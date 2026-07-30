@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #d8d3c4;
+  --chart-tooltip-text: #1a1830;
+  --chart-tooltip-muted: #6b6880;
+  --chart-tooltip-shadow: 0 6px 24px rgba(50, 45, 90, 0.14);
+}
+
+html.dark {
+  color-scheme: dark;
+  --chart-tooltip-bg: #151233;
+  --chart-tooltip-border: #2b2668;
+  --chart-tooltip-text: #ece9f6;
+  --chart-tooltip-muted: #a5a1c4;
+  --chart-tooltip-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.32); }
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(129, 140, 248, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 140, 248, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-ink-700 bg-ink-800 shadow-card; }
+  .card-pad { @apply card p-5; }
+  .label-xs { @apply text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500; }
+  .h-section { @apply text-sm font-semibold text-slate-200; }
+  .divider { @apply border-t border-ink-700; }
+  .ring-focus { @apply focus:outline-none focus:ring-2 focus:ring-champagne-500/40; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium ring-focus transition-colors; }
+  .btn-primary { @apply btn bg-champagne-500 text-ink-950 hover:bg-champagne-400; }
+  .btn-ghost { @apply btn border border-ink-600 bg-transparent text-slate-200 hover:bg-ink-700/60; }
+  .pill { @apply inline-flex items-center gap-1 rounded-full border border-ink-600 bg-ink-700/60 px-2 py-0.5 text-[11px] font-medium text-slate-300; }
+}
+
+/* ---------------------------------------------------------------------------
+   LIGHT MODE — Pearl / Ivory with indigo-tinted ink.
+   Remaps the dark ink-* (indigo) + slate-* utilities to a warm ivory palette
+   so the whole chassis shifts without rewriting components.
+   Palette: page #f4f2ec · low #efece3 · mid #faf8f1 · card #ffffff
+            border #d8d3c4 / #e4ddcd · text #1a1830 / #3d3a52 / #6b6880 / #9995ad
+   ------------------------------------------------------------------------- */
+html:not(.dark) { color-scheme: light; }
+html:not(.dark) body { background: #f4f2ec; color: #1a1830; }
+
+/* Chassis backgrounds */
+html:not(.dark) .bg-ink-950 { background-color: #f4f2ec; }
+html:not(.dark) .bg-ink-900 { background-color: #efece3; }
+html:not(.dark) .bg-ink-900\/85 { background-color: rgba(239, 236, 227, 0.92); }
+html:not(.dark) .bg-ink-900\/60 { background-color: rgba(239, 236, 227, 0.7); }
+html:not(.dark) .bg-ink-800 { background-color: #ffffff; }
+html:not(.dark) .bg-ink-800\/85 { background-color: rgba(255, 255, 255, 0.92); }
+html:not(.dark) .bg-ink-800\/60 { background-color: rgba(255, 255, 255, 0.7); }
+html:not(.dark) .bg-ink-800\/30 { background-color: rgba(255, 255, 255, 0.4); }
+html:not(.dark) .bg-ink-700 { background-color: #faf8f1; }
+html:not(.dark) .bg-ink-700\/60 { background-color: rgba(250, 248, 241, 0.85); }
+html:not(.dark) .bg-ink-700\/40 { background-color: rgba(250, 248, 241, 0.7); }
+html:not(.dark) .bg-ink-700\/30 { background-color: rgba(250, 248, 241, 0.55); }
+/* Active/selected nav item — was falling back to dark indigo; use a soft
+   champagne highlight so the dark label stays legible. */
+html:not(.dark) .bg-ink-700\/80 { background-color: rgba(217, 196, 143, 0.38); }
+/* Sidebar footer avatar — was dark indigo with dark text; make it champagne
+   (matches the logo) so the initials read. */
+html:not(.dark) .bg-ink-600 { background-color: #d9c48f; }
+
+/* Inner panels / hover surfaces (slate remaps) */
+html:not(.dark) .bg-slate-900 { background-color: #efece3; }
+html:not(.dark) .bg-slate-800 { background-color: #eae4d5; }
+html:not(.dark) .bg-slate-800\/80 { background-color: rgba(234, 228, 213, 0.85); }
+html:not(.dark) .bg-slate-800\/60 { background-color: rgba(234, 228, 213, 0.55); }
+html:not(.dark) .bg-slate-800\/40 { background-color: rgba(234, 228, 213, 0.4); }
+html:not(.dark) .bg-slate-800\/30 { background-color: rgba(234, 228, 213, 0.3); }
+html:not(.dark) .bg-slate-800\/20 { background-color: rgba(234, 228, 213, 0.2); }
+html:not(.dark) .bg-slate-700 { background-color: #d8d3c4; }
+
+/* Hover variants (Tailwind emits these as separate selectors) */
+html:not(.dark) .hover\:bg-ink-700\/60:hover { background-color: rgba(250, 248, 241, 0.9); }
+html:not(.dark) .hover\:bg-ink-700\/40:hover { background-color: rgba(234, 228, 213, 0.6); }
+html:not(.dark) .hover\:bg-ink-700\/20:hover { background-color: rgba(234, 228, 213, 0.4); }
+html:not(.dark) .hover\:bg-slate-800\/20:hover { background-color: rgba(234, 228, 213, 0.35); }
+html:not(.dark) .hover\:bg-slate-800\/30:hover { background-color: rgba(234, 228, 213, 0.45); }
+html:not(.dark) .hover\:bg-slate-800\/40:hover { background-color: rgba(234, 228, 213, 0.55); }
+html:not(.dark) .hover\:bg-slate-800\/60:hover { background-color: rgba(234, 228, 213, 0.7); }
+/* The pinned first column of a research table has to be opaque, or the columns
+   scrolling under it show through. That means it can't inherit the row's
+   translucent hover tint — it needs the composited colour spelled out. */
+html:not(.dark) .group:hover .group-hover\:bg-ink-700 { background-color: #f2efe6; }
+
+/* Borders */
+html:not(.dark) .border-ink-700 { border-color: #e4ddcd; }
+html:not(.dark) .border-ink-600 { border-color: #d8d3c4; }
+html:not(.dark) .border-slate-800 { border-color: #e4ddcd; }
+html:not(.dark) .border-slate-700 { border-color: #d8d3c4; }
+html:not(.dark) .divide-slate-800 > * + *,
+html:not(.dark) .divide-slate-800\/70 > * + * { border-color: #e4ddcd; }
+
+/* Text — remap slate greys to warm indigo-tinted ink */
+html:not(.dark) .text-slate-100 { color: #1a1830; }
+html:not(.dark) .text-slate-200 { color: #26233d; }
+html:not(.dark) .text-slate-300 { color: #3d3a52; }
+html:not(.dark) .text-slate-400 { color: #55516b; }
+html:not(.dark) .text-slate-500 { color: #6b6880; }
+html:not(.dark) .text-slate-600 { color: #7c7891; }
+html:not(.dark) input::placeholder, html:not(.dark) textarea::placeholder { color: #9995ad; }
+
+/* Champagne accent text — the pale gold (#ecdcae / #d9c48f) disappears on
+   light surfaces. Darken to a readable gold (AA on white and champagne
+   tints) for light mode; the dark theme keeps the brighter tones. */
+html:not(.dark) .text-champagne-400 { color: #8a6a1c; }
+html:not(.dark) .text-champagne-500 { color: #7d5f16; }
+/* Link-card titles/icons switch to champagne on hover (News, Announcements, the
+   alerts bell). The hover variant had no light-mode remap, so it fell back to the
+   pale #ecdcae and all but vanished on the light hover surface. Use a deep gold so
+   hovered headlines stay clearly readable. */
+html:not(.dark) .group:hover .group-hover\:text-champagne-400 { color: #5f4711; }
+
+/* Gain / loss — darker in light mode for readable contrast (AA) on white rows
+   and on the row-hover tint. Dark theme keeps the brighter #10b981 / #ef4444. */
+html:not(.dark) .text-gain { color: #047857; }
+html:not(.dark) .text-loss { color: #b91c1c; }
+
+/* Amber — "still to invest" / dry-powder figures and alert accents. The bright
+   amber-400/300 washes out on the light surfaces; darken to a readable ochre for
+   light mode (AA on white) while dark mode keeps the brighter tone. */
+html:not(.dark) .text-amber-400 { color: #a1610a; }
+html:not(.dark) .text-amber-300 { color: #a1610a; }
+html:not(.dark) .text-amber-300\/90 { color: #a1610a; }
+
+html:not(.dark) .card {
+  background-color: #ffffff;
+  border-color: #e4ddcd;
+  color: #1a1830;
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.6) inset, 0 1px 3px 0 rgba(60, 55, 100, 0.07);
+}
+html:not(.dark) .btn-ghost { border-color: #d8d3c4; color: #26233d; background-color: transparent; }
+html:not(.dark) .btn-ghost:hover { background-color: rgba(216, 211, 196, 0.35); }
+html:not(.dark) .btn-primary { background-color: #b8923c; color: #ffffff; }
+html:not(.dark) .btn-primary:hover { background-color: #c3a962; color: #1a1830; }
+html:not(.dark) .pill { border-color: #d8d3c4; background-color: rgba(255, 255, 255, 0.6); color: #3d3a52; }
+html:not(.dark) .bg-grid {
+  background-image:
+    linear-gradient(rgba(60, 55, 100, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60, 55, 100, 0.05) 1px, transparent 1px);
+}
+html:not(.dark) input[type="text"], html:not(.dark) input[type="search"],
+html:not(.dark) input[type="file"], html:not(.dark) input[type="number"],
+html:not(.dark) select, html:not(.dark) textarea {
+  background-color: #ffffff; border-color: #d8d3c4; color: #1a1830;
+}
+html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(60, 55, 100, 0.22); }
+html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(60, 55, 100, 0.4); }

@@ -1,0 +1,379 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { loadSheetFormats, columnDecimals, type SheetFormats } from "@/lib/sheetFormats";
+import { Table2, Lock, Search, Download, ShieldAlert, FileSpreadsheet } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { Pill } from "@/components/Pill";
+
+// The Data Audit archive lives in public/audit/ and is served at /audit/* in dev,
+// preview and production. On the hosted site those requests sit behind the edge
+// password gate (functions/_middleware.js); if a fetch fails we show a fallback notice.
+type SheetMeta = { key: string; name: string; rows: number; cols: number };
+type FileMeta = {
+  fileKey: string; label: string; fy: string; source: string;
+  status: "ok" | "encrypted"; sheets: SheetMeta[];
+};
+type Cell = string | number | null;
+type Sheet = { name: string; rows: Cell[][] };
+
+const BASE = import.meta.env.BASE_URL;
+const VISIBLE_CAP = 200;
+
+function colLabel(i: number): string {
+  let s = "", n = i + 1;
+  while (n > 0) { s = String.fromCharCode(65 + ((n - 1) % 26)) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+function fmtCell(v: Cell, decimals: number | null = null): { text: string; num: boolean; full: string } {
+  if (v === null || v === undefined || v === "") return { text: "", num: false, full: "" };
+  if (typeof v === "number") {
+    // Mirror how Excel *displays* the cell. The workbook stores full binary
+    // precision (1687.79022064853) but shows it through the column's number
+    // format ("1,687.79"), so we re-apply that precision here; the untouched
+    // stored value stays in `full` (hover tooltip) and in the CSV export.
+    const text = decimals != null
+      ? v.toLocaleString("en-IN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+      : Number.isInteger(v)
+        ? v.toLocaleString("en-IN")
+        : v.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    return { text, num: true, full: String(v) };
+  }
+  // Excel dates land as ISO datetimes at midnight — render the date, not the raw
+  // timestamp, so the cell reads like the source sheet (full value stays in `full`).
+  const s = String(v);
+  const dateOnly = /^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.0+)?$/.exec(s);
+  return { text: dateOnly ? dateOnly[1] : s, num: false, full: s };
+}
+
+export function DataAudit() {
+  const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
+  const [manifest, setManifest] = useState<FileMeta[]>([]);
+  const [fileKey, setFileKey] = useState("");
+  const [sheetKey, setSheetKey] = useState("");
+  const [sheet, setSheet] = useState<Sheet | null>(null);
+  const [sheetLoading, setSheetLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [exact, setExact] = useState(false); // deep-link `eq` → whole-cell match instead of substring
+  const [showAll, setShowAll] = useState(false);
+  const [formats, setFormats] = useState<SheetFormats | null>(null);
+  const cache = useRef<Record<string, Sheet>>({});
+  const [searchParams] = useSearchParams();
+  const pendingFind = useRef<string | null>(null); // a deep-link's `find`/`eq`, applied on next sheet load
+  const pendingExact = useRef<boolean>(false);
+
+  useEffect(() => {
+    let alive = true;
+    // Per-column number formats for every sheet, so the grid shows the precision
+    // the workbook shows (see sheetFormats).
+    loadSheetFormats().then((f) => { if (alive) setFormats(f); });
+    fetch(`${BASE}audit/manifest.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((m: FileMeta[]) => {
+        if (!alive) return;
+        setManifest(m);
+        if (!searchParams.get("file")) {
+          const first = m.find((f) => f.status === "ok" && f.sheets.length);
+          if (first) { setFileKey(first.fileKey); setSheetKey(first.sheets[0].key); }
+        }
+        setStatus("ready");
+      })
+      .catch(() => alive && setStatus("restricted"));
+    return () => { alive = false; };
+  }, []);
+
+  // Deep-link: ?file=&sheet=&find= opens a specific workbook/sheet and highlights
+  // the rows containing `find` (an ISIN, name…), so a dashboard number can point
+  // straight at its source cells. Runs on first load and on in-app navigation.
+  useEffect(() => {
+    if (status !== "ready" || !manifest.length) return;
+    const wantFile = searchParams.get("file");
+    if (!wantFile) return;
+    const f = manifest.find((x) => x.fileKey === wantFile && x.status === "ok");
+    if (!f) return;
+    const wantSheet = searchParams.get("sheet");
+    const s = (wantSheet && f.sheets.find((x) => x.key === wantSheet)) || f.sheets[0];
+    const eq = searchParams.get("eq");
+    pendingFind.current = eq ?? searchParams.get("find");
+    pendingExact.current = eq != null;
+    setFileKey(f.fileKey);
+    setSheetKey(s?.key ?? "");
+  }, [searchParams, status, manifest]);
+
+  useEffect(() => {
+    if (status !== "ready" || !fileKey || !sheetKey) return;
+    if (pendingFind.current) { setQuery(pendingFind.current); setExact(pendingExact.current); pendingFind.current = null; pendingExact.current = false; }
+    else { setQuery(""); setExact(false); }
+    setShowAll(false);
+    const id = `${fileKey}/${sheetKey}`;
+    if (cache.current[id]) { setSheet(cache.current[id]); return; }
+    let alive = true;
+    setSheetLoading(true); setSheet(null);
+    fetch(`${BASE}audit/${fileKey}/${sheetKey}.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((s: Sheet) => { if (!alive) return; cache.current[id] = s; setSheet(s); })
+      .catch(() => alive && setSheet(null))
+      .finally(() => alive && setSheetLoading(false));
+    return () => { alive = false; };
+  }, [status, fileKey, sheetKey]);
+
+  const currentFile = manifest.find((f) => f.fileKey === fileKey);
+  const ncols = useMemo(() => sheet ? sheet.rows.reduce((m, r) => Math.max(m, r.length), 0) : 0, [sheet]);
+  // Detect the sheet's column-heading row (the label-heaviest of the first rows) so
+  // we can pin it as a header — otherwise a filter (e.g. by ISIN) hides it and the
+  // user is left with only the A/B/C letters.
+  const headerRowIndex = useMemo(() => {
+    if (!sheet) return -1;
+    // A heading cell is a *label* — plain text, not a date and not a number written
+    // as text. Counting raw strings instead misreads data rows whose cells are ISO
+    // dates or codes (e.g. a dividend row "BALKRISHNA … 2022-08-11 … Rate not
+    // declared") as the heading row, which then mislabels every column beneath it.
+    const isLabel = (c: Cell) => {
+      if (typeof c !== "string") return false;
+      const s = c.trim();
+      if (s === "") return false;
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return false;      // ISO datetime
+      if (/^[-+]?[\d,]*\.?\d+%?$/.test(s)) return false;     // number-as-text
+      return true;
+    };
+    // Scan far enough down to clear a tall preamble: "Future consumer Not
+    // considered" (FY21-22) carries four note/metadata lines before its
+    // "Name of the Script | Remarks | Qty | Rate | Total" heading on row 9.
+    let best = -1, bestLabels = -1;
+    for (let i = 0; i < Math.min(sheet.rows.length, 16); i++) {
+      let nonEmpty = 0, labels = 0;
+      for (const c of sheet.rows[i] ?? []) {
+        if (c === null || c === undefined || String(c).trim() === "") continue;
+        nonEmpty++;
+        if (isLabel(c)) labels++;
+      }
+      // Require the row to be predominantly labels, then take the richest one.
+      if (labels >= 2 && nonEmpty > 0 && labels / nonEmpty >= 0.6 && labels > bestLabels) {
+        bestLabels = labels; best = i;
+      }
+    }
+    return best;
+  }, [sheet]);
+  // Rows that sit ABOVE the heading row in the workbook (sheet titles, "Data as on
+  // …" notes, pivot "Column Labels" bands). They must stay above it on screen too —
+  // rendering them as ordinary body rows put stray values under unrelated headings
+  // (e.g. "NABS Equity" beneath "Pur Date"), which reads as mixed-up columns.
+  const preambleRows = useMemo(() => {
+    if (!sheet || headerRowIndex <= 0) return [] as { i: number; row: Cell[] }[];
+    return sheet.rows.slice(0, headerRowIndex)
+      .map((row, i) => ({ i, row }))
+      .filter(({ row }) => row.some((c) => c !== null && c !== undefined && String(c).trim() !== ""));
+  }, [sheet, headerRowIndex]);
+  const headerRow = headerRowIndex >= 0 && sheet ? sheet.rows[headerRowIndex] : null;
+  // Display precision per column, taken from the workbook's own number formats
+  // (see sheetFormats) so the grid shows what Excel shows.
+  const colDecimals = useMemo(
+    () => Array.from({ length: ncols }, (_, c) => columnDecimals(formats, fileKey, sheetKey, c)),
+    [formats, fileKey, sheetKey, ncols],
+  );
+  const filtered = useMemo(() => {
+    if (!sheet) return [] as { i: number; row: Cell[] }[];
+    const q = query.trim().toLowerCase();
+    // Body = everything after the heading row; the heading and anything above it are
+    // pinned in <thead>, in their original workbook order.
+    const base = sheet.rows.map((row, i) => ({ i, row })).filter(({ i }) => i > headerRowIndex);
+    if (!q) return base;
+    return base.filter(({ row }) => row.some((c) => {
+      if (c === null || c === undefined) return false;
+      const s = String(c).trim().toLowerCase();
+      return exact ? s === q : s.includes(q);
+    }));
+  }, [sheet, query, headerRowIndex, exact]);
+  const visible = showAll ? filtered : filtered.slice(0, VISIBLE_CAP);
+
+  const totalSheets = manifest.reduce((n, f) => n + f.sheets.length, 0);
+  const okFiles = manifest.filter((f) => f.status === "ok").length;
+
+  function downloadCsv() {
+    if (!sheet) return;
+    const esc = (v: Cell) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = sheet.rows.map((r) => Array.from({ length: ncols }, (_, c) => esc(r[c] ?? null)).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `${fileKey}__${sheetKey}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (status === "restricted") {
+    return (
+      <div className="flex h-full flex-col">
+        <PageHeader eyebrow="Setup" title="Data Audit"
+          subtitle="Raw source workbooks — every sheet, every tab, exactly as uploaded." />
+        <div className="grid flex-1 place-items-center py-16 text-center">
+          <div className="max-w-lg">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
+              <ShieldAlert className="h-7 w-7" />
+            </div>
+            <h2 className="mt-5 text-lg font-semibold text-slate-100">Couldn't load the archive</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              The source workbooks couldn't be loaded. Refresh the page to try again — if this keeps
+              happening, your session may have expired; sign in again from the login screen.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <PageHeader eyebrow="Setup" title="Data Audit"
+        subtitle="Raw source workbooks — every sheet, every tab, exactly as uploaded."
+        right={status === "ready" ? <Pill tone="info">{okFiles} workbooks · {totalSheets} sheets</Pill> : null} />
+
+      {/* Workbook selector */}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {manifest.map((f) => {
+          const locked = f.status !== "ok";
+          const active = f.fileKey === fileKey;
+          return (
+            <button key={f.fileKey} type="button" disabled={locked}
+              onClick={() => { if (!locked) { setFileKey(f.fileKey); setSheetKey(f.sheets[0]?.key ?? ""); } }}
+              title={locked ? "Password-protected — awaiting password" : f.source}
+              className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[12px] transition-colors ${
+                active ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
+                : locked ? "cursor-not-allowed border-ink-700 bg-ink-800/40 text-slate-600"
+                : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
+              {locked ? <Lock className="h-3.5 w-3.5" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+              <span className="font-medium">{f.fy || f.label}</span>
+              {locked && <span className="text-[10px] uppercase tracking-wide">locked</span>}
+              {!locked && <span className="text-slate-500">· {f.sheets.length}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Sheet tabs */}
+      {currentFile && (
+        <div className="mb-3 flex flex-wrap gap-1.5 border-b border-ink-700 pb-3">
+          {currentFile.sheets.map((s) => {
+            const active = s.key === sheetKey;
+            return (
+              <button key={s.key} type="button" onClick={() => setSheetKey(s.key)}
+                className={`rounded-md px-2.5 py-1 text-[12px] transition-colors ${
+                  active ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:bg-ink-700/40 hover:text-slate-200"}`}>
+                {s.name} <span className="mono text-[10px] text-slate-500">{s.rows}×{s.cols}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <input value={query} onChange={(e) => { setQuery(e.target.value); setExact(false); }} placeholder="Search this sheet…"
+            className="w-72 rounded-md border border-ink-700 bg-ink-800 py-2 pl-9 pr-3 text-sm text-slate-200 ring-focus" />
+        </div>
+        {sheet && (
+          <span className="text-[12px] text-slate-500">
+            Showing <span className="mono text-slate-300">{visible.length.toLocaleString("en-IN")}</span> of{" "}
+            <span className="mono text-slate-300">{filtered.length.toLocaleString("en-IN")}</span>
+            {query ? ` matching rows` : ` rows`}
+          </span>
+        )}
+        {sheet && !showAll && filtered.length > VISIBLE_CAP && (
+          <button onClick={() => setShowAll(true)}
+            className="rounded-md border border-ink-700 bg-ink-800 px-3 py-1.5 text-[12px] text-slate-300 hover:bg-ink-700/60">
+            Load all {filtered.length.toLocaleString("en-IN")} rows
+          </button>
+        )}
+        <div className="ml-auto">
+          {sheet && (
+            <button onClick={downloadCsv}
+              className="flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-3 py-1.5 text-[12px] text-slate-300 hover:bg-ink-700/60">
+              <Download className="h-3.5 w-3.5" /> CSV
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Grid */}
+      <Card pad={false} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-auto">
+          {status === "loading" || sheetLoading ? (
+            <div className="grid h-40 place-items-center text-sm text-slate-500">Loading…</div>
+          ) : !sheet ? (
+            <div className="grid h-40 place-items-center text-sm text-slate-500">
+              <div className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Select a workbook and sheet.</div>
+            </div>
+          ) : (
+            <table className="border-separate border-spacing-0 text-[12px]">
+              <thead className="sticky top-0 z-20">
+                <tr>
+                  <th className="sticky left-0 z-30 border-b border-r border-ink-700 bg-ink-900 px-2 py-1.5 text-slate-600" />
+                  {Array.from({ length: ncols }, (_, c) => (
+                    <th key={c} className="label-xs whitespace-nowrap border-b border-r border-ink-700 bg-ink-900 px-3 py-1.5 text-center font-medium">
+                      {colLabel(c)}
+                    </th>
+                  ))}
+                </tr>
+                {/* Sheet preamble — titles/notes that sit above the heading row in the
+                    workbook. Kept here so the on-screen order matches the source exactly. */}
+                {preambleRows.map(({ i, row }) => (
+                  <tr key={`pre-${i}`}>
+                    <th className="sticky left-0 z-30 border-b border-r border-ink-700 bg-ink-900 px-2 py-1 text-right mono text-[10px] font-normal text-slate-600">{i + 1}</th>
+                    {Array.from({ length: ncols }, (_, c) => {
+                      const { text, num, full } = fmtCell(row[c] ?? null, colDecimals[c]);
+                      return (
+                        <td key={c} title={full}
+                          className={`max-w-[280px] truncate border-b border-r border-ink-700 bg-ink-900/60 px-3 py-1 text-[11px] italic text-slate-400 ${num ? "text-right mono not-italic" : "text-left"}`}>
+                          {text}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+                {headerRow && (
+                  <tr>
+                    <th className="sticky left-0 z-30 border-b border-r border-ink-700 bg-ink-800 px-2 py-1.5 text-[10px] text-slate-500">{headerRowIndex + 1}</th>
+                    {Array.from({ length: ncols }, (_, c) => {
+                      const { text } = fmtCell(headerRow[c] ?? null);
+                      return (
+                        <th key={c} title={text}
+                          className="max-w-[280px] truncate border-b border-r border-ink-700 bg-ink-800 px-3 py-1.5 text-left text-[11px] font-semibold text-slate-200">
+                          {text || <span className="text-slate-600">—</span>}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {visible.map(({ i, row }) => (
+                  <tr key={i} className="hover:bg-ink-700/30">
+                    <td className="sticky left-0 z-10 border-b border-r border-ink-700 bg-ink-900 px-2 py-1 text-right mono text-[10px] text-slate-600">
+                      {i + 1}
+                    </td>
+                    {Array.from({ length: ncols }, (_, c) => {
+                      const { text, num, full } = fmtCell(row[c] ?? null, colDecimals[c]);
+                      const q = query.trim().toLowerCase();
+                      const cell = text.trim().toLowerCase();
+                      const hit = q !== "" && (exact ? cell === q : cell.includes(q));
+                      return (
+                        <td key={c} title={full}
+                          className={`max-w-[280px] truncate border-b border-r border-ink-700/60 px-3 py-1 ${
+                            num ? "text-right mono" : ""} ${hit ? "bg-champagne-500/20 font-medium text-champagne-200" : "text-slate-300"}`}>
+                          {text}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}

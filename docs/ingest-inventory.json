@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-07-30T19:09:25.946Z",
+  "sourceDir": "source",
+  "counts": {
+    "pdfs": 0,
+    "classified": 0,
+    "unclassified": 0,
+    "fromArchives": 0,
+    "archivesExpanded": 0,
+    "pages": 0
+  },
+  "reportTypes": [
+    "holdings",
+    "appraisal",
+    "fact-sheet",
+    "performance-summary",
+    "performance-history",
+    "transaction-statement",
+    "corporate-action",
+    "capital-call",
+    "distribution-notice",
+    "contract-note",
+    "unknown"
+  ],
+  "archives": [],
+  "archiveFailures": [],
+  "files": [],
+  "groups": {},
+  "overlaps": [],
+  "unclassified": []
+}

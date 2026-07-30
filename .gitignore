@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Raw statements live in source/ and ARE committed (they are the book's provenance),
+# but the expanded copies are derived — regenerate with `npm run inventory`.
+source/_extracted/

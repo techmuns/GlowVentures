@@ -1,0 +1,76 @@
+// Client helper for the corporate-announcements feed. Resolves each holding to its
+// NSE trading symbol — the ticker the statement printed, else via ISIN through
+// src/data/nseSymbols.json — then fans out across ALL of them (chunked, see
+// feedFetch) to the server-side proxy at /api/announcements.
+//
+// Only listed names reach this feed at all. AIF/PMS units and unlisted holdings
+// have no exchange filings and are simply absent, not shown as having none.
+import type { Portfolio } from "./types";
+import { symbolForIsin } from "./quotes";
+import { fetchFeedChunked } from "./feedFetch";
+
+export type Announcement = {
+  title: string;
+  desc: string;
+  date: string;
+  attachment: string;
+  source: string;
+  symbol: string;
+  holding: string;
+  key: string;
+};
+
+export type AnnouncementsResponse = {
+  ok: boolean;
+  reason?: "not_configured" | "auth" | "error" | "method" | "upstream_error";
+  status?: number;
+  generatedAt?: string;
+  windowDays?: number;
+  count?: number;
+  items?: Announcement[];
+  symbolsSearched?: number;
+};
+
+export type AnnHolding = { symbol: string; name: string; key: string; weight: number };
+
+// Listed holdings that have a resolvable NSE symbol, largest first. `n` limits
+// the list; omit it to return EVERY holding that maps to a symbol.
+export function topHoldingsForAnnouncements(portfolio: Portfolio, n?: number): AnnHolding[] {
+  const map = new Map<string, { name: string; key: string; symbol: string | null; mv: number }>();
+  let total = 0;
+  for (const p of portfolio.positions) {
+    total += p.marketValue;
+    const e = map.get(p.securityKey)
+      ?? { name: p.security, key: p.securityKey, symbol: p.symbol || symbolForIsin(p.isin), mv: 0 };
+    // A statement that prints the ticker wins over one that doesn't; the first
+    // row for a name may be the one lacking it.
+    if (!e.symbol) e.symbol = p.symbol || symbolForIsin(p.isin);
+    e.mv += p.marketValue;
+    map.set(p.securityKey, e);
+  }
+  const withSym = [...map.values()]
+    .sort((a, b) => b.mv - a.mv)
+    .filter((h): h is typeof h & { symbol: string } => !!h.symbol);
+  const chosen = n == null ? withSym : withSym.slice(0, n);
+  return chosen.map((h) => ({ symbol: h.symbol, name: h.name, key: h.key, weight: total > 0 ? h.mv / total : 0 }));
+}
+
+const _cache = new Map<string, Promise<AnnouncementsResponse>>();
+
+export function getHoldingsAnnouncements(holdings: AnnHolding[], force = false): Promise<AnnouncementsResponse> {
+  const key = holdings.map((h) => h.symbol).join("|");
+  if (!force && _cache.has(key)) return _cache.get(key)!;
+  const promise = fetchFeedChunked<Announcement>("/api/announcements", holdings, force, {
+    itemsField: "items",
+    dedupeKey: (a) => a.attachment || `${a.symbol}|${a.title}|${a.date}`,
+    sortDesc: (a) => a.date || "",
+    displayCap: 150,
+  }).then((r): AnnouncementsResponse => {
+    if (!r.ok && _cache.get(key) === promise) _cache.delete(key);
+    return r.ok
+      ? { ok: true, generatedAt: r.generatedAt, count: r.count, items: r.items, symbolsSearched: r.searched, windowDays: 180 }
+      : { ok: false, reason: r.reason, status: r.status };
+  });
+  _cache.set(key, promise);
+  return promise;
+}

@@ -1,0 +1,128 @@
+import { Search, Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { lastQuoteFailure } from "@/lib/quotes";
+
+const THEME_KEY = "glow:theme";
+
+function readInitialTheme(): boolean {
+  try { return localStorage.getItem(THEME_KEY) === "dark"; } catch { return false; }
+}
+
+function CurrencySwitch() {
+  const { displayCurrency, setDisplayCurrency, inrPerUsd, fxAsOf } = usePortfolio();
+  return (
+    <div className="flex items-center gap-2">
+      <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency">
+        {SUPPORTED_DISPLAY_CURRENCIES.map((c: DisplayCurrency) => {
+          const active = displayCurrency === c;
+          return (
+            <button key={c} onClick={() => setDisplayCurrency(c)} aria-pressed={active}
+              className={["rounded px-2 py-0.5 text-[11px] font-medium tabular transition-colors active:scale-[0.97]",
+                active ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+              {c}
+            </button>
+          );
+        })}
+      </div>
+      {displayCurrency === "USD" && (
+        <span className="hidden whitespace-nowrap text-[11px] tabular text-slate-400 sm:inline"
+          title={`USD → INR reference rate${fxAsOf ? ` · as of ${fxAsOf}` : " · fallback rate"}`}>
+          $1 = ₹{inrPerUsd.toFixed(2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Live-quote state, stated honestly. The dot used to be hard-coded green whenever
+// a book was loaded, which would now claim "Live" even with the feed down.
+function QuoteStatus() {
+  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive } = usePortfolio();
+  if (!portfolio) {
+    return <><span className="inline-block h-2 w-2 rounded-full bg-slate-600" /><span className="text-slate-400">Awaiting data</span></>;
+  }
+  if (quotesStatus === "loading") {
+    return <>
+      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+      <span className="text-slate-400">Fetching prices…</span>
+    </>;
+  }
+  if (quotesStatus === "unavailable") {
+    // Name the reason rather than just saying it's off — "Live · 149 not live"
+    // with no explanation is what made the last feed outage hard to diagnose.
+    const f = lastQuoteFailure();
+    const why = f
+      ? `Live prices unavailable (${f.failureCode}${f.upstreamStatus != null ? ` · upstream ${f.upstreamStatus}` : ""}). ${f.detail ?? ""} Every holding is showing its workbook mark. See the console for the full diagnostics.`
+      : "The live price feed is unavailable — every holding is showing its workbook mark.";
+    return <>
+      <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+      <span className="text-slate-400" title={why}>
+        Marks as of {portfolio.asOf}
+        {f && <span className="ml-1 text-amber-500/80">· feed down</span>}
+      </span>
+    </>;
+  }
+  const at = quotesAsOf ? new Date(quotesAsOf) : null;
+  const clock = at ? at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+  // The count of unpriced holdings stays in the tooltip, not the header. Those
+  // rows are already marked individually in the table, where the reader can see
+  // which ones they are — a bare number up here just raised questions.
+  return <>
+    <span className="inline-block h-2 w-2 rounded-full bg-gain shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+    <span className="text-slate-400"
+      title={`${livePriced} holdings priced live${notLive ? ` · ${notLive} on workbook marks — ETFs, warrants and securities the price feed does not carry` : ""}`}>
+      Live{clock ? ` ${clock}` : ""}
+    </span>
+  </>;
+}
+
+export function TopBar() {
+  const { portfolio, fmtFromBase, clearPortfolio, refreshQuotes, quotesStatus } = usePortfolio();
+  const [isDark, setIsDark] = useState<boolean>(readInitialTheme);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    if (isDark) html.classList.add("dark"); else html.classList.remove("dark");
+    try { localStorage.setItem(THEME_KEY, isDark ? "dark" : "light"); } catch {}
+  }, [isDark]);
+
+  const refresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    clearPortfolio();  // reload the ingested book from source
+    refreshQuotes();   // and force a fresh pull past the 60s server cache
+    window.setTimeout(() => setRefreshing(false), 700);
+  };
+
+  return (
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
+      <div className="relative max-w-md flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <input type="text" placeholder="Search holdings, entities…"
+          className="w-full rounded-md border border-ink-700 bg-ink-800 py-2 pl-9 pr-3 text-sm text-slate-200 placeholder-slate-500 ring-focus" />
+      </div>
+      <div className="ml-auto flex items-center gap-3">
+        <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
+        <CurrencySwitch />
+        {portfolio && (
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-1.5 text-xs text-slate-200"
+            title="Consolidated NAV">
+            <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}
+          </span>
+        )}
+        <div className="flex items-center gap-2 border-l border-ink-700 pl-3">
+          <button onClick={refresh} disabled={refreshing} className="btn-ghost h-9 px-2.5" title="Reload data">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          </button>
+          <button onClick={() => setIsDark((v) => !v)} className="btn-ghost h-9 px-2.5" title="Toggle theme">
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <NotificationsBell />
+        </div>
+      </div>
+    </header>
+  );
+}
