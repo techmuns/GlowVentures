@@ -20,7 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractLayout } from "./lib/layout.mjs";
 import { classify } from "./lib/classify.mjs";
-import { makeDocument, makeDocKey, assertNormalized } from "./lib/document.mjs";
+import { makeDocument, makeDocKey, assertNormalized, deriveDocument } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
 import * as goldstandard from "./providers/goldstandard.mjs";
 import * as threeSixtyOne from "./providers/threeSixtyOne.mjs";
@@ -122,7 +122,9 @@ function extractOne(file, grid) {
   if (!owner.owner && meta.ownerName) {
     warnings.push({ code: "owner-unresolved", detail: `"${meta.ownerName}" matches no canonical owner — add an alias in shared/owners.mjs` });
   }
-  const doc = makeDocument({ ...base, ...result, warnings, ownerId: base.ownerId });
+  // Derive every derivable field from the primitives BEFORE the document is
+  // validated or written. Nothing downstream ever sees an un-derived holding.
+  const doc = deriveDocument(makeDocument({ ...base, ...result, warnings, ownerId: base.ownerId }));
   return assertNormalized(doc);
 }
 

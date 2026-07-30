@@ -213,11 +213,29 @@ const RETURN_COLUMNS = {
   series: [/^(series|portfolio|scheme|index|benchmark|particulars|description|name)/],
   mtd:    [/^(mtd|month to date|1 month|1m)/],
   qtd:    [/^(qtd|quarter to date|3 month|3m)/],
-  ytd:    [/^(ytd|year to date|1 year|1y)/],
+  // The provider's "YTD" is the INDIAN FINANCIAL year to date, from 1 April —
+  // the Perf Summary window is literally 01/04/2026 to 10/07/2026. Stored as
+  // fytd so it is never compared against a calendar-year figure.
+  fytd:   [/^(ytd|fytd|year to date|financial year|fy to date|1 year|1y)/],
   si:     [/^(si|since inception|inception|itd)/],
 };
 
-function readReturns(pages, warnings, source) {
+/**
+ * Is the since-inception figure annualised?
+ *
+ * The provider annualises only beyond one year — its own disclosure says so, and
+ * for this account (inception 26/12/2025, report 10/07/2026, ~6.5 months) the
+ * Perf Summary prints Absolute 16.69% = Annualized 16.69%. Returns null when the
+ * inception date is unknown, rather than assuming either way.
+ */
+function siIsAnnualised(inceptionDate, asOf) {
+  if (!inceptionDate || !asOf) return null;
+  const a = Date.parse(inceptionDate), b = Date.parse(asOf);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return (b - a) / (365.25 * 864e5) >= 1;
+}
+
+function readReturns(pages, warnings, source, annualised = null) {
   for (const page of pages) {
     const table = findTable(page, RETURN_COLUMNS, { minFields: 3, stopRe: /^\s*$/ });
     if (!table) continue;
@@ -229,11 +247,12 @@ function readReturns(pages, warnings, source) {
         isBenchmark: !/^(portfolio|scheme|your portfolio|aristos)/i.test(String(r.fields.series ?? "").trim()),
         mtd: parseNum(r.fields.mtd),
         qtd: parseNum(r.fields.qtd),
-        ytd: parseNum(r.fields.ytd),
+        fytd: parseNum(r.fields.fytd),
         si: parseNum(r.fields.si),
+        siAnnualised: annualised,
         source,
       }))
-      .filter((s) => s.series && [s.mtd, s.qtd, s.ytd, s.si].some((v) => v !== null));
+      .filter((s) => s.series && [s.mtd, s.qtd, s.fytd, s.si].some((v) => v !== null));
     if (series.length) {
       if (table.missing.length) warn(warnings, "return-columns-not-matched", table.missing.join(", "));
       return { series, sheet: toAuditSheet("returns", Object.keys(table.columns), rows) };
@@ -302,8 +321,13 @@ export function extract({ grid, meta }) {
     if (!totals) warn(warnings, "totals-not-found", reportType);
   }
 
+  if (reportType === "performance-history") {
+    inceptionDate = readInception(pages);
+    if (!inceptionDate) warn(warnings, "inception-date-not-found", reportType);
+  }
+
   if (reportType === "fact-sheet" || reportType === "performance-history") {
-    const r = readReturns(pages, warnings, source);
+    const r = readReturns(pages, warnings, source, siIsAnnualised(inceptionDate ?? meta.inceptionDate, meta.asOfDate));
     if (r) { returns = r.series; sections.returns = r.sheet; }
     else warn(warnings, "returns-table-not-found", reportType);
   }
@@ -311,11 +335,6 @@ export function extract({ grid, meta }) {
   if (reportType === "performance-summary") {
     flows = readFlows(pages, source);
     if (!flows) warn(warnings, "flows-not-found", reportType);
-  }
-
-  if (reportType === "performance-history") {
-    inceptionDate = readInception(pages);
-    if (!inceptionDate) warn(warnings, "inception-date-not-found", reportType);
   }
 
   const gotSomething = holdings.length || totals || returns.length || flows || inceptionDate;

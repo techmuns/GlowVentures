@@ -11,6 +11,15 @@
 // silently taking the first one seen. They are reported (see reconcile.mjs) and
 // the precedence below decides what is used.
 //
+// SCOPE NOTE — precedence governs PRIMITIVES.
+//
+// Since the primitives/derived split in lib/document.mjs, market value, gain,
+// %gain and %assets are COMPUTED from the primitives, not ingested. Precedence
+// still decides which report supplies each PRIMITIVE (quantity, unit cost, total
+// cost, market price, accrued income). The derived entries below therefore say
+// which report's PRINTED figure is the one worth cross-checking against — they
+// no longer select a value the book uses. See reconcile.mjs section (a2).
+//
 // ── Rationale for the GoldStandard choices ──────────────────────────────────
 // PortfolioAppraisal is the clean basis: its market value equals price ×
 // quantity exactly. CurrentPortfolio folds accrued income into market value on

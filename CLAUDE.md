@@ -84,6 +84,22 @@ Each platform uses its own taxonomy. `Position.sector` is our normalised value;
 `Position.providerSector` is what the provider actually printed. Both are kept —
 neither is authoritative on its own.
 
+### 4b. Primitives are ingested; everything derivable is DERIVED
+
+A statement's own arithmetic is not internally consistent. The GoldStandard
+Appraisal prints Sundaram Finance at MV 7,740,510 with %Assets 4.29%, but
+7,740,510 / 181,533,677 = 4.26% — its percentage is on an income-inclusive basis
+its own MV column excludes. Ingesting both as facts imports that contradiction.
+
+So `makeHolding` takes only **primitives** — quantity, unit cost, total cost,
+market price, accrued income (plus market value where no price is reported, e.g.
+360 ONE AIF units, flagged `marketValueFromPrinted`). `deriveHolding` computes
+market value = price x quantity, gain = value - cost, %gain, and %assets against
+the **total portfolio value including cash** (equity 98.08% + cash 1.92% = 100).
+
+The printed figures are kept in `printed.*` as a **CHECK, not a source**. Every
+delta lands in the extraction report's section (a2).
+
 ### 5. Asset class is what a thing IS; engagement is how it is RUN
 
 `AssetClass` = `Equity | ETF | Mutual Fund | AIF | Bond | Structured Product |
@@ -93,8 +109,26 @@ inside a PMS are ordinary listed equity and are classified as such.
 `assertNormalized` rejects a document that tries otherwise.
 
 How an account is run is `Account.engagement` = `PMS | AIF | Advisory |
-Distribution | Execution | Direct`, with `providerEngagement` holding the
-provider's own wording verbatim.
+Distribution | Execution | Direct | unknown`, with `providerEngagement` holding
+the provider's own wording verbatim.
+
+**Engagement lives on the MEMBER, not the account, and is never defaulted.** One
+360 ONE CRN spans several member sub-accounts on different engagements —
+CRN37702 carries a Distribution member and an Executionary one, and its May
+corporate actions are tagged Executionary while its holding sits in
+Distribution. `Account.members: Member[]` holds them; `Account.engagement` is
+**derived** (`dominantEngagement`) from whichever member carries the most value.
+An engagement that cannot be read is `unknown` and warns — never Advisory by
+default, which would mislabel both of this book's CRNs.
+
+### 4c. Duplicates: carry both, count once
+
+*Pending confirmation from the provider — reversible policy, kept in one place.*
+The same position can appear on two family members' statements. Neither row is
+suppressed: matching rows share a `dedupeGroup` and carry `alsoReportedUnder`, an
+account view shows each statement as printed, and **consolidated totals count
+each group once** (`dedupedPositions` in `src/lib/analytics.ts`, mirrored by
+`consolidatedValue` in `reconcile.mjs`).
 
 ### 6. One person, one ownerId
 
@@ -183,6 +217,7 @@ Five checks, none of which resolve a conflict:
 | | |
 | --- | --- |
 | **a** Row sums vs printed totals, per table — both figures and the delta |
+| **a2** Derived vs printed — every computed figure against the statement's own |
 | **b** Cross-report deltas — same account, same as-of, field by field |
 | **c** Duplicate holdings under DIFFERENT owners — **flagged, never deduped** |
 | **d** Coverage — found / parsed / partial / failed, with reasons |

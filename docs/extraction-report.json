@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T19:43:36.700Z",
+  "generatedAt": "2026-07-30T20:01:49.156Z",
   "summary": {
     "documents": 0,
     "parsed": 0,
@@ -7,6 +7,7 @@
     "failed": 0,
     "rowSumChecks": 0,
     "totalMismatches": 0,
+    "derivedVsPrintedDeltas": 0,
     "crossReportDeltas": 0,
     "suspectedDuplicates": 0,
     "securitiesWithoutSymbol": 0,
@@ -22,7 +23,13 @@
     "failures": [],
     "partials": []
   },
+  "consolidated": {
+    "naive": 0,
+    "deduped": 0,
+    "doubleCounted": 0
+  },
   "rowSumChecks": [],
+  "derivedVsPrinted": [],
   "crossReportDeltas": [],
   "duplicateHoldings": [],
   "unresolved": {

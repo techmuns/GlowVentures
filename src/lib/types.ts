@@ -32,14 +32,40 @@ export type AssetClass =
   | "Unlisted"
   | "Cash";
 
-/** How the family engages the provider on an account — a relationship, not an asset. */
+/**
+ * How the family engages the provider — a relationship, not an asset.
+ *
+ * `unknown` is a real value, not a placeholder to be tidied away. An engagement
+ * that could not be read from the statement is recorded as unknown and flagged,
+ * because guessing one (Advisory being the tempting default) mislabels the whole
+ * account: both 360 ONE CRNs here are Distribution, not Advisory.
+ */
 export type Engagement =
   | "PMS"
   | "AIF"
   | "Advisory"
   | "Distribution"
   | "Execution"
-  | "Direct";
+  | "Direct"
+  | "unknown";
+
+/**
+ * A member sub-account within a provider account.
+ *
+ * One 360 ONE CRN spans several members on DIFFERENT engagements — CRN60117
+ * holds both an Advisory member and a Distribution one; CRN37702 holds
+ * Distribution and Executionary, and its May corporate actions are tagged
+ * Executionary while its holding sits in Distribution. So engagement belongs to
+ * the member, and the account's engagement is derived from whichever member
+ * carries the most value.
+ */
+export type Member = {
+  memberId: string;
+  label: string;
+  engagement: Engagement;
+  /** The provider's own wording, verbatim — "Executionary", not "Execution". */
+  providerEngagement?: string;
+};
 
 /**
  * One account as a provider reports it: the statement's own header, normalized.
@@ -64,9 +90,12 @@ export type Account = {
   ownerId: string | null;
   /** The wider family grouping a provider files the account under, when it prints one. */
   familyGroup?: string;
+  /** DERIVED from `members` — the engagement carrying the most value, never asserted. */
   engagement: Engagement;
   /** The provider's own wording for the engagement, verbatim, before normalisation. */
   providerEngagement?: string;
+  /** Member sub-accounts, each with its own engagement. Empty when the provider reports none. */
+  members: Member[];
   asOf: string;             // report date of THIS account's latest statement (ISO)
 };
 
@@ -82,6 +111,8 @@ export type Position = {
   isin?: string;            // enrichment — several providers print no ISIN at all
   symbol?: string;          // NSE trading symbol, when one is mapped
   accountId: string;        // → Account.accountId; owner/provider come from there
+  /** Member sub-account holding this, when the statement identifies one. */
+  memberId?: string;
   sector: string;           // normalized sector (our taxonomy)
   providerSector?: string;  // sector exactly as the provider printed it
   assetClass: AssetClass;
@@ -97,6 +128,15 @@ export type Position = {
   daysToLT: number | null;  // min days for short-term lots to turn long-term
   dividendReceived: number; // INR, cumulative
   costUnavailable?: boolean; // cost basis missing/unreliable — P&L & return not meaningful
+  /**
+   * Shared id for positions the SAME holding is reported under by more than one
+   * owner. Policy: carry both, count once — each owner's account view shows
+   * their statement as printed, and consolidated totals count each group once.
+   * See `dedupeGroupTotals` in ./analytics.
+   */
+  dedupeGroup?: string;
+  /** Other owners whose statements also report this position. */
+  alsoReportedUnder?: string[];
   // ── Live-quote overlay (src/lib/quotes.ts) ────────────────────────────────
   // Present once the muns quote feed has been applied. `live: false` means the
   // price above is still the statement mark — the UI flags those rather than

@@ -14,8 +14,11 @@
 // Run: node scripts/ingest/__tests__/pipeline.test.mjs
 import { extractLayout } from "../lib/layout.mjs";
 import { extract as extractGoldstandard, PROVIDER as GS } from "../providers/goldstandard.mjs";
-import { makeDocument, makeHolding, makeTotals, assertNormalized } from "../lib/document.mjs";
-import { reconcile } from "../reconcile.mjs";
+import {
+  makeDocument, makeHolding, makeTotals, assertNormalized, deriveDocument, deriveHolding,
+  makeMember, normalizeEngagement, dominantEngagement,
+} from "../lib/document.mjs";
+import { reconcile, consolidatedValue } from "../reconcile.mjs";
 import { makeGridPdf } from "./fixtures/makePdf.mjs";
 
 let pass = 0, fail = 0;
@@ -63,7 +66,10 @@ const meta = {
   provider: GS, accountNo: "100023", reportType: "appraisal",
   strategy: "Aristos Equity Portfolio", asOfDate: "2026-07-10",
 };
-const result = extractGoldstandard({ grid: { pages }, meta });
+const raw = extractGoldstandard({ grid: { pages }, meta });
+// Derivation is what fills marketValue/gainLoss/%; the extractor only ingests
+// primitives, so nothing computed exists until deriveDocument has run.
+const result = deriveDocument({ ...raw, holdings: raw.holdings, totals: raw.totals });
 
 ok("holdings extracted", result.holdings.length >= 3, `got ${result.holdings.length}`);
 const blueJet = result.holdings.find((h) => /blue jet/i.test(h.security));
@@ -73,17 +79,21 @@ if (blueJet) {
   eq("Blue Jet unit cost",   blueJet.unitCost, 422.73);
   eq("Blue Jet total cost",  blueJet.totalCost, 6340947.49);
   eq("Blue Jet price",       blueJet.marketPrice, 574.50);
-  eq("Blue Jet market value", blueJet.marketValue, 8617500.00);
-  eq("Blue Jet gain/loss",   blueJet.gainLoss, 2276553);
-  eq("Blue Jet % G/L",       blueJet.pctGainLoss, 35.90);
-  eq("Blue Jet % assets",    blueJet.pctAssets, 4.75);
+  // DERIVED, not ingested: 574.50 x 15,000 = 8,617,500 exactly.
+  eq("Blue Jet market value derived", blueJet.marketValue, 8617500.00);
+  eq("Blue Jet gain/loss derived",    blueJet.gainLoss, 2276552.51);   // 8,617,500 - 6,340,947.49
+  eq("Blue Jet % G/L derived",        blueJet.pctGainLoss, 35.90);
+  // The printed figures are kept as a CHECK, never as the source.
+  eq("Blue Jet printed MV kept",      blueJet.printed.marketValue, 8617500.00);
+  eq("Blue Jet printed G/L kept",     blueJet.printed.gainLoss, 2276553);
+  ok("market value was computed, not copied", blueJet.marketValueFromPrinted === false);
   eq("Blue Jet securityKey", blueJet.securityKey, "blue-jet-healthcare");
   // PMS is an engagement, not an asset class — the holding is listed equity.
   eq("Blue Jet asset class", blueJet.assetClass, "Equity");
 }
-// A negative G/L must survive as negative.
+// A negative G/L must survive as negative, derived from price x qty - cost.
 const sonata = result.holdings.find((h) => /sonata/i.test(h.security));
-eq("Sonata negative G/L", sonata?.gainLoss ?? null, -169575);
+eq("Sonata negative G/L derived", sonata?.gainLoss ?? null, -169575);   // 3,440,425 - 3,610,000
 // The cash line is Cash, and its unreported cells are null — NOT zero.
 const cash = result.holdings.find((h) => h.assetClass === "Cash");
 ok("cash line classified", !!cash);
@@ -97,22 +107,81 @@ eq("cash market value", cash?.marketValue ?? null, 3482781.83);
 // Engagement is PMS; asset classes never are.
 eq("engagement", result.engagement, "PMS");
 
+// ── 1b. Derivation rules ───────────────────────────────────────────────────
+// %Assets denominator is the TOTAL portfolio value INCLUDING cash, so equity and
+// cash weights sum to exactly 100.
+{
+  const total = 181533676.83;
+  const eq1 = deriveHolding(makeHolding({ security: "E", assetClass: "Equity", marketValue: 178050895 }), total);
+  const cash1 = deriveHolding(makeHolding({ security: "Cash", assetClass: "Cash", marketValue: 3482781.83 }), total);
+  eq("equity weight on total-incl-cash", eq1.pctAssets, 98.08, 0.005);
+  eq("cash weight on total-incl-cash", cash1.pctAssets, 1.92, 0.005);
+  eq("weights sum to 100", Math.round((eq1.pctAssets + cash1.pctAssets) * 100) / 100, 100);
+}
+// A printed %Assets that disagrees with the statement's own MV is REPORTED, and
+// the derived value is what the book uses. Real case: Sundaram Finance prints
+// 4.29% against an MV that works out to 4.26%.
+{
+  const h = deriveHolding(makeHolding({
+    security: "Sundaram Finance Ltd.", assetClass: "Equity",
+    marketPrice: 1, quantity: 7740510, pctAssets: 4.29,
+  }), 181533676.83);
+  eq("derived %assets from own MV", h.pctAssets, 4.26, 0.005);
+  eq("printed %assets preserved", h.printed.pctAssets, 4.29);
+}
+// Where no price is reported, the printed value is adopted — and flagged.
+{
+  const h = deriveHolding(makeHolding({
+    security: "AIF Units", assetClass: "AIF", marketValue: 14580412.51, totalCost: 9866647,
+  }));
+  eq("value-only holding adopts printed MV", h.marketValue, 14580412.51);
+  ok("adoption is flagged", h.marketValueFromPrinted === true);
+  eq("gain still derived", h.gainLoss, 4713765.51);
+}
+// Missing inputs never become zero.
+{
+  const h = deriveHolding(makeHolding({ security: "No Cost", assetClass: "Equity", marketPrice: 10, quantity: 5 }));
+  eq("MV derived", h.marketValue, 50);
+  ok("no cost -> no gain, not a 50 profit", h.gainLoss === null);
+  ok("no cost -> no % gain", h.pctGainLoss === null);
+}
+
+// ── 1c. Engagement is derived, never defaulted ─────────────────────────────
+eq("Executionary normalises", normalizeEngagement("Executionary"), "Execution");
+eq("Distribution normalises", normalizeEngagement("- Distribution "), "Distribution");
+eq("unrecognised stays unknown", normalizeEngagement("Bespoke Mandate"), "unknown");
+eq("blank stays unknown", normalizeEngagement(""), "unknown");
+eq("no members -> unknown, NOT Advisory", dominantEngagement([]), "unknown");
+{
+  // CRN37702: Distribution holds the value, Executionary carries only actions.
+  const members = [
+    makeMember({ memberId: "CRN37702LE53856", engagement: "Distribution", providerEngagement: "Distribution" }),
+    makeMember({ memberId: "CRN37702E29000", engagement: "Execution", providerEngagement: "Executionary" }),
+  ];
+  const holdings = [
+    deriveHolding(makeHolding({ security: "X", memberId: "CRN37702LE53856", marketValue: 14408473.91 })),
+  ];
+  eq("dominant engagement follows the value", dominantEngagement(members, holdings), "Distribution");
+}
+
 // ── 2. Reconciliation: row sums vs printed totals ───────────────────────────
 // The printed equity total here (17,944,045) does NOT equal the sum of the three
 // equity rows (17,944,045.00) — it does. So we also build a deliberately
 // inconsistent document to prove a mismatch is DETECTED, not smoothed.
-const mkDoc = (over) => assertNormalized(makeDocument({
+// Documents go through derivation, exactly as the extract pass does — the
+// computed fields do not exist until then.
+const mkDoc = (over) => assertNormalized(deriveDocument(makeDocument({
   docKey: over.docKey, provider: GS, accountNo: "100023", asOf: "2026-07-10",
   owner: "Ajay Thakurdas Jaisinghani", ownerId: "ajay-jaisinghani",
   sourcePath: "source/x.pdf", status: "ok", reportType: over.reportType,
   holdings: over.holdings ?? [], totals: over.totals ?? null,
-}));
+})));
 
 const consistent = mkDoc({
   docKey: "d-consistent", reportType: "appraisal",
   holdings: [
-    makeHolding({ security: "A Ltd", assetClass: "Equity", marketValue: 100, totalCost: 90, gainLoss: 10 }),
-    makeHolding({ security: "B Ltd", assetClass: "Equity", marketValue: 200, totalCost: 180, gainLoss: 20 }),
+    makeHolding({ security: "A Ltd", assetClass: "Equity", marketPrice: 10, quantity: 10, totalCost: 90 }),
+    makeHolding({ security: "B Ltd", assetClass: "Equity", marketPrice: 20, quantity: 10, totalCost: 180 }),
   ],
   totals: makeTotals({ equityMarketValue: 300, equityCost: 270, gainLoss: 30 }),
 });
@@ -123,11 +192,11 @@ ok("checks did run", r.summary.rowSumChecks >= 3, `ran ${r.summary.rowSumChecks}
 const inconsistent = mkDoc({
   docKey: "d-inconsistent", reportType: "appraisal",
   holdings: [
-    makeHolding({ security: "A Ltd", assetClass: "Equity", marketValue: 100, totalCost: 90 }),
-    makeHolding({ security: "B Ltd", assetClass: "Equity", marketValue: 200, totalCost: 180 }),
+    makeHolding({ security: "A Ltd", assetClass: "Equity", marketPrice: 10, quantity: 10, totalCost: 90 }),
+    makeHolding({ security: "B Ltd", assetClass: "Equity", marketPrice: 20, quantity: 10, totalCost: 180 }),
   ],
-  // Printed total disagrees with the rows by 5 — exactly the real GoldStandard
-  // situation where two reports print the same equity total over different rows.
+  // Printed total disagrees with the derived rows by 5 — exactly the real
+  // GoldStandard situation where a report's own total does not equal its rows.
   totals: makeTotals({ equityMarketValue: 305, equityCost: 270 }),
 });
 r = reconcile([inconsistent]);
@@ -156,13 +225,33 @@ ok("both sides kept", gl && gl.a.value === 5957554 && gl.b.value === 6744704,
    JSON.stringify(gl));
 ok("precedence named, not applied", gl?.authoritative === "appraisal", String(gl?.authoritative));
 
+// ── 3b. Derived-vs-printed deltas are reported ─────────────────────────────
+{
+  // The %assets denominator comes from the document's own printed total, so the
+  // doc must carry it — mkDoc runs deriveDocument, exactly as extract does.
+  const doc = mkDoc({
+    docKey: "d-derived", reportType: "appraisal",
+    holdings: [makeHolding({
+      security: "Sundaram Finance Ltd.", assetClass: "Equity",
+      marketPrice: 1, quantity: 7740510, pctAssets: 4.29,
+    })],
+    totals: makeTotals({ totalMarketValue: 181533676.83 }),
+  });
+  const rep = reconcile([doc]);
+  eq("derived-vs-printed delta reported", rep.summary.derivedVsPrintedDeltas, 1);
+  const d = rep.derivedVsPrinted[0];
+  eq("delta field", d.field, "pctAssets");
+  eq("delta keeps derived", d.derived, 4.26);
+  eq("delta keeps printed", d.printed, 4.29);
+}
+
 // ── 4. Reconciliation: duplicate holdings across owners ────────────────────
 // The 360 ONE Special Opportunities Fund case: byte-identical figures under two
 // different family members. Must be FLAGGED and must NOT be deduped.
-const sharedHolding = () => makeHolding({
+const sharedHolding = () => deriveHolding(makeHolding({
   security: "360 ONE Special Opportunities Fund - Series 8 - Class A3",
   assetClass: "AIF", quantity: 990429.684, totalCost: 9866647.00, marketValue: 14580412.51,
-});
+}));
 const ajayDoc = assertNormalized(makeDocument({
   docKey: "d-ajay", provider: "360 ONE Private Wealth", accountNo: "37702", asOf: "2026-06-30",
   owner: "Mr. AJAY T JAISINGHANI", ownerId: "ajay-jaisinghani", sourcePath: "a.pdf",
@@ -178,7 +267,20 @@ eq("duplicate across owners flagged", r.summary.suspectedDuplicates, 1);
 const dup = r.duplicateHoldings[0];
 eq("duplicate names both owners", dup?.owners.length ?? 0, 2);
 eq("double-count risk stated", dup?.doubleCountRisk ?? null, 14580412.51);
-ok("not deduped", /NOT deduped/.test(dup?.resolution ?? ""), dup?.resolution);
+ok("neither row suppressed", /NOT deduped/.test(dup?.resolution ?? ""), dup?.resolution);
+// Policy: carry both, count once.
+ok("a dedupeGroup id was assigned", !!dup?.dedupeGroup, String(dup?.dedupeGroup));
+{
+  const rep = reconcile([ajayDoc, bharatDoc]);
+  const ajayRow = ajayDoc.holdings[0], bharatRow = bharatDoc.holdings[0];
+  ok("both rows tagged with the SAME group", !!ajayRow.dedupeGroup && ajayRow.dedupeGroup === bharatRow.dedupeGroup);
+  eq("ajay row knows bharat also reports it", ajayRow.alsoReportedUnder[0], "bharat-jaisinghani");
+  eq("bharat row knows ajay also reports it", bharatRow.alsoReportedUnder[0], "ajay-jaisinghani");
+  // Each owner's own view is untouched; only the consolidated figure collapses.
+  eq("naive sum double-counts", rep.consolidated.naive, 29160825.02);
+  eq("consolidated counts it ONCE", rep.consolidated.deduped, 14580412.51);
+  eq("difference is stated", rep.consolidated.doubleCounted, 14580412.51);
+}
 // The same holding twice for the SAME owner is a cross-report matter, not a duplicate.
 r = reconcile([ajayDoc, { ...ajayDoc, docKey: "d-ajay-2", reportType: "appraisal" }]);
 eq("same owner is not a cross-owner duplicate", r.summary.suspectedDuplicates, 0);

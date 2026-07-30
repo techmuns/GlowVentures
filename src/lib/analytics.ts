@@ -8,6 +8,46 @@ import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
+/**
+ * DUPLICATE POLICY — carry both, count once.
+ *
+ * PENDING CONFIRMATION FROM THE PROVIDER. Reversible policy, not a fact, and it
+ * lives here alone on the app side (its twin is in scripts/ingest/reconcile.mjs)
+ * so it can be changed in one place.
+ *
+ * The same position can be reported on two family members' statements — the
+ * 360 ONE Special Opportunities Fund Series 8 Class A3 appears with identical
+ * figures under both CRNs. Neither row is suppressed: an ACCOUNT or per-owner
+ * view shows each statement exactly as printed. But a CONSOLIDATED family total
+ * must count the holding once, or the book overstates itself.
+ *
+ * Use this — not a raw `sum(positions.map(p => p.marketValue))` — anywhere a
+ * figure spans more than one owner.
+ */
+export function dedupedPositions(positions: Position[]): Position[] {
+  const seen = new Set<string>();
+  const out: Position[] = [];
+  for (const p of positions) {
+    if (p.dedupeGroup) {
+      if (seen.has(p.dedupeGroup)) continue;
+      seen.add(p.dedupeGroup);
+    }
+    out.push(p);
+  }
+  return out;
+}
+
+/** Consolidated market value, each dedupeGroup counted once. */
+export const consolidatedMarketValue = (positions: Position[]) =>
+  sum(dedupedPositions(positions).map((p) => p.marketValue));
+
+/**
+ * What the naive sum would have overstated by. Surfaced in the UI rather than
+ * quietly absorbed, so the reader can see a duplicate was collapsed.
+ */
+export const doubleCountedValue = (positions: Position[]) =>
+  sum(positions.map((p) => p.marketValue)) - consolidatedMarketValue(positions);
+
 export type Bucket = { key: string; mv: number; cost: number; pnl: number; count: number; returnPct: number; weight: number };
 
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {

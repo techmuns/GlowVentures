@@ -21,7 +21,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { findTable, readRows, findLabelledNumber, rowsMatching, toAuditSheet } from "../lib/table.mjs";
 import { parseNum, parseNumInfo } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals, makeFlows, makeCashFlow } from "../lib/document.mjs";
+import {
+  makeHolding, makeTotals, makeFlows, makeCashFlow, makeMember,
+  normalizeEngagement, dominantEngagement,
+} from "../lib/document.mjs";
 import { toIso } from "../lib/classify.mjs";
 
 export const PROVIDER = "360 ONE Private Wealth";
@@ -61,6 +64,42 @@ const TXN_COLUMNS = {
 const TERMINATOR = /\b(total|grand total|sub ?total)\b/i;
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
 
+/**
+ * Member sub-accounts, from p2's "SUMMARY BY ENGAGEMENT MODELS" / Members block.
+ *
+ * The statement lists them as `- <Engagement> (<MemberId>)`:
+ *   CRN60117 -> "- Advisory (CRN60117LE53288)", "- Distribution (CRN60117LE51867)"
+ *   CRN37702 -> "- Distribution (CRN37702LE53856)", "- Executionary (CRN37702E29000)"
+ *
+ * One CRN therefore spans several engagements, which is why engagement cannot be
+ * a single value on the account.
+ */
+const MEMBER_LINE = /-\s*([A-Za-z][A-Za-z ]{2,20}?)\s*\((CRN[A-Z0-9]+)\)/gi;
+
+function readMembers(pages, warnings) {
+  const search = pagesForSection(pages, SECTION_HEADINGS["executive-summary"]);
+  const scan = search.length ? search : pages;
+  const found = new Map();
+  for (const page of scan) {
+    const text = page.rows.map((r) => r.cells.map((c) => c.text).join(" ")).join("\n");
+    for (const m of text.matchAll(MEMBER_LINE)) {
+      const providerEngagement = m[1].trim();
+      const memberId = m[2].trim();
+      if (found.has(memberId)) continue;
+      const engagement = normalizeEngagement(providerEngagement);
+      if (engagement === "unknown") {
+        warn(warnings, "member-engagement-unrecognised",
+          `${memberId} is labelled "${providerEngagement}", which maps to no known engagement`);
+      }
+      found.set(memberId, makeMember({
+        memberId, label: `${providerEngagement} (${memberId})`, engagement, providerEngagement,
+      }));
+    }
+  }
+  if (!found.size) warn(warnings, "members-not-found", "no `- <Engagement> (CRN…)` lines matched on p2");
+  return [...found.values()];
+}
+
 /** Pages that contain a given section heading, in document order. */
 function pagesForSection(pages, re) {
   return pages.filter((p) => rowsMatching(p, re).length > 0);
@@ -91,6 +130,8 @@ function readHoldings(pages, warnings, source) {
         totalCost: parseNum(f.totalCost),
         marketPrice: parseNum(f.marketPrice),
         marketValue: parseNum(f.marketValue),
+        // Printed cross-checks. marketValue is a primitive ONLY where no NAV per
+        // unit is reported; deriveHolding prefers price x quantity when it can.
         unrealized: parseNum(f.unrealized),
         pctGainLoss: parseNum(f.pctUnrealized),
         realized: parseNum(f.realized),
@@ -206,6 +247,7 @@ export function extract({ grid, meta }) {
   const source = meta.docKey;
   const sections = {};
 
+  const members = readMembers(pages, warnings);
   const h = readHoldings(pages, warnings, source);
   const holdings = h?.holdings ?? [];
   if (h) sections["detailed-holding-statement"] = h.sheet;
@@ -219,21 +261,24 @@ export function extract({ grid, meta }) {
   if (corpActions) sections["corporate-action"] = corpActions.sheet;
   const cashFlows = [...(txns?.flows ?? []), ...(corpActions?.flows ?? [])];
 
-  // 360 ONE's own wording decides the engagement; AIF holdings alone do not make
-  // the RELATIONSHIP an AIF mandate, so this defaults to Advisory only when the
-  // report says nothing, and records the provider's wording either way.
-  const pe = exec.providerEngagement;
-  const engagement = pe && /distribut/i.test(pe) ? "Distribution"
-    : pe && /execution/i.test(pe) ? "Execution"
-    : pe && /pms|portfolio manage/i.test(pe) ? "PMS"
-    : "Advisory";
-  if (!pe) warn(warnings, "engagement-model-not-found", "defaulted to Advisory; provider wording not located");
+  // Engagement is DERIVED from the members, never asserted, and never defaulted:
+  // an account with no recognisable member engagement is "unknown" and warns.
+  // Defaulting to Advisory would have labelled both of these CRNs wrongly —
+  // p2's "SUMMARY BY ENGAGEMENT MODELS" says Distribution.
+  const engagement = dominantEngagement(members, holdings);
+  if (engagement === "unknown") {
+    warn(warnings, "engagement-unknown",
+      "no member engagement could be determined; recorded as unknown rather than assumed");
+  }
+  const memberWording = members.map((m) => m.providerEngagement).filter(Boolean).join(" / ");
+  const pe = exec.providerEngagement ?? (memberWording || null);
 
   const gotSomething = holdings.length || exec.totals || corpus || cashFlows.length;
   return {
     provider: PROVIDER,
     engagement,
     providerEngagement: pe,
+    members,
     familyGroup: meta.familyGroup ?? null,
     holdings,
     totals: exec.totals,

@@ -55,9 +55,12 @@ const GOLDEN = [
 
     flows: { reportType: "performance-summary", contribution: 175000000, withdrawal: 41000, profit: 6574677 },
 
+    // "YTD" on the statement is the INDIAN FY to date (window 01/04/2026 to
+    // 10/07/2026), stored as fytd. SI is NOT annualised: inception 26/12/2025 is
+    // ~6.5 months before the report, and the provider annualises only past a year.
     returns: [
-      { reportType: "fact-sheet", series: /portfolio/i, mtd: 2.35, qtd: 2.35, ytd: 16.69, si: 3.76 },
-      { reportType: "fact-sheet", series: /n50 ?tri|nifty ?50/i, mtd: 0.46, qtd: 0.46, ytd: 7.89, si: -7.73 },
+      { reportType: "fact-sheet", series: /portfolio/i, mtd: 2.35, qtd: 2.35, fytd: 16.69, si: 3.76, siAnnualised: false },
+      { reportType: "fact-sheet", series: /n50 ?tri|nifty ?50/i, mtd: 0.46, qtd: 0.46, fytd: 7.89, si: -7.73 },
     ],
 
     holdings: [
@@ -77,6 +80,9 @@ const GOLDEN = [
     match: { provider: /360 ?one/i, accountNo: "60117" },
     asOf: "2026-06-30",
     owner: { printed: "Bharat Jaisinghani", ownerId: "bharat-jaisinghani" },
+    // p2 "SUMMARY BY ENGAGEMENT MODELS". Never Advisory-by-default.
+    engagement: "Distribution",
+    members: ["CRN60117LE53288", "CRN60117LE51867"],
     holdings: [
       {
         reportType: "holdings",
@@ -100,6 +106,8 @@ const GOLDEN = [
     match: { provider: /360 ?one/i, accountNo: "37702" },
     asOf: "2026-05-31",
     owner: { printed: "Mr. AJAY T JAISINGHANI", ownerId: "ajay-jaisinghani" },
+    engagement: "Distribution",
+    members: ["CRN37702LE53856", "CRN37702E29000"],
     holdings: [
       {
         reportType: "holdings",
@@ -177,6 +185,11 @@ function runCase(manifest, spec) {
   // Owner must resolve to ONE canonical person across every spelling.
   check(`${spec.label} · ownerId`, any.ownerId, spec.owner.ownerId);
   if (spec.strategy) check(`${spec.label} · strategy`, any.strategy, spec.strategy);
+  if (spec.engagement) check(`${spec.label} · engagement`, any.engagement, spec.engagement);
+  for (const memberId of spec.members ?? []) {
+    const found = (any.members ?? []).some((m) => m.memberId === memberId);
+    check(`${spec.label} · member ${memberId} present`, found, true);
+  }
 
   if (spec.inceptionDate) {
     const withInception = [...byType.values()].find((d) => d.inceptionDate);
@@ -222,9 +235,12 @@ function runCase(manifest, spec) {
       failures.push({ label: `${spec.label} · return series ${want.series}`, got: "not found", want: "present" });
       continue;
     }
-    for (const k of ["mtd", "qtd", "ytd", "si"]) {
+    for (const k of ["mtd", "qtd", "fytd", "si"]) {
       if (want[k] === undefined) continue;
       check(`${spec.label} · ${want.series} ${k.toUpperCase()}`, series[k], want[k], PCT_TOL);
+    }
+    if (want.siAnnualised !== undefined) {
+      check(`${spec.label} · ${want.series} SI annualised?`, series.siAnnualised, want.siAnnualised);
     }
   }
 
@@ -238,7 +254,13 @@ function runCase(manifest, spec) {
     }
     for (const [field, wantVal] of Object.entries(want)) {
       if (["reportType", "security", "derived"].includes(field)) continue;
+      // Derivable fields are checked against the DERIVED value — that is what the
+      // book uses. The printed counterpart is asserted too, so a report that
+      // disagrees with its own arithmetic is caught rather than averaged away.
       check(`${spec.label} · ${h.security} .${field}`, h[field] ?? null, wantVal, field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
+      if (h.printed && field in h.printed && h.printed[field] !== null) {
+        check(`${spec.label} · ${h.security} printed.${field}`, h.printed[field], wantVal, field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
+      }
     }
     if (want.derived?.totalGain !== undefined) {
       const got = (h.unrealized ?? 0) + (h.realized ?? 0);
