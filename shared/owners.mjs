@@ -37,6 +37,16 @@ export const OWNERS = [
     ],
   },
   {
+    ownerId: "ankita-jaisinghani",
+    displayName: "Ankita Jaisinghani",
+    aliases: [
+      // As printed: Goldstandard/Aristos gives the full name, Green Lantern the short one.
+      "Ankita Bharat Jaisinghani",
+      "ANKITA JAISINGHANI",
+      "Ankita B Jaisinghani",
+    ],
+  },
+  {
     ownerId: "bharat-jaisinghani",
     displayName: "Bharat Jaisinghani",
     aliases: [

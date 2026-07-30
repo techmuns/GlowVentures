@@ -13,7 +13,10 @@
 //
 // Run: node scripts/ingest/__tests__/pipeline.test.mjs
 import { extractLayout } from "../lib/layout.mjs";
-import { extract as extractGoldstandard, PROVIDER as GS } from "../providers/goldstandard.mjs";
+// The three PMS managers share one reporting system and one extractor; the
+// fixture below is laid out to the Goldstandard/Aristos appraisal shape.
+import { extract as extractPms, PROVIDERS as PMS } from "../providers/pmsStatements.mjs";
+const GS = PMS.goldstandard.name;
 import {
   makeDocument, makeHolding, makeTotals, assertNormalized, deriveDocument, deriveHolding,
   makeMember, normalizeEngagement, dominantEngagement,
@@ -32,7 +35,7 @@ const ok = (label, cond, detail = "") => { if (cond) pass++; else { fail++; cons
 
 console.log("pipeline");
 
-// ── 1. A GoldStandard-shaped appraisal, laid out as a real one ──────────────
+// ── 1. A Goldstandard-shaped appraisal, laid out as a real one ──────────────
 // Landscape, nine columns, spaced so the header labels do not collide — as a
 // real report must be, or a human could not read it either. The header WRAPS
 // onto two lines ("Market"/"Price"), which these reports commonly do and which
@@ -66,7 +69,7 @@ const meta = {
   provider: GS, accountNo: "100023", reportType: "appraisal",
   strategy: "Aristos Equity Portfolio", asOfDate: "2026-07-10",
 };
-const raw = extractGoldstandard({ grid: { pages }, meta });
+const raw = extractPms({ grid: { pages }, meta });
 // Derivation is what fills marketValue/gainLoss/%; the extractor only ingests
 // primitives, so nothing computed exists until deriveDocument has run.
 const result = deriveDocument({ ...raw, holdings: raw.holdings, totals: raw.totals });
@@ -196,7 +199,7 @@ const inconsistent = mkDoc({
     makeHolding({ security: "B Ltd", assetClass: "Equity", marketPrice: 20, quantity: 10, totalCost: 180 }),
   ],
   // Printed total disagrees with the derived rows by 5 — exactly the real
-  // GoldStandard situation where a report's own total does not equal its rows.
+  // Goldstandard situation where a report's own total does not equal its rows.
   totals: makeTotals({ equityMarketValue: 305, equityCost: 270 }),
 });
 r = reconcile([inconsistent]);
@@ -227,14 +230,26 @@ ok("precedence named, not applied", gl?.authoritative === "appraisal", String(gl
 
 // ── 3b. Derived-vs-printed deltas are reported ─────────────────────────────
 {
-  // The %assets denominator comes from the document's own printed total, so the
-  // doc must carry it — mkDoc runs deriveDocument, exactly as extract does.
+  // The real Goldstandard case: Sundaram Finance is printed at 4.29% of assets
+  // while its own market value works out to 4.26%, because the statement's
+  // percentage is on an income-inclusive basis its MV column excludes.
+  //
+  // The %assets denominator is the sum of the DERIVED market values, so the doc
+  // needs the rest of the book in it — hence the second holding, which stands
+  // for the other 31 positions and the cash. mkDoc runs deriveDocument, exactly
+  // as extract does.
   const doc = mkDoc({
     docKey: "d-derived", reportType: "appraisal",
-    holdings: [makeHolding({
-      security: "Sundaram Finance Ltd.", assetClass: "Equity",
-      marketPrice: 1, quantity: 7740510, pctAssets: 4.29,
-    })],
+    holdings: [
+      makeHolding({
+        security: "Sundaram Finance Ltd.", assetClass: "Equity",
+        marketPrice: 1, quantity: 7740510, pctAssets: 4.29,
+      }),
+      makeHolding({
+        security: "Rest of book", assetClass: "Equity",
+        marketPrice: 1, quantity: 173793166.83,
+      }),
+    ],
     totals: makeTotals({ totalMarketValue: 181533676.83 }),
   });
   const rep = reconcile([doc]);

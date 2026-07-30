@@ -20,7 +20,7 @@
 // which report's PRINTED figure is the one worth cross-checking against — they
 // no longer select a value the book uses. See reconcile.mjs section (a2).
 //
-// ── Rationale for the GoldStandard choices ──────────────────────────────────
+// ── Rationale for the Goldstandard choices ──────────────────────────────────
 // PortfolioAppraisal is the clean basis: its market value equals price ×
 // quantity exactly. CurrentPortfolio folds accrued income into market value on
 // SOME rows but not others (Sundaram Finance yes, Sonata Software no) while
@@ -47,8 +47,19 @@ export const FACTS = [
  * `reportTypes` (plural) means the fact is assembled from more than one report;
  * the extractor must take it from the first that carries it and record which.
  */
-export const PRECEDENCE = {
-  "GoldStandard Wealth Private Limited": {
+/**
+ * The three PMS managers in this book — Goldstandard, Green Lantern, Carnelian —
+ * publish from ONE reporting system: the same report set, the same column
+ * layout, the same internal inconsistencies. So they share one precedence block
+ * rather than three copies that would drift apart.
+ *
+ * The keys below must match `PROVIDERS[*].name` in providers/pmsStatements.mjs
+ * exactly. A key that does not match resolves to no precedence at all, and the
+ * reconciler then reports a cross-report disagreement with nothing to say about
+ * which side to believe — which is how "Goldstandard" spelled "GoldStandard"
+ * quietly disabled this whole table.
+ */
+const PMS_REPORTING_SYSTEM = {
     holdings:        { reportType: "appraisal", note: "MV = price x quantity exactly; the clean basis." },
     quantity:        { reportType: "appraisal" },
     unitCost:        { reportType: "appraisal" },
@@ -75,7 +86,12 @@ export const PRECEDENCE = {
 
     inceptionDate:   { reportType: "performance-history" },
     netCapitalInOut: { reportType: "performance-history" },
-  },
+};
+
+export const PRECEDENCE = {
+  "Goldstandard Wealth Private Limited": PMS_REPORTING_SYSTEM,
+  "Green Lantern Capital LLP": PMS_REPORTING_SYSTEM,
+  "Carnelian Asset Management and Advisors Pvt Ltd": PMS_REPORTING_SYSTEM,
 
   "360 ONE Private Wealth": {
     // The 11-page bundle is ONE file; these name the SECTION within it.

@@ -1,0 +1,34 @@
+{
+ "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-capital-register",
+ "provider": "Goldstandard Wealth Private Limited",
+ "accountNo": "100023",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Ajay Thakurdas Jaisinghani",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "Aristos Equity Portfolio",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-10",
+ "inceptionDate": null,
+ "reportType": "capital-register",
+ "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+ "pages": 1,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "capital-register: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

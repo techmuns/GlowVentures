@@ -161,7 +161,121 @@ export function inferColumns(rows, opts = {}) {
   }
   if (start != null) spans.push([minX + start * o.bucket, maxX]);
 
-  return spans.map(([x0, x1], i) => ({ index: i, x0, x1, center: (x0 + x1) / 2 }));
+  const columns = spans.map(([x0, x1], i) => ({ index: i, x0, x1, center: (x0 + x1) / 2 }));
+  // Right edges first (money columns), then left edges (text columns) over
+  // whatever is still merged. Both are alignment evidence the blank-corridor
+  // pass cannot see.
+  return splitByAlignedEdges(splitByAlignedEdges(columns, rows, o, "right"), rows, o, "left");
+}
+
+/**
+ * Split a column that blank corridors could not separate, using ALIGNED EDGES.
+ *
+ * A column's alignment edge is a far stronger signal than the gap beside it,
+ * because the gap can vanish entirely while the alignment never moves:
+ *
+ *   • RIGHT edges — money columns are right-aligned, so every value in a column
+ *     ends on the same x to a fraction of a point. Green Lantern's widest gain
+ *     figure runs to 485.0 while the percentage beside it starts at 488, and one
+ *     long row closes that 3pt corridor completely, merging "Gain / Loss" and
+ *     "% G/L" into a single cell.
+ *   • LEFT edges — text columns are left-aligned and behave the same way in
+ *     mirror. On the fact sheet a long security name ("Tenneco Clean Air India
+ *     Ltd.") reaches the x where the Sector column starts, closing that corridor
+ *     and merging the two.
+ *
+ * Lowering the gap threshold far enough to catch either would start splitting
+ * columns internally. Instead: within each inferred column, cluster the item
+ * edges on the given side; if two or more well-separated edges each account for
+ * a substantial share of the rows, the column is really several columns and is
+ * split between them.
+ *
+ * A column aligned on the OTHER side is ragged on this one and forms no such
+ * cluster, so it is left alone — which is why the share threshold and the
+ * minimum separation both matter, and why running both passes is safe.
+ */
+/**
+ * How strongly is this column aligned on `side`? The share of its items sitting
+ * on the single most popular edge there, 0..1.
+ *
+ * Used to tell which side carries the alignment: a right-aligned money column
+ * scores near 1 on the right and low on the left, and cutting it along the left
+ * would slice through the figures.
+ */
+function edgeDominance(rows, col, side, tol = 1.5) {
+  const edges = [];
+  for (const r of rows) {
+    for (const it of r.items) {
+      const mid = it.x + it.width / 2;
+      if (mid >= col.x0 && mid <= col.x1) edges.push(side === "right" ? it.x + it.width : it.x);
+    }
+  }
+  if (edges.length < 4) return 0;
+  edges.sort((a, b) => a - b);
+  let best = 0, run = 0, anchor = -Infinity;
+  for (const e of edges) {
+    if (e - anchor <= tol) run++;
+    else { run = 1; anchor = e; }
+    if (run > best) best = run;
+  }
+  return best / edges.length;
+}
+
+function splitByAlignedEdges(columns, rows, o, side) {
+  const EDGE_TOL = 1.5;        // points; edges of one column agree this closely
+  const MIN_SEPARATION = 8;    // points; closer than this is one column, not two
+  const MIN_SHARE = 0.25;      // a real column holds a value on at least this share of rows
+
+  const out = [];
+  for (const col of columns) {
+    const edges = [];
+    for (const r of rows) {
+      for (const it of r.items) {
+        const mid = it.x + it.width / 2;
+        if (mid >= col.x0 && mid <= col.x1) edges.push(side === "right" ? it.x + it.width : it.x);
+      }
+    }
+    if (edges.length < 4) { out.push(col); continue; }
+
+    // Never cut a column along the side it is NOT aligned to.
+    //
+    // A right-aligned money column has ragged left edges — but not RANDOM ones:
+    // values with the same digit count share a width and so share a left edge,
+    // and two such groups can each clear the share threshold and fake a column
+    // boundary through the middle of the figures. So compare the two sides and
+    // decline when the OTHER one carries the stronger alignment; a genuinely
+    // merged pair of columns scores about half on each side and still splits.
+    if (edgeDominance(rows, col, side === "right" ? "left" : "right") > edgeDominance(rows, col, side)) {
+      out.push(col);
+      continue;
+    }
+
+    edges.sort((a, b) => a - b);
+    const clusters = [];
+    for (const e of edges) {
+      const last = clusters[clusters.length - 1];
+      if (last && e - last.edge <= EDGE_TOL) { last.count++; last.edge = e; }
+      else clusters.push({ edge: e, count: 1 });
+    }
+    const strong = clusters.filter((c) => c.count >= Math.max(3, edges.length * MIN_SHARE));
+    // Keep only clusters far enough apart to be distinct columns.
+    const kept = strong.filter((c, i) => i === 0 || c.edge - strong[i - 1].edge >= MIN_SEPARATION);
+    if (kept.length < 2) { out.push(col); continue; }
+
+    let x0 = col.x0;
+    kept.forEach((c, i) => {
+      if (i === kept.length - 1) { out.push({ x0, x1: col.x1 }); return; }
+      // A right-aligned column ends at its edge, so the boundary goes midway to
+      // the next one. A left-aligned column STARTS at its edge, so the boundary
+      // goes immediately before the next column's start — putting it midway
+      // would cut the tail off every name that runs long, which is the very case
+      // this pass exists to handle.
+      const x1 = side === "right" ? (c.edge + kept[i + 1].edge) / 2 : kept[i + 1].edge - 1;
+      out.push({ x0, x1 });
+      x0 = x1;
+    });
+  }
+  return out.map((c, i) => ({ index: i, x0: c.x0, x1: c.x1, center: (c.x0 + c.x1) / 2 }));
 }
 
 /** Column whose span best overlaps an item; falls back to nearest centre. */
@@ -337,7 +451,12 @@ export function pageToGrid(pageNumber, viewport, items, opts = {}) {
  */
 export function regrid(rowSlice, opts = {}) {
   if (!rowSlice.length) return { columns: [], rows: [], stitches: [] };
-  const columns = inferColumns(rowSlice, opts);
+  // Columns may be measured from a SUBSET of the slice — see `measureFrom`. The
+  // header is the usual thing to exclude: report engines merge adjacent header
+  // labels into one text span ("Market Value Gain / Loss (+/-)"), and that span
+  // bridges the blank corridor between two data columns and collapses them.
+  // The body rows carry the true geometry.
+  const columns = inferColumns(opts.measureFrom ?? rowSlice, opts);
   const stitches = [];
   const rebuilt = rowSlice.map((r) => {
     const { cells, stitches: s } = buildCells(r, columns);

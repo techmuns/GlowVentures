@@ -1,0 +1,9 @@
+{
+ "name": "pages",
+ "pages": [
+  {
+   "page": 1,
+   "text": "Page 1\nBalance\n74,992,950.00 74,989,046.00 74,983,106.00 74,983,106.00\n0.00\nDebit\n3,904.00 5,940.00 9,844.00\n0.00 0.00 0.00 0.00\nCredit\n<---- Capital flow at market value ----->\nBalance\n74,992,950.00 74,989,046.00 74,983,106.00 74,983,106.00\n0.00\nDebit\n3,904.00 5,940.00 9,844.00\n0.00 0.00 0.00 0.00\nCredit\n<---------- Capital at Cost ----------->\nTax Deducted at Source Tax Deducted at Source\nAristos Equity Portfolio\nDesc/Notes TDS Netting Generated - -3904 TDS Netting Generated - -5940 Closing Balance\nSet Date\n01/04/2026 05/06/2026 30/06/2026\nTran Date 01/04/2026 05/06/2026 30/06/2026\nCAPITAL REGISTER From 01/04/2026 to 10/07/2026 Account : 100022 Ankita Bharat Jaisinghani Transaction Description Opening Balance TDS Trf to Capital A/c TDS Trf to Capital A/c Total"
+  }
+ ]
+}

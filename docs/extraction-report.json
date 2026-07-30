@@ -1,45 +1,4738 @@
 {
-  "generatedAt": "2026-07-30T20:01:49.156Z",
+  "generatedAt": "2026-07-30T21:20:23.433Z",
   "summary": {
-    "documents": 0,
-    "parsed": 0,
+    "documents": 51,
+    "parsed": 22,
     "partial": 0,
-    "failed": 0,
-    "rowSumChecks": 0,
-    "totalMismatches": 0,
-    "derivedVsPrintedDeltas": 0,
-    "crossReportDeltas": 0,
+    "failed": 29,
+    "rowSumChecks": 30,
+    "totalMismatches": 23,
+    "totalsMaterial": 0,
+    "totalsExplained": 10,
+    "totalsRounding": 16,
+    "derivedVsPrintedDeltas": 177,
+    "derivedMaterial": 0,
+    "derivedExplained": 53,
+    "derivedRounding": 124,
+    "crossReportDeltas": 3,
     "suspectedDuplicates": 0,
-    "securitiesWithoutSymbol": 0,
+    "securitiesWithoutSymbol": 76,
     "ownerNamesUnmatched": 0,
-    "stitchesApplied": 0
+    "stitchesApplied": 39
   },
   "coverage": {
-    "pdfsFound": 0,
-    "parsed": 0,
+    "pdfsFound": 51,
+    "parsed": 22,
     "partial": 0,
-    "failed": 0,
-    "byProvider": {},
-    "failures": [],
+    "failed": 29,
+    "byProvider": {
+      "Goldstandard Wealth Private Limited": {
+        "bank-book": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "capital-register": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "corporate-benefits": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "holdings": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "dividend-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "expense-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "appraisal": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "fact-sheet": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-benchmark": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-history": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-summary": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        }
+      },
+      "Carnelian Asset Management and Advisors Pvt Ltd": {
+        "bank-book": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "capital-gain": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "dividend-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "appraisal": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "fact-sheet": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-history": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-summary": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "holdings": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "Green Lantern Capital LLP": {
+        "bank-book": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "capital-gain": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "capital-register": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "dividend-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "appraisal": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "fact-sheet": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-history": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-summary": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "holdings": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        },
+        "performance-benchmark": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
+      }
+    },
+    "failures": [
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-bank-book",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "bank-book",
+        "reasons": [
+          "no-reader-for-report-type: bank-book: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-capital-register",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "capital-register",
+        "reasons": [
+          "no-reader-for-report-type: capital-register: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-corporate-benefits",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "corporate-benefits",
+        "reasons": [
+          "no-reader-for-report-type: corporate-benefits: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "holdings",
+        "reasons": [
+          "no-reader-for-report-type: holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read.",
+          "owner-from-account-number: this report does not print the client name where it can be read; taken from other statements for Goldstandard Wealth Private Limited account 100023, which all name Ajay Thakurdas Jaisinghani"
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "dividend-statement",
+        "reasons": [
+          "no-reader-for-report-type: dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "expense-statement",
+        "reasons": [
+          "no-reader-for-report-type: expense-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement",
+        "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-reader-for-report-type: transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-bank-book",
+        "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "bank-book",
+        "reasons": [
+          "no-reader-for-report-type: bank-book: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-capital-register",
+        "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "capital-register",
+        "reasons": [
+          "no-reader-for-report-type: capital-register: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
+        "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "holdings",
+        "reasons": [
+          "no-reader-for-report-type: holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read.",
+          "owner-from-account-number: this report does not print the client name where it can be read; taken from other statements for Goldstandard Wealth Private Limited account 100022, which all name Ankita Bharat Jaisinghani"
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement",
+        "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "dividend-statement",
+        "reasons": [
+          "no-reader-for-report-type: dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement",
+        "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-reader-for-report-type: transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-bank-book",
+        "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_BankBook178OT (3).pdf",
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "bank-book",
+        "reasons": [
+          "no-reader-for-report-type: bank-book: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+        "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "capital-gain",
+        "reasons": [
+          "no-reader-for-report-type: capital-gain: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-dividend-statement",
+        "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_DividendStatement_India177OT (2).pdf",
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "dividend-statement",
+        "reasons": [
+          "no-reader-for-report-type: dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+        "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "holdings",
+        "reasons": [
+          "no-reader-for-report-type: holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-transaction-statement",
+        "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-reader-for-report-type: transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-unknown-bank-book",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "bank-book",
+        "reasons": [
+          "no-reader-for-report-type: bank-book: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-gain",
+        "reasons": [
+          "no-reader-for-report-type: capital-gain: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-unknown-capital-register",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-register",
+        "reasons": [
+          "no-reader-for-report-type: capital-register: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-unknown-dividend-statement",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "dividend-statement",
+        "reasons": [
+          "no-reader-for-report-type: dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "holdings",
+        "reasons": [
+          "no-reader-for-report-type: holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-unknown-transaction-statement",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-reader-for-report-type: transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-unknown-bank-book",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "bank-book",
+        "reasons": [
+          "no-reader-for-report-type: bank-book: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-gain",
+        "reasons": [
+          "no-reader-for-report-type: capital-gain: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-unknown-capital-register",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-register",
+        "reasons": [
+          "no-reader-for-report-type: capital-register: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-unknown-dividend-statement",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "dividend-statement",
+        "reasons": [
+          "no-reader-for-report-type: dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "holdings",
+        "reasons": [
+          "no-reader-for-report-type: holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510854-unknown-transaction-statement",
+        "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-reader-for-report-type: transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+        ]
+      }
+    ],
     "partials": []
   },
   "consolidated": {
-    "naive": 0,
-    "deduped": 0,
+    "naive": 835063590.78,
+    "deduped": 835063590.78,
     "doubleCounted": 0
   },
-  "rowSumChecks": [],
-  "derivedVsPrinted": [],
-  "crossReportDeltas": [],
+  "rowSumChecks": [
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 177671295,
+      "printedTotal": 178050895,
+      "delta": -379600,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,79,600).",
+      "accruedIncome": 379600
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 171713740.61,
+      "printedTotal": 171713740.6,
+      "delta": 0.01,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": 379600
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 181154076.83,
+      "printedTotal": 181533676.83,
+      "delta": -379600,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,79,600).",
+      "accruedIncome": 379600
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 175196522.44,
+      "printedTotal": 175196522.44,
+      "delta": 0,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": 379600
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 5957554.39,
+      "printedTotal": 5957554,
+      "delta": 0.39,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 379600
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.97,
+      "printedTotal": 100,
+      "delta": -0.03,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 76654525.5,
+      "printedTotal": 76811725.5,
+      "delta": -157200,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,57,200).",
+      "accruedIncome": 157200
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 74224237.78,
+      "printedTotal": 74224237.81,
+      "delta": -0.03,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 157200
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 77538153.36,
+      "printedTotal": 77695353.36,
+      "delta": -157200,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,57,200).",
+      "accruedIncome": 157200
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 75107865.64,
+      "printedTotal": 75107865.67,
+      "delta": -0.03,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 157200
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 2430287.72,
+      "printedTotal": 2430288,
+      "delta": -0.28,
+      "rowsSummed": 31,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 157200
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 370295893.31,
+      "printedTotal": 370665543.31,
+      "delta": -369650,
+      "rowsSummed": 9,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,69,650).",
+      "accruedIncome": 369650
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 273002977.9,
+      "printedTotal": 273002977.9,
+      "delta": 0,
+      "rowsSummed": 9,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": 369650
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 400106027.94,
+      "printedTotal": 400475677.94,
+      "delta": -369650,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,69,650).",
+      "accruedIncome": 369650
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 302813112.52,
+      "printedTotal": 302813112.53,
+      "delta": -0.01,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": 369650
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 97292915.41,
+      "printedTotal": 97292915,
+      "delta": 0.41,
+      "rowsSummed": 9,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 369650
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 100.01,
+      "printedTotal": 100,
+      "delta": 0.01,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 113447001.26,
+      "printedTotal": 113482401.26,
+      "delta": -35400,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400).",
+      "accruedIncome": 35400
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 99380675.29,
+      "printedTotal": 99380675.26,
+      "delta": 0.03,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 35400
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 117016830.76,
+      "printedTotal": 117052230.76,
+      "delta": -35400,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400).",
+      "accruedIncome": 35400
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 102950348.95,
+      "printedTotal": 102950348.92,
+      "delta": 0.03,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 35400
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 14066325.97,
+      "printedTotal": 14066326,
+      "delta": -0.03,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 35400
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 100.02,
+      "printedTotal": 100,
+      "delta": 0.02,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 57361417.86,
+      "printedTotal": 57379267.86,
+      "delta": -17850,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (17,850).",
+      "accruedIncome": 17850
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 49806067.04,
+      "printedTotal": 49806067.01,
+      "delta": 0.03,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 17850
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 59248501.89,
+      "printedTotal": 59266351.89,
+      "delta": -17850,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (17,850).",
+      "accruedIncome": 17850
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 51692978.7,
+      "printedTotal": 51692978.68,
+      "delta": 0.02,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 17850
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 7555350.82,
+      "printedTotal": 7555351,
+      "delta": -0.18,
+      "rowsSummed": 32,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 17850
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.99,
+      "printedTotal": 100,
+      "delta": -0.01,
+      "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    }
+  ],
+  "derivedVsPrinted": [
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Blue Jet Healthcare Ltd.",
+      "securityKey": "blue-jet-healthcare",
+      "field": "gainLoss",
+      "derived": 2276552.51,
+      "printed": 2276553,
+      "delta": -0.49,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Blue Jet Healthcare Ltd.",
+      "securityKey": "blue-jet-healthcare",
+      "field": "pctAssets",
+      "derived": 4.76,
+      "printed": 4.75,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Transport Corp. of India Ltd.",
+      "securityKey": "transport-corp-of-india",
+      "field": "gainLoss",
+      "derived": -1143958.54,
+      "printed": -1143959,
+      "delta": 0.46,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Transport Corp. of India Ltd.",
+      "securityKey": "transport-corp-of-india",
+      "field": "pctAssets",
+      "derived": 4.35,
+      "printed": 4.34,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sundaram Finance Ltd.",
+      "securityKey": "sundaram-finance",
+      "field": "gainLoss",
+      "derived": 111561.59,
+      "printed": 111562,
+      "delta": -0.41,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sundaram Finance Ltd.",
+      "securityKey": "sundaram-finance",
+      "field": "pctAssets",
+      "derived": 4.27,
+      "printed": 4.29,
+      "delta": -0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Suprajit Engineering Ltd.",
+      "securityKey": "suprajit-engineering",
+      "field": "gainLoss",
+      "derived": 859821.27,
+      "printed": 859821,
+      "delta": 0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Life Insurance Corp. of India",
+      "securityKey": "life-insurance-corp-of-india",
+      "field": "gainLoss",
+      "derived": 296345.57,
+      "printed": 296346,
+      "delta": -0.43,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Life Insurance Corp. of India",
+      "securityKey": "life-insurance-corp-of-india",
+      "field": "pctAssets",
+      "derived": 3.97,
+      "printed": 4.05,
+      "delta": -0.08,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Kovai Medical Center & Hospital Ltd.",
+      "securityKey": "kovai-medical-center-and-hospital",
+      "field": "gainLoss",
+      "derived": 216119.4,
+      "printed": 216119,
+      "delta": 0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Zydus Lifesciences Ltd.",
+      "securityKey": "zydus-lifesciences",
+      "field": "gainLoss",
+      "derived": 1521224.4,
+      "printed": 1521224,
+      "delta": 0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Zydus Lifesciences Ltd.",
+      "securityKey": "zydus-lifesciences",
+      "field": "pctAssets",
+      "derived": 3.84,
+      "printed": 3.83,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "ICICI Bank Ltd.",
+      "securityKey": "icici-bank",
+      "field": "pctAssets",
+      "derived": 3.81,
+      "printed": 3.8,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "HDFC Asset Management Co. Ltd.",
+      "securityKey": "hdfc-asset-management",
+      "field": "pctAssets",
+      "derived": 3.78,
+      "printed": 3.77,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "MPS Ltd",
+      "securityKey": "mps",
+      "field": "gainLoss",
+      "derived": 232456.99,
+      "printed": 232457,
+      "delta": -0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indraprastha Medical Corp. Ltd.",
+      "securityKey": "indraprastha-medical",
+      "field": "gainLoss",
+      "derived": -1023108.43,
+      "printed": -1023108,
+      "delta": -0.43,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indraprastha Medical Corp. Ltd.",
+      "securityKey": "indraprastha-medical",
+      "field": "pctAssets",
+      "derived": 3.67,
+      "printed": 3.66,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "EIH Ltd.",
+      "securityKey": "eih",
+      "field": "pctAssets",
+      "derived": 3.62,
+      "printed": 3.61,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Can Fin Homes Ltd.",
+      "securityKey": "can-fin-homes",
+      "field": "gainLoss",
+      "derived": -31857.7,
+      "printed": -31858,
+      "delta": 0.3,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Can Fin Homes Ltd.",
+      "securityKey": "can-fin-homes",
+      "field": "pctAssets",
+      "derived": 3.54,
+      "printed": 3.56,
+      "delta": -0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Canara Robeco Asset Management Co. Ltd.",
+      "securityKey": "canara-robeco-asset-management",
+      "field": "gainLoss",
+      "derived": -146402.61,
+      "printed": -146403,
+      "delta": 0.39,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Tenneco Clean Air India Ltd.",
+      "securityKey": "tenneco-clean-air-india",
+      "field": "gainLoss",
+      "derived": 691650.56,
+      "printed": 691651,
+      "delta": -0.44,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Tenneco Clean Air India Ltd.",
+      "securityKey": "tenneco-clean-air-india",
+      "field": "pctAssets",
+      "derived": 3.23,
+      "printed": 3.22,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sonata Software Ltd.",
+      "securityKey": "sonata-software",
+      "field": "gainLoss",
+      "derived": -1486508.86,
+      "printed": -1486509,
+      "delta": 0.14,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sonata Software Ltd.",
+      "securityKey": "sonata-software",
+      "field": "pctAssets",
+      "derived": 3.2,
+      "printed": 3.19,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Mahindra & Mahindra Ltd.",
+      "securityKey": "mahindra-and-mahindra",
+      "field": "gainLoss",
+      "derived": -193922.88,
+      "printed": -193923,
+      "delta": 0.12,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Mahindra & Mahindra Ltd.",
+      "securityKey": "mahindra-and-mahindra",
+      "field": "pctAssets",
+      "derived": 3.07,
+      "printed": 3.09,
+      "delta": -0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Caplin Point Laboratories Ltd.",
+      "securityKey": "caplin-point-laboratories",
+      "field": "gainLoss",
+      "derived": 1889677.78,
+      "printed": 1889678,
+      "delta": -0.22,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "State Bank of India",
+      "securityKey": "state-bank-of-india",
+      "field": "gainLoss",
+      "derived": 294497.5,
+      "printed": 294498,
+      "delta": -0.5,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Lupin Ltd",
+      "securityKey": "lupin",
+      "field": "gainLoss",
+      "derived": 490493.16,
+      "printed": 490493,
+      "delta": 0.16,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Waaree Energies Ltd.",
+      "securityKey": "waaree-energies",
+      "field": "gainLoss",
+      "derived": -404594.7,
+      "printed": -404595,
+      "delta": 0.3,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Oberoi Realty Ltd.",
+      "securityKey": "oberoi-realty",
+      "field": "gainLoss",
+      "derived": 858950.84,
+      "printed": 858951,
+      "delta": -0.16,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indian Energy Exchange Ltd.",
+      "securityKey": "indian-energy-exchange",
+      "field": "gainLoss",
+      "derived": -313774.92,
+      "printed": -313775,
+      "delta": 0.08,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indian Energy Exchange Ltd.",
+      "securityKey": "indian-energy-exchange",
+      "field": "pctAssets",
+      "derived": 1.95,
+      "printed": 1.98,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Banco Products India Ltd.",
+      "securityKey": "banco-products-india",
+      "field": "gainLoss",
+      "derived": 740806.5,
+      "printed": 740806,
+      "delta": 0.5,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Banco Products India Ltd.",
+      "securityKey": "banco-products-india",
+      "field": "pctAssets",
+      "derived": 1.86,
+      "printed": 1.85,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "BLS International Services Ltd",
+      "securityKey": "bls-international-services",
+      "field": "gainLoss",
+      "derived": -642846.25,
+      "printed": -642846,
+      "delta": -0.25,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sharda Motor Industries Ltd",
+      "securityKey": "sharda-motor-industries",
+      "field": "gainLoss",
+      "derived": 174137.21,
+      "printed": 174137,
+      "delta": 0.21,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Transport Corp. of India Ltd.",
+      "securityKey": "transport-corp-of-india",
+      "field": "gainLoss",
+      "derived": -501454.68,
+      "printed": -501455,
+      "delta": 0.32,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Transport Corp. of India Ltd.",
+      "securityKey": "transport-corp-of-india",
+      "field": "pctAssets",
+      "derived": 4.48,
+      "printed": 4.47,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Blue Jet Healthcare Ltd.",
+      "securityKey": "blue-jet-healthcare",
+      "field": "gainLoss",
+      "derived": 894576.55,
+      "printed": 894577,
+      "delta": -0.45,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Blue Jet Healthcare Ltd.",
+      "securityKey": "blue-jet-healthcare",
+      "field": "pctAssets",
+      "derived": 4.45,
+      "printed": 4.44,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sundaram Finance Ltd.",
+      "securityKey": "sundaram-finance",
+      "field": "gainLoss",
+      "derived": 42016.85,
+      "printed": 42017,
+      "delta": -0.15,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sundaram Finance Ltd.",
+      "securityKey": "sundaram-finance",
+      "field": "pctAssets",
+      "derived": 4.17,
+      "printed": 4.19,
+      "delta": -0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Zydus Lifesciences Ltd.",
+      "securityKey": "zydus-lifesciences",
+      "field": "gainLoss",
+      "derived": 709904.72,
+      "printed": 709905,
+      "delta": -0.28,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Zydus Lifesciences Ltd.",
+      "securityKey": "zydus-lifesciences",
+      "field": "pctAssets",
+      "derived": 4.19,
+      "printed": 4.18,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "EIH Ltd.",
+      "securityKey": "eih",
+      "field": "gainLoss",
+      "derived": -291752.6,
+      "printed": -291753,
+      "delta": 0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "EIH Ltd.",
+      "securityKey": "eih",
+      "field": "pctAssets",
+      "derived": 4.02,
+      "printed": 4.01,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Kovai Medical Center & Hospital Ltd.",
+      "securityKey": "kovai-medical-center-and-hospital",
+      "field": "gainLoss",
+      "derived": 89184.25,
+      "printed": 89184,
+      "delta": 0.25,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Kovai Medical Center & Hospital Ltd.",
+      "securityKey": "kovai-medical-center-and-hospital",
+      "field": "pctAssets",
+      "derived": 3.85,
+      "printed": 3.84,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Suprajit Engineering Ltd.",
+      "securityKey": "suprajit-engineering",
+      "field": "gainLoss",
+      "derived": 313057.87,
+      "printed": 313058,
+      "delta": -0.13,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Suprajit Engineering Ltd.",
+      "securityKey": "suprajit-engineering",
+      "field": "pctAssets",
+      "derived": 3.84,
+      "printed": 3.83,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indraprastha Medical Corp. Ltd.",
+      "securityKey": "indraprastha-medical",
+      "field": "gainLoss",
+      "derived": -427675.72,
+      "printed": -427676,
+      "delta": 0.28,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Tenneco Clean Air India Ltd.",
+      "securityKey": "tenneco-clean-air-india",
+      "field": "gainLoss",
+      "derived": 352765.04,
+      "printed": 352765,
+      "delta": 0.04,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Tenneco Clean Air India Ltd.",
+      "securityKey": "tenneco-clean-air-india",
+      "field": "pctAssets",
+      "derived": 3.77,
+      "printed": 3.76,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Can Fin Homes Ltd.",
+      "securityKey": "can-fin-homes",
+      "field": "gainLoss",
+      "derived": -13653.3,
+      "printed": -13653,
+      "delta": -0.3,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Can Fin Homes Ltd.",
+      "securityKey": "can-fin-homes",
+      "field": "pctAssets",
+      "derived": 3.54,
+      "printed": 3.57,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "ICICI Bank Ltd.",
+      "securityKey": "icici-bank",
+      "field": "pctAssets",
+      "derived": 3.56,
+      "printed": 3.55,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Life Insurance Corp. of India",
+      "securityKey": "life-insurance-corp-of-india",
+      "field": "gainLoss",
+      "derived": 107455.35,
+      "printed": 107455,
+      "delta": 0.35,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Life Insurance Corp. of India",
+      "securityKey": "life-insurance-corp-of-india",
+      "field": "pctAssets",
+      "derived": 3.39,
+      "printed": 3.46,
+      "delta": -0.07,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Canara Robeco Asset Management Co. Ltd.",
+      "securityKey": "canara-robeco-asset-management",
+      "field": "gainLoss",
+      "derived": -63545.1,
+      "printed": -63545,
+      "delta": -0.1,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Canara Robeco Asset Management Co. Ltd.",
+      "securityKey": "canara-robeco-asset-management",
+      "field": "pctAssets",
+      "derived": 3.34,
+      "printed": 3.33,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "MPS Ltd",
+      "securityKey": "mps",
+      "field": "gainLoss",
+      "derived": 22362.44,
+      "printed": 22362,
+      "delta": 0.44,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "MPS Ltd",
+      "securityKey": "mps",
+      "field": "pctAssets",
+      "derived": 3.26,
+      "printed": 3.25,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Karur Vysya Bank Ltd.",
+      "securityKey": "karur-vysya-bank",
+      "field": "gainLoss",
+      "derived": 335127.8,
+      "printed": 335128,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Karur Vysya Bank Ltd.",
+      "securityKey": "karur-vysya-bank",
+      "field": "pctAssets",
+      "derived": 3.24,
+      "printed": 3.23,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Mahindra & Mahindra Ltd.",
+      "securityKey": "mahindra-and-mahindra",
+      "field": "gainLoss",
+      "derived": -85248.29,
+      "printed": -85248,
+      "delta": -0.29,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Mahindra & Mahindra Ltd.",
+      "securityKey": "mahindra-and-mahindra",
+      "field": "pctAssets",
+      "derived": 3.18,
+      "printed": 3.21,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "eClerx Services Ltd.",
+      "securityKey": "eclerx-services",
+      "field": "gainLoss",
+      "derived": 240365.33,
+      "printed": 240365,
+      "delta": 0.33,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sonata Software Ltd.",
+      "securityKey": "sonata-software",
+      "field": "gainLoss",
+      "derived": -641117.39,
+      "printed": -641117,
+      "delta": -0.39,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Caplin Point Laboratories Ltd.",
+      "securityKey": "caplin-point-laboratories",
+      "field": "gainLoss",
+      "derived": 850354.14,
+      "printed": 850354,
+      "delta": 0.14,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "State Bank of India",
+      "securityKey": "state-bank-of-india",
+      "field": "gainLoss",
+      "derived": 132523.88,
+      "printed": 132524,
+      "delta": -0.12,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "State Bank of India",
+      "securityKey": "state-bank-of-india",
+      "field": "pctAssets",
+      "derived": 2.97,
+      "printed": 2.96,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Lupin Ltd",
+      "securityKey": "lupin",
+      "field": "gainLoss",
+      "derived": 220719.7,
+      "printed": 220720,
+      "delta": -0.3,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Lupin Ltd",
+      "securityKey": "lupin",
+      "field": "pctAssets",
+      "derived": 2.91,
+      "printed": 2.9,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Motilal Oswal Financial Services Ltd.",
+      "securityKey": "motilal-oswal-financial-services",
+      "field": "gainLoss",
+      "derived": 265172.85,
+      "printed": 265173,
+      "delta": -0.15,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Oberoi Realty Ltd.",
+      "securityKey": "oberoi-realty",
+      "field": "gainLoss",
+      "derived": 390432.2,
+      "printed": 390432,
+      "delta": 0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Oberoi Realty Ltd.",
+      "securityKey": "oberoi-realty",
+      "field": "pctAssets",
+      "derived": 2.42,
+      "printed": 2.41,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sagility Ltd.",
+      "securityKey": "sagility",
+      "field": "pctAssets",
+      "derived": 2.37,
+      "printed": 2.36,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indian Energy Exchange Ltd.",
+      "securityKey": "indian-energy-exchange",
+      "field": "gainLoss",
+      "derived": -155073.43,
+      "printed": -155073,
+      "delta": -0.43,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Indian Energy Exchange Ltd.",
+      "securityKey": "indian-energy-exchange",
+      "field": "pctAssets",
+      "derived": 2.28,
+      "printed": 2.31,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Waaree Energies Ltd.",
+      "securityKey": "waaree-energies",
+      "field": "gainLoss",
+      "derived": -134864.9,
+      "printed": -134865,
+      "delta": 0.1,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Waaree Energies Ltd.",
+      "securityKey": "waaree-energies",
+      "field": "pctAssets",
+      "derived": 1.85,
+      "printed": 1.84,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "BLS International Services Ltd",
+      "securityKey": "bls-international-services",
+      "field": "gainLoss",
+      "derived": -308566.2,
+      "printed": -308566,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "BLS International Services Ltd",
+      "securityKey": "bls-international-services",
+      "field": "pctAssets",
+      "derived": 1.82,
+      "printed": 1.81,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Banco Products India Ltd.",
+      "securityKey": "banco-products-india",
+      "field": "gainLoss",
+      "derived": 296322.6,
+      "printed": 296323,
+      "delta": -0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Banco Products India Ltd.",
+      "securityKey": "banco-products-india",
+      "field": "pctAssets",
+      "derived": 1.74,
+      "printed": 1.73,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Sharda Motor Industries Ltd",
+      "securityKey": "sharda-motor-industries",
+      "field": "gainLoss",
+      "derived": 78943.76,
+      "printed": 78944,
+      "delta": -0.24,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Aditya Birla Capital Ltd",
+      "securityKey": "aditya-birla-capital",
+      "field": "pctAssets",
+      "derived": 21.43,
+      "printed": 21.41,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Jammu Kashmir Bank Ltd",
+      "securityKey": "jammu-kashmir-bank",
+      "field": "gainLoss",
+      "derived": 20567227.46,
+      "printed": 20567227,
+      "delta": 0.46,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Jammu Kashmir Bank Ltd",
+      "securityKey": "jammu-kashmir-bank",
+      "field": "pctAssets",
+      "derived": 13.62,
+      "printed": 13.6,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Biocon Ltd",
+      "securityKey": "biocon",
+      "field": "gainLoss",
+      "derived": 4567611.29,
+      "printed": 4567611,
+      "delta": 0.29,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Bandhan Bank Ltd",
+      "securityKey": "bandhan-bank",
+      "field": "gainLoss",
+      "derived": 10545031.39,
+      "printed": 10545031,
+      "delta": 0.39,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Bandhan Bank Ltd",
+      "securityKey": "bandhan-bank",
+      "field": "pctAssets",
+      "derived": 11.15,
+      "printed": 11.14,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Star Health and Allied Insurance Company Limited",
+      "securityKey": "star-health-and-allied-insurance",
+      "field": "pctAssets",
+      "derived": 10.53,
+      "printed": 10.52,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Kalpataru Projects International Ltd",
+      "securityKey": "kalpataru-projects-international",
+      "field": "gainLoss",
+      "derived": 4169935.03,
+      "printed": 4169935,
+      "delta": 0.03,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Kalpataru Projects International Ltd",
+      "securityKey": "kalpataru-projects-international",
+      "field": "pctAssets",
+      "derived": 9.43,
+      "printed": 9.5,
+      "delta": -0.07,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "PVR Inox Ltd",
+      "securityKey": "pvr-inox",
+      "field": "gainLoss",
+      "derived": -1175299.43,
+      "printed": -1175299,
+      "delta": -0.43,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "PVR Inox Ltd",
+      "securityKey": "pvr-inox",
+      "field": "pctAssets",
+      "derived": 8.18,
+      "printed": 8.17,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "GLAND PHARMA LIMITED",
+      "securityKey": "gland-pharma",
+      "field": "gainLoss",
+      "derived": 128936.51,
+      "printed": 128937,
+      "delta": -0.49,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "CRIZAC LIMITED",
+      "securityKey": "crizac",
+      "field": "gainLoss",
+      "derived": -610344.84,
+      "printed": -610345,
+      "delta": 0.16,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Cash Rec/Payable",
+      "securityKey": "cash-rec-payable",
+      "field": "marketValue",
+      "derived": 426039.56,
+      "printed": 426039.55,
+      "delta": 0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "reportType": "appraisal",
+      "security": "Cash Rec/Payable",
+      "securityKey": "cash-rec-payable",
+      "field": "gainLoss",
+      "derived": 0.01,
+      "printed": 0,
+      "delta": 0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Gujarat Ambuja Exports Ltd",
+      "securityKey": "gujarat-ambuja-exports",
+      "field": "gainLoss",
+      "derived": 1624045.24,
+      "printed": 1624045,
+      "delta": 0.24,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Gujarat Ambuja Exports Ltd",
+      "securityKey": "gujarat-ambuja-exports",
+      "field": "pctAssets",
+      "derived": 5.45,
+      "printed": 5.44,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Engineers India Ltd",
+      "securityKey": "engineers-india",
+      "field": "gainLoss",
+      "derived": 2120436.33,
+      "printed": 2120436,
+      "delta": 0.33,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bharat Heavy Electricals Ltd",
+      "securityKey": "bharat-heavy-electricals",
+      "field": "gainLoss",
+      "derived": 2556451.32,
+      "printed": 2556451,
+      "delta": 0.32,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Exide Industries Ltd",
+      "securityKey": "exide-industries",
+      "field": "gainLoss",
+      "derived": 395472.22,
+      "printed": 395472,
+      "delta": 0.22,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "State Bank Of India",
+      "securityKey": "state-bank-of-india",
+      "field": "gainLoss",
+      "derived": 1303712.58,
+      "printed": 1303713,
+      "delta": -0.42,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "KSB Ltd",
+      "securityKey": "ksb",
+      "field": "gainLoss",
+      "derived": 616916.96,
+      "printed": 616917,
+      "delta": -0.04,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Aurobindo Pharma Ltd",
+      "securityKey": "aurobindo-pharma",
+      "field": "gainLoss",
+      "derived": 1296034.82,
+      "printed": 1296035,
+      "delta": -0.18,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Isgec Heavy Engineering Ltd",
+      "securityKey": "isgec-heavy-engineering",
+      "field": "gainLoss",
+      "derived": -1145984.27,
+      "printed": -1145984,
+      "delta": -0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Isgec Heavy Engineering Ltd",
+      "securityKey": "isgec-heavy-engineering",
+      "field": "pctAssets",
+      "derived": 4.08,
+      "printed": 4.07,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Kaveri Seed Company Ltd",
+      "securityKey": "kaveri-seed",
+      "field": "gainLoss",
+      "derived": -19823.04,
+      "printed": -19823,
+      "delta": -0.04,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Alivus Life Sciences Ltd",
+      "securityKey": "alivus-life-sciences",
+      "field": "gainLoss",
+      "derived": 499717.46,
+      "printed": 499717,
+      "delta": 0.46,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Glenmark Pharmaceuticals Ltd",
+      "securityKey": "glenmark-pharmaceuticals",
+      "field": "gainLoss",
+      "derived": 1274160.8,
+      "printed": 1274161,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Vedanta Aluminium Metal Limited",
+      "securityKey": "vedanta-aluminium-metal",
+      "field": "gainLoss",
+      "derived": 3510010.74,
+      "printed": 3510011,
+      "delta": -0.26,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Hindustan Aeronautics Ltd",
+      "securityKey": "hindustan-aeronautics",
+      "field": "gainLoss",
+      "derived": -104580.74,
+      "printed": -104581,
+      "delta": 0.26,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Jamna Auto Ind Ltd",
+      "securityKey": "jamna-auto-ind",
+      "field": "gainLoss",
+      "derived": -18080.42,
+      "printed": -18080,
+      "delta": -0.42,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Power Finance Corporation Ltd",
+      "securityKey": "power-finance",
+      "field": "gainLoss",
+      "derived": 12476.39,
+      "printed": 12476,
+      "delta": 0.39,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Intellect Design Arena Ltd",
+      "securityKey": "intellect-design-arena",
+      "field": "gainLoss",
+      "derived": -707537.73,
+      "printed": -707538,
+      "delta": 0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Mishra Dhatu Nigam Ltd",
+      "securityKey": "mishra-dhatu-nigam",
+      "field": "gainLoss",
+      "derived": 743770.31,
+      "printed": 743770,
+      "delta": 0.31,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "KPIT Technologies Ltd",
+      "securityKey": "kpit-technologies",
+      "field": "gainLoss",
+      "derived": -1165750.5,
+      "printed": -1165750,
+      "delta": -0.5,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Triveni Turbine Ltd",
+      "securityKey": "triveni-turbine",
+      "field": "gainLoss",
+      "derived": 471901.03,
+      "printed": 471901,
+      "delta": 0.03,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Triveni Turbine Ltd",
+      "securityKey": "triveni-turbine",
+      "field": "pctAssets",
+      "derived": 2.48,
+      "printed": 2.47,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "The Anup Engineering Ltd",
+      "securityKey": "the-anup-engineering",
+      "field": "gainLoss",
+      "derived": 512534.37,
+      "printed": 512534,
+      "delta": 0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Thermax Ltd",
+      "securityKey": "thermax",
+      "field": "gainLoss",
+      "derived": 833116.81,
+      "printed": 833117,
+      "delta": -0.19,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "ZF Commercial Vehicle Control Systems India Ltd",
+      "securityKey": "zf-commercial-vehicle-control-systems-india",
+      "field": "gainLoss",
+      "derived": 336502.37,
+      "printed": 336502,
+      "delta": 0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Ratnamani Metals & Tubes Ltd",
+      "securityKey": "ratnamani-metals-and-tubes",
+      "field": "gainLoss",
+      "derived": -29857.82,
+      "printed": -29858,
+      "delta": 0.18,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bajaj Auto Ltd",
+      "securityKey": "bajaj-auto",
+      "field": "gainLoss",
+      "derived": 306066.94,
+      "printed": 306067,
+      "delta": -0.06,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bajaj Auto Ltd",
+      "securityKey": "bajaj-auto",
+      "field": "pctAssets",
+      "derived": 1.99,
+      "printed": 2.01,
+      "delta": -0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Vedanta Ltd",
+      "securityKey": "vedanta",
+      "field": "gainLoss",
+      "derived": 260472.14,
+      "printed": 260472,
+      "delta": 0.14,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Tech Mahindra Ltd",
+      "securityKey": "tech-mahindra",
+      "field": "gainLoss",
+      "derived": -62197.8,
+      "printed": -62198,
+      "delta": 0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Aarti Drugs Ltd",
+      "securityKey": "aarti-drugs",
+      "field": "gainLoss",
+      "derived": -87159.33,
+      "printed": -87159,
+      "delta": -0.33,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Graphite India Ltd",
+      "securityKey": "graphite-india",
+      "field": "gainLoss",
+      "derived": -25348.39,
+      "printed": -25348,
+      "delta": -0.39,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Ingersollrand India Ltd",
+      "securityKey": "ingersollrand-india",
+      "field": "gainLoss",
+      "derived": 208380.35,
+      "printed": 208380,
+      "delta": 0.35,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "GMM Pfaudler Ltd",
+      "securityKey": "gmm-pfaudler",
+      "field": "gainLoss",
+      "derived": -1050087.56,
+      "printed": -1050088,
+      "delta": 0.44,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Rural Electrification Corporation Ltd",
+      "securityKey": "rural-electrification",
+      "field": "gainLoss",
+      "derived": -333254.41,
+      "printed": -333254,
+      "delta": -0.41,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Punjab National Bank",
+      "securityKey": "punjab-national-bank",
+      "field": "gainLoss",
+      "derived": -66191.2,
+      "printed": -66191,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Cash",
+      "securityKey": "cash",
+      "field": "pctAssets",
+      "derived": 3.05,
+      "printed": 3.04,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510861",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Axis Liquid Fund - Direct Plan - Growth Option",
+      "securityKey": "axis-liquid-fund-direct-plan-growth-option",
+      "field": "gainLoss",
+      "derived": 155.84,
+      "printed": 156,
+      "delta": -0.16,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Gujarat Ambuja Exports Ltd",
+      "securityKey": "gujarat-ambuja-exports",
+      "field": "gainLoss",
+      "derived": 822549.55,
+      "printed": 822550,
+      "delta": -0.45,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Engineers India Ltd",
+      "securityKey": "engineers-india",
+      "field": "gainLoss",
+      "derived": 1073646.21,
+      "printed": 1073646,
+      "delta": 0.21,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bharat Heavy Electricals Ltd",
+      "securityKey": "bharat-heavy-electricals",
+      "field": "gainLoss",
+      "derived": 1425559.01,
+      "printed": 1425559,
+      "delta": 0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bharat Heavy Electricals Ltd",
+      "securityKey": "bharat-heavy-electricals",
+      "field": "pctAssets",
+      "derived": 5.23,
+      "printed": 5.22,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Exide Industries Ltd",
+      "securityKey": "exide-industries",
+      "field": "gainLoss",
+      "derived": 199878.6,
+      "printed": 199879,
+      "delta": -0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "State Bank Of India",
+      "securityKey": "state-bank-of-india",
+      "field": "gainLoss",
+      "derived": 699239.54,
+      "printed": 699240,
+      "delta": -0.46,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "KSB Ltd",
+      "securityKey": "ksb",
+      "field": "gainLoss",
+      "derived": 312781.57,
+      "printed": 312782,
+      "delta": -0.43,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Aurobindo Pharma Ltd",
+      "securityKey": "aurobindo-pharma",
+      "field": "gainLoss",
+      "derived": 656724.26,
+      "printed": 656724,
+      "delta": 0.26,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Isgec Heavy Engineering Ltd",
+      "securityKey": "isgec-heavy-engineering",
+      "field": "gainLoss",
+      "derived": -518494.85,
+      "printed": -518495,
+      "delta": 0.15,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Kaveri Seed Company Ltd",
+      "securityKey": "kaveri-seed",
+      "field": "gainLoss",
+      "derived": 7729.27,
+      "printed": 7729,
+      "delta": 0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Alivus Life Sciences Ltd",
+      "securityKey": "alivus-life-sciences",
+      "field": "gainLoss",
+      "derived": 307587.75,
+      "printed": 307588,
+      "delta": -0.25,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Glenmark Pharmaceuticals Ltd",
+      "securityKey": "glenmark-pharmaceuticals",
+      "field": "gainLoss",
+      "derived": 643388.13,
+      "printed": 643388,
+      "delta": 0.13,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Vedanta Aluminium Metal Limited",
+      "securityKey": "vedanta-aluminium-metal",
+      "field": "gainLoss",
+      "derived": 1785557.83,
+      "printed": 1785558,
+      "delta": -0.17,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Hindustan Aeronautics Ltd",
+      "securityKey": "hindustan-aeronautics",
+      "field": "gainLoss",
+      "derived": -57536.98,
+      "printed": -57537,
+      "delta": 0.02,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Jamna Auto Ind Ltd",
+      "securityKey": "jamna-auto-ind",
+      "field": "gainLoss",
+      "derived": -7170.16,
+      "printed": -7170,
+      "delta": -0.16,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Power Finance Corporation Ltd",
+      "securityKey": "power-finance",
+      "field": "gainLoss",
+      "derived": 73127.63,
+      "printed": 73128,
+      "delta": -0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Intellect Design Arena Ltd",
+      "securityKey": "intellect-design-arena",
+      "field": "gainLoss",
+      "derived": -360131.71,
+      "printed": -360132,
+      "delta": 0.29,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Mishra Dhatu Nigam Ltd",
+      "securityKey": "mishra-dhatu-nigam",
+      "field": "gainLoss",
+      "derived": 376239.42,
+      "printed": 376239,
+      "delta": 0.42,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "KPIT Technologies Ltd",
+      "securityKey": "kpit-technologies",
+      "field": "gainLoss",
+      "derived": -590777.54,
+      "printed": -590778,
+      "delta": 0.46,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Triveni Turbine Ltd",
+      "securityKey": "triveni-turbine",
+      "field": "gainLoss",
+      "derived": 238795.76,
+      "printed": 238796,
+      "delta": -0.24,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Triveni Turbine Ltd",
+      "securityKey": "triveni-turbine",
+      "field": "pctAssets",
+      "derived": 2.48,
+      "printed": 2.47,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "The Anup Engineering Ltd",
+      "securityKey": "the-anup-engineering",
+      "field": "gainLoss",
+      "derived": 260059.9,
+      "printed": 260060,
+      "delta": -0.1,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Thermax Ltd",
+      "securityKey": "thermax",
+      "field": "gainLoss",
+      "derived": 418988.79,
+      "printed": 418989,
+      "delta": -0.21,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "ZF Commercial Vehicle Control Systems India Ltd",
+      "securityKey": "zf-commercial-vehicle-control-systems-india",
+      "field": "gainLoss",
+      "derived": 167986.63,
+      "printed": 167987,
+      "delta": -0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Ratnamani Metals & Tubes Ltd",
+      "securityKey": "ratnamani-metals-and-tubes",
+      "field": "gainLoss",
+      "derived": -14888.01,
+      "printed": -14888,
+      "delta": -0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bajaj Auto Ltd",
+      "securityKey": "bajaj-auto",
+      "field": "gainLoss",
+      "derived": 156895.87,
+      "printed": 156896,
+      "delta": -0.13,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Bajaj Auto Ltd",
+      "securityKey": "bajaj-auto",
+      "field": "pctAssets",
+      "derived": 1.98,
+      "printed": 2.01,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Vedanta Ltd",
+      "securityKey": "vedanta",
+      "field": "gainLoss",
+      "derived": 189158.21,
+      "printed": 189158,
+      "delta": 0.21,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Tech Mahindra Ltd",
+      "securityKey": "tech-mahindra",
+      "field": "gainLoss",
+      "derived": -30818.27,
+      "printed": -30818,
+      "delta": -0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Aarti Drugs Ltd",
+      "securityKey": "aarti-drugs",
+      "field": "gainLoss",
+      "derived": -44490.17,
+      "printed": -44490,
+      "delta": -0.17,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Aarti Drugs Ltd",
+      "securityKey": "aarti-drugs",
+      "field": "pctAssets",
+      "derived": 1.78,
+      "printed": 1.77,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Ingersollrand India Ltd",
+      "securityKey": "ingersollrand-india",
+      "field": "gainLoss",
+      "derived": 102649.26,
+      "printed": 102649,
+      "delta": 0.26,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "GMM Pfaudler Ltd",
+      "securityKey": "gmm-pfaudler",
+      "field": "gainLoss",
+      "derived": -532151.4,
+      "printed": -532151,
+      "delta": -0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Rural Electrification Corporation Ltd",
+      "securityKey": "rural-electrification",
+      "field": "gainLoss",
+      "derived": -160351.41,
+      "printed": -160351,
+      "delta": -0.41,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Punjab National Bank",
+      "securityKey": "punjab-national-bank",
+      "field": "gainLoss",
+      "derived": -33492.87,
+      "printed": -33493,
+      "delta": 0.13,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+      "provider": "Green Lantern Capital LLP",
+      "accountNo": "510854",
+      "asOf": "2026-06-25",
+      "reportType": "appraisal",
+      "security": "Axis Liquid Fund - Direct Plan - Growth Option",
+      "securityKey": "axis-liquid-fund-direct-plan-growth-option",
+      "field": "gainLoss",
+      "derived": 172.37,
+      "printed": 172,
+      "delta": 0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    }
+  ],
+  "crossReportDeltas": [
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100023",
+      "asOf": "2026-07-10",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "fact-sheet",
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+        "value": 181533677
+      },
+      "b": {
+        "reportType": "performance-history",
+        "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-history",
+        "value": 181533676.83
+      },
+      "delta": 0.17,
+      "window": "2025-12-26..2026-07-10",
+      "severity": "rounding",
+      "authoritative": null
+    },
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "accountNo": "100022",
+      "asOf": "2026-07-10",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "fact-sheet",
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
+        "value": 77695353
+      },
+      "b": {
+        "reportType": "performance-history",
+        "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-history",
+        "value": 77695353.36
+      },
+      "delta": -0.36,
+      "window": "2025-12-26..2026-07-10",
+      "severity": "rounding",
+      "authoritative": null
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-07-10",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "fact-sheet",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
+        "value": 400475678
+      },
+      "b": {
+        "reportType": "performance-history",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history",
+        "value": 400475677.94
+      },
+      "delta": 0.06,
+      "window": "2025-01-06..2026-07-10",
+      "severity": "rounding",
+      "authoritative": null
+    }
+  ],
   "duplicateHoldings": [],
   "unresolved": {
-    "securitiesWithoutSymbol": [],
+    "securitiesWithoutSymbol": [
+      {
+        "security": "Blue Jet Healthcare Ltd.",
+        "securityKey": "blue-jet-healthcare",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Transport Corp. of India Ltd.",
+        "securityKey": "transport-corp-of-india",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Sundaram Finance Ltd.",
+        "securityKey": "sundaram-finance",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Suprajit Engineering Ltd.",
+        "securityKey": "suprajit-engineering",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Life Insurance Corp. of India",
+        "securityKey": "life-insurance-corp-of-india",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Kovai Medical Center & Hospital Ltd.",
+        "securityKey": "kovai-medical-center-and-hospital",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Zydus Lifesciences Ltd.",
+        "securityKey": "zydus-lifesciences",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "ICICI Bank Ltd.",
+        "securityKey": "icici-bank",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "HDFC Asset Management Co. Ltd.",
+        "securityKey": "hdfc-asset-management",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "MPS Ltd",
+        "securityKey": "mps",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Indraprastha Medical Corp. Ltd.",
+        "securityKey": "indraprastha-medical",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "EIH Ltd.",
+        "securityKey": "eih",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Can Fin Homes Ltd.",
+        "securityKey": "can-fin-homes",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Canara Robeco Asset Management Co. Ltd.",
+        "securityKey": "canara-robeco-asset-management",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Karur Vysya Bank Ltd.",
+        "securityKey": "karur-vysya-bank",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Tenneco Clean Air India Ltd.",
+        "securityKey": "tenneco-clean-air-india",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Sonata Software Ltd.",
+        "securityKey": "sonata-software",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Mahindra & Mahindra Ltd.",
+        "securityKey": "mahindra-and-mahindra",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "eClerx Services Ltd.",
+        "securityKey": "eclerx-services",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Caplin Point Laboratories Ltd.",
+        "securityKey": "caplin-point-laboratories",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "State Bank of India",
+        "securityKey": "state-bank-of-india",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Lupin Ltd",
+        "securityKey": "lupin",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Jindal Stainless Ltd",
+        "securityKey": "jindal-stainless",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Motilal Oswal Financial Services Ltd.",
+        "securityKey": "motilal-oswal-financial-services",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Waaree Energies Ltd.",
+        "securityKey": "waaree-energies",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Oberoi Realty Ltd.",
+        "securityKey": "oberoi-realty",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Sagility Ltd.",
+        "securityKey": "sagility",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Indian Energy Exchange Ltd.",
+        "securityKey": "indian-energy-exchange",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Banco Products India Ltd.",
+        "securityKey": "banco-products-india",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "BLS International Services Ltd",
+        "securityKey": "bls-international-services",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Sharda Motor Industries Ltd",
+        "securityKey": "sharda-motor-industries",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Cash",
+        "securityKey": "cash",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Aditya Birla Capital Ltd",
+        "securityKey": "aditya-birla-capital",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Jammu Kashmir Bank Ltd",
+        "securityKey": "jammu-kashmir-bank",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Biocon Ltd",
+        "securityKey": "biocon",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Bandhan Bank Ltd",
+        "securityKey": "bandhan-bank",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "Star Health and Allied Insurance Company Limited",
+        "securityKey": "star-health-and-allied-insurance",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Kalpataru Projects International Ltd",
+        "securityKey": "kalpataru-projects-international",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "PVR Inox Ltd",
+        "securityKey": "pvr-inox",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "GLAND PHARMA LIMITED",
+        "securityKey": "gland-pharma",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet"
+        ]
+      },
+      {
+        "security": "CRIZAC LIMITED",
+        "securityKey": "crizac",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal"
+        ]
+      },
+      {
+        "security": "Gujarat Ambuja Exports Ltd",
+        "securityKey": "gujarat-ambuja-exports",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Engineers India Ltd",
+        "securityKey": "engineers-india",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Bharat Heavy Electricals Ltd",
+        "securityKey": "bharat-heavy-electricals",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Exide Industries Ltd",
+        "securityKey": "exide-industries",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "KSB Ltd",
+        "securityKey": "ksb",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Aurobindo Pharma Ltd",
+        "securityKey": "aurobindo-pharma",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Isgec Heavy Engineering Ltd",
+        "securityKey": "isgec-heavy-engineering",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Kaveri Seed Company Ltd",
+        "securityKey": "kaveri-seed",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Alivus Life Sciences Ltd",
+        "securityKey": "alivus-life-sciences",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Glenmark Pharmaceuticals Ltd",
+        "securityKey": "glenmark-pharmaceuticals",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Vedanta Aluminium Metal Limited",
+        "securityKey": "vedanta-aluminium-metal",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Hindustan Aeronautics Ltd",
+        "securityKey": "hindustan-aeronautics",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Jamna Auto Ind Ltd",
+        "securityKey": "jamna-auto-ind",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Power Finance Corporation Ltd",
+        "securityKey": "power-finance",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Intellect Design Arena Ltd",
+        "securityKey": "intellect-design-arena",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Mishra Dhatu Nigam Ltd",
+        "securityKey": "mishra-dhatu-nigam",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "KPIT Technologies Ltd",
+        "securityKey": "kpit-technologies",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Triveni Turbine Ltd",
+        "securityKey": "triveni-turbine",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "The Anup Engineering Ltd",
+        "securityKey": "the-anup-engineering",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Thermax Ltd",
+        "securityKey": "thermax",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "ZF Commercial Vehicle Control Systems India Ltd",
+        "securityKey": "zf-commercial-vehicle-control-systems-india",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Ratnamani Metals & Tubes Ltd",
+        "securityKey": "ratnamani-metals-and-tubes",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Bajaj Auto Ltd",
+        "securityKey": "bajaj-auto",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Vedanta Ltd",
+        "securityKey": "vedanta",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Tech Mahindra Ltd",
+        "securityKey": "tech-mahindra",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Aarti Drugs Ltd",
+        "securityKey": "aarti-drugs",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Graphite India Ltd",
+        "securityKey": "graphite-india",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Ingersollrand India Ltd",
+        "securityKey": "ingersollrand-india",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "GMM Pfaudler Ltd",
+        "securityKey": "gmm-pfaudler",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Rural Electrification Corporation Ltd",
+        "securityKey": "rural-electrification",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal"
+        ]
+      },
+      {
+        "security": "Punjab National Bank",
+        "securityKey": "punjab-national-bank",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-appraisal",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "ZF Commercial Vehicle Control Systems",
+        "securityKey": "zf-commercial-vehicle-control-systems",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "India Ltd",
+        "securityKey": "india",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Option",
+        "securityKey": "option",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      },
+      {
+        "security": "Dividend / Interest receivable",
+        "securityKey": "dividend-interest-receivable",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+        ]
+      }
+    ],
     "ownerNamesUnmatched": [],
-    "reportTypesWithoutExtractor": [],
+    "reportTypesWithoutExtractor": [
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "bank-book",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-bank-book",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-bank-book"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "capital-register",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-capital-register",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-capital-register"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "corporate-benefits",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-corporate-benefits"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "holdings",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-holdings"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "dividend-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "expense-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+        ]
+      },
+      {
+        "provider": "Goldstandard Wealth Private Limited",
+        "reportType": "transaction-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement",
+          "goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement"
+        ]
+      },
+      {
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "bank-book",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-bank-book"
+        ]
+      },
+      {
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "capital-gain",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain"
+        ]
+      },
+      {
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "dividend-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-dividend-statement"
+        ]
+      },
+      {
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "holdings",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings"
+        ]
+      },
+      {
+        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+        "reportType": "transaction-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-transaction-statement"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "bank-book",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-unknown-bank-book",
+          "green-lantern-capital-llp-510854-unknown-bank-book"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-gain",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-unknown-capital-gain",
+          "green-lantern-capital-llp-510854-unknown-capital-gain"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "capital-register",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-unknown-capital-register",
+          "green-lantern-capital-llp-510854-unknown-capital-register"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "dividend-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-unknown-dividend-statement",
+          "green-lantern-capital-llp-510854-unknown-dividend-statement"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "holdings",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-25-holdings",
+          "green-lantern-capital-llp-510854-2026-06-25-holdings"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "transaction-statement",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-unknown-transaction-statement",
+          "green-lantern-capital-llp-510854-unknown-transaction-statement"
+        ]
+      }
+    ],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
         "displayName": "Ajay Jaisinghani"
+      },
+      {
+        "ownerId": "ankita-jaisinghani",
+        "displayName": "Ankita Jaisinghani"
       },
       {
         "ownerId": "bharat-jaisinghani",
@@ -47,9 +4740,623 @@
       }
     ],
     "providersWithPrecedence": [
-      "GoldStandard Wealth Private Limited",
+      "Goldstandard Wealth Private Limited",
+      "Green Lantern Capital LLP",
+      "Carnelian Asset Management and Advisors Pvt Ltd",
       "360 ONE Private Wealth"
     ]
   },
-  "stitches": []
+  "stitches": [
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 624.73,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000000000000",
+      "page": 2
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 682.73,
+      "parts": [
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "000",
+      "page": 3
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 624.73,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000000",
+      "page": 3
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 624.73,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000000000000",
+      "page": 2
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 682.73,
+      "parts": [
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "000",
+      "page": 3
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 624.73,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000000",
+      "page": 3
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 326.95,
+      "parts": [
+        "700",
+        "500"
+      ],
+      "joined": "700500",
+      "page": 3
+    },
+    {
+      "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 414.22,
+      "parts": [
+        "900",
+        "800",
+        "700"
+      ],
+      "joined": "900800700",
+      "page": 1
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "357",
+        "358",
+        "359",
+        "362",
+        "363",
+        "366",
+        "500",
+        "500",
+        "501",
+        "492",
+        "162",
+        "161",
+        "158",
+        "156"
+      ],
+      "joined": "357358359362363366500500501492162161158156",
+      "page": 1
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "156",
+        "90",
+        "89",
+        "89"
+      ],
+      "joined": "156908989",
+      "page": 2
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 613,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 2
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 543,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 2
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 668,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000",
+      "page": 3
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 605,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000",
+      "page": 3
+    },
+    {
+      "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 412,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "0000000000",
+      "page": 3
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "209",
+        "518",
+        "285",
+        "286",
+        "223",
+        "222",
+        "221",
+        "222",
+        "511",
+        "369",
+        "249",
+        "250",
+        "513",
+        "514",
+        "372"
+      ],
+      "joined": "209518285286223222221222511369249250513514372",
+      "page": 1
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "252",
+        "511",
+        "369",
+        "249",
+        "250"
+      ],
+      "joined": "252511369249250",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "439",
+        "446",
+        "450",
+        "293",
+        "290",
+        "97",
+        "66",
+        "83"
+      ],
+      "joined": "439446450293290976683",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 605,
+      "parts": [
+        "156",
+        "156"
+      ],
+      "joined": "156156",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 535,
+      "parts": [
+        "156",
+        "156"
+      ],
+      "joined": "156156",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 412,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "000000000",
+      "page": 3
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 266,
+      "parts": [
+        "236",
+        "839",
+        "445",
+        "956"
+      ],
+      "joined": "236839445956",
+      "page": 3
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 668,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 660,
+      "parts": [
+        "156",
+        "156",
+        "156"
+      ],
+      "joined": "156156156",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 605,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 597,
+      "parts": [
+        "156",
+        "156",
+        "156"
+      ],
+      "joined": "156156156",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 412,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "00000000",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "209",
+        "524",
+        "285",
+        "286",
+        "223",
+        "222",
+        "221",
+        "222",
+        "517",
+        "369",
+        "249",
+        "250",
+        "519",
+        "520",
+        "372"
+      ],
+      "joined": "209524285286223222221222517369249250519520372",
+      "page": 1
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "252",
+        "517",
+        "369",
+        "249",
+        "250"
+      ],
+      "joined": "252517369249250",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+      "kind": "same-line",
+      "column": 0,
+      "y": 635,
+      "parts": [
+        "443",
+        "450",
+        "446",
+        "436",
+        "289",
+        "293",
+        "290",
+        "97",
+        "66",
+        "83"
+      ],
+      "joined": "443450446436289293290976683",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 605,
+      "parts": [
+        "172",
+        "172"
+      ],
+      "joined": "172172",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 535,
+      "parts": [
+        "172",
+        "172"
+      ],
+      "joined": "172172",
+      "page": 2
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 412,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "000000000",
+      "page": 3
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 266,
+      "parts": [
+        "119",
+        "425",
+        "218",
+        "484",
+        "772",
+        "637"
+      ],
+      "joined": "119425218484772637",
+      "page": 3
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 668,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 660,
+      "parts": [
+        "172",
+        "172",
+        "172"
+      ],
+      "joined": "172172172",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 605,
+      "parts": [
+        "0",
+        "0"
+      ],
+      "joined": "00",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 597,
+      "parts": [
+        "172",
+        "172",
+        "172"
+      ],
+      "joined": "172172172",
+      "page": 4
+    },
+    {
+      "docKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": 412,
+      "parts": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "joined": "00000000",
+      "page": 4
+    }
+  ]
 }

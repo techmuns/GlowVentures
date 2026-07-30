@@ -1,0 +1,84 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Bandhan Bank Ltd",
+   "Banks",
+   "44,613,240",
+   "11.14%"
+  ],
+  [
+   "2",
+   "Jammu Kashmir Bank Ltd",
+   "Banks",
+   "54,475,833",
+   "13.60%"
+  ],
+  [
+   "3",
+   "Kalpataru Projects International Ltd"
+  ],
+  [
+   "4",
+   "Biocon Ltd",
+   "Biotechnology",
+   "52,521,750",
+   "13.11%"
+  ],
+  [
+   "5",
+   "CRIZAC LIMITED"
+  ],
+  [
+   "6",
+   "Aditya Birla Capital Ltd",
+   "Holding Companies",
+   "85,743,000",
+   "21.41%"
+  ],
+  [
+   "Star Health and Allied Insurance Company",
+   "42,117,105",
+   "10.52%"
+  ],
+  [
+   "Limited"
+  ],
+  [
+   "8",
+   "GLAND PHARMA LIMITED",
+   "Pharmaceuticals",
+   "18,900,466",
+   "4.72%"
+  ],
+  [
+   "9",
+   "PVR Inox Ltd",
+   "Distribution &"
+  ],
+  [
+   "10",
+   "Cash",
+   "Cash and Equivalent",
+   "29,810,135",
+   "7.44%"
+  ],
+  [
+   "11",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "Total",
+   "400,475,678",
+   "100%"
+  ]
+ ]
+}

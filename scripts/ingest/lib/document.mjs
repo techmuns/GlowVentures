@@ -1,7 +1,7 @@
 // The normalized document — the contract every provider extractor must return.
 //
 // This is the seam. Above it, code knows about 360 ONE's "Detailed Holding
-// Statement" and GoldStandard's "PortFolioFactSheet". Below it, nothing does:
+// Statement" and Goldstandard's "PortFolioFactSheet". Below it, nothing does:
 // the archive writer, the reconciler and the eventual book builder see only the
 // shapes defined here. `assertNormalized` enforces that at runtime, so a
 // provider quirk cannot quietly leak downstream and become everyone's problem.
@@ -79,7 +79,7 @@ export function dominantEngagement(members, holdings = []) {
  *
  * PRIMITIVES vs DERIVED — the central rule of this layer.
  *
- * A statement's own arithmetic is not internally consistent. The GoldStandard
+ * A statement's own arithmetic is not internally consistent. The Goldstandard
  * Appraisal prints Sundaram Finance at MV 7,740,510 with %Assets 4.29%, but
  * 7,740,510 / 181,533,677 = 4.26% — its percentage is computed on an
  * income-inclusive basis that its own MV column excludes. Ingesting both as
@@ -166,9 +166,9 @@ const r2 = (n) => (n === null ? null : Math.round(n * 100) / 100);
  * Compute the derived fields for one holding.
  *
  * `portfolioTotal` is the denominator for %assets: the TOTAL portfolio value
- * including cash (181,533,677 for GoldStandard 100023 at 10/07/2026, giving
- * equity 98.08% + cash 1.92% = 100.00%). Passing an equity-only denominator
- * would make the weights sum to more than 100.
+ * including cash. Passing an equity-only denominator would make the weights sum
+ * to more than 100. See deriveDocument for where the figure comes from and why
+ * it is not the statement's printed total.
  *
  * Anything that cannot be computed stays null. A missing input never becomes a
  * zero, so a holding with no cost reports no gain rather than reporting its
@@ -205,12 +205,29 @@ export function deriveHolding(h, portfolioTotal = null) {
 }
 
 /**
- * Derive every holding in a document, using the document's own printed total
- * portfolio value as the %assets denominator where one was read.
+ * Derive every holding in a document, in two passes.
+ *
+ * Pass 1 derives each market value. Pass 2 uses the SUM OF THOSE DERIVED VALUES
+ * (equity + cash) as the %assets denominator.
+ *
+ * The denominator is deliberately NOT the statement's printed total. These
+ * reports print their totals on an income-inclusive basis while the market-value
+ * column excludes accrued income, so dividing an ex-income numerator by an
+ * income-inclusive denominator leaves the weights summing to 99.83 rather than
+ * 100 — a gap that is neither a rounding error nor a real holding, just two
+ * bases mixed together. Deriving both sides from the same measurement makes the
+ * weights add up, and the statement's own %Assets stays in `printed.pctAssets`
+ * as the cross-check (Sundaram Finance: 4.26 derived vs 4.29 printed, reported
+ * in section a2 rather than silently adopted).
  */
 export function deriveDocument(doc) {
-  const portfolioTotal = doc.totals?.totalMarketValue ?? null;
-  return { ...doc, holdings: doc.holdings.map((h) => deriveHolding(h, portfolioTotal)) };
+  const withValues = doc.holdings.map((h) => deriveHolding(h, null));
+  const portfolioTotal = withValues.reduce((t, h) => t + (h.marketValue ?? 0), 0) || null;
+  return {
+    ...doc,
+    derivedPortfolioTotal: portfolioTotal === null ? null : r2(portfolioTotal),
+    holdings: doc.holdings.map((h) => deriveHolding(h, portfolioTotal)),
+  };
 }
 
 /**
@@ -236,7 +253,7 @@ export function makeTotals(input = {}) {
 /**
  * A period-return series (TWRR / IRR) as printed.
  *
- * `fytd`, not `ytd`: GoldStandard's "YTD" is the INDIAN FINANCIAL year to date,
+ * `fytd`, not `ytd`: Goldstandard's "YTD" is the INDIAN FINANCIAL year to date,
  * from 1 April — the Perf Summary window is literally 01/04/2026 to 10/07/2026.
  * Calling it YTD in the model would have the cockpit compare it against calendar
  * year-to-date figures from every other source.
@@ -250,11 +267,25 @@ export function makeReturnSeries(input) {
   return {
     series: String(input.series ?? "").trim(),   // "Portfolio" | "N50TRI" | …
     isBenchmark: !!input.isBenchmark,
+    // TO-DATE periods, as Goldstandard labels them: MTD, QTD, and the Indian
+    // FY to date (the statement calls it "YTD" but its window is 01/04 → as-of).
     mtd: num(input.mtd),
     qtd: num(input.qtd),
     fytd: num(input.fytd ?? input.ytd),
+    // TRAILING periods, as Green Lantern and Carnelian label them: 1m, 3m, 1y.
+    // Deliberately separate fields. A trailing one-month return and a
+    // month-to-date return are different measurements over different windows,
+    // and folding "1m" into `mtd` because the numbers look alike would put a
+    // figure under a label the statement never claimed for it.
+    m1: num(input.m1),
+    m3: num(input.m3),
+    m6: num(input.m6),
+    y1: num(input.y1),
     si: num(input.si),
     siAnnualised: input.siAnnualised ?? null,
+    /** "after" | "before" | null — whether returns are net of fees, per the
+     *  report's own disclosure. Goldstandard prints after, Carnelian before. */
+    feeBasis: input.feeBasis ?? null,
     source: input.source ?? null,
   };
 }
@@ -272,6 +303,10 @@ export function makeFlows(input = {}) {
     fees: num(input.fees),
     profit: num(input.profit),
     corpus: num(input.corpus),
+    /** The window these figures cover. Two flow blocks with different windows
+     *  are not in disagreement, however similar their labels — see readPeriod. */
+    periodFrom: input.periodFrom ?? null,
+    periodTo: input.periodTo ?? null,
     source: input.source ?? null,
   };
 }
@@ -305,6 +340,12 @@ export function makeDocument(input) {
     docKey: input.docKey,
     provider: input.provider,
     accountNo: input.accountNo ?? null,
+    /** "printed" unless the owner was matched via the account number — see backfillOwners. */
+    ownerSource: input.ownerSource ?? (input.ownerId ? "printed" : null),
+    /** "printed" unless the number was matched via the client code — see backfillAccountNumbers. */
+    accountNoSource: input.accountNoSource ?? (input.accountNo ? "printed" : null),
+    /** The provider's own client identifier (GLC0780 / CBP0142), where printed. */
+    clientCode: input.clientCode ?? null,
     owner: input.owner ?? null,
     ownerId: input.ownerId ?? null,
     familyGroup: input.familyGroup ?? null,

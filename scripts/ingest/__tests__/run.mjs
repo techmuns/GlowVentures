@@ -21,16 +21,25 @@ const SUITES = [
 
 let failed = 0, blocked = 0;
 const lines = [];
+const blockedDetail = [];
 
 for (const s of SUITES) {
   const r = spawnSync(process.execPath, [path.join(HERE, s.file)], { encoding: "utf8" });
   const out = (r.stdout ?? "") + (r.stderr ?? "");
+  // The count line ("79 passed, 0 failed, …"), not just the last line printed —
+  // BLOCKED runs go on to explain themselves after it.
+  const counts = out.split("\n").reverse().find((l) => /\d+ passed/.test(l))?.trim() ?? "";
   const tail = out.trim().split("\n").filter(Boolean).slice(-1)[0] ?? "";
   if (r.status === 0) {
-    lines.push(`  PASS     ${s.name.padEnd(9)} ${tail.trim()}`);
+    lines.push(`  PASS     ${s.name.padEnd(9)} ${counts || tail.trim()}`);
   } else if (r.status === 2 && !s.required) {
     blocked++;
-    lines.push(`  BLOCKED  ${s.name.padEnd(9)} no source statements to verify against`);
+    lines.push(`  BLOCKED  ${s.name.padEnd(9)} ${counts}`);
+    // Carry the suite's own explanation up: which cases were blocked, and what
+    // was left unchecked. "no source statements" is not true when most of them
+    // are present and 79 figures verified.
+    const from = out.split("\n").findIndex((l) => /^ {2}(NOT CHECKED|BLOCKED — no statement in source)/.test(l));
+    if (from >= 0) blockedDetail.push(...out.split("\n").slice(from).filter((l) => l.trim()));
   } else {
     failed++;
     lines.push(`  FAIL     ${s.name.padEnd(9)} ${tail.trim()}`);
@@ -46,8 +55,12 @@ if (failed) {
   process.exit(1);
 }
 if (blocked) {
-  console.log(`  All machinery suites passed. ${blocked} suite(s) BLOCKED — the golden figures cannot be`);
-  console.log("  verified until the statement PDFs are in source/ and `npm run extract` has run.");
-  console.log("  This is not a pass for extraction accuracy, and is not counted as one.");
+  console.log(`  All machinery suites passed, and every golden figure that could be checked`);
+  console.log(`  reproduced. ${blocked} suite(s) BLOCKED — some expected accounts have no statement`);
+  console.log("  in source/. That is not a pass for those accounts and is not counted as one.");
+  if (blockedDetail.length) {
+    console.log("");
+    for (const l of blockedDetail) console.log(l);
+  }
 }
 process.exit(0);

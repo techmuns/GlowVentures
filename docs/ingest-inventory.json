@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-30T20:01:48.955Z",
+  "generatedAt": "2026-07-30T21:21:10.905Z",
   "sourceDir": "source",
   "counts": {
-    "pdfs": 0,
-    "classified": 0,
+    "pdfs": 51,
+    "classified": 51,
     "unclassified": 0,
-    "fromArchives": 0,
-    "archivesExpanded": 0,
-    "pages": 0
+    "fromArchives": 51,
+    "archivesExpanded": 5,
+    "pages": 162
   },
   "reportTypes": [
     "holdings",
@@ -15,17 +15,1955 @@
     "fact-sheet",
     "performance-summary",
     "performance-history",
+    "performance-benchmark",
     "transaction-statement",
     "corporate-action",
+    "capital-gain",
+    "capital-register",
+    "dividend-statement",
+    "bank-book",
+    "expense-statement",
+    "corporate-benefits",
     "capital-call",
     "distribution-notice",
     "contract-note",
     "unknown"
   ],
-  "archives": [],
+  "archives": [
+    {
+      "archive": "source/ARISTOS__AJAY.zip",
+      "extractedTo": "source/_extracted/ARISTOS__AJAY",
+      "files": 12,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/ARISTOS__ANKITA.zip",
+      "extractedTo": "source/_extracted/ARISTOS__ANKITA",
+      "files": 10,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/CARNELIAN.zip",
+      "extractedTo": "source/_extracted/CARNELIAN",
+      "files": 9,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/GREEN_LANTERN__AJAY.zip",
+      "extractedTo": "source/_extracted/GREEN_LANTERN__AJAY",
+      "files": 10,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/GREEN_LANTERN__ANKITA.zip",
+      "extractedTo": "source/_extracted/GREEN_LANTERN__ANKITA",
+      "files": 10,
+      "skipped": 0,
+      "failed": 0
+    }
+  ],
   "archiveFailures": [],
-  "files": [],
-  "groups": {},
-  "overlaps": [],
+  "files": [
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
+      "fileName": "G100023_100024_BankBook178OT (2).pdf",
+      "bytes": 43319,
+      "size": "42.3 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+      "fileName": "G100023_100024_CapitalRegister1173OT (3).pdf",
+      "bytes": 28228,
+      "size": "27.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
+      "fileName": "G100023_100024_CorporateBenefitsReport1767OT.pdf",
+      "bytes": 29185,
+      "size": "28.5 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "corporate-benefits",
+      "sections": [
+        "corporate-benefits"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+      "fileName": "G100023_100024_CurrentPortfolio2086OT (4).pdf",
+      "bytes": 45427,
+      "size": "44.4 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
+      "fileName": "G100023_100024_DividendStatement_India177OT (3).pdf",
+      "bytes": 35020,
+      "size": "34.2 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
+      "fileName": "G100023_100024_Expensestmt546OT.pdf",
+      "bytes": 31409,
+      "size": "30.7 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "expense-statement",
+      "sections": [
+        "expense-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
+      "fileName": "G100023_100024_PortfolioAppraisal675OT (4).pdf",
+      "bytes": 35950,
+      "size": "35.1 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+      "fileName": "G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+      "bytes": 35392,
+      "size": "34.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
+      "fileName": "G100023_100024_PortfolioPerfBM196OT (4).pdf",
+      "bytes": 43168,
+      "size": "42.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "performance-benchmark",
+      "sections": [
+        "performance-benchmark"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+      "fileName": "G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+      "bytes": 30681,
+      "size": "30.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+      "fileName": "G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+      "bytes": 28637,
+      "size": "28.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
+      "fileName": "G100023_100024_TransactionStatement_India94OT (3).pdf",
+      "bytes": 32523,
+      "size": "31.8 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100024",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
+      "fileName": "G100023_100023_BankBook178OT (2).pdf",
+      "bytes": 42871,
+      "size": "41.9 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
+      "fileName": "G100023_100023_CapitalRegister1173OT (2).pdf",
+      "bytes": 28061,
+      "size": "27.4 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+      "fileName": "G100023_100023_CurrentPortfolio2086OT (3).pdf",
+      "bytes": 44981,
+      "size": "43.9 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+      "fileName": "G100023_100023_DividendStatement_India177OT (2).pdf",
+      "bytes": 34963,
+      "size": "34.1 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
+      "fileName": "G100023_100023_PortfolioAppraisal675OT (3).pdf",
+      "bytes": 35700,
+      "size": "34.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+      "fileName": "G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+      "bytes": 35509,
+      "size": "34.7 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
+      "fileName": "G100023_100023_PortfolioPerfBM196OT (4).pdf",
+      "bytes": 42578,
+      "size": "41.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "performance-benchmark",
+      "sections": [
+        "performance-benchmark"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+      "fileName": "G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+      "bytes": 30283,
+      "size": "29.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+      "fileName": "G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+      "bytes": 28308,
+      "size": "27.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
+      "fileName": "G100023_100023_TransactionStatement_India94OT (3).pdf",
+      "bytes": 32299,
+      "size": "31.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Goldstandard Wealth Private Limited",
+      "ownerName": null,
+      "accountNo": "100023",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_BankBook178OT (3).pdf",
+      "fileName": "CBP0142_40212_BankBook178OT (3).pdf",
+      "bytes": 28580,
+      "size": "27.9 KB",
+      "pages": 6,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
+      "fileName": "CBP0142_40212_CapitalGain90OT (3).pdf",
+      "bytes": 24979,
+      "size": "24.4 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_DividendStatement_India177OT (2).pdf",
+      "fileName": "CBP0142_40212_DividendStatement_India177OT (2).pdf",
+      "bytes": 16152,
+      "size": "15.8 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioAppraisal675OT (7).pdf",
+      "fileName": "CBP0142_40212_PortfolioAppraisal675OT (7).pdf",
+      "bytes": 16086,
+      "size": "15.7 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": "2026-07-10",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortFolioFactSheet6020OT (7).pdf",
+      "fileName": "CBP0142_40212_PortFolioFactSheet6020OT (7).pdf",
+      "bytes": 61102,
+      "size": "59.7 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-10",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_portfolioPerfHistory1155OT (5).pdf",
+      "fileName": "CBP0142_40212_portfolioPerfHistory1155OT (5).pdf",
+      "bytes": 15281,
+      "size": "14.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": "2026-07-10",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPerfSummary1528OT (7).pdf",
+      "fileName": "CBP0142_40212_PortfolioPerfSummary1528OT (7).pdf",
+      "bytes": 14121,
+      "size": "13.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": "2026-04-01",
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
+      "fileName": "CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
+      "bytes": 27778,
+      "size": "27.1 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": "2026-07-10",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
+      "fileName": "CBP0142_40212_TransactionStatement_India94OT (7).pdf",
+      "bytes": 17502,
+      "size": "17.1 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "3517383",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "Carnelian Bespoke Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
+      "fileName": "GLC0780_40994_BankBook178OT (3).pdf",
+      "bytes": 136837,
+      "size": "133.6 KB",
+      "pages": 27,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
+      "fileName": "GLC0780_40994_CapitalGain90OT (5).pdf",
+      "bytes": 80747,
+      "size": "78.9 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
+      "fileName": "GLC0780_40994_CapitalRegister1173OT (2).pdf",
+      "bytes": 69716,
+      "size": "68.1 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
+      "fileName": "GLC0780_40994_DividendStatement_India177OT (3).pdf",
+      "bytes": 70956,
+      "size": "69.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
+      "fileName": "GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
+      "bytes": 75031,
+      "size": "73.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-06-25",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
+      "fileName": "GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
+      "bytes": 117754,
+      "size": "115.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-06-25",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
+      "fileName": "GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
+      "bytes": 69958,
+      "size": "68.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-07-09",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
+      "fileName": "GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
+      "bytes": 68832,
+      "size": "67.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-04-01",
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+      "fileName": "GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+      "bytes": 87450,
+      "size": "85.4 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-06-25",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+      "fileName": "GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+      "bytes": 83193,
+      "size": "81.2 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
+      "fileName": "GLC0776_40752_BankBook178OT (4).pdf",
+      "bytes": 137202,
+      "size": "134.0 KB",
+      "pages": 27,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
+      "fileName": "GLC0776_40752_CapitalGain90OT (7).pdf",
+      "bytes": 82529,
+      "size": "80.6 KB",
+      "pages": 6,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
+      "fileName": "GLC0776_40752_CapitalRegister1173OT (4).pdf",
+      "bytes": 69706,
+      "size": "68.1 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
+      "fileName": "GLC0776_40752_DividendStatement_India177OT (2).pdf",
+      "bytes": 70934,
+      "size": "69.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
+      "fileName": "GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
+      "bytes": 74995,
+      "size": "73.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": "2026-06-25",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
+      "fileName": "GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
+      "bytes": 118006,
+      "size": "115.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-06-25",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
+      "fileName": "GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
+      "bytes": 87683,
+      "size": "85.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "performance-benchmark",
+      "sections": [
+        "performance-benchmark"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
+      "fileName": "GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
+      "bytes": 69973,
+      "size": "68.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": "2026-07-09",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+      "fileName": "GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+      "bytes": 87388,
+      "size": "85.3 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": "2026-06-25",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+      "fileName": "GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+      "bytes": 83319,
+      "size": "81.4 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    }
+  ],
+  "groups": {
+    "Goldstandard Wealth Private Limited": {
+      "accounts": {
+        "100023": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
+                    "pages": 4,
+                    "size": "41.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
+                    "pages": 1,
+                    "size": "27.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "holdings": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+                    "pages": 3,
+                    "size": "43.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+                    "pages": 3,
+                    "size": "34.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
+                    "pages": 2,
+                    "size": "34.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+                    "pages": 1,
+                    "size": "34.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ],
+                "performance-benchmark": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
+                    "pages": 1,
+                    "size": "41.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+                    "pages": 1,
+                    "size": "29.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ],
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+                    "pages": 1,
+                    "size": "27.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
+                    "pages": 2,
+                    "size": "31.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 10
+            }
+          },
+          "fileCount": 10
+        },
+        "100024": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
+                    "pages": 4,
+                    "size": "42.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+                    "pages": 1,
+                    "size": "27.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "corporate-benefits": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
+                    "pages": 1,
+                    "size": "28.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-benefits"
+                    ]
+                  }
+                ],
+                "holdings": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+                    "pages": 3,
+                    "size": "44.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
+                    "pages": 3,
+                    "size": "34.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "expense-statement": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
+                    "pages": 2,
+                    "size": "30.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "expense-statement"
+                    ]
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
+                    "pages": 2,
+                    "size": "35.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+                    "pages": 1,
+                    "size": "34.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ],
+                "performance-benchmark": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
+                    "pages": 1,
+                    "size": "42.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+                    "pages": 1,
+                    "size": "30.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ],
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+                    "pages": 1,
+                    "size": "28.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
+                    "pages": 2,
+                    "size": "31.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 12
+            }
+          },
+          "fileCount": 12
+        }
+      },
+      "fileCount": 22
+    },
+    "Carnelian Asset Management and Advisors Pvt Ltd": {
+      "accounts": {
+        "3517383": {
+          "owner": "AJAY T JAISINGHANI",
+          "strategy": "Carnelian Bespoke Portfolio",
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_BankBook178OT (3).pdf",
+                    "pages": 6,
+                    "size": "27.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
+                    "pages": 5,
+                    "size": "24.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_DividendStatement_India177OT (2).pdf",
+                    "pages": 2,
+                    "size": "15.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
+                    "pages": 2,
+                    "size": "17.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 4
+            },
+            "2026-07-10": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioAppraisal675OT (7).pdf",
+                    "pages": 1,
+                    "size": "15.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_portfolioPerfHistory1155OT (5).pdf",
+                    "pages": 1,
+                    "size": "14.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ],
+                "holdings": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
+                    "pages": 3,
+                    "size": "27.1 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPerfSummary1528OT (7).pdf",
+                    "pages": 1,
+                    "size": "13.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 8
+        },
+        "(unidentified)": {
+          "owner": null,
+          "strategy": "Carnelian Bespoke Portfolio",
+          "asOfDates": {
+            "2026-07-10": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/CARNELIAN/CBP0142_40212_PortFolioFactSheet6020OT (7).pdf",
+                    "pages": 1,
+                    "size": "59.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 9
+    },
+    "Green Lantern Capital LLP": {
+      "accounts": {
+        "510854": {
+          "owner": "ANKITA JAISINGHANI",
+          "strategy": "GLC Growth Fund",
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
+                    "pages": 27,
+                    "size": "134.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
+                    "pages": 6,
+                    "size": "80.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
+                    "pages": 1,
+                    "size": "68.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
+                    "pages": 2,
+                    "size": "69.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "performance-benchmark": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
+                    "pages": 1,
+                    "size": "85.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+                    "pages": 5,
+                    "size": "81.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 6
+            },
+            "2026-06-25": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
+                    "pages": 2,
+                    "size": "73.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "holdings": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+                    "pages": 4,
+                    "size": "85.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-07-09": {
+              "reportTypes": {
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
+                    "pages": 1,
+                    "size": "68.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 9
+        },
+        "510861": {
+          "owner": "AJAY T JAISINGHANI",
+          "strategy": "GLC Growth Fund",
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
+                    "pages": 27,
+                    "size": "133.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
+                    "pages": 5,
+                    "size": "78.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
+                    "pages": 1,
+                    "size": "68.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
+                    "pages": 2,
+                    "size": "69.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+                    "pages": 5,
+                    "size": "81.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 5
+            },
+            "2026-06-25": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
+                    "pages": 2,
+                    "size": "73.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "holdings": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+                    "pages": 4,
+                    "size": "85.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-07-09": {
+              "reportTypes": {
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
+                    "pages": 1,
+                    "size": "68.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
+                    "pages": 1,
+                    "size": "67.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 9
+        },
+        "(unidentified)": {
+          "owner": null,
+          "strategy": "GLC Growth Fund",
+          "asOfDates": {
+            "2026-06-25": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
+                    "pages": 1,
+                    "size": "115.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
+                    "pages": 1,
+                    "size": "115.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 20
+    }
+  },
+  "overlaps": [
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100024",
+      "asOf": "(unidentified)",
+      "fileCount": 12,
+      "reportTypes": [
+        "bank-book",
+        "capital-register",
+        "corporate-benefits",
+        "holdings",
+        "dividend-statement",
+        "expense-statement",
+        "appraisal",
+        "fact-sheet",
+        "performance-benchmark",
+        "performance-history",
+        "performance-summary",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100023",
+      "asOf": "(unidentified)",
+      "fileCount": 10,
+      "reportTypes": [
+        "bank-book",
+        "capital-register",
+        "holdings",
+        "dividend-statement",
+        "appraisal",
+        "fact-sheet",
+        "performance-benchmark",
+        "performance-history",
+        "performance-summary",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "510854",
+      "asOf": "(unidentified)",
+      "fileCount": 6,
+      "reportTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "510861",
+      "asOf": "(unidentified)",
+      "fileCount": 5,
+      "reportTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "account": "3517383",
+      "asOf": "(unidentified)",
+      "fileCount": 4,
+      "reportTypes": [
+        "bank-book",
+        "capital-gain",
+        "dividend-statement",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "account": "3517383",
+      "asOf": "2026-07-10",
+      "fileCount": 3,
+      "reportTypes": [
+        "appraisal",
+        "performance-history",
+        "holdings"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "510854",
+      "asOf": "2026-06-25",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "holdings"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "510861",
+      "asOf": "2026-06-25",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "holdings"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "(unidentified)",
+      "asOf": "2026-06-25",
+      "fileCount": 2,
+      "reportTypes": [
+        "fact-sheet"
+      ],
+      "duplicateTypes": [
+        "fact-sheet"
+      ]
+    }
+  ],
   "unclassified": []
 }

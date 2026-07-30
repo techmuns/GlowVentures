@@ -1,0 +1,225 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Punjab National Bank",
+   "Banks",
+   "451,867",
+   "0.76%"
+  ],
+  [
+   "2",
+   "State Bank Of India",
+   "Banks",
+   "2,697,132",
+   "4.55%"
+  ],
+  [
+   "3",
+   "Engineers India Ltd",
+   "Consulting Services"
+  ],
+  [
+   "4",
+   "Bajaj Auto Ltd",
+   "2/3 Wheelers",
+   "1,171,317",
+   "1.98%"
+  ],
+  [
+   "5",
+   "Exide Industries Ltd"
+  ],
+  [
+   "6",
+   "Jamna Auto Ind Ltd"
+  ],
+  [
+   "7",
+   "KPIT Technologies Ltd"
+  ],
+  [
+   "ZF Commercial Vehicle Control Systems",
+   "Auto Parts &",
+   "1,349,856",
+   "2.28%"
+  ],
+  [
+   "India Ltd",
+   "Equipment"
+  ],
+  [
+   "9",
+   "Power Finance Corporation Ltd"
+  ],
+  [
+   "10",
+   "Rural Electrification Corporation Ltd"
+  ],
+  [
+   "11",
+   "Tech Mahindra Ltd"
+  ],
+  [
+   "12",
+   "Intellect Design Arena Ltd",
+   "IT Software",
+   "1,633,051",
+   "2.76%"
+  ],
+  [
+   "13",
+   "Aarti Drugs Ltd",
+   "Pharmaceuticals",
+   "1,051,759",
+   "1.77%"
+  ],
+  [
+   "14",
+   "Aurobindo Pharma Ltd",
+   "Pharmaceuticals",
+   "2,575,411",
+   "4.35%"
+  ],
+  [
+   "15",
+   "Glenmark Pharmaceuticals Ltd",
+   "Pharmaceuticals",
+   "2,197,488",
+   "3.71%"
+  ],
+  [
+   "16",
+   "GMM Pfaudler Ltd",
+   "Industrial Machinery",
+   "934,887",
+   "1.58%"
+  ],
+  [
+   "17",
+   "Ingersollrand India Ltd",
+   "Industrial Machinery",
+   "978,776",
+   "1.65%"
+  ],
+  [
+   "18",
+   "Isgec Heavy Engineering Ltd",
+   "Industrial Machinery",
+   "2,414,306",
+   "4.07%"
+  ],
+  [
+   "19",
+   "KSB Ltd",
+   "Industrial Machinery",
+   "2,634,867",
+   "4.45%"
+  ],
+  [
+   "20",
+   "Gujarat Ambuja Exports Ltd"
+  ],
+  [
+   "21",
+   "Kaveri Seed Company Ltd"
+  ],
+  [
+   "22",
+   "Ratnamani Metals & Tubes Ltd"
+  ],
+  [
+   "23",
+   "Thermax Ltd"
+  ],
+  [
+   "24",
+   "Triveni Turbine Ltd"
+  ],
+  [
+   "25",
+   "Vedanta Aluminium Metal Limited",
+   "Aluminium",
+   "1,921,839",
+   "3.24%"
+  ],
+  [
+   "26",
+   "Bharat Heavy Electricals Ltd"
+  ],
+  [
+   "27",
+   "Graphite India Ltd"
+  ],
+  [
+   "28",
+   "Hindustan Aeronautics Ltd",
+   "Airlines",
+   "1,856,698",
+   "3.13%"
+  ],
+  [
+   "29",
+   "The Anup Engineering Ltd",
+   "Engineering",
+   "1,463,762",
+   "2.47%"
+  ],
+  [
+   "30",
+   "Alivus Life Sciences Ltd",
+   "Pharmaceuticals",
+   "2,371,762",
+   "4.00%"
+  ],
+  [
+   "31",
+   "Mishra Dhatu Nigam Ltd",
+   "Miscellaneous",
+   "1,565,046",
+   "2.64%"
+  ],
+  [
+   "32",
+   "Vedanta Ltd",
+   "Diversified Metals",
+   "1,186,773",
+   "2.00%"
+  ],
+  [
+   "33",
+   "Cash",
+   "Cash and Equivalent",
+   "1,880,257",
+   "3.17%"
+  ],
+  [
+   "Axis Liquid Fund - Direct Plan - Growth",
+   "6,827",
+   "0.01%"
+  ],
+  [
+   "34",
+   "Option",
+   "Mutual Fund"
+  ],
+  [
+   "35",
+   "Dividend / Interest receivable",
+   "receivable"
+  ],
+  [
+   "Total",
+   "59,266,352",
+   "100%"
+  ]
+ ]
+}

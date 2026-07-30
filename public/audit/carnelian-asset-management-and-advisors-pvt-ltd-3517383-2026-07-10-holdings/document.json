@@ -1,0 +1,102 @@
+{
+ "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
+ "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+ "accountNo": "3517383",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "CBP0142",
+ "owner": "AJAY T JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-10",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
+ "pages": 3,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 613,
+   "parts": [
+    "0",
+    "0"
+   ],
+   "joined": "00",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 543,
+   "parts": [
+    "0",
+    "0"
+   ],
+   "joined": "00",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 668,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "0000",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 605,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "0000",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 412,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "0000000000",
+   "page": 3
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

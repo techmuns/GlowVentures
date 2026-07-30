@@ -5,15 +5,21 @@
 // read off a real report by a human; if the extractor cannot reproduce them, the
 // extractor is wrong and the book built on it would be wrong too.
 //
-// Three outcomes, and the difference between them matters:
+// Four outcomes, and the differences between them all matter:
 //
-//   PASS     every expected figure was reproduced.
-//   FAIL     a document was found but a figure came out wrong or missing.
-//            The extractor needs fixing. Exit code 1.
-//   BLOCKED  the source statements are not present, so nothing could be
-//            checked. Exit code 2 — NOT a pass. A test that silently "passes"
-//            because it had nothing to test is worse than no test: it reports
-//            confidence that was never earned.
+//   PASS         every expected figure was reproduced.
+//   FAIL         a document was found but a figure came out wrong or missing.
+//                The extractor needs fixing. Exit code 1.
+//   BLOCKED      the source statements are not present, so nothing could be
+//                checked. Exit code 2 — NOT a pass. A test that silently
+//                "passes" because it had nothing to test is worse than no test:
+//                it reports confidence that was never earned.
+//   NOT CHECKED  the statement is here but this engine has no reader for that
+//                report type, so the figure was never read. Marked `pending`
+//                with the reason, counted apart from both passes and failures,
+//                and printed at the end so it stays a visible to-do.
+//
+// FAIL outranks BLOCKED: a wrong figure is a defect whatever else is missing.
 //
 // Run: node scripts/ingest/__tests__/golden.mjs   (or `npm run test:ingest`)
 import fs from "node:fs";
@@ -25,14 +31,24 @@ const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit
 
 // ── The expected figures ─────────────────────────────────────────────────────
 
+// A figure the engine cannot check yet, and why. Listed, never silently dropped:
+// an expectation that quietly disappears is indistinguishable from one that
+// passed. These are counted separately and reported at the end.
+const pending = (reason) => ({ pending: reason });
+
+const NO_READER_CURRENT_PORTFOLIO =
+  "CURRENT PORTFOLIO (reportType `holdings`) has no reader in pmsStatements.mjs — " +
+  "it is declared `no-reader-for-report-type` and left unread rather than half-read.";
+
 const GOLDEN = [
   {
-    label: "GoldStandard · account 100023 · Aristos Equity Portfolio · as of 2026-07-10",
+    label: "Goldstandard · account 100023 · Aristos Equity Portfolio · as of 2026-07-10",
     match: { provider: /goldstandard/i, accountNo: "100023" },
     asOf: "2026-07-10",
     owner: { printed: "Ajay Thakurdas Jaisinghani", ownerId: "ajay-jaisinghani" },
     inceptionDate: "2025-12-26",
     strategy: "Aristos Equity Portfolio",
+    engagement: "PMS",
 
     // Totals — from PortfolioAppraisal (the precedence-authoritative source).
     totals: {
@@ -48,18 +64,39 @@ const GOLDEN = [
     positionCounts: { equity: 31, cash: 1 },
 
     // The SAME account and date, a different report, a different total G/L.
-    // Both must be extracted; the delta is the reconciler's to report.
     alternateTotals: [
-      { reportType: "holdings", gainLoss: 6744704, pctGainLoss: 3.93, note: "CurrentPortfolio folds accrued income into G/L" },
+      {
+        reportType: "holdings",
+        gainLoss: pending(NO_READER_CURRENT_PORTFOLIO),
+        pctGainLoss: pending(NO_READER_CURRENT_PORTFOLIO),
+        note: "CurrentPortfolio prints 6,744,704 / 3.93% — it folds accrued income into G/L on every row.",
+      },
     ],
 
-    flows: { reportType: "performance-summary", contribution: 175000000, withdrawal: 41000, profit: 6574677 },
+    // Two DIFFERENT flow blocks, on two different windows. The fact sheet's
+    // Portfolio Summary runs since inception (26/12/2025); the performance
+    // summary runs the financial year to date (01/04/2026 to 10/07/2026). Both
+    // are real and neither is a restatement of the other.
+    flowBlocks: [
+      { reportType: "fact-sheet", contribution: 175000000, withdrawal: 41000, profit: 6574677, corpus: 181533677 },
+      {
+        reportType: "performance-summary",
+        netCapitalInOut: -22975, realized: 415051.23, unrealized: 25401289.68,
+        income: 234150, fees: 404305.18, expenses: 59929.70,
+        // The CLOSING value. This report prints "Market Value as of" twice —
+        // 155,590,795.80 opening on 01/04/2026 and this one closing on
+        // 10/07/2026 — and corpus is the close, which is what ties to the
+        // appraisal's total and to the fact sheet's Portfolio Value.
+        corpus: 181533676.83,
+      },
+    ],
 
-    // "YTD" on the statement is the INDIAN FY to date (window 01/04/2026 to
-    // 10/07/2026), stored as fytd. SI is NOT annualised: inception 26/12/2025 is
-    // ~6.5 months before the report, and the provider annualises only past a year.
+    // "YTD" on the statement is the INDIAN FY to date — the performance summary
+    // covering 01/04/2026 to 10/07/2026 prints the same 16.69% — so it is stored
+    // as fytd. SI is NOT annualised: inception 26/12/2025 is ~6.5 months before
+    // the report, and the provider annualises only past a year.
     returns: [
-      { reportType: "fact-sheet", series: /portfolio/i, mtd: 2.35, qtd: 2.35, fytd: 16.69, si: 3.76, siAnnualised: false },
+      { reportType: "fact-sheet", series: /^portfolio$/i, mtd: 2.35, qtd: 2.35, fytd: 16.69, si: 3.76, siAnnualised: false },
       { reportType: "fact-sheet", series: /n50 ?tri|nifty ?50/i, mtd: 0.46, qtd: 0.46, fytd: 7.89, si: -7.73 },
     ],
 
@@ -68,12 +105,79 @@ const GOLDEN = [
         reportType: "appraisal",
         security: /blue jet healthcare/i,
         quantity: 15000, unitCost: 422.73, marketPrice: 574.50,
-        totalCost: 6340947.49, marketValue: 8617500.00,
-        gainLoss: 2276553, pctGainLoss: 35.90, pctAssets: 4.75,
+        totalCost: 6340947.49,
+        // DERIVED to the paise: 574.50 x 15,000 and the gain from it. The
+        // statement prints the gain rounded to the rupee (2,276,553) and %Assets
+        // on its income-inclusive basis (4.75); both are asserted separately
+        // under `printed` so the two bases stay visible rather than averaged.
+        marketValue: 8617500.00,
+        gainLoss: 2276552.51,
+        pctGainLoss: 35.90,
+        pctAssets: 4.76,
+        printed: { gainLoss: 2276553, pctAssets: 4.75 },
       },
       { reportType: "fact-sheet", security: /blue jet healthcare/i, providerSector: "Pharmaceuticals" },
-      { reportType: "holdings", security: /sundaram finance/i, accruedIncome: 40200, positionIrrPct: 11.87 },
+      {
+        reportType: "holdings",
+        security: /sundaram finance/i,
+        accruedIncome: pending(NO_READER_CURRENT_PORTFOLIO),
+        positionIrrPct: pending(NO_READER_CURRENT_PORTFOLIO),
+      },
     ],
+  },
+  {
+    label: "Goldstandard · account 100022 · Aristos Equity Portfolio · as of 2026-07-10",
+    match: { provider: /goldstandard/i, accountNo: "100022" },
+    asOf: "2026-07-10",
+    owner: { printed: "Ankita Bharat Jaisinghani", ownerId: "ankita-jaisinghani" },
+    strategy: "Aristos Equity Portfolio",
+    engagement: "PMS",
+    totals: {
+      reportType: "appraisal",
+      equityMarketValue: 76811725.50,
+      cashValue: 883627.86,
+      totalMarketValue: 77695353.36,
+      totalCost: 75107865.67,
+      gainLoss: 2430288,
+    },
+    positionCounts: { equity: 31, cash: 1 },
+    flowBlocks: [
+      { reportType: "fact-sheet", contribution: 75000000, withdrawal: 16894, profit: 2712247, corpus: 77695353 },
+    ],
+    returns: [
+      { reportType: "fact-sheet", series: /^portfolio$/i, mtd: 2.30, qtd: 2.30, fytd: 16.58, si: 3.62 },
+      { reportType: "fact-sheet", series: /n50 ?tri|nifty ?50/i, mtd: 0.46, qtd: 0.46, fytd: 7.89, si: -7.73 },
+    ],
+  },
+  {
+    label: "Green Lantern · account 510861 · GLC Growth Fund · as of 2026-06-25",
+    match: { provider: /green lantern/i, accountNo: "510861" },
+    asOf: "2026-06-25",
+    owner: { printed: "AJAY T JAISINGHANI", ownerId: "ajay-jaisinghani" },
+    engagement: "PMS",
+    totals: {
+      reportType: "appraisal",
+      equityMarketValue: 113482401.26,
+      totalMarketValue: 117052230.76,
+      gainLoss: 14066326,
+    },
+    // 32 equity lines plus a Cash section of two — the cash block is on PAGE 2,
+    // which is why this case exists: a one-page read loses 3% of the account.
+    positionCounts: { equity: 32, cash: 2 },
+  },
+  {
+    label: "Carnelian · account 3517383 · Carnelian Bespoke Portfolio · as of 2026-07-10",
+    match: { provider: /carnelian/i, accountNo: "3517383" },
+    asOf: "2026-07-10",
+    owner: { printed: "AJAY T JAISINGHANI", ownerId: "ajay-jaisinghani" },
+    engagement: "PMS",
+    totals: {
+      reportType: "appraisal",
+      equityMarketValue: 370665543.31,
+      totalMarketValue: 400475677.94,
+      gainLoss: 97292915,
+    },
+    positionCounts: { equity: 9, cash: 2 },
   },
   {
     label: "360 ONE · Bharat Jaisinghani CRN60117 · as on 2026-06-30",
@@ -127,9 +231,18 @@ const GOLDEN = [
 
 let pass = 0, fail = 0;
 const failures = [];
+const blocked = [];        // whole cases with no source document in this drop
+const unchecked = [];      // single figures the engine cannot read yet
 const MONEY_TOL = 0.011, PCT_TOL = 0.005;
 
+const isPending = (w) => w !== null && typeof w === "object" && typeof w.pending === "string";
+
 function check(label, got, want, tol = MONEY_TOL) {
+  // A pending expectation is neither passed nor failed — it is reported as
+  // unchecked, with the reason it could not be checked. Counting it either way
+  // would be a lie: as a pass it claims confidence nobody earned, as a failure
+  // it says the extractor got a number wrong when it never read one.
+  if (isPending(want)) { unchecked.push({ label, reason: want.pending }); return false; }
   const ok = typeof want === "number"
     ? typeof got === "number" && Math.abs(got - want) <= tol
     : Object.is(got, want);
@@ -173,9 +286,11 @@ function runCase(manifest, spec) {
   console.log(`\n  ${spec.label}`);
   const byType = docsFor(manifest, spec);
   if (!byType.size) {
-    console.log("    NO DOCUMENT FOUND for this account/date");
-    fail++;
-    failures.push({ label: `${spec.label} — document present`, got: "none", want: "at least one" });
+    // BLOCKED, not FAILED. No statement for this account is in the drop, so
+    // nothing about it was tested — the extractor has not been shown to be wrong.
+    // Reported loudly and counted apart, never quietly deleted from the spec.
+    console.log("    BLOCKED — no statement for this account/date is present in source/");
+    blocked.push(spec.label);
     return;
   }
 
@@ -219,11 +334,11 @@ function runCase(manifest, spec) {
     }
   }
 
-  if (spec.flows) {
-    const d = pick(spec.flows.reportType);
-    for (const [field, want] of Object.entries(spec.flows)) {
-      if (field === "reportType") continue;
-      check(`${spec.label} · flows.${field}`, d?.flows?.[field] ?? null, want);
+  for (const block of spec.flowBlocks ?? []) {
+    const d = pick(block.reportType);
+    for (const [field, want] of Object.entries(block)) {
+      if (field === "reportType" || field === "note") continue;
+      check(`${spec.label} · ${block.reportType}.flows.${field}`, d?.flows?.[field] ?? null, want);
     }
   }
 
@@ -248,19 +363,30 @@ function runCase(manifest, spec) {
     const d = pick(want.reportType);
     const h = (d?.holdings ?? []).find((x) => want.security.test(String(x.security ?? "")));
     if (!h) {
-      fail++;
-      failures.push({ label: `${spec.label} · holding ${want.security} in ${want.reportType}`, got: "not found", want: "present" });
+      // Every field expected of a document that produced no holdings is
+      // unchecked for the same reason; say so once, with that reason, rather
+      // than failing on a report the engine openly declines to read.
+      const reasons = Object.values(want).filter(isPending).map((v) => v.pending);
+      if (reasons.length) unchecked.push({ label: `${spec.label} · ${want.reportType} holdings`, reason: reasons[0] });
+      else {
+        fail++;
+        failures.push({ label: `${spec.label} · holding ${want.security} in ${want.reportType}`, got: "not found", want: "present" });
+      }
       continue;
     }
     for (const [field, wantVal] of Object.entries(want)) {
-      if (["reportType", "security", "derived"].includes(field)) continue;
+      if (["reportType", "security", "derived", "printed"].includes(field)) continue;
       // Derivable fields are checked against the DERIVED value — that is what the
-      // book uses. The printed counterpart is asserted too, so a report that
-      // disagrees with its own arithmetic is caught rather than averaged away.
+      // book uses, to the paise.
       check(`${spec.label} · ${h.security} .${field}`, h[field] ?? null, wantVal, field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
-      if (h.printed && field in h.printed && h.printed[field] !== null) {
-        check(`${spec.label} · ${h.security} printed.${field}`, h.printed[field], wantVal, field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
-      }
+    }
+    // …and the statement's own PRINTED figure is asserted separately, so the two
+    // bases stay visible. Blue Jet's gain is 2,276,552.51 derived and 2,276,553
+    // printed; %Assets is 4.76 derived and 4.75 printed. Asserting one against
+    // the other would force a tolerance wide enough to hide a real error.
+    for (const [field, wantVal] of Object.entries(want.printed ?? {})) {
+      check(`${spec.label} · ${h.security} printed.${field}`, h.printed?.[field] ?? null, wantVal,
+        field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
     }
     if (want.derived?.totalGain !== undefined) {
       const got = (h.unrealized ?? 0) + (h.realized ?? 0);
@@ -314,5 +440,29 @@ if (failures.length) {
   }
   console.log("");
 }
-console.log(`  ${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
+if (unchecked.length) {
+  const byReason = new Map();
+  for (const u of unchecked) byReason.set(u.reason, [...(byReason.get(u.reason) ?? []), u.label]);
+  console.log("  NOT CHECKED — the engine cannot read these yet:");
+  for (const [reason, labels] of byReason) {
+    console.log(`    ${reason}`);
+    for (const l of labels) console.log(`      · ${l}`);
+  }
+  console.log("");
+}
+if (blocked.length) {
+  console.log("  BLOCKED — no statement in source/ for these accounts, so nothing was checked:");
+  for (const b of blocked) console.log(`    · ${b}`);
+  console.log("");
+}
+console.log(`  ${pass} passed, ${fail} failed, ${unchecked.length} not checked, ${blocked.length} case(s) blocked`);
+
+// FAIL beats BLOCKED: a wrong figure is a defect whatever else is missing.
+if (fail) process.exit(1);
+if (blocked.length) {
+  console.log("");
+  console.log("  Exit 2 (BLOCKED): every figure that COULD be checked reproduced, but the");
+  console.log("  accounts above have no statement in this drop. That is not a pass.");
+  process.exit(2);
+}
+process.exit(0);

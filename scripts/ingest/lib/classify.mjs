@@ -12,8 +12,9 @@
 
 export const REPORT_TYPES = [
   "holdings", "appraisal", "fact-sheet", "performance-summary", "performance-history",
-  "transaction-statement", "corporate-action", "capital-call", "distribution-notice",
-  "contract-note", "unknown",
+  "performance-benchmark", "transaction-statement", "corporate-action", "capital-gain",
+  "capital-register", "dividend-statement", "bank-book", "expense-statement",
+  "corporate-benefits", "capital-call", "distribution-notice", "contract-note", "unknown",
 ];
 
 // ── Date parsing ─────────────────────────────────────────────────────────────
@@ -151,20 +152,49 @@ function match360One(text, name) {
  */
 const GOLDSTANDARD_FILE_TYPES = [
   [/currentportfolio/i, "holdings"],
+  [/portfoliopositionmain/i, "holdings"],
   [/portfolioappraisal/i, "appraisal"],
-  [/port_?folio_?factsheet/i, "fact-sheet"],
+  [/portfoliofactsheet/i, "fact-sheet"],
   [/portfolioperfsummary/i, "performance-summary"],
   [/portfolioperfhistory/i, "performance-history"],
-  [/transaction/i, "transaction-statement"],
+  [/portfolioperfbm/i, "performance-benchmark"],
+  [/transactionstatement/i, "transaction-statement"],
+  [/capitalgain/i, "capital-gain"],
+  [/capitalregister/i, "capital-register"],
+  [/dividendstatement/i, "dividend-statement"],
+  [/bankbook/i, "bank-book"],
+  [/expensestmt/i, "expense-statement"],
+  [/corporatebenefits/i, "corporate-benefits"],
 ];
 
+/**
+ * The shared PMS reporting system.
+ *
+ * Goldstandard (Aristos), Green Lantern and Carnelian all issue from it, with
+ * identical filenames `<code>_<account>_<ReportType><n>OT (n).pdf`. That pattern
+ * is the gate; the manager is then read from the letterhead, falling back to the
+ * account-code prefix because the appraisal carries no letterhead.
+ */
+const PMS_FILE = /^[A-Z]{1,4}\d+_\d+_/i;
+
 function matchGoldstandard(text, name) {
-  const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text);
-  const byName = /^G\d+_\d+_/i.test(name);
+  const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
+    || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text);
+  const byName = PMS_FILE.test(name);
   if (!byText && !byName) return null;
 
   // `Account : 12345  Some Owner Name`
-  const strategy = /Aristos\s+Equity\s+Portfolio/i.test(text) ? "Aristos Equity Portfolio" : null;
+  const provider = /GREEN\s+LANTERN\s+CAPITAL/i.test(text) ? "Green Lantern Capital LLP"
+    : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
+    : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
+    : /^GLC/i.test(name) ? "Green Lantern Capital LLP"
+    : /^CBP/i.test(name) ? "Carnelian Asset Management and Advisors Pvt Ltd"
+    : /^G\d/i.test(name) ? "Goldstandard Wealth Private Limited"
+    : null;
+  const strategy = /Aristos\s+Equity\s+Portfolio/i.test(text) ? "Aristos Equity Portfolio"
+    : /GLC\s+GROWTH\s+FUND/i.test(text) ? "GLC Growth Fund"
+    : /CARNELIAN\s+BESPOKE\s+PORTFOLIO/i.test(text) ? "Carnelian Bespoke Portfolio"
+    : null;
   const acct = text.match(/Account\s*[:#-]\s*([A-Z0-9-]{2,20})\s+([A-Za-z][A-Za-z.&'\- ]{2,80})/i);
   let accountNo = acct ? acct[1] : null;
   // The strategy name sits right after the owner on the same header line, so its
@@ -179,17 +209,17 @@ function matchGoldstandard(text, name) {
   const asOf = dateAfter(text, "Report\\s*Date") || dateAfter(text, "As\\s*of") || dateAfter(text, "As\\s*on");
 
   let reportType = "unknown";
-  let matchedBy = "GoldStandard signature";
+  let matchedBy = "Goldstandard signature";
   for (const [re, type] of GOLDSTANDARD_FILE_TYPES) {
-    if (re.test(name.replace(/[^A-Za-z]/g, ""))) { reportType = type; matchedBy = "GoldStandard filename"; break; }
+    if (re.test(name.replace(/[^A-Za-z]/g, ""))) { reportType = type; matchedBy = "Goldstandard filename"; break; }
   }
   if (reportType === "unknown") {
     const g = genericReportType(text);
-    if (g) { reportType = g; matchedBy = "GoldStandard signature + content keywords"; }
+    if (g) { reportType = g; matchedBy = "Goldstandard signature + content keywords"; }
   }
 
   return {
-    provider: "GoldStandard Wealth Private Limited",
+    provider,
     ownerName,
     accountNo,
     asOfDate: asOf,
@@ -223,7 +253,9 @@ function genericReportType(text) {
 
 const GENERIC_PROVIDER_RULES = [
   [/360\s*ONE/i, "360 ONE Private Wealth"],
-  [/GOLDSTANDARD\s+WEALTH/i, "GoldStandard Wealth Private Limited"],
+  [/GOLDSTANDARD\s+WEALTH/i, "Goldstandard Wealth Private Limited"],
+  [/GREEN\s+LANTERN\s+CAPITAL/i, "Green Lantern Capital LLP"],
+  [/CARNELIAN\s+ASSET\s+MANAGEMENT/i, "Carnelian Asset Management and Advisors Pvt Ltd"],
   [/\bKotak\s+(?:Mahindra\s+)?(?:Bank|Securities|Investment)/i, "Kotak"],
   [/\bICICI\s+(?:Securities|Prudential|Bank)/i, "ICICI"],
   [/\bHDFC\s+(?:Securities|Bank|AMC)/i, "HDFC"],

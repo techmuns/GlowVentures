@@ -22,7 +22,7 @@ import { extractLayout } from "./lib/layout.mjs";
 import { classify } from "./lib/classify.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
-import * as goldstandard from "./providers/goldstandard.mjs";
+import * as pms from "./providers/pmsStatements.mjs";
 import * as threeSixtyOne from "./providers/threeSixtyOne.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 
@@ -41,11 +41,17 @@ function loadSymbolMap() {
   catch { return {}; }
 }
 
-/** provider name -> extractor module. Add a provider by adding a line here. */
-const EXTRACTORS = {
-  [goldstandard.PROVIDER]: goldstandard,
-  [threeSixtyOne.PROVIDER]: threeSixtyOne,
-};
+/**
+ * provider name -> extractor module.
+ *
+ * The three PMS managers share ONE reporting system, so they share one
+ * extractor rather than having three near-copies drift apart. 360 ONE keeps its
+ * own because its bundle is a genuinely different document.
+ */
+const EXTRACTORS = Object.fromEntries([
+  ...Object.values(pms.PROVIDERS).map((p) => [p.name, pms]),
+  [threeSixtyOne.PROVIDER, threeSixtyOne],
+]);
 
 function walk(dir, hit, seen = new Set()) {
   let entries;
@@ -113,19 +119,162 @@ function extractOne(file, grid) {
 
   let result;
   try {
-    result = extractor.extract({ grid, meta: { ...meta, docKey } });
+    result = extractor.extract({ grid, meta: { ...meta, docKey, fileName } });
   } catch (e) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "extractor-threw", detail: e?.message ?? String(e) }] });
   }
 
   const warnings = [...(result.warnings ?? [])];
-  if (!owner.owner && meta.ownerName) {
-    warnings.push({ code: "owner-unresolved", detail: `"${meta.ownerName}" matches no canonical owner — add an alias in shared/owners.mjs` });
+
+  // Resolve the owner from the name the document ENDS UP with, not the one the
+  // classifier guessed from flat text. The extractor reads the header off the
+  // coordinate grid and often finds a name where the flat-text classifier found
+  // none — resolving before the merge left those documents with a correct owner
+  // and a null ownerId, which reads downstream as "unidentified person".
+  const finalOwnerName = result.owner ?? meta.ownerName ?? null;
+  const finalOwner = resolveOwner(finalOwnerName);
+  if (!finalOwner.owner && finalOwnerName) {
+    warnings.push({ code: "owner-unresolved", detail: `"${finalOwnerName}" matches no canonical owner — add an alias in shared/owners.mjs` });
   }
   // Derive every derivable field from the primitives BEFORE the document is
   // validated or written. Nothing downstream ever sees an un-derived holding.
-  const doc = deriveDocument(makeDocument({ ...base, ...result, warnings, ownerId: base.ownerId }));
-  return assertNormalized(doc);
+  const doc = deriveDocument(makeDocument({
+    ...base, ...result, warnings,
+    owner: finalOwnerName,
+    ownerId: finalOwner.owner?.ownerId ?? null,
+  }));
+  // The PRINTED account number is the record, and the extractor reads it off the
+  // page while the classifier only had the file name to go on. They disagree
+  // here: `G100023_100023_PortFolioFactSheet.pdf` prints `Account: 100022`, and
+  // keying that document under 100023 files Ankita's fact sheet with Ajay's
+  // statements.
+  return assertNormalized(rekey(doc));
+}
+
+/**
+ * Re-key a document after its identity changed, carrying every back-reference
+ * with it. `source` on each holding, each return series and the flows block is
+ * the docKey — leaving those pointing at the old key would break provenance in
+ * exactly the places the audit archive exists to preserve it.
+ */
+function rekey(doc) {
+  const docKey = makeDocKey({
+    provider: doc.provider, accountNo: doc.accountNo, asOf: doc.asOf, reportType: doc.reportType,
+  });
+  if (docKey === doc.docKey) return doc;
+  const old = doc.docKey;
+  const move = (o) => (o && o.source === old ? { ...o, source: docKey } : o);
+  doc.docKey = docKey;
+  doc.holdings = doc.holdings.map(move);
+  doc.returns = doc.returns.map(move);
+  doc.flows = move(doc.flows);
+  doc.totals = move(doc.totals);
+  doc.cashFlows = doc.cashFlows.map(move);
+  return doc;
+}
+
+/**
+ * Fill a missing account number from the client code, using this drop's OWN
+ * statements as the mapping.
+ *
+ * Green Lantern and Carnelian print two identifiers for the same account: the
+ * account number (`Account : 510861`) and a client code (`AJAY T JAISINGHANI -
+ * GLC0780`). Several of their reports carry only the code, which leaves those
+ * documents keyed `…-unknown-…` and scattered away from the account they belong
+ * to.
+ *
+ * The mapping is not invented — it is read off statements in this same drop
+ * that print BOTH, and only ever applied when the code maps to exactly one
+ * account. An ambiguous code is left alone and reported. Every backfilled
+ * document carries `accountNoSource: "client-code"` and a warning, so no reader
+ * mistakes it for a number the statement printed.
+ */
+function backfillAccountNumbers(docs) {
+  const byCode = new Map();
+  for (const d of docs) {
+    if (!d.clientCode || !d.accountNo) continue;
+    const set = byCode.get(d.clientCode) ?? new Set();
+    set.add(d.accountNo);
+    byCode.set(d.clientCode, set);
+  }
+  for (const d of docs) {
+    if (d.accountNo || !d.clientCode) continue;
+    const candidates = byCode.get(d.clientCode);
+    if (!candidates || candidates.size !== 1) continue;
+    d.accountNo = [...candidates][0];
+    d.accountNoSource = "client-code";
+    d.warnings.push({
+      code: "account-no-from-client-code",
+      detail: `this report prints client code ${d.clientCode} but no account number; matched to ${d.accountNo} via other statements in this drop that print both`,
+    });
+    rekey(d);
+  }
+  return docs;
+}
+
+/**
+ * Fill a missing owner from another statement for the SAME provider and account.
+ *
+ * Some reports don't print the client's name anywhere this engine can read it
+ * safely — GoldStandard's CURRENT PORTFOLIO puts it on the same line as the
+ * table's own column headings, where a rule loose enough to reach it also reaches
+ * a security name. The account number on the other hand is unambiguous, and
+ * other statements for that account name the owner outright.
+ *
+ * So the name is joined on `provider + accountNo`, only when every statement for
+ * that account agrees on one owner, and it is recorded as derived. It is NOT a
+ * guess about who owns the account — it is the same account's own paperwork.
+ */
+function backfillOwners(docs) {
+  const byAccount = new Map();
+  for (const d of docs) {
+    if (!d.accountNo || !d.ownerId) continue;
+    const k = `${d.provider}\u0000${d.accountNo}`;
+    const set = byAccount.get(k) ?? new Map();
+    set.set(d.ownerId, d.owner);
+    byAccount.set(k, set);
+  }
+  for (const d of docs) {
+    if (d.ownerId || !d.accountNo) continue;
+    const candidates = byAccount.get(`${d.provider}\u0000${d.accountNo}`);
+    if (!candidates || candidates.size !== 1) continue;
+    const [[ownerId, owner]] = [...candidates];
+    d.ownerId = ownerId;
+    d.owner = owner;
+    d.ownerSource = "same-account";
+    d.warnings.push({
+      code: "owner-from-account-number",
+      detail: `this report does not print the client name where it can be read; taken from other statements for ${d.provider} account ${d.accountNo}, which all name ${owner}`,
+    });
+  }
+  return docs;
+}
+
+/**
+ * No two documents may share a docKey — the archive is a directory per key, so a
+ * collision silently overwrites one statement with another.
+ *
+ * Rather than let that happen quietly, the second and later documents get a
+ * suffix and a warning naming what they collided with. A collision is a signal
+ * that the identity fields did not distinguish two real statements, and it needs
+ * to be visible in the report, not resolved by whoever wrote to disk last.
+ */
+function ensureUniqueDocKeys(docs) {
+  const seen = new Map();
+  for (const d of docs) {
+    const first = seen.get(d.docKey);
+    if (!first) { seen.set(d.docKey, d); continue; }
+    const base = d.docKey;
+    let n = 2;
+    while (seen.has(`${base}-${n}`)) n++;
+    d.warnings.push({
+      code: "duplicate-doc-key",
+      detail: `${base} was already claimed by ${first.sourcePath}; filed as ${base}-${n}. The identity fields (provider, account, as-of, report type) do not distinguish these two statements.`,
+    });
+    d.docKey = `${base}-${n}`;
+    seen.set(d.docKey, d);
+  }
+  return docs;
 }
 
 /** public/audit/<docKey>/<section>.json + pages.json, and the manifest. */
@@ -208,6 +357,9 @@ async function main() {
     console.log(`${doc.status}${doc.warnings.length ? ` (${doc.warnings.length} warning${doc.warnings.length === 1 ? "" : "s"})` : ""}`);
   }
 
+  backfillAccountNumbers(docs);
+  backfillOwners(docs);
+  ensureUniqueDocKeys(docs);
   const manifest = writeArchive(docs, grids);
   const report = reconcile(docs, { pdfCount: files.length, symbolMap: loadSymbolMap() });
   writeReports(report, DOCS_DIR);

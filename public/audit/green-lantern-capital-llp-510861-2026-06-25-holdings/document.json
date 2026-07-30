@@ -1,0 +1,151 @@
+{
+ "docKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
+ "provider": "Green Lantern Capital LLP",
+ "accountNo": "510861",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "GLC0780",
+ "owner": "AJAY T JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-06-25",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+ "pages": 4,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 605,
+   "parts": [
+    "156",
+    "156"
+   ],
+   "joined": "156156",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 535,
+   "parts": [
+    "156",
+    "156"
+   ],
+   "joined": "156156",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 412,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "000000000",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 266,
+   "parts": [
+    "236",
+    "839",
+    "445",
+    "956"
+   ],
+   "joined": "236839445956",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 668,
+   "parts": [
+    "0",
+    "0"
+   ],
+   "joined": "00",
+   "page": 4
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 660,
+   "parts": [
+    "156",
+    "156",
+    "156"
+   ],
+   "joined": "156156156",
+   "page": 4
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 605,
+   "parts": [
+    "0",
+    "0"
+   ],
+   "joined": "00",
+   "page": 4
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 597,
+   "parts": [
+    "156",
+    "156",
+    "156"
+   ],
+   "joined": "156156156",
+   "page": 4
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 412,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "00000000",
+   "page": 4
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

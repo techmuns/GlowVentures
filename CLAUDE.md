@@ -40,12 +40,26 @@ default. This applies to every layer:
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
+**What is actually in `source/` today.** Three portfolio managers, five accounts,
+three family members, 51 PDFs:
+
+| Provider | Accounts | Owner | Strategy | As of |
+| --- | --- | --- | --- | --- |
+| Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-07-10 |
+| Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-07-10 |
+| Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | GLC Growth Fund | 2026-06-25 |
+| Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | GLC Growth Fund | 2026-06-25 |
+| Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | Carnelian Bespoke Portfolio | 2026-07-10 |
+
+All five are PMS mandates. **There are no 360 ONE statements in this drop** — the
+extractor, the precedence block and two golden cases for it are retained, and the
+golden test reports those cases BLOCKED rather than passing or failing them.
+
 ### 1. `securityKey`, not ISIN, is the join key
 
-Several providers print a security **name and nothing else** — no ISIN, no ticker.
-360 ONE's holdings are AIF/PMS units; GoldStandard reports listed Indian equity by
-name only. A model that requires an ISIN to identify a security cannot represent
-most of this book.
+These providers print a security **name and nothing else** — no ISIN, no ticker,
+on any of the 51 statements. A model that requires an ISIN to identify a security
+cannot represent this book at all.
 
 So `Position.securityKey` — a slug of the normalised security name
 (`securityKeyOf`) — is the identity, and it is what grouping, look-through, dedupe
@@ -86,7 +100,7 @@ neither is authoritative on its own.
 
 ### 4b. Primitives are ingested; everything derivable is DERIVED
 
-A statement's own arithmetic is not internally consistent. The GoldStandard
+A statement's own arithmetic is not internally consistent. The Goldstandard
 Appraisal prints Sundaram Finance at MV 7,740,510 with %Assets 4.29%, but
 7,740,510 / 181,533,677 = 4.26% — its percentage is on an income-inclusive basis
 its own MV column excludes. Ingesting both as facts imports that contradiction.
@@ -94,11 +108,28 @@ its own MV column excludes. Ingesting both as facts imports that contradiction.
 So `makeHolding` takes only **primitives** — quantity, unit cost, total cost,
 market price, accrued income (plus market value where no price is reported, e.g.
 360 ONE AIF units, flagged `marketValueFromPrinted`). `deriveHolding` computes
-market value = price x quantity, gain = value - cost, %gain, and %assets against
-the **total portfolio value including cash** (equity 98.08% + cash 1.92% = 100).
+market value = price x quantity, gain = value - cost, %gain, and %assets.
+
+**The %assets denominator is derived, not printed.** It is the sum of the derived
+market values including cash, NOT the statement's printed total. Both sides then
+sit on the same measurement and the weights add to 100. Dividing an ex-income
+numerator by the printed income-inclusive total leaves them summing to 99.83 —
+a gap that is neither rounding nor a holding, just two bases mixed together.
 
 The printed figures are kept in `printed.*` as a **CHECK, not a source**. Every
 delta lands in the extraction report's section (a2).
+
+**The one income-inclusive rule, verified exactly.** Across all five appraisals,
+143 of 143 rows satisfy
+
+```
+printed %Assets = (row market value + row accrued income) / (printed total, itself income-inclusive)
+```
+
+so those deltas are classified `explained` with that cause named, by reproducing
+the formula per row — not by widening a tolerance. The same basis explains every
+row-sum shortfall: `sum(marketValue)` falls short of the printed total by exactly
+the account's accrued income (Goldstandard 100023: ₹3,79,600, to the rupee).
 
 ### 5. Asset class is what a thing IS; engagement is how it is RUN
 
@@ -133,7 +164,7 @@ each group once** (`dedupedPositions` in `src/lib/analytics.ts`, mirrored by
 ### 6. One person, one ownerId
 
 The same family member is printed three ways across these providers — `Mr. AJAY
-T JAISINGHANI` (360 ONE), `Ajay Thakurdas Jaisinghani` (GoldStandard), `Ajay
+T JAISINGHANI` (360 ONE), `Ajay Thakurdas Jaisinghani` (Goldstandard), `Ajay
 Jaisinghani` (a family-name field). Grouped by printed name, one person becomes
 three and every per-entity total, allocation and XIRR is quietly wrong.
 
@@ -186,16 +217,42 @@ that are wrong and look right.
   whole page — a full-width title bridges the blank corridor between two columns
   and collapses them. Getting this wrong silently merges the security name into
   the quantity column.
+  **`splitByAlignedEdges()` matters too:** the blank corridor can close
+  completely on the widest row, so columns are also refined by their ALIGNMENT
+  edge — right edges for money columns, left edges for text ones. Each column is
+  cut only along the side it is *not* aligned to, or two values of equal width
+  would fake a boundary through the middle of the figures.
 - `lib/parseNum.mjs` — Indian (`1,45,80,412.51`) and Western grouping, leading /
   trailing minus, parenthesised negatives. **`null` means NOT REPORTED and never
   zero.** A grouping validator rejects concatenations like `-33.7912,500` rather
   than returning a plausible wrong number.
 - `lib/table.mjs` — tables are located by matching HEADER TEXT, never by column
   index, so a layout change surfaces as "column not matched" instead of wrong
-  figures. Handles headers wrapped over two lines.
-- `providers/*.mjs` — per-provider extractors. **Nothing provider-specific may
-  leak past this layer**; `lib/document.mjs` defines the normalized shape and
+  figures. Header labels are matched two ways, because these reports break them
+  both ways: **per span** (Carnelian emits all nine labels as ONE item, split by
+  character offset within it) and **per column across the header lines** ("Unit"
+  above "Cost" is the Unit Cost column, though neither line alone says so).
+  `bandToHeader` confines a table to the horizontal band its own header occupies,
+  for the fact sheet's two-column magazine layout.
+- `providers/pmsStatements.mjs` — ONE extractor for all three managers, who
+  publish from the same reporting system. **Nothing provider-specific may leak
+  past this layer**; `lib/document.mjs` defines the normalized shape and
   `assertNormalized` enforces it at runtime.
+
+**Three period vocabularies, three sets of fields.** Goldstandard prints to-date
+periods (`MTD QTD YTD Since`), Green Lantern and Carnelian trailing ones
+(`1m 3m 1y Since`), and the performance appraisal a transposed third
+(`1 Month / 3 Months / 6 Months / Since inception`). They are stored as
+`mtd/qtd/fytd` and `m1/m3/m6/y1` respectively — never folded together, because a
+trailing one-month return and a month-to-date return are different measurements.
+`ReturnSeries.feeBasis` records whether returns are after fees (Goldstandard) or
+before them (Carnelian), as each report's own disclosure states.
+
+**Flows carry their window.** `periodFrom`/`periodTo` on every flows block. The
+performance summary runs the financial year to date, the performance appraisal and
+fact sheet run since inception, and both print a "Realized Gain" — ₹4,15,051.23
+and ₹8,82,423.12. Both are right. Comparing them as a disagreement produced 14
+phantom deltas that would have buried the 3 real ones.
 
 ### `precedence.mjs` — a committed decision
 
@@ -203,11 +260,18 @@ Which report is authoritative for which fact, per provider. Not a default:
 "whichever file we parsed last wins" produces a different book on every run.
 The reconciler reports disagreements; precedence decides what is used.
 
-For GoldStandard, **PortfolioAppraisal is the clean basis** — its market value
+For all three PMS managers — who share one reporting system and therefore one
+precedence block — **PortfolioAppraisal is the clean basis**: its market value
 equals price × quantity exactly. CurrentPortfolio folds accrued income into
 market value on some rows but not others (Sundaram Finance yes, Sonata Software
 no) while adding it to Total G/L on every row, so accrued income is carried as
 its own field instead.
+
+The block's keys must match `PROVIDERS[*].name` in `pmsStatements.mjs` character
+for character. A key that doesn't match resolves to no precedence at all and the
+reconciler then reports disagreements with nothing to say about which side to
+believe — which is exactly how "Goldstandard" spelled "GoldStandard" silently
+disabled this whole table.
 
 ### Stage 3 — reconciliation (`docs/EXTRACTION-REPORT.md`)
 
@@ -219,23 +283,39 @@ Five checks, none of which resolve a conflict:
 | **a** Row sums vs printed totals, per table — both figures and the delta |
 | **a2** Derived vs printed — every computed figure against the statement's own |
 | **b** Cross-report deltas — same account, same as-of, field by field |
-| **c** Duplicate holdings under DIFFERENT owners — **flagged, never deduped** |
+| **c** Duplicate holdings with identical primitives — **flagged, never deduped** |
 | **d** Coverage — found / parsed / partial / failed, with reasons |
-| **e** Unresolved — securities with no symbol, owners with no canonical match, report types with no extractor |
+| **e** Unresolved — securities with no symbol, owners with no canonical match, report types with no reader |
+
+Every delta a check reports carries a `severity`, and the distinction is the
+product:
+
+- `rounding` — within the printing precision (≤ ₹1, ≤ 0.005pp). Aggregated, does
+  not block.
+- `explained` — reproduced exactly from a known basis difference, with the cause
+  named. Also does not block, because it is understood rather than merely small.
+- `material` — anything else. Reported per row, and it blocks the golden test.
+
+**As of this calibration there are zero material deltas of either kind.**
 
 Check (c) exists for a real case: 360 ONE Special Opportunities Fund Series 8
 Class A3 appears with byte-identical figures under two family members. Summing
 both double-counts ~1.46 Cr. Deciding which statement owns the position is a
-judgement about the family's affairs, not a parsing rule.
+judgement about the family's affairs, not a parsing rule. (No 360 ONE statement
+is in the current drop, so the check finds nothing — that is an absence of input,
+not a clean bill of health.)
 
 ### Stage 4 — tests (`npm run test:ingest`)
 
 - `parseNum`, `layout`, `pipeline` — the machinery, against PDFs generated in
   the test with known coordinates. These must pass.
-- `golden.mjs` — figures read off the REAL statements by a human. Three
-  outcomes: PASS, FAIL (exit 1), and **BLOCKED (exit 2) when the statements are
-  absent**. Blocked is not a pass and is never reported as one: a test that
-  passes with no input claims confidence nobody earned.
+- `golden.mjs` — figures read off the REAL statements by a human. Four outcomes:
+  PASS; **FAIL (exit 1)**; **BLOCKED (exit 2)** for a case whose statements are
+  absent; and **NOT CHECKED** for a figure whose report type this engine
+  deliberately does not read, marked `pending` with the reason and counted apart
+  from both passes and failures. FAIL outranks BLOCKED. Neither blocked nor
+  unchecked is ever reported as a pass: a test that passes with no input claims
+  confidence nobody earned.
 
 ### The audit archive
 
@@ -248,6 +328,22 @@ for provenance) and `document.json` (the normalized facts).
 
 `docKey` = `<provider>-<accountNo>-<asOf>-<reportType>`.
 **Raw PDFs stay in `source/` and are never copied under `public/`.**
+
+The account number in that key is the one the STATEMENT PRINTS, not the one in
+the file name — they disagree. `G100023_100023_PortFolioFactSheet.pdf` prints
+`Account: 100022`, and keying it by file name filed Ankita's fact sheet with
+Ajay's statements. `rekey()` in `extract.mjs` re-derives the key after extraction
+and carries every `source` back-reference with it; `ensureUniqueDocKeys()` makes
+a collision a visible warning rather than one document silently overwriting
+another on disk.
+
+Two identity fields are joined from this drop's own statements when a report
+doesn't print them, each recorded as derived with a warning naming the join:
+`accountNoSource: "client-code"` (Green Lantern and Carnelian print
+`AJAY T JAISINGHANI - GLC0780`, and other reports for that client print both
+identifiers) and `ownerSource: "same-account"`. Neither is a guess; both are the
+same account's own paperwork, and both are applied only when the mapping is
+unambiguous.
 
 Adding a provider: write `providers/<name>.mjs` returning a normalized document,
 register it in `extract.mjs`'s `EXTRACTORS`, and add its precedence block.

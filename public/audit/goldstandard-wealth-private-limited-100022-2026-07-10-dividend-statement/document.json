@@ -1,0 +1,47 @@
+{
+ "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement",
+ "provider": "Goldstandard Wealth Private Limited",
+ "accountNo": "100022",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Ankita Bharat Jaisinghani",
+ "ownerId": "ankita-jaisinghani",
+ "familyGroup": null,
+ "strategy": "Aristos Equity Portfolio",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-10",
+ "inceptionDate": null,
+ "reportType": "dividend-statement",
+ "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+ "pages": 3,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "dividend-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 414.22,
+   "parts": [
+    "900",
+    "800",
+    "700"
+   ],
+   "joined": "900800700",
+   "page": 1
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

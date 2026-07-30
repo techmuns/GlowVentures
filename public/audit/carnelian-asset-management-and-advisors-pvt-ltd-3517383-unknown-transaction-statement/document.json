@@ -1,0 +1,34 @@
+{
+ "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-transaction-statement",
+ "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+ "accountNo": "3517383",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "CBP0142",
+ "owner": "AJAY T JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": null,
+ "inceptionDate": null,
+ "reportType": "transaction-statement",
+ "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
+ "pages": 2,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "transaction-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

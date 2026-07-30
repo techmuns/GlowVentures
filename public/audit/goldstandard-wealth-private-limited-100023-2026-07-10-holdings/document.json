@@ -1,0 +1,89 @@
+{
+ "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
+ "provider": "Goldstandard Wealth Private Limited",
+ "accountNo": "100023",
+ "ownerSource": "same-account",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Ajay Thakurdas Jaisinghani",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-10",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+ "pages": 3,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "holdings: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  },
+  {
+   "code": "owner-from-account-number",
+   "detail": "this report does not print the client name where it can be read; taken from other statements for Goldstandard Wealth Private Limited account 100023, which all name Ajay Thakurdas Jaisinghani"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 624.73,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "0000000000000",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 682.73,
+   "parts": [
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "000",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 624.73,
+   "parts": [
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "joined": "0000000",
+   "page": 3
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

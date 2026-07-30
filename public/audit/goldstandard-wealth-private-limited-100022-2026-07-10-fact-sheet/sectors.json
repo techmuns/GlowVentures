@@ -1,0 +1,208 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Sundaram Finance Ltd.",
+   "Financial Company"
+  ],
+  [
+   "2",
+   "Banco Products India Ltd."
+  ],
+  [
+   "3",
+   "Sharda Motor Industries Ltd"
+  ],
+  [
+   "4",
+   "Suprajit Engineering Ltd.",
+   "& Equipments"
+  ],
+  [
+   "5",
+   "Tenneco Clean Air India Ltd."
+  ],
+  [
+   "6",
+   "Blue Jet Healthcare Ltd.",
+   "Pharmaceuticals",
+   "3,447,000",
+   "4.44%"
+  ],
+  [
+   "7",
+   "Caplin Point Laboratories Ltd.",
+   "Pharmaceuticals",
+   "2,359,260",
+   "3.04%"
+  ],
+  [
+   "8",
+   "Lupin Ltd",
+   "Pharmaceuticals",
+   "2,252,970",
+   "2.90%"
+  ],
+  [
+   "9",
+   "Zydus Lifesciences Ltd.",
+   "Pharmaceuticals",
+   "3,245,200",
+   "4.18%"
+  ],
+  [
+   "10",
+   "Oberoi Realty Ltd.",
+   "Commercial"
+  ],
+  [
+   "11",
+   "Motilal Oswal Financial Services Ltd.",
+   "Stockbroking &",
+   "2,120,625",
+   "2.73%"
+  ],
+  [
+   "12",
+   "Sonata Software Ltd.",
+   "Software &"
+  ],
+  [
+   "13",
+   "EIH Ltd.",
+   "Hotels & Resorts",
+   "3,114,575",
+   "4.01%"
+  ],
+  [
+   "14",
+   "Waaree Energies Ltd."
+  ],
+  [
+   "15",
+   "Indraprastha Medical Corp. Ltd.",
+   "Hospital",
+   "2,942,288",
+   "3.79%"
+  ],
+  [
+   "16",
+   "Kovai Medical Center & Hospital Ltd.",
+   "Hospital",
+   "2,985,250",
+   "3.84%"
+  ],
+  [
+   "17",
+   "Sagility Ltd.",
+   "IT Enabled Services",
+   "1,834,200",
+   "2.36%"
+  ],
+  [
+   "18",
+   "eClerx Services Ltd.",
+   "(BPO)/ Knowledge"
+  ],
+  [
+   "19",
+   "Transport Corp. of India Ltd."
+  ],
+  [
+   "20",
+   "Mahindra & Mahindra Ltd."
+  ],
+  [
+   "21",
+   "State Bank of India",
+   "Public Sector Bank",
+   "2,299,725",
+   "2.96%"
+  ],
+  [
+   "22",
+   "Can Fin Homes Ltd."
+  ],
+  [
+   "23",
+   "ICICI Bank Ltd.",
+   "Private Sector",
+   "2,761,400",
+   "3.55%"
+  ],
+  [
+   "24",
+   "Karur Vysya Bank Ltd.",
+   "Private Sector",
+   "2,513,025",
+   "3.23%"
+  ],
+  [
+   "Canara Robeco Asset Management"
+  ],
+  [
+   "Co. Ltd."
+  ],
+  [
+   "26",
+   "HDFC Asset Management Co. Ltd.",
+   "Management"
+  ],
+  [
+   "27",
+   "BLS International Services Ltd",
+   "Tour Travel",
+   "1,407,600",
+   "1.81%"
+  ],
+  [
+   "28",
+   "Jindal Stainless Ltd",
+   "Iron & Steel",
+   "2,306,200",
+   "2.97%"
+  ],
+  [
+   "29",
+   "MPS Ltd",
+   "E-Learning",
+   "2,528,500",
+   "3.25%"
+  ],
+  [
+   "30",
+   "Life Insurance Corp. of India",
+   "Life Insurance",
+   "2,630,700",
+   "3.39%"
+  ],
+  [
+   "31",
+   "Indian Energy Exchange Ltd."
+  ],
+  [
+   "32",
+   "Cash",
+   "Cash",
+   "883,628",
+   "1.14%"
+  ],
+  [
+   "33",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "Total",
+   "77,695,353",
+   "100%"
+  ]
+ ]
+}

@@ -1,0 +1,71 @@
+{
+ "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+ "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+ "accountNo": "3517383",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "CBP0142",
+ "owner": "AJAY T JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": null,
+ "inceptionDate": null,
+ "reportType": "capital-gain",
+ "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
+ "pages": 5,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-reader-for-report-type",
+   "detail": "capital-gain: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 635,
+   "parts": [
+    "357",
+    "358",
+    "359",
+    "362",
+    "363",
+    "366",
+    "500",
+    "500",
+    "501",
+    "492",
+    "162",
+    "161",
+    "158",
+    "156"
+   ],
+   "joined": "357358359362363366500500501492162161158156",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 635,
+   "parts": [
+    "156",
+    "90",
+    "89",
+    "89"
+   ],
+   "joined": "156908989",
+   "page": 2
+  }
+ ],
+ "derivedPortfolioTotal": null
+}
