@@ -8,10 +8,11 @@ Built with **React 18 + TypeScript + Vite + Tailwind + Recharts**. No backend �
 the book is baked in as typed data and everything runs in the browser, behind an
 edge password gate.
 
-> **Status: the shell is live, the book is empty.** The data model, every page and
-> the ingest intake are in place. `src/data/glowData.ts` is a placeholder with
-> empty arrays until statements are ingested, and the cockpit shows
-> *"No statements ingested yet"* rather than rendering zeros as if they were real.
+> **Status: the shell and the extraction engine are built; no statements have been
+> dropped yet.** `source/` is empty, so `public/audit/` and the extraction report
+> are empty too and the cockpit shows *"No statements ingested yet"* rather than
+> rendering zeros as if they were real. The golden test reports **BLOCKED**, not
+> pass, until the real PDFs land — see [Verification](#verification).
 
 ## Run
 
@@ -21,16 +22,17 @@ npm run dev      # http://localhost:5173
 npm run build    # type-check + production build
 ```
 
-## Before it will let anyone in
+## Access
 
-The gate password is **not set** — `functions/_middleware.js` ships with a
-`PLACEHOLDER` hash, which fails closed (the login page appears and no password
-works). Set one and redeploy:
+The gate password is set. To rotate it:
 
 ```bash
 npm run set-password -- "the new password"
-git commit -am "Set dashboard password" && git push
+git commit -am "Rotate dashboard password" && git push
 ```
+
+Only a salted SHA-256 hash is stored, server-side only. Rotating invalidates every
+existing session automatically.
 
 ## Where the data comes from
 
@@ -39,10 +41,10 @@ platforms** — monthly wealth-platform statements, PMS/AIF reports, fact sheets
 distribution / capital-call notices, some loose, some inside ZIPs.
 
 ```
-source/*.{zip,pdf}  →  docs/ingest-inventory.{json,md}  →  public/audit/  →  src/data/glowData.ts
-   raw statements         what's in the drop, grouped      extracted sheets      the baked book
-   (committed; never          (npm run inventory)          (served, gated)
-    served to browsers)
+source/*.{zip,pdf}   →   docs/INGEST-INVENTORY.md   →   public/audit/<docKey>/   →   src/data/glowData.ts
+  raw statements          what's in the drop,            extracted tables +           the book
+  (committed; NEVER       grouped & classified           docs/EXTRACTION-REPORT.md    (next step)
+   served to browsers)    (npm run inventory)            (npm run extract)
 ```
 
 1. **Drop** every ZIP and PDF into `source/` at the repo root. It sits outside
@@ -52,8 +54,11 @@ source/*.{zip,pdf}  →  docs/ingest-inventory.{json,md}  →  public/audit/  �
    `docs/ingest-inventory.json` and the readable `docs/INGEST-INVENTORY.md`.
 3. **Read the inventory before extracting anything** — especially its
    *"Overlapping reports"* and *"Could not classify"* sections.
-4. The extraction pass then writes `public/audit/` and regenerates
-   `src/data/glowData.ts`.
+4. **`npm run extract`** reads every PDF with the coordinate-aware engine, writes
+   the audit archive under `public/audit/<docKey>/`, and reconciles it into
+   `docs/EXTRACTION-REPORT.md`.
+5. **Read the extraction report.** It is the deliverable: extraction that "ran" is
+   worthless, extraction that ties out is the product.
 
 ### Why the inventory groups the way it does
 
@@ -67,11 +72,44 @@ deliberate decision rather than an accident of which file got parsed first.
 ### A caveat that shapes the whole pipeline
 
 Both known providers emit PDFs whose text layer is **column-scrambled** — values
-print out of document order and run together (`-33.7912,500 3,575,346 …`).
-Line-based regex parsing of a holdings table produces wrong numbers that look
-right. The inventory therefore reads **header fields only**; real table extraction
-must be **coordinate-based** (per-span x/y positions, columns recovered by
-clustering on x) and is a separate pass.
+print out of document order and run together (`-33.7912,500 3,575,346 …`), and
+figures split mid-number across spans (`3,440,` + `425.00`) and across lines
+(`2,037,517.` + `00`). Line-based regex parsing produces numbers that are wrong
+and look right.
+
+Extraction is therefore **coordinate-based** (`scripts/ingest/lib/layout.mjs`,
+built on `pdfjs-dist`): x/y per text span, rows clustered by y, columns inferred
+from blank vertical corridors **within each table region** — never across the
+whole page, where a full-width title bridges the gap between two columns and
+collapses them. Split figures are stitched only where the join yields one
+well-formed number, and every stitch is recorded in the extraction report.
+
+### Which report wins
+
+One account on one date produces several reports that disagree.
+`scripts/ingest/precedence.mjs` is a **committed decision** about which is
+authoritative for which fact — because "whichever file we parsed last wins"
+produces a different book on every run. For GoldStandard, PortfolioAppraisal is
+the clean basis (market value = price × quantity exactly); CurrentPortfolio folds
+accrued income into market value on some rows but not others, so accrued income
+is carried as its own field. Disagreements are **reported, never averaged away**.
+
+## Verification
+
+```bash
+npm run test:ingest
+```
+
+| Suite | What it proves |
+| --- | --- |
+| `parseNum` | Indian & Western grouping, sign conventions, and that `null` means *not reported* — never zero. Rejects concatenations like `-33.7912,500` instead of guessing. |
+| `layout` | Row clustering, column inference, same-line and cross-line number stitching, superscripts — against PDFs generated in the test with known coordinates. |
+| `pipeline` | Extractor → normalized document → every reconciliation check, including duplicate-holding detection across owners. |
+| `golden` | The **real** figures, read off the statements by a human. |
+
+`golden` has three outcomes: PASS, FAIL (exit 1), and **BLOCKED (exit 2) when the
+statements are absent**. Blocked is not a pass and is never counted as one — a
+test that passes with no input claims confidence nobody earned.
 
 ## The rule that governs every figure
 
@@ -89,7 +127,7 @@ renders `—`. Not a zero, not an estimate, not a plausible default.
 
 ## How this book differs from a single-workbook book
 
-The model carries four things that a spreadsheet-sourced cockpit doesn't need.
+The model carries six things that a spreadsheet-sourced cockpit doesn't need.
 Full rationale in [CLAUDE.md](./CLAUDE.md); in short:
 
 | | |
@@ -98,6 +136,8 @@ Full rationale in [CLAUDE.md](./CLAUDE.md); in short:
 | **Owner ≠ custodian** | `Account` carries `owner`, `provider`, `accountNo`, `strategy`, `engagement`, `asOf`; positions reference it by `accountId`. The old substring-matching `custodianOf()` heuristic is gone. |
 | **As-of is per account** | Statements arrive per platform on their own schedule. `Portfolio.asOf` is the newest; `<BasisPill>` flags which accounts are behind wherever a consolidated total is shown. |
 | **Sectors are per provider** | `sector` is our normalised value, `providerSector` is what the provider printed. Both kept. |
+| **Asset class ≠ engagement** | `AssetClass` is what a thing *is* (`Equity`, `AIF`, `Cash`, …). **PMS is not an asset class** — it is how an account is *run*, so it lives on `Account.engagement`. The holdings inside a PMS are ordinary listed equity. |
+| **One person, one `ownerId`** | The same family member is printed three ways across providers. `shared/owners.mjs` resolves every spelling to one canonical owner; an unmatched name is reported loudly, never turned into a new person. |
 
 ## Pages
 

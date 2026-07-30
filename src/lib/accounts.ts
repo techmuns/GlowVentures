@@ -6,7 +6,8 @@
 // answer two different questions ("whose money is this?" and "who manages it?"),
 // and statements from several platforms give no reason to expect either answer
 // to be readable out of the account code. Both come from `Portfolio.accounts`.
-import type { Account, Portfolio, Position } from "./types";
+import type { Account, Engagement, Portfolio, Position } from "./types";
+import { ownerDisplayName } from "./owners";
 
 export type AccountIndex = Map<string, Account>;
 
@@ -19,10 +20,31 @@ const UNKNOWN = "Unattributed";
 
 export const accountOf = (idx: AccountIndex, p: Position): Account | undefined => idx.get(p.accountId);
 
-export const ownerOf = (idx: AccountIndex, p: Position): string => idx.get(p.accountId)?.owner || UNKNOWN;
+/**
+ * The owning entity, as ONE name per person.
+ *
+ * Resolves through the canonical registry, because the same person is printed
+ * three different ways across these providers and grouping on the printed name
+ * splits one family member into three. An account whose owner never resolved
+ * falls back to its printed name — visible and odd-looking, which is the point.
+ */
+export const ownerOf = (idx: AccountIndex, p: Position): string => {
+  const a = idx.get(p.accountId);
+  if (!a) return UNKNOWN;
+  return a.ownerId ? ownerDisplayName(a.ownerId) : a.owner || UNKNOWN;
+};
+
+/** The canonical owner id, for grouping and joins. Null when unresolved. */
+export const ownerIdOf = (idx: AccountIndex, p: Position): string | null =>
+  idx.get(p.accountId)?.ownerId ?? null;
+
 export const providerOf = (idx: AccountIndex, p: Position): string => idx.get(p.accountId)?.provider || UNKNOWN;
 export const strategyOf = (idx: AccountIndex, p: Position): string => idx.get(p.accountId)?.strategy || "";
-export const engagementOf = (idx: AccountIndex, p: Position): string => idx.get(p.accountId)?.engagement || "";
+export const engagementOf = (idx: AccountIndex, p: Position): Engagement | "" => idx.get(p.accountId)?.engagement || "";
+/** The provider's own wording for the engagement, when it differs from ours. */
+export const providerEngagementOf = (idx: AccountIndex, p: Position): string =>
+  idx.get(p.accountId)?.providerEngagement || "";
+export const familyGroupOf = (idx: AccountIndex, p: Position): string => idx.get(p.accountId)?.familyGroup || "";
 
 /**
  * Custody label for allocation views: the provider that holds the assets, or
@@ -37,7 +59,7 @@ export function custodyLabelOf(idx: AccountIndex, p: Position): string {
 }
 
 /** True when the family runs the account itself rather than through a manager. */
-export const isDirect = (a: Account): boolean => /^direct$/i.test(a.engagement.trim());
+export const isDirect = (a: Account): boolean => a.engagement === "Direct";
 
 // ── Per-account as-of ────────────────────────────────────────────────────────
 // Statements for different accounts are dated differently, so a consolidated

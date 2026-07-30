@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-07-30T19:43:36.700Z",
+  "summary": {
+    "documents": 0,
+    "parsed": 0,
+    "partial": 0,
+    "failed": 0,
+    "rowSumChecks": 0,
+    "totalMismatches": 0,
+    "crossReportDeltas": 0,
+    "suspectedDuplicates": 0,
+    "securitiesWithoutSymbol": 0,
+    "ownerNamesUnmatched": 0,
+    "stitchesApplied": 0
+  },
+  "coverage": {
+    "pdfsFound": 0,
+    "parsed": 0,
+    "partial": 0,
+    "failed": 0,
+    "byProvider": {},
+    "failures": [],
+    "partials": []
+  },
+  "rowSumChecks": [],
+  "crossReportDeltas": [],
+  "duplicateHoldings": [],
+  "unresolved": {
+    "securitiesWithoutSymbol": [],
+    "ownerNamesUnmatched": [],
+    "reportTypesWithoutExtractor": [],
+    "knownOwners": [
+      {
+        "ownerId": "ajay-jaisinghani",
+        "displayName": "Ajay Jaisinghani"
+      },
+      {
+        "ownerId": "bharat-jaisinghani",
+        "displayName": "Bharat Jaisinghani"
+      }
+    ],
+    "providersWithPrecedence": [
+      "GoldStandard Wealth Private Limited",
+      "360 ONE Private Wealth"
+    ]
+  },
+  "stitches": []
+}

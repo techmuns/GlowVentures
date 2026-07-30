@@ -12,7 +12,7 @@ import { Pill } from "@/components/Pill";
 type SheetMeta = { key: string; name: string; rows: number; cols: number };
 type FileMeta = {
   fileKey: string; label: string; fy: string; source: string;
-  status: "ok" | "encrypted"; sheets: SheetMeta[];
+  status: "ok" | "partial" | "failed" | "encrypted"; sheets: SheetMeta[];
 };
 type Cell = string | number | null;
 type Sheet = { name: string; rows: Cell[][] };
@@ -73,7 +73,7 @@ export function DataAudit() {
         if (!alive) return;
         setManifest(m);
         if (!searchParams.get("file")) {
-          const first = m.find((f) => f.status === "ok" && f.sheets.length);
+          const first = m.find((f) => f.sheets.length);
           if (first) { setFileKey(first.fileKey); setSheetKey(first.sheets[0].key); }
         }
         setStatus("ready");
@@ -89,7 +89,7 @@ export function DataAudit() {
     if (status !== "ready" || !manifest.length) return;
     const wantFile = searchParams.get("file");
     if (!wantFile) return;
-    const f = manifest.find((x) => x.fileKey === wantFile && x.status === "ok");
+    const f = manifest.find((x) => x.fileKey === wantFile && x.sheets.length);
     if (!f) return;
     const wantSheet = searchParams.get("sheet");
     const s = (wantSheet && f.sheets.find((x) => x.key === wantSheet)) || f.sheets[0];
@@ -187,7 +187,9 @@ export function DataAudit() {
   const visible = showAll ? filtered : filtered.slice(0, VISIBLE_CAP);
 
   const totalSheets = manifest.reduce((n, f) => n + f.sheets.length, 0);
-  const okFiles = manifest.filter((f) => f.status === "ok").length;
+  // A partially-parsed document still has sheets worth reading; only a document
+  // with nothing extracted is unusable.
+  const okFiles = manifest.filter((f) => f.sheets.length).length;
 
   function downloadCsv() {
     if (!sheet) return;
@@ -206,7 +208,7 @@ export function DataAudit() {
     return (
       <div className="flex h-full flex-col">
         <PageHeader eyebrow="Setup" title="Data Audit"
-          subtitle="Raw source workbooks — every sheet, every tab, exactly as uploaded." />
+          subtitle="Extracted statement tables — one entry per source document, exactly as parsed." />
         <div className="grid flex-1 place-items-center py-16 text-center">
           <div className="max-w-lg">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
@@ -226,18 +228,18 @@ export function DataAudit() {
   return (
     <div className="flex h-full flex-col">
       <PageHeader eyebrow="Setup" title="Data Audit"
-        subtitle="Raw source workbooks — every sheet, every tab, exactly as uploaded."
-        right={status === "ready" ? <Pill tone="info">{okFiles} workbooks · {totalSheets} sheets</Pill> : null} />
+        subtitle="Extracted statement tables — one entry per source document, exactly as parsed."
+        right={status === "ready" ? <Pill tone="info">{okFiles} documents · {totalSheets} tables</Pill> : null} />
 
       {/* Workbook selector */}
       <div className="mb-3 flex flex-wrap gap-2">
         {manifest.map((f) => {
-          const locked = f.status !== "ok";
+          const locked = f.sheets.length === 0;
           const active = f.fileKey === fileKey;
           return (
             <button key={f.fileKey} type="button" disabled={locked}
               onClick={() => { if (!locked) { setFileKey(f.fileKey); setSheetKey(f.sheets[0]?.key ?? ""); } }}
-              title={locked ? "Password-protected — awaiting password" : f.source}
+              title={locked ? "Nothing could be extracted from this document" : f.source}
               className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[12px] transition-colors ${
                 active ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
                 : locked ? "cursor-not-allowed border-ink-700 bg-ink-800/40 text-slate-600"

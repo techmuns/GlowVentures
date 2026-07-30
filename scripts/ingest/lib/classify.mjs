@@ -124,6 +124,9 @@ function match360One(text, name) {
   return {
     provider: "360 ONE Private Wealth",
     ownerName: client || family || null,
+    // The wider family grouping the provider files the account under. Kept
+    // distinct from the owner: several accounts share one Family Name.
+    familyGroup: family || null,
     accountNo: crn ? crn[1] : null,
     asOfDate: asOf,
     // The holding statement is the authoritative section for the book; the rest
@@ -192,6 +195,7 @@ function matchGoldstandard(text, name) {
     asOfDate: asOf,
     reportType,
     sections: reportType === "unknown" ? [] : [reportType],
+    familyGroup: null,
     strategy,
     confidence: accountNo && asOf && reportType !== "unknown" ? "high" : "medium",
     matchedBy,
@@ -296,6 +300,7 @@ export function classify({ fileName, text }) {
     asOfDate,
     reportType: reportType || "unknown",
     sections: reportType && reportType !== "unknown" ? [reportType] : [],
+    familyGroup: null,
     strategy: null,
     confidence,
     matchedBy: provider || reportType ? "generic keywords" : "nothing matched",

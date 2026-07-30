@@ -13,7 +13,33 @@
 //   3. Statements for different accounts carry different report dates, so as-of
 //      is per account. `Portfolio.asOf` is only the newest of them.
 export type DisplayCurrency = "INR" | "USD" | "EUR" | "GBP";
-export type AssetClass = "Equity" | "ETF" | "Liquid";
+
+/**
+ * What an instrument IS.
+ *
+ * Note what is absent: PMS. A portfolio-management mandate is a relationship
+ * with a manager, not a kind of security — the holdings inside a PMS are
+ * ordinary listed equity and are classified as such. How an account is run is
+ * `Account.engagement`; what it holds is this.
+ */
+export type AssetClass =
+  | "Equity"
+  | "ETF"
+  | "Mutual Fund"
+  | "AIF"
+  | "Bond"
+  | "Structured Product"
+  | "Unlisted"
+  | "Cash";
+
+/** How the family engages the provider on an account — a relationship, not an asset. */
+export type Engagement =
+  | "PMS"
+  | "AIF"
+  | "Advisory"
+  | "Distribution"
+  | "Execution"
+  | "Direct";
 
 /**
  * One account as a provider reports it: the statement's own header, normalized.
@@ -27,8 +53,20 @@ export type Account = {
   provider: string;         // issuing platform, e.g. "360 ONE Private Wealth"
   accountNo: string;        // account / folio number as printed
   strategy: string;         // scheme or strategy, e.g. "Aristos Equity Portfolio"
-  owner: string;            // owning entity or individual, as printed
-  engagement: string;       // PMS | AIF | Advisory | Custody | Direct | …
+  /** Account holder, as printed on this statement. Spelling varies by provider. */
+  owner: string;
+  /**
+   * Canonical owner (see src/lib/owners.ts). The SAME person is printed three
+   * different ways across these providers, so `owner` above cannot be used to
+   * group a family book — this can. Null when no canonical owner matched, which
+   * the extraction report surfaces rather than silently minting a new person.
+   */
+  ownerId: string | null;
+  /** The wider family grouping a provider files the account under, when it prints one. */
+  familyGroup?: string;
+  engagement: Engagement;
+  /** The provider's own wording for the engagement, verbatim, before normalisation. */
+  providerEngagement?: string;
   asOf: string;             // report date of THIS account's latest statement (ISO)
 };
 

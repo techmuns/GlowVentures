@@ -84,62 +84,138 @@ Each platform uses its own taxonomy. `Position.sector` is our normalised value;
 `Position.providerSector` is what the provider actually printed. Both are kept —
 neither is authoritative on its own.
 
+### 5. Asset class is what a thing IS; engagement is how it is RUN
+
+`AssetClass` = `Equity | ETF | Mutual Fund | AIF | Bond | Structured Product |
+Unlisted | Cash`. **PMS is not on that list and must never be added.** A
+portfolio-management mandate is a relationship with a manager; the holdings
+inside a PMS are ordinary listed equity and are classified as such.
+`assertNormalized` rejects a document that tries otherwise.
+
+How an account is run is `Account.engagement` = `PMS | AIF | Advisory |
+Distribution | Execution | Direct`, with `providerEngagement` holding the
+provider's own wording verbatim.
+
+### 6. One person, one ownerId
+
+The same family member is printed three ways across these providers — `Mr. AJAY
+T JAISINGHANI` (360 ONE), `Ajay Thakurdas Jaisinghani` (GoldStandard), `Ajay
+Jaisinghani` (a family-name field). Grouped by printed name, one person becomes
+three and every per-entity total, allocation and XIRR is quietly wrong.
+
+`shared/owners.mjs` is the canonical registry: `{ ownerId, displayName,
+aliases[] }`, matched case- and honorific-insensitively, plus an initials rule
+that bridges `Thakurdas` and `T` without merging different first names. Every
+account resolves to an `ownerId`. **A name that matches nothing is reported
+loudly** in the extraction report's "unresolved" section — never turned into a
+new owner.
+
 (`SattvaSummary` from the source cockpit is `BookSummary` here.)
 
 ## The ingest pipeline
 
 ```
-source/*.{zip,pdf}  →  docs/ingest-inventory.{json,md}  →  public/audit/  →  src/data/glowData.ts
-   raw statements         what's in the drop, grouped      extracted sheets      the baked book
-   (committed, never          (npm run inventory)          (served, gated)
-    served to browsers)
+source/*.{zip,pdf}          raw statements — committed, NEVER served to a browser
+   |  npm run inventory     what is in the drop, grouped and classified
+   v
+docs/INGEST-INVENTORY.md    provider -> account -> as-of -> reportType
+   |  npm run extract       coordinate-aware extraction + reconciliation
+   v
+public/audit/<docKey>/      extracted tables, keyed by DOCUMENT (served, gated)
+docs/EXTRACTION-REPORT.md   does it tie out?
+   |  (next step)
+   v
+src/data/glowData.ts        the book
 ```
 
-- **`source/`** is at the repo root, **not** under `public/` — raw statements must
-  never ship to the browser. `source/_extracted/` is git-ignored (derived).
-- **`npm run inventory`** (`scripts/ingest/inventory.mjs`) expands every ZIP
-  (including nested ones), walks every PDF, and records path / size / page count
-  plus a best-effort `{ provider, ownerName, accountNo, asOfDate, reportType }`.
-  It groups **provider → account → as-of date → report type**, because *one
-  account at one date routinely produces several overlapping reports that
-  sometimes disagree* — a current portfolio, an appraisal, a fact sheet and a
-  performance summary can all describe the same holdings and not reconcile.
-  Making that visible is the whole point; which file is authoritative is a
-  decision someone makes, not an accident of parse order.
-- Running it with an empty `source/` is fine and writes an empty inventory.
+### Stage 1 — inventory (`npm run inventory`)
 
-### Text extraction is column-scrambled — this matters
+Expands every ZIP (including nested), walks every PDF, records path / size /
+pages plus a best-effort `{ provider, ownerName, accountNo, asOfDate,
+reportType }`, and groups **provider → account → as-of → report type**. That
+grouping is the point: *one account at one date routinely produces several
+overlapping reports that sometimes disagree*, and which one is authoritative is
+a decision someone makes, not an accident of parse order.
 
-Both seeded providers emit PDFs whose text layer comes out **out of document
-order and run together** (`-33.7912,500 3,575,346 …`). Line-based regex parsing of
-a holdings table *will* produce wrong numbers, and they will look plausible.
+### Stage 2 — extraction (`npm run extract`)
 
-`scripts/ingest/lib/pdf.mjs` is therefore scoped to **header fields only** — where
-matching a label and taking what follows survives scrambling. **Real table
-extraction must be coordinate-based**: per-span x/y positions, columns recovered
-by clustering on x. That belongs in the extraction pass, not the inventory.
+**Coordinate-aware, via `pdfjs-dist`.** The text layer of these statements is
+column-scrambled: values print out of document order and run together
+(`-33.7912,500`), and figures split mid-number across spans (`3,440,` `425.00`)
+and across lines (`2,037,517.` / `00`). Line-based regex parsing produces numbers
+that are wrong and look right.
 
-The ZIP and PDF readers are hand-rolled and dependency-free: fewer third-party
-packages touching a family's financial records.
+- `lib/layout.mjs` — x from `transform[4]`, y from `transform[5]`. Clusters rows
+  by y (tolerance absorbs sub-pixel drift and superscripts), infers columns from
+  a horizontal occupancy histogram, and stitches split numbers.
+  **`regrid()` matters:** columns are inferred over ONE TABLE REGION, never the
+  whole page — a full-width title bridges the blank corridor between two columns
+  and collapses them. Getting this wrong silently merges the security name into
+  the quantity column.
+- `lib/parseNum.mjs` — Indian (`1,45,80,412.51`) and Western grouping, leading /
+  trailing minus, parenthesised negatives. **`null` means NOT REPORTED and never
+  zero.** A grouping validator rejects concatenations like `-33.7912,500` rather
+  than returning a plausible wrong number.
+- `lib/table.mjs` — tables are located by matching HEADER TEXT, never by column
+  index, so a layout change surfaces as "column not matched" instead of wrong
+  figures. Handles headers wrapped over two lines.
+- `providers/*.mjs` — per-provider extractors. **Nothing provider-specific may
+  leak past this layer**; `lib/document.mjs` defines the normalized shape and
+  `assertNormalized` enforces it at runtime.
 
-### Seeded provider signatures
+### `precedence.mjs` — a committed decision
 
-`scripts/ingest/lib/classify.mjs` carries two, from real documents:
+Which report is authoritative for which fact, per provider. Not a default:
+"whichever file we parsed last wins" produces a different book on every run.
+The reconciler reports disagreements; precedence decides what is used.
 
-- **360 ONE Private Wealth** — "PORTFOLIO ANALYSIS REPORT - CLIENT LEVEL", ~11pp.
-  Header: `Family Name`, `Client Name (CRN…)`, `Report As On Date`. One PDF is a
-  *bundle* (executive summary + detailed holding statement + transaction statement
-  + corporate-action statement), so it gets one primary `reportType` for grouping
-  plus a `sections` list. Holdings are AIF/PMS units — no ISIN, no ticker.
-- **GoldStandard Wealth Private Limited** — PMS, strategy "Aristos Equity
-  Portfolio". Header: `Account : <no>  <owner>`, `Report Date` / `As of <date>`.
-  Filenames `G<acct>_<acct>_<ReportType><n>OT_<n>.pdf` are the more reliable
-  report-type signal, since the on-page title is part of the scrambled text.
-  Listed Indian equity, name only — no ISIN.
+For GoldStandard, **PortfolioAppraisal is the clean basis** — its market value
+equals price × quantity exactly. CurrentPortfolio folds accrued income into
+market value on some rows but not others (Sundaram Finance yes, Sonata Software
+no) while adding it to Total G/L on every row, so accrued income is carried as
+its own field instead.
 
-Add new providers by adding a signature function there. Everything else falls
-through to generic keyword matching, and low-confidence rows land in the
-inventory's "could not classify" section.
+### Stage 3 — reconciliation (`docs/EXTRACTION-REPORT.md`)
+
+Extraction that "ran" is worthless; extraction that ties out is the product.
+Five checks, none of which resolve a conflict:
+
+| | |
+| --- | --- |
+| **a** Row sums vs printed totals, per table — both figures and the delta |
+| **b** Cross-report deltas — same account, same as-of, field by field |
+| **c** Duplicate holdings under DIFFERENT owners — **flagged, never deduped** |
+| **d** Coverage — found / parsed / partial / failed, with reasons |
+| **e** Unresolved — securities with no symbol, owners with no canonical match, report types with no extractor |
+
+Check (c) exists for a real case: 360 ONE Special Opportunities Fund Series 8
+Class A3 appears with byte-identical figures under two family members. Summing
+both double-counts ~1.46 Cr. Deciding which statement owns the position is a
+judgement about the family's affairs, not a parsing rule.
+
+### Stage 4 — tests (`npm run test:ingest`)
+
+- `parseNum`, `layout`, `pipeline` — the machinery, against PDFs generated in
+  the test with known coordinates. These must pass.
+- `golden.mjs` — figures read off the REAL statements by a human. Three
+  outcomes: PASS, FAIL (exit 1), and **BLOCKED (exit 2) when the statements are
+  absent**. Blocked is not a pass and is never reported as one: a test that
+  passes with no input claims confidence nobody earned.
+
+### The audit archive
+
+`public/audit/manifest.json` is an array, one entry per document, carrying both
+the document identity (`docKey`, provider, account, owner, ownerId, asOf,
+reportType, sourcePath, pages, sections, status) and the fields the Data Audit
+browser reads (`fileKey`, `sheets[]`). Per document:
+`<docKey>/<section>.json` (`{ name, rows }`), `pages.json` (raw per-page text,
+for provenance) and `document.json` (the normalized facts).
+
+`docKey` = `<provider>-<accountNo>-<asOf>-<reportType>`.
+**Raw PDFs stay in `source/` and are never copied under `public/`.**
+
+Adding a provider: write `providers/<name>.mjs` returning a normalized document,
+register it in `extract.mjs`'s `EXTRACTORS`, and add its precedence block.
 
 ## Conventions
 
@@ -153,4 +229,6 @@ inventory's "could not classify" section.
 
 - `npm run build` runs `tsc -b && vite build` — keep it green before landing changes.
 - `npm run inventory` regenerates the ingest inventory.
+- `npm run extract` re-extracts the audit archive and the reconciliation report.
+- `npm run test:ingest` runs the ingest test suites.
 - `npm run set-password -- "<password>"` sets the edge gate password.
