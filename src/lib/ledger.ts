@@ -45,6 +45,7 @@ export type ManifestEntry = {
 type ArchiveTxn = {
   date: string | null; settlementDate: string | null; side: "buy" | "sell" | string;
   security: string; securityKey: string; exchange: string | null;
+  assetClass: string | null;
   quantity: number | null; unitPrice: number | null;
   gross: number | null; charges: number | null; net: number | null;
 };
@@ -252,6 +253,9 @@ export async function loadTransactions(): Promise<TxnData | null> {
 // ─────────────────────────────────────────────────────────────────────────────
 export type Lot = {
   securityKey: string; security: string; account: string;
+  /** Joined from this security's rows elsewhere in the drop; null when no
+   *  appraisal or transaction statement carries it. Never inferred from name. */
+  assetClass: string | null;
   purchaseDate: string | null; saleDate: string | null;
   quantity: number | null; purchaseAmount: number | null; saleAmount: number | null;
   daysHeld: number | null; shortTerm: number | null; longTerm: number | null;
@@ -261,12 +265,40 @@ export type LotData = {
   asOf: string; lots: Lot[];
   totalShort: number | null; totalLong: number | null;
   accounts: string[]; accountsWithout: string[];
+  /**
+   * The canonical total, split by ASSET CLASS.
+   *
+   * −₹1.93 Cr is one number covering two unlike things: an equity book that lost
+   * −₹2.02 Cr and a liquid-fund cash sweep that made +₹8.66 L. Netted, the sweep
+   * flatters the equity result by nearly nine lakh with nothing on screen to say
+   * so. The split needs no model change — the class comes from the same
+   * securities' rows on the appraisals and transaction statements.
+   *
+   * The capital gain statement prints no asset class of its own, so the two
+   * sweep instruments — which appear on no appraisal and no transaction
+   * statement — resolve to `null` and are NAMED rather than guessed at from
+   * their titles. "MUTUAL FUND" in a printed name is not a classification any
+   * statement made.
+   */
+  byClass: { assetClass: string | null; lots: number; short: number; long: number; total: number; securities: string[] }[];
 };
 
 export async function loadRealisedLots(): Promise<LotData | null> {
   const docs = await loadArchive();
   if (!docs) return null;
   const src = of(docs, AUTHORITATIVE.capitalGains);
+  // Asset class per security, from the reports that DO print one. The capital
+  // gain statement never does, so the class is joined from the same security's
+  // rows on an appraisal or a transaction statement — this drop's own paperwork,
+  // the same kind of join the account number and owner already use.
+  const classOf = new Map<string, string>();
+  for (const d of docs) {
+    for (const arr of [d.holdings, d.transactions]) {
+      for (const x of arr ?? []) {
+        if (x?.securityKey && x.assetClass && !classOf.has(x.securityKey)) classOf.set(x.securityKey, x.assetClass);
+      }
+    }
+  }
   const lots: Lot[] = [];
   for (const d of src) {
     const account = accountLabel(d);
@@ -274,6 +306,7 @@ export async function loadRealisedLots(): Promise<LotData | null> {
       const st = l.shortTerm ?? 0, lt = l.longTerm ?? 0;
       lots.push({
         securityKey: l.securityKey, security: displaySecurity(l.security), account,
+        assetClass: classOf.get(l.securityKey) ?? null,
         purchaseDate: l.purchaseDate, saleDate: l.saleDate, quantity: l.quantity,
         purchaseAmount: l.purchaseAmount, saleAmount: l.saleAmount, daysHeld: l.daysHeld,
         shortTerm: l.shortTerm, longTerm: l.longTerm, gain: st + lt,
@@ -292,8 +325,21 @@ export async function loadRealisedLots(): Promise<LotData | null> {
   for (const d of docs) allAccounts.set(d.accountNo, accountLabel(d));
   const sumShort = lots.filter((l) => l.shortTerm !== null);
   const sumLong = lots.filter((l) => l.longTerm !== null);
+  const classes = new Map<string | null, { lots: number; short: number; long: number; securities: Set<string> }>();
+  for (const l of lots) {
+    const e = classes.get(l.assetClass) ?? { lots: 0, short: 0, long: 0, securities: new Set<string>() };
+    e.lots++; e.short += l.shortTerm ?? 0; e.long += l.longTerm ?? 0; e.securities.add(l.security);
+    classes.set(l.assetClass, e);
+  }
+  const byClass = [...classes.entries()]
+    .map(([assetClass, v]) => ({
+      assetClass, lots: v.lots, short: v.short, long: v.long, total: v.short + v.long,
+      securities: [...v.securities].sort(),
+    }))
+    // Classified first, biggest book first; the unclassified remainder last.
+    .sort((a, b) => (a.assetClass === null ? 1 : b.assetClass === null ? -1 : b.lots - a.lots));
   return {
-    asOf: newestAsOf(docs), lots,
+    asOf: newestAsOf(docs), lots, byClass,
     totalShort: sumShort.length ? sumShort.reduce((s, l) => s + (l.shortTerm ?? 0), 0) : null,
     totalLong: sumLong.length ? sumLong.reduce((s, l) => s + (l.longTerm ?? 0), 0) : null,
     accounts: [...withCg].map((n) => allAccounts.get(n) ?? n).sort(),

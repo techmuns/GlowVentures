@@ -13,7 +13,8 @@
     "set-password": "node scripts/set-dashboard-password.mjs",
     "build-symbols": "node scripts/build-nse-symbols.mjs",
     "build-book": "node scripts/build-book.mjs",
-    "check:pages": "node scripts/check-pages.mjs"
+    "check:pages": "node scripts/check-pages.mjs",
+    "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

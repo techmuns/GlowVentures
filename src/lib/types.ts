@@ -347,3 +347,22 @@ export type Portfolio = {
     startups: StartupInvestment[];
   };
 };
+
+/**
+ * Realised gains split by asset class, per account.
+ *
+ * The canonical realised total nets two unlike books — an equity mandate and a
+ * liquid-fund cash sweep whose gains offset the equity losses. This makes that
+ * visible without changing the figure. `assetClass` is null where no statement
+ * in the drop classifies the security; the names are carried so the page can
+ * say WHICH rather than describing them in the abstract.
+ */
+export type RealisedByClass = {
+  accountId: string;
+  entity: string;
+  assetClass: string | null;
+  lots: number;
+  realisedST: number | null;
+  realisedLT: number | null;
+  securities: string[];
+};

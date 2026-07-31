@@ -320,6 +320,60 @@ function GainsView({ data }: { data: LotData | null }) {
             : { value: <span className={changeColor(data.totalLong)}>{fmtFromBase(data.totalLong, { compact: true, sign: true })}</span>, sub: "as the managers split it" })} />
       </div>
 
+      {/* THE HEADLINE NETS TWO UNLIKE BOOKS. −₹1.93 Cr is an equity book that
+          lost money and a liquid-fund cash sweep that made some, added together.
+          The split changes no figure and makes that visible. */}
+      {data.byClass.length > 1 && (
+        <Card title="Realised, by asset class" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="border-b border-ink-700 text-left">
+                <tr>
+                  <th className="label-xs px-4 py-2 font-medium">Asset class</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Short-term</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Long-term</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/70">
+                {data.byClass.map((c) => (
+                  <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
+                    <td className="px-4 py-2.5">
+                      {c.assetClass
+                        ? <span className="font-medium text-slate-100">{c.assetClass}</span>
+                        : (
+                          <>
+                            <span className="text-slate-400">{DASH} no asset class on any statement</span>
+                            <div className="mt-0.5 text-[11px] leading-snug text-slate-500">
+                              {c.securities.join(", ")} — the cash sweep. These appear on no appraisal and no
+                              transaction statement, so nothing classifies them. "Mutual Fund" in a printed
+                              name is not a classification any statement made, so none is asserted.
+                            </div>
+                          </>
+                        )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(c.lots)}</td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.short)}`}>{fmtFromBase(c.short, { compact: true, sign: true })}</td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.long)}`}>{fmtFromBase(c.long, { compact: true, sign: true })}</td>
+                    <td className={`px-4 py-2.5 text-right mono font-semibold ${changeColor(c.total)}`}>{fmtFromBase(c.total, { compact: true, sign: true })}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t-2 border-ink-600 font-semibold">
+                <tr>
+                  <td className="px-4 py-2.5 text-slate-200">Total — the canonical figure</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(data.lots.length)}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(data.totalShort ?? 0)}`}>{data.totalShort == null ? <AbsentCell /> : fmtFromBase(data.totalShort, { compact: true, sign: true })}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(data.totalLong ?? 0)}`}>{data.totalLong == null ? <AbsentCell /> : fmtFromBase(data.totalLong, { compact: true, sign: true })}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor((data.totalShort ?? 0) + (data.totalLong ?? 0))}`}>{fmtFromBase((data.totalShort ?? 0) + (data.totalLong ?? 0), { compact: true, sign: true })}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
+      )}
+
       <p className="text-xs leading-relaxed text-slate-500">
         Short vs long term is <span className="font-medium text-slate-400">read from the statement, not re-derived here</span> —
         the holding-period rule differs by asset and the determination is the manager's.

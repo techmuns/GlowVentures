@@ -630,8 +630,69 @@ before the token is set — every page renders on statement marks, the pill read
 
 ## Conventions
 
+These are not style preferences. Each one is here because violating it produced a
+figure on screen that was wrong and looked right. **A future session must not
+violate any of them.**
+
+### The seven that govern figures
+
+1. **Never fabricate.** If the source carries no number, render `—` with a reason
+   through `src/components/Absent.tsx`. Not a zero, not an estimate, not an
+   interpolation, not a plausible default.
+2. **A measured zero and an absent measurement must never look the same.** Any
+   tile, chart, cell or total whose underlying collection is EMPTY renders `—`.
+   A *computed* zero is legitimate and stays — but its reason goes in the tile,
+   not in a tooltip.
+3. **Ingest PRIMITIVES; DERIVE everything else.** Quantity, unit cost, market
+   price, accrued income are read. Market value, gain, %gain and %assets are
+   computed. A statement's own arithmetic is not internally consistent, and
+   ingesting both sides imports the contradiction.
+4. **Printed values are a CHECK, never a source.** They live in `printed.*` and
+   every delta goes to the reconciliation report classified `rounding`,
+   `explained` or `material`. A material delta blocks the golden test.
+5. **Never blend a missing value into a total as zero.** Use `sumOrNull`. A
+   figure that exists for SOME accounts is shown for those and the rest are
+   named — including in the total's own caption.
+6. **STATEMENT vs LIVE basis.** Live prices may move market value, day change,
+   unrealised P&L and return on cost — and nothing else. Never quantity, cost
+   basis, realised gains, dividends, fees or a dated cash flow. Every
+   consolidated figure carries a `<BasisPill>`; Capital Gains, Data Audit and
+   Ledger Insights read `statementPortfolio` and pass `statement`.
+7. **`src/data/glowData.ts` is GENERATED. Never hand-edit it.** It regenerates
+   byte-identically from `source/`; an edit is reverted by the next
+   `build-book`, and until then the book no longer matches its own archive.
+
+### And five more that have each cost a debugging session
+
+- Identity is `securityKey`, derived from the CLEAN name. If a join fails, fix
+  the EXTRACTOR — never re-derive a key in the presentation layer, which hides
+  the defect from the reconciler.
+- A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
+  builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
+  composes the docKey. A consolidated figure spans five documents and names none:
+  it links to the archive index with the search term pre-filled.
+- Nothing on screen may be hardcoded that isn't derived from the book. No
+  security names, entity names, dates, amounts, document titles or sample rows.
+  Icon maps, sector tables and statutory tax rates are the legitimate exceptions.
+- **Every new `ink-*`/`slate-*` utility needs a light-mode remap in
+  `index.css`** — including each opacity variant, which Tailwind emits as its own
+  class. And `divide-*` remaps must mirror Tailwind's
+  `> :not([hidden]) ~ :not([hidden])` selector or they lose on specificity and
+  silently do nothing. `npm run check:pages` resolves computed colour and catches
+  both.
+- A failure message must diagnose the ACTUAL failure. "Your session expired" for
+  an unreachable archive is worse than a blank panel, because the reader acts
+  on it.
+
+### Formatting and layout
+
 - All monetary values are INR at the model layer; format with `fmtFromBase`,
-  never hard-code currency symbols.
+  never hard-code currency symbols. Compact suffixes follow the SELECTED
+  currency (Cr/L for INR, M/B for USD), not the base. Statutory figures (the
+  ₹1.25L LTCG exemption) and the FX rate itself are denominated in rupees by
+  definition and correctly do not convert.
+- Wide tables scroll inside their own `overflow-x-auto` container. The page body
+  must never scroll horizontally at any width.
 - A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
   builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
   composes the docKey. A consolidated figure spans five documents and names none:

@@ -13,6 +13,7 @@ import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { holdingHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
+import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
 
 // Capital Gains & Tax — honest about two holes.
 //
@@ -113,6 +114,20 @@ export function CapitalGains() {
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
   const harvestTotal = sum(harvest.map((x) => x.unrealizedPnL));
+  // Rolled up across accounts: the split is about WHAT was sold, not by whom.
+  const byClass = (() => {
+    const m = new Map<string | null, { assetClass: string | null; lots: number; st: number; lt: number; securities: Set<string> }>();
+    for (const r of BOOK_REALISED_BY_CLASS) {
+      const e = m.get(r.assetClass) ?? { assetClass: r.assetClass, lots: 0, st: 0, lt: 0, securities: new Set<string>() };
+      e.lots += r.lots; e.st += r.realisedST ?? 0; e.lt += r.realisedLT ?? 0;
+      for (const n of r.securities) e.securities.add(n);
+      m.set(r.assetClass, e);
+    }
+    return [...m.values()]
+      .map((e) => ({ ...e, securities: [...e.securities].sort() }))
+      .sort((a, b) => Number(a.assetClass === null) - Number(b.assetClass === null) || b.lots - a.lots);
+  })();
+
   const byEnt = [...cg].sort((a, b) =>
     ((b.realisedST ?? -Infinity) + (b.realisedLT ?? 0)) - ((a.realisedST ?? -Infinity) + (a.realisedLT ?? 0)));
 
@@ -190,6 +205,66 @@ export function CapitalGains() {
       </div>
 
       {/* ── Realised, per account ── */}
+      {/* THE HEADLINE NETS TWO UNLIKE BOOKS. −₹1.93 Cr is an equity mandate that
+          lost money plus a liquid-fund cash sweep that made some. No figure
+          changes here; the split just stops the sweep silently flattering the
+          equity result. */}
+      {byClass.length > 1 && (
+        <Card className="mt-5" title="Realised, by asset class"
+          subtitle="The same canonical total, split — the headline above nets these together" pad={false}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="border-b border-ink-700">
+                <tr>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Asset class</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Realised ST</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Realised LT</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/70">
+                {byClass.map((c) => {
+                  const tot = (c.st ?? 0) + (c.lt ?? 0);
+                  return (
+                    <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5">
+                        {c.assetClass
+                          ? <span className="font-medium text-slate-100">{c.assetClass}</span>
+                          : (
+                            <>
+                              <span className="text-slate-400">{DASH} no asset class on any statement</span>
+                              <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                                {c.securities.join(", ")} — the cash sweep these managers run beside the equity
+                                mandate. They appear on no appraisal and no transaction statement, so nothing
+                                classifies them; "Mutual Fund" in a printed name is not a classification a
+                                statement made, so none is asserted.
+                              </div>
+                            </>
+                          )}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots}</td>
+                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.st ?? 0)}`}>{fmtFromBase(c.st ?? 0, { compact: true, sign: true })}</td>
+                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.lt ?? 0)}`}>{fmtFromBase(c.lt ?? 0, { compact: true, sign: true })}</td>
+                      <td className={`px-4 py-2.5 text-right mono font-semibold ${changeColor(tot)}`}>{fmtFromBase(tot, { compact: true, sign: true })}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="border-t-2 border-ink-600 font-semibold">
+                <tr>
+                  <td className="px-4 py-2.5 text-slate-200">Total — the canonical figure</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">{byClass.reduce((s, c) => s + c.lots, 0)}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
+      )}
+
       <Card className="mt-5" title="Realised gains by account"
         subtitle="Short- and long-term as the MANAGER split them — a tax determination taken from the statement, not re-derived here"
         pad={false}>

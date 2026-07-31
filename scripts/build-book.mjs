@@ -108,12 +108,24 @@ function build(docs) {
   }
   for (const k of isinConflicts.keys()) isinByKey.delete(k);
 
+  // Asset class per security, from the reports that DO print one. Same kind of
+  // join as the ISIN above: this drop's own paperwork, never inferred from text.
+  const classByKey = new Map();
+  for (const d of docs) {
+    for (const arr of [d.holdings, d.transactions]) {
+      for (const x of arr ?? []) {
+        if (x?.securityKey && x.assetClass && !classByKey.has(x.securityKey)) classByKey.set(x.securityKey, x.assetClass);
+      }
+    }
+  }
+
   const accounts = [];
   const positions = [];
   const capitalGains = [];
   const accountCashFlows = {};
   const accountReturns = {};
   const corporateActionsAll = [];
+  const realisedByClass = new Map();
   const accountBridges = {};
   const unclassified = new Map();
 
@@ -336,6 +348,28 @@ function build(docs) {
         lots: lots.length,
         source: cgDoc.docKey,
       });
+      // ── the same total, split by ASSET CLASS ──
+      //
+      // The canonical realised figure nets two unlike books: an equity mandate
+      // that lost money and a liquid-fund cash sweep that made some. Netted,
+      // the sweep flatters the equity result with nothing on screen to say so.
+      // The class is JOINED from the same security's rows on an appraisal or
+      // transaction statement — the capital gain statement prints none — and a
+      // security neither carries is left `null` and NAMED. "Mutual Fund" in a
+      // printed name is not a classification any statement made.
+      for (const l of lots) {
+        const cls = classByKey.get(l.securityKey) ?? null;
+        const k = `${accountId}|${cls ?? ""}`;
+        const e = realisedByClass.get(k) ?? {
+          accountId, entity: `${ownerById(ownerId)?.displayName ?? accountNo} · ${provider.split(" ")[0]} ${accountNo}`,
+          assetClass: cls, lots: 0, realisedST: 0, realisedLT: 0, securities: new Set(),
+        };
+        e.lots += 1;
+        e.realisedST += isNum(l.shortTerm) ? l.shortTerm : 0;
+        e.realisedLT += isNum(l.longTerm) ? l.longTerm : 0;
+        e.securities.add(l.security);
+        realisedByClass.set(k, e);
+      }
     }
     // An account with NO capital gain statement is recorded as such, with an
     // empty realised block. Omitting it entirely would let the page average
@@ -464,6 +498,19 @@ function build(docs) {
 
   return {
     accounts, positions, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
+    // Sorted deterministically: classified first (biggest book first), the
+    // unclassified remainder last. Insertion order would make the emitted file
+    // depend on map iteration, and the book must regenerate byte-identically.
+    realisedByClass: [...realisedByClass.values()]
+      .map((e) => ({
+        accountId: e.accountId, entity: e.entity, assetClass: e.assetClass, lots: e.lots,
+        realisedST: r2(e.realisedST), realisedLT: r2(e.realisedLT),
+        securities: [...e.securities].sort(),
+      }))
+      .sort((a, b) =>
+        (a.assetClass === null) - (b.assetClass === null)
+        || (a.assetClass ?? "").localeCompare(b.assetClass ?? "")
+        || a.entity.localeCompare(b.entity)),
     accountReturns, accountBridges,
     corporateActions: corporateActionsAll.sort((a, b) =>
       (a.exDate ?? "").localeCompare(b.exDate ?? "") || a.securityKey.localeCompare(b.securityKey)),
@@ -500,7 +547,7 @@ function emit(book) {
   L.push("// list and what document would supply each.");
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, CorporateAction,");
-  L.push("  EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,");
+  L.push("  EntityCG, FundInvestment, NavPoint, Position, RealisedByClass, StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -529,6 +576,9 @@ function emit(book) {
   L.push(" * dates, which no statement in this drop carries.");
   L.push(" */");
   L.push(`export const BOOK_CAPITAL_GAINS: EntityCG[] = ${j(book.capitalGains)};`);
+  L.push("");
+  L.push("/** The canonical realised total, split by asset class — the headline nets these. */");
+  L.push(`export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = ${j(book.realisedByClass)};`);
   L.push("");
   L.push("/**");
   L.push(" * Dated external capital flows per account, for money-weighted return.");

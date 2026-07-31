@@ -80,6 +80,8 @@ html:not(.dark) .bg-ink-700 { background-color: #faf8f1; }
 html:not(.dark) .bg-ink-700\/60 { background-color: rgba(250, 248, 241, 0.85); }
 html:not(.dark) .bg-ink-700\/40 { background-color: rgba(250, 248, 241, 0.7); }
 html:not(.dark) .bg-ink-700\/30 { background-color: rgba(250, 248, 241, 0.55); }
+html:not(.dark) .bg-ink-800\/40 { background-color: rgba(255, 255, 255, 0.55); }
+html:not(.dark) .bg-ink-900\/50 { background-color: rgba(239, 236, 227, 0.6); }
 /* Active/selected nav item — was falling back to dark indigo; use a soft
    champagne highlight so the dark label stays legible. */
 html:not(.dark) .bg-ink-700\/80 { background-color: rgba(217, 196, 143, 0.38); }
@@ -100,7 +102,16 @@ html:not(.dark) .bg-slate-700 { background-color: #d8d3c4; }
 /* Hover variants (Tailwind emits these as separate selectors) */
 html:not(.dark) .hover\:bg-ink-700\/60:hover { background-color: rgba(250, 248, 241, 0.9); }
 html:not(.dark) .hover\:bg-ink-700\/40:hover { background-color: rgba(234, 228, 213, 0.6); }
+html:not(.dark) .hover\:bg-ink-700\/30:hover { background-color: rgba(234, 228, 213, 0.5); }
 html:not(.dark) .hover\:bg-ink-700\/20:hover { background-color: rgba(234, 228, 213, 0.4); }
+/* HOVER TEXT THAT VANISHED. `text-slate-400 hover:text-slate-200` is the dark
+   theme's "dim label brightens on hover". slate-200 is #e2e8f0 — near white — so
+   on ivory the label disappeared exactly when the pointer was on it: sidebar
+   items, sort headers, the research tabs, the filter chips. The light theme wants
+   the opposite motion, so hover DARKENS instead. */
+html:not(.dark) .hover\:text-slate-200:hover { color: #1a1830; }
+html:not(.dark) .hover\:text-slate-300:hover { color: #26233d; }
+html:not(.dark) .text-slate-700 { color: #8d889f; }
 html:not(.dark) .hover\:bg-slate-800\/20:hover { background-color: rgba(234, 228, 213, 0.35); }
 html:not(.dark) .hover\:bg-slate-800\/30:hover { background-color: rgba(234, 228, 213, 0.45); }
 html:not(.dark) .hover\:bg-slate-800\/40:hover { background-color: rgba(234, 228, 213, 0.55); }
@@ -110,13 +121,31 @@ html:not(.dark) .hover\:bg-slate-800\/60:hover { background-color: rgba(234, 228
    translucent hover tint — it needs the composited colour spelled out. */
 html:not(.dark) .group:hover .group-hover\:bg-ink-700 { background-color: #f2efe6; }
 
-/* Borders */
+/* Borders.
+   THE OPACITY VARIANTS NEED THEIR OWN RULES. Tailwind emits `border-ink-700/60`
+   as a separate class from `border-ink-700`, so remapping the base does nothing
+   for it: the variant keeps the DARK indigo and paints a near-black rule across
+   an ivory table. Every variant actually used has to be listed, which is why
+   `npm run check:pages` resolves computed colour rather than trusting a grep —
+   a missing remap is invisible in the markup and obvious on screen. */
 html:not(.dark) .border-ink-700 { border-color: #e4ddcd; }
+html:not(.dark) .border-ink-700\/70 { border-color: rgba(228, 221, 205, 0.85); }
+html:not(.dark) .border-ink-700\/60 { border-color: rgba(228, 221, 205, 0.8); }
 html:not(.dark) .border-ink-600 { border-color: #d8d3c4; }
+html:not(.dark) .border-ink-600\/70 { border-color: rgba(197, 188, 165, 0.9); }
 html:not(.dark) .border-slate-800 { border-color: #e4ddcd; }
 html:not(.dark) .border-slate-700 { border-color: #d8d3c4; }
-html:not(.dark) .divide-slate-800 > * + *,
-html:not(.dark) .divide-slate-800\/70 > * + * { border-color: #e4ddcd; }
+/* `divide-*` MUST match Tailwind's own selector shape, not `> * + *`.
+   Tailwind emits `.divide-x > :not([hidden]) ~ :not([hidden])` — specificity
+   (0,3,0). A remap written as `html:not(.dark) .divide-x > * + *` is (0,2,1) and
+   LOSES, so the rule parses, looks right in the stylesheet, and changes nothing
+   on screen. Mirroring the selector puts it at (0,3,1) and it wins. */
+html:not(.dark) .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) { border-color: #e4ddcd; }
+html:not(.dark) .divide-ink-700 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-ink-700\/70 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-ink-700\/60 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-ink-700\/50 > :not([hidden]) ~ :not([hidden]) { border-color: #e8e2d4; }
 
 /* Text — remap slate greys to warm indigo-tinted ink */
 html:not(.dark) .text-slate-100 { color: #1a1830; }
@@ -158,7 +187,12 @@ html:not(.dark) .card {
 }
 html:not(.dark) .btn-ghost { border-color: #d8d3c4; color: #26233d; background-color: transparent; }
 html:not(.dark) .btn-ghost:hover { background-color: rgba(216, 211, 196, 0.35); }
-html:not(.dark) .btn-primary { background-color: #b8923c; color: #ffffff; }
+/* WHITE ON GOLD FAILS AA. #ffffff on #b8923c is 2.9:1 — under the 4.5:1 floor,
+   and under even the 3:1 large-text allowance. The dark theme already puts INK
+   on champagne (`bg-champagne-500 text-ink-950`); light mode had inverted it for
+   no reason. Ink on the same gold is 5.4:1 and matches the dark theme's
+   treatment, so the primary button reads the same way in both. */
+html:not(.dark) .btn-primary { background-color: #b8923c; color: #1a1830; }
 html:not(.dark) .btn-primary:hover { background-color: #c3a962; color: #1a1830; }
 html:not(.dark) .pill { border-color: #d8d3c4; background-color: rgba(255, 255, 255, 0.6); color: #3d3a52; }
 html:not(.dark) .bg-grid {

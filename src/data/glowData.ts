@@ -9,7 +9,7 @@
 // list and what document would supply each.
 import type {
   Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, CorporateAction,
-  EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,
+  EntityCG, FundInvestment, NavPoint, Position, RealisedByClass, StartupInvestment,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -3488,6 +3488,88 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "periodTo": "2026-06-25",
     "lots": 28,
     "source": "green-lantern-capital-llp-510861-2026-06-25-capital-gain"
+  }
+];
+
+/** The canonical realised total, split by asset class — the headline nets these. */
+export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
+  {
+    "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
+    "entity": "Ajay Jaisinghani · Carnelian 3517383",
+    "assetClass": "Equity",
+    "lots": 18,
+    "realisedST": -19658017.68,
+    "realisedLT": 668155.57,
+    "securities": [
+      "CRIZAC LIMITED",
+      "Glaxosmithkline Pharmaceuticals Ltd",
+      "Syngene International Ltd"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "entity": "Ajay Jaisinghani · Green 510861",
+    "assetClass": "Equity",
+    "lots": 20,
+    "realisedST": -134060.56,
+    "realisedLT": -683674.72,
+    "securities": [
+      "Aurobindo Pharma Ltd",
+      "Kaveri Seed Company Ltd",
+      "PNB Housing Finance Ltd",
+      "Vedanta Iron and Steel Limited",
+      "Vedanta Oil and Gas Limited",
+      "Vedanta Power Limited"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510854",
+    "entity": "Ankita Jaisinghani · Green 510854",
+    "assetClass": "Equity",
+    "lots": 20,
+    "realisedST": -67363.05,
+    "realisedLT": -301728.1,
+    "securities": [
+      "Aurobindo Pharma Ltd",
+      "Kaveri Seed Company Ltd",
+      "PNB Housing Finance Ltd",
+      "Vedanta Iron and Steel Limited",
+      "Vedanta Oil and Gas Limited",
+      "Vedanta Power Limited"
+    ]
+  },
+  {
+    "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
+    "entity": "Ajay Jaisinghani · Carnelian 3517383",
+    "assetClass": null,
+    "lots": 1,
+    "realisedST": 3453.96,
+    "realisedLT": 0,
+    "securities": [
+      "DSP MUTUAL FUND - DSP S&P BSE"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "entity": "Ajay Jaisinghani · Green 510861",
+    "assetClass": null,
+    "lots": 8,
+    "realisedST": 578366.03,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510854",
+    "entity": "Ankita Jaisinghani · Green 510854",
+    "assetClass": null,
+    "lots": 10,
+    "realisedST": 283865.6,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
   }
 ];
 
