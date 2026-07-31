@@ -62,17 +62,48 @@ export const DEFAULTS = {
 
 // ── 1. Items ─────────────────────────────────────────────────────────────────
 
-/** Raw positioned text items for one page, whitespace-only spans dropped. */
-function itemsFrom(textContent) {
+/**
+ * Raw positioned text items for one page, in READING orientation.
+ *
+ * PAGE ROTATION IS NOT COSMETIC. A page carrying `/Rotate 90` stores its text
+ * turned on its side: the glyph transform is `[0, s, -s, 0, tx, ty]`, so the
+ * text advances along user-space +y and `transform[4]` runs DOWN the displayed
+ * page rather than across it. Reading x from `transform[4]` on such a page
+ * transposes the whole table — every column becomes a row. It does not fail; it
+ * silently produces a grid where "Exchg NSE NSE NSE …" is one line and each
+ * transaction is a column, and any table read off it is nonsense.
+ *
+ * 29 of the 51 statements in this drop are `/Rotate 90` — every transaction
+ * statement, bank book, capital register, capital gain, dividend, corporate
+ * benefits, expense statement and CURRENT PORTFOLIO. All 22 that were readable
+ * before are unrotated. One coordinate mapping, applied here, is what separates
+ * them.
+ *
+ * The mapping puts every page into the same convention the rest of this module
+ * assumes: x increases to the right, y increases UP (PDF user space), so rows
+ * sort by descending y.
+ */
+function itemsFrom(textContent, rotation = 0) {
+  const rot = ((Math.round(Number(rotation) || 0) % 360) + 360) % 360;
+  const place = {
+    0:   (tx, ty) => ({ x: tx, y: ty }),
+    90:  (tx, ty) => ({ x: ty, y: -tx }),
+    180: (tx, ty) => ({ x: -tx, y: -ty }),
+    270: (tx, ty) => ({ x: -ty, y: tx }),
+  }[rot] ?? ((tx, ty) => ({ x: tx, y: ty }));
+
   const out = [];
   for (const it of textContent.items) {
     if (typeof it.str !== "string") continue;
     const text = it.str.replace(/\s+/g, " ").trim();
     if (!text) continue;                       // pdfjs emits synthetic spacer spans
     const t = it.transform || [1, 0, 0, 1, 0, 0];
-    const height = Math.abs(Number(it.height)) || Math.abs(t[3]) || 9;
+    // On a rotated page the glyph scale sits in t[1]/t[2] rather than t[0]/t[3].
+    const height = Math.abs(Number(it.height)) || Math.abs(t[3]) || Math.abs(t[1]) || 9;
+    // `it.width` is pdfjs's advance along the TEXT direction, which is the
+    // reading direction whatever the rotation — so it needs no remapping.
     const width = Math.abs(Number(it.width)) || text.length * height * 0.5;
-    out.push({ x: t[4], y: t[5], width, height, text });
+    out.push({ ...place(t[4], t[5]), width, height, text });
   }
   return out;
 }
@@ -456,7 +487,9 @@ export function regrid(rowSlice, opts = {}) {
   // labels into one text span ("Market Value Gain / Loss (+/-)"), and that span
   // bridges the blank corridor between two data columns and collapses them.
   // The body rows carry the true geometry.
-  const columns = inferColumns(opts.measureFrom ?? rowSlice, opts);
+  // `columns` overrides inference entirely — table.mjs passes the header's own
+  // verdict back in when two of its labels landed inside one inferred column.
+  const columns = opts.columns ?? inferColumns(opts.measureFrom ?? rowSlice, opts);
   const stitches = [];
   const rebuilt = rowSlice.map((r) => {
     const { cells, stitches: s } = buildCells(r, columns);
@@ -493,7 +526,7 @@ export async function extractLayout(bytes, opts = {}) {
       const page = await doc.getPage(p);
       const tc = await page.getTextContent();
       const viewport = page.getViewport({ scale: 1 });
-      pages.push(pageToGrid(p, viewport, itemsFrom(tc), opts));
+      pages.push(pageToGrid(p, viewport, itemsFrom(tc, viewport.rotation), opts));
       page.cleanup();
     }
     return { pages, numPages: doc.numPages, error: null };

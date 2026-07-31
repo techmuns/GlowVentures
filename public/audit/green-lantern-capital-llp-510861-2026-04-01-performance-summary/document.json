@@ -38,6 +38,12 @@
   "source": "green-lantern-capital-llp-510861-2026-04-01-performance-summary"
  },
  "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-09",
  "stitches": [],
  "derivedPortfolioTotal": null
 }

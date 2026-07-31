@@ -123,6 +123,10 @@ export function makeHolding(input) {
     realized: num(input.realized),
     positionIrrPct: num(input.positionIrrPct),
     benchmarkIrrPct: num(input.benchmarkIrrPct),
+    /** Green Lantern / Carnelian print yields where Goldstandard prints IRR.
+     *  Different measures, so different fields — never folded together. */
+    absoluteYieldPct: num(input.absoluteYieldPct),
+    annualizedYieldPct: num(input.annualizedYieldPct),
     priceAsOn: input.priceAsOn ?? null,
 
     // ── DERIVED — filled by deriveHolding(); null until then ────────────────
@@ -227,6 +231,7 @@ export function deriveDocument(doc) {
     ...doc,
     derivedPortfolioTotal: portfolioTotal === null ? null : r2(portfolioTotal),
     holdings: doc.holdings.map((h) => deriveHolding(h, portfolioTotal)),
+    transactions: (doc.transactions ?? []).map(deriveTransaction),
   };
 }
 
@@ -323,6 +328,144 @@ export function makeCashFlow(input) {
     memberId: input.memberId ?? null,
     amount: num(input.amount),
     units: num(input.units),
+    settlementDate: input.settlementDate ?? null,
+    /** Bank-book columns, each a primitive the statement printed. */
+    tranAccount: input.tranAccount ?? null,
+    buySellAmount: num(input.buySellAmount),
+    income: num(input.income),
+    expenses: num(input.expenses),
+    depositWithdrawal: num(input.depositWithdrawal),
+    /** Capital-register columns. */
+    credit: num(input.credit),
+    debit: num(input.debit),
+    notes: input.notes ?? null,
+    /** The running balance the statement printed after this row — a CHECK. */
+    balance: num(input.balance),
+    source: input.source ?? null,
+  };
+}
+
+/**
+ * One dated trade, from the transaction statement.
+ *
+ * PRIMITIVES ONLY, same rule as holdings: quantity, unit price and each printed
+ * charge are ingested; the gross consideration and the net settlement are
+ * DERIVED (`deriveTransaction`) and the statement's own settlement amount is
+ * kept as a check. A buy and a sell differ only in `side` — the sign convention
+ * is applied once, at the cash-flow layer, so it cannot be applied twice.
+ */
+export function makeTransaction(input) {
+  const security = String(input.security ?? "").trim();
+  return {
+    date: input.date ?? null,                    // ISO trade date
+    settlementDate: input.settlementDate ?? null,
+    side: input.side ?? null,                    // "buy" | "sell"
+    security,
+    securityKey: security ? securityKeyOf(security) : null,
+    exchange: input.exchange ?? null,
+    assetClass: input.assetClass ?? null,
+    // ── primitives ──
+    quantity: num(input.quantity),
+    unitPrice: num(input.unitPrice),
+    /**
+     * BROKERAGE IS A PER-UNIT RATE, NOT AN AMOUNT.
+     *
+     * The column prints 0.1288 against a 22,476-share trade at 128.8256 — a
+     * tenth of a percent OF THE PRICE, charged per unit. Read as an amount it
+     * makes the settlement 2,895.30 light on that one trade and wrong on all
+     * 256; read as a rate, gross + rate x quantity + STT reproduces the printed
+     * settlement to the paisa (2,901,274.99 against 2,901,274.59 printed).
+     */
+    brokerageRate: num(input.brokerageRate),
+    stt: num(input.stt),
+    otherCharges: num(input.otherCharges),
+    // ── derived by deriveTransaction ──
+    gross: null,
+    brokerage: null,
+    charges: null,
+    net: null,
+    /** What the statement printed for the settlement amount — a CHECK. */
+    printed: { settlementAmount: num(input.settlementAmount) },
+    source: input.source ?? null,
+  };
+}
+
+/**
+ * Gross = price x quantity; charges = the printed components summed; net is the
+ * settlement, which for a BUY is gross + charges and for a SELL is gross −
+ * charges. Nulls propagate: a trade missing its price reports no gross rather
+ * than a zero one.
+ */
+export function deriveTransaction(t) {
+  const gross = t.unitPrice !== null && t.quantity !== null ? r2(t.unitPrice * t.quantity) : null;
+  const brokerage = t.brokerageRate !== null && t.quantity !== null ? r2(t.brokerageRate * t.quantity) : null;
+  const parts = [brokerage, t.stt, t.otherCharges].filter((v) => v !== null);
+  const charges = parts.length ? r2(parts.reduce((a, b) => a + b, 0)) : null;
+  // A buy settles for more than the consideration, a sell for less. The sign is
+  // applied here and only here, so it cannot be applied twice downstream.
+  const net = gross === null ? null
+    : r2(gross + (charges ?? 0) * (t.side === "sell" ? -1 : 1));
+  return { ...t, gross, brokerage, charges, net };
+}
+
+/**
+ * One realised gain lot, from the capital gain statement.
+ *
+ * The statement itself splits short from long term — that split is a tax
+ * determination made by the manager, not something to re-derive from dates here.
+ */
+export function makeCapitalGain(input) {
+  const security = String(input.security ?? "").trim();
+  return {
+    security,
+    securityKey: security ? securityKeyOf(security) : null,
+    saleDate: input.saleDate ?? null,
+    purchaseDate: input.purchaseDate ?? null,
+    quantity: num(input.quantity),
+    saleRate: num(input.saleRate),
+    saleAmount: num(input.saleAmount),
+    purchaseRate: num(input.purchaseRate),
+    purchaseAmount: num(input.purchaseAmount),
+    /** Grandfathered price under s.112A, where the statement prints one. */
+    priceOn31Jan2018: num(input.priceOn31Jan2018),
+    effectiveCost: num(input.effectiveCost),
+    daysHeld: num(input.daysHeld),
+    shortTerm: num(input.shortTerm),
+    longTerm: num(input.longTerm),
+    effectiveLongTerm: num(input.effectiveLongTerm),
+    source: input.source ?? null,
+  };
+}
+
+/** One dated income event — a dividend, or a corporate action's cash leg. */
+export function makeIncomeEvent(input) {
+  const security = String(input.security ?? "").trim();
+  return {
+    security,
+    securityKey: security ? securityKeyOf(security) : null,
+    kind: input.kind ?? null,               // "dividend" | "bonus" | "interest" | …
+    exDate: input.exDate ?? null,
+    receivedDate: input.receivedDate ?? null,
+    quantity: num(input.quantity),
+    ratePerUnit: num(input.ratePerUnit),
+    receivable: num(input.receivable),
+    received: num(input.received),
+    tds: num(input.tds),
+    netAmount: num(input.netAmount),
+    /** The provider's own wording — "Dividend @ 17.35", "Bonus Shares @ 1:1". */
+    entitlement: input.entitlement ?? null,
+    source: input.source ?? null,
+  };
+}
+
+/** One charge, from the expense statement or the bank book's expense column. */
+export function makeExpense(input) {
+  return {
+    date: input.date ?? null,
+    settlementDate: input.settlementDate ?? null,
+    detail: String(input.detail ?? "").trim(),
+    notes: input.notes ?? null,
+    amount: num(input.amount),
     source: input.source ?? null,
   };
 }
@@ -367,6 +510,17 @@ export function makeDocument(input) {
     returns: input.returns ?? [],
     flows: input.flows ?? null,
     cashFlows: input.cashFlows ?? [],
+    /** Dated trades — the XIRR input. See makeTransaction. */
+    transactions: input.transactions ?? [],
+    /** Realised gain lots, split short/long term by the statement itself. */
+    capitalGains: input.capitalGains ?? [],
+    /** Dated dividends and corporate-action cash legs. */
+    income: input.income ?? [],
+    /** Fees and charges. */
+    expenses: input.expenses ?? [],
+    /** The window the dated rows above cover, from the report's own header. */
+    periodFrom: input.periodFrom ?? null,
+    periodTo: input.periodTo ?? null,
     /** Raw tables, for the audit archive: { sectionName: { name, rows } }. */
     sections: input.sections ?? {},
     /** Every stitch the layout engine applied, for provenance. */

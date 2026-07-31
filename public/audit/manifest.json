@@ -12,15 +12,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
   "pages": 4,
   "sections": [
+   "bankBook",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-bank-book",
   "label": "Goldstandard Wealth Private Limited · 100023 · bank-book",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
   "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 108,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -42,15 +49,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
   "pages": 1,
   "sections": [
+   "capitalRegister",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-capital-register",
   "label": "Goldstandard Wealth Private Limited · 100023 · capital-register",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
   "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 9,
+    "cols": 11
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -72,15 +86,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
   "pages": 1,
   "sections": [
+   "corporateBenefits",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-corporate-benefits",
   "label": "Goldstandard Wealth Private Limited · 100023 · corporate-benefits",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
   "sheets": [
+   {
+    "key": "corporateBenefits",
+    "name": "corporate-benefits",
+    "rows": 13,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -102,15 +123,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
   "pages": 3,
   "sections": [
+   "currentPortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
   "label": "Goldstandard Wealth Private Limited · 100023 · holdings",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
   "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 44,
+    "cols": 12
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -132,15 +160,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
   "pages": 3,
   "sections": [
+   "dividends",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · dividend-statement",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
   "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 32,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -162,15 +197,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
   "pages": 2,
   "sections": [
+   "expenses",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · expense-statement",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
   "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 31,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -370,15 +412,22 @@
   "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · transaction-statement",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 25,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -400,15 +449,22 @@
   "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
   "pages": 4,
   "sections": [
+   "bankBook",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-bank-book",
   "label": "Goldstandard Wealth Private Limited · 100022 · bank-book",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
   "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 106,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -430,15 +486,22 @@
   "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
   "pages": 1,
   "sections": [
+   "capitalRegister",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-capital-register",
   "label": "Goldstandard Wealth Private Limited · 100022 · capital-register",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
   "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 8,
+    "cols": 11
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -460,15 +523,22 @@
   "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
   "pages": 3,
   "sections": [
+   "currentPortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
   "label": "Goldstandard Wealth Private Limited · 100022 · holdings",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
   "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 44,
+    "cols": 12
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -490,15 +560,22 @@
   "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
   "pages": 3,
   "sections": [
+   "dividends",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement",
   "label": "Goldstandard Wealth Private Limited · 100022 · dividend-statement",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
   "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 32,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -698,15 +775,22 @@
   "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement",
   "label": "Goldstandard Wealth Private Limited · 100022 · transaction-statement",
   "fy": "2026-07-10",
   "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 25,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -716,27 +800,34 @@
   ]
  },
  {
-  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-bank-book",
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-bank-book",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "CARNELIAN BESPOKE PORTFOLIO",
-  "asOf": null,
+  "asOf": "2026-07-10",
   "reportType": "bank-book",
   "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_BankBook178OT (3).pdf",
   "pages": 6,
   "sections": [
+   "bankBook",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-bank-book",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-bank-book",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · bank-book",
-  "fy": "",
+  "fy": "2026-07-10",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_BankBook178OT (3).pdf",
   "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 118,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -746,27 +837,34 @@
   ]
  },
  {
-  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "CARNELIAN BESPOKE PORTFOLIO",
-  "asOf": null,
+  "asOf": "2026-07-10",
   "reportType": "capital-gain",
   "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
   "pages": 5,
   "sections": [
+   "capitalGains",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-capital-gain",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · capital-gain",
-  "fy": "",
+  "fy": "2026-07-10",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_CapitalGain90OT (3).pdf",
   "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 64,
+    "cols": 15
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -776,27 +874,34 @@
   ]
  },
  {
-  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-dividend-statement",
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-dividend-statement",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": "STATEMENT OF DIVIDEND CARNELIAN BESPOKE PORTFOLIO",
-  "asOf": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-07-10",
   "reportType": "dividend-statement",
   "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_DividendStatement_India177OT (2).pdf",
   "pages": 2,
   "sections": [
+   "dividends",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-dividend-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-dividend-statement",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · dividend-statement",
-  "fy": "",
+  "fy": "2026-07-10",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_DividendStatement_India177OT (2).pdf",
   "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 9,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -959,15 +1064,22 @@
   "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
   "pages": 3,
   "sections": [
+   "currentPortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · holdings",
   "fy": "2026-07-10",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPositionMain4089OT (7).pdf",
   "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 25,
+    "cols": 12
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -977,27 +1089,34 @@
   ]
  },
  {
-  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-transaction-statement",
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-transaction-statement",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "CARNELIAN BESPOKE PORTFOLIO",
-  "asOf": null,
+  "asOf": "2026-07-10",
   "reportType": "transaction-statement",
   "sourcePath": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-unknown-transaction-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-transaction-statement",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · transaction-statement",
-  "fy": "",
+  "fy": "2026-07-10",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_TransactionStatement_India94OT (7).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 26,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1007,27 +1126,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-unknown-bank-book",
+  "docKey": "green-lantern-capital-llp-510861-2026-06-25-bank-book",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "bank-book",
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
   "pages": 27,
   "sections": [
+   "bankBook",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-unknown-bank-book",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-25-bank-book",
   "label": "Green Lantern Capital LLP · 510861 · bank-book",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
   "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 505,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1037,27 +1163,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+  "docKey": "green-lantern-capital-llp-510861-2026-06-25-capital-gain",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "capital-gain",
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
   "pages": 5,
   "sections": [
+   "capitalGains",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-unknown-capital-gain",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-25-capital-gain",
   "label": "Green Lantern Capital LLP · 510861 · capital-gain",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
   "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 70,
+    "cols": 14
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1067,27 +1200,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-unknown-capital-register",
+  "docKey": "green-lantern-capital-llp-510861-2026-06-25-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "capital-register",
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
   "pages": 1,
   "sections": [
+   "capitalRegister",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-unknown-capital-register",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-25-capital-register",
   "label": "Green Lantern Capital LLP · 510861 · capital-register",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
   "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 13,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1097,27 +1237,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-unknown-dividend-statement",
+  "docKey": "green-lantern-capital-llp-510861-2026-06-25-dividend-statement",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "dividend-statement",
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
   "pages": 2,
   "sections": [
+   "dividends",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-unknown-dividend-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-25-dividend-statement",
   "label": "Green Lantern Capital LLP · 510861 · dividend-statement",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
   "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 10,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1152,7 +1299,7 @@
    {
     "key": "holdings",
     "name": "holdings",
-    "rows": 45,
+    "rows": 46,
     "cols": 9
    },
    {
@@ -1280,15 +1427,22 @@
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
   "pages": 4,
   "sections": [
+   "currentPortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
   "label": "Green Lantern Capital LLP · 510861 · holdings",
   "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
   "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 49,
+    "cols": 12
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1298,27 +1452,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-unknown-transaction-statement",
+  "docKey": "green-lantern-capital-llp-510861-2026-06-25-transaction-statement",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "transaction-statement",
   "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
   "pages": 5,
   "sections": [
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-unknown-transaction-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-25-transaction-statement",
   "label": "Green Lantern Capital LLP · 510861 · transaction-statement",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 103,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1328,27 +1489,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-bank-book",
+  "docKey": "green-lantern-capital-llp-510854-2026-06-25-bank-book",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "bank-book",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
   "pages": 27,
   "sections": [
+   "bankBook",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-bank-book",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-06-25-bank-book",
   "label": "Green Lantern Capital LLP · 510854 · bank-book",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
   "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 513,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1358,27 +1526,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+  "docKey": "green-lantern-capital-llp-510854-2026-06-25-capital-gain",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "capital-gain",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
   "pages": 6,
   "sections": [
+   "capitalGains",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-capital-gain",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-06-25-capital-gain",
   "label": "Green Lantern Capital LLP · 510854 · capital-gain",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
   "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 77,
+    "cols": 14
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1388,27 +1563,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-capital-register",
+  "docKey": "green-lantern-capital-llp-510854-2026-06-25-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "capital-register",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
   "pages": 1,
   "sections": [
+   "capitalRegister",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-capital-register",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-06-25-capital-register",
   "label": "Green Lantern Capital LLP · 510854 · capital-register",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
   "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 13,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1418,27 +1600,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-dividend-statement",
+  "docKey": "green-lantern-capital-llp-510854-2026-06-25-dividend-statement",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "dividend-statement",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
   "pages": 2,
   "sections": [
+   "dividends",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-dividend-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-06-25-dividend-statement",
   "label": "Green Lantern Capital LLP · 510854 · dividend-statement",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
   "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 10,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1473,7 +1662,7 @@
    {
     "key": "holdings",
     "name": "holdings",
-    "rows": 45,
+    "rows": 46,
     "cols": 9
    },
    {
@@ -1522,14 +1711,14 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-performance-benchmark",
+  "docKey": "green-lantern-capital-llp-510854-2026-07-09-performance-benchmark",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-07-09",
   "reportType": "performance-benchmark",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
   "pages": 1,
@@ -1539,9 +1728,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-performance-benchmark",
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-09-performance-benchmark",
   "label": "Green Lantern Capital LLP · 510854 · performance-benchmark",
-  "fy": "",
+  "fy": "2026-07-09",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
   "sheets": [
    {
@@ -1608,15 +1797,22 @@
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
   "pages": 4,
   "sections": [
+   "currentPortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
   "label": "Green Lantern Capital LLP · 510854 · holdings",
   "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
   "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 49,
+    "cols": 12
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1626,27 +1822,34 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510854-unknown-transaction-statement",
+  "docKey": "green-lantern-capital-llp-510854-2026-06-25-transaction-statement",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510854",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
-  "asOf": null,
+  "asOf": "2026-06-25",
   "reportType": "transaction-statement",
   "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
   "pages": 5,
   "sections": [
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510854-unknown-transaction-statement",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-06-25-transaction-statement",
   "label": "Green Lantern Capital LLP · 510854 · transaction-statement",
-  "fy": "",
+  "fy": "2026-06-25",
   "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 105,
+    "cols": 10
+   },
    {
     "key": "pages",
     "name": "Raw page text",

@@ -27,7 +27,10 @@
 //     rightwards. The section they close is the last section heading seen.
 import { findTable, readRows, findLabelledNumber, toAuditSheet } from "../lib/table.mjs";
 import { parseNum, parseNumInfo } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals, makeReturnSeries, makeFlows } from "../lib/document.mjs";
+import {
+  makeHolding, makeTotals, makeReturnSeries, makeFlows,
+  makeTransaction, makeCapitalGain, makeIncomeEvent, makeExpense, makeCashFlow,
+} from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
 
 /** Every manager issuing through this reporting system. */
@@ -84,6 +87,138 @@ const HOLDING_COLUMNS = {
   pctAssets:   [/^(%\s*assets)/],
 };
 
+// ── The dated statements ────────────────────────────────────────────────────
+// All seven print landscape on a `/Rotate 90` page; layout.mjs puts them the
+// right way up. Their headers wrap over two lines, so every alias below has to
+// match the label as the reader sees it after the wrap is joined per column.
+
+/** TRANSACTION STATEMENT — the dated trades, and the XIRR input. */
+const TRANSACTION_COLUMNS = {
+  description: [/^(transaction\s*description|description)/],
+  tranDate:    [/^(tran\s*date|trade\s*date|date)/],
+  settleDate:  [/^(settlement\s*date|sett?\s*date)/],
+  security:    [/^(security|scrip|stock)/],
+  exchange:    [/^(exchg|exchange)/],
+  quantity:    [/^(quantity|qty|units?(?!\s*cost))/],
+  unitPrice:   [/^(unit\s*price|rate|price)/],
+  brokerage:   [/^(brkg|brokerage)/],
+  stt:         [/^stt/],
+  settlement:  [/^(settlement\s*amount|net\s*amount|amount)/],
+};
+
+/** STATEMENT OF CAPITAL GAIN/LOSS — realised lots, split ST/LT by the manager. */
+const CAPITAL_GAIN_COLUMNS = {
+  security:     [/^(security|scrip|stock)/],
+  saleDate:     [/^sale\s*date/],
+  quantity:     [/^(sale\s*quantity|quantity|qty)/],
+  saleRate:     [/^sale\s*rate/],
+  saleAmount:   [/^sale\s*amount/],
+  purchaseDate: [/^purchase\s*date/],
+  purchaseRate: [/^purchase\s*rate/],
+  price31Jan:   [/^price\s*on/],
+  purchaseAmt:  [/^purchase\s*amount/],
+  effectiveCost:[/^effective\s*cost/],
+  daysHeld:     [/^days\s*held/],
+  shortTerm:    [/^st$/],
+  longTerm:     [/^lt$/],
+  effectiveLT:  [/^effective\s*gain\s*lt/],
+};
+
+/** STATEMENT OF DIVIDEND — dated income per security. */
+const DIVIDEND_COLUMNS = {
+  exDate:       [/^ex\s*date/],
+  receivedDate: [/^received\s*date/],
+  security:     [/^(security|scrip|stock)/],
+  quantity:     [/^(quantity|qty)/],
+  rate:         [/^rate/],
+  receivable:   [/^receivable/],
+  received:     [/^received\s*amount/],
+  netAmount:    [/^net\s*amount/],
+  balance:      [/^balance/],
+  tds:          [/^tds/],
+};
+
+/** CORPORATE BENEFITS — bonuses and dividends by corporate-action type. */
+const CORPORATE_BENEFIT_COLUMNS = {
+  type:        [/^type/],
+  security:    [/^(security|scrip|stock)/],
+  exDate:      [/^ex\s*date/],
+  entitlement: [/^entitlement/],
+  quantity:    [/^(quantity|qty)/],
+  amount:      [/^amount/],
+};
+
+/** BANK BOOK — every cash movement, with a running balance. */
+const BANK_BOOK_COLUMNS = {
+  description: [/^(transaction\s*description|description)/],
+  tranDate:    [/^tran\s*date/],
+  setDate:     [/^set\s*date/],
+  tranAccount: [/^tran\s*account/],
+  security:    [/^(security|scrip)/],
+  buySell:     [/^buy\s*sell/],
+  income:      [/^income/],
+  expenses:    [/^expenses/],
+  depWith:     [/^dep\s*with/],
+  balance:     [/^balance/],
+};
+
+/**
+ * CAPITAL REGISTER — the capital account, at cost and at market value.
+ *
+ * NOT a lot register. It records CONTRIBUTIONS AND WITHDRAWALS against the
+ * capital account, so it cannot supply the per-lot purchase dates an unrealised
+ * short/long-term split needs. See the note in build-book.mjs.
+ */
+const CAPITAL_REGISTER_COLUMNS = {
+  description: [/^(transaction\s*description|description)/],
+  tranDate:    [/^tran\s*date/],
+  setDate:     [/^set\s*date/],
+  notes:       [/^desc\s*notes/],
+  credit:      [/^credit/],
+  debit:       [/^debit/],
+  balance:     [/^balance/],
+};
+
+/** STATEMENT OF EXPENSES — fees and charges, dated. */
+const EXPENSE_COLUMNS = {
+  date:       [/^date/],
+  settleDate: [/^settlement\s*date/],
+  tranRef:    [/^tran\s*ref/],
+  detail:     [/^detail/],
+  notes:      [/^desc\s*notes/],
+  amount:     [/^amount/],
+};
+
+/**
+ * CURRENT PORTFOLIO — read for TWO FIELDS ONLY.
+ *
+ * Precedence names the appraisal authoritative for every figure this report
+ * also carries, and for good reason: it folds accrued income into market value
+ * on some rows but not others. What it alone carries is per-position accrued
+ * income and IRR%, so those are what is taken.
+ */
+const CURRENT_PORTFOLIO_COLUMNS = {
+  security:    [/^(security|scrip|stock)/],
+  priceAsOn:   [/^price\s*as\s*on/],
+  quantity:    [/^(quantity|qty)/],
+  avgDays:     [/^avg\s*days/],
+  unitCost:    [/^unit\s*cost/],
+  totalCost:   [/^total\s*cost/],
+  marketPrice: [/^market\s*price/],
+  marketValue: [/^market\s*value/],
+  income:      [/^income/],
+  unrealized:  [/^unrealized\s*gain/],
+  totalGl:     [/^total\s*g(\s*\/?\s*l|ain)/],
+  pctGl:       [/^%\s*g\s*l/],
+  // Goldstandard prints IRR%; Green Lantern and Carnelian print an Absolute and
+  // an Annualized Yield % instead. They are DIFFERENT measures over different
+  // bases, so they get different fields and neither is read into the other.
+  irrPct:      [/^irr/],
+  absYieldPct: [/^absolute\s*yield/],
+  annYieldPct: [/^annualized\s*yield/],
+  pctAssets:   [/^%\s*assets/],
+};
+
 /** Fact-sheet holdings table: security, sector, value, weight. */
 const FACTSHEET_COLUMNS = {
   rank:        [/^(sr|s\s*no|rank)/],
@@ -120,6 +255,9 @@ const SUBTOTAL_LABEL = /^(equity|equities|cash|debt|bonds?|liquid|others?|total|
 /** A holding line that IS cash, by its own name rather than by its section. */
 const CASH_LINE = /^cash\b/i;
 
+/** The page footer, which lands in whichever column sits above it. */
+const PAGE_FOOTER = /^page\s*\d+(\s*of\s*\d+)?$/i;
+
 /** Sub-header text that prints inside a data column, not a value. */
 const HEADER_LABEL = /^(accrued\s*income|market\s*value|unit\s*cost|total\s*cost|%\s*(g\s*\/?\s*l|assets)|price|quantity|cost)$/i;
 
@@ -138,12 +276,15 @@ const HEADER_LABEL = /^(accrued\s*income|market\s*value|unit\s*cost|total\s*cost
 const READABLE = new Set([
   "appraisal", "fact-sheet",
   "performance-summary", "performance-history", "performance-benchmark",
+  "transaction-statement", "capital-gain", "dividend-statement", "corporate-benefits",
+  "bank-book", "capital-register", "expense-statement", "holdings",
 ]);
 /** These reports place the geometry at 3pt corridors; measured, not guessed. */
 const LAYOUT = { minColumnGap: 3 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
 const clean = (s) => String(s ?? "").trim();
+const round2 = (n) => Math.round(n * 100) / 100;
 
 /**
  * Header identity: account number, owner, as-of, strategy.
@@ -298,11 +439,13 @@ function readHoldings(pages, warnings) {
 
     for (const r of rows) {
       for (const f of numericFields) {
-        // A HEADER LABEL is not an unparseable figure. "Accrued Income" is a
-        // sub-header printed inside the Market Value column on a line of its own,
-        // below the two header lines; flagging it as a cell that would not parse
-        // put the same false warning on every appraisal in the drop.
-        if (HEADER_LABEL.test(clean(r.fields[f]))) continue;
+        // A HEADER LABEL or a page footer is not an unparseable figure.
+        // "Accrued Income" is a sub-header printed inside the Market Value
+        // column on a line of its own below the header block, and "Page 1" is
+        // the footer; flagging either as a cell that would not parse put the
+        // same false warning on every appraisal in the drop.
+        const cell = clean(r.fields[f]);
+        if (HEADER_LABEL.test(cell) || PAGE_FOOTER.test(cell)) continue;
         if (parseNumInfo(r.fields[f]).status === "unparseable") {
           warn(warnings, "unparseable-cell", `${clean(r.fields.security) || "(continuation)"} · ${f} = ${JSON.stringify(r.fields[f])}`);
         }
@@ -423,6 +566,328 @@ function readPeriod(pages, fallback) {
     }
   }
   return { periodFrom: fallback.inceptionDate ?? null, periodTo: fallback.asOf ?? null };
+}
+
+// ── Dated-table readers ─────────────────────────────────────────────────────
+
+/** `dd/mm/yyyy` or `dd/mm/yy` — the capital gain statement uses the short form. */
+const DATE_CELL = /^\s*(\d{1,2}\/\d{1,2}\/(?:\d{4}|\d{2}))\s*$/;
+
+/**
+ * Read one header-located table across EVERY page of the report.
+ *
+ * These statements run to five pages and repeat the header on each. Reading only
+ * the first page loses the tail silently — the same failure that dropped Green
+ * Lantern's cash section during calibration.
+ *
+ * Returns rows in document order plus the column map from the first page the
+ * table was found on, or null when no page carried it.
+ */
+function readAcrossPages(pages, columns, opts = {}) {
+  const rows = [];
+  let map = null, missing = null;
+  for (const page of pages) {
+    const table = findTable(page, columns, { minFields: opts.minFields ?? 4, ...LAYOUT, ...opts });
+    if (!table) continue;
+    if (opts.require && !opts.require.every((f) => f in table.columns)) continue;
+    const r = readRows(page, table, {});
+    if (!r.rows.length) continue;
+    map ??= table.columns;
+    missing ??= table.missing;
+    rows.push(...r.rows);
+  }
+  return rows.length ? { rows, columns: map, missing } : null;
+}
+
+/** `dd/mm/yyyy` in a cell → ISO, else null. Never a partial or a guess. */
+const cellDate = (v) => {
+  const m = DATE_CELL.exec(clean(v));
+  return m ? toIso(m[1]) : null;
+};
+
+/**
+ * TRANSACTION STATEMENT → dated trades.
+ *
+ * The Transaction Description column carries three different things: the side
+ * ("Buy"/"Sell") on a data row, a section heading ("Shares - Listed") on a
+ * grouping row, and nothing at all on a subtotal. A row is a TRADE only when it
+ * carries a trade date — the one field a heading or a subtotal never has.
+ */
+function readTransactions(pages, source, warnings) {
+  const t = readAcrossPages(pages, TRANSACTION_COLUMNS, { minFields: 6, require: ["security", "quantity"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  let section = null;
+  for (const r of t.rows) {
+    const date = cellDate(r.fields.tranDate);
+    const desc = clean(r.fields.description);
+    if (!date) {
+      // A label with no figures is the section it opens; anything else is a
+      // subtotal or a page artefact and is skipped rather than guessed at.
+      if (desc && !Object.entries(r.fields).some(([k, v]) => k !== "description" && parseNumInfo(v).status === "ok")) {
+        section = desc;
+      }
+      continue;
+    }
+    const side = /^sell/i.test(desc) ? "sell" : /^buy/i.test(desc) ? "buy" : null;
+    if (!side) { warn(warnings, "transaction-side-unknown", `${date} · ${JSON.stringify(desc)}`); continue; }
+    out.push(makeTransaction({
+      date,
+      settlementDate: cellDate(r.fields.settleDate),
+      side,
+      security: clean(r.fields.security),
+      exchange: clean(r.fields.exchange) || null,
+      // The section names the instrument type ("Shares - Listed"); a PMS holds
+      // ordinary listed equity, so anything else is left unclassified rather
+      // than forced into a class this reader cannot verify.
+      assetClass: /shares|equit/i.test(section ?? "") ? "Equity" : null,
+      quantity: parseNum(r.fields.quantity),
+      unitPrice: parseNum(r.fields.unitPrice),
+      brokerageRate: parseNum(r.fields.brokerage),
+      stt: parseNum(r.fields.stt),
+      settlementAmount: parseNum(r.fields.settlement),
+      source,
+    }));
+  }
+  return out.length ? { transactions: out, sheet: toAuditSheet("transactions", Object.keys(t.columns), t.rows) } : null;
+}
+
+/** STATEMENT OF CAPITAL GAIN/LOSS → realised lots, ST/LT as the manager split them. */
+function readCapitalGains(pages, source, warnings) {
+  const t = readAcrossPages(pages, CAPITAL_GAIN_COLUMNS, { minFields: 6, require: ["security", "saleDate"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const saleDate = cellDate(r.fields.saleDate);
+    if (!saleDate) continue;                 // heading or subtotal
+    out.push(makeCapitalGain({
+      security: clean(r.fields.security),
+      saleDate,
+      purchaseDate: cellDate(r.fields.purchaseDate),
+      quantity: parseNum(r.fields.quantity),
+      saleRate: parseNum(r.fields.saleRate),
+      saleAmount: parseNum(r.fields.saleAmount),
+      purchaseRate: parseNum(r.fields.purchaseRate),
+      purchaseAmount: parseNum(r.fields.purchaseAmt),
+      priceOn31Jan2018: parseNum(r.fields.price31Jan),
+      effectiveCost: parseNum(r.fields.effectiveCost),
+      daysHeld: parseNum(r.fields.daysHeld),
+      shortTerm: parseNum(r.fields.shortTerm),
+      longTerm: parseNum(r.fields.longTerm),
+      effectiveLongTerm: parseNum(r.fields.effectiveLT),
+      source,
+    }));
+  }
+  return out.length ? { capitalGains: out, sheet: toAuditSheet("capital-gains", Object.keys(t.columns), t.rows) } : null;
+}
+
+/**
+ * STATEMENT OF DIVIDEND → dated income per security.
+ *
+ * The statement carries REVERSALS: a dividend booked and then backed out prints
+ * as a negative row against the same security and date. Both are kept — netting
+ * them here would hide a correction the account actually experienced — and they
+ * cancel when summed, which is the point.
+ */
+function readDividends(pages, source, warnings) {
+  const t = readAcrossPages(pages, DIVIDEND_COLUMNS, { minFields: 5, require: ["security", "exDate"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const exDate = cellDate(r.fields.exDate);
+    const security = clean(r.fields.security);
+    if (!exDate || !security) continue;
+    out.push(makeIncomeEvent({
+      kind: "dividend",
+      security,
+      exDate,
+      receivedDate: cellDate(r.fields.receivedDate),
+      quantity: parseNum(r.fields.quantity),
+      ratePerUnit: parseNum(r.fields.rate),
+      receivable: parseNum(r.fields.receivable),
+      received: parseNum(r.fields.received),
+      netAmount: parseNum(r.fields.netAmount),
+      tds: parseNum(r.fields.tds),
+      source,
+    }));
+  }
+  return out.length ? { income: out, sheet: toAuditSheet("dividends", Object.keys(t.columns), t.rows) } : null;
+}
+
+/**
+ * CORPORATE BENEFITS → the same events seen from the corporate-action side.
+ *
+ * A bonus issue has an entitlement and a quantity but no cash (`Amount 0.00`),
+ * and that zero is REAL — the statement measured it — so it is kept as 0 rather
+ * than dropped. The dividends here overlap the dividend statement; precedence
+ * names which one the book uses.
+ */
+function readCorporateBenefits(pages, source, warnings) {
+  const t = readAcrossPages(pages, CORPORATE_BENEFIT_COLUMNS, { minFields: 4, require: ["security", "type"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const exDate = cellDate(r.fields.exDate);
+    const security = clean(r.fields.security);
+    const type = clean(r.fields.type);
+    if (!exDate || !security || !type) continue;
+    out.push(makeIncomeEvent({
+      kind: /bonus/i.test(type) ? "bonus" : /dividend/i.test(type) ? "dividend" : type.toLowerCase(),
+      security,
+      exDate,
+      quantity: parseNum(r.fields.quantity),
+      netAmount: parseNum(r.fields.amount),
+      entitlement: clean(r.fields.entitlement) || null,
+      source,
+    }));
+  }
+  return out.length ? { income: out, sheet: toAuditSheet("corporate-benefits", Object.keys(t.columns), t.rows) } : null;
+}
+
+/**
+ * BANK BOOK → every cash movement, as dated cash flows.
+ *
+ * Four money columns and a running balance. Each row is emitted as a cash flow
+ * with the SIGN the balance implies: a deposit and income increase it, a
+ * withdrawal and an expense reduce it. The running balance is kept so the
+ * reconciler can check the flows against it rather than trusting the sum.
+ */
+function readBankBook(pages, source, warnings) {
+  const t = readAcrossPages(pages, BANK_BOOK_COLUMNS, { minFields: 5, require: ["description", "balance"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const date = cellDate(r.fields.tranDate);
+    const description = clean(r.fields.description);
+    if (!date || !description) continue;
+    const income = parseNum(r.fields.income);
+    const expenses = parseNum(r.fields.expenses);
+    const depWith = parseNum(r.fields.depWith);
+    const buySell = parseNum(r.fields.buySell);
+    out.push(makeCashFlow({
+      date,
+      description,
+      security: clean(r.fields.security) || null,
+      kind: "bank-book",
+      amount: null,          // the components below are the primitives
+      source,
+      settlementDate: cellDate(r.fields.setDate),
+      tranAccount: clean(r.fields.tranAccount) || null,
+      buySellAmount: buySell,
+      income,
+      expenses,
+      depositWithdrawal: depWith,
+      balance: parseNum(r.fields.balance),
+    }));
+  }
+  return out.length ? { cashFlows: out, sheet: toAuditSheet("bank-book", Object.keys(t.columns), t.rows) } : null;
+}
+
+/**
+ * CAPITAL REGISTER → contributions and withdrawals against the capital account.
+ *
+ * Note what this is NOT: it holds no per-lot purchase dates, so it cannot supply
+ * an unrealised short/long-term split. It records capital movements — an opening
+ * balance, TDS transfers, contributions — at cost and again at market value.
+ */
+function readCapitalRegister(pages, source, warnings) {
+  const t = readAcrossPages(pages, CAPITAL_REGISTER_COLUMNS, { minFields: 4, require: ["description", "credit", "debit"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const date = cellDate(r.fields.tranDate);
+    const description = clean(r.fields.description);
+    if (!date || !description) continue;
+    const credit = parseNum(r.fields.credit);
+    const debit = parseNum(r.fields.debit);
+    out.push(makeCashFlow({
+      date,
+      description,
+      kind: "capital-register",
+      // Credit adds capital, debit removes it. Null when neither was printed.
+      amount: credit === null && debit === null ? null : round2((credit ?? 0) - (debit ?? 0)),
+      source,
+      settlementDate: cellDate(r.fields.setDate),
+      credit, debit,
+      balance: parseNum(r.fields.balance),
+      notes: clean(r.fields.notes) || null,
+    }));
+  }
+  return out.length ? { cashFlows: out, sheet: toAuditSheet("capital-register", Object.keys(t.columns), t.rows) } : null;
+}
+
+/** STATEMENT OF EXPENSES → dated charges. */
+function readExpenses(pages, source, warnings) {
+  const t = readAcrossPages(pages, EXPENSE_COLUMNS, { minFields: 3, require: ["detail", "amount"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  for (const r of t.rows) {
+    const date = cellDate(r.fields.date);
+    const detail = clean(r.fields.detail);
+    const amount = parseNum(r.fields.amount);
+    if (!date || !detail || amount === null) continue;
+    out.push(makeExpense({
+      date,
+      settlementDate: cellDate(r.fields.settleDate),
+      detail,
+      notes: clean(r.fields.notes) || null,
+      amount,
+      source,
+    }));
+  }
+  return out.length ? { expenses: out, sheet: toAuditSheet("expenses", Object.keys(t.columns), t.rows) } : null;
+}
+
+/**
+ * CURRENT PORTFOLIO → per-position accrued income and IRR%, and nothing else.
+ *
+ * Everything else on this report is deliberately discarded. Its market value
+ * folds accrued income in on some rows but not others (Sundaram Finance yes,
+ * Sonata Software no) while its Total G/L adds it on every row, so its figures
+ * are on a basis that does not reconcile with anything. Precedence names the
+ * appraisal authoritative; this reader takes only the two fields the appraisal
+ * does not carry.
+ */
+function readCurrentPortfolio(pages, source, warnings) {
+  const t = readAcrossPages(pages, CURRENT_PORTFOLIO_COLUMNS, { minFields: 6, require: ["security", "income"] });
+  if (!t) {
+    warn(warnings, "current-portfolio-table-not-found", "no security/accrued-income table matched");
+    return null;
+  }
+  const out = [];
+  for (const r of t.rows) {
+    const security = clean(r.fields.security);
+    if (!security) continue;
+    const income = parseNum(r.fields.income);
+    const irr = parseNum(r.fields.irrPct);
+    const annYield = parseNum(r.fields.annYieldPct);
+    if (income === null && irr === null && annYield === null) continue;   // heading or subtotal
+    if (parseNumInfo(r.fields.quantity).status !== "ok") continue;
+    out.push(makeHolding({
+      security,
+      assetClass: CASH_LINE.test(security) ? "Cash" : "Equity",
+      accruedIncome: income,
+      positionIrrPct: irr,
+      annualizedYieldPct: annYield,
+      absoluteYieldPct: parseNum(r.fields.absYieldPct),
+      source,
+    }));
+  }
+  return out.length ? { holdings: out, sheet: toAuditSheet("current-portfolio", Object.keys(t.columns), t.rows) } : null;
 }
 
 /** Performance summary / history: labelled capital and P&L lines. */
@@ -690,6 +1155,8 @@ export function extract({ grid, meta }) {
   const reportType = meta.reportType;
 
   let holdings = [], totals = null, returns = [], flows = null;
+  let transactions = [], capitalGains = [], income = [], expenses = [], cashFlows = [];
+  const window = readPeriod(pages, id);
 
   if (reportType === "appraisal") {
     const h = readHoldings(pages, warnings);
@@ -748,12 +1215,61 @@ export function extract({ grid, meta }) {
     else warn(warnings, "returns-table-not-found", "neither a dated period table nor a Portfolio Performance block matched");
   }
 
+  // ── The dated statements. Each is one table, read across every page. ──
+  if (reportType === "transaction-statement") {
+    const r = readTransactions(pages, source, warnings);
+    if (r) { transactions = r.transactions; sections.transactions = r.sheet; }
+    else warn(warnings, "transactions-table-not-found", reportType);
+  }
+
+  if (reportType === "capital-gain") {
+    const r = readCapitalGains(pages, source, warnings);
+    if (r) { capitalGains = r.capitalGains; sections.capitalGains = r.sheet; }
+    else warn(warnings, "capital-gain-table-not-found", reportType);
+  }
+
+  if (reportType === "dividend-statement") {
+    const r = readDividends(pages, source, warnings);
+    if (r) { income = r.income; sections.dividends = r.sheet; }
+    else warn(warnings, "dividend-table-not-found", reportType);
+  }
+
+  if (reportType === "corporate-benefits") {
+    const r = readCorporateBenefits(pages, source, warnings);
+    if (r) { income = r.income; sections.corporateBenefits = r.sheet; }
+    else warn(warnings, "corporate-benefits-table-not-found", reportType);
+  }
+
+  if (reportType === "bank-book") {
+    const r = readBankBook(pages, source, warnings);
+    if (r) { cashFlows = r.cashFlows; sections.bankBook = r.sheet; }
+    else warn(warnings, "bank-book-table-not-found", reportType);
+  }
+
+  if (reportType === "capital-register") {
+    const r = readCapitalRegister(pages, source, warnings);
+    if (r) { cashFlows = r.cashFlows; sections.capitalRegister = r.sheet; }
+    else warn(warnings, "capital-register-table-not-found", reportType);
+  }
+
+  if (reportType === "expense-statement") {
+    const r = readExpenses(pages, source, warnings);
+    if (r) { expenses = r.expenses; sections.expenses = r.sheet; }
+    else warn(warnings, "expense-table-not-found", reportType);
+  }
+
+  if (reportType === "holdings") {
+    const r = readCurrentPortfolio(pages, source, warnings);
+    if (r) { holdings = r.holdings; sections.currentPortfolio = r.sheet; }
+  }
+
   if (!READABLE.has(reportType)) {
     warn(warnings, "no-reader-for-report-type",
       `${reportType}: this engine reads ${[...READABLE].join(", ")}. Left unread rather than half-read.`);
   }
 
-  const gotSomething = holdings.length || totals || returns.length || flows;
+  const gotSomething = holdings.length || totals || returns.length || flows
+    || transactions.length || capitalGains.length || income.length || expenses.length || cashFlows.length;
   return {
     provider: provider?.name ?? meta.provider ?? "(unidentified)",
     // A PMS mandate is how the account is RUN. Every manager here is a PMS.
@@ -763,9 +1279,18 @@ export function extract({ grid, meta }) {
     clientCode: id.clientCode,
     owner: id.owner ?? meta.ownerName,
     strategy: id.strategy ?? meta.strategy,
-    asOf: id.asOf ?? meta.asOfDate,
+    // A dated statement prints no "As of" — it prints "From X to Y", and its
+    // as-of IS that window's end. Without this the transaction statement, bank
+    // book, dividend and capital gain all key as `…-unknown-…`, which files them
+    // apart from the appraisal they belong beside.
+    asOf: id.asOf ?? meta.asOfDate ?? window.periodTo,
     inceptionDate: id.inceptionDate,
     holdings, totals, returns, flows,
+    transactions, capitalGains, income, expenses, cashFlows,
+    // Every dated statement states its own window in its header. Carried so the
+    // reconciler never compares a financial-year figure against a since-inception
+    // one — that mismatch produced 14 phantom deltas during calibration.
+    ...window,
     sections,
     warnings,
     status: !gotSomething ? "failed" : warnings.length ? "partial" : "ok",

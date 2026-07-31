@@ -1,0 +1,75 @@
+{
+ "name": "capital-register",
+ "rows": [
+  [
+   "description",
+   "tranDate",
+   "setDate",
+   "credit",
+   "debit",
+   "balance",
+   "notes"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "05/06/2026",
+   "05/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "8,675.00",
+   "174,973,300.00",
+   "0.00",
+   "8,675.00",
+   "174,973,300.00"
+  ],
+  [
+   "- -8675"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "09/06/2026",
+   "09/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "800.00",
+   "174,972,500.00",
+   "0.00",
+   "800.00",
+   "174,972,500.00"
+  ],
+  [
+   "- -800"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "30/06/2026",
+   "30/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "13,500.00",
+   "174,959,000.00",
+   "0.00",
+   "13,500.00",
+   "174,959,000.00"
+  ],
+  [
+   "- -13500"
+  ],
+  [
+   "Total",
+   "Closing Balance",
+   "0.00",
+   "22,975.00",
+   "174,959,000.00",
+   "0.00",
+   "22,975.00",
+   "174,959,000.00"
+  ],
+  [
+   "Page 1"
+  ]
+ ]
+}

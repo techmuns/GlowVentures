@@ -69,6 +69,12 @@
   "source": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-history"
  },
  "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2025-12-26",
+ "periodTo": "2026-07-10",
  "stitches": [],
  "derivedPortfolioTotal": null
 }

@@ -165,11 +165,11 @@ function rekey(doc) {
   const old = doc.docKey;
   const move = (o) => (o && o.source === old ? { ...o, source: docKey } : o);
   doc.docKey = docKey;
-  doc.holdings = doc.holdings.map(move);
-  doc.returns = doc.returns.map(move);
+  for (const k of ["holdings", "returns", "cashFlows", "transactions", "capitalGains", "income", "expenses"]) {
+    doc[k] = (doc[k] ?? []).map(move);
+  }
   doc.flows = move(doc.flows);
   doc.totals = move(doc.totals);
-  doc.cashFlows = doc.cashFlows.map(move);
   return doc;
 }
 

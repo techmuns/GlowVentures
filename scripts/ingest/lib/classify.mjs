@@ -35,8 +35,14 @@ export function toIso(raw) {
   const s = String(raw).trim();
   let m;
   if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return s;
-  if ((m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/))) {
-    const [, d, mo, y] = m;
+  if ((m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/))) {
+    const [, d, mo, yy] = m;
+    // The capital gain statement prints two-digit years (`07/05/26`) while every
+    // other report prints four. Two digits are read as 20xx: these are 2025-26
+    // statements of a book whose earliest inception is 2025, and no row in the
+    // drop predates 2000. A wider rule would need a pivot year, and a pivot year
+    // guessed here would silently move a trade by a century.
+    const y = yy.length === 2 ? `20${yy}` : yy;
     if (Number(mo) >= 1 && Number(mo) <= 12 && Number(d) >= 1 && Number(d) <= 31) return `${y}-${pad(mo)}-${pad(d)}`;
     return null;
   }

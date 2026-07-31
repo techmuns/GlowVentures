@@ -17,18 +17,228 @@
  "reportType": "expense-statement",
  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
  "pages": 2,
- "status": "failed",
- "warnings": [
-  {
-   "code": "no-reader-for-report-type",
-   "detail": "expense-statement: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark. Left unread rather than half-read."
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
  "flows": null,
  "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [
+  {
+   "date": "2026-04-09",
+   "settlementDate": "2026-04-09",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 2895.5,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-10",
+   "settlementDate": "2026-04-10",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 1.94,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-21",
+   "settlementDate": "2026-04-21",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 3663.16,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-27",
+   "settlementDate": "2026-04-27",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 807.02,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-28",
+   "settlementDate": "2026-04-28",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 2458.39,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": "2026-04-30",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 1358.59,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": "2026-05-08",
+   "detail": "Custody Charges",
+   "notes": "PMS/26-27/APR1012",
+   "amount": 3287.56,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": "2026-05-08",
+   "detail": "Management Fees",
+   "notes": "PMS/26-27/APR1012",
+   "amount": 131502.66,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": "2026-05-08",
+   "detail": "Other Expenses",
+   "notes": "PMS/26-27/APR1012",
+   "amount": 3287.56,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-06",
+   "settlementDate": "2026-05-07",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 1996.69,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-07",
+   "settlementDate": "2026-05-07",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 5375.99,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-08",
+   "settlementDate": "2026-05-08",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 95.81,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-11",
+   "settlementDate": "2026-05-11",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 70.49,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-13",
+   "settlementDate": "2026-05-14",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 178.66,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-20",
+   "settlementDate": "2026-05-20",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 2970.12,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-21",
+   "settlementDate": "2026-05-21",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 27,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-29",
+   "settlementDate": "2026-05-29",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 5797.88,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": "2026-06-01",
+   "detail": "Custody Charges",
+   "notes": "PMS/26-27/MAY1015",
+   "amount": 3441.33,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": "2026-06-01",
+   "detail": "Management Fees",
+   "notes": "PMS/26-27/MAY1015",
+   "amount": 137652.98,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": "2026-06-01",
+   "detail": "Other Expenses",
+   "notes": "PMS/26-27/MAY1015",
+   "amount": 3441.33,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-01",
+   "settlementDate": "2026-06-01",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 3408.83,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-15",
+   "settlementDate": "2026-06-16",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 3551.21,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-24",
+   "settlementDate": "2026-06-24",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 5057.14,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": "2026-07-03",
+   "detail": "Custody Charges",
+   "notes": "PMS/26-27/JUN1014",
+   "amount": 3378.74,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": "2026-07-03",
+   "detail": "Management Fees",
+   "notes": "PMS/26-27/JUN1014",
+   "amount": 135149.54,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": "2026-07-03",
+   "detail": "Other Expenses",
+   "notes": "PMS/26-27/JUN1014",
+   "amount": 3378.74,
+   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement"
+  }
+ ],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-10",
  "stitches": [],
  "derivedPortfolioTotal": null
 }

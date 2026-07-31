@@ -451,6 +451,88 @@ function coverage(docs, pdfCount) {
   };
 }
 
+// ── a3) The dated statements, checked against their own printed figures ──────
+
+/**
+ * Every dated table joins the same discipline as the holdings tables: what the
+ * pipeline DERIVES is compared against what the statement PRINTED, per row, and
+ * each delta is classified rather than tolerated.
+ *
+ * Three checks, one per statement that prints something derivable:
+ *
+ *   • TRANSACTIONS — derived net settlement (gross ± charges) against the
+ *     printed Settlement Amount. This is what caught brokerage being a per-unit
+ *     RATE rather than an amount: read as an amount every one of the 256 trades
+ *     was short by roughly its own brokerage, and the check said so per row.
+ *   • BANK BOOK — the running balance the statement prints after each row
+ *     against the balance implied by the previous row plus this row's flows.
+ *   • CAPITAL GAINS — the per-lot ST + LT against the account's realised gain
+ *     as the performance appraisal states it, over the same window.
+ */
+function datedTableChecks(docs) {
+  const out = [];
+  const add = (doc, check, key, derived, printed, tolerance = MONEY_TOLERANCE) => {
+    if (!isNum(derived) || !isNum(printed)) return;
+    const delta = round2(derived - printed);
+    out.push({
+      docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
+      asOf: doc.asOf, reportType: doc.reportType,
+      check, row: key, derived, printed, delta,
+      matches: Math.abs(delta) <= tolerance,
+      severity: Math.abs(delta) <= tolerance ? "ok" : classifyDelta("amount", delta),
+    });
+  };
+
+  for (const doc of docs) {
+    for (const t of doc.transactions ?? []) {
+      add(doc, "transaction settlement", `${t.date} ${t.side} ${t.security}`, t.net, t.printed?.settlementAmount);
+    }
+
+    // The bank book's own running balance is the check on its own flows.
+    let prev = null;
+    for (const c of doc.cashFlows ?? []) {
+      if (c.kind !== "bank-book") continue;
+      const moves = [c.buySellAmount, c.income, c.expenses, c.depositWithdrawal];
+      if (prev !== null && moves.some(isNum)) {
+        // The Buy/Sell and Dep/With columns are SIGNED — a buy prints
+        // −2,898,379.09 — so they are added as printed. Expenses print positive
+        // and reduce the balance. Assuming a sign the statement already carries
+        // moved every trade row by twice its own value.
+        const step = (isNum(c.buySellAmount) ? c.buySellAmount : 0)
+          + (isNum(c.income) ? c.income : 0)
+          + (isNum(c.depositWithdrawal) ? c.depositWithdrawal : 0)
+          - (isNum(c.expenses) ? c.expenses : 0);
+        add(doc, "bank book running balance", `${c.date} ${c.description}`, round2(prev + step), c.balance);
+      }
+      if (isNum(c.balance)) prev = c.balance;
+    }
+  }
+
+  // Realised gain: the lots against the account's own statement of it. Same
+  // account, and only where the windows agree — a since-inception realised gain
+  // and a financial-year one are different measurements, as calibration found.
+  const lotsByAccount = new Map();
+  for (const doc of docs) {
+    if (!doc.capitalGains?.length || !doc.accountNo) continue;
+    const k = `${doc.provider} ${doc.accountNo} ${doc.periodFrom}..${doc.periodTo}`;
+    const e = lotsByAccount.get(k) ?? { doc, st: 0, lt: 0 };
+    for (const g of doc.capitalGains) {
+      e.st += isNum(g.shortTerm) ? g.shortTerm : 0;
+      e.lt += isNum(g.longTerm) ? g.longTerm : 0;
+    }
+    lotsByAccount.set(k, e);
+  }
+  for (const [k, e] of lotsByAccount) {
+    const [provider, accountNo, window] = k.split(" ");
+    const stated = docs.find((d) => d.provider === provider && d.accountNo === accountNo
+      && isNum(d.flows?.realized) && `${d.flows.periodFrom}..${d.flows.periodTo}` === window);
+    if (!stated) continue;
+    add(e.doc, "realised gain: lots vs statement", `${accountNo} ${window}`,
+      round2(e.st + e.lt), stated.flows.realized);
+  }
+  return out;
+}
+
 function unresolved(docs, symbolMap) {
   const securities = new Map();
   const owners = new Map();
@@ -506,6 +588,7 @@ export function reconcile(docs, opts = {}) {
   // Tag the matching rows before any consolidated figure is computed.
   applyDedupePolicy(docs, duplicates);
   const consolidated = consolidatedValue(docs);
+  const dated = datedTableChecks(docs);
   const cov = coverage(docs, opts.pdfCount ?? docs.length);
   const unres = unresolved(docs, symbolMap);
   const stitches = docs.flatMap((d) => (d.stitches ?? []).map((s) => ({ docKey: d.docKey, ...s })));
@@ -524,6 +607,9 @@ export function reconcile(docs, opts = {}) {
       derivedMaterial: derived.filter((d) => d.severity === "material").length,
       derivedExplained: derived.filter((d) => d.severity === "explained").length,
       derivedRounding: derived.filter((d) => d.severity === "rounding").length,
+      datedChecks: dated.length,
+      datedMaterial: dated.filter((d) => d.severity === "material").length,
+      datedRounding: dated.filter((d) => d.severity === "rounding").length,
       crossReportDeltas: deltas.length,
       suspectedDuplicates: duplicates.length,
       securitiesWithoutSymbol: unres.securitiesWithoutSymbol.length,
@@ -534,6 +620,7 @@ export function reconcile(docs, opts = {}) {
     consolidated,
     rowSumChecks: rowSums,
     derivedVsPrinted: derived,
+    datedTableChecks: dated,
     crossReportDeltas: deltas,
     duplicateHoldings: duplicates,
     unresolved: unres,
@@ -664,6 +751,40 @@ export function renderMarkdown(r) {
         const sev = d.severity === "material" ? "**MATERIAL**" : d.severity;
         L.push(`| \`${esc(d.docKey)}\` | ${esc(d.security)} | ${esc(d.field)} | ${fmt(d.derived)} | ${fmt(d.printed)} | ${fmt(d.delta)} | ${sev} |`);
       }
+    }
+  }
+  L.push("");
+
+  // ── a3 ──
+  L.push("## a3) Dated statements vs their own printed figures");
+  L.push("");
+  L.push("Every dated table joins the same check as the holdings tables: what the pipeline derives");
+  L.push("against what the statement printed, per row.");
+  L.push("");
+  if (!r.datedTableChecks?.length) {
+    L.push("_No dated table carried a derivable figure alongside a printed one._");
+  } else {
+    const byCheck = new Map();
+    for (const d of r.datedTableChecks) {
+      const e = byCheck.get(d.check) ?? { n: 0, ok: 0, rounding: 0, material: 0 };
+      e.n++; e[d.severity] = (e[d.severity] ?? 0) + 1;
+      byCheck.set(d.check, e);
+    }
+    L.push("| Check | Rows | Ties out | Rounding | Material |");
+    L.push("| --- | ---: | ---: | ---: | ---: |");
+    for (const [check, e] of byCheck) {
+      L.push(`| ${esc(check)} | ${e.n} | ${e.ok ?? 0} | ${e.rounding ?? 0} | ${e.material ? `**${e.material}**` : 0} |`);
+    }
+    const bad = r.datedTableChecks.filter((d) => d.severity === "material");
+    if (bad.length) {
+      L.push("");
+      L.push("| Document | Check | Row | Derived | Printed | Delta |");
+      L.push("| --- | --- | --- | ---: | ---: | ---: |");
+      for (const d of bad.slice(0, 60)) {
+        L.push(`| \`${esc(d.docKey)}\` | ${esc(d.check)} | ${esc(d.row)} | ${fmt(d.derived)} | ${fmt(d.printed)} | ${fmt(d.delta)} |`);
+      }
+      if (bad.length > 60) L.push("");
+      if (bad.length > 60) L.push(`_${bad.length - 60} further material row(s) in \`docs/extraction-report.json\`._`);
     }
   }
   L.push("");

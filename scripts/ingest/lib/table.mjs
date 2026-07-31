@@ -120,6 +120,28 @@ function mapHeaderToColumns(headerRows, columns, fieldAliases) {
   // alias and the bare "Cost" matches the Total Cost alias, so a span-only reader
   // binds the unit column to the wrong field and drops unitCost entirely.
   //
+  // (2a) Per STACK — spans at about the same x on different header lines, joined
+  // top to bottom. This is the same wrapped label case as (2), but keyed on the
+  // label's own x rather than on a column, so it still works when the label
+  // overhangs into the next column's territory: "Settlement" sits at x=214 and
+  // runs to 256 where Security begins, and "Date" beneath it at 225. Neither
+  // line matches an alias alone, and the pair is too wide to be assigned to a
+  // column by midpoint — so without this pass the Settlement Date column binds
+  // to nothing at all.
+  const STACK_TOL = 14;
+  const stacks = [];
+  for (const row of headerRows) {
+    for (const it of row.items ?? []) {
+      const s = stacks.find((k) => Math.abs(k.x - it.x) <= STACK_TOL);
+      if (s) { s.parts.push(it.text); s.x = Math.min(s.x, it.x); s.x1 = Math.max(s.x1, it.x + it.width); }
+      else stacks.push({ x: it.x, x1: it.x + it.width, parts: [it.text] });
+    }
+  }
+  for (const s of stacks) {
+    if (s.parts.length < 2) continue;
+    matchInto(s.parts.join(" "), (field, m) => claim(field, s.x, s.x1, m.index, true));
+  }
+
   // A span belongs to the column its MIDPOINT sits nearest, and only if it
   // covers no other column's centre. Requiring it to fit inside the column's
   // bounds would be too strict: those bounds are measured from the BODY, so a
@@ -189,6 +211,50 @@ function bandRows(rows, x0, x1) {
   return rows
     .map((r) => ({ ...r, items: (r.items ?? []).filter((it) => it.x >= x0 && it.x + it.width <= x1) }))
     .filter((r) => r.items.length);
+}
+
+/**
+ * Cut a column that carries TWO header labels into two columns.
+ *
+ * Returns the new column list, or null when nothing needed splitting. Only
+ * labels that ANCHOR their span count — a label found mid-span belongs to a
+ * merged header item, which mapHeaderToColumns already resolves by offset.
+ */
+function splitAtHeaderLabels(columns, headerRows, fieldAliases) {
+  const sets = Object.values(fieldAliases);
+  const matches = (t) => !!t && sets.some((set) => set.some((re) => re.test(t)));
+
+  // Group the header items into STACKS: spans at about the same x on different
+  // header lines are one label wrapped ("Settlement" over "Date", "Received"
+  // over "Date"). Neither line alone matches an alias, so a per-span scan misses
+  // exactly the columns that most need splitting — a Received Date column with
+  // three values in thirty rows leaves no corridor of its own.
+  const STACK_TOL = 14;
+  const stacks = [];
+  for (const row of headerRows) {
+    for (const it of row.items ?? []) {
+      const s = stacks.find((k) => Math.abs(k.x - it.x) <= STACK_TOL);
+      if (s) { s.parts.push(it.text); s.x = Math.min(s.x, it.x); }
+      else stacks.push({ x: it.x, parts: [it.text] });
+    }
+  }
+  const labels = stacks
+    .filter((s) => matches(norm(s.parts.join(" "))) || s.parts.some((p) => matches(norm(p))))
+    .map((s) => s.x);
+  if (labels.length < 2) return null;
+
+  const out = [];
+  let changed = false;
+  for (const col of columns) {
+    // Distinct label positions inside this column, left to right.
+    const inside = [...new Set(labels.filter((x) => x >= col.x0 - 1 && x < col.x1))].sort((a, b) => a - b);
+    if (inside.length < 2) { out.push({ x0: col.x0, x1: col.x1 }); continue; }
+    changed = true;
+    let x0 = col.x0;
+    inside.slice(1).forEach((x) => { out.push({ x0, x1: x - 1 }); x0 = x - 1; });
+    out.push({ x0, x1: col.x1 });
+  }
+  return changed ? out.map((c, i) => ({ index: i, x0: c.x0, x1: c.x1, center: (c.x0 + c.x1) / 2 })) : null;
 }
 
 /** Do this row's item texts look like the header of the table we want? */
@@ -270,9 +336,26 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
         body = bandRows(body, x0, x1);
       }
       if (!body.length) continue;
-      // Measure columns from the BODY only. See regrid's note: a merged header
-      // span bridges two data columns and would collapse them into one.
-      const grid = regrid(slice, { ...opts, measureFrom: body });
+      // Measure columns from the BODY only, and within the body only from rows
+      // that carry SEVERAL items. See regrid's note: one wide span bridges the
+      // corridors between columns and collapses them. A single-item row is never
+      // a data row here — it is a section heading ("Listed Shares/Equity",
+      // spanning 45→281 across three columns of the capital gain statement), a
+      // wrapped security name, or a lone continuation figure. None of them
+      // should get a vote on where the columns are; all of them still get READ,
+      // because only the measurement is narrowed, not the table.
+      const dataRows = body.filter((r) => (r.items ?? []).length > 1);
+      const measureFrom = dataRows.length >= 2 ? dataRows : body;
+      let grid = regrid(slice, { ...opts, measureFrom });
+      // The HEADER gets the casting vote on how many columns there are. Where
+      // two of its labels land inside one inferred column, the body did not
+      // separate them — a mostly-empty column leaves too few items to open a
+      // corridor or to cluster an edge, as on the dividend statement where only
+      // three of thirty rows carry a Received Date and the Security beside it
+      // was swallowed whole. Splitting on the labels' own positions is the same
+      // header-driven rule the rest of this module runs on.
+      const split = splitAtHeaderLabels(grid.columns, slice.slice(0, headerRows), fieldAliases);
+      if (split) grid = regrid(slice, { ...opts, measureFrom, columns: split });
       if (grid.rows.length <= headerRows - 1) continue;
 
       const columns = mapHeaderToColumns(slice.slice(0, headerRows), grid.columns, fieldAliases);

@@ -38,6 +38,12 @@
   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-summary"
  },
  "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-10",
  "stitches": [],
  "derivedPortfolioTotal": null
 }

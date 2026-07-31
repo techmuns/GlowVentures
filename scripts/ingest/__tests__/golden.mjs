@@ -36,9 +36,11 @@ const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit
 // passed. These are counted separately and reported at the end.
 const pending = (reason) => ({ pending: reason });
 
-const NO_READER_CURRENT_PORTFOLIO =
-  "CURRENT PORTFOLIO (reportType `holdings`) has no reader in pmsStatements.mjs — " +
-  "it is declared `no-reader-for-report-type` and left unread rather than half-read.";
+const CURRENT_PORTFOLIO_TOTALS_NOT_READ =
+  "CURRENT PORTFOLIO's own TOTALS are deliberately not read. Precedence names the " +
+  "appraisal authoritative for every figure it duplicates, and its total G/L is on " +
+  "a different basis (accrued income added on every row). Only the two fields it " +
+  "alone carries — per-position accrued income and IRR% — are taken from it.";
 
 const GOLDEN = [
   {
@@ -67,11 +69,47 @@ const GOLDEN = [
     alternateTotals: [
       {
         reportType: "holdings",
-        gainLoss: pending(NO_READER_CURRENT_PORTFOLIO),
-        pctGainLoss: pending(NO_READER_CURRENT_PORTFOLIO),
+        gainLoss: pending(CURRENT_PORTFOLIO_TOTALS_NOT_READ),
+        pctGainLoss: pending(CURRENT_PORTFOLIO_TOTALS_NOT_READ),
         note: "CurrentPortfolio prints 6,744,704 / 3.93% — it folds accrued income into G/L on every row.",
       },
     ],
+
+    // ── The dated statements ────────────────────────────────────────────────
+    // Read for the first time this pass. Each carries its own window, and the
+    // windows differ: the transaction statement and the bank book run the
+    // financial year to date, the fact sheet runs since inception.
+    dated: {
+      transactions: {
+        count: 20,
+        window: ["2026-04-01", "2026-07-10"],
+        // Derived to the paisa and reconciled against the printed settlement.
+        // Brokerage is a per-UNIT RATE on these statements (0.135 against a
+        // 14,790-share sale at 135.00), which is what makes 1,992,656.66 come
+        // out exactly rather than 1,996,650 short of it.
+        rows: [
+          { date: "2026-04-09", side: "buy", security: /indian energy exchange/i,
+            quantity: 22476, unitPrice: 128.8256, brokerageRate: 0.1288, stt: 2895.50,
+            gross: 2895484.19, brokerage: 2894.91, net: 2901274.60,
+            printedSettlement: 2901274.59 },
+          { date: "2026-05-06", side: "sell", security: /jammu.*kashmir bank/i,
+            quantity: 14790, unitPrice: 135.00, gross: 1996650, charges: 3993.34, net: 1992656.66,
+            printedSettlement: 1992656.66 },
+        ],
+      },
+      // The bank book's closing balance is the appraisal's cash line, to the paisa.
+      bankBook: { rows: 60, closingBalance: 3482781.83 },
+      expenses: { rows: 26, total: 464234.86 },
+      dividends: {
+        rows: 17,
+        first: { security: /can fin homes/i, exDate: "2026-07-03", quantity: 7000, ratePerUnit: 8, netAmount: 56000 },
+      },
+      // Per-position accrued income and IRR%, the two fields CURRENT PORTFOLIO
+      // alone carries.
+      currentPortfolio: [
+        { security: /sundaram finance/i, accruedIncome: 40200, positionIrrPct: 11.87 },
+      ],
+    },
 
     // Two DIFFERENT flow blocks, on two different windows. The fact sheet's
     // Portfolio Summary runs since inception (26/12/2025); the performance
@@ -120,8 +158,8 @@ const GOLDEN = [
       {
         reportType: "holdings",
         security: /sundaram finance/i,
-        accruedIncome: pending(NO_READER_CURRENT_PORTFOLIO),
-        positionIrrPct: pending(NO_READER_CURRENT_PORTFOLIO),
+        accruedIncome: 40200,
+        positionIrrPct: 11.87,
       },
     ],
   },
@@ -164,6 +202,11 @@ const GOLDEN = [
     // 32 equity lines plus a Cash section of two — the cash block is on PAGE 2,
     // which is why this case exists: a one-page read loses 3% of the account.
     positionCounts: { equity: 32, cash: 2 },
+    dated: {
+      // Realised gains as the MANAGER split them short/long term — a tax
+      // determination, taken from the statement rather than re-derived here.
+      capitalGains: { lots: 28, window: ["2026-04-01", "2026-06-25"], shortTerm: 444305.47, longTerm: -683674.72 },
+    },
   },
   {
     label: "Carnelian · account 3517383 · Carnelian Bespoke Portfolio · as of 2026-07-10",
@@ -391,6 +434,91 @@ function runCase(manifest, spec) {
     if (want.derived?.totalGain !== undefined) {
       const got = (h.unrealized ?? 0) + (h.realized ?? 0);
       check(`${spec.label} · ${h.security} unrealized+realized = total gain`, got, want.derived.totalGain);
+    }
+  }
+
+  // ── The dated statements ──────────────────────────────────────────────────
+  const D = spec.dated;
+  if (D) {
+    const tx = pick("transaction-statement");
+    if (D.transactions) {
+      check(`${spec.label} · transaction count`, tx?.transactions?.length ?? null, D.transactions.count);
+      if (D.transactions.window) {
+        check(`${spec.label} · transaction window from`, tx?.periodFrom ?? null, D.transactions.window[0]);
+        check(`${spec.label} · transaction window to`, tx?.periodTo ?? null, D.transactions.window[1]);
+      }
+      for (const want of D.transactions.rows ?? []) {
+        const t = (tx?.transactions ?? []).find((x) => x.date === want.date && x.side === want.side
+          && want.security.test(String(x.security ?? "")));
+        if (!t) {
+          fail++;
+          failures.push({ label: `${spec.label} · trade ${want.date} ${want.side} ${want.security}`, got: "not found", want: "present" });
+          continue;
+        }
+        for (const [k, v] of Object.entries(want)) {
+          if (["date", "side", "security", "printedSettlement"].includes(k)) continue;
+          check(`${spec.label} · ${t.security} ${want.date} .${k}`, t[k] ?? null, v);
+        }
+        if (want.printedSettlement !== undefined) {
+          check(`${spec.label} · ${t.security} ${want.date} printed settlement`,
+            t.printed?.settlementAmount ?? null, want.printedSettlement);
+        }
+      }
+    }
+    if (D.capitalGains) {
+      const cg = pick("capital-gain");
+      const lots = cg?.capitalGains ?? [];
+      check(`${spec.label} · capital-gain lots`, lots.length, D.capitalGains.lots);
+      if (D.capitalGains.window) {
+        check(`${spec.label} · capital-gain window from`, cg?.periodFrom ?? null, D.capitalGains.window[0]);
+        check(`${spec.label} · capital-gain window to`, cg?.periodTo ?? null, D.capitalGains.window[1]);
+      }
+      const sum = (f) => (lots.length ? Math.round(lots.reduce((a, b) => a + (b[f] ?? 0), 0) * 100) / 100 : null);
+      check(`${spec.label} · realised short term`, sum("shortTerm"), D.capitalGains.shortTerm);
+      check(`${spec.label} · realised long term`, sum("longTerm"), D.capitalGains.longTerm);
+    }
+    if (D.bankBook) {
+      const bb = pick("bank-book");
+      const rows = bb?.cashFlows ?? [];
+      check(`${spec.label} · bank-book rows`, rows.length, D.bankBook.rows);
+      check(`${spec.label} · bank-book closing balance`, rows.at(-1)?.balance ?? null, D.bankBook.closingBalance);
+    }
+    if (D.expenses) {
+      const ex = pick("expense-statement");
+      const rows = ex?.expenses ?? [];
+      check(`${spec.label} · expense rows`, rows.length, D.expenses.rows);
+      check(`${spec.label} · expense total`, rows.length ? Math.round(rows.reduce((a, b) => a + (b.amount ?? 0), 0) * 100) / 100 : null, D.expenses.total);
+    }
+    if (D.dividends) {
+      const dv = pick("dividend-statement");
+      const rows = dv?.income ?? [];
+      check(`${spec.label} · dividend rows`, rows.length, D.dividends.rows);
+      if (D.dividends.first) {
+        const w = D.dividends.first;
+        const d = rows.find((x) => w.security.test(String(x.security ?? "")) && x.exDate === w.exDate);
+        if (!d) {
+          fail++;
+          failures.push({ label: `${spec.label} · dividend ${w.security}`, got: "not found", want: "present" });
+        } else {
+          for (const [k, v] of Object.entries(w)) {
+            if (["security", "exDate"].includes(k)) continue;
+            check(`${spec.label} · dividend ${d.security} .${k}`, d[k] ?? null, v);
+          }
+        }
+      }
+    }
+    for (const want of D.currentPortfolio ?? []) {
+      const cp = pick("holdings");
+      const h = (cp?.holdings ?? []).find((x) => want.security.test(String(x.security ?? "")));
+      if (!h) {
+        fail++;
+        failures.push({ label: `${spec.label} · CURRENT PORTFOLIO ${want.security}`, got: "not found", want: "present" });
+        continue;
+      }
+      for (const [k, v] of Object.entries(want)) {
+        if (k === "security") continue;
+        check(`${spec.label} · ${h.security} .${k}`, h[k] ?? null, v, k.endsWith("Pct") ? PCT_TOL : MONEY_TOL);
+      }
     }
   }
 

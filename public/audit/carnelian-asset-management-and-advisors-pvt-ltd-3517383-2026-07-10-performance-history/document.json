@@ -69,6 +69,12 @@
   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history"
  },
  "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2025-01-06",
+ "periodTo": "2026-07-10",
  "stitches": [],
  "derivedPortfolioTotal": null
 }
