@@ -97,6 +97,10 @@ export type Account = {
   /** Member sub-accounts, each with its own engagement. Empty when the provider reports none. */
   members: Member[];
   asOf: string;             // report date of THIS account's latest statement (ISO)
+  /** First investment date, where a statement prints one. Null when none does. */
+  inceptionDate?: string | null;
+  /** Who holds the assets. For a PMS mandate this is the manager. */
+  custodian?: string;
 };
 
 // One current position: a security held within one account.
@@ -108,14 +112,18 @@ export type Position = {
    */
   securityKey: string;
   security: string;         // security name as printed on the statement
-  isin?: string;            // enrichment — several providers print no ISIN at all
-  symbol?: string;          // NSE trading symbol, when one is mapped
+  isin?: string | null;     // enrichment — several providers print no ISIN at all
+  symbol?: string | null;   // NSE trading symbol, when one is mapped
   accountId: string;        // → Account.accountId; owner/provider come from there
   /** Member sub-account holding this, when the statement identifies one. */
-  memberId?: string;
+  memberId?: string | null;
   sector: string;           // normalized sector (our taxonomy)
-  providerSector?: string;  // sector exactly as the provider printed it
+  providerSector?: string | null;  // sector exactly as the provider printed it
   assetClass: AssetClass;
+  // These seven are present on every position in this book: the appraisal prints
+  // quantity, unit cost and price for every row including cash, and the rest are
+  // derived from them. A book whose statements did NOT carry one of them would
+  // have no position to show, which `costUnavailable` below already expresses.
   quantity: number;
   avgCost: number;
   currentPrice: number;
@@ -123,10 +131,19 @@ export type Position = {
   marketValue: number;      // INR
   unrealizedPnL: number;    // INR
   returnPct: number;
-  stCostBasis: number;      // cost of lots held < 1yr (short-term)
-  ltCostBasis: number;      // cost of lots held >= 1yr (long-term)
+  /**
+   * Cost of lots held under / over a year. NULL, not zero, on this book: the
+   * split needs per-lot purchase dates and no statement in the drop carries
+   * them. See docs/BOOK-REPORT.md.
+   */
+  stCostBasis: number | null;
+  ltCostBasis: number | null;
   daysToLT: number | null;  // min days for short-term lots to turn long-term
-  dividendReceived: number; // INR, cumulative
+  dividendReceived: number | null; // INR, cumulative
+  /** Income accrued but not yet received, carried separately from market value. */
+  accruedIncome?: number | null;
+  /** Per-position IRR, where the provider computes one (Goldstandard does). */
+  positionIrrPct?: number | null;
   costUnavailable?: boolean; // cost basis missing/unreliable — P&L & return not meaningful
   /**
    * Shared id for positions the SAME holding is reported under by more than one
@@ -155,14 +172,26 @@ export type NavPoint = { period: string; date: string; nav: number };
 // A dated cash flow for money-weighted return (XIRR). Sign convention:
 // amount < 0 = capital in (contribution / buy), amount > 0 = capital out
 // (sale / distribution). The terminal market value is appended at compute time.
-export type CashFlow = { date: string; amount: number };
+export type CashFlow = { date: string; amount: number; description?: string };
 
 export type EntityCG = {
   entity: string;
+  /** The account these gains belong to, and its canonical owner. */
+  accountId?: string;
+  ownerId?: string | null;
   realisedST: number;
   realisedLT: number;
-  unrealisedST: number;
-  unrealisedLT: number;
+  /**
+   * NULL when the corpus cannot support the split — it needs per-lot purchase
+   * dates. Never estimated: an unrealised ST/LT split is a tax figure, and a
+   * guessed one is worse than an absent one.
+   */
+  unrealisedST: number | null;
+  unrealisedLT: number | null;
+  /** The window the realised figures cover. */
+  periodFrom?: string | null;
+  periodTo?: string | null;
+  lots?: number;
 };
 
 export type FundInvestment = {
@@ -193,6 +222,7 @@ export type BookSummary = {
   positionsCount: number;
   entitiesCount: number;
   startupsCount: number;
+  accountsCount?: number;
 };
 
 export type Portfolio = {
@@ -219,6 +249,12 @@ export type Portfolio = {
   // per-entity XIRR (annualized) and YTD columns, which render "—" when missing.
   entityCashFlows?: Record<string, CashFlow[]>;
   entityNavHistory?: Record<string, NavPoint[]>;
+  /**
+   * Dated external capital flows keyed by accountId — the money-weighted-return
+   * input. Built from the capital register (or the bank book where a provider
+   * issues none), with the window's opening portfolio value as its first entry.
+   */
+  accountCashFlows?: Record<string, CashFlow[]>;
   privateMarkets: {
     peFunds: FundInvestment[];
     preIpoFunds: FundInvestment[];

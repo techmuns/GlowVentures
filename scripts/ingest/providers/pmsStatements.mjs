@@ -505,12 +505,40 @@ function readSectors(pages, warnings) {
     // header occupies, or the left column's text is read into its cells.
     const table = findTable(page, FACTSHEET_COLUMNS, { minFields: 3, bandToHeader: true, ...LAYOUT });
     if (!table || !("security" in table.columns) || !("sector" in table.columns)) continue;
-    const { rows } = readRows(page, table, { requireField: "security" });
-    const map = new Map();
+    // NOT requireField: "security" — one holding occupies SEVERAL rows here and
+    // the security name is on only one of them.
+    const { rows } = readRows(page, table, {});
+
+    /**
+     * One holding spans a GROUP of consecutive rows, because the Sector column
+     * wraps and the security name sits on the second line of it:
+     *
+     *     |          | Non Banking       | 7,740,510 | 4.26% |   ← value row
+     *     | 1 | Sundaram Finance Ltd. | Financial Company |    |
+     *     |          | (NBFC)            |           |       |
+     *
+     * The row carrying the market value opens a new holding; every row after it
+     * contributes to the same one until the next value row. Taking the sector
+     * from the security's own row alone truncated "Non Banking Financial Company
+     * (NBFC)" to "Financial Company" — and did the same to more than half the
+     * taxonomy, which then mapped to nothing.
+     */
+    const groups = [];
     for (const r of rows) {
+      const opensRecord = parseNumInfo(r.fields.marketValue).status === "ok";
+      if (opensRecord || !groups.length) groups.push({ security: "", sectorParts: [], rows: [] });
+      const g = groups[groups.length - 1];
+      g.rows.push(r);
       const name = clean(r.fields.security);
-      const sector = clean(r.fields.sector);
-      if (name && sector) map.set(name, sector);
+      if (name) g.security = g.security ? `${g.security} ${name}` : name;
+      const part = clean(r.fields.sector);
+      if (part) g.sectorParts.push(part);
+    }
+
+    const map = new Map();
+    for (const g of groups) {
+      if (!g.security || !g.sectorParts.length) continue;
+      map.set(g.security.replace(/\s+/g, " ").trim(), g.sectorParts.join(" ").replace(/\s+/g, " ").trim());
     }
     if (map.size) return { sectors: map, sheet: toAuditSheet("sectors", Object.keys(table.columns), rows) };
   }
@@ -923,6 +951,11 @@ function readFlows(pages, source, window) {
     // closing figure, and taking the first made it the opening one — which then
     // "disagreed" with every other report by a whole period's return.
     corpus: find(/^(portfolio value on|market value as of)/, true),
+    // …and the FIRST occurrence, which is the opening value. The performance
+    // summary prints "Market Value as of 01/04/2026" above and "as of
+    // 10/07/2026" below; both endpoints are needed to compute a return over the
+    // window, and neither can be inferred from the other.
+    openingCorpus: find(/^(portfolio value on|market value as of)/),
     ...window,
     source,
   });

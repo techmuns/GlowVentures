@@ -14,6 +14,7 @@ import { fmtCurrency, displaySecurity } from "@/lib/format";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
+  BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
 } from "@/data/glowData";
 
@@ -38,6 +39,12 @@ function defaultPortfolio(): Portfolio {
     positions: BOOK_POSITIONS.map((p) => ({ ...p, security: displaySecurity(p.security) })),
     navHistory: BOOK_NAV_HISTORY,
     capitalGains: BOOK_CAPITAL_GAINS,
+    // Dated external capital movements per account — the money-weighted-return
+    // input. Empty for an account whose statements carry none, which is a real
+    // answer and renders as "—" rather than as a return of zero.
+    accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
+    // Keyed by owner — what the per-entity XIRR reads.
+    entityCashFlows: BOOK_ENTITY_CASH_FLOWS,
     privateMarkets: {
       peFunds: BOOK_PE_FUNDS, preIpoFunds: BOOK_PREIPO_FUNDS, unlistedCompanies: BOOK_UNLISTED_COMPANIES,
       debtFunds: BOOK_DEBT_FUNDS, closedFunds: BOOK_CLOSED_FUNDS, startups: BOOK_STARTUPS,

@@ -10,7 +10,9 @@
     "inventory": "node scripts/ingest/inventory.mjs",
     "extract": "node scripts/ingest/extract.mjs",
     "test:ingest": "node scripts/ingest/__tests__/run.mjs",
-    "set-password": "node scripts/set-dashboard-password.mjs"
+    "set-password": "node scripts/set-dashboard-password.mjs",
+    "build-symbols": "node scripts/build-nse-symbols.mjs",
+    "build-book": "node scripts/build-book.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

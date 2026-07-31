@@ -188,10 +188,14 @@ docs/INGEST-INVENTORY.md    provider -> account -> as-of -> reportType
    v
 public/audit/<docKey>/      extracted tables, keyed by DOCUMENT (served, gated)
 docs/EXTRACTION-REPORT.md   does it tie out?
-   |  (next step)
+   |  npm run build-symbols securityKey -> NSE symbol (name-matched, see below)
+   |  npm run build-book     precedence applied, sectors mapped, gaps left as gaps
    v
-src/data/glowData.ts        the book
+src/data/glowData.ts        the book        docs/BOOK-REPORT.md   what it does NOT carry
 ```
+
+All four steps are idempotent, and `glowData.ts` regenerates **byte-identically**
+from `source/` alone.
 
 ### Stage 1 — inventory (`npm run inventory`)
 
@@ -203,6 +207,15 @@ overlapping reports that sometimes disagree*, and which one is authoritative is
 a decision someone makes, not an accident of parse order.
 
 ### Stage 2 — extraction (`npm run extract`)
+
+**PAGE ROTATION FIRST.** 29 of the 51 statements are `/Rotate 90` pages — every
+transaction statement, bank book, capital register, capital gain, dividend,
+corporate benefits, expense statement and CURRENT PORTFOLIO. On such a page the
+glyph transform is `[0, s, -s, 0, tx, ty]`, so `transform[4]` runs DOWN the
+displayed page. Reading x from it TRANSPOSES the table — every column becomes a
+row — and it does not fail, it yields a grid where "Exchg NSE NSE NSE …" is one
+line and each trade is a column. `itemsFrom` maps coordinates by the page's own
+rotation before anything else runs.
 
 **Coordinate-aware, via `pdfjs-dist`.** The text layer of these statements is
 column-scrambled: values print out of document order and run together
@@ -248,6 +261,24 @@ trailing one-month return and a month-to-date return are different measurements.
 `ReturnSeries.feeBasis` records whether returns are after fees (Goldstandard) or
 before them (Carnelian), as each report's own disclosure states.
 
+**Every report type has a reader.** The appraisal and fact sheet supply the
+holdings, sectors and returns; the transaction statement supplies the dated
+trades; capital gain, dividend, corporate benefits, bank book, capital register
+and expense statement supply the rest. CURRENT PORTFOLIO is read for TWO FIELDS
+ONLY — per-position accrued income and IRR% — because precedence names the
+appraisal authoritative for everything else it duplicates and its market value
+folds accrued income in on some rows but not others.
+
+**Brokerage is a per-unit RATE, not an amount.** The transaction statement prints
+`0.1288` against a 22,476-share trade at `128.8256` — a tenth of a percent of the
+price, charged per unit. Read as an amount, every one of the 256 trades settles
+short by roughly its own brokerage. Read as a rate, `gross + rate x quantity ±
+STT` reproduces the printed settlement on all 256 to within one rupee. Section
+(a3) of the reconciliation is what found it.
+
+**The bank book's Buy/Sell and Dep/With columns are already SIGNED** (a buy prints
+`-2,898,379.09`). Imposing a sign moves every trade row by twice its own value.
+
 **Flows carry their window.** `periodFrom`/`periodTo` on every flows block. The
 performance summary runs the financial year to date, the performance appraisal and
 fact sheet run since inception, and both print a "Realized Gain" — ₹4,15,051.23
@@ -285,6 +316,7 @@ Five checks, none of which resolve a conflict:
 | **b** Cross-report deltas — same account, same as-of, field by field |
 | **c** Duplicate holdings with identical primitives — **flagged, never deduped** |
 | **d** Coverage — found / parsed / partial / failed, with reasons |
+| **a3** Dated statements — derived settlement vs printed, bank-book running balance vs its own flows, capital-gain lots vs the account's stated realised gain |
 | **e** Unresolved — securities with no symbol, owners with no canonical match, report types with no reader |
 
 Every delta a check reports carries a `severity`, and the distinction is the
@@ -296,7 +328,8 @@ product:
   named. Also does not block, because it is understood rather than merely small.
 - `material` — anything else. Reported per row, and it blocks the golden test.
 
-**As of this calibration there are zero material deltas of either kind.**
+**As of this calibration there are zero material deltas anywhere**: 30 row-sum
+checks, 177 derived-vs-printed, 900 dated-table row checks, 3 cross-report.
 
 Check (c) exists for a real case: 360 ONE Special Opportunities Fund Series 8
 Class A3 appears with byte-identical figures under two family members. Summing
@@ -348,6 +381,51 @@ unambiguous.
 Adding a provider: write `providers/<name>.mjs` returning a normalized document,
 register it in `extract.mjs`'s `EXTRACTORS`, and add its precedence block.
 
+## Stage 5 — the book (`npm run build-book`)
+
+`scripts/build-book.mjs` turns the archive into `src/data/glowData.ts`, applying
+`precedence.mjs` at every field: holdings and primitives from the appraisal,
+`providerSector` from the fact sheet, accrued income and IRR% from CURRENT
+PORTFOLIO, realised gains from the capital gain statement, capital movements from
+the capital register (or the bank book where a provider issues none).
+
+**It will not fill a gap.** Where the corpus does not support a figure the field
+is `null` or the array is empty, the reason is printed at the end of the run and
+written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is:
+
+| Not populated | Why | What would fix it |
+| --- | --- | --- |
+| `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | a monthly / quarterly valuation statement |
+| `unrealisedST` / `unrealisedLT`, `stCostBasis`, `ltCostBasis`, `daysToLT` | needs per-lot purchase dates; the CAPITAL REGISTER is a capital-account ledger, not a lot register | a holding statement with lot-level acquisition dates |
+| `privateMarkets` | all five accounts are listed-equity PMS mandates | a private-markets statement |
+
+**Cash flows are checked, not assumed.** The capital-register total is compared
+against the performance summary's own Net Capital In/Out over the same window —
+they agree to the rupee on every account that prints both — and the window's
+opening portfolio value is the series' first entry, because a return computed
+against the few thousand rupees of TDS that moved during the period is nonsense.
+
+### Sectors — `shared/sectors.mjs`
+
+Provider sector → GICS, as a committed map. Nothing is inferred: the three
+platforms disagree with each other on nearly every name ("Non Banking Financial
+Company (NBFC)", "Finance (including NBFCs)", "Banks"), and a wrongly-sectored
+holding looks exactly like a correctly-sectored one on an allocation chart.
+Anything unmapped renders **Unclassified** and is listed in the book report.
+
+The one bridge is a PREFIX match, because these fact sheets clip the sector
+column to its width and the same sector arrives as `Heavy Electrical Equip`,
+`Heavy Electrical Equipmen` and in full. A prefix must be ≥8 characters and match
+exactly one entry; an ambiguous prefix stays unclassified.
+
+### NSE symbols — `npm run build-symbols`
+
+Keyed on **name**, not ISIN: no statement in this book prints one. Three tiers —
+exact normalized name, `securityKeyOf` on both sides, and a committed override
+table — and no fuzzy tier at all. A name matching two listings or none is
+reported unresolved and left out, because a missing symbol shows a position as
+not-live while a wrong one shows another company's price and says nothing.
+
 ## Conventions
 
 - All monetary values are INR at the model layer; format with `fmtFromBase`,
@@ -362,4 +440,6 @@ register it in `extract.mjs`'s `EXTRACTORS`, and add its precedence block.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
+- `npm run build-symbols` re-resolves securityKey → NSE symbol.
+- `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run set-password -- "<password>"` sets the edge gate password.

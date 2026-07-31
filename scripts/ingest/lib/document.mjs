@@ -307,7 +307,11 @@ export function makeFlows(input = {}) {
     expenses: num(input.expenses),
     fees: num(input.fees),
     profit: num(input.profit),
+    /** Portfolio value at the END of the window. */
     corpus: num(input.corpus),
+    /** …and at the START of it, where the report prints both. Together they are
+     *  the two endpoints a money-weighted return over the window needs. */
+    openingCorpus: num(input.openingCorpus),
     /** The window these figures cover. Two flow blocks with different windows
      *  are not in disagreement, however similar their labels — see readPeriod. */
     periodFrom: input.periodFrom ?? null,

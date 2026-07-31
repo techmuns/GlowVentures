@@ -38,6 +38,9 @@ export function fmtCr(nInr: number, decimals = 1): string {
   return `₹${(nInr / 1e7).toLocaleString("en-IN", { maximumFractionDigits: decimals })} Cr`;
 }
 
+/** An absent measurement, everywhere in the UI. Never a zero. */
+export const DASH = "\u2014";
+
 export function fmtPct(n: number, opts?: { sign?: boolean; decimals?: number }): string {
   const sign = opts?.sign && n > 0 ? "+" : "";
   return `${sign}${n.toFixed(opts?.decimals ?? 2)}%`;

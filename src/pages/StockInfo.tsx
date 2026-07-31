@@ -5,8 +5,8 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum } from "@/lib/analytics";
-import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
+import { sum, sumOrNull } from "@/lib/analytics";
+import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { ledgerHref, auditHref, LEDGER } from "@/lib/auditFormulas";
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -47,9 +47,10 @@ export function StockInfo() {
   const avgCost = qty > 0 ? cost / qty : 0;
   const ret = cost > 0 ? (pnl / cost) * 100 : 0;
   const weight = listedMV > 0 ? (mv / listedMV) * 100 : 0;
-  const stCost = sum(rows.map((r) => r.stCostBasis));
-  const ltCost = sum(rows.map((r) => r.ltCostBasis));
-  const div = sum(rows.map((r) => r.dividendReceived));
+  // Null, not zero, when no statement supplied the figure — see sumOrNull.
+  const stCost = sumOrNull(rows.map((r) => r.stCostBasis));
+  const ltCost = sumOrNull(rows.map((r) => r.ltCostBasis));
+  const div = sumOrNull(rows.map((r) => r.dividendReceived));
   // Live-quote state for this name. Every lot shares one quote, so this is
   // all-or-nothing in practice; the day move is summed across the lots.
   const sym = rows[0] ? symbolFor(rows[0]) : null;
@@ -64,7 +65,9 @@ export function StockInfo() {
   const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
   const firstBought = buys.length ? buys[buys.length - 1].date : null;
   const lastAdded = buys.length ? buys[0].date : null;
-  const ltPct = cost > 0 ? (ltCost / cost) * 100 : 0;
+  // Null when the long-term cost is unknown — the bar is hidden rather than
+  // drawn at zero, which would read as "none of this is long-term".
+  const ltPct = ltCost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
 
   return (
     <div>
@@ -152,7 +155,7 @@ export function StockInfo() {
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
                       <td className="px-4 py-2.5 text-right">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${r.ltCostBasis >= r.stCostBasis ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.ltCostBasis >= r.stCostBasis ? "LT" : "ST"}</span>
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>
                       </td>
                     </tr>
                   ))}
@@ -175,16 +178,22 @@ export function StockInfo() {
           </Card>
 
           <Card title="Tax basis & holding">
-            <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-400">Long-term cost</span><span className="mono text-slate-100">{money(ltCost)}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Short-term cost</span><span className="mono text-slate-100">{money(stCost)}</span></div>
+            <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-400">Long-term cost</span><span className="mono text-slate-100">{ltCost === null ? DASH : money(ltCost)}</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Short-term cost</span><span className="mono text-slate-100">{stCost === null ? DASH : money(stCost)}</span></div>
             <div className="mt-2 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
-              <div style={{ width: `${ltPct}%`, background: "#10b981" }} />
-              <div style={{ width: `${100 - ltPct}%`, background: "rgba(245,158,11,.5)" }} />
+              <div style={{ width: `${ltPct ?? 0}%`, background: "#10b981" }} />
+              <div style={{ width: `${ltPct === null ? 0 : 100 - ltPct}%`, background: "rgba(245,158,11,.5)" }} />
             </div>
-            <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500"><span>Long-term {ltPct.toFixed(0)}%</span><span>Short-term {(100 - ltPct).toFixed(0)}%</span></div>
+            {/* No lot dates in this book, so the split is unknown — say so rather
+                than drawing an empty bar that reads as "all short-term". */}
+            <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500">
+              {ltPct === null
+                ? <span>Long-term / short-term split {DASH} no lot dates on the statements</span>
+                : <><span>Long-term {ltPct.toFixed(0)}%</span><span>Short-term {(100 - ltPct).toFixed(0)}%</span></>}
+            </div>
             <div className="mt-2 flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">First bought</span><span className="mono text-slate-100">{firstBought ? fmtDate(firstBought) : led === undefined ? "…" : "—"}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Last added</span><span className="mono text-slate-100">{lastAdded ? fmtDate(lastAdded) : led === undefined ? "…" : "—"}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Dividends recorded</span><span className="mono text-slate-100">{div > 0 ? fmtFromBase(div, { compact: true }) : "—"}</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Dividends recorded</span><span className="mono text-slate-100">{div !== null && div > 0 ? fmtFromBase(div, { compact: true }) : DASH}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in listed book</span><span className="mono text-slate-100">{weight.toFixed(1)}%</span></div>
           </Card>
         </div>

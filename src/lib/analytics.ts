@@ -9,6 +9,20 @@ import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 /**
+ * Sum values that may be absent, and stay absent when they ALL are.
+ *
+ * A null in this book means the statement did not report the figure — not that
+ * it reported zero. Coercing nulls to 0 and summing gives a total of 0, which
+ * renders as a measurement of nothing rather than as the absence of one. So a
+ * null contributes nothing to a total that has at least one real value, and a
+ * column of nothing but nulls sums to null and renders "—".
+ */
+export const sumOrNull = (xs: (number | null | undefined)[]): number | null => {
+  const seen = xs.filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+  return seen.length ? seen.reduce((a, b) => a + b, 0) : null;
+};
+
+/**
  * DUPLICATE POLICY — carry both, count once.
  *
  * PENDING CONFIRMATION FROM THE PROVIDER. Reversible policy, not a fact, and it

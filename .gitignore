@@ -10,3 +10,7 @@ vite.config.d.ts
 # Raw statements live in source/ and ARE committed (they are the book's provenance),
 # but the expanded copies are derived — regenerate with `npm run inventory`.
 source/_extracted/
+
+# Cached NSE equity master — refetched by `npm run build-symbols`, kept out of
+# the repo so a stale copy can never quietly become the authority.
+scripts/.nse-equity-master.csv

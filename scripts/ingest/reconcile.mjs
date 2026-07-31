@@ -514,7 +514,7 @@ function datedTableChecks(docs) {
   const lotsByAccount = new Map();
   for (const doc of docs) {
     if (!doc.capitalGains?.length || !doc.accountNo) continue;
-    const k = `${doc.provider} ${doc.accountNo} ${doc.periodFrom}..${doc.periodTo}`;
+    const k = `${doc.provider}\u0000${doc.accountNo}\u0000${doc.periodFrom}..${doc.periodTo}`;
     const e = lotsByAccount.get(k) ?? { doc, st: 0, lt: 0 };
     for (const g of doc.capitalGains) {
       e.st += isNum(g.shortTerm) ? g.shortTerm : 0;
@@ -523,7 +523,7 @@ function datedTableChecks(docs) {
     lotsByAccount.set(k, e);
   }
   for (const [k, e] of lotsByAccount) {
-    const [provider, accountNo, window] = k.split(" ");
+    const [provider, accountNo, window] = k.split("\u0000");
     const stated = docs.find((d) => d.provider === provider && d.accountNo === accountNo
       && isNum(d.flows?.realized) && `${d.flows.periodFrom}..${d.flows.periodTo}` === window);
     if (!stated) continue;
@@ -562,7 +562,9 @@ function unresolved(docs, symbolMap) {
       // Listed equity is the only thing an NSE symbol could exist for; fund
       // units having none is expected, not a gap.
       if (h.assetClass && h.assetClass !== "Equity") continue;
-      if (h.symbol || (h.isin && symbolMap[h.isin])) continue;
+      // The symbol map is keyed on securityKey, not ISIN: not one statement in
+      // this book prints an ISIN. See scripts/build-nse-symbols.mjs.
+      if (h.symbol || symbolMap[h.securityKey] || (h.isin && symbolMap[h.isin])) continue;
       const e = securities.get(h.securityKey) ?? { security: h.security, securityKey: h.securityKey, docs: new Set() };
       e.docs.add(d.docKey);
       securities.set(h.securityKey, e);

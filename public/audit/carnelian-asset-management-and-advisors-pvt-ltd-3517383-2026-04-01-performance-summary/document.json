@@ -33,6 +33,7 @@
   "fees": 797474.54,
   "profit": null,
   "corpus": 400475677.94,
+  "openingCorpus": 312627059.69,
   "periodFrom": "2026-04-01",
   "periodTo": "2026-07-10",
   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary"

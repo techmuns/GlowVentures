@@ -64,6 +64,7 @@
   "fees": 1063700.68,
   "profit": null,
   "corpus": 181533676.83,
+  "openingCorpus": 181533676.83,
   "periodFrom": "2025-12-26",
   "periodTo": "2026-07-10",
   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-history"

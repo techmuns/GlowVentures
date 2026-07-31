@@ -64,6 +64,7 @@
   "fees": 848100.58,
   "profit": null,
   "corpus": 58209562.53,
+  "openingCorpus": 58209562.53,
   "periodFrom": "2025-01-13",
   "periodTo": "2026-07-09",
   "source": "green-lantern-capital-llp-510854-2026-07-09-performance-history"

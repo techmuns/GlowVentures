@@ -9,9 +9,9 @@ import { Pill } from "@/components/Pill";
 import { BasisPill } from "@/components/BasisPill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { sum } from "@/lib/analytics";
+import { sumOrNull, sum } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
-import { fmtPct, changeColor, fmtDate } from "@/lib/format";
+import { fmtPct, changeColor, fmtDate, DASH } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { ledgerHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
@@ -41,10 +41,14 @@ export function CapitalGains() {
   const p = portfolio.positions;
   const totRealST = sum(cg.map((c) => c.realisedST));
   const totRealLT = sum(cg.map((c) => c.realisedLT));
-  const totUnrealST = sum(cg.map((c) => c.unrealisedST));
-  const totUnrealLT = sum(cg.map((c) => c.unrealisedLT));
+  // Unrealised ST/LT is null on this book — the split needs per-lot purchase
+  // dates and no statement carries them. sumOrNull keeps that absence visible
+  // instead of turning it into a measured zero.
+  const totUnrealST = sumOrNull(cg.map((c) => c.unrealisedST));
+  const totUnrealLT = sumOrNull(cg.map((c) => c.unrealisedLT));
   const realisedTotal = totRealST + totRealLT;
-  const unrealisedTotal = totUnrealST + totUnrealLT;
+  const unrealisedTotal = totUnrealST === null && totUnrealLT === null
+    ? null : (totUnrealST ?? 0) + (totUnrealLT ?? 0);
   const estTaxRealised = Math.max(0, totRealST) * STCG_RATE + Math.max(0, totRealLT) * LTCG_RATE;
   // Hold-to-LTCG planner: short-term positions (daysToLT set) sitting on a gain.
   //
@@ -82,26 +86,26 @@ export function CapitalGains() {
   const harvest = useMemo(() =>
     p.filter((x) => x.unrealizedPnL < 0 && !x.costUnavailable).sort((a, b) => a.unrealizedPnL - b.unrealizedPnL), [p]);
   const harvestTotal = sum(harvest.map((x) => x.unrealizedPnL));
-  const match = (q: string) => (h: { security: string; isin?: string }) => {
+  const match = (q: string) => (h: { security: string; isin?: string | null }) => {
     const s = q.trim().toLowerCase();
     return h.security.toLowerCase().includes(s) || (h.isin ?? "").toLowerCase().includes(s);
   };
   const holdRows = (holdQ.trim() ? holdCandidates.filter(match(holdQ)) : holdCandidates).slice(0, 30);
   const harvestRows = (harvestQ.trim() ? harvest.filter(match(harvestQ)) : harvest).slice(0, 30);
   const byEnt = useMemo(() =>
-    cg.map((c) => ({ ...c, total: c.realisedST + c.realisedLT + c.unrealisedST + c.unrealisedLT }))
+    cg.map((c) => ({ ...c, total: c.realisedST + c.realisedLT + (c.unrealisedST ?? 0) + (c.unrealisedLT ?? 0) }))
       .sort((a, b) => b.total - a.total), [cg]);
   const splitPie = [
-    { name: "Short-term", value: Math.max(0, totUnrealST) },
-    { name: "Long-term", value: Math.max(0, totUnrealLT) },
+    { name: "Short-term", value: Math.max(0, totUnrealST ?? 0) },
+    { name: "Long-term", value: Math.max(0, totUnrealLT ?? 0) },
   ];
   return (
     <div>
       <PageHeader eyebrow="Tax & Income" title="Capital Gains & Tax"
         right={<BasisPill liveText="Unrealised gains live" hint="Unrealised gains move with live prices; cost basis, holding periods and realised gains come from the statements \u2014 each on its own report date." />} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Embedded (unrealised) gains" value={<Auditable formula={sumFormula("Embedded (unrealised) gains", "The short-term and long-term unrealised gains added together — everything you still hold, measured on paper against cost.", [{ label: "Unrealised ST", value: totUnrealST }, { label: "Unrealised LT", value: totUnrealLT }], unrealisedTotal, money)}>{fmtFromBase(unrealisedTotal, { compact: true })}</Auditable>}
-          sub={<>ST <Auditable to={auditHref(LEDGER)} title="Unrealised short-term gains — trace to the ledger">{fmtFromBase(totUnrealST, { compact: true })}</Auditable> · LT <Auditable to={auditHref(LEDGER)} title="Unrealised long-term gains — trace to the ledger">{fmtFromBase(totUnrealLT, { compact: true })}</Auditable></>} icon={<Landmark className="h-4 w-4" />} />
+        <StatTile label="Embedded (unrealised) gains" value={<Auditable formula={sumFormula("Embedded (unrealised) gains", "The short-term and long-term unrealised gains added together — everything you still hold, measured on paper against cost.", [{ label: "Unrealised ST", value: totUnrealST ?? 0 }, { label: "Unrealised LT", value: totUnrealLT ?? 0 }], unrealisedTotal ?? 0, money)}>{unrealisedTotal === null ? DASH : fmtFromBase(unrealisedTotal, { compact: true })}</Auditable>}
+          sub={<>ST <Auditable to={auditHref(LEDGER)} title="Unrealised short-term gains — trace to the ledger">{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true })}</Auditable> · LT <Auditable to={auditHref(LEDGER)} title="Unrealised long-term gains — trace to the ledger">{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true })}</Auditable></>} icon={<Landmark className="h-4 w-4" />} />
         <StatTile label="Realised gains (period)" value={<Auditable formula={sumFormula("Realised gains (period)", "The short-term and long-term gains actually booked this period, added together.", [{ label: "Realised ST", value: totRealST }, { label: "Realised LT", value: totRealLT }], realisedTotal, money)}>{fmtFromBase(realisedTotal, { compact: true, sign: true })}</Auditable>}
           sub={<>ST <Auditable to={auditHref(LEDGER)} title="Realised short-term gains — trace to the ledger">{fmtFromBase(totRealST, { compact: true })}</Auditable> · LT <Auditable to={auditHref(LEDGER)} title="Realised long-term gains — trace to the ledger">{fmtFromBase(totRealLT, { compact: true })}</Auditable></>} icon={<Receipt className="h-4 w-4" />} />
         <StatTile label="Est. tax on realised" value={<Auditable formula={{ title: "Est. tax on realised", excel: "= max(0, Realised ST) × STCG rate + max(0, Realised LT) × LTCG rate", plain: "An illustrative tax bill on booked gains: positive short-term gains taxed at the STCG rate and long-term at the LTCG rate. Losses aren't taxed, so negative amounts count as zero.", worked: `= ${money(Math.max(0, totRealST))} × ${(STCG_RATE * 100).toFixed(0)}% + ${money(Math.max(0, totRealLT))} × ${(LTCG_RATE * 100).toFixed(1)}% = ${money(estTaxRealised)}`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>}
@@ -128,8 +132,8 @@ export function CapitalGains() {
                     <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · realised short-term — trace to the ledger`}>{fmtFromBase(c.realisedST, { compact: true, sign: true })}</Auditable></td>
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · realised long-term — trace to the ledger`}>{fmtFromBase(c.realisedLT, { compact: true, sign: true })}</Auditable></td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedST)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised short-term — trace to the ledger`}>{fmtFromBase(c.unrealisedST, { compact: true, sign: true })}</Auditable></td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedLT)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised long-term — trace to the ledger`}>{fmtFromBase(c.unrealisedLT, { compact: true, sign: true })}</Auditable></td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedST ?? 0)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised short-term — trace to the ledger`}>{c.unrealisedST === null ? DASH : fmtFromBase(c.unrealisedST, { compact: true, sign: true })}</Auditable></td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedLT ?? 0)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised long-term — trace to the ledger`}>{c.unrealisedLT === null ? DASH : fmtFromBase(c.unrealisedLT, { compact: true, sign: true })}</Auditable></td>
                   </tr>
                 ))}
               </tbody>
@@ -138,8 +142,8 @@ export function CapitalGains() {
                   <td className="px-4 py-2.5 text-slate-200">Total</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST)}`}><Auditable formula={{ title: "Total realised ST", excel: "= Σ Realised ST across entities", plain: "Every entity's realised short-term gain or loss, added together.", worked: `= ${money(totRealST, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totRealST, { compact: true, sign: true })}</Auditable></td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT)}`}><Auditable formula={{ title: "Total realised LT", excel: "= Σ Realised LT across entities", plain: "Every entity's realised long-term gain or loss, added together.", worked: `= ${money(totRealLT, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totRealLT, { compact: true, sign: true })}</Auditable></td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealST)}`}><Auditable formula={{ title: "Total unrealised ST", excel: "= Σ Unrealised ST across entities", plain: "Every entity's unrealised short-term gain or loss, added together.", worked: `= ${money(totUnrealST, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totUnrealST, { compact: true, sign: true })}</Auditable></td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealLT)}`}><Auditable formula={{ title: "Total unrealised LT", excel: "= Σ Unrealised LT across entities", plain: "Every entity's unrealised long-term gain or loss, added together.", worked: `= ${money(totUnrealLT, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totUnrealLT, { compact: true, sign: true })}</Auditable></td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealST ?? 0)}`}><Auditable formula={{ title: "Total unrealised ST", excel: "= Σ Unrealised ST across entities", plain: "Every entity's unrealised short-term gain or loss, added together.", worked: `= ${money(totUnrealST ?? 0, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true, sign: true })}</Auditable></td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealLT ?? 0)}`}><Auditable formula={{ title: "Total unrealised LT", excel: "= Σ Unrealised LT across entities", plain: "Every entity's unrealised long-term gain or loss, added together.", worked: `= ${money(totUnrealLT ?? 0, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true, sign: true })}</Auditable></td>
                 </tr>
               </tfoot>
             </table>
@@ -159,8 +163,8 @@ export function CapitalGains() {
             </ResponsiveContainer>
           </div>
           <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#e0709b]" />Short-term</span><span className="mono text-slate-200">{fmtFromBase(totUnrealST, { compact: true })}</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />Long-term</span><span className="mono text-slate-200">{fmtFromBase(totUnrealLT, { compact: true })}</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#e0709b]" />Short-term</span><span className="mono text-slate-200">{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true })}</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />Long-term</span><span className="mono text-slate-200">{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true })}</span></div>
             <p className="pt-1 text-[11px] text-slate-500">Long-term equity gains are taxed at 12.5% vs 20% short-term — deferring short-term winners past their 1-year mark saves 7.5% of the gain.</p>
           </div>
         </Card>
