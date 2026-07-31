@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { loadSheetFormats, columnDecimals, type SheetFormats } from "@/lib/sheetFormats";
 import { Table2, Lock, Search, Download, ShieldAlert, FileSpreadsheet } from "lucide-react";
+import { BasisPill } from "@/components/BasisPill";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -87,14 +88,29 @@ export function DataAudit() {
   // straight at its source cells. Runs on first load and on in-app navigation.
   useEffect(() => {
     if (status !== "ready" || !manifest.length) return;
+    const eq = searchParams.get("eq");
+    const find = eq ?? searchParams.get("find");
     const wantFile = searchParams.get("file");
-    if (!wantFile) return;
+    // A CONSOLIDATED figure names no single document, because it spans five.
+    // Its link carries only `find`, and the honest response is to open the
+    // archive with that term already in the search box rather than to pick a
+    // document at random and highlight nothing. Returning early here — which is
+    // what used to happen — dropped the term silently.
+    if (!wantFile) {
+      if (find) { pendingFind.current = find; pendingExact.current = eq != null; setQuery(find); setExact(eq != null); }
+      return;
+    }
     const f = manifest.find((x) => x.fileKey === wantFile && x.sheets.length);
-    if (!f) return;
+    // A file key the manifest does not carry is a BROKEN link, and quietly
+    // leaving the previously-open document on screen is how a reader ends up
+    // reading another account's statement believing it is the one they clicked.
+    if (!f) {
+      if (typeof console !== "undefined") console.warn(`[audit] no document "${wantFile}" in the manifest — the link that sent you here is stale.`);
+      return;
+    }
     const wantSheet = searchParams.get("sheet");
     const s = (wantSheet && f.sheets.find((x) => x.key === wantSheet)) || f.sheets[0];
-    const eq = searchParams.get("eq");
-    pendingFind.current = eq ?? searchParams.get("find");
+    pendingFind.current = find;
     pendingExact.current = eq != null;
     setFileKey(f.fileKey);
     setSheetKey(s?.key ?? "");
@@ -229,7 +245,13 @@ export function DataAudit() {
     <div className="flex h-full flex-col">
       <PageHeader eyebrow="Setup" title="Data Audit"
         subtitle="Extracted statement tables — one entry per source document, exactly as parsed."
-        right={status === "ready" ? <Pill tone="info">{okFiles} documents · {totalSheets} tables</Pill> : null} />
+        right={<span className="inline-flex items-center gap-1.5">
+          {/* Always STATEMENT: these ARE the source tables. A live price has no
+              business anywhere on this page. */}
+          <BasisPill statement liveText="Statement tables"
+            hint="Every table here is the extracted statement exactly as parsed. The live price feed is never applied to this page." />
+          {status === "ready" ? <Pill tone="info">{okFiles} documents · {totalSheets} tables</Pill> : null}
+        </span>} />
 
       {/* Workbook selector */}
       <div className="mb-3 flex flex-wrap gap-2">

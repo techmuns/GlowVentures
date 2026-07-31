@@ -9,7 +9,30 @@
 // Every numeric field is `number | null`, and null means NOT REPORTED. No field
 // is ever defaulted to 0 — see parseNum.mjs for why that distinction is load
 // bearing.
-import { securityKeyOf } from "../../../shared/securityKey.mjs";
+import { securityKeyOf, splitSecurityName } from "../../../shared/securityKey.mjs";
+
+/**
+ * Every security name entering the model goes through here.
+ *
+ * Some providers print the name and the ISIN in ONE column
+ * (`CRIZAC LIMITED-INE0S4R01014`). Splitting them at the seam does two things
+ * at once: the key is derived from the CLEAN name, so it joins the same
+ * company's rows on every other report natively, and the ISIN is KEPT rather
+ * than thrown away in a book whose providers mostly print none.
+ *
+ * It runs on every record type, not just the one report that glues them today —
+ * a split that only covered capital gains would miss the next provider's habit.
+ * An `isin` the caller already read from its own column always wins; this only
+ * recovers one that was hiding inside the name.
+ */
+function namedSecurity(input) {
+  const { security, isin } = splitSecurityName(input.security);
+  return {
+    security,
+    securityKey: input.securityKey ?? (security ? securityKeyOf(security) : null),
+    isin: input.isin ?? isin,
+  };
+}
 
 /** Normalized asset classes. PMS is deliberately absent — it is an engagement. */
 export const ASSET_CLASSES = [
@@ -96,11 +119,11 @@ export function dominantEngagement(members, holdings = []) {
  * counterpart and the delta goes to the reconciliation report.
  */
 export function makeHolding(input) {
-  const security = String(input.security ?? "").trim();
+  const named = namedSecurity(input);
   return {
-    security,
-    securityKey: input.securityKey ?? securityKeyOf(security),
-    isin: input.isin ?? null,
+    security: named.security,
+    securityKey: named.securityKey ?? securityKeyOf(named.security),
+    isin: named.isin ?? null,
     symbol: input.symbol ?? null,
     assetClass: input.assetClass ?? null,
     providerSector: input.providerSector ?? null,
@@ -325,8 +348,9 @@ export function makeCashFlow(input) {
   return {
     date: input.date ?? null,             // ISO
     description: String(input.description ?? "").trim(),
-    security: input.security ?? null,
-    securityKey: input.security ? securityKeyOf(input.security) : null,
+    security: input.security ? namedSecurity(input).security : null,
+    securityKey: input.security ? namedSecurity(input).securityKey : null,
+    isin: input.security ? namedSecurity(input).isin : null,
     kind: input.kind ?? null,             // "transaction" | "corporate-action"
     /** Member sub-account the row is tagged to, when the statement says. */
     memberId: input.memberId ?? null,
@@ -359,13 +383,14 @@ export function makeCashFlow(input) {
  * is applied once, at the cash-flow layer, so it cannot be applied twice.
  */
 export function makeTransaction(input) {
-  const security = String(input.security ?? "").trim();
+  const named = namedSecurity(input);
   return {
     date: input.date ?? null,                    // ISO trade date
     settlementDate: input.settlementDate ?? null,
     side: input.side ?? null,                    // "buy" | "sell"
-    security,
-    securityKey: security ? securityKeyOf(security) : null,
+    security: named.security,
+    securityKey: named.securityKey,
+    isin: named.isin,
     exchange: input.exchange ?? null,
     assetClass: input.assetClass ?? null,
     // ── primitives ──
@@ -419,10 +444,11 @@ export function deriveTransaction(t) {
  * determination made by the manager, not something to re-derive from dates here.
  */
 export function makeCapitalGain(input) {
-  const security = String(input.security ?? "").trim();
+  const named = namedSecurity(input);
   return {
-    security,
-    securityKey: security ? securityKeyOf(security) : null,
+    security: named.security,
+    securityKey: named.securityKey,
+    isin: named.isin,
     saleDate: input.saleDate ?? null,
     purchaseDate: input.purchaseDate ?? null,
     quantity: num(input.quantity),
@@ -443,10 +469,11 @@ export function makeCapitalGain(input) {
 
 /** One dated income event — a dividend, or a corporate action's cash leg. */
 export function makeIncomeEvent(input) {
-  const security = String(input.security ?? "").trim();
+  const named = namedSecurity(input);
   return {
-    security,
-    securityKey: security ? securityKeyOf(security) : null,
+    security: named.security,
+    securityKey: named.securityKey,
+    isin: named.isin,
     kind: input.kind ?? null,               // "dividend" | "bonus" | "interest" | …
     exDate: input.exDate ?? null,
     receivedDate: input.receivedDate ?? null,

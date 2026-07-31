@@ -30,6 +30,7 @@
   {
    "security": "Can Fin Homes Ltd.",
    "securityKey": "can-fin-homes",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-07-03",
    "receivedDate": null,
@@ -45,6 +46,7 @@
   {
    "security": "Caplin Point Laboratories Ltd.",
    "securityKey": "caplin-point-laboratories",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-29",
    "receivedDate": null,
@@ -60,6 +62,7 @@
   {
    "security": "Caplin Point Laboratories Ltd.",
    "securityKey": "caplin-point-laboratories",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-09",
    "receivedDate": "2026-06-09",
@@ -75,6 +78,7 @@
   {
    "security": "Caplin Point Laboratories Ltd.",
    "securityKey": "caplin-point-laboratories",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-09",
    "receivedDate": null,
@@ -90,6 +94,7 @@
   {
    "security": "HDFC Asset Management Co. Ltd.",
    "securityKey": "hdfc-asset-management",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-05",
    "receivedDate": null,
@@ -105,6 +110,7 @@
   {
    "security": "HDFC Asset Management Co. Ltd.",
    "securityKey": "hdfc-asset-management",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-30",
    "receivedDate": "2026-06-30",
@@ -120,6 +126,7 @@
   {
    "security": "HDFC Asset Management Co. Ltd.",
    "securityKey": "hdfc-asset-management",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-30",
    "receivedDate": null,
@@ -135,6 +142,7 @@
   {
    "security": "Indian Energy Exchange Ltd.",
    "securityKey": "indian-energy-exchange",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-15",
    "receivedDate": null,
@@ -150,6 +158,7 @@
   {
    "security": "Life Insurance Corp. of India",
    "securityKey": "life-insurance-corp-of-india",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-25",
    "receivedDate": null,
@@ -165,6 +174,7 @@
   {
    "security": "Mahindra & Mahindra Ltd.",
    "securityKey": "mahindra-and-mahindra",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-07-03",
    "receivedDate": null,
@@ -180,6 +190,7 @@
   {
    "security": "Oberoi Realty Ltd.",
    "securityKey": "oberoi-realty",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-14",
    "receivedDate": null,
@@ -195,6 +206,7 @@
   {
    "security": "Oberoi Realty Ltd.",
    "securityKey": "oberoi-realty",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-25",
    "receivedDate": "2026-05-25",
@@ -210,6 +222,7 @@
   {
    "security": "Oberoi Realty Ltd.",
    "securityKey": "oberoi-realty",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-25",
    "receivedDate": null,
@@ -225,6 +238,7 @@
   {
    "security": "State Bank of India",
    "securityKey": "state-bank-of-india",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-15",
    "receivedDate": null,
@@ -240,6 +254,7 @@
   {
    "security": "State Bank of India",
    "securityKey": "state-bank-of-india",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-05",
    "receivedDate": "2026-06-05",
@@ -255,6 +270,7 @@
   {
    "security": "State Bank of India",
    "securityKey": "state-bank-of-india",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-05",
    "receivedDate": null,
@@ -270,6 +286,7 @@
   {
    "security": "Sundaram Finance Ltd.",
    "securityKey": "sundaram-finance",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-07-06",
    "receivedDate": null,

@@ -9,7 +9,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Portfolio } from "@/lib/types";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, applyQuotes, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, type QuoteFeed } from "@/lib/quotes";
 import { fmtCurrency, displaySecurity } from "@/lib/format";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
@@ -71,8 +71,33 @@ export function isEmptyBook(p: Portfolio | null): boolean {
 
 export type QuotesStatus = "loading" | "live" | "unavailable";
 
+/**
+ * Which measurement a figure is on.
+ *
+ * STATEMENT — as the managers printed it. Ties to the archive to the rupee, and
+ * carries the accounts' individual report dates, so a consolidated total on this
+ * basis is a BLEND of dates and must say so.
+ *
+ * LIVE — the same holdings marked to market now. The date skew disappears
+ * because every price is from the same moment, but the figure no longer matches
+ * any statement, so it can never be the basis for a page that must reconcile.
+ */
+export type Basis = "STATEMENT" | "LIVE";
+
 type Ctx = {
+  /** The book with live prices overlaid where a quote exists. */
   portfolio: Portfolio | null;
+  /**
+   * The book EXACTLY as extracted, never touched by the quote feed.
+   *
+   * Capital Gains, Data Audit, Ledger Insights and every reconciliation view
+   * read this. They have to tie to a printed statement, and a page whose totals
+   * drift with the market cannot do that — the reader would open the PDF and
+   * find a different number, with nothing on screen to explain why.
+   */
+  statementPortfolio: Portfolio | null;
+  /** Which basis `portfolio` is currently on. */
+  basis: Basis;
   /** No statements ingested yet — pages show an empty state rather than zeros. */
   bookIsEmpty: boolean;
   displayCurrency: DisplayCurrency;
@@ -87,6 +112,12 @@ type Ctx = {
   quotesAsOf: string | null;   // when the feed was pulled
   livePriced: number;          // holdings carrying a live price
   notLive: number;             // holdings still on their statement mark
+  /**
+   * Securities with NO NSE symbol at all — cash balances, receivables and the
+   * liquid-fund sweep. These can never go live however well the feed is running,
+   * and folding them into `notLive` would read as a feed problem forever.
+   */
+  unpriceable: number;
   refreshQuotes: () => void;
 };
 
@@ -163,8 +194,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     return () => { alive = false; window.clearTimeout(timer); window.removeEventListener("focus", onFocus); };
   }, [loadQuotes]);
 
-  // Merge quotes into the book. Only price-derived fields move; quantity and cost
-  // basis stay exactly as the statements have them.
+  // Merge quotes into the book.
+  //
+  // BASIS DISCIPLINE. Only PRICE-DERIVED fields move — market value, day change,
+  // unrealised P&L and the return on cost. Quantity, cost basis, realised gains,
+  // dividends, fees and every dated cash flow come from the statements and are
+  // never touched here, because no live price is evidence about any of them.
+  // `basePortfolio` is kept intact alongside and handed out as
+  // `statementPortfolio`, so a page that must reconcile has the printed figures
+  // available rather than having to un-mix them.
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;
     if (!quotes) return basePortfolio;
@@ -177,13 +215,31 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   // Counted by security, not by position row: the same holding is often held by
   // several accounts, and "53 not live" against a 149-row table reads as wrong.
-  const { livePriced, notLive } = useMemo(() => {
-    const bySecurity = new Map<string, boolean>();
-    for (const p of portfolio?.positions ?? []) bySecurity.set(p.securityKey, !!p.live || !!bySecurity.get(p.securityKey));
-    let live = 0;
-    for (const isLive of bySecurity.values()) if (isLive) live++;
-    return { livePriced: live, notLive: bySecurity.size - live };
+  //
+  // `unpriceable` is split out because it is a different fact. A security with
+  // no NSE symbol — cash, a receivable, the liquid-fund sweep — is not waiting
+  // on the feed; it has nothing to quote. Counting it as "not live" would report
+  // a permanent feed shortfall that no token or network would ever close.
+  const { livePriced, notLive, unpriceable } = useMemo(() => {
+    const bySecurity = new Map<string, { live: boolean; hasSymbol: boolean }>();
+    for (const p of portfolio?.positions ?? []) {
+      const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false };
+      e.live = e.live || !!p.live;
+      e.hasSymbol = e.hasSymbol || !!symbolFor(p);
+      bySecurity.set(p.securityKey, e);
+    }
+    const all = [...bySecurity.values()];
+    return {
+      livePriced: all.filter((e) => e.live).length,
+      notLive: all.filter((e) => !e.live && e.hasSymbol).length,
+      unpriceable: all.filter((e) => !e.hasSymbol).length,
+    };
   }, [portfolio]);
+
+  // The basis the merged book is actually on. LIVE the moment any position
+  // carries a live price — from then on the consolidated total no longer equals
+  // any statement, and every page showing one has to say so.
+  const basis: Basis = livePriced > 0 ? "LIVE" : "STATEMENT";
 
   const setDisplayCurrency = useCallback((c: DisplayCurrency) => { setCcy(c); writeDisplayCurrency(c); }, []);
   const convertFromBase = useCallback((n: number) => (displayCurrency === "USD" ? n / inrPerUsd : n), [displayCurrency, inrPerUsd]);
@@ -196,11 +252,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const refreshQuotes = useCallback(() => { loadQuotes(true); }, [loadQuotes]);
   const value = useMemo<Ctx>(
     () => ({
-      portfolio, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf,
-      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, refreshQuotes,
+      portfolio, statementPortfolio: basePortfolio, basis,
+      bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf,
+      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, refreshQuotes,
     }),
-    [portfolio, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf,
-     quotesStatus, quotes, livePriced, notLive, refreshQuotes],
+    [portfolio, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
+     clearPortfolio, inrPerUsd, fxAsOf, quotesStatus, quotes, livePriced, notLive, unpriceable, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 }

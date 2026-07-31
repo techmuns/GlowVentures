@@ -30,6 +30,7 @@
   {
    "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-05-29",
    "receivedDate": "2026-07-06",
@@ -45,6 +46,7 @@
   {
    "security": "Kalpataru Projects International Ltd",
    "securityKey": "kalpataru-projects-international",
+   "isin": null,
    "kind": "dividend",
    "exDate": "2026-06-29",
    "receivedDate": null,

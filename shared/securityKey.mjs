@@ -20,6 +20,48 @@
 // apart. That matters directly here: "360 ONE Special Opportunities Fund -
 // Series 8 - Class A3" must not collapse onto Class A1.
 
+// ─────────────────────────────────────────────────────────────────────────────
+// An ISIN glued onto the end of a name.
+//
+// Carnelian's capital gain statement prints the two identifiers in ONE column:
+// `CRIZAC LIMITED-INE0S4R01014`. That is a name AND an ISIN, and treating the
+// whole string as a name does two kinds of damage at once. It keys the row
+// `crizac-limited-ine0s4r01014` while the same manager's transaction statement
+// keys the same company `crizac`, so the two never join — and it throws away a
+// real ISIN in a book whose providers otherwise print none.
+//
+// THE PATTERN IS ANCHORED AND NARROW, ON PURPOSE. An Indian ISIN is `INE` (or
+// `INF` for mutual-fund units) followed by nine alphanumerics, and it is matched
+// only as a TRAILING token after a separator. An unanchored search finds
+// "INDraprastha Medical Corp. Ltd." — `IND` plus nine more characters is the
+// same shape — and would amputate a real company name. Three statements in this
+// drop carry that name, which is how the anchor earned its place.
+const ISIN_TAIL = /[\s-]+(IN[EF][0-9A-Z]{9})\s*$/i;
+// A separator printed with nothing after it: the column was empty, but the glue
+// character still made it into the name ("Vedanta Iron and Steel Limited-").
+const EMPTY_TAIL = /[\s-]+$/;
+
+/**
+ * Split a printed security name into `{ security, isin }`.
+ *
+ * Returns the name unchanged and `isin: null` when nothing is glued on, so it is
+ * safe to run over every name from every provider — which is the point. The glue
+ * is one provider's habit today; the next drop's provider will have its own, and
+ * a split that only ran on capital gains would miss it.
+ */
+export function splitSecurityName(raw) {
+  const s = String(raw ?? "").trim();
+  const m = s.match(ISIN_TAIL);
+  if (m) {
+    const name = s.slice(0, s.length - m[0].length).replace(EMPTY_TAIL, "").trim();
+    // Never let the split empty the name: a row printed as the bare ISIN keeps
+    // it as its name rather than becoming nameless.
+    if (name) return { security: name, isin: m[1].toUpperCase() };
+    return { security: s, isin: null };
+  }
+  return { security: s.replace(EMPTY_TAIL, "").trim() || s, isin: null };
+}
+
 // Legal-form words, stripped only from the END of a name.
 const LEGAL_SUFFIX = new Set([
   "limited", "ltd", "pvt", "private", "plc", "inc", "incorporated",

@@ -12,7 +12,7 @@ import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { BasisPill } from "@/components/BasisPill";
 import { Auditable } from "@/components/Auditable";
-import { ledgerHref, auditHref, LEDGER, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { holdingHref, auditHref, LEDGER, returnFormula, weightFormula } from "@/lib/auditFormulas";
 
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
 
@@ -158,7 +158,7 @@ export function SectorComposition() {
                                         <td className="px-3 py-1.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                                         <td className="px-3 py-1.5 text-right mono text-slate-100" title={h.live ? LIVE_CELL : undefined}>
                                           {h.live ? fmtFromBase(h.marketValue, { compact: true })
-                                            : <Auditable to={ledgerHref(h.security)} title="Market value — trace to the ledger">{fmtFromBase(h.marketValue, { compact: true })}</Auditable>}
+                                            : <Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Market value — trace to this account's appraisal">{fmtFromBase(h.marketValue, { compact: true })}</Auditable>}
                                         </td>
                                         <td className="px-3 py-1.5 text-right mono text-slate-400" title={h.live ? LIVE_CELL : undefined}>
                                           {h.live ? `${s.mv > 0 ? ((h.marketValue / s.mv) * 100).toFixed(1) : "0.0"}%`
@@ -167,7 +167,7 @@ export function SectorComposition() {
                                         <td className={`px-3 py-1.5 text-right mono ${h.costUnavailable ? "text-slate-500" : changeColor(h.returnPct)}`} title={h.live && !h.costUnavailable ? LIVE_CELL : undefined}>
                                           {h.costUnavailable ? "—"
                                             : h.live ? fmtPct(h.returnPct, { sign: true })
-                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, ledgerHref(h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, holdingHref(accIdx.get(h.accountId), h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                         </td>
                                       </tr>
                                     ))}

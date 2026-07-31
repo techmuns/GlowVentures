@@ -1,12 +1,12 @@
 // Client helper for the corporate-announcements feed. Resolves each holding to its
-// NSE trading symbol — the ticker the statement printed, else via ISIN through
-// src/data/nseSymbols.json — then fans out across ALL of them (chunked, see
-// feedFetch) to the server-side proxy at /api/announcements.
+// NSE trading symbol — the ticker the statement printed, else its securityKey
+// through src/data/nseSymbols.json — then fans out across ALL of them (chunked,
+// see feedFetch) to the server-side proxy at /api/announcements.
 //
 // Only listed names reach this feed at all. AIF/PMS units and unlisted holdings
 // have no exchange filings and are simply absent, not shown as having none.
 import type { Portfolio } from "./types";
-import { symbolForIsin } from "./quotes";
+import { symbolFor } from "./quotes";
 import { fetchFeedChunked } from "./feedFetch";
 
 export type Announcement = {
@@ -41,10 +41,10 @@ export function topHoldingsForAnnouncements(portfolio: Portfolio, n?: number): A
   for (const p of portfolio.positions) {
     total += p.marketValue;
     const e = map.get(p.securityKey)
-      ?? { name: p.security, key: p.securityKey, symbol: p.symbol || symbolForIsin(p.isin), mv: 0 };
+      ?? { name: p.security, key: p.securityKey, symbol: symbolFor(p), mv: 0 };
     // A statement that prints the ticker wins over one that doesn't; the first
     // row for a name may be the one lacking it.
-    if (!e.symbol) e.symbol = p.symbol || symbolForIsin(p.isin);
+    if (!e.symbol) e.symbol = symbolFor(p);
     e.mv += p.marketValue;
     map.set(p.securityKey, e);
   }

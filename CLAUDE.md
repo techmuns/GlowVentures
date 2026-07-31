@@ -105,6 +105,23 @@ suffixes — `HFCL LIMITED` = `HFCL Ltd.`) and preserves anything that distingui
 real instruments (series, class, tranche). Merging two different securities into
 one key is worse than showing them apart.
 
+**Some providers glue the ISIN onto the name.** Carnelian's capital gain statement
+prints `CRIZAC LIMITED-INE0S4R01014` in one column. `splitSecurityName` (in
+`shared/securityKey.mjs`) separates them before anything else runs, so the key
+comes from the CLEAN name — `crizac`, which joins that manager's own transaction
+statement natively — and the ISIN is kept as enrichment rather than thrown away.
+It runs on EVERY record type, not the one report that glues them today.
+
+The pattern is anchored and narrow on purpose: a trailing `IN[EF]` + nine
+alphanumerics, matched only at the end after a separator. An unanchored search
+finds `INDraprastha Medical Corp. Ltd.` — same shape — and would amputate a real
+company name; three statements in this drop carry it. A separator printed with an
+empty ISIN column (`Vedanta Iron and Steel Limited-`) is trimmed too.
+
+This used to be patched on the read side, in `src/lib/ledger.ts`. **Do not
+reinstate that.** A presentation layer that repairs identity hides the defect from
+the reconciler, which is the only thing that would have caught it.
+
 ### 2. Owner and custodian are different fields
 
 `account` used to mean both "which family entity owns this" and "who holds it".
@@ -526,6 +543,28 @@ join from 17 of 77 lots to 58. **This is a presentation-layer join, not a repair
 the extractor should stop carrying an identifier inside a name field, and until
 it does the archive keeps the key exactly as derived.
 
+### Two realised totals, and which one is canonical
+
+The capital gain statements' own total is the **printed primitive and is
+canonical**: −₹1,93,11,003 across 77 lots. The roll-up that attributes each lot
+to the sale that produced it on the transaction tape is a **cross-check**, and it
+is more negative:
+
+```
+statement (77 lots)   −1,93,11,003     ← canonical, what Capital Gains shows
+attributed (58 lots)  −2,01,76,689     ← cross-check, on Ledger Insights
+unattributed (19)         +8,65,686
+```
+
+The 19 lots the tape never carries are **liquid mutual fund redemptions** — 18
+Axis Liquid Fund across the two Green Lantern accounts, 1 DSP — the cash sweep
+these managers run beside the equity mandate. The equity transaction statement
+does not print them, so there is no sale row to hang them on. They are net GAINS,
+which is the entire reason the attributed subtotal reads worse: removing gains
+from a loss makes the remainder look bigger. **Unjoined never means dropped** —
+all 77 lots count in the canonical figure. The three lines reconcile exactly, and
+Ledger Insights shows them as three lines for that reason.
+
 ### XIRR: only accounts that can be measured, on one terminal date
 
 Account 510854 publishes no FY performance summary, so its flows carry no opening
@@ -542,10 +581,61 @@ gave the same measurement two values. The window is one quarter here, so every
 rate annualises about three months; the pages say so, because an unlabelled
 +109.7% reads as a sustained yearly rate.
 
+## Stage 7 — the live layer
+
+Six Cloudflare Pages Functions proxy the in-house muns API, with `MUNS_TOKEN`
+held in the Cloudflare environment and never in the browser: `quotes`,
+`news`, `announcements`, `insider`, `research`, `history`. `fx` needs no token
+(ECB reference rates, keyless) and falls back to a static rate.
+
+**The symbol bridge is keyed on `securityKey`, not ISIN.** No provider in this
+book prints an ISIN in its holdings column, so `nseSymbols.json` — which
+`npm run build-symbols` resolves by NAME for exactly that reason — must be read
+on the same key. `quotes.ts` previously exported `symbolForIsin(p.isin)` against
+that map: two identifier spaces, one dictionary, no error anywhere, and a live
+layer that resolved nothing for 143 of 143 positions while looking wired up.
+
+Coverage is 71 of 74 distinct securities, 136 of 143 position rows. The three
+that do not resolve are `Cash`, `Cash — receivable/payable` and the Axis Liquid
+Fund sweep: no NSE listing, so they can never go live. They are counted as
+`unpriceable`, separately from `notLive`, because folding them together reports a
+permanent feed shortfall no token would ever close.
+
+### BASIS — the discipline that keeps the book checkable
+
+`PortfolioContext` hands out three things: `portfolio` (live overlaid),
+`statementPortfolio` (**never touched by the feed**) and `basis`.
+
+- Live prices may move **market value, day change, unrealised P&L and return on
+  cost**. They must NEVER touch quantity, cost basis, realised gains, dividends,
+  fees or any dated cash flow — no price is evidence about any of them.
+- Every consolidated total states its basis via `<BasisPill>`, which leads with
+  `STATEMENT` or `LIVE` rather than burying it in a tooltip.
+- **Pages that must tie to source pass `<BasisPill statement>` AND read
+  `statementPortfolio`**: Capital Gains, Data Audit, Ledger Insights. A reader
+  checks these by opening the PDF; a total that drifts with the market cannot be
+  checked. Passing the pill without switching the data source is the trap — the
+  label would then be a claim the page does not honour.
+- **The as-of skew survives on both bases.** Green Lantern closes 2026-06-25, the
+  others 2026-07-10. On LIVE basis prices share one moment, but every field the
+  feed does not touch still blends dates, so the "N accounts behind" pill stays.
+
+### Degrading without a token
+
+With no `MUNS_TOKEN` and no network — how it runs locally, and how it will run
+before the token is set — every page renders on statement marks, the pill reads
+`STATEMENT · as of 2026-07-10`, and consolidated NAV is exactly
+**₹83,50,63,590.78**. No blank tiles, no zeros, no unresolved spinners, and no
+"session expired" wording for what is a missing upstream.
+
 ## Conventions
 
 - All monetary values are INR at the model layer; format with `fmtFromBase`,
   never hard-code currency symbols.
+- A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
+  builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
+  composes the docKey. A consolidated figure spans five documents and names none:
+  it links to the archive index with the search term pre-filled.
 - Large holdings lists get a `SearchInput` (filter by security name or ISIN).
 - Pages showing a consolidated total should carry a `<BasisPill>` so the reader
   knows what the figure is actually based on.

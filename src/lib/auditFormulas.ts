@@ -30,12 +30,37 @@ export function auditHref(o: { file?: string; sheet?: string; find?: string; eq?
   return qs ? `/audit?${qs}` : "/audit";
 }
 
-// The master current-book ledger: the row-level holdings table the ingest
-// pipeline writes to public/audit/current/holdings.json, the source of every
-// listed holding's quantity, cost and value. Rows are keyed by security name,
-// not ISIN — most of this book's providers print no ISIN.
-export const LEDGER = { file: "current", sheet: "holdings" };
-export const ledgerHref = (find: string) => auditHref({ ...LEDGER, find });
+// THE "LEDGER" LINK USED TO POINT AT A DOCUMENT THAT DOES NOT EXIST.
+//
+// This was `{ file: "current", sheet: "holdings" }` — the reference dashboard's
+// one big workbook sheet, and the same phantom path that left src/lib/ledger.ts
+// reading nothing. Dozens of `<Auditable>` figures across the app carried a
+// "trace to the ledger" link to `/audit?file=current&sheet=holdings`. Data Audit
+// looks that key up in the manifest, does not find it, and silently leaves
+// whichever document was already open — so the reader clicks a number, lands on
+// an unrelated statement, and has no way to tell it is the wrong one.
+//
+// This archive is keyed BY DOCUMENT. A holding's source is its account's
+// PORTFOLIO APPRAISAL — precedence names that authoritative for every holdings
+// figure — and its docKey is `<accountId>-<account asOf>-appraisal`, which is
+// exactly how extract.mjs composes it.
+//
+// So there is no single ledger to link to, and pretending there is one is what
+// broke this. `holdingHref` needs the account; `AUDIT_INDEX` is the honest
+// fallback for a CONSOLIDATED figure, which has no one source document because
+// it spans five.
+export const AUDIT_INDEX = {};
+/** The appraisal that sourced a holding, for a per-position deep link. */
+export const appraisalDocKey = (a: { accountId: string; asOf: string }) => `${a.accountId}-${a.asOf}-appraisal`;
+/** Deep link to a holding's own row in its own account's appraisal. */
+export const holdingHref = (a: { accountId: string; asOf: string } | undefined, find: string) =>
+  a ? auditHref({ file: appraisalDocKey(a), find }) : auditHref({ find });
+
+// Kept as the name every call site already uses, now meaning "the archive
+// index" rather than a specific sheet: a consolidated figure spans documents,
+// so it links to the archive rather than asserting one source.
+export const LEDGER = AUDIT_INDEX;
+export const ledgerHref = (find: string) => auditHref({ find });
 
 // Deep-link to a security's Stock Info drill-down page, keyed by securityKey.
 export const stockHref = (securityKey: string) => `/stock/${encodeURIComponent(securityKey)}`;

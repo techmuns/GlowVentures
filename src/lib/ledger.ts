@@ -28,7 +28,6 @@
 //     Two of the five accounts have none, so their sells carry no realised
 //     figure — absent, not zero.
 import { displaySecurity } from "./format";
-import { securityKeyOf } from "./securityKey";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -145,35 +144,22 @@ export type TxnData = {
   accounts: string[]; accountsWithout: string[];
 };
 
-// ONE STATEMENT GLUES THE ISIN ONTO THE SECURITY NAME.
+// THE ISIN USED TO BE GLUED TO THE NAME, AND THE JOIN USED TO BE PATCHED HERE.
 //
-// Carnelian's capital gain statement prints `CRIZAC LIMITED-INE0S4R01014` in the
-// name column, so `securityKeyOf` — which has no reason to expect an identifier
-// inside a name — keys the lot `crizac-limited-ine0s4r01014`. Its own
-// transaction statement prints `Crizac Limited` and keys it `crizac`. The two
-// never join, and the realised column showed "—" against every Carnelian sell
-// while the gain sat in the archive three folders away.
+// Carnelian's capital gain statement prints `CRIZAC LIMITED-INE0S4R01014` in one
+// column. That keyed the lot `crizac-limited-ine0s4r01014` while the same
+// manager's transaction statement keyed the same company `crizac`, so the two
+// never joined and the realised column showed "—" against every Carnelian sell.
+// A `joinKey()` here used to unpick the suffix at read time.
 //
-// The suffix is recognised exactly — a trailing token matching an ISIN's fixed
-// shape (2 letters, 9 alphanumerics, 1 check digit) — and the remainder is put
-// back through the SAME normaliser, so `SYNGENE INTERNATIONAL LTD-INE398R01022`
-// resolves to `syngene-international` rather than to `syngene-international-ltd`
-// (the glued-on ISIN had hidden the trailing "Ltd" from the suffix rule). That
-// lifts the join from 17 of 77 lots to 58; the other 19 are demerger allotments
-// and mutual-fund redemptions that never appear on a transaction statement, and
-// they keep their honest "—".
+// The extractor now splits the two apart at the seam (`splitSecurityName` in
+// shared/securityKey.mjs), so the archive's own keys join natively — 58 of 77
+// lots, the same figure the patch reached — and the ISIN is kept rather than
+// discarded. Nothing re-derives a key on this side any more.
 //
-// This is a presentation-layer join, not a repair: the extractor should stop
-// carrying an ISIN inside a name field, and until it does the archive keeps the
-// key exactly as it derived it.
-const ISIN_SUFFIX = /-([a-z]{2}[a-z0-9]{9}[0-9])$/;
-
-function joinKey(securityKey: string, security: string): string {
-  const m = securityKey.match(ISIN_SUFFIX);
-  if (!m) return securityKey;
-  const name = String(security).replace(new RegExp(`[-\\s]*${m[1]}`, "i"), "").trim();
-  return name ? securityKeyOf(name) : securityKey;
-}
+// If a lot ever stops joining, the fix is in the extractor. Do not reinstate a
+// key rewrite here: a presentation layer that repairs identity hides the defect
+// from the reconciler, which is the one thing that would have caught it.
 
 /** Realised gain per (account, securityKey, saleDate), from the capital gain
  *  statements. Keyed by ACCOUNT too: the same name sold on the same day in two
@@ -184,7 +170,7 @@ function realisedIndex(docs: ArchiveDoc[]): Map<string, number> {
   for (const d of of(docs, AUTHORITATIVE.capitalGains)) {
     for (const l of d.capitalGains ?? []) {
       if (!l.saleDate) continue;
-      const k = `${d.accountNo}|${joinKey(l.securityKey, l.security)}@${l.saleDate}`;
+      const k = `${d.accountNo}|${l.securityKey}@${l.saleDate}`;
       m.set(k, (m.get(k) ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0));
     }
   }
@@ -397,16 +383,35 @@ export type SalesData = {
   totalProceeds: number; totalRealized: number | null; exits: number; trims: number;
   periodFrom: string | null; periodTo: string | null;
   /**
-   * TWO REALISED TOTALS, ON TWO BASES, BOTH CORRECT.
+   * ONE CANONICAL FIGURE, ONE CROSS-CHECK, AND THE GAP EXPLAINED TO THE RUPEE.
    *
-   * `totalRealized` is what the sales listed here realised. `statementRealized`
-   * is the capital gain statements' OWN total over their period — larger,
-   * because it also settles demerger allotments and fund redemptions that never
-   * appear as a sell on a transaction statement. Comparing them as a
-   * disagreement would be the FY-to-date-vs-since-inception mistake again, so
-   * both are carried and the page says which is which.
+   * `statementRealized` is the PRIMITIVE — the capital gain statements' own
+   * total across every lot they settle. It is canonical and it is what the
+   * headline shows.
+   *
+   * `totalRealized` is a roll-up we DERIVE by attributing each statement lot to
+   * the sale that produced it on the transaction tape. It is a cross-check, and
+   * it is more negative, which looked alarming until it was traced:
+   *
+   *   statement (77 lots)  −₹1,93,11,003
+   *   attributed (58 lots) −₹2,01,76,689
+   *   unattributed (19)          +₹8,65,686
+   *
+   * The 19 lots the tape never carries are LIQUID MUTUAL FUND redemptions — 18
+   * Axis Liquid Fund across the two Green Lantern accounts, 1 DSP — the cash
+   * sweep these managers run alongside the equity mandate. The equity
+   * transaction statement does not print them. They are net GAINS, so leaving
+   * them out of a loss-making total makes the remainder look worse than the
+   * book actually did. Nothing is lost or double-counted: the three figures
+   * reconcile exactly, which is why all three are carried here.
    */
   statementRealized: number | null; statementLots: number; matchedSales: number;
+  /** Lots the tape never carries, and what they sum to. Signed as the statement
+   *  reports them — positive means the unattributed set is a net gain. */
+  unattributedRealized: number | null; unattributedLots: number;
+  /** The securities behind those lots, so the page can name them rather than
+   *  describing them in the abstract. */
+  unattributedSecurities: string[];
 };
 
 export async function loadSales(): Promise<SalesData | null> {
@@ -451,7 +456,18 @@ export async function loadSales(): Promise<SalesData | null> {
   rows.sort((a, b) => b.proceeds - a.proceeds);
   const withRealised = rows.filter((e) => e.hasRealised);
   const exits = rows.filter((e) => e.exited).length;
+  // Which statement lots the tape never carried, so the gap between the two
+  // totals is a named set of securities rather than a residual.
+  const unattributed = [];
+  for (const d of of(docs, AUTHORITATIVE.capitalGains)) {
+    for (const l of d.capitalGains ?? []) {
+      if (!l.saleDate) continue;
+      if (claimed.has(`${d.accountNo}|${l.securityKey}@${l.saleDate}`)) continue;
+      unattributed.push(l);
+    }
+  }
   const allLots = of(docs, AUTHORITATIVE.capitalGains).flatMap((d) => d.capitalGains ?? []);
+  const realisedOf = (ls: typeof allLots) => ls.reduce((s, l) => s + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0);
   return {
     asOf: newestAsOf(docs),
     rows: rows.map(({ hasRealised: _drop, ...r }) => r),
@@ -460,10 +476,12 @@ export async function loadSales(): Promise<SalesData | null> {
     // statement — the sells happened; what they realised was never reported.
     totalRealized: withRealised.length ? withRealised.reduce((s, e) => s + (e.realized ?? 0), 0) : null,
     exits, trims: rows.length - exits, periodFrom, periodTo,
-    statementRealized: allLots.length
-      ? allLots.reduce((s, l) => s + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0) : null,
+    statementRealized: allLots.length ? realisedOf(allLots) : null,
     statementLots: allLots.length,
     matchedSales: claimed.size,
+    unattributedRealized: unattributed.length ? realisedOf(unattributed) : null,
+    unattributedLots: unattributed.length,
+    unattributedSecurities: [...new Set(unattributed.map((l) => displaySecurity(l.security)))].sort(),
   };
 }
 

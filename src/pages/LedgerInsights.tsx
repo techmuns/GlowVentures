@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
+import { BasisPill } from "@/components/BasisPill";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
@@ -96,7 +97,14 @@ export function LedgerInsights() {
     <div className="flex h-full flex-col">
       <PageHeader eyebrow="Analytics" title="Ledger Insights"
         subtitle="The dated record behind the book — read from the extracted statements, not from the position snapshot."
-        right={txn ? <Pill tone="info">as of {fmtDate(txn.asOf)}</Pill> : undefined} />
+        right={<span className="inline-flex items-center gap-1.5">
+          {/* Always STATEMENT: every figure here is a dated primitive read off a
+              statement. Nothing on this page is price-derived, so there is
+              nothing for the live layer to mark. */}
+          <BasisPill statement liveText="Statement records"
+            hint="Transactions, capital gain lots and income events are dated primitives read off the statements. No figure on this page is price-derived, so the live feed does not apply." />
+          {txn ? <Pill tone="info">as of {fmtDate(txn.asOf)}</Pill> : null}
+        </span>} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {TABS.map(({ key, label, icon: Icon }) => (
@@ -143,32 +151,59 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
           {...(data.sells
             ? { value: fmtFromBase(sold, { compact: true }), sub: "settled proceeds, over the window" }
             : absentTile("no sells over this window", "Every transaction on these statements is a purchase."))} />
-        {sales?.totalRealized == null ? (
-          <StatTile label="Realised on those sells"
-            {...absentTile("no capital gain statement covers them",
+        {/* THE STATEMENT FIGURE IS THE HEADLINE. It is the printed primitive —
+            what the managers determined and what Capital Gains shows. The
+            roll-up we derive from the tape is a cross-check and sits below,
+            never in a tile where it could be mistaken for the answer. */}
+        {sales?.statementRealized == null ? (
+          <StatTile label="Realised (as the statements report it)"
+            {...absentTile("no capital gain statement covers these sells",
               "Realised gain is a tax determination the manager makes on its own statement. Where none was issued, the sells are real but what they realised was never reported.")}
             icon={<Receipt className="h-4 w-4" />} />
         ) : (
-          <StatTile label="Realised on those sells"
-            value={<span className={changeColor(sales.totalRealized)}>{fmtFromBase(sales.totalRealized, { compact: true, sign: true })}</span>}
-            sub={`on the ${sales.matchedSales} sales the statements settle`}
-            hint={sales.statementRealized != null
-              ? `A DIFFERENT BASIS from the ${fmtFromBase(sales.statementRealized, { compact: true, sign: true })} on Capital Gains. That figure is the capital gain statements' own total over their period — all ${sales.statementLots} lots, including demerger allotments and fund redemptions that never appear as a sell on a transaction statement. This one covers only the sales listed below. Both are right; they measure different sets.`
-              : undefined}
+          <StatTile label="Realised (as the statements report it)"
+            value={<span className={changeColor(sales.statementRealized)}>{fmtFromBase(sales.statementRealized, { compact: true, sign: true })}</span>}
+            sub={`all ${sales.statementLots} lots · the printed figure`}
+            hint="This is the capital gain statements' own total, and it is the figure Capital Gains shows. Everything below is derived from it, never the other way round."
             icon={<Receipt className="h-4 w-4" />} />
         )}
       </div>
 
       {sales?.statementRealized != null && sales.totalRealized != null
         && Math.abs(sales.statementRealized - sales.totalRealized) > 1 && (
-        <p className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2 text-xs leading-relaxed text-slate-500">
-          <span className="font-medium text-slate-400">Two realised totals, two bases, both right.</span>{" "}
-          {fmtFromBase(sales.totalRealized, { compact: true, sign: true })} above is what the {sales.matchedSales} sales
-          listed here realised. The Capital Gains page shows{" "}
-          {fmtFromBase(sales.statementRealized, { compact: true, sign: true })} — the capital gain statements' own total
-          across all {sales.statementLots} lots, which also settles demerger allotments and fund redemptions that never
-          appear as a sell on a transaction statement. They are not a disagreement to reconcile; they measure different sets.
-        </p>
+        <div className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
+          <div className="font-medium text-slate-400">Cross-check: attributing each lot to the sale that produced it</div>
+          <table className="mt-2 w-full max-w-2xl">
+            <tbody className="mono">
+              <tr>
+                <td className="py-0.5 pr-4">Statement total — <span className="text-slate-400">canonical</span></td>
+                <td className="py-0.5 pr-3 text-right">{sales.statementLots} lots</td>
+                <td className={`py-0.5 text-right ${changeColor(sales.statementRealized)}`}>{fmtFromBase(sales.statementRealized, { sign: true })}</td>
+              </tr>
+              <tr>
+                <td className="py-0.5 pr-4">…attributed to a sale on the tape</td>
+                <td className="py-0.5 pr-3 text-right">{sales.statementLots - sales.unattributedLots} lots</td>
+                <td className={`py-0.5 text-right ${changeColor(sales.totalRealized)}`}>{fmtFromBase(sales.totalRealized, { sign: true })}</td>
+              </tr>
+              {sales.unattributedRealized != null && (
+                <tr className="border-t border-ink-700/60">
+                  <td className="py-0.5 pr-4">…not on the tape at all</td>
+                  <td className="py-0.5 pr-3 text-right">{sales.unattributedLots} lots</td>
+                  <td className={`py-0.5 text-right ${changeColor(sales.unattributedRealized)}`}>{fmtFromBase(sales.unattributedRealized, { sign: true })}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <p className="mt-2 max-w-3xl">
+            The three lines reconcile to the rupee. The unattributed lots are{" "}
+            <span className="text-slate-400">{sales.unattributedSecurities.join(", ")}</span> — the LIQUID FUND sweep these
+            managers run alongside the equity mandate. Their redemptions are settled on the capital gain statement but
+            never printed on the equity transaction statement, so no sale row exists to hang them on. They are net{" "}
+            <span className="text-slate-400">gains</span>, which is the whole reason the attributed subtotal reads worse
+            than the statement total: removing gains from a loss makes the remainder look bigger. Nothing is missing and
+            nothing is double-counted — but the printed figure above is the one to quote.
+          </p>
+        </div>
       )}
 
       <p className="text-xs leading-relaxed text-slate-500">

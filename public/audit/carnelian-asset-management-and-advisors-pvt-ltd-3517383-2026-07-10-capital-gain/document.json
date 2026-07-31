@@ -27,8 +27,9 @@
  "transactions": [],
  "capitalGains": [
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-01",
    "purchaseDate": "2025-07-09",
    "quantity": 9064,
@@ -45,8 +46,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-02",
    "purchaseDate": "2025-07-09",
    "quantity": 6501,
@@ -63,8 +65,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-03",
    "purchaseDate": "2025-07-09",
    "quantity": 10627,
@@ -81,8 +84,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-06",
    "purchaseDate": "2025-07-09",
    "quantity": 2716,
@@ -99,8 +103,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-07",
    "purchaseDate": "2025-07-09",
    "quantity": 4535,
@@ -117,8 +122,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "CRIZAC LIMITED-INE0S4R01014",
-   "securityKey": "crizac-limited-ine0s4r01014",
+   "security": "CRIZAC LIMITED",
+   "securityKey": "crizac",
+   "isin": "INE0S4R01014",
    "saleDate": "2026-07-10",
    "purchaseDate": "2025-07-09",
    "quantity": 2169,
@@ -135,8 +141,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-11",
    "purchaseDate": "2025-01-27",
    "quantity": 1752,
@@ -153,8 +160,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-11",
    "purchaseDate": "2025-01-27",
    "quantity": 4216,
@@ -171,8 +179,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2025-01-27",
    "quantity": 3232,
@@ -189,8 +198,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2025-02-05",
    "quantity": 2300,
@@ -207,8 +217,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2026-01-01",
    "quantity": 3977,
@@ -225,8 +236,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2026-01-02",
    "quantity": 801,
@@ -243,8 +255,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2026-01-05",
    "quantity": 549,
@@ -261,8 +274,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2026-01-07",
    "quantity": 720,
@@ -279,8 +293,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Glaxosmithkline Pharmaceuticals Ltd-",
+   "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
+   "isin": null,
    "saleDate": "2026-06-12",
    "purchaseDate": "2026-01-07",
    "quantity": 1713,
@@ -297,8 +312,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Syngene International Ltd-INE398R01022",
-   "securityKey": "syngene-international-ltd-ine398r01022",
+   "security": "Syngene International Ltd",
+   "securityKey": "syngene-international",
+   "isin": "INE398R01022",
    "saleDate": "2026-04-01",
    "purchaseDate": "2026-01-01",
    "quantity": 20845,
@@ -315,8 +331,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Syngene International Ltd-INE398R01022",
-   "securityKey": "syngene-international-ltd-ine398r01022",
+   "security": "Syngene International Ltd",
+   "securityKey": "syngene-international",
+   "isin": "INE398R01022",
    "saleDate": "2026-04-01",
    "purchaseDate": "2026-01-02",
    "quantity": 16481,
@@ -333,8 +350,9 @@
    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
   },
   {
-   "security": "Syngene International Ltd-INE398R01022",
-   "securityKey": "syngene-international-ltd-ine398r01022",
+   "security": "Syngene International Ltd",
+   "securityKey": "syngene-international",
+   "isin": "INE398R01022",
    "saleDate": "2026-04-01",
    "purchaseDate": "2026-01-02",
    "quantity": 17185,
@@ -353,6 +371,7 @@
   {
    "security": "DSP MUTUAL FUND - DSP S&P BSE",
    "securityKey": "dsp-mutual-fund-dsp-s-and-p-bse",
+   "isin": null,
    "saleDate": "2026-06-19",
    "purchaseDate": "2026-06-18",
    "quantity": 17848,

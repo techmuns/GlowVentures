@@ -18,7 +18,7 @@ import { entityXirrPct, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
-import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { holdingHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 
 export function FamilyEntities() {
   const { portfolio, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
@@ -222,8 +222,8 @@ export function FamilyEntities() {
                     <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                       <td className="px-4 py-2.5 text-slate-400">{h.sector}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={ledgerHref(h.security)} title="Market value — trace to the ledger">{fmtFromBase(h.marketValue, { compact: true })}</Auditable></td>
-                      <td className={`px-4 py-2.5 text-right mono ${h.costUnavailable ? "text-slate-500" : changeColor(h.returnPct)}`}>{h.costUnavailable ? "—" : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, ledgerHref(h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Market value — trace to this account's appraisal">{fmtFromBase(h.marketValue, { compact: true })}</Auditable></td>
+                      <td className={`px-4 py-2.5 text-right mono ${h.costUnavailable ? "text-slate-500" : changeColor(h.returnPct)}`}>{h.costUnavailable ? "—" : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, holdingHref(accIdx.get(h.accountId), h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
                     </tr>
                   ))}
                   {holdings.length === 0 && <tr><td colSpan={4} className="py-10 text-center text-sm text-slate-500">No holdings match “{holdingsQ}”.</td></tr>}

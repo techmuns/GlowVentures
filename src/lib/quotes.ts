@@ -2,22 +2,47 @@
 // server proxy (the token lives in the Cloudflare environment, never the browser).
 //
 // The quote API works in NSE symbols. A position may already carry one (some
-// statements print the ticker); otherwise, if it carries an ISIN, nseSymbols.json
-// bridges it. Neither is guaranteed — most of this book's providers print only a
-// security name, and AIF/PMS units have no listing at all. Those keep their
-// statement mark with a "not live" flag rather than silently going stale.
+// statements print the ticker); otherwise `nseSymbols.json` bridges it.
+//
+// THE BRIDGE IS KEYED ON securityKey, NOT ISIN. That is not a preference — no
+// provider in this book prints an ISIN in its holdings column, so an ISIN-keyed
+// lookup resolves nothing for 143 of 143 positions and the entire live layer
+// silently stays dark while looking wired up. `npm run build-symbols` resolves
+// NAMES to symbols for exactly that reason and emits a securityKey-keyed map;
+// this reads it on the same key. (This file previously exported
+// `symbolForIsin(p.isin)` against that map — two identifier spaces, one
+// dictionary, and no error anywhere to show for it.)
+//
+// A name the resolver could not place with certainty is simply absent from the
+// map: the position keeps its statement mark and is flagged not-live, because a
+// wrong symbol shows another company's price and says nothing about it.
 import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
 
-const ISIN_TO_SYMBOL = nseSymbols as Record<string, string>;
+const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
-export function symbolForIsin(isin: string | undefined | null): string | null {
-  return isin ? ISIN_TO_SYMBOL[isin] ?? null : null;
+/** The NSE symbol for a securityKey, or null when the resolver left it out. */
+export function symbolForKey(securityKey: string | undefined | null): string | null {
+  return securityKey ? KEY_TO_SYMBOL[securityKey] ?? null : null;
 }
 
-/** The NSE symbol for a position: the one the statement printed, else via ISIN. */
-export function symbolFor(p: Pick<Position, "symbol" | "isin">): string | null {
-  return p.symbol || symbolForIsin(p.isin);
+/** The NSE symbol for a position: the one the statement printed, else the map. */
+export function symbolFor(p: Pick<Position, "symbol" | "securityKey">): string | null {
+  return p.symbol || symbolForKey(p.securityKey);
+}
+
+/** How much of a book the live layer can even ask about, before any fetch. */
+export function symbolCoverage(positions: Position[]): { withSymbol: number; withoutSymbol: number; names: string[] } {
+  const seen = new Map<string, boolean>();
+  for (const p of positions) if (!seen.has(p.securityKey)) seen.set(p.securityKey, !!symbolFor(p));
+  const names = positions
+    .filter((p) => !symbolFor(p))
+    .map((p) => p.security);
+  return {
+    withSymbol: [...seen.values()].filter(Boolean).length,
+    withoutSymbol: [...seen.values()].filter((v) => !v).length,
+    names: [...new Set(names)].sort(),
+  };
 }
 
 export type Quote = {

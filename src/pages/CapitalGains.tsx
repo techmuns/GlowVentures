@@ -12,7 +12,7 @@ import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
-import { ledgerHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
+import { holdingHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
 
 // Capital Gains & Tax — honest about two holes.
 //
@@ -52,7 +52,12 @@ const daysBetween = (fromIso: string, toIso: string) =>
   Math.round((Date.parse(toIso) - Date.parse(fromIso)) / DAY_MS);
 
 export function CapitalGains() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  // STATEMENT BASIS, ALWAYS. This page has to tie to the capital gain statements
+  // — a reader checks a figure here by opening the PDF. Reading the live-overlaid
+  // book would drift its unrealised figures with the market while the realised
+  // ones stayed printed, so two halves of the same table would be on two
+  // different measurements with nothing on screen to say which.
+  const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
   const [harvestQ, setHarvestQ] = useState("");
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -114,8 +119,8 @@ export function CapitalGains() {
   return (
     <div>
       <PageHeader eyebrow="Tax &amp; Income" title="Capital Gains &amp; Tax"
-        right={<BasisPill liveText="Unrealised gains live"
-          hint="Unrealised P&amp;L moves with live prices; realised gains come from each account's capital gain statement, each over its own window." />} />
+        right={<BasisPill statement liveText="Statement marks"
+          hint="Realised gains come from each account's capital gain statement, each over its own window; unrealised figures are on the same statement marks so both halves of this page are one measurement." />} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {realisedTotal === null ? (
@@ -332,7 +337,7 @@ export function CapitalGains() {
                         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                         <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                         <td className="px-4 py-2.5 text-right mono text-loss">
-                          <Auditable to={ledgerHref(h.security)} title="Unrealised loss — trace to the ledger">
+                          <Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Unrealised loss — trace to this account's appraisal">
                             {money(h.unrealizedPnL, true)}
                           </Auditable>
                         </td>

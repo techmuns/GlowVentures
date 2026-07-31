@@ -79,6 +79,35 @@ function build(docs) {
     catch { return {}; }
   })();
 
+  // ── ISIN, joined across the drop's own documents ─────────────────────────
+  //
+  // Only some reports print an ISIN, and in this drop only one does — glued to
+  // the security name, which the extractor now splits apart. The appraisal that
+  // supplies the holdings prints none, so a position's ISIN comes from another
+  // report ABOUT THE SAME SECURITY in the same drop. That is the same kind of
+  // join the account number and owner already use: this book's own paperwork,
+  // applied only where it is unambiguous.
+  //
+  // A securityKey that two documents give DIFFERENT ISINs for is left with none
+  // and reported — two identifiers for one key means the key is wrong, and
+  // guessing which is right would bake that error in.
+  const isinByKey = new Map();
+  const isinConflicts = new Map();
+  for (const d of docs) {
+    for (const arr of [d.holdings, d.transactions, d.capitalGains, d.income]) {
+      for (const x of arr ?? []) {
+        if (!x?.isin || !x.securityKey) continue;
+        const seen = isinByKey.get(x.securityKey);
+        if (seen && seen !== x.isin) {
+          isinConflicts.set(x.securityKey, [...new Set([...(isinConflicts.get(x.securityKey) ?? [seen]), x.isin])]);
+          continue;
+        }
+        isinByKey.set(x.securityKey, x.isin);
+      }
+    }
+  }
+  for (const k of isinConflicts.keys()) isinByKey.delete(k);
+
   const accounts = [];
   const positions = [];
   const capitalGains = [];
@@ -186,6 +215,8 @@ function build(docs) {
         securityKey: h.securityKey,
         security: h.security,
         symbol: symbols[h.securityKey] ?? null,
+        // Enrichment, never identity — undefined where no statement gives one.
+        isin: h.isin ?? isinByKey.get(h.securityKey) ?? undefined,
         accountId,
         memberId: h.memberId ?? null,
         sector: h.assetClass === "Cash" ? "Cash" : sector,
