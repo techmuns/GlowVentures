@@ -1,20 +1,41 @@
 import { useMemo, useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Receipt, Landmark, Timer, Percent } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { SearchInput } from "@/components/SearchInput";
-import { Pill } from "@/components/Pill";
 import { BasisPill } from "@/components/BasisPill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { sumOrNull, sum } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
-import { fmtPct, changeColor, fmtDate, DASH } from "@/lib/format";
+import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
+import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { ledgerHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
-import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
+
+// Capital Gains & Tax — honest about two holes.
+//
+// HOLE 1: TWO ACCOUNTS HAVE NO CAPITAL GAIN STATEMENT. Three of the five
+// accounts publish one; the two Goldstandard accounts do not, in this drop.
+// Those rows say so. They are neither dropped — which would let the totals read
+// as the family's whole realised position — nor zeroed, which would claim those
+// accounts realised nothing, a thing nobody measured.
+//
+// HOLE 2: NO LOT ACQUISITION DATES ANYWHERE. Every unrealised short/long-term
+// figure, and the whole hold-to-LTCG planner, needs to know when each lot was
+// bought. The CAPITAL REGISTER these managers issue is a capital-account ledger
+// — contributions, withdrawals, TDS transfers — not a lot register, so the split
+// cannot be made. The planner is disabled with its reason rather than shown as
+// an empty table, and the code path is kept intact: `daysToLT` becomes non-null
+// the moment a lot-level statement is ingested, and the planner revives here
+// with no change.
+//
+// WHAT SURVIVES BOTH HOLES: loss harvesting. Unrealised P&L per position is
+// real, so the underwater names and their size are real. What cannot be computed
+// is the TAX effect of booking them, which turns on whether each lot is short or
+// long term — so the table lists the losses and says the tax effect is
+// unavailable, rather than quoting a saving it cannot support.
 
 // Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%
 // (beyond the ₹1.25L annual exemption, which we don't net per-entity here).
@@ -32,39 +53,22 @@ const daysBetween = (fromIso: string, toIso: string) =>
 
 export function CapitalGains() {
   const { portfolio, fmtFromBase } = usePortfolio();
-  const [holdQ, setHoldQ] = useState("");
   const [harvestQ, setHarvestQ] = useState("");
-  if (!portfolio) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
-  const accIdx = accountIndex(portfolio.accounts);
-  const cg = portfolio.capitalGains;
-  const p = portfolio.positions;
-  const totRealST = sum(cg.map((c) => c.realisedST));
-  const totRealLT = sum(cg.map((c) => c.realisedLT));
-  // Unrealised ST/LT is null on this book — the split needs per-lot purchase
-  // dates and no statement carries them. sumOrNull keeps that absence visible
-  // instead of turning it into a measured zero.
-  const totUnrealST = sumOrNull(cg.map((c) => c.unrealisedST));
-  const totUnrealLT = sumOrNull(cg.map((c) => c.unrealisedLT));
-  const realisedTotal = totRealST + totRealLT;
-  const unrealisedTotal = totUnrealST === null && totUnrealLT === null
-    ? null : (totUnrealST ?? 0) + (totUnrealLT ?? 0);
-  const estTaxRealised = Math.max(0, totRealST) * STCG_RATE + Math.max(0, totRealLT) * LTCG_RATE;
-  // Hold-to-LTCG planner: short-term positions (daysToLT set) sitting on a gain.
-  //
-  // `daysToLT` counts from the workbook's as-of date, not from today, so the
-  // countdown has to be re-based or the planner keeps advertising dates that have
-  // already passed. Anything whose one-year mark is now behind us is out: its gain
-  // is already taxed at the long-term rate, so there is nothing left to save by
-  // holding. Those are counted and reported rather than silently dropped.
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const elapsed = daysBetween(portfolio.asOf, today);
+
+  const p = portfolio?.positions ?? [];
+  const asOf = portfolio?.asOf ?? today;
+  const elapsed = daysBetween(asOf, today);
+
+  // The planner's calculation, unchanged and dormant. `daysToLT` is null on
+  // every position in this book; the moment a lot-level statement supplies it,
+  // this yields candidates and the card renders them instead of the notice.
   const { holdCandidates, crossed, crossedGain } = useMemo(() => {
     const all = p.filter((x) => x.daysToLT != null && x.unrealizedPnL > 0 && !x.costUnavailable)
       .map((x) => ({
         ...x,
         saving: x.unrealizedPnL * (STCG_RATE - LTCG_RATE),
-        ltDate: addDays(portfolio.asOf, x.daysToLT!),
+        ltDate: addDays(asOf, x.daysToLT!),
         daysLeft: x.daysToLT! - elapsed,
       }));
     const done = all.filter((x) => x.daysLeft <= 0);
@@ -73,167 +77,297 @@ export function CapitalGains() {
       crossed: done.length,
       crossedGain: sum(done.map((x) => x.unrealizedPnL)),
     };
-  }, [p, portfolio.asOf, elapsed]);
-  const totalSaving = sum(holdCandidates.map((x) => x.saving));
-  const savingTotalFormula = {
-    title: "Hold-to-LTCG saving",
-    excel: "= Σ (Unrealised gain × (STCG rate − LTCG rate))",
-    plain: "If every short-term winner below is held past its one-year mark, each gain is taxed at the 12.5% long-term rate instead of 20% — this totals the 7.5% saved across them all.",
-    worked: `= ${money(totalSaving)} across ${holdCandidates.length} positions`,
-    auditHref: auditHref(LEDGER),
-  };
-  // Tax-loss harvesting: positions currently underwater, to offset realised gains.
+  }, [p, asOf, elapsed]);
+
   const harvest = useMemo(() =>
-    p.filter((x) => x.unrealizedPnL < 0 && !x.costUnavailable).sort((a, b) => a.unrealizedPnL - b.unrealizedPnL), [p]);
+    p.filter((x) => x.unrealizedPnL < 0 && !x.costUnavailable)
+      .sort((a, b) => a.unrealizedPnL - b.unrealizedPnL), [p]);
+
+  if (!portfolio) return null;
+  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const accIdx = accountIndex(portfolio.accounts);
+  const cg = portfolio.capitalGains;
+
+  // Only accounts that HAVE a statement contribute to a total. The others are
+  // listed with their reason — never averaged in, never counted as zero.
+  const reported = cg.filter((c) => c.realisedST !== null || c.realisedLT !== null);
+  const unreported = cg.filter((c) => c.realisedST === null && c.realisedLT === null);
+  const totRealST = sumOrNull(reported.map((c) => c.realisedST));
+  const totRealLT = sumOrNull(reported.map((c) => c.realisedLT));
+  const realisedTotal = totRealST === null && totRealLT === null
+    ? null : (totRealST ?? 0) + (totRealLT ?? 0);
+  const totUnrealST = sumOrNull(cg.map((c) => c.unrealisedST));
+  const totUnrealLT = sumOrNull(cg.map((c) => c.unrealisedLT));
+  const unrealisedTotal = totUnrealST === null && totUnrealLT === null
+    ? null : (totUnrealST ?? 0) + (totUnrealLT ?? 0);
+  const estTaxRealised = realisedTotal === null
+    ? null : Math.max(0, totRealST ?? 0) * STCG_RATE + Math.max(0, totRealLT ?? 0) * LTCG_RATE;
+
+  const totalSaving = sum(holdCandidates.map((x) => x.saving));
+  const harvestRows = harvestQ.trim()
+    ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
+    : harvest;
   const harvestTotal = sum(harvest.map((x) => x.unrealizedPnL));
-  const match = (q: string) => (h: { security: string; isin?: string | null }) => {
-    const s = q.trim().toLowerCase();
-    return h.security.toLowerCase().includes(s) || (h.isin ?? "").toLowerCase().includes(s);
-  };
-  const holdRows = (holdQ.trim() ? holdCandidates.filter(match(holdQ)) : holdCandidates).slice(0, 30);
-  const harvestRows = (harvestQ.trim() ? harvest.filter(match(harvestQ)) : harvest).slice(0, 30);
-  const byEnt = useMemo(() =>
-    cg.map((c) => ({ ...c, total: c.realisedST + c.realisedLT + (c.unrealisedST ?? 0) + (c.unrealisedLT ?? 0) }))
-      .sort((a, b) => b.total - a.total), [cg]);
-  const splitPie = [
-    { name: "Short-term", value: Math.max(0, totUnrealST ?? 0) },
-    { name: "Long-term", value: Math.max(0, totUnrealLT ?? 0) },
-  ];
+  const byEnt = [...cg].sort((a, b) =>
+    ((b.realisedST ?? -Infinity) + (b.realisedLT ?? 0)) - ((a.realisedST ?? -Infinity) + (a.realisedLT ?? 0)));
+
   return (
     <div>
-      <PageHeader eyebrow="Tax & Income" title="Capital Gains & Tax"
-        right={<BasisPill liveText="Unrealised gains live" hint="Unrealised gains move with live prices; cost basis, holding periods and realised gains come from the statements \u2014 each on its own report date." />} />
+      <PageHeader eyebrow="Tax &amp; Income" title="Capital Gains &amp; Tax"
+        right={<BasisPill liveText="Unrealised gains live"
+          hint="Unrealised P&amp;L moves with live prices; realised gains come from each account's capital gain statement, each over its own window." />} />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Embedded (unrealised) gains" value={<Auditable formula={sumFormula("Embedded (unrealised) gains", "The short-term and long-term unrealised gains added together — everything you still hold, measured on paper against cost.", [{ label: "Unrealised ST", value: totUnrealST ?? 0 }, { label: "Unrealised LT", value: totUnrealLT ?? 0 }], unrealisedTotal ?? 0, money)}>{unrealisedTotal === null ? DASH : fmtFromBase(unrealisedTotal, { compact: true })}</Auditable>}
-          sub={<>ST <Auditable to={auditHref(LEDGER)} title="Unrealised short-term gains — trace to the ledger">{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true })}</Auditable> · LT <Auditable to={auditHref(LEDGER)} title="Unrealised long-term gains — trace to the ledger">{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true })}</Auditable></>} icon={<Landmark className="h-4 w-4" />} />
-        <StatTile label="Realised gains (period)" value={<Auditable formula={sumFormula("Realised gains (period)", "The short-term and long-term gains actually booked this period, added together.", [{ label: "Realised ST", value: totRealST }, { label: "Realised LT", value: totRealLT }], realisedTotal, money)}>{fmtFromBase(realisedTotal, { compact: true, sign: true })}</Auditable>}
-          sub={<>ST <Auditable to={auditHref(LEDGER)} title="Realised short-term gains — trace to the ledger">{fmtFromBase(totRealST, { compact: true })}</Auditable> · LT <Auditable to={auditHref(LEDGER)} title="Realised long-term gains — trace to the ledger">{fmtFromBase(totRealLT, { compact: true })}</Auditable></>} icon={<Receipt className="h-4 w-4" />} />
-        <StatTile label="Est. tax on realised" value={<Auditable formula={{ title: "Est. tax on realised", excel: "= max(0, Realised ST) × STCG rate + max(0, Realised LT) × LTCG rate", plain: "An illustrative tax bill on booked gains: positive short-term gains taxed at the STCG rate and long-term at the LTCG rate. Losses aren't taxed, so negative amounts count as zero.", worked: `= ${money(Math.max(0, totRealST))} × ${(STCG_RATE * 100).toFixed(0)}% + ${money(Math.max(0, totRealLT))} × ${(LTCG_RATE * 100).toFixed(1)}% = ${money(estTaxRealised)}`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>}
-          sub="STCG 20% · LTCG 12.5% · illustrative" icon={<Percent className="h-4 w-4" />} />
-        <StatTile label="Hold-to-LTCG saving" value={<Auditable formula={savingTotalFormula}>{fmtFromBase(totalSaving, { compact: true })}</Auditable>}
-          sub={`${holdCandidates.length} still short-term${crossed ? ` · ${crossed} already crossed` : ""}`} icon={<Timer className="h-4 w-4" />} />
+        {realisedTotal === null ? (
+          <StatTile label="Realised gains (period)"
+            {...absentTile("no capital gain statement in this book",
+              "Realised gains come from the manager's capital gain statement. No account in this book has one.")}
+            icon={<Receipt className="h-4 w-4" />} />
+        ) : (
+          <StatTile label="Realised gains (period)"
+            value={<Auditable formula={sumFormula("Realised gains (period)",
+              "The short- and long-term gains booked over each account's own window, added together.",
+              [{ label: "Realised ST", value: totRealST ?? 0 }, { label: "Realised LT", value: totRealLT ?? 0 }],
+              realisedTotal, money)}>
+              <span className={changeColor(realisedTotal)}>{fmtFromBase(realisedTotal, { compact: true, sign: true })}</span>
+            </Auditable>}
+            sub={<>ST {fmtFromBase(totRealST ?? 0, { compact: true, sign: true })} · LT {fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</>}
+            hint={unreported.length
+              ? `From ${reported.length} of ${cg.length} accounts. The other ${unreported.length} publish no capital gain statement and are excluded, not counted as zero.`
+              : `All ${cg.length} accounts.`}
+            icon={<Receipt className="h-4 w-4" />} />
+        )}
+
+        <StatTile label="Embedded (unrealised) gains"
+          {...(unrealisedTotal === null
+            ? absentTile("needs lot acquisition dates",
+              "The short/long-term split needs to know when each lot was bought. No statement in this drop carries lot dates.")
+            : {
+              value: fmtFromBase(unrealisedTotal, { compact: true }),
+              sub: <>ST {fmtFromBase(totUnrealST ?? 0, { compact: true })} · LT {fmtFromBase(totUnrealLT ?? 0, { compact: true })}</>,
+            })}
+          icon={<Landmark className="h-4 w-4" />} />
+
+        {estTaxRealised === null ? (
+          <StatTile label="Est. tax on realised"
+            {...absentTile("no realised gains to tax", "Needs a capital gain statement.")}
+            icon={<Percent className="h-4 w-4" />} />
+        ) : (
+          // A COMPUTED zero, and the reason belongs in the tile rather than on
+          // hover: a reader scanning "₹0" next to a −₹1.97 Cr realised loss must
+          // be able to see it is the arithmetic, not a gap.
+          <StatTile label="Est. tax on realised"
+            value={<Auditable formula={{
+              title: "Est. tax on realised",
+              excel: "= max(0, Realised ST) × 20% + max(0, Realised LT) × 12.5%",
+              plain: "Illustrative tax on the gains actually booked. Losses are not netted against other heads here.",
+              worked: `= max(0, ${money(totRealST ?? 0)}) × 20% + max(0, ${money(totRealLT ?? 0)}) × 12.5% = ${money(estTaxRealised)}`,
+              auditHref: auditHref(LEDGER),
+            }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>}
+            sub={realisedTotal !== null && realisedTotal < 0
+              ? <span className="text-slate-400">net realised LOSS · nothing to tax</span>
+              : "STCG 20% · LTCG 12.5% · illustrative"}
+            hint={realisedTotal !== null && realisedTotal < 0
+              ? "The book's realised position is a net LOSS, so there is no tax to estimate on it — the figure is zero because the arithmetic gives zero, not because anything is missing. Rates would be STCG 20% and LTCG 12.5% on a gain."
+              : undefined}
+            icon={<Percent className="h-4 w-4" />} />
+        )}
+
+        <StatTile label="Hold-to-LTCG saving"
+          {...(holdCandidates.length
+            ? {
+              value: fmtFromBase(totalSaving, { compact: true }),
+              sub: `${holdCandidates.length} still short-term${crossed ? ` · ${crossed} already crossed` : ""}`,
+            }
+            : absentTile("needs lot acquisition dates",
+              "The planner defers short-term winners past their one-year mark. Without a lot date there is no mark to count to."))}
+          icon={<Timer className="h-4 w-4" />} />
       </div>
-      <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
-        <Card className="lg:col-span-2" title="Gains by entity" subtitle="Realised & unrealised, short- vs long-term" pad={false}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Real. ST</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Real. LT</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Unreal. ST</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Unreal. LT</th>
+
+      {/* ── Realised, per account ── */}
+      <Card className="mt-5" title="Realised gains by account"
+        subtitle="Short- and long-term as the MANAGER split them — a tax determination taken from the statement, not re-derived here"
+        pad={false}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="border-b border-ink-700">
+              <tr>
+                <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
+                <th className="label-xs px-4 py-2 text-left font-medium">Window</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Realised ST</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Realised LT</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Unrealised ST</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Unrealised LT</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/70">
+              {byEnt.map((c) => (
+                <tr key={c.entity} className="hover:bg-ink-700/40">
+                  <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
+                  {c.absent ? (
+                    <td className="px-4 py-2.5 text-[11.5px] text-slate-500" colSpan={6}>{DASH} {c.absent}</td>
+                  ) : (
+                    <>
+                      <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
+                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
+                        <Auditable to={c.source ? auditHref({ file: c.source }) : auditHref(LEDGER)}
+                          title={`${c.entity} · realised short-term — trace to the capital gain statement`}>
+                          {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
+                        </Auditable>
+                      </td>
+                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT ?? 0)}`}>
+                        <Auditable to={c.source ? auditHref({ file: c.source }) : auditHref(LEDGER)}
+                          title={`${c.entity} · realised long-term — trace to the capital gain statement`}>
+                          {fmtFromBase(c.realisedLT ?? 0, { compact: true, sign: true })}
+                        </Auditable>
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+                      <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+                    </>
+                  )}
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {byEnt.map((c) => (
-                  <tr key={c.entity} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · realised short-term — trace to the ledger`}>{fmtFromBase(c.realisedST, { compact: true, sign: true })}</Auditable></td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · realised long-term — trace to the ledger`}>{fmtFromBase(c.realisedLT, { compact: true, sign: true })}</Auditable></td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedST ?? 0)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised short-term — trace to the ledger`}>{c.unrealisedST === null ? DASH : fmtFromBase(c.unrealisedST, { compact: true, sign: true })}</Auditable></td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(c.unrealisedLT ?? 0)}`}><Auditable to={auditHref({ ...LEDGER, eq: c.entity })} title={`${c.entity} · unrealised long-term — trace to the ledger`}>{c.unrealisedLT === null ? DASH : fmtFromBase(c.unrealisedLT, { compact: true, sign: true })}</Auditable></td>
+              ))}
+            </tbody>
+            <tfoot className="border-t border-ink-700 font-semibold">
+              <tr>
+                <td className="px-4 py-2.5 text-slate-200">Total</td>
+                <td className="px-4 py-2.5 text-[11px] text-slate-500" colSpan={2}>
+                  {reported.length} of {cg.length} accounts
+                </td>
+                <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>
+                  {totRealST === null ? <AbsentCell /> : fmtFromBase(totRealST, { compact: true, sign: true })}
+                </td>
+                <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>
+                  {totRealLT === null ? <AbsentCell /> : fmtFromBase(totRealLT, { compact: true, sign: true })}
+                </td>
+                <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+                <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+          Each account's window is its own — Green Lantern's statements close 25 June, Carnelian's 10 July — so
+          the total is a sum of what each manager booked over its own period, not a single-period figure.
+        </p>
+      </Card>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
+        {/* ── Hold-to-LTCG planner: dormant, with its reason ── */}
+        <Card title="Hold-to-LTCG planner"
+          subtitle={holdCandidates.length
+            ? `Short-term winners nearing their 1-year mark. Counted to today, ${fmtDate(today)}.`
+            : "Deferring a short-term winner past one year moves its gain from 20% to 12.5%"}>
+          {holdCandidates.length === 0 ? (
+            <AbsentSection
+              what="No lot acquisition dates in this book"
+              needs={`The planner works out how long each lot has left before its gain becomes long-term, which
+                needs the date that lot was bought. The CAPITAL REGISTER these managers issue is a
+                capital-account ledger — contributions, withdrawals, TDS transfers — not a lot register, and no
+                other statement in the drop carries acquisition dates. A lot-level holding statement switches
+                this on; the calculation is already wired and dormant.`} />
+          ) : (
+            <div className="max-h-[440px] overflow-auto">
+              <table className="min-w-full text-sm">
+                <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
+                  <tr>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Unreal. gain</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Turns LT</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Tax saved</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t border-ink-700 font-semibold">
-                <tr>
-                  <td className="px-4 py-2.5 text-slate-200">Total</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST)}`}><Auditable formula={{ title: "Total realised ST", excel: "= Σ Realised ST across entities", plain: "Every entity's realised short-term gain or loss, added together.", worked: `= ${money(totRealST, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totRealST, { compact: true, sign: true })}</Auditable></td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT)}`}><Auditable formula={{ title: "Total realised LT", excel: "= Σ Realised LT across entities", plain: "Every entity's realised long-term gain or loss, added together.", worked: `= ${money(totRealLT, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totRealLT, { compact: true, sign: true })}</Auditable></td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealST ?? 0)}`}><Auditable formula={{ title: "Total unrealised ST", excel: "= Σ Unrealised ST across entities", plain: "Every entity's unrealised short-term gain or loss, added together.", worked: `= ${money(totUnrealST ?? 0, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true, sign: true })}</Auditable></td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totUnrealLT ?? 0)}`}><Auditable formula={{ title: "Total unrealised LT", excel: "= Σ Unrealised LT across entities", plain: "Every entity's unrealised long-term gain or loss, added together.", worked: `= ${money(totUnrealLT ?? 0, true)} across ${byEnt.length} entities`, auditHref: auditHref(LEDGER) }}>{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true, sign: true })}</Auditable></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </Card>
-        <Card title="Unrealised: ST vs LT" subtitle="Embedded gains by holding period">
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={splitPie} dataKey="value" innerRadius={46} outerRadius={70} paddingAngle={2} stroke="none">
-                  <Cell fill="#e0709b" />
-                  <Cell fill="#10b981" />
-                </Pie>
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  formatter={(v: number) => fmtFromBase(v, { compact: true })} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#e0709b]" />Short-term</span><span className="mono text-slate-200">{totUnrealST === null ? DASH : fmtFromBase(totUnrealST, { compact: true })}</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />Long-term</span><span className="mono text-slate-200">{totUnrealLT === null ? DASH : fmtFromBase(totUnrealLT, { compact: true })}</span></div>
-            <p className="pt-1 text-[11px] text-slate-500">Long-term equity gains are taxed at 12.5% vs 20% short-term — deferring short-term winners past their 1-year mark saves 7.5% of the gain.</p>
-          </div>
-        </Card>
-      </div>
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Card title="Hold-to-LTCG planner" subtitle={`Short-term winners nearing their 1-year mark — holding defers to the 12.5% rate. Counted to today, ${fmtDate(today)}.`}
-          right={<div className="flex items-center gap-2"><SearchInput value={holdQ} onChange={setHoldQ} placeholder="Search security…" className="w-44" suggestions={holdCandidates.map((x) => x.security)} /><Pill tone="gain"><Auditable formula={savingTotalFormula}>{fmtFromBase(totalSaving, { compact: true })}</Auditable> saveable</Pill></div>} pad={false}>
-          <div className="max-h-[440px] overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Unreal. gain</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Turns LT</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Tax saved</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {holdRows.map((h) => (
-                  <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5"><div className="text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></div><div className="text-[10px] text-slate-500">{ownerOf(accIdx, h)}</div></td>
-                    <td className="px-4 py-2.5 text-right mono text-gain"><Auditable to={ledgerHref(h.security)} title="Unrealised gain — trace to the ledger">{fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</Auditable></td>
-                    <td className="px-4 py-2.5 text-right">
-                      <Pill tone={h.daysLeft <= 30 ? "warn" : "default"}>{h.daysLeft}d</Pill>
-                      <div className="mt-0.5 text-[10px] text-slate-500">{fmtDate(h.ltDate)}</div>
-                    </td>
-                    <td className="px-4 py-2.5 text-right mono text-champagne-400"><Auditable formula={{ title: "Tax saved by holding to long-term", excel: "= Unrealised gain × (STCG rate − LTCG rate)", plain: "Hold this position past its one-year mark and the gain is taxed at the 12.5% long-term rate instead of 20% — a saving of 7.5% of the gain.", worked: `= ${money(h.unrealizedPnL)} × ${((STCG_RATE - LTCG_RATE) * 100).toFixed(1)}% = ${money(h.saving)}` }}>{fmtFromBase(h.saving, { compact: true })}</Auditable></td>
-                  </tr>
-                ))}
-                {holdRows.length === 0 && <tr><td colSpan={4} className="py-10 text-center text-sm text-slate-500">{holdQ.trim() ? `No securities match “${holdQ}”.` : "No short-term winners approaching the LTCG threshold."}</td></tr>}
-              </tbody>
-            </table>
-          </div>
-          {crossed > 0 && (
-            <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-              {crossed} position{crossed === 1 ? "" : "s"} carrying {money(crossedGain)} of gain passed the one-year mark in the {elapsed} days since the {fmtDate(portfolio.asOf)} book, so {crossed === 1 ? "it is" : "they are"} already at the 12.5% long-term rate and no longer appear here.
-            </p>
+                </thead>
+                <tbody className="divide-y divide-ink-700/70">
+                  {holdCandidates.slice(0, 30).map((h) => (
+                    <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
+                      <td className="px-4 py-2.5 text-right mono text-gain">{money(h.unrealizedPnL)}</td>
+                      <td className="px-4 py-2.5 text-right text-[11px] text-slate-400">{fmtDate(h.ltDate)} · {h.daysLeft}d</td>
+                      <td className="px-4 py-2.5 text-right mono text-champagne-400">{money(h.saving)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {crossed > 0 && (
+                <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] text-slate-500">
+                  {crossed} position{crossed === 1 ? "" : "s"} carrying {money(crossedGain)} of gain passed the
+                  one-year mark since {fmtDate(asOf)}.
+                </p>
+              )}
+            </div>
           )}
         </Card>
-        <Card title="Tax-loss harvesting" subtitle="Positions underwater — booking losses can offset realised gains"
-          right={<div className="flex items-center gap-2"><SearchInput value={harvestQ} onChange={setHarvestQ} placeholder="Search security…" className="w-44" suggestions={harvest.map((x) => x.security)} /><Pill tone="loss"><Auditable formula={{ title: "Harvestable losses", excel: "= Σ Unrealised loss of every underwater holding", plain: "Every position currently below its cost, added together — the paper losses you could book to offset realised gains.", worked: `= ${money(harvestTotal)} across ${harvest.length} positions`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(harvestTotal, { compact: true })}</Auditable> available</Pill></div>} pad={false}>
-          <div className="max-h-[440px] overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Unreal. loss</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {harvestRows.map((h) => (
-                  <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
-                    <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-loss"><Auditable to={ledgerHref(h.security)} title="Unrealised loss — trace to the ledger">{fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</Auditable></td>
-                    <td className="px-4 py-2.5 text-right mono text-loss"><Auditable formula={{ title: "Return", excel: "= (Market value − Cost) ÷ Cost × 100", plain: "How far this position sits below what it cost, as a percentage.", worked: `= ${money(h.unrealizedPnL)} ÷ ${money(h.costBasis)} × 100 = ${fmtPct(h.returnPct, { sign: true })}`, auditHref: ledgerHref(h.security) }}>{fmtPct(h.returnPct, { sign: true })}</Auditable></td>
-                  </tr>
-                ))}
-                {harvestRows.length === 0 && <tr><td colSpan={4} className="py-10 text-center text-sm text-slate-500">{harvestQ.trim() ? `No securities match “${harvestQ}”.` : "No positions currently at a loss."}</td></tr>}
-              </tbody>
-            </table>
-          </div>
+
+        {/* ── Loss harvesting: real, minus the part that isn't ── */}
+        <Card title="Tax-loss harvesting" subtitle="Positions underwater — booking a loss can offset realised gains"
+          right={<SearchInput value={harvestQ} onChange={setHarvestQ} placeholder="Search security…" className="w-44"
+            suggestions={harvest.map((x) => x.security)} />}>
+          {harvest.length === 0 ? (
+            <AbsentSection what="No position is in unrealised loss"
+              needs="Every priced holding in the book is above its cost, so there is nothing to harvest." />
+          ) : (
+            <>
+              <div className="mb-2 flex items-baseline justify-between px-1">
+                <span className="text-[11.5px] text-slate-400">
+                  {harvest.length} position{harvest.length === 1 ? "" : "s"} underwater
+                </span>
+                <span className="mono text-[13px] text-loss">{money(harvestTotal, true)}</span>
+              </div>
+              <div className="max-h-[380px] overflow-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
+                    <tr>
+                      <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
+                      <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
+                      <th className="label-xs px-4 py-2 text-right font-medium">Unreal. loss</th>
+                      <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
+                      <th className="label-xs px-4 py-2 text-right font-medium">ST / LT</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-700/70">
+                    {harvestRows.slice(0, 30).map((h) => (
+                      <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                        <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
+                        <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
+                        <td className="px-4 py-2.5 text-right mono text-loss">
+                          <Auditable to={ledgerHref(h.security)} title="Unrealised loss — trace to the ledger">
+                            {money(h.unrealizedPnL, true)}
+                          </Auditable>
+                        </td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(h.returnPct)}`}>
+                          {fmtPct(h.returnPct, { sign: true, decimals: 1 })}
+                        </td>
+                        <td className="px-4 py-2.5 text-right mono">
+                          <AbsentCell reason="no lot acquisition date, so the holding period is unknown" />
+                        </td>
+                      </tr>
+                    ))}
+                    {harvestRows.length === 0 && (
+                      <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">
+                        No security matches "{harvestQ}".
+                      </td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 border-t border-dashed border-ink-700 px-1 pt-2.5 text-[11px] leading-relaxed text-slate-500">
+                The losses and their size are real. <span className="font-medium text-slate-400">The tax effect
+                is not computed</span>: whether booking one offsets at 20% or 12.5% turns on whether the lot is
+                short- or long-term, and no statement in this book carries lot acquisition dates.
+              </p>
+            </>
+          )}
         </Card>
       </div>
-      <p className="mt-4 text-[11px] text-slate-500">
-        Tax figures are illustrative, using current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A) and do not apply the ₹1.25L LTCG exemption, set-off rules, surcharge, or cess. Not tax advice.
-        Gains and losses move with live prices; holding periods are counted to today ({fmtDate(today)}) from lot dates in the {fmtDate(portfolio.asOf)} book. The short- vs long-term split by entity above is that book's own classification and has not been re-cut for the {elapsed} days since.
+
+      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+        Tax figures are <span className="font-medium text-slate-400">illustrative</span>, using current Indian
+        equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do
+        not net losses across heads or years, and exclude surcharge and cess. Not tax advice. Unrealised figures
+        move with live prices; realised figures are as each manager's capital gain statement reports them, each
+        over its own window.
       </p>
     </div>
   );

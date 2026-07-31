@@ -1,104 +1,90 @@
-import { FileText, StickyNote, Sparkles } from "lucide-react";
+import { FileText, StickyNote } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { BUCKET_META, type BucketKey } from "@/lib/privateValue";
+import { AbsentSection } from "@/components/Absent";
+import { usePortfolio } from "@/context/PortfolioContext";
 
 // Data Bank — the document repository and founder meeting notes behind the
 // private book. Kept as its own page rather than a Private Markets segment:
 // once uploads, capital calls and AI summaries land it becomes a working area
 // (things go in, not just out), which is a different job from reading a report.
 //
-// Storage, uploads and AI summaries need the backend; the rows below are an
-// illustrative scaffold that conveys the layout only.
+// WHAT WAS HERE BEFORE, AND WHY IT IS GONE. This page shipped a hardcoded list
+// of documents and founder meeting notes — named holdings, dated board updates,
+// quoted revenue growth — behind a "scaffold" pill. A pill does not undo a
+// fabrication: a reader scanning the page saw this family's document trail and
+// this family's meetings, and none of it existed. An invented figure is bad; an
+// invented minute of a meeting that never happened is worse.
+//
+// So the page now renders what is true: the repository is empty, because no
+// private-market holding exists in the book and no document store is connected.
+// The two cards stay, and both fill themselves the moment either arrives.
 
-const DOCS = [
-  { holding: "InCred Capital", file: "SHA_2024.pdf", kind: "Shareholders' Agreement", added: "Mar 2024", ai: true },
-  { holding: "Pilgrim", file: "SSA_final.pdf", kind: "Share Subscription", added: "Jan 2025", ai: true },
-  { holding: "NSE", file: "Q1FY27_statement.pdf", kind: "Quarterly statement", added: "Jul 2026", ai: true },
-  { holding: "Quorum", file: "term_sheet.pdf", kind: "Term sheet", added: "Aug 2024", ai: false },
-  { holding: "Vahdam", file: "cap_table.xlsx", kind: "Cap table", added: "Feb 2025", ai: false },
+/** Later phases, stated as capability — not as content that already exists. */
+const PLANNED = [
+  "Document upload & storage — SHA / SSA / statements / cap tables",
+  "Quarterly-statement upload → fund NAV & inflows",
+  "Drawdown notices → projected cash flow",
+  "AI summaries of ingested documents",
+  "Founder meeting notes, tagged to value-creation buckets",
 ];
-
-const NOTES: { title: string; meta: string; body: string; tags: BucketKey[] }[] = [
-  { title: "Pilgrim · Founder sync", meta: "12 Jun 2026 · with A. Sharma", body: "Q1 revenue +40% QoQ; D2C SKUs expanding into new categories. Series C term sheet expected Q3 at a step-up mark. Burn tracking to plan.", tags: ["value-driver", "on-track"] },
-  { title: "InCred Capital · Board update", meta: "3 May 2026 · quarterly board", body: "NBFC AUM compounding; IPO-readiness work underway. Secondary interest at the current mark noted for a possible partial exit.", tags: ["value-driver"] },
-];
-
-function StatusTag({ bucket }: { bucket: BucketKey }) {
-  return <Pill tone={BUCKET_META[bucket].tone}>{BUCKET_META[bucket].label}</Pill>;
-}
 
 export function DataBank() {
+  const { portfolio } = usePortfolio();
+
+  // Driven by the book, not by a flag. A private holding in the statements gives
+  // these cards something to hang documents from, and this page comes alive.
+  const privateHoldings = portfolio
+    ? portfolio.privateMarkets.peFunds.length + portfolio.privateMarkets.preIpoFunds.length
+      + portfolio.privateMarkets.unlistedCompanies.length + portfolio.privateMarkets.debtFunds.length
+      + portfolio.privateMarkets.closedFunds.length + portfolio.privateMarkets.startups.length
+    : 0;
+  const accounts = portfolio?.accounts.length ?? 0;
+  const providers = new Set((portfolio?.accounts ?? []).map((a) => a.provider)).size;
+
   return (
     <div>
       <PageHeader eyebrow="Private Markets" title="Data Bank"
         subtitle="Document repository &amp; founder meeting notes, per holding"
-        right={<Pill tone="warn">scaffold</Pill>} />
+        right={<Pill tone="info">{privateHoldings} private holding{privateHoldings === 1 ? "" : "s"}</Pill>} />
 
-      <div className="mb-5 flex items-start gap-2 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11.5px] leading-relaxed text-amber-400">
-        <span className="mt-px">◐</span>
-        <span>Scaffold layout — document storage, uploads &amp; AI summaries activate when the backend lands. The rows below are illustrative placeholders.</span>
-      </div>
+      <AbsentSection
+        what="Nothing to file yet"
+        needs={`The Data Bank holds the paperwork behind private-market holdings — shareholders' agreements,
+          subscription agreements, cap tables, quarterly statements and meeting notes. This book's ${accounts}
+          account${accounts === 1 ? "" : "s"} across ${providers} manager${providers === 1 ? "" : "s"} are
+          discretionary PMS mandates in listed equity, so there are no private holdings to file against, and no
+          document store is connected.`}>
+        <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">
+          The statements this book IS built from are all readable, per document, under{" "}
+          <span className="font-medium text-slate-400">Setup → Data Audit</span>.
+        </p>
+      </AbsentSection>
 
-      <div className="grid gap-5 lg:grid-cols-2 items-start">
+      <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
         <Card title="Document repository" subtitle="SHA / SSA / statements / cap tables, per holding"
           right={<FileText className="h-4 w-4 text-slate-500" />}>
-          <ul>
-            {DOCS.map((d) => (
-              <li key={d.file} className="flex items-center justify-between gap-3 border-t border-ink-700/60 py-2.5 first:border-t-0">
-                <div className="min-w-0">
-                  <div className="truncate text-[12.5px] font-medium text-slate-200">{d.holding} — {d.file}</div>
-                  <div className="text-[10.5px] text-slate-500">{d.kind} · added {d.added}</div>
-                </div>
-                {d.ai
-                  ? <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-accent-500/15 px-2 py-0.5 text-[10px] font-semibold text-accent-400"><Sparkles className="h-3 w-3" /> AI summary</span>
-                  : <span className="shrink-0 rounded-md bg-ink-700/60 px-2 py-0.5 text-[10px] font-semibold text-slate-500">pending</span>}
-              </li>
-            ))}
-          </ul>
-          <div title="Available when the data-bank backend lands" className="mt-3 cursor-not-allowed rounded-lg border border-dashed border-ink-600 py-2.5 text-center text-[11.5px] text-slate-500">
-            ＋ Upload document — SHA / SSA / statement / cap table
-          </div>
+          <p className="py-6 text-center text-[11.5px] leading-relaxed text-slate-500">
+            No documents stored. Uploads activate with the document backend.
+          </p>
         </Card>
 
         <Card title="Founder meeting notes" subtitle="Minutes of meeting, tagged to the value-creation buckets"
           right={<StickyNote className="h-4 w-4 text-slate-500" />}>
-          <div className="flex flex-col gap-2.5">
-            {NOTES.map((n) => (
-              <div key={n.title} className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
-                <div className="text-[12.5px] font-semibold text-slate-100">{n.title}</div>
-                <div className="text-[10.5px] text-slate-500">{n.meta}</div>
-                <p className="mt-2 text-[11.5px] leading-relaxed text-slate-400">{n.body}</p>
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                  {n.tags.map((t) => <StatusTag key={t} bucket={t} />)}
-                  <span className="inline-flex items-center gap-1 rounded-md bg-accent-500/15 px-2 py-0.5 text-[10px] font-semibold text-accent-400"><Sparkles className="h-3 w-3" /> AI summary</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div title="Available when the data-bank backend lands" className="mt-3 cursor-not-allowed rounded-lg border border-dashed border-ink-600 py-2.5 text-center text-[11.5px] text-slate-500">
-            ＋ New note — minutes of meeting
-          </div>
+          <p className="py-6 text-center text-[11.5px] leading-relaxed text-slate-500">
+            No notes recorded. Notes are written against a private holding, and this book has none.
+          </p>
         </Card>
       </div>
 
       <div className="mt-5 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 p-4">
-        <div className="text-[12.5px] font-semibold text-slate-400">◇ Activates with the data-bank backend — later phases</div>
+        <div className="text-[12.5px] font-semibold text-slate-400">◇ Planned — needs a backend with auth &amp; file storage</div>
         <div className="mt-3 flex flex-wrap gap-2.5">
-          {[
-            "Inline edit — new investments, markups & fields",
-            "Quarterly-statement upload → auto fund NAV & inflows",
-            "Drawdown-notice emails + projected cashflow",
-            "AI summaries — SHA / SSA / MoM / statements",
-            "VC & startup industry RSS feed",
-          ].map((c) => (
+          {PLANNED.map((c) => (
             <span key={c} className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-[11.5px] text-slate-400">◷ {c}</span>
           ))}
         </div>
-        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-          Value-creation analytics &amp; the startup classification ship now on data we already hold, over on <span className="font-medium text-slate-400">Private Markets → Value Creation</span>. The Data Bank's storage, document uploads, inline editing, AI summaries and drawdown emails need a backend with auth &amp; file storage — wired in the data-infrastructure track.
-        </p>
       </div>
     </div>
   );

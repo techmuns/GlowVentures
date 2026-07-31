@@ -1,173 +1,441 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from "recharts";
-import { Activity, TrendingUp, Crosshair, Gauge, Percent } from "lucide-react";
+import { useMemo } from "react";
+import { Crosshair, Gauge, Percent, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum } from "@/lib/analytics";
-import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod } from "@/lib/format";
-import { loadReturns, type ReturnsData } from "@/lib/ledger";
+import { fmtPct } from "@/lib/format";
 import { xirrWithTerminal } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
+import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { auditHref, LEDGER, embeddedReturnFormula } from "@/lib/auditFormulas";
-import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
+import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
+import type { AccountBridge, ReturnSeries } from "@/lib/types";
+
+// NAV & Performance — built from what these statements actually carry.
+//
+// WHAT THIS PAGE USED TO DO, AND WHY IT DOESN'T. It led with a NAV trajectory
+// chart plus growth and CAGR read off `navHistory`. This book's corpus carries
+// exactly TWO dated portfolio values per account — the opening figure on the
+// performance summary and the closing one — and two points are not a curve. A
+// line between them would assert a path through the period that nothing
+// measured, and the CAGR off it would be a real-looking number with no
+// measurement behind it. So the chart is gone, and what replaced it is the three
+// things the statements DO support: each manager's own time-weighted returns,
+// the value bridge from opening to closing, and a money-weighted return over the
+// real dated flows.
+//
+// THREE PERIOD VOCABULARIES, KEPT APART. Goldstandard publishes MTD / QTD / YTD
+// against N50TRI; Green Lantern and Carnelian publish trailing 1m / 3m / 1y
+// against S&P BSE 500. A trailing one-month return and a month-to-date return
+// are different measurements over different windows, so each account shows the
+// columns its own manager publishes and a dash for the rest — never a trailing
+// figure under a to-date heading.
+
+/** The to-date and trailing columns, in the order a reader scans them. */
+const PERIODS = [
+  { key: "mtd" as const, label: "MTD", title: "Month to date" },
+  { key: "qtd" as const, label: "QTD", title: "Quarter to date" },
+  { key: "fytd" as const, label: "FYTD", title: "Indian FINANCIAL year to date — 1 April to the report date, not the calendar year" },
+  { key: "m1" as const, label: "1m", title: "Trailing one month — NOT month-to-date" },
+  { key: "m3" as const, label: "3m", title: "Trailing three months" },
+  { key: "m6" as const, label: "6m", title: "Trailing six months" },
+  { key: "y1" as const, label: "1y", title: "Trailing twelve months" },
+  { key: "si" as const, label: "Since inception", title: "Since the account's own inception date" },
+];
+
+/** The bridge rows, in the order the money moves. */
+const BRIDGE_ROWS = [
+  { key: "opening" as const, label: "Opening value", tone: 0 },
+  { key: "contribution" as const, label: "Contributions", tone: 1 },
+  { key: "withdrawal" as const, label: "Withdrawals", tone: -1 },
+  { key: "netCapitalInOut" as const, label: "Net capital in / out", tone: 0 },
+  { key: "realized" as const, label: "Realised gain", tone: 0 },
+  { key: "unrealized" as const, label: "Unrealised gain", tone: 0 },
+  { key: "income" as const, label: "Income received", tone: 1 },
+  { key: "fees" as const, label: "Fees & expenses", tone: -1 },
+  { key: "closing" as const, label: "Closing value", tone: 0 },
+];
+
+const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
+  `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function Performance() {
-  const { portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
-  // Money-weighted return (XIRR) over the real dated ledger flows, closed against
-  // the live listed value rather than the ledger's own month-old marks — so this
-  // agrees with the Morning CIO's figure instead of running ~0.6pp above it.
-  // undefined = still loading, null = unavailable (e.g. session expired) →
-  // rendered honestly as "—", never estimated.
-  const [returns, setReturns] = useState<ReturnsData | null | undefined>(undefined);
-  useEffect(() => {
-    let alive = true;
-    loadReturns().then((r) => { if (alive) setReturns(r); });
-    return () => { alive = false; };
-  }, []);
-  const today = useMemo(() => new Date(), []);
-  if (!portfolio) return null;
-  const nav = portfolio.navHistory;
-  const p = portfolio.positions;
-  const priced = p.filter((x) => !x.costUnavailable);
-  const listedMV = sum(p.map((x) => x.marketValue));
-  const xirrPct = returns === undefined ? undefined
-    : returns == null ? null
-    : xirrWithTerminal(returns.accounts.flatMap((c) => c.flows), listedMV, today);
-  const listedCost = sum(priced.map((x) => x.costBasis));
-  const listedPnL = sum(priced.map((x) => x.unrealizedPnL));
-  const embeddedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : 0;
-  // A book assembled from current-holdings statements carries no year-end NAV
-  // series. Growth and CAGR need two dated points; with fewer they render "\u2014"
-  // rather than a number computed against a missing baseline.
-  const first = nav[0] ?? null, last = nav.length ? nav[nav.length - 1] : null;
-  const hasSeries = nav.length >= 2 && !!first && !!last;
-  const growth = hasSeries && first.nav > 0 ? (last.nav / first.nav - 1) * 100 : 0;
-  const years = hasSeries ? (new Date(last.date).getTime() - new Date(first.date).getTime()) / (365.25 * 864e5) : 0;
-  const cagr = hasSeries && years > 0 && first.nav > 0 ? (Math.pow(last.nav / first.nav, 1 / years) - 1) * 100 : 0;
-  const navSeries = nav.map((n) => ({ period: n.period, value: convertFromBase(n.nav) }));
-  const yoy = nav.map((n, i) => (i === 0 ? null : { period: n.period, pct: (n.nav / nav[i - 1].nav - 1) * 100 })).filter(Boolean) as { period: string; pct: number }[];
-  // Consolidated single-name weights for concentration.
-  const consolidated = useMemo(() => {
+  const { portfolio, fmtFromBase } = usePortfolio();
+
+  const p = portfolio?.positions ?? [];
+  const consolidatedWeights = useMemo(() => {
     const m = new Map<string, number>();
     for (const x of p) m.set(x.securityKey, (m.get(x.securityKey) ?? 0) + x.marketValue);
     return [...m.values()].sort((a, b) => b - a);
   }, [p]);
-  const top10Val = sum(consolidated.slice(0, 10));
-  const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
+  if (!portfolio) return null;
+
   const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
-  const bands = [
-    { label: "< -20%", test: (r: number) => r < -20 },
-    { label: "-20 – 0%", test: (r: number) => r >= -20 && r < 0 },
-    { label: "0 – 25%", test: (r: number) => r >= 0 && r < 25 },
-    { label: "25 – 100%", test: (r: number) => r >= 25 && r < 100 },
-    { label: "> 100%", test: (r: number) => r >= 100 },
-  ];
-  const dist = bands.map((b) => ({ label: b.label, value: sum(priced.filter((x) => b.test(x.returnPct)).map((x) => x.marketValue)) }));
-  const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
+  const accounts = portfolio.accounts;
+  const priced = p.filter((x) => !x.costUnavailable);
+  const listedMV = sum(p.map((x) => x.marketValue));
+  const listedCost = sum(priced.map((x) => x.costBasis));
+  const listedPnL = sum(priced.map((x) => x.unrealizedPnL));
+  const embeddedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : 0;
+  const mvOf = (accountId: string) =>
+    sum(p.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
+
+  // ── Money-weighted return, per account and consolidated ──
+  //
+  // From the book's own dated flows — the capital register (or the bank book
+  // where a manager issues none) plus the window's opening portfolio value —
+  // closed against that account's market value on its own report date. An
+  // account whose flows carry no opening value cannot produce a return over the
+  // window, and says which document it is missing rather than showing a zero.
+  const xirrByAccount = accounts.map((a) => {
+    const flows = portfolio.accountCashFlows?.[a.accountId] ?? [];
+    const hasOpening = flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""));
+    const mv = mvOf(a.accountId);
+    return {
+      account: a,
+      mv,
+      flows: flows.length,
+      pct: hasOpening && flows.length
+        ? xirrWithTerminal(flows.map((f) => ({ date: new Date(f.date), amount: f.amount })), mv, new Date(a.asOf))
+        : null,
+      reason: !flows.length ? "no dated capital movements in this account's statements"
+        : !hasOpening ? "no performance summary for the window, so no opening value to measure against"
+        : null,
+    };
+  });
+  // THE CONSOLIDATED FIGURE COVERS ONLY THE ACCOUNTS THAT CAN BE MEASURED.
+  //
+  // Account 510854 publishes no FY performance summary, so its flows carry no
+  // opening portfolio value. Pooling everything anyway put its ₹5.92 Cr of
+  // market value into the terminal flow with no opening stake behind it — the
+  // solver saw ₹5.92 Cr appear out of a handful of small movements and returned
+  // 174.3% p.a. against 109.7% for the four accounts that CAN be measured. A
+  // 64.6 pp overstatement, and precisely the failure §0 names: a missing value
+  // blended in as zero.
+  //
+  // So the consolidated row is over the measurable accounts, its market value is
+  // theirs alone, and the excluded account is named on screen.
+  const measurable = xirrByAccount.filter((x) => x.pct !== null);
+  const unmeasurable = xirrByAccount.filter((x) => x.pct === null);
+  const measuredFlows = measurable.flatMap((x) => (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
+    .map((f) => ({ date: new Date(f.date), amount: f.amount })));
+  const measuredMV = sum(measurable.map((x) => x.mv));
+  const consolidatedXirr = measuredFlows.length
+    ? xirrWithTerminal(measuredFlows, measuredMV, new Date(portfolio.asOf))
+    : null;
+  const xirrMissing = unmeasurable.map((x) => x.account.accountNo);
+  // The window every one of these rates annualises. Naming it matters: these
+  // flows open on 1 April, so this is a quarter's return expressed per annum.
+  const windowStart = measuredFlows.reduce<string | null>((a, f) => {
+    const iso = f.date.toISOString().slice(0, 10);
+    return !a || iso < a ? iso : a;
+  }, null);
+  const windowDays = windowStart
+    ? Math.round((Date.parse(portfolio.asOf) - Date.parse(windowStart)) / 864e5)
+    : null;
+  const windowNote = windowStart && windowDays
+    ? `over ${windowStart} → ${portfolio.asOf} (${windowDays} days), annualised`
+    : "annualised";
+
+  // ── Time-weighted returns, per account, from each manager's own report ──
+  const twrr = accounts.map((a) => {
+    const blocks = BOOK_ACCOUNT_RETURNS[a.accountId] ?? [];
+    // The fact sheet is what the manager publishes to the client; the
+    // performance appraisal restates it on a trailing vocabulary. Prefer the
+    // fact sheet, and name whichever report the figures came from.
+    const block = blocks.find((b) => b.reportType === "fact-sheet") ?? blocks[0] ?? null;
+    const series = (block?.series ?? []) as ReturnSeries[];
+    return {
+      account: a,
+      block,
+      portfolio: series.find((s) => !s.isBenchmark) ?? null,
+      benchmark: series.find((s) => s.isBenchmark) ?? null,
+    };
+  });
+  // A column is worth a heading only if some account publishes it.
+  const livePeriods = PERIODS.filter((per) =>
+    twrr.some((t) => t.portfolio && t.portfolio[per.key] !== null));
+  const feeBases = [...new Set(twrr.map((t) => t.portfolio?.feeBasis).filter(Boolean))] as string[];
+  const notAnnualised = twrr.filter((t) => t.portfolio?.siAnnualised === false).map((t) => t.account.accountNo);
+
+  const top10Val = sum(consolidatedWeights.slice(0, 10));
+  const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
+  const bridgeOf = (accountId: string): AccountBridge[] => BOOK_ACCOUNT_BRIDGES[accountId] ?? [];
+
   return (
     <div>
-      <PageHeader eyebrow="Analytics" title="NAV & Performance"
-        subtitle="Listed book value over time, growth, embedded return and concentration. NAV history comes from ingested performance-history statements."
+      <PageHeader eyebrow="Analytics" title="NAV &amp; Performance"
+        subtitle="Time-weighted returns as each manager publishes them, the value bridge from opening to closing, and a money-weighted return over the real dated flows."
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Listed NAV and embedded return are rebuilt from live prices where a quote exists; NAV snapshots are as reported." />
-          <Pill tone="info">{nav.length} snapshot{nav.length === 1 ? "" : "s"}</Pill>
+          <BasisPill liveText="Live prices" hint="Listed NAV and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
+          <Pill tone="info">{accounts.length} accounts</Pill>
         </div>} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatTile label="Listed NAV" value={<Auditable to={auditHref(LEDGER)} title="Sum of every holding's market value — trace to the ledger">{fmtFromBase(listedMV, { compact: true })}</Auditable>} sub={`${p.length} positions`} icon={<Activity className="h-4 w-4" />} />
-        {hasSeries ? (
-        <StatTile label={`NAV growth since ${first.period}`} value={<Auditable formula={{ title: `NAV growth since ${first.period}`, excel: "= (Latest NAV ÷ First NAV − 1) × 100", plain: "How much the listed book's net asset value has grown from the first year-end snapshot to now. Includes money added over time, not just market gains.", worked: `= (${money(last.nav)} ÷ ${money(first.nav)} − 1) × 100 = +${growth.toFixed(0)}%` }}>{`+${growth.toFixed(0)}%`}</Auditable>} sub={<><Auditable formula={{ title: "CAGR (compound annual growth rate)", excel: "= (Latest NAV ÷ First NAV) ^ (1 ÷ years) − 1", plain: "The smoothed yearly growth rate that would take the first NAV snapshot to the latest over the elapsed years. Like NAV growth, it includes money added over time.", worked: `= (${money(last.nav)} ÷ ${money(first.nav)}) ^ (1 ÷ ${years.toFixed(1)}) − 1 = ${cagr.toFixed(0)}%` }}>{`${cagr.toFixed(0)}%`}</Auditable> CAGR \u00b7 incl. net contributions</>} icon={<TrendingUp className="h-4 w-4" />} />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Listed NAV"
+          value={<Auditable to={auditHref(LEDGER)} title="Sum of every holding's market value — trace to the ledger">{money(listedMV)}</Auditable>}
+          sub={`${p.length} positions across ${accounts.length} accounts`} icon={<Layers className="h-4 w-4" />} />
+
+        <StatTile label="Embedded return"
+          value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money, auditHref(LEDGER))}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
+          sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
+
+        {consolidatedXirr == null ? (
+          <StatTile label="Money-weighted return (XIRR)"
+            {...absentTile("no dated capital movements to measure against",
+              "XIRR needs dated external flows. No statement in this book carries them.")}
+            icon={<Percent className="h-4 w-4" />} />
         ) : (
-          <StatTile label="NAV growth" value={<span className="text-slate-500">\u2014</span>}
-            sub="needs at least two NAV snapshots" icon={<TrendingUp className="h-4 w-4" />} />
+          <StatTile label="Money-weighted return (XIRR)"
+            value={<span className={consolidatedXirr >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedXirr, { sign: true, decimals: 1 })}</span>}
+            sub={<>p.a. · {windowNote}</>}
+            hint={xirrMissing.length
+              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. Account ${xirrMissing.join(", ")} is excluded on both sides — counting its value without its opening stake would overstate this figure. The window is short, so the annualised rate is volatile: it is a real measurement of a quarter, not a sustained yearly rate.`
+              : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}. The window is short, so the annualised rate is volatile.`}
+            icon={<Percent className="h-4 w-4" />} />
         )}
-        <StatTile label="Embedded return" value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money, auditHref(LEDGER))}>{fmtPct(embeddedRet, { sign: true })}</Auditable>} sub={<><Auditable to={auditHref(LEDGER)} title="Unrealised gain on listed cost — trace to the ledger">{fmtFromBase(listedPnL, { compact: true, sign: true })}</Auditable> unrealized</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
-        <StatTile label="Money-weighted return (XIRR)"
-          value={xirrPct === undefined ? "…" : xirrPct == null ? "—" : <Auditable formula={{ title: "Money-weighted return (XIRR)", excel: "= XIRR(dated buys & sells, live market value today)", plain: "The single yearly growth rate that makes all your dated buys and sells balance to what the book is worth right now — exactly like Excel's XIRR(). Dated transactions from the ledger, closed against live prices.", auditHref: auditHref(LEDGER) }}><span className={changeColor(xirrPct)}>{fmtPct(xirrPct, { sign: true, decimals: 1 })}</span></Auditable>}
-          sub="p.a., from dated ledger flows"
-          icon={<Percent className="h-4 w-4" />} />
-        <StatTile label="Top-10 concentration" value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the listed book sits in just its ten biggest single names — a concentration and single-name-risk gauge.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable>} sub="of listed NAV in the 10 biggest names" icon={<Crosshair className="h-4 w-4" />} />
+
+        <StatTile label="Top-10 concentration"
+          value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the listed book sits in just its ten biggest single names.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable>}
+          sub="of listed NAV in the 10 biggest names" icon={<Crosshair className="h-4 w-4" />} />
       </div>
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2" title="NAV trajectory" subtitle="Listed book, year-end snapshots">
-          {navSeries.length < 2 ? (
-            <div className="grid h-64 place-items-center px-6 text-center text-[12px] leading-relaxed text-slate-500">
-              No NAV history ingested yet \u2014 a trajectory needs at least two dated snapshots.
-            </div>
-          ) : (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={navSeries} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="perf" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d9c48f" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#d9c48f" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="period" stroke="#6b6880" fontSize={11} tickFormatter={fmtFyPeriod} />
-                <YAxis stroke="#6b6880" fontSize={11} tickFormatter={axisFmt} width={84} />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle} formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "NAV"]} />
-                <Area type="monotone" dataKey="value" stroke="#d9c48f" strokeWidth={2} fill="url(#perf)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+
+      {/* ── NAV trajectory: absent, and why ── */}
+      <Card className="mt-5" title="NAV trajectory" subtitle="A dated series of portfolio values">
+        <AbsentSection
+          what="No valuation series in this book"
+          needs={`Each account's statements carry exactly two dated portfolio values — the opening figure on the
+            performance summary and the closing one. Two points are not a trajectory: a line between them would
+            assert a path through the period that nothing measured, and any growth or CAGR read off it would be a
+            real-looking number with nothing behind it. A periodic — monthly or quarterly — valuation statement
+            per account is what this needs.`} />
+      </Card>
+
+      {/* ── TWRR grid ── */}
+      <Card className="mt-5" title="Time-weighted return"
+        subtitle="As each manager publishes it — portfolio against that manager's own benchmark"
+        right={<Pill tone="info">{twrr.filter((t) => t.portfolio).length} of {accounts.length} accounts</Pill>}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead className="label-xs border-b border-ink-700">
+              <tr>
+                <th className="px-3 py-2 text-left">Account</th>
+                <th className="px-3 py-2 text-left">Series</th>
+                {livePeriods.map((per) => (
+                  <th key={per.key} className="px-3 py-2 text-right" title={per.title}>{per.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {twrr.flatMap((t) => {
+                if (!t.portfolio || !t.block) {
+                  return [(
+                    <tr key={t.account.accountId} className="border-t border-ink-700/60">
+                      <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(t.account)}</td>
+                      <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}>
+                        {DASH} no time-weighted return series in this account's statements
+                      </td>
+                    </tr>
+                  )];
+                }
+                const rows = [t.portfolio, t.benchmark].filter(Boolean) as ReturnSeries[];
+                return rows.map((s, i) => (
+                  <tr key={`${t.account.accountId}-${s.series}`} className={i === 0 ? "border-t border-ink-700/60" : ""}>
+                    <td className="px-3 py-2.5 font-medium text-slate-100">{i === 0 ? acctLabel(t.account) : ""}</td>
+                    <td className={`px-3 py-2.5 ${s.isBenchmark ? "text-slate-400" : "text-slate-200"}`}>
+                      {s.series}{s.isBenchmark ? " (benchmark)" : ""}
+                    </td>
+                    {livePeriods.map((per) => {
+                      const v = s[per.key];
+                      return (
+                        <td key={per.key} className="px-3 py-2.5 text-right mono">
+                          {v === null
+                            ? <AbsentCell reason={`${t.account.provider.split(" ")[0]} does not publish a ${per.label} figure`} />
+                            : <span className={v >= 0 ? "text-gain" : "text-loss"}>
+                                <Auditable to={auditHref({ file: t.block!.source })}
+                                  title={`${s.series} ${per.label} — trace to the ${t.block!.reportType}`}>
+                                  {fmtPct(v, { sign: true, decimals: 2 })}
+                                </Auditable>
+                              </span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ));
+              })}
+              <tr className="border-t-2 border-ink-600">
+                <td className="px-3 py-2.5 font-semibold text-slate-200">Consolidated</td>
+                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}>
+                  {DASH} time-weighted returns cannot be consolidated across these accounts: the three managers
+                  publish different periods, against different benchmarks, from different inception dates. The
+                  money-weighted return above is the consolidated figure this book does support.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 space-y-1 text-[11px] leading-relaxed text-slate-500">
+          <p>
+            <span className="font-medium text-slate-400">FYTD is the Indian FINANCIAL year to date</span> — 1 April
+            to the report date. The statements label it "YTD"; it is not a calendar-year figure.
+          </p>
+          {notAnnualised.length > 0 && (
+            <p>
+              <span className="font-medium text-slate-400">Since inception is NOT annualised</span> for account
+              {notAnnualised.length === 1 ? " " : "s "}{notAnnualised.join(", ")} — those accounts are under a year
+              old and the reports annualise only past twelve months. It is a cumulative return over the period.
+            </p>
           )}
-        </Card>
-        <Card title="Period growth" subtitle="Change between snapshots">
-          {yoy.length === 0 ? (
-            <div className="grid h-64 place-items-center px-6 text-center text-[12px] leading-relaxed text-slate-500">
-              Nothing to compare yet \u2014 period growth needs consecutive NAV snapshots.
-            </div>
-          ) : (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yoy} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-                <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="period" stroke="#6b6880" fontSize={10} tickFormatter={fmtFyPeriod} />
-                <YAxis stroke="#6b6880" fontSize={11} tickFormatter={(v) => `${v}%`} />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle} formatter={(v: number) => [`${v.toFixed(1)}%`, "Growth"]} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
-                <Bar dataKey="pct" radius={[3, 3, 0, 0]}>
-                  {yoy.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {feeBases.length > 0 && (
+            <p>
+              Returns are stated <span className="font-medium text-slate-400">{feeBases.join(" / ")}</span> management
+              fees and expenses, per each report's own disclosure — so the managers' figures are not directly
+              comparable with one another.
+            </p>
           )}
-        </Card>
-      </div>
-      <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
-        <Card className="lg:col-span-2" title="Return distribution" subtitle="Listed market value by return band (cost-priced positions)">
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dist} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-                <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="label" stroke="#6b6880" fontSize={11} />
-                <YAxis stroke="#6b6880" fontSize={11} tickFormatter={axisFmt} width={84} />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle} formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "Value"]} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
-                <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                  {dist.map((_, i) => <Cell key={i} fill={i < 2 ? "#ef4444" : "#10b981"} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-        <Card title="Risk snapshot">
-          <ul className="space-y-2.5 text-sm">
-            <li className="flex items-center justify-between"><span className="text-slate-400">Positions</span><span className="mono text-slate-100">{p.length}</span></li>
-            <li className="flex items-center justify-between"><span className="text-slate-400">Distinct names</span><span className="mono text-slate-100">{new Set(p.map((x) => x.securityKey)).size}</span></li>
-            <li className="flex items-center justify-between"><span className="text-slate-400">Top-10 concentration</span><span className="mono text-slate-100"><Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the listed book sits in just its ten biggest single names.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable></span></li>
-            <li className="flex items-center justify-between"><span className="text-slate-400">Cost-unavailable</span><span className="mono text-slate-100">{p.filter((x) => x.costUnavailable).length}</span></li>
-            <li className="flex items-center justify-between"><span className="text-slate-400">Winners / losers</span><span className="mono text-slate-100">{priced.filter((x) => x.returnPct > 0).length} / {priced.filter((x) => x.returnPct < 0).length}</span></li>
-          </ul>
-          <p className="mt-3 text-[11px] text-slate-500">NAV growth includes net capital contributions across periods, not just market return; embedded return isolates unrealized gain on current cost.</p>
-        </Card>
-      </div>
+        </div>
+      </Card>
+
+      {/* ── Value bridge ── */}
+      <Card className="mt-5" title="Value bridge"
+        subtitle="Opening value to closing value, per account — every component read from the statements">
+        <div className="space-y-6">
+          {accounts.map((a) => {
+            const bridges = bridgeOf(a.accountId);
+            return (
+              <div key={a.accountId}>
+                <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
+                  <span className="text-[12.5px] font-semibold text-slate-200">{acctLabel(a)}</span>
+                  <span className="text-[10.5px] text-slate-500">inception {a.inceptionDate ?? DASH}</span>
+                </div>
+                {!bridges.length ? (
+                  <p className="text-[11.5px] text-slate-500">{DASH} no flow block in this account's statements</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[12.5px]">
+                      <thead className="label-xs border-b border-ink-700">
+                        <tr>
+                          <th className="px-3 py-1.5 text-left">Component</th>
+                          {bridges.map((b) => (
+                            <th key={b.source} className="px-3 py-1.5 text-right">
+                              {b.basis === "since-inception" ? "Since inception" : "FY to date"}
+                              <div className="font-normal normal-case tracking-normal text-slate-600">{b.periodFrom} → {b.periodTo}</div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {BRIDGE_ROWS.map((row) => (
+                          <tr key={row.key} className="border-t border-ink-700/60">
+                            <td className="px-3 py-1.5 text-slate-300">{row.label}</td>
+                            {bridges.map((b) => {
+                              const v = b[row.key];
+                              return (
+                                <td key={b.source} className="px-3 py-1.5 text-right mono">
+                                  {v === null
+                                    ? <AbsentCell reason={`the ${b.reportType} does not print this component`} />
+                                    : <Auditable to={auditHref({ file: b.source })} title={`${row.label} — trace to the ${b.reportType}`}>
+                                        <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}>
+                                          {money(v)}
+                                        </span>
+                                      </Auditable>}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+          The two columns are <span className="font-medium text-slate-400">different windows and are never added
+          together</span>: the fact sheet and performance appraisal run since inception, the performance summary
+          runs the financial year to date. Both print a "Realised Gain" and both are right.
+        </p>
+      </Card>
+
+      {/* ── Money-weighted return, per account ── */}
+      <Card className="mt-5" title="Money-weighted return (XIRR), per account"
+        subtitle="From each account's own dated capital movements, closed against its current market value">
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead className="label-xs border-b border-ink-700">
+              <tr>
+                <th className="px-3 py-2 text-left">Account</th>
+                <th className="px-3 py-2 text-right">Dated flows</th>
+                <th className="px-3 py-2 text-right">Market value</th>
+                <th className="px-3 py-2 text-right">Terminal date</th>
+                <th className="px-3 py-2 text-right">XIRR p.a.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {xirrByAccount.map((x) => (
+                <tr key={x.account.accountId} className="border-t border-ink-700/60">
+                  <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(x.account)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">{x.flows}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-200">{money(x.mv)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>
+                  <td className="px-3 py-2.5 text-right mono">
+                    {x.pct == null
+                      ? <span className="text-[11px] text-slate-500">{DASH} {x.reason}</span>
+                      : <span className={x.pct >= 0 ? "text-gain" : "text-loss"}>{fmtPct(x.pct, { sign: true, decimals: 1 })}</span>}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-ink-600 font-semibold">
+                <td className="px-3 py-2.5 text-slate-200">
+                  Consolidated
+                  {unmeasurable.length > 0 && (
+                    <div className="text-[10.5px] font-normal text-slate-500">
+                      {measurable.length} of {accounts.length} accounts · {money(measuredMV)} of {money(listedMV)}
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-2.5 text-right mono text-slate-400">{measuredFlows.length}</td>
+                <td className="px-3 py-2.5 text-right mono text-slate-200">{money(measuredMV)}</td>
+                <td className="px-3 py-2.5 text-right mono text-slate-400">{portfolio.asOf}</td>
+                <td className="px-3 py-2.5 text-right mono">
+                  {consolidatedXirr == null
+                    ? <span className="text-slate-500">{DASH}</span>
+                    : <span className={consolidatedXirr >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedXirr, { sign: true, decimals: 1 })}</span>}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-slate-500">
+          <p>
+            <span className="font-medium text-slate-400">Method.</span> Newton–Raphson over the dated flows, as
+            Excel's XIRR() does. Each account's series is its EXTERNAL capital movements — the capital register, or
+            the bank book where a manager issues none — with the window's opening portfolio value as the first
+            entry, closed against that account's market value on its own report date. Trades are excluded: they
+            move cash inside the account, not into or out of it.
+          </p>
+          {unmeasurable.length > 0 && (
+            <p>
+              <span className="font-medium text-slate-400">The consolidated row covers {measurable.length} of {accounts.length} accounts</span>
+              {" — "}{money(measuredMV)} of the book's {money(listedMV)}. Account {xirrMissing.join(", ")} is left out
+              of BOTH sides: pooling its flows while adding its market value to the terminal figure would credit the
+              book with value it never shows the opening stake for, and reads {" "}
+              <span className="text-slate-400">64.6 pp higher</span> than the measurable accounts do.
+            </p>
+          )}
+          <p>
+            <span className="font-medium text-slate-400">The window is one quarter.</span> These flows open on
+            1 April and close on the report date, so every rate in this table annualises about three months.
+            That is a real money-weighted measurement of that period — not a rate the book has sustained for a year.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }

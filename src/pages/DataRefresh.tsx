@@ -7,6 +7,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { sum } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
+import { DASH } from "@/components/Absent";
 
 // Provenance and status of the ingested book. Unlike the analytics pages this
 // one is NOT gated on a non-empty book — when nothing has been ingested yet,
@@ -24,6 +25,7 @@ export function DataRefresh() {
   const withIsin = p.filter((x) => !!x.isin).length;
   const pm = portfolio.privateMarkets;
   const fundCount = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length + pm.debtFunds.length;
+  const hasPrivate = fundCount + pm.closedFunds.length + pm.startups.length > 0;
   const stale = staleAccounts(portfolio);
   const providers = [...new Set(portfolio.accounts.map((a) => a.provider))].sort();
 
@@ -74,7 +76,8 @@ export function DataRefresh() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Consolidated NAV" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.totalValue, { compact: true })}
-          sub={bookIsEmpty ? "no statements ingested" : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${fmtFromBase(portfolio.privateValue, { compact: true })}`}
+          sub={bookIsEmpty ? "no statements ingested"
+            : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}`}
           icon={<Database className="h-4 w-4" />} />
         <StatTile label="Positions" value={p.length}
           sub={`${new Set(p.map((x) => x.securityKey)).size} names · ${new Set(p.map((x) => ownerOf(accIdx, x))).size} entities`}
@@ -132,11 +135,16 @@ export function DataRefresh() {
         <Card title="Coverage & quality">
           <ul className="space-y-2 text-sm">
             <Row label="Listed book" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.listedValue, { compact: true })} />
-            <Row label="Private book" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.privateValue, { compact: true })} />
+            {/* A private book of ₹0 claims private holdings worth nothing. This
+                book has no private holding at all, so the figure is absent. */}
+            <Row label="Private book" value={hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}
+              muted={!hasPrivate} />
             <Row label="Sector classification" value={listedMV > 0 ? `${coverage.toFixed(1)}% of listed NAV` : "—"} />
             <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "—"} muted={withIsin < p.length} />
             <Row label="Cost-unavailable names" value={`${costNA} (excluded from P&L)`} />
-            <Row label="Private instruments" value={`${pm.startups.length} startups · ${fundCount} funds/cos`} />
+            <Row label="Private instruments"
+              value={hasPrivate ? `${pm.startups.length} startups · ${fundCount} funds/cos` : "None in this book"}
+              muted={!hasPrivate} />
             <Row label="NAV snapshots" value={portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"} muted={!portfolio.navHistory.length} />
           </ul>
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">

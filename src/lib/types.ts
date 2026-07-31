@@ -169,6 +169,80 @@ export type Position = {
 
 export type NavPoint = { period: string; date: string; nav: number };
 
+/**
+ * One time-weighted return series exactly as a manager publishes it.
+ *
+ * The period fields are deliberately NOT interchangeable. `mtd`/`qtd`/`fytd` are
+ * TO-DATE windows (Goldstandard); `m1`/`m3`/`m6`/`y1` are TRAILING ones (Green
+ * Lantern, Carnelian). A trailing one-month return and a month-to-date return
+ * measure different things, so a series carries one set and leaves the other
+ * null — and the UI renders "—" for the columns that manager does not publish.
+ */
+export type ReturnSeries = {
+  series: string;             // "Portfolio", "N50TRI", "S&P BSE 500 Total" …
+  isBenchmark: boolean;
+  mtd: number | null;
+  qtd: number | null;
+  fytd: number | null;        // Indian FINANCIAL year to date (1 Apr →), not calendar
+  m1: number | null;
+  m3: number | null;
+  m6: number | null;
+  y1: number | null;
+  si: number | null;          // since inception
+  /** False when the period is under a year — the reports annualise only past one. */
+  siAnnualised: boolean | null;
+  /** "after" | "before" — whether returns are net of management fees. */
+  feeBasis: string | null;
+};
+
+/** The return series one report published, with the document it came from. */
+export type AccountReturnBlock = {
+  reportType: string;
+  source: string;             // docKey → public/audit/<docKey>/
+  series: ReturnSeries[];
+};
+
+/**
+ * Opening → capital → realised → unrealised → income → fees → closing, over ONE
+ * window. Each account has more than one block on more than one window (the
+ * financial year to date, and since inception) and they are never added together.
+ */
+export type AccountBridge = {
+  reportType: string;
+  source: string;
+  periodFrom: string;
+  periodTo: string;
+  basis: "since-inception" | "financial-year-to-date";
+  opening: number | null;
+  contribution: number | null;
+  withdrawal: number | null;
+  netCapitalInOut: number | null;
+  realized: number | null;
+  unrealized: number | null;
+  income: number | null;
+  fees: number | null;
+  expenses: number | null;
+  closing: number | null;
+  profit: number | null;
+};
+
+/**
+ * A NON-CASH corporate action: bonus, split, rights. Separate from dividend
+ * income because its substance is the entitlement, not an amount — a bonus
+ * prints 0.00 and that zero is a real measurement, not a missing one.
+ */
+export type CorporateAction = {
+  security: string;
+  securityKey: string;
+  accountId: string;
+  kind: string | null;
+  exDate: string | null;
+  quantity: number | null;
+  entitlement: string | null;
+  amount: number | null;
+  source: string | null;
+};
+
 // A dated cash flow for money-weighted return (XIRR). Sign convention:
 // amount < 0 = capital in (contribution / buy), amount > 0 = capital out
 // (sale / distribution). The terminal market value is appended at compute time.
@@ -179,8 +253,13 @@ export type EntityCG = {
   /** The account these gains belong to, and its canonical owner. */
   accountId?: string;
   ownerId?: string | null;
-  realisedST: number;
-  realisedLT: number;
+  /**
+   * NULL when the account has no capital gain statement at all — distinct from
+   * a statement that reports zero realised gain. The page names the account and
+   * says which document is missing rather than averaging it in as nothing.
+   */
+  realisedST: number | null;
+  realisedLT: number | null;
   /**
    * NULL when the corpus cannot support the split — it needs per-lot purchase
    * dates. Never estimated: an unrealised ST/LT split is a tax figure, and a
@@ -192,6 +271,10 @@ export type EntityCG = {
   periodFrom?: string | null;
   periodTo?: string | null;
   lots?: number;
+  /** docKey of the capital gain statement these lots came from. */
+  source?: string | null;
+  /** Set when there is no statement: why, in one line, for the row to show. */
+  absent?: string;
 };
 
 export type FundInvestment = {

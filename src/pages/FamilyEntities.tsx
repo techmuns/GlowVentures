@@ -13,6 +13,7 @@ import { StockLink } from "@/components/StockLink";
 import { byEntity, byCustodian, bySector, sum } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, ownerOf } from "@/lib/accounts";
 import { BasisPill } from "@/components/BasisPill";
+import { AbsentCell, absentTile } from "@/components/Absent";
 import { entityXirrPct, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -41,9 +42,15 @@ export function FamilyEntities() {
     set.add(custodyLabelOf(accIdx, x));
     custodiansByOwner.set(who, set);
   }
+  // The in-house bucket either EXISTS in this book or it doesn't. Every account
+  // here is an external mandate, so there are no direct-held positions at all —
+  // and "0% / ₹0" would read as a measurement of an in-house book that holds
+  // nothing, which is a different claim from having no in-house book. The tile
+  // below renders the dash and names the reason when the bucket is absent.
   const direct = cust.find((c) => c.key === DIRECT);
   const directMV = direct?.mv ?? 0;
   const externalMV = totalMV - directMV;
+  const externalCustodians = cust.filter((c) => c.key !== DIRECT);
   const largest = entities[0];
   const entityChart = entities.slice(0, 12).map((e) => ({ name: e.key, value: convertFromBase(e.mv) }));
   const custPie = cust.map((c) => ({ name: c.key, value: c.mv }));
@@ -68,8 +75,13 @@ export function FamilyEntities() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Entities" value={entities.length} sub="distinct owners in the book" icon={<Users className="h-4 w-4" />} />
         <StatTile label="Largest entity" value={largest?.key ?? "—"} sub={largest ? <><Auditable to={auditHref({ ...LEDGER, find: largest.key })} title="Largest entity NAV — trace to the ledger">{fmtFromBase(largest.mv, { compact: true })}</Auditable>{" · "}<Auditable formula={weightFormula(largest.mv, totalMV, largest.weight * 100, money)}>{`${(largest.weight * 100).toFixed(0)}%`}</Auditable></> : "—"} icon={<Building2 className="h-4 w-4" />} />
-        <StatTile label="In-house / Direct" value={<Auditable formula={{ title: "In-house / Direct share", excel: "= In-house market value ÷ Total market value × 100", plain: "The share of the whole book the family holds directly (in-house), rather than through an external custodian or manager.", worked: `= ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${((directMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((directMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<Auditable to={auditHref(LEDGER)} title="In-house NAV — trace to the ledger">{fmtFromBase(directMV, { compact: true })}</Auditable>} icon={<Wallet className="h-4 w-4" />} />
-        <StatTile label="External custodians" value={<Auditable formula={{ title: "External-custody share", excel: "= External market value ÷ Total market value × 100", plain: "The share of the whole book held through external custodians and managers, rather than directly in-house.", worked: `= ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${((externalMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((externalMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<>{cust.filter((c) => c.key !== DIRECT).length} custodian(s){" · "}<Auditable to={auditHref(LEDGER)} title="External-custody NAV — trace to the ledger">{fmtFromBase(externalMV, { compact: true })}</Auditable></>} icon={<UserCheck className="h-4 w-4" />} />
+        {direct
+          ? <StatTile label="In-house / Direct" value={<Auditable formula={{ title: "In-house / Direct share", excel: "= In-house market value ÷ Total market value × 100", plain: "The share of the whole book the family holds directly (in-house), rather than through an external custodian or manager.", worked: `= ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${((directMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((directMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<Auditable to={auditHref(LEDGER)} title="In-house NAV — trace to the ledger">{fmtFromBase(directMV, { compact: true })}</Auditable>} icon={<Wallet className="h-4 w-4" />} />
+          : <StatTile label="In-house / Direct"
+              {...absentTile("no account in this book is run in-house",
+                `All ${portfolio.accounts.length} accounts are external mandates, so there are no direct-held positions to measure. A 0% here would say the family runs an in-house book that holds nothing, which is a different claim.`)}
+              icon={<Wallet className="h-4 w-4" />} />}
+        <StatTile label="External custodians" value={<Auditable formula={{ title: "External-custody share", excel: "= External market value ÷ Total market value × 100", plain: "The share of the whole book held through external custodians and managers, rather than directly in-house.", worked: `= ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${((externalMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((externalMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<>{externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}{" · "}<Auditable to={auditHref(LEDGER)} title="External-custody NAV — trace to the ledger">{fmtFromBase(externalMV, { compact: true })}</Auditable></>} icon={<UserCheck className="h-4 w-4" />} />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-1.5">
         {["All", ...entities.map((e) => e.key)].map((m) => {
@@ -102,7 +114,8 @@ export function FamilyEntities() {
                 </ResponsiveContainer>
               </div>
             </Card>
-            <Card title="In-house vs external" subtitle="Who custodies the capital">
+            <Card title={direct ? "In-house vs external" : "Custody"}
+              subtitle={direct ? "Who custodies the capital" : `Who custodies the capital — all of it external, across ${externalCustodians.length} manager${externalCustodians.length === 1 ? "" : "s"}`}>
               <div className="h-44">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -152,13 +165,15 @@ export function FamilyEntities() {
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money, auditHref({ ...LEDGER, find: e.key }))}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, auditHref({ ...LEDGER, find: e.key }))}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}
-                          title={xirrPct == null ? "Populates once dated transactions are uploaded for this entity" : undefined}>
-                          {xirrPct == null ? "—" : fmtPct(xirrPct, { sign: true })}
+                        <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
+                          {xirrPct == null
+                            ? <AbsentCell reason="no dated capital movements for this entity — needs a capital register or bank book" />
+                            : fmtPct(xirrPct, { sign: true })}
                         </td>
-                        <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}
-                          title={ytdPct == null ? "Populates once per-entity NAV history is uploaded" : undefined}>
-                          {ytdPct == null ? "—" : fmtPct(ytdPct, { sign: true })}
+                        <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}>
+                          {ytdPct == null
+                            ? <AbsentCell reason="needs a per-entity NAV on 1 April; no statement in this book carries one" />
+                            : fmtPct(ytdPct, { sign: true })}
                         </td>
                         <td className="px-4 py-2.5 text-left text-[12px] text-slate-400">
                           {[...(custodiansByOwner.get(e.key) ?? [])].sort().join(", ") || "\u2014"}

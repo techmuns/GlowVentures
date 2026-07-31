@@ -8,7 +8,8 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, BookSummary, CashFlow, EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,
+  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, CorporateAction,
+  EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -1190,7 +1191,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 56000,
-    "dividendReceived": 112000,
+    "dividendReceived": 56000,
     "positionIrrPct": 0.71
   },
   {
@@ -1236,7 +1237,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 8000,
-    "dividendReceived": 15200,
+    "dividendReceived": 7200,
     "positionIrrPct": 290.29
   },
   {
@@ -1328,7 +1329,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 135000,
-    "dividendReceived": 256500,
+    "dividendReceived": 121500,
     "positionIrrPct": 22.13
   },
   {
@@ -1374,7 +1375,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 60000,
-    "dividendReceived": 120000,
+    "dividendReceived": 60000,
     "positionIrrPct": -24.39
   },
   {
@@ -1489,7 +1490,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 164000,
-    "dividendReceived": 328000,
+    "dividendReceived": 164000,
     "positionIrrPct": 13.59
   },
   {
@@ -1535,7 +1536,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 59400,
-    "dividendReceived": 118800,
+    "dividendReceived": 59400,
     "positionIrrPct": -6.83
   },
   {
@@ -1604,7 +1605,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 8800,
-    "dividendReceived": 8800,
+    "dividendReceived": 4400,
     "positionIrrPct": 66.55
   },
   {
@@ -1696,7 +1697,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 86750,
-    "dividendReceived": 164825,
+    "dividendReceived": 78075,
     "positionIrrPct": 15.55
   },
   {
@@ -1719,7 +1720,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 40200,
-    "dividendReceived": 80400,
+    "dividendReceived": 40200,
     "positionIrrPct": 11.87
   },
   {
@@ -3426,7 +3427,36 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "unrealisedLT": null,
     "periodFrom": "2026-04-01",
     "periodTo": "2026-07-10",
-    "lots": 19
+    "lots": 19,
+    "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Goldstandard 100022",
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · Goldstandard 100023",
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
   },
   {
     "entity": "Ankita Jaisinghani · Green 510854",
@@ -3438,7 +3468,8 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "unrealisedLT": null,
     "periodFrom": "2026-04-01",
     "periodTo": "2026-06-25",
-    "lots": 30
+    "lots": 30,
+    "source": "green-lantern-capital-llp-510854-2026-06-25-capital-gain"
   },
   {
     "entity": "Ajay Jaisinghani · Green 510861",
@@ -3450,7 +3481,8 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "unrealisedLT": null,
     "periodFrom": "2026-04-01",
     "periodTo": "2026-06-25",
-    "lots": 28
+    "lots": 28,
+    "source": "green-lantern-capital-llp-510861-2026-06-25-capital-gain"
   }
 ];
 
@@ -3701,6 +3733,759 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
     }
   ]
 };
+
+/**
+ * Time-weighted returns per account, as each manager publishes them.
+ *
+ * Each carries its OWN period vocabulary and its OWN benchmark, kept apart:
+ * Goldstandard prints MTD / QTD / FYTD against N50TRI, Green Lantern and
+ * Carnelian trailing 1m / 3m / 1y against S&P BSE 500. `siAnnualised` says
+ * whether since-inception is annualised — false under a year, per the
+ * reports' own disclosure. `feeBasis` says whether returns are net of fees.
+ */
+export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
+    {
+      "reportType": "fact-sheet",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 9.65,
+          "m3": 18.37,
+          "m6": null,
+          "y1": 8.89,
+          "si": 21.99,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        },
+        {
+          "series": "S&P BSE 500 Total",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 5.22,
+          "m3": 4.67,
+          "m6": null,
+          "y1": 0.08,
+          "si": 2.6,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 9.65,
+          "m3": 18.37,
+          "m6": 11.24,
+          "y1": 8.89,
+          "si": 21.99,
+          "siAnnualised": true,
+          "feeBasis": null
+        },
+        {
+          "series": "S&P BSE 500",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 5.22,
+          "m3": 4.67,
+          "m6": -0.33,
+          "y1": 0.08,
+          "si": 2.6,
+          "siAnnualised": true,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022": [
+    {
+      "reportType": "fact-sheet",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 2.3,
+          "qtd": 2.3,
+          "fytd": 16.58,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 3.62,
+          "siAnnualised": false,
+          "feeBasis": "after"
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": 0.46,
+          "qtd": 0.46,
+          "fytd": 7.89,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": -7.73,
+          "siAnnualised": false,
+          "feeBasis": "after"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-benchmark",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-benchmark",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 2.3,
+          "qtd": 2.3,
+          "fytd": 16.58,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": 0.46,
+          "qtd": 0.46,
+          "fytd": 7.89,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 6.83,
+          "m3": 6.09,
+          "m6": 4.8,
+          "y1": null,
+          "si": 3.62,
+          "siAnnualised": false,
+          "feeBasis": null
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 3.55,
+          "m3": 0.18,
+          "m6": -6.08,
+          "y1": null,
+          "si": -7.73,
+          "siAnnualised": false,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023": [
+    {
+      "reportType": "fact-sheet",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 2.35,
+          "qtd": 2.35,
+          "fytd": 16.69,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 3.76,
+          "siAnnualised": false,
+          "feeBasis": "after"
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": 0.46,
+          "qtd": 0.46,
+          "fytd": 7.89,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": -7.73,
+          "siAnnualised": false,
+          "feeBasis": "after"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-benchmark",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-benchmark",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 2.35,
+          "qtd": 2.35,
+          "fytd": 16.69,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": 0.46,
+          "qtd": 0.46,
+          "fytd": 7.89,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 6.87,
+          "m3": 6.29,
+          "m6": 4.94,
+          "y1": null,
+          "si": 3.76,
+          "siAnnualised": false,
+          "feeBasis": null
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 3.55,
+          "m3": 0.18,
+          "m6": -6.08,
+          "y1": null,
+          "si": -7.73,
+          "siAnnualised": false,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
+  "green-lantern-capital-llp-510854": [
+    {
+      "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.58,
+          "m3": 14.88,
+          "m6": null,
+          "y1": 11.77,
+          "si": 13.58,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        },
+        {
+          "series": "S&P BSE 500 Total",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 0.99,
+          "m3": 7.74,
+          "m6": null,
+          "y1": -0.06,
+          "si": 4.82,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-benchmark",
+      "source": "green-lantern-capital-llp-510854-2026-07-09-performance-benchmark",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": -1.66,
+          "qtd": -1.66,
+          "fytd": 16.88,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        },
+        {
+          "series": "N50TRI",
+          "isBenchmark": true,
+          "mtd": 0.39,
+          "qtd": 0.39,
+          "fytd": 12.54,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": null,
+          "siAnnualised": null,
+          "feeBasis": null
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510854-2026-07-09-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.2,
+          "m3": 7.72,
+          "m6": 10.64,
+          "y1": 9.52,
+          "si": 12.03,
+          "siAnnualised": true,
+          "feeBasis": null
+        },
+        {
+          "series": "S&P BSE 500",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 3.37,
+          "m3": 4.91,
+          "m6": -1.48,
+          "y1": -1.41,
+          "si": 4.64,
+          "siAnnualised": true,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
+  "green-lantern-capital-llp-510861": [
+    {
+      "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.58,
+          "m3": 14.91,
+          "m6": null,
+          "y1": 11.84,
+          "si": 12.67,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        },
+        {
+          "series": "S&P BSE 500 Total",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 0.99,
+          "m3": 7.74,
+          "m6": null,
+          "y1": -0.06,
+          "si": 5.73,
+          "siAnnualised": true,
+          "feeBasis": "before"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510861-2026-07-09-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.2,
+          "m3": 7.72,
+          "m6": 10.69,
+          "y1": 9.58,
+          "si": 11.15,
+          "siAnnualised": true,
+          "feeBasis": null
+        },
+        {
+          "series": "S&P BSE 500",
+          "isBenchmark": true,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 3.37,
+          "m3": 4.91,
+          "m6": -1.48,
+          "y1": -1.41,
+          "si": 5.52,
+          "siAnnualised": true,
+          "feeBasis": null
+        }
+      ]
+    }
+  ]
+};
+
+/**
+ * The value bridge per account: opening → capital → realised → unrealised →
+ * income → fees → closing, each block over ONE window and labelled with it.
+ * Windows are NOT interchangeable and nothing is added across them.
+ */
+export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
+    {
+      "reportType": "fact-sheet",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
+      "periodFrom": "2025-01-06",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 330000000,
+      "withdrawal": 322645,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 400475678,
+      "profit": 70798323
+    },
+    {
+      "reportType": "performance-history",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history",
+      "periodFrom": "2025-01-06",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": 400475677.94,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 329677355,
+      "realized": -20637905.99,
+      "unrealized": 97292915.41,
+      "income": 3226436.1,
+      "fees": 9452772.59,
+      "expenses": null,
+      "closing": 400475677.94,
+      "profit": null
+    },
+    {
+      "reportType": "performance-summary",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-07-10",
+      "basis": "financial-year-to-date",
+      "opening": 312627059.69,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": -109782,
+      "realized": -18986408.14,
+      "unrealized": 106406053,
+      "income": 1097820,
+      "fees": 797474.54,
+      "expenses": 131240.07,
+      "closing": 400475677.94,
+      "profit": null
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022": [
+    {
+      "reportType": "fact-sheet",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
+      "periodFrom": "2025-12-26",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 75000000,
+      "withdrawal": 16894,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 77695353,
+      "profit": 2712247
+    },
+    {
+      "reportType": "performance-history",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-history",
+      "periodFrom": "2025-12-26",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": 77695353.36,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 74983106,
+      "realized": 394913.5,
+      "unrealized": 2430287.69,
+      "income": 186287.5,
+      "fees": 456441.33,
+      "expenses": null,
+      "closing": 77695353.36,
+      "profit": null
+    },
+    {
+      "reportType": "performance-summary",
+      "source": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-summary",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-07-10",
+      "basis": "financial-year-to-date",
+      "opening": 66656491.25,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": -9844,
+      "realized": 179030.94,
+      "unrealized": 10807138.04,
+      "income": 104037.5,
+      "fees": 173275.96,
+      "expenses": 25424.4,
+      "closing": 77695353.36,
+      "profit": null
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023": [
+    {
+      "reportType": "fact-sheet",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
+      "periodFrom": "2025-12-26",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 175000000,
+      "withdrawal": 41000,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 181533677,
+      "profit": 6574677
+    },
+    {
+      "reportType": "performance-history",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-history",
+      "periodFrom": "2025-12-26",
+      "periodTo": "2026-07-10",
+      "basis": "since-inception",
+      "opening": 181533676.83,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 174959000,
+      "realized": 882423.12,
+      "unrealized": 5957554.4,
+      "income": 418800,
+      "fees": 1063700.68,
+      "expenses": null,
+      "closing": 181533676.83,
+      "profit": null
+    },
+    {
+      "reportType": "performance-summary",
+      "source": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-summary",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-07-10",
+      "basis": "financial-year-to-date",
+      "opening": 155590795.8,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": -22975,
+      "realized": 415051.23,
+      "unrealized": 25401289.68,
+      "income": 234150,
+      "fees": 404305.18,
+      "expenses": 59929.7,
+      "closing": 181533676.83,
+      "profit": null
+    }
+  ],
+  "green-lantern-capital-llp-510854": [
+    {
+      "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
+      "periodFrom": "2025-01-13",
+      "periodTo": "2026-06-25",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 50000000,
+      "withdrawal": 48699,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 59266352,
+      "profit": 9315051
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510854-2026-07-09-performance-history",
+      "periodFrom": "2025-01-13",
+      "periodTo": "2026-07-09",
+      "basis": "since-inception",
+      "opening": 58209562.53,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 49951301,
+      "realized": 1063731.69,
+      "unrealized": 7443357.67,
+      "income": 533716.75,
+      "fees": 848100.58,
+      "expenses": null,
+      "closing": 58209562.53,
+      "profit": null
+    }
+  ],
+  "green-lantern-capital-llp-510861": [
+    {
+      "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
+      "periodFrom": "2025-01-16",
+      "periodTo": "2026-06-25",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 100000000,
+      "withdrawal": 102901,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 117052231,
+      "profit": 17155132
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510861-2026-07-09-performance-history",
+      "periodFrom": "2025-01-16",
+      "periodTo": "2026-07-09",
+      "basis": "since-inception",
+      "opening": 114959353.99,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 99897099,
+      "realized": 1706897.7,
+      "unrealized": 13838530.7,
+      "income": 1054402.6,
+      "fees": 1668156.01,
+      "expenses": null,
+      "closing": 114959353.99,
+      "profit": null
+    },
+    {
+      "reportType": "performance-summary",
+      "source": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-07-09",
+      "basis": "financial-year-to-date",
+      "opening": 98614842.68,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": -27093,
+      "realized": -1912240.85,
+      "unrealized": 18324860.15,
+      "income": 270893.2,
+      "fees": 234014.65,
+      "expenses": 73756.44,
+      "closing": 114959353.99,
+      "profit": null
+    }
+  ]
+};
+
+/**
+ * NON-CASH corporate actions — bonuses, splits, rights. Kept apart from
+ * dividend income: a bonus prints Amount 0.00 and its substance is the
+ * entitlement, not a cash figure to be summed.
+ */
+export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = [
+  {
+    "security": "Life Insurance Corp. of India",
+    "securityKey": "life-insurance-corp-of-india",
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "kind": "bonus",
+    "exDate": "2026-05-29",
+    "quantity": 8200,
+    "entitlement": "Bonus Shares @ 1:1",
+    "amount": 0,
+    "source": "goldstandard-wealth-private-limited-100023-2026-07-10-corporate-benefits"
+  }
+];
 
 // No private-markets holdings in this book: all five accounts are listed-equity
 // PMS mandates. These stay empty rather than being removed, so a later drop that

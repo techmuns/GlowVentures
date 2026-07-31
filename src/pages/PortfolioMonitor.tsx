@@ -7,13 +7,15 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum } from "@/lib/analytics";
+import { sum, sumOrNull } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
+import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
+import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 
 type EntityPart = {
   entity: string; quantity: number; avgCost: number; currentPrice: number;
@@ -49,9 +51,11 @@ export function PortfolioMonitor() {
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
-  // Realised P&L per security (by securityKey) from the dated ledger sales —
-  // undefined = loading, null = unavailable.
-  const [realized, setRealized] = useState<Map<string, number> | null | undefined>(undefined);
+  // Realised P&L per security (by securityKey) from the archive's sales —
+  // undefined = loading, null = the archive didn't respond. A VALUE of null in
+  // the map is a third thing again: the name was sold, but no capital gain
+  // statement covers that account, so what it realised was never reported.
+  const [realized, setRealized] = useState<Map<string, number | null> | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     loadSales().then((s) => { if (alive) setRealized(s ? new Map(s.rows.map((r) => [r.securityKey, r.realized])) : null); });
@@ -281,7 +285,18 @@ export function PortfolioMonitor() {
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
                             : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money, ledgerHref(r.security))}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{!consolidate ? <span className="text-slate-600">—</span> : realized === undefined ? <span className="text-slate-500">…</span> : realized === null ? <span className="text-slate-600">—</span> : (realized.get(r.securityKey) ?? 0) === 0 ? <span className="text-slate-600">—</span> : <span className={changeColor(realized.get(r.securityKey) ?? 0)}><Auditable to={ledgerHref(r.security)} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey) ?? 0, { compact: true, sign: true })}</Auditable></span>}</td>
+                        {/* Three distinct states, never collapsed into one dash
+                            without a reason: not looked up (per-entity view),
+                            archive unreachable, name never sold, name sold but
+                            no capital gain statement covers that account. */}
+                        <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{
+                          !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
+                          : realized === undefined ? <span className="text-slate-500">…</span>
+                          : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
+                          : !realized.has(r.securityKey) ? <AbsentCell reason="no sale of this name on the transaction statements" />
+                          : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
+                          : <span className={changeColor(realized.get(r.securityKey)!)}><Auditable to={ledgerHref(r.security)} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</Auditable></span>
+                        }</td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? LIVE_CELL : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtPct(r.returnPct, { sign: true })
@@ -345,7 +360,10 @@ export function PortfolioMonitor() {
                     {feedLive ? fmtFromBase(totPnL, { compact: true, sign: true })
                               : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
                   </td>
-                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const tr = sum(rows.map((r) => realized.get(r.securityKey) ?? 0)); return <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <span className="text-slate-600">—</span>}</td>
+                  {/* sumOrNull, not sum: a name with no realised figure must not
+                      be added in as zero — that turns "never reported" into a
+                      measurement and drags the total towards it. */}
+                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const tr = sumOrNull(rows.map((r) => realized.get(r.securityKey) ?? null)); return tr === null ? <AbsentCell reason="no capital gain statement covers any of these names" /> : <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <AbsentCell reason="realised gain is shown in the consolidated view" />}</td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })}` }}>{fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })}</Auditable>}
@@ -464,7 +482,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
     if (!txns) return [];
     return txns.filter((t) =>
       (side === "all" || t.side === side) &&
-      (entity === "All" || t.account === entity) &&
+      // Matched on the CANONICAL owner, not on the account label: the label
+      // prints the owner's name as that statement spelled it ("Ajay Thakurdas
+      // Jaisinghani"), and the filter offers the canonical one ("Ajay
+      // Jaisinghani"). Comparing the two strings never matches, which would
+      // empty the tape the moment anyone filtered by entity.
+      (entity === "All" || ownerDisplayName(t.ownerId) === entity) &&
       (sector === "All" || sectorByKey.get(t.securityKey) === sector) &&
       (selected.size === 0 || selected.has(t.security)) &&
       (!from || t.date >= from) &&
@@ -473,7 +496,22 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   const shown = filtered.slice(0, TXN_CAP);
 
   if (status === "loading") return <Card className="flex min-h-0 flex-1 items-center justify-center"><span className="text-sm text-slate-500">Loading transactions…</span></Card>;
-  if (status === "error") return <Card className="flex min-h-0 flex-1 items-center justify-center"><span className="text-sm text-slate-500">Couldn't load the transaction ledger. Reload and sign in again if this persists.</span></Card>;
+  if (status === "error") {
+    return (
+      <Card className="flex min-h-0 flex-1 items-center justify-center">
+        <AbsentSection what="The audit archive didn't respond"
+          needs="This tape reads the extracted transaction statements from /audit. That request didn't come back — refresh to retry. The archive is served alongside the app, so this is the archive being unreachable rather than your session being stale." />
+      </Card>
+    );
+  }
+  if (!txns?.length) {
+    return (
+      <Card className="flex min-h-0 flex-1 items-center justify-center">
+        <AbsentSection what="No dated transactions in this book"
+          needs="Transactions come from each manager's transaction statement. No account in this drop issued one, so there is no tape to show — which is not the same as a period with no trading." />
+      </Card>
+    );
+  }
 
   return (
     <>

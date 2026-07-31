@@ -12,7 +12,8 @@
     "test:ingest": "node scripts/ingest/__tests__/run.mjs",
     "set-password": "node scripts/set-dashboard-password.mjs",
     "build-symbols": "node scripts/build-nse-symbols.mjs",
-    "build-book": "node scripts/build-book.mjs"
+    "build-book": "node scripts/build-book.mjs",
+    "check:pages": "node scripts/check-pages.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
@@ -29,6 +30,7 @@
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
     "pdfjs-dist": "^6.2.108",
+    "playwright-core": "^1.62.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",

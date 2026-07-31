@@ -6,6 +6,7 @@ import { Pill } from "@/components/Pill";
 import { ViewToggle, useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { privateValueModel, type PrivateClassKey } from "@/lib/privateValue";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { AbsentSection } from "@/components/Absent";
 import { Overview } from "./private/Overview";
 import { Startups } from "./private/Startups";
 import { FundClass } from "./private/FundClass";
@@ -56,6 +57,10 @@ export function PrivateMarkets() {
   ], [model]);
 
   const [view, setView] = useViewParam(views, VIEW_ALIASES);
+  // Named from the registry, so the empty state describes THIS book rather than
+  // asserting anything about it.
+  const accountCount = portfolio?.accounts.length ?? 0;
+  const providerCount = new Set((portfolio?.accounts ?? []).map((a) => a.provider)).size;
   if (!portfolio || !model) return null;
 
   const m = model;
@@ -63,6 +68,31 @@ export function PrivateMarkets() {
   const instruments = m.classes.reduce((s, c) => s + c.count, 0);
   const segmentProps: SegmentProps = { portfolio, model: m, money };
   const activeClass = m.classes.find((c) => c.key === view);
+
+  // THE SEGMENT IS EMPTY, so nothing here is measured — and a strip of ₹0 tiles
+  // says the opposite: that the family put in nothing and got nothing back. It
+  // is driven by the model, not hardcoded: ingest a private-markets statement
+  // and privateValueModel yields classes, the tabs appear and the page comes
+  // alive with no change here.
+  if (!instruments) {
+    return (
+      <div>
+        <PageHeader eyebrow="Private Markets" title="Private Markets"
+          right={<Pill tone="info">no private holdings in this book</Pill>} />
+        <AbsentSection
+          what="No private-market holdings in this book"
+          needs={`The ${accountCount} account${accountCount === 1 ? "" : "s"} ingested so far are discretionary PMS mandates
+            across ${providerCount} manager${providerCount === 1 ? "" : "s"}, holding listed Indian equity and cash. No PE or
+            VC fund, pre-IPO vehicle, unlisted company or direct startup appears in any statement — so there is
+            nothing to value, and every figure this page would show is absent rather than zero.`}>
+          <p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-600">
+            This page and its tabs are driven by the book's own classification. Ingest a statement carrying a
+            private holding and the segments, tiles and tables here populate themselves.
+          </p>
+        </AbsentSection>
+      </div>
+    );
+  }
 
   return (
     <div>

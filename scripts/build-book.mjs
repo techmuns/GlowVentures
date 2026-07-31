@@ -83,6 +83,9 @@ function build(docs) {
   const positions = [];
   const capitalGains = [];
   const accountCashFlows = {};
+  const accountReturns = {};
+  const corporateActionsAll = [];
+  const accountBridges = {};
   const unclassified = new Map();
 
   for (const [key, group] of [...byAccount.entries()].sort()) {
@@ -123,17 +126,52 @@ function build(docs) {
     const sectorByKey = new Map((sectorDoc?.holdings ?? []).map((h) => [h.securityKey, h.providerSector]));
     const incomeByKey = new Map((incomeDoc?.holdings ?? []).map((h) => [h.securityKey, h]));
 
-    // Dividends received, per security, from the dated income statements.
+    // ── income, by EVENT TYPE rather than by report ──
+    //
+    // The two statements overlap but neither contains the other. The DIVIDEND
+    // STATEMENT is authoritative for cash dividends — it alone carries the ex
+    // and received dates, the per-unit rate and the TDS. CORPORATE BENEFITS is
+    // authoritative for NON-CASH actions — a bonus issue, a split, a rights
+    // entitlement — which the dividend statement has no row shape for.
+    //
+    // Preferring one report wholesale, as this did, silently dropped every bonus
+    // and split in the book. So each event goes to the reader that owns its
+    // KIND, and a cash event listed by both is deduped on (date, security,
+    // amount) with the dividend statement winning.
+    const CASH_KIND = /^dividend$/i;
+    const cashSeen = new Set();
     const dividendByKey = new Map();
-    for (const d of group) {
+    const corporateActions = [];
+    const ordered = [
+      ...group.filter((d) => d.reportType === "dividend-statement"),
+      ...group.filter((d) => d.reportType !== "dividend-statement"),
+    ];
+    for (const d of ordered) {
       for (const ev of d.income ?? []) {
-        if (!ev.securityKey || !isNum(ev.netAmount)) continue;
-        // The dividend statement and the corporate benefits report describe the
-        // same events. Precedence picks one; counting both would double every
-        // dividend in the book.
-        if (sourceFor(provider, "corporateActions") && d.reportType !== "dividend-statement"
-          && group.some((x) => x.reportType === "dividend-statement")) continue;
-        dividendByKey.set(ev.securityKey, r2((dividendByKey.get(ev.securityKey) ?? 0) + ev.netAmount));
+        if (!ev.securityKey) continue;
+        const isCash = CASH_KIND.test(ev.kind ?? "");
+        if (isCash) {
+          if (!isNum(ev.netAmount)) continue;
+          const k = `${ev.exDate ?? ""}|${ev.securityKey}|${ev.netAmount}`;
+          if (cashSeen.has(k)) continue;         // same event, both reports
+          cashSeen.add(k);
+          dividendByKey.set(ev.securityKey, r2((dividendByKey.get(ev.securityKey) ?? 0) + ev.netAmount));
+        } else {
+          // Non-cash: a bonus prints Amount 0.00, and that zero is REAL — the
+          // entitlement is the substance. Carried as an action, never summed
+          // into dividend income.
+          corporateActions.push({
+            security: ev.security,
+            securityKey: ev.securityKey,
+            accountId,
+            kind: ev.kind,
+            exDate: ev.exDate,
+            quantity: ev.quantity,
+            entitlement: ev.entitlement,
+            amount: ev.netAmount,
+            source: ev.source,
+          });
+        }
       }
     }
 
@@ -173,6 +211,78 @@ function build(docs) {
       });
     }
 
+    // ── time-weighted returns, per account ──
+    //
+    // Each manager publishes its OWN period vocabulary and its OWN benchmark:
+    // Goldstandard prints MTD / QTD / YTD against N50TRI, Green Lantern and
+    // Carnelian print trailing 1m / 3m / 1y against S&P BSE 500 Total Return.
+    // Those are different measurements over different windows against different
+    // indices, so every series is carried with its own vocabulary intact and the
+    // page renders the columns each account actually has. Folding them together
+    // would put a trailing one-month return under a month-to-date heading.
+    const returnDocs = group
+      .filter((d) => (d.returns ?? []).length)
+      // fact sheet first: it is the one the provider publishes to the client.
+      .sort((a, b) => (a.reportType === "fact-sheet" ? -1 : 0) - (b.reportType === "fact-sheet" ? -1 : 0));
+    const seriesByReport = returnDocs.map((d) => ({
+      reportType: d.reportType,
+      source: d.docKey,
+      series: d.returns.map((r) => ({
+        series: r.series,
+        isBenchmark: r.isBenchmark,
+        mtd: r.mtd, qtd: r.qtd, fytd: r.fytd,
+        m1: r.m1, m3: r.m3, m6: r.m6, y1: r.y1,
+        si: r.si, siAnnualised: r.siAnnualised, feeBasis: r.feeBasis,
+      })),
+    }));
+    if (seriesByReport.length) accountReturns[accountId] = seriesByReport;
+    else notes.push(`account ${accountNo}: no time-weighted return series in any statement`);
+
+    // ── the value bridge ──
+    //
+    // opening → contributions → withdrawals → realised → unrealised → income →
+    // fees → closing, over ONE window. Two windows are available per account and
+    // they are not interchangeable: the performance summary runs the financial
+    // year to date, the fact sheet and performance appraisal run since
+    // inception. Both are carried, each labelled with its own window; nothing is
+    // added across them.
+    const bridges = [];
+    for (const d of group) {
+      const f = d.flows;
+      if (!f || !f.periodFrom || !f.periodTo) continue;
+      const has = ["openingCorpus", "contribution", "withdrawal", "netCapitalInOut",
+        "realized", "unrealized", "income", "fees", "expenses", "corpus"]
+        .filter((k) => isNum(f[k]));
+      if (!has.length) continue;
+      bridges.push({
+        reportType: d.reportType,
+        source: d.docKey,
+        periodFrom: f.periodFrom,
+        periodTo: f.periodTo,
+        basis: f.periodFrom === inception ? "since-inception" : "financial-year-to-date",
+        opening: f.openingCorpus,
+        contribution: f.contribution,
+        withdrawal: f.withdrawal,
+        netCapitalInOut: f.netCapitalInOut,
+        realized: f.realized,
+        unrealized: f.unrealized,
+        income: f.income,
+        fees: f.fees,
+        expenses: f.expenses,
+        closing: f.corpus,
+        profit: f.profit,
+      });
+    }
+    if (bridges.length) {
+      // Widest window first, so the since-inception view leads.
+      bridges.sort((a, b) => a.periodFrom.localeCompare(b.periodFrom));
+      accountBridges[accountId] = bridges;
+    } else {
+      notes.push(`account ${accountNo}: no flow block in any statement, so no value bridge`);
+    }
+
+    corporateActionsAll.push(...corporateActions);
+
     // ── realised capital gains ──
     const cgDoc = group.find((d) => (d.capitalGains ?? []).length);
     if (cgDoc) {
@@ -193,6 +303,20 @@ function build(docs) {
         periodFrom: cgDoc.periodFrom ?? null,
         periodTo: cgDoc.periodTo ?? null,
         lots: lots.length,
+        source: cgDoc.docKey,
+      });
+    }
+    // An account with NO capital gain statement is recorded as such, with an
+    // empty realised block. Omitting it entirely would let the page average
+    // three accounts and call it the family's realised gain; a zero would say
+    // the account realised nothing, which nobody measured.
+    else {
+      capitalGains.push({
+        entity: `${ownerById(ownerId)?.displayName ?? accountNo} · ${provider.split(" ")[0]} ${accountNo}`,
+        accountId, ownerId,
+        realisedST: null, realisedLT: null, unrealisedST: null, unrealisedLT: null,
+        periodFrom: null, periodTo: null, lots: 0, source: null,
+        absent: "no capital gain statement issued for this account in this drop",
       });
     }
 
@@ -309,6 +433,9 @@ function build(docs) {
 
   return {
     accounts, positions, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
+    accountReturns, accountBridges,
+    corporateActions: corporateActionsAll.sort((a, b) =>
+      (a.exDate ?? "").localeCompare(b.exDate ?? "") || a.securityKey.localeCompare(b.securityKey)),
     summary: {
       asOf,
       listedValue: totalValue,
@@ -341,7 +468,8 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, BookSummary, CashFlow, EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,");
+  L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, CorporateAction,");
+  L.push("  EntityCG, FundInvestment, NavPoint, Position, StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -382,6 +510,31 @@ function emit(book) {
   L.push(" * everything they own, so their accounts' flows merge here.");
   L.push(" */");
   L.push(`export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = ${j(book.entityCashFlows)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * Time-weighted returns per account, as each manager publishes them.");
+  L.push(" *");
+  L.push(" * Each carries its OWN period vocabulary and its OWN benchmark, kept apart:");
+  L.push(" * Goldstandard prints MTD / QTD / FYTD against N50TRI, Green Lantern and");
+  L.push(" * Carnelian trailing 1m / 3m / 1y against S&P BSE 500. `siAnnualised` says");
+  L.push(" * whether since-inception is annualised — false under a year, per the");
+  L.push(" * reports' own disclosure. `feeBasis` says whether returns are net of fees.");
+  L.push(" */");
+  L.push(`export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = ${j(book.accountReturns)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * The value bridge per account: opening → capital → realised → unrealised →");
+  L.push(" * income → fees → closing, each block over ONE window and labelled with it.");
+  L.push(" * Windows are NOT interchangeable and nothing is added across them.");
+  L.push(" */");
+  L.push(`export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = ${j(book.accountBridges)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * NON-CASH corporate actions — bonuses, splits, rights. Kept apart from");
+  L.push(" * dividend income: a bonus prints Amount 0.00 and its substance is the");
+  L.push(" * entitlement, not a cash figure to be summed.");
+  L.push(" */");
+  L.push(`export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = ${j(book.corporateActions)};`);
   L.push("");
   L.push("// No private-markets holdings in this book: all five accounts are listed-equity");
   L.push("// PMS mandates. These stay empty rather than being removed, so a later drop that");
@@ -478,7 +631,8 @@ fs.writeFileSync(REPORT, report(book));
 
 console.log(`Book: ${book.positions.length} position(s) across ${book.accounts.length} account(s), ${book.owners.length} owner(s).`);
 console.log(`  consolidated market value ${book.summary.totalValue.toLocaleString("en-IN")} as of ${book.summary.asOf}`);
-console.log(`  cash-flow series for ${Object.keys(book.accountCashFlows).length} account(s); realised gains for ${book.capitalGains.length}`);
+const withGains = book.capitalGains.filter((c) => c.realisedST !== null).length;
+console.log(`  cash-flow series for ${Object.keys(book.accountCashFlows).length} account(s); realised gains for ${withGains} of ${book.capitalGains.length} account(s)`);
 if (book.unclassified.length) {
   console.log(`  ${book.unclassified.length} UNCLASSIFIED sector(s): ${book.unclassified.map((u) => u.providerSector).join(", ")}`);
 }

@@ -1,230 +1,335 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area, Cell, LabelList,
-  ResponsiveContainer, Tooltip, CartesianGrid, XAxis, YAxis, ReferenceLine,
+  BarChart, Bar, Cell, ResponsiveContainer, Tooltip, CartesianGrid, XAxis, YAxis, ReferenceLine,
 } from "recharts";
-import { TrendingUp, Percent, Activity, TrendingDown, Target, Scale } from "lucide-react";
+import { Percent, TrendingDown, Target, Scale } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { Kpi } from "@/components/Kpi";
+import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtPct, changeColor, fmtFyPeriod } from "@/lib/format";
-import { loadReturns, loadTradeStats, type TradeStats, type ReturnsData } from "@/lib/ledger";
-import { xirrWithTerminal } from "@/lib/bucketXirr";
-import { fetchCloses, NIFTY } from "@/lib/history";
-import { navAnalytics } from "@/lib/performance";
+import { fmtPct, changeColor } from "@/lib/format";
+import { sum } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
-import { auditHref, LEDGER } from "@/lib/auditFormulas";
+import { BasisPill } from "@/components/BasisPill";
+import { AbsentSection, DASH } from "@/components/Absent";
+import { auditHref, LEDGER, stockHref } from "@/lib/auditFormulas";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
-const GAIN = "#10b981", LOSS = "#ef4444", GOLD = "#d9c48f", INDIGO = "#6366f1";
+const GAIN = "#10b981", LOSS = "#ef4444";
 
-// Return & Drawdown Analysis (Phase 3 of the redesign). Time- and money-weighted
-// returns, drawdown & trade statistics — all derived from data we already hold:
-// the listed book's year-end NAV history (navAnalytics) and the dated ledger
-// (XIRR + trade stats). The Nifty benchmark line is a seeded placeholder until a
-// live index feed lands; deeper daily-NAV & rolling-return work is mapped below.
+// Return & Drawdown — the return half, built from what the book carries.
+//
+// DRAWDOWN IS GONE, AND SAYS SO. A drawdown is peak-to-trough of a VALUATION
+// SERIES: it needs the book's value at many dates. This corpus carries two dated
+// values per account and nothing between them, so there is no peak to fall from.
+// The page previously drew a drawdown area against a seeded placeholder
+// benchmark — an axis with a shape on it and no measurement behind it. That is
+// replaced by a statement of exactly which document would produce one.
+//
+// WHAT IS REAL HERE. Every position carries a cost basis, a market value and
+// therefore a return. That supports a genuine distribution, a
+// contribution-to-return decomposition by position and by sector, the best and
+// worst name per account, and the spread between managers. All of it is
+// point-in-time on the statements' own marks, which is stated rather than
+// dressed up as a time series.
+
+/** Return bands, lowest first so the axis reads left to right. */
+const BANDS = [
+  { label: "< −25%", lo: -Infinity, hi: -25 },
+  { label: "−25 to −10%", lo: -25, hi: -10 },
+  { label: "−10 to 0%", lo: -10, hi: 0 },
+  { label: "0 to 10%", lo: 0, hi: 10 },
+  { label: "10 to 25%", lo: 10, hi: 25 },
+  { label: "25 to 50%", lo: 25, hi: 50 },
+  { label: "> 50%", lo: 50, hi: Infinity },
+];
+
+const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
+  `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
+
 export function ReturnAnalysis() {
   const { portfolio, fmtFromBase } = usePortfolio();
-  // The ledger's dated flows, closed against the live listed value rather than the
-  // workbook's marks — so this XIRR matches the one on Morning CIO and Performance.
-  const [returns, setReturns] = useState<ReturnsData | null | undefined>(undefined);
-  const [trade, setTrade] = useState<TradeStats | null | undefined>(undefined);
-  useEffect(() => {
-    let alive = true;
-    loadReturns().then((r) => { if (alive) setReturns(r); });
-    loadTradeStats().then((t) => { if (alive) setTrade(t ?? null); });
-    return () => { alive = false; };
-  }, []);
-  const today = useMemo(() => new Date(), []);
-  const xirrPct = useMemo(() => {
-    if (returns === undefined) return undefined;
-    if (!returns || !portfolio) return null;
-    const listedMV = portfolio.positions.reduce((s, x) => s + x.marketValue, 0);
-    return xirrWithTerminal(returns.accounts.flatMap((c) => c.flows), listedMV, today);
-  }, [returns, portfolio, today]);
 
-  // Live Nifty closes at the NAV snapshot dates. The upstream can't hand back a
-  // full series (see functions/api/history.js), but it answers "close on date D"
-  // reliably — and since NAV is only captured at year-ends, that is exactly the
-  // granularity the comparison needs. Falls back to the stored estimates, which
-  // the chart then labels as such.
-  const [bench, setBench] = useState<Record<string, number> | null>(null);
-  useEffect(() => {
-    if (!portfolio) return;
-    let alive = true;
-    fetchCloses(portfolio.navHistory.map((n) => n.date), NIFTY).then((r) => {
-      if (!alive || !r) return;
-      const m: Record<string, number> = {};
-      for (const [asked, c] of Object.entries(r.closes)) m[asked] = c.close;
-      setBench(Object.keys(m).length ? m : null);
+  const model = useMemo(() => {
+    if (!portfolio) return null;
+    const priced = portfolio.positions.filter((x) => !x.costUnavailable && x.costBasis > 0);
+    const cost = sum(priced.map((x) => x.costBasis));
+    const pnl = sum(priced.map((x) => x.unrealizedPnL));
+
+    // Distribution by VALUE, not by count: ten small losers and one large winner
+    // is a different book from the reverse, and a count hides that.
+    const dist = BANDS.map((b) => {
+      const inBand = priced.filter((x) => x.returnPct >= b.lo && x.returnPct < b.hi);
+      return { label: b.label, value: sum(inBand.map((x) => x.marketValue)), names: inBand.length, loss: b.hi <= 0 };
     });
-    return () => { alive = false; };
+
+    // Contribution to return: each position's unrealised P&L over the book's
+    // TOTAL cost, so the parts add to the embedded return exactly.
+    const contrib = priced
+      .map((x) => ({
+        key: x.securityKey, security: x.security, pnl: x.unrealizedPnL, returnPct: x.returnPct,
+        contribPct: cost > 0 ? (x.unrealizedPnL / cost) * 100 : 0,
+      }))
+      .sort((a, b) => b.pnl - a.pnl);
+
+    const bySector = new Map<string, { pnl: number; cost: number; mv: number }>();
+    for (const x of priced) {
+      const e = bySector.get(x.sector) ?? { pnl: 0, cost: 0, mv: 0 };
+      e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
+      bySector.set(x.sector, e);
+    }
+    const sectors = [...bySector.entries()]
+      .map(([sector, e]) => ({
+        sector, ...e,
+        returnPct: e.cost > 0 ? (e.pnl / e.cost) * 100 : null,
+        contribPct: cost > 0 ? (e.pnl / cost) * 100 : 0,
+      }))
+      .sort((a, b) => b.pnl - a.pnl);
+
+    const byAccount = portfolio.accounts.map((a) => {
+      const rows = priced.filter((x) => x.accountId === a.accountId);
+      const c = sum(rows.map((x) => x.costBasis));
+      const pl = sum(rows.map((x) => x.unrealizedPnL));
+      const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
+      return {
+        account: a, names: rows.length, cost: c, pnl: pl,
+        returnPct: c > 0 ? (pl / c) * 100 : null,
+        best: sorted[0] ?? null,
+        worst: sorted[sorted.length - 1] ?? null,
+      };
+    }).sort((a, b) => (b.returnPct ?? -Infinity) - (a.returnPct ?? -Infinity));
+
+    const rated = byAccount.filter((a) => a.returnPct !== null);
+    const winners = priced.filter((x) => x.unrealizedPnL > 0);
+    return {
+      priced, cost, pnl, dist, contrib, sectors, byAccount, winners: winners.length,
+      embeddedRet: cost > 0 ? (pnl / cost) * 100 : null,
+      hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
+      // Only across accounts that HAVE a return — an account without one is
+      // named, never folded in as zero.
+      spread: rated.length >= 2 ? rated[0].returnPct! - rated[rated.length - 1].returnPct! : null,
+      spreadEnds: rated.length >= 2 ? [rated[0], rated[rated.length - 1]] : null,
+      unrated: byAccount.filter((a) => a.returnPct === null).map((a) => a.account.accountNo),
+    };
   }, [portfolio]);
 
-  const a = useMemo(() => (portfolio ? navAnalytics(portfolio.navHistory, bench) : null), [portfolio, bench]);
-  if (!portfolio || !a) return null;
-
+  if (!portfolio || !model) return null;
   const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
-  const pct1 = (n: number) => fmtPct(n, { sign: true, decimals: 1 });
-  const idx = (v: number) => `₹${Math.round(v)}`;
-  const ddDomainMin = Math.min(-1, Math.floor(a.maxDrawdownPct * 1.4));
+  const m = model;
 
-  // Wait / missing states for the two async ledger reads.
-  const xirrCell = xirrPct === undefined ? "…" : xirrPct == null ? "—" : pct1(xirrPct);
-  const winCell = trade === undefined ? "…" : trade == null ? "—" : fmtPct(trade.winRatePct, { decimals: 1 });
-  const pfCell = trade === undefined ? "…" : trade == null || trade.profitFactor == null ? "—" : `${trade.profitFactor.toFixed(2)}`;
+  if (!m.priced.length) {
+    return (
+      <div>
+        <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown" />
+        <AbsentSection what="No priced positions in this book"
+          needs="A return needs a cost basis and a market value on the same position. No holding in this book carries both." />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown Analysis"
-        subtitle="Listed book — time- &amp; money-weighted returns, drawdown and trade statistics"
-        right={<Pill tone="info">Since inception · {fmtFyPeriod(a.first.period)} → {fmtFyPeriod(a.last.period)}</Pill>} />
+      <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown"
+        subtitle="Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."
+        right={<div className="flex items-center gap-2">
+          <BasisPill liveText="Live prices" hint="Returns are unrealised gain on cost, rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
+          <Pill tone="info">{m.priced.length} priced positions</Pill>
+        </div>} />
 
-      {/* KPI strip */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="CAGR"
-          value={<span className={changeColor(a.cagrPct)}><Auditable formula={{ title: "CAGR (annualised)", excel: "= (NAV_end / NAV_start)^(1 / years) − 1", plain: "The steady yearly growth rate that turns the first year-end NAV into the latest, over the elapsed years.", worked: `= (${money(a.last.nav)} / ${money(a.first.nav)})^(1/${a.years.toFixed(1)}) − 1 = ${pct1(a.cagrPct)}` }}>{pct1(a.cagrPct)}</Auditable></span>}
-          sub={`listed NAV · ~${a.years.toFixed(1)}y`} icon={<TrendingUp className="h-4 w-4" />} />
-        <Kpi label="XIRR (money-wtd)"
-          value={xirrPct == null && xirrPct !== undefined ? "—" : xirrPct === undefined ? "…" : <span className={changeColor(xirrPct)}><Auditable formula={{ title: "Money-weighted return (XIRR)", excel: "= XIRR(dated buys & sells, live market value today)", plain: "The single yearly growth rate that makes every dated buy and sell balance against what the book is worth right now — like Excel's XIRR(). Dated transactions from the ledger, closed against live prices.", auditHref: auditHref(LEDGER) }}>{pct1(xirrPct)}</Auditable></span>}
-          sub="p.a. · dated flows" icon={<Percent className="h-4 w-4" />} />
-        <Kpi label="Total return"
-          value={<span className={changeColor(a.totalReturnPct)}><Auditable formula={{ title: "Total return since inception", excel: "= NAV_end / NAV_start − 1", plain: "Cumulative growth of the listed book's NAV from the first year-end snapshot to the latest.", worked: `= ${money(a.last.nav)} / ${money(a.first.nav)} − 1 = ${pct1(a.totalReturnPct)}` }}>{pct1(a.totalReturnPct)}</Auditable></span>}
-          sub={`since ${fmtFyPeriod(a.first.period)}`} icon={<Activity className="h-4 w-4" />} />
-        <Kpi label="Max drawdown"
-          value={<span className="text-loss"><Auditable formula={{ title: "Maximum drawdown", excel: "= min over time of (NAV / running peak − 1)", plain: "The deepest fall from a prior year-end high to a later trough. Year-end granularity, so troughs within a year aren't captured.", worked: `= ${fmtPct(a.maxDrawdownPct, { sign: true, decimals: 1 })} at ${fmtFyPeriod(a.maxDrawdownPeriod)}` }}>{fmtPct(a.maxDrawdownPct, { sign: true, decimals: 1 })}</Auditable></span>}
-          sub={`${fmtFyPeriod(a.maxDrawdownPeriod)} · ${a.atHigh ? "recovered" : "current"}`} icon={<TrendingDown className="h-4 w-4" />} />
-        <Kpi label="Win rate" value={winCell}
-          sub={trade && trade.sold > 0 ? `${trade.wins} W / ${trade.losses} L lots` : "of closed lots"} icon={<Target className="h-4 w-4" />} />
-        <Kpi label="Profit factor" value={pfCell} sub="gross gain ÷ loss" icon={<Scale className="h-4 w-4" />} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Embedded return"
+          value={<Auditable to={auditHref(LEDGER)} title="Unrealised gain on cost — trace to the ledger">
+            <span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>
+          </Auditable>}
+          sub={<>{money(m.pnl, true)} on {money(m.cost)} of cost</>} icon={<Percent className="h-4 w-4" />} />
+
+        <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
+          sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
+
+        <StatTile label="Spread between managers"
+          value={m.spread === null ? <span className="text-slate-500">{DASH}</span> : `${m.spread.toFixed(1)} pp`}
+          sub={m.spread === null
+            ? "needs two accounts with a cost basis"
+            : `${m.spreadEnds![0].account.provider.split(" ")[0]} to ${m.spreadEnds![1].account.provider.split(" ")[0]}`}
+          hint={m.unrated.length ? `Account ${m.unrated.join(", ")} has no cost basis and is excluded rather than counted as zero.` : undefined}
+          icon={<Scale className="h-4 w-4" />} />
+
+        <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
+          sub="needs a valuation series"
+          hint="Peak-to-trough needs the book's value at many dates; this corpus carries two per account."
+          icon={<TrendingDown className="h-4 w-4" />} />
       </div>
 
-      {/* Portfolio vs benchmark + Drawdown & risk */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <Card className="flex flex-col lg:col-span-2" title="Portfolio vs benchmark"
-          subtitle="Growth of ₹100 · listed book vs Nifty 50, financial year-ends"
-          right={a.alphaPct == null ? undefined : <Pill tone={a.alphaPct >= 0 ? "gain" : "loss"}>{fmtPct(a.alphaPct, { sign: true, decimals: 0 })} alpha</Pill>}>
-          <div className="min-h-[15rem] flex-1">
+      <div className="mt-5 grid gap-5 lg:grid-cols-5 items-start">
+        <Card className="lg:col-span-3" title="Return distribution"
+          subtitle="Market value in each return band — by value, not by count">
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={a.growth} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+              <BarChart data={m.dist} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="period" stroke="#6b6880" fontSize={11} tickFormatter={fmtFyPeriod} />
-                <YAxis stroke="#6b6880" fontSize={11} width={48} tickFormatter={(v: number) => idx(v)} />
+                <XAxis dataKey="label" stroke="#6b6880" fontSize={10} interval={0} angle={-20} textAnchor="end" height={58} />
+                <YAxis stroke="#6b6880" fontSize={11} tickFormatter={(v: number) => fmtFromBase(v, { compact: true })} width={78} />
+                <ReferenceLine y={0} stroke="#3a3570" />
                 <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  labelFormatter={(l: string) => fmtFyPeriod(l)}
-                  formatter={(v: number, n: string) => [idx(v), n === "portfolio" ? "Portfolio" : a.benchmarkSeeded ? "Nifty 50 (estimated)" : "Nifty 50"]} />
-                <Line type="monotone" dataKey="portfolio" stroke={GOLD} strokeWidth={2.5} dot={false} name="portfolio" />
-                <Line type="monotone" dataKey="benchmark" stroke={INDIGO} strokeWidth={2} strokeDasharray="5 4" dot={false} name="benchmark" connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-dashed border-ink-700 pt-2.5 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="inline-block h-[3px] w-4 rounded-full" style={{ background: GOLD }} />Portfolio {pct1(a.totalReturnPct)}</span>
-            {a.benchmarkReturnPct != null && (
-              <span className="flex items-center gap-1.5"><span className="inline-block h-0 w-4 border-t-2 border-dashed" style={{ borderColor: INDIGO }} />Nifty 50 {pct1(a.benchmarkReturnPct)}</span>
-            )}
-            <span className="text-slate-600">{a.benchmarkSeeded ? "· estimated closes — the live index feed is unavailable" : "· live index closes at each year-end"}</span>
-          </div>
-        </Card>
-
-        <Card title="Drawdown &amp; risk">
-          <div className="text-sm">
-            <div className="flex items-center justify-between py-2"><span className="text-slate-400">Max drawdown</span><span className="mono font-semibold text-loss">{fmtPct(a.maxDrawdownPct, { sign: true, decimals: 1 })}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Current drawdown</span><span className="mono text-slate-100">{fmtPct(a.currentDrawdownPct, { decimals: 1 })}{a.atHigh && <span className="text-slate-500"> · at high</span>}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Recovery period</span><span className="mono text-slate-100">{a.recoveryLabel}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Best year</span><span className="mono font-semibold text-gain">{pct1(a.bestYearPct)} <span className="font-normal text-slate-500">({fmtFyPeriod(a.bestYearPeriod)})</span></span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Positive years</span><span className="mono text-slate-100">{a.positiveYears} of {a.totalYears}</span></div>
-          </div>
-          <div className="mt-3 h-24">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={a.underwater} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="ddfill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={LOSS} stopOpacity={0.32} />
-                    <stop offset="100%" stopColor={LOSS} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="period" hide />
-                <YAxis hide domain={[ddDomainMin, 0]} />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  labelFormatter={(l: string) => fmtFyPeriod(l)} formatter={(v: number) => [fmtPct(v, { decimals: 1 }), "Drawdown"]} />
-                <Area type="monotone" dataKey="dd" stroke={LOSS} strokeWidth={1.5} fill="url(#ddfill)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-1 text-[11px] text-slate-500">Underwater curve · % below the running peak</div>
-        </Card>
-      </div>
-
-      {/* Performance summary + Year-wise returns */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2" title="Performance summary" subtitle="Headline return &amp; trade statistics">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCell label="CAGR" value={pct1(a.cagrPct)} tone={a.cagrPct} sub="annualised" />
-            <StatCell label="XIRR" value={xirrCell} tone={xirrPct ?? undefined} sub="money-weighted" />
-            <StatCell label="Total return" value={pct1(a.totalReturnPct)} tone={a.totalReturnPct} sub="since inception" />
-            <StatCell label="Win rate" value={winCell} sub="of closed lots" />
-            <StatCell label="Profitable days" value="—" sub="needs daily NAV" muted />
-            <StatCell label="Avg gain" value={trade === undefined ? "…" : trade == null ? "—" : money(trade.avgGain, true)} tone={trade ? 1 : undefined} sub="per winning lot" />
-            <StatCell label="Avg loss" value={trade === undefined ? "…" : trade == null ? "—" : money(-trade.avgLoss, true)} tone={trade ? -1 : undefined} sub="per losing lot" />
-            <StatCell label="Profit factor" value={pfCell} sub={trade && trade.profitFactor != null ? `${money(trade.grossProfit)} ÷ ${money(trade.grossLoss)}` : "gross gain ÷ loss"} />
-          </div>
-        </Card>
-
-        <Card className="flex flex-col" title="Year-wise returns" subtitle="NAV change between snapshots">
-          <div className="min-h-[14rem] flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={a.yearly} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="period" stroke="#6b6880" fontSize={10} interval={0} tickFormatter={fmtFyPeriod} />
-                <YAxis stroke="#6b6880" fontSize={11} width={40} tickFormatter={(v: number) => `${Math.round(v)}%`} />
-                <ReferenceLine y={0} stroke="#6b6880" />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  cursor={{ fill: "rgba(120,120,160,0.08)" }} labelFormatter={(l: string) => fmtFyPeriod(l)}
-                  formatter={(v: number) => [fmtPct(v, { sign: true, decimals: 1 }), "Return"]} />
-                <Bar dataKey="pct" radius={[3, 3, 0, 0]} maxBarSize={46}>
-                  {a.yearly.map((y, i) => <Cell key={i} fill={y.pct >= 0 ? GAIN : LOSS} />)}
-                  <LabelList dataKey="pct" position="top" className="mono"
-                    formatter={(v: number) => `${v >= 0 ? "+" : ""}${Math.round(v)}%`}
-                    style={{ fontSize: 10, fill: "#8a8aa0" }} />
+                  formatter={(v: number, _n, o) => [`${fmtFromBase(v as number, { compact: true })} · ${(o?.payload as { names: number })?.names ?? 0} names`, "Market value"]} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {m.dist.map((d, i) => <Cell key={i} fill={d.loss ? LOSS : GAIN} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
+
+        <Card className="lg:col-span-2" title="Contribution by sector"
+          subtitle="Each sector's unrealised P&amp;L as a share of total cost">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12.5px]">
+              <thead className="label-xs border-b border-ink-700">
+                <tr>
+                  <th className="px-2 py-2 text-left">Sector</th>
+                  <th className="px-2 py-2 text-right">P&amp;L</th>
+                  <th className="px-2 py-2 text-right">Return</th>
+                  <th className="px-2 py-2 text-right">Contrib.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {m.sectors.map((s) => (
+                  <tr key={s.sector} className="border-t border-ink-700/60">
+                    <td className="px-2 py-2 text-slate-200">{s.sector}</td>
+                    <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
+                    <td className="px-2 py-2 text-right mono">
+                      {s.returnPct === null
+                        ? <span className="text-slate-500" title="no cost basis on these rows">{DASH}</span>
+                        : <span className={changeColor(s.returnPct)}>{fmtPct(s.returnPct, { sign: true, decimals: 1 })}</span>}
+                    </td>
+                    <td className={`px-2 py-2 text-right mono ${changeColor(s.contribPct)}`}>{fmtPct(s.contribPct, { sign: true, decimals: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t-2 border-ink-600 font-semibold">
+                <tr>
+                  <td className="px-2 py-2 text-slate-200">Total</td>
+                  <td className={`px-2 py-2 text-right mono ${changeColor(m.pnl)}`}>{money(m.pnl, true)}</td>
+                  <td className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>
+                  <td className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+            Contributions are each sector's P&amp;L over the book's TOTAL cost, so they add to the embedded
+            return exactly.
+          </p>
+        </Card>
       </div>
 
-      {/* Deferred — deepens as data lands */}
-      <div className="mt-5 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 p-4">
-        <div className="text-[12.5px] font-semibold text-slate-400">◇ Deepens as data lands — later phases</div>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          {[
-            "Midcap / Smallcap benchmarks alongside the Nifty",
-            "Rolling returns across 1 / 3 / 5-yr horizons",
-            "Month-wise return & drawdown with a date-range filter",
-            "Daily-NAV metrics — profitable days, downside deviation, Sharpe / Sortino, Beta",
-          ].map((c) => (
-            <span key={c} className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-[11.5px] text-slate-400">◷ {c}</span>
-          ))}
+      <Card className="mt-5" title="Per manager"
+        subtitle="The same measure across the three managers, and each one's best and worst name">
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead className="label-xs border-b border-ink-700">
+              <tr>
+                <th className="px-3 py-2 text-left">Account</th>
+                <th className="px-3 py-2 text-right">Names</th>
+                <th className="px-3 py-2 text-right">Cost</th>
+                <th className="px-3 py-2 text-right">Unrealised P&amp;L</th>
+                <th className="px-3 py-2 text-right">Return</th>
+                <th className="px-3 py-2 text-left">Best</th>
+                <th className="px-3 py-2 text-left">Worst</th>
+              </tr>
+            </thead>
+            <tbody>
+              {m.byAccount.map((a) => (
+                <tr key={a.account.accountId} className="border-t border-ink-700/60">
+                  <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(a.account)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">{a.names}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-300">{money(a.cost)}</td>
+                  <td className={`px-3 py-2.5 text-right mono ${changeColor(a.pnl)}`}>{money(a.pnl, true)}</td>
+                  <td className="px-3 py-2.5 text-right mono">
+                    {a.returnPct === null
+                      ? <span className="text-slate-500" title="no cost basis on this account's rows">{DASH}</span>
+                      : <span className={changeColor(a.returnPct)}>{fmtPct(a.returnPct, { sign: true, decimals: 1 })}</span>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {a.best
+                      ? <a className="text-slate-200 hover:text-accent-400" href={stockHref(a.best.securityKey)}>
+                          {a.best.security} <span className="mono text-gain">{fmtPct(a.best.returnPct, { sign: true, decimals: 0 })}</span>
+                        </a>
+                      : <span className="text-slate-500">{DASH}</span>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {a.worst
+                      ? <a className="text-slate-200 hover:text-accent-400" href={stockHref(a.worst.securityKey)}>
+                          {a.worst.security} <span className="mono text-loss">{fmtPct(a.worst.returnPct, { sign: true, decimals: 0 })}</span>
+                        </a>
+                      : <span className="text-slate-500">{DASH}</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-          The Nifty line is now live — real index closes pulled at each NAV snapshot date. What stays coarse is the granularity: our NAV is captured only at financial year-ends, so drawdown and rolling returns are annual. Sharpening them needs a monthly or daily NAV series, and the price API returns only a four-row preview of any window rather than the full history, so that series can't be reconstructed from it — it needs either a different data contract or NAV snapshots captured more often. Portfolio figures above are live from the NAV history &amp; the dated ledger.
+        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+          These are point-in-time returns on cost, not time-weighted, so they are not a like-for-like ranking of
+          manager skill — an account funded later shows a different figure for the same performance. Each
+          manager's own time-weighted return is on <span className="font-medium text-slate-400">NAV &amp; Performance</span>.
         </p>
+      </Card>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
+        <Card title="Largest contributors" subtitle="By unrealised P&amp;L">
+          <ContribTable rows={m.contrib.slice(0, 10)} money={money} />
+        </Card>
+        <Card title="Largest detractors" subtitle="By unrealised P&amp;L">
+          <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} />
+        </Card>
       </div>
+
+      <Card className="mt-5" title="Drawdown" subtitle="Peak-to-trough decline in the book's value">
+        <AbsentSection
+          what="No drawdown can be computed for this book"
+          needs={`A drawdown is the largest peak-to-trough fall in the book's VALUE, which needs that value at
+            many dates. Each account's statements carry two — the opening and closing figures on the performance
+            summary — so there is no peak to fall from. A periodic (monthly or quarterly) valuation statement per
+            account, or a daily NAV feed from the managers, is what this needs. Nothing here is drawn against a
+            placeholder series.`} />
+      </Card>
     </div>
   );
 }
 
-// One cell of the Performance-summary grid. tone: >0 green, <0 red, else neutral.
-function StatCell({ label, value, sub, tone, muted }: { label: string; value: React.ReactNode; sub: string; tone?: number; muted?: boolean }) {
-  const color = muted ? "text-slate-500" : typeof tone === "number" ? changeColor(tone) : "text-slate-100";
+function ContribTable({ rows, money }: {
+  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number }[];
+  money: (n: number, sign?: boolean) => string;
+}) {
+  if (!rows.length) {
+    return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
+  }
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
-      <div className="label-xs">{label}</div>
-      <div className={`mt-1.5 mono whitespace-nowrap text-[18px] font-semibold ${color}`}>{value}</div>
-      <div className="mt-0.5 text-[11px] text-slate-500">{sub}</div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-[12.5px]">
+        <thead className="label-xs border-b border-ink-700">
+          <tr>
+            <th className="px-2 py-2 text-left">Security</th>
+            <th className="px-2 py-2 text-right">P&amp;L</th>
+            <th className="px-2 py-2 text-right">Return</th>
+            <th className="px-2 py-2 text-right">Contrib.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={`${r.key}-${r.pnl}`} className="border-t border-ink-700/60">
+              <td className="px-2 py-2">
+                <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
+              </td>
+              <td className={`px-2 py-2 text-right mono ${changeColor(r.pnl)}`}>{money(r.pnl, true)}</td>
+              <td className={`px-2 py-2 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
+              <td className={`px-2 py-2 text-right mono ${changeColor(r.contribPct)}`}>{fmtPct(r.contribPct, { sign: true, decimals: 2 })}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

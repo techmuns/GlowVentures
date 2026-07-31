@@ -14,3 +14,7 @@ source/_extracted/
 # Cached NSE equity master — refetched by `npm run build-symbols`, kept out of
 # the repo so a stale copy can never quietly become the authority.
 scripts/.nse-equity-master.csv
+
+# Page-check output — screenshots and report from `npm run check:pages`.
+# Regenerable, and 15 full-page PNGs per run has no business in git history.
+docs/page-check/

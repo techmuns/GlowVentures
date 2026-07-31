@@ -22,16 +22,50 @@ default. This applies to every layer:
 - The ingest classifier writes `null` for a field it can't determine, and files
   it can't place go in a "could not classify" section rather than under a guess.
 
+### The presentation half of the same rule
+
+The rule above governs the model. It has a twin on screen, and the screen is
+where a reader actually forms a belief:
+
+**A measured zero and an absent measurement must never look the same.** Any
+tile, chart, table cell or total whose underlying collection is EMPTY renders
+`—` with a one-line reason — never `0`, never `0.00%`, never an empty chart
+frame with axes drawn around nothing. `src/components/Absent.tsx` is the one
+place that renders it: `AbsentValue`, `absentTile(reason, hint)`, `AbsentCell`
+for one row among many that do have the figure, and `AbsentSection` for where a
+chart would be. Every one of them takes the reason as a required argument,
+because "no data" tells a reader nothing about whether to go and find something.
+
+Three corollaries that this book actually needed:
+
+- **Never blend a missing value into a total as zero.** `sumOrNull` in
+  `src/lib/analytics.ts` returns `null` when every input is null and skips the
+  nulls otherwise. Averaging a missing account in as zero drags the answer
+  towards a number nobody measured.
+- **A figure that exists for SOME accounts is shown for those and the rest are
+  named.** Realised gains exist for three of five accounts here; the other two
+  render "no capital gain statement issued for this account in this drop", and
+  the total says it covers three of five.
+- **A COMPUTED zero is legitimate and stays** — cash has no P&L, a net realised
+  loss owes no tax — but the reason goes in the tile, not in a tooltip. A reader
+  scanning `₹0` beside a −₹1.97 Cr loss must be able to see it is the arithmetic.
+
+`npm run check:pages` renders every route headlessly and reports console errors,
+failed requests, and any on-screen `₹0` / `0.00%` with its surrounding text. The
+last of those is a lead rather than a verdict — a bar chart's ₹0 axis tick and a
+cash holding's genuinely-zero return both match, and both are correct.
+
 ## Layout
 
 - `src/pages/*` — one file per dashboard route (see `src/App.tsx`).
 - `src/lib/types.ts` — the canonical model. Read this first.
 - `src/lib/securityKey.ts` — the join key (see below).
 - `src/lib/accounts.ts` — the account registry: owner vs provider, per-account as-of.
-- `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector / per-custodian rollups).
+- `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector / per-custodian rollups); `sumOrNull`.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
+- `src/lib/ledger.ts` — the DATED record, read from `public/audit/` at runtime (see below).
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
-- `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, …). Reuse these rather than re-styling tables inline.
+- `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
 - `scripts/ingest/*` — the PDF intake pipeline.
 
@@ -426,6 +460,88 @@ table — and no fuzzy tier at all. A name matching two listings or none is
 reported unresolved and left out, because a missing symbol shows a position as
 not-live while a wrong one shows another company's price and says nothing.
 
+### Income — split by EVENT TYPE, not by preferred document
+
+The dividend statement is authoritative for **cash** dividends; the corporate
+benefits report is authoritative for the **non-cash** actions (bonus, split,
+rights, mergers) that a dividend statement structurally cannot carry. Where both
+list the same cash event it is counted once, matched on `(date, security,
+amount)`, with the dividend statement winning.
+
+Both halves of that rule were load-bearing here. The one corporate benefits
+report in this drop carries 10 events: 9 cash dividends byte-identical to rows on
+the dividend statement, and 1 bonus (Life Insurance Corp, 1:1). Summing both
+reports double-counted every one of those 9 — Can Fin Homes read ₹1,12,000
+against the statement's own 7,000 × ₹8 = ₹56,000. Preferring the dividend
+statement wholesale would have fixed the double-count and silently dropped the
+bonus. `dividendReceived` on a position is cash only; non-cash actions live in
+`BOOK_CORPORATE_ACTIONS` and are never summed into income.
+
+## Stage 6 — the dated record at runtime (`src/lib/ledger.ts`)
+
+The book baked into `glowData.ts` is a POSITION snapshot. The dated record —
+every buy and sell, every capital-gain lot, every dividend — stays in
+`public/audit/` and is fetched by the browser: it is 51 documents, it is already
+gated by the edge password check, and inlining it would put megabytes of
+transaction tape into the JS bundle for pages that may never be opened.
+
+`ledger.ts` reads `manifest.json`, then each `<docKey>/document.json`, and
+applies the **same precedence** the ingest does (`AUTHORITATIVE`) — transactions
+from the transaction statement, lots from the capital gain statement, cash from
+the dividend statement, non-cash from corporate benefits, holdings from the
+appraisal. Reading every document that mentions a trade would count it several
+times.
+
+Three things it deliberately does not do:
+
+- **No per-security XIRR.** That needs every lot from first purchase; these
+  transaction statements cover the CURRENT PERIOD only. A rate over a partial
+  history is a real number for the wrong window. The money-weighted returns this
+  book supports are per-ACCOUNT, over external capital movements, on
+  `/performance`.
+- **No realised gain where no capital gain statement covers the account.** Two of
+  five accounts issue none. Their sells are real; what they realised was never
+  reported, so the cell is `—`.
+- **No false diagnosis on failure.** When the archive doesn't respond the page
+  says the archive didn't respond. It previously told the reader their session
+  had expired and to sign in again — for a fetch aimed at a path this pipeline
+  has never written. A wrong diagnosis is worse than a blank panel, because the
+  reader acts on it.
+
+**A day's sale is settled once.** The capital gain statement settles a day's sale
+of a name against however many purchase lots it consumed; the transaction
+statement prints that sale as one row — or, three times in this drop, as two.
+Attributing the day's whole realised figure to each row counted Syngene's
+−₹1.4 Cr twice and made the tape total −₹3.62 Cr against the statements' own
+−₹1.93 Cr. Each `(account, security, date)` is therefore attributed once, to the
+first row, and the others say where their figure went.
+
+**One statement glues the ISIN onto the name.** Carnelian's capital gain
+statement prints `CRIZAC LIMITED-INE0S4R01014`, so the lot keys
+`crizac-limited-ine0s4r01014` while its own transaction statement keys `crizac` —
+and the realised column showed `—` against every Carnelian sell while the gain
+sat three folders away. `joinKey()` recognises a trailing ISIN by its exact shape
+and re-normalises the remainder through the same `securityKeyOf`, lifting the
+join from 17 of 77 lots to 58. **This is a presentation-layer join, not a repair:**
+the extractor should stop carrying an identifier inside a name field, and until
+it does the archive keeps the key exactly as derived.
+
+### XIRR: only accounts that can be measured, on one terminal date
+
+Account 510854 publishes no FY performance summary, so its flows carry no opening
+portfolio value. Pooling every account anyway put its ₹5.92 Cr of market value
+into the terminal flow with no opening stake behind it, and returned **174.3%**
+p.a. against **109.7%** for the four accounts that can be measured — a 64.6 pp
+overstatement, and exactly the failure the presentation rule names.
+
+So a consolidated XIRR covers only accounts carrying an opening value, **on both
+sides** (flows AND terminal market value), and the excluded account is named on
+screen. Both `/cio` and `/performance` close against `portfolio.asOf`, not
+`new Date()` — closing against today on one page and the report date on the other
+gave the same measurement two values. The window is one quarter here, so every
+rate annualises about three months; the pages say so, because an unlabelled
++109.7% reads as a sustained yearly rate.
+
 ## Conventions
 
 - All monetary values are INR at the model layer; format with `fmtFromBase`,
@@ -433,6 +549,8 @@ not-live while a wrong one shows another company's price and says nothing.
 - Large holdings lists get a `SearchInput` (filter by security name or ISIN).
 - Pages showing a consolidated total should carry a `<BasisPill>` so the reader
   knows what the figure is actually based on.
+- An absent figure goes through `src/components/Absent.tsx` with a reason. Never
+  type a bare `—` inline, and never let an empty collection reach a formatter.
 
 ## Build
 
@@ -442,4 +560,7 @@ not-live while a wrong one shows another company's price and says nothing.
 - `npm run test:ingest` runs the ingest test suites.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
+- `npm run check:pages` renders every route headlessly (needs `npm run build` and
+  a `vite preview` on :4173) and reports console errors, failed requests and
+  on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.
 - `npm run set-password -- "<password>"` sets the edge gate password.

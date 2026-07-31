@@ -7,6 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
+import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
 import { ledgerHref, auditHref, LEDGER } from "@/lib/auditFormulas";
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -111,7 +112,17 @@ export function StockInfo() {
         <Kpi label="Quantity" value={fmtNum(qty)} sub="shares held" icon={<Layers className="h-4 w-4" />} />
         <Kpi label="Avg cost" value={<span className="mono">{price(avgCost)}</span>} sub={`invested ${money(cost)}`} icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}><Auditable to={ledgerHref(name)} title="Unrealised P&L — trace to the ledger">{fmtFromBase(pnl, { compact: true, sign: true })}</Auditable></span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />
-        <Kpi label="Realised P&L" value={led === undefined ? "…" : led == null ? "—" : <span className={changeColor(led.realizedProfit)}><Auditable to={ledgerHref(name)} title="Realised P&L — trace to the ledger">{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</Auditable></span>} sub="booked on exits" icon={<Activity className="h-4 w-4" />} />
+        {/* Realised P&L exists only where a capital gain statement covers this
+            name's sells. Null is not zero: the sells may be real and what they
+            realised simply never reported. */}
+        <Kpi label="Realised P&L"
+          value={led === undefined ? "…" : led?.realizedProfit == null
+            ? <AbsentValue />
+            : <span className={changeColor(led.realizedProfit)}><Auditable to={ledgerHref(name)} title="Realised P&L — trace to the ledger">{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</Auditable></span>}
+          sub={led === undefined ? "booked on exits" : led?.realizedProfit == null
+            ? <span className="text-slate-500">no capital gain statement covers this name</span>
+            : "booked on exits"}
+          icon={<Activity className="h-4 w-4" />} />
         <Kpi label="Change today"
           value={dayPct == null ? <span className="text-slate-500">—</span> : <span className={changeColor(dayPct)}>{fmtPct(dayPct, { sign: true })}</span>}
           sub={dayPct == null ? "no live quote" : `${fmtFromBase(dayChange, { compact: true, sign: true })} on the position`}
@@ -191,9 +202,12 @@ export function StockInfo() {
                 ? <span>Long-term / short-term split {DASH} no lot dates on the statements</span>
                 : <><span>Long-term {ltPct.toFixed(0)}%</span><span>Short-term {(100 - ltPct).toFixed(0)}%</span></>}
             </div>
-            <div className="mt-2 flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">First bought</span><span className="mono text-slate-100">{firstBought ? fmtDate(firstBought) : led === undefined ? "…" : "—"}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Last added</span><span className="mono text-slate-100">{lastAdded ? fmtDate(lastAdded) : led === undefined ? "…" : "—"}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Dividends recorded</span><span className="mono text-slate-100">{div !== null && div > 0 ? fmtFromBase(div, { compact: true }) : DASH}</span></div>
+            {/* A purchase date only exists where the statements' window covers
+                the buy. Absent here means "not in this window", not "never
+                bought" — the tooltip says which. */}
+            <div className="mt-2 flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">First bought</span><span className="mono text-slate-100">{firstBought ? fmtDate(firstBought) : led === undefined ? "…" : <AbsentCell reason="no purchase in the window the transaction statements cover — this holding predates it" />}</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Last added</span><span className="mono text-slate-100">{lastAdded ? fmtDate(lastAdded) : led === undefined ? "…" : <AbsentCell reason="no purchase in the window the transaction statements cover" />}</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Dividends recorded</span><span className="mono text-slate-100">{div !== null && div > 0 ? fmtFromBase(div, { compact: true }) : <AbsentCell reason="no dividend statement in this book records an event in this name" />}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in listed book</span><span className="mono text-slate-100">{weight.toFixed(1)}%</span></div>
           </Card>
         </div>
@@ -206,9 +220,19 @@ export function StockInfo() {
           {led === undefined ? (
             <div className="grid h-32 place-items-center text-sm text-slate-500">Loading transactions…</div>
           ) : led == null ? (
-            <div className="grid h-32 place-items-center px-6 text-center text-sm text-slate-500">The dated ledger couldn't be loaded — sign in again if this persists.</div>
+            <div className="grid h-32 place-items-center px-6 text-center text-sm text-slate-500">
+              The audit archive didn't respond. Refresh to retry — it is served alongside the app, so this is the
+              archive being unreachable rather than your session being stale.
+            </div>
           ) : led.txns.length === 0 ? (
-            <div className="grid h-32 place-items-center text-sm text-slate-500">No dated transactions recorded for this security.</div>
+            <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
+              <span className="max-w-md">
+                No transaction in this name over the window the statements cover
+                {led.periodFrom && led.periodTo ? <> ({fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)})</> : null}.
+                A holding bought before that window and untraded since carries no row here — the transaction
+                statements are a period record, not a lot history.
+              </span>
+            </div>
           ) : (
             <table className="min-w-full whitespace-nowrap text-sm">
               <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
