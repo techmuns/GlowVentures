@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractZip } from "./lib/unzip.mjs";
 import { readPdf } from "./lib/pdf.mjs";
+import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
 import { classify, REPORT_TYPES } from "./lib/classify.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -104,32 +105,52 @@ function expandArchives() {
 }
 
 // ── 2. Inspect every PDF ─────────────────────────────────────────────────────
-function inspectPdfs() {
+async function inspectPdfs() {
   const pdfs = [];
   walk(SOURCE_DIR, (f) => { if (/\.pdf$/i.test(f)) pdfs.push(f); });
   pdfs.sort((a, b) => rel(a).localeCompare(rel(b)));
 
-  return pdfs.map((full) => {
+  const passwords = passwordsFromEnv();
+  const out = [];
+  for (const full of pdfs) {
     const stat = fs.statSync(full);
     const fileName = path.basename(full);
-    let pages = null, text = "", error = null;
+    let pages = null, text = "", error = null, encrypted = false;
     try {
-      ({ pages, text, error } = readPdf(fs.readFileSync(full)));
+      ({ pages, text, encrypted, error } = readPdf(fs.readFileSync(full)));
     } catch (e) {
       error = e.message;
     }
+    // An encrypted file yields nothing to the flat reader, and a classifier fed
+    // nothing files it under "(unidentified)" with the same confidence as a file
+    // that genuinely says nothing. Route it through pdfjs, which can decrypt, so
+    // the row states either what the document is or that no password opened it.
+    if (encrypted) {
+      const grid = await extractLayout(new Uint8Array(fs.readFileSync(full)), { passwords });
+      if (!grid.error) {
+        pages = grid.numPages;
+        text = grid.pages.map((p) => p.text).join(" ").replace(/\s+/g, " ");
+        error = null;
+      } else {
+        error = passwords.length
+          ? "encrypted — no supplied password opened it"
+          : "encrypted — set GLOW_PDF_PASSWORDS to read it";
+      }
+    }
     const guess = classify({ fileName, text });
-    return {
+    out.push({
       path: rel(full),
       fileName,
       bytes: stat.size,
       size: humanSize(stat.size),
       pages,
       fromArchive: full.startsWith(EXTRACT_DIR + path.sep),
+      encrypted,
       readError: error,
       ...guess,
-    };
-  });
+    });
+  }
+  return out;
 }
 
 // ── 3. Group provider → account → as-of → reportType ─────────────────────────
@@ -316,12 +337,12 @@ function renderMarkdown({ generatedAt, files, tree, archives, unclassified, over
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-function main() {
+async function main() {
   fs.mkdirSync(SOURCE_DIR, { recursive: true });
   fs.mkdirSync(DOCS_DIR, { recursive: true });
 
   const archiveReport = expandArchives();
-  const files = inspectPdfs();
+  const files = await inspectPdfs();
   const tree = group(files.filter((f) => !isUnclassified(f)));
   const unclassified = files.filter(isUnclassified);
   const overlapping = overlaps(tree);
@@ -334,6 +355,7 @@ function main() {
       pdfs: files.length,
       classified: files.length - unclassified.length,
       unclassified: unclassified.length,
+      encrypted: files.filter((f) => f.encrypted).length,
       fromArchives: files.filter((f) => f.fromArchive).length,
       archivesExpanded: archiveReport.archives.length,
       pages: files.reduce((s, f) => s + (f.pages ?? 0), 0),
@@ -363,4 +385,4 @@ function main() {
   console.log(`  ${rel(MD_OUT)}`);
 }
 
-main();
+main().catch((e) => { console.error(e); process.exit(1); });

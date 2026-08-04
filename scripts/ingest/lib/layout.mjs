@@ -501,17 +501,77 @@ export function regrid(rowSlice, opts = {}) {
 }
 
 /**
+ * Passwords for the encrypted statements in this drop, read from the
+ * environment and NEVER committed.
+ *
+ *   GLOW_PDF_PASSWORDS="one,two,three"   (comma- or newline-separated)
+ *
+ * Several providers here encrypt the reader's own PDF with an identifier that
+ * belongs to the family — a PAN, a SEBI registration — so the password IS
+ * personally identifying and cannot live in a tracked file. It is also not one
+ * password: three different ones open six files across three providers, and
+ * which opens which is not printed anywhere reliable (the one document that
+ * names a Kotak password names one that does not open it). So the list is tried
+ * in order per file rather than mapped, and the one that worked is reported.
+ */
+export function passwordsFromEnv(env = process.env) {
+  return String(env.GLOW_PDF_PASSWORDS ?? env.GLOW_PDF_PASSWORD ?? "")
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const isPasswordError = (e) =>
+  e?.name === "PasswordException" || /password/i.test(e?.message ?? "");
+
+/**
  * Read a whole PDF into per-page grids.
+ *
+ * `opts.passwords` (default: the environment's) is tried in order when the
+ * document is encrypted. `usedPassword` reports WHICH one opened it — as an
+ * index into that list, never the secret itself, so the extraction report can
+ * say "opened with password #2" without printing it.
+ *
  * @param {Uint8Array|Buffer} bytes
- * @returns {Promise<{ pages: Array<object>, numPages: number, error: string|null }>}
+ * @returns {Promise<{ pages: Array<object>, numPages: number, error: string|null, encrypted: boolean, usedPassword: number|null }>}
  */
 export async function extractLayout(bytes, opts = {}) {
+  const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const passwords = opts.passwords ?? passwordsFromEnv();
+  // "" first: an unencrypted document must not pay for the retry loop, and a
+  // document encrypted with an EMPTY user password opens on this pass too.
+  const attempts = ["", ...passwords];
+
+  let last = null;
+  for (let i = 0; i < attempts.length; i++) {
+    const r = await readOnce(data, attempts[i], opts);
+    if (!r.error) return { ...r, encrypted: i > 0, usedPassword: i > 0 ? i : null };
+    last = r;
+    // Only a password failure is worth retrying. A malformed file fails the
+    // same way five times over and the first message is the honest one.
+    if (!isPasswordError(r.pdfError)) break;
+  }
+  return {
+    ...last,
+    encrypted: isPasswordError(last?.pdfError),
+    usedPassword: null,
+    error: isPasswordError(last?.pdfError) && passwords.length === 0
+      ? `${last.error} (no GLOW_PDF_PASSWORDS set)`
+      : last.error,
+  };
+}
+
+async function readOnce(data, password, opts) {
   const { getDocument } = await pdfjs();
   const pages = [];
   let doc = null;
   try {
     doc = await getDocument({
-      data: bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
+      // A COPY per attempt. pdfjs takes ownership of the buffer it is handed and
+      // detaches it, so the second password would be tried against zero bytes and
+      // fail with a parse error that says nothing about the password.
+      data: data.slice(),
+      password,
       disableFontFace: true,
       useSystemFonts: false,
       standardFontDataUrl: standardFontDataUrl(),
@@ -529,9 +589,9 @@ export async function extractLayout(bytes, opts = {}) {
       pages.push(pageToGrid(p, viewport, itemsFrom(tc, viewport.rotation), opts));
       page.cleanup();
     }
-    return { pages, numPages: doc.numPages, error: null };
+    return { pages, numPages: doc.numPages, error: null, pdfError: null };
   } catch (e) {
-    return { pages, numPages: pages.length, error: e?.message ?? String(e) };
+    return { pages, numPages: pages.length, error: e?.message ?? String(e), pdfError: e };
   } finally {
     try { await doc?.destroy(); } catch { /* already gone */ }
   }

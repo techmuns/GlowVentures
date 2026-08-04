@@ -1,33 +1,45 @@
 {
-  "generatedAt": "2026-07-31T08:23:38.453Z",
+  "generatedAt": "2026-08-04T10:43:51.060Z",
   "summary": {
-    "documents": 51,
-    "parsed": 51,
-    "partial": 0,
-    "failed": 0,
-    "rowSumChecks": 30,
-    "totalMismatches": 23,
+    "documents": 103,
+    "parsed": 71,
+    "partial": 7,
+    "failed": 25,
+    "rowSumChecks": 54,
+    "totalMismatches": 30,
     "totalsMaterial": 0,
     "totalsExplained": 10,
-    "totalsRounding": 16,
-    "derivedVsPrintedDeltas": 177,
+    "totalsRounding": 28,
+    "derivedVsPrintedDeltas": 210,
     "derivedMaterial": 0,
     "derivedExplained": 53,
-    "derivedRounding": 124,
-    "datedChecks": 900,
+    "derivedRounding": 157,
+    "datedChecks": 972,
     "datedMaterial": 0,
     "datedRounding": 11,
-    "crossReportDeltas": 3,
-    "suspectedDuplicates": 0,
-    "securitiesWithoutSymbol": 3,
-    "ownerNamesUnmatched": 0,
-    "stitchesApplied": 0
+    "crossReportDeltas": 5,
+    "suspectedDuplicates": 2,
+    "securitiesWithoutSymbol": 2,
+    "ownerNamesUnmatched": 2,
+    "stitchesApplied": 20
   },
   "coverage": {
-    "pdfsFound": 51,
-    "parsed": 51,
-    "partial": 0,
-    "failed": 0,
+    "pdfsFound": 103,
+    "duplicateSources": [
+      {
+        "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT.pdf",
+        "sameAs": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
+        "sha256": "712d74d99ee69ea2d40d39189b5e52f515ea52ee598508969619f5929ddcd8c5"
+      },
+      {
+        "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT.pdf",
+        "sameAs": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
+        "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
+      }
+    ],
+    "parsed": 71,
+    "partial": 7,
+    "failed": 25,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -193,16 +205,459 @@
           "ok": 1,
           "partial": 0,
           "failed": 0
+        },
+        "contract-note": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "Aditya Birla Sun Life Mutual Fund": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
+        }
+      },
+      "HDFC Mutual Fund": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "Kotak Mahindra Mutual Fund": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "Mirae Asset Mutual Fund": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "LKP Securities": {
+        "holdings": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        },
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "Sanshi Fund": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 5
+        }
+      },
+      "V.E.C Assago Capital Management LLP": {
+        "bank-book": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "capital-gain": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "capital-register": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "corporate-benefits": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "dividend-statement": {
+          "ok": 1,
+          "partial": 1,
+          "failed": 0
+        },
+        "expense-statement": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "appraisal": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "fact-sheet": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-benchmark": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-history": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "performance-summary": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 2,
+          "failed": 0
+        }
+      },
+      "360 ONE Private Wealth": {
+        "holdings": {
+          "ok": 0,
+          "partial": 4,
+          "failed": 0
+        },
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 5
+        }
+      },
+      "Molecule Ventures LLP": {
+        "transaction-statement": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
+      "SVAN Investment Managers LLP": {
+        "contract-note": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 4
+        }
+      },
+      "Transition Venture Capital": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 2
         }
       }
     },
-    "failures": [],
-    "partials": []
+    "failures": [
+      {
+        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+        "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+        "provider": "Aditya Birla Sun Life Mutual Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Aditya Birla Sun Life Mutual Fund\" / reportType unknown",
+          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
+        ]
+      },
+      {
+        "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
+        "sourcePath": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
+        "provider": "Aditya Birla Sun Life Mutual Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Aditya Birla Sun Life Mutual Fund\" / reportType unknown",
+          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
+        ]
+      },
+      {
+        "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+        "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
+        "provider": "HDFC Mutual Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"HDFC Mutual Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
+        "sourcePath": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
+        "provider": "Kotak Mahindra Mutual Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Kotak Mahindra Mutual Fund\" / reportType unknown",
+          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
+        ]
+      },
+      {
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
+        "sourcePath": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
+        "provider": "Mirae Asset Mutual Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Mirae Asset Mutual Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "lkp-securities-unknown-2026-03-31-holdings",
+        "sourcePath": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
+        "provider": "LKP Securities",
+        "reportType": "holdings",
+        "reasons": [
+          "no-extractor: no extractor for provider \"LKP Securities\" / reportType holdings"
+        ]
+      },
+      {
+        "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+        "sourcePath": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
+        "provider": "LKP Securities",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-extractor: no extractor for provider \"LKP Securities\" / reportType transaction-statement"
+        ]
+      },
+      {
+        "docKey": "sanshi-fund-9039671821-2026-07-08-unknown",
+        "sourcePath": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Sanshi Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "sanshi-fund-9039671854-2026-07-08-unknown",
+        "sourcePath": "source/_extracted/SANSHI FUND/9039671854_08072026183817746423.pdf",
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Sanshi Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+        "sourcePath": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Sanshi Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "sanshi-fund-9069671554-2026-07-08-unknown",
+        "sourcePath": "source/_extracted/SANSHI FUND/9069671554_08072026184047430124.pdf",
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Sanshi Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "sanshi-fund-9069671634-2026-07-08-unknown",
+        "sourcePath": "source/_extracted/SANSHI FUND/9069671634_08072026184128510783.pdf",
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Sanshi Fund\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-unknown-unknown-unknown",
+        "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reasons": [
+          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists"
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-unknown-unknown-unknown-2",
+        "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reasons": [
+          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
+          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #1",
+          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-unknown-unknown-unknown-3",
+        "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reasons": [
+          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
+          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-3. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-unknown-unknown-unknown-4",
+        "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reasons": [
+          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
+          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #1",
+          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-unknown-unknown-unknown-5",
+        "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reasons": [
+          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
+          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-5. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "green-lantern-capital-llp-510861-2026-06-30-contract-note",
+        "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "contract-note",
+        "reasons": [
+          "no-reader-for-report-type: contract-note: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark, transaction-statement, capital-gain, dividend-statement, corporate-benefits, bank-book, capital-register, expense-statement, holdings. Left unread rather than half-read."
+        ]
+      },
+      {
+        "docKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+        "sourcePath": "source/Molecule_June_2026_392.pdf",
+        "provider": "Molecule Ventures LLP",
+        "reportType": "transaction-statement",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Molecule Ventures LLP\" / reportType transaction-statement"
+        ]
+      },
+      {
+        "docKey": "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
+        "sourcePath": "source/SVAN - AJAY [1E444lq6].pdf",
+        "provider": "SVAN Investment Managers LLP",
+        "reportType": "contract-note",
+        "reasons": [
+          "no-extractor: no extractor for provider \"SVAN Investment Managers LLP\" / reportType contract-note"
+        ]
+      },
+      {
+        "docKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
+        "sourcePath": "source/SVAN - AJAY [1knFZ18g].pdf",
+        "provider": "SVAN Investment Managers LLP",
+        "reportType": "contract-note",
+        "reasons": [
+          "no-extractor: no extractor for provider \"SVAN Investment Managers LLP\" / reportType contract-note"
+        ]
+      },
+      {
+        "docKey": "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
+        "sourcePath": "source/SVAN - BHARAT [1DSgHtJU].pdf",
+        "provider": "SVAN Investment Managers LLP",
+        "reportType": "contract-note",
+        "reasons": [
+          "no-extractor: no extractor for provider \"SVAN Investment Managers LLP\" / reportType contract-note"
+        ]
+      },
+      {
+        "docKey": "svan-investment-managers-llp-8710090-2026-05-31-contract-note",
+        "sourcePath": "source/SVAN - BHARAT [1pRnGtq5].pdf",
+        "provider": "SVAN Investment Managers LLP",
+        "reportType": "contract-note",
+        "reasons": [
+          "no-extractor: no extractor for provider \"SVAN Investment Managers LLP\" / reportType contract-note"
+        ]
+      },
+      {
+        "docKey": "transition-venture-capital-unknown-2026-03-31-unknown",
+        "sourcePath": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+        "provider": "Transition Venture Capital",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Transition Venture Capital\" / reportType unknown"
+        ]
+      },
+      {
+        "docKey": "transition-venture-capital-unknown-2026-03-31-unknown-2",
+        "sourcePath": "source/TRANSITION VENTURE-BHARAT JAISINGHANI FAMILY TRUST 2_April_2026 (1).pdf",
+        "provider": "Transition Venture Capital",
+        "reportType": "unknown",
+        "reasons": [
+          "no-extractor: no extractor for provider \"Transition Venture Capital\" / reportType unknown",
+          "duplicate-doc-key: transition-venture-capital-unknown-2026-03-31-unknown was already claimed by source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf; filed as transition-venture-capital-unknown-2026-03-31-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      }
+    ],
+    "partials": [
+      {
+        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement",
+        "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
+        "reasons": [
+          "columns-not-matched: tds"
+        ]
+      },
+      {
+        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+        "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
+        "reasons": [
+          "transaction-side-unknown: 2026-06-15 · \"Trf to TDS A/c\"",
+          "transaction-side-unknown: 2026-06-15 · \"TDS Trf to Capital A/c\""
+        ]
+      },
+      {
+        "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+        "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
+        "reasons": [
+          "transaction-side-unknown: 2026-05-27 · \"Trf to TDS A/c\"",
+          "transaction-side-unknown: 2026-05-27 · \"TDS Trf to Capital A/c\"",
+          "transaction-side-unknown: 2026-06-15 · \"Trf to TDS A/c\"",
+          "transaction-side-unknown: 2026-06-15 · \"TDS Trf to Capital A/c\""
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+        "sourcePath": "source/360 - AJAY.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
+          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+        "sourcePath": "source/360 - BHARAT.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
+          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+        "sourcePath": "source/360 ONE WEALTH - AJAY.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\""
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+        "sourcePath": "source/360 ONE WEALTH - BHARAT.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\""
+        ]
+      }
+    ]
   },
   "consolidated": {
-    "naive": 835063590.78,
-    "deduped": 835063590.78,
-    "doubleCounted": 0
+    "naive": 1051007072.45,
+    "deduped": 1007609712.12,
+    "doubleCounted": 43397360.33
   },
   "rowSumChecks": [
     {
@@ -709,6 +1164,414 @@
       "printedTotal": 100,
       "delta": -0.01,
       "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 90898637.45,
+      "printedTotal": 90898637.45,
+      "delta": 0,
+      "rowsSummed": 16,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 82244605.94,
+      "printedTotal": 82244605.93,
+      "delta": 0.01,
+      "rowsSummed": 16,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 92443383.42,
+      "printedTotal": 92443383.43,
+      "delta": -0.01,
+      "rowsSummed": 18,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 83789351.91,
+      "printedTotal": 83789351.91,
+      "delta": 0,
+      "rowsSummed": 18,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 8654031.51,
+      "printedTotal": 8654032,
+      "delta": -0.49,
+      "rowsSummed": 16,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 100.01,
+      "printedTotal": 100,
+      "delta": 0.01,
+      "rowsSummed": 18,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "equity market value",
+      "rowSum": 63650732.73,
+      "printedTotal": 63650732.73,
+      "delta": 0,
+      "rowsSummed": 15,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "equity cost",
+      "rowSum": 55722853.61,
+      "printedTotal": 55722853.6,
+      "delta": 0.01,
+      "rowsSummed": 15,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total market value (incl. cash)",
+      "rowSum": 65522325.41,
+      "printedTotal": 65522325.4,
+      "delta": 0.01,
+      "rowsSummed": 17,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total cost (incl. cash)",
+      "rowSum": 57594446.28,
+      "printedTotal": 57594446.27,
+      "delta": 0.01,
+      "rowsSummed": 17,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "total gain/loss",
+      "rowSum": 7927879.12,
+      "printedTotal": 7927879,
+      "delta": 0.12,
+      "rowsSummed": 15,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "check": "% of assets sums to 100",
+      "rowSum": 100.02,
+      "printedTotal": 100,
+      "delta": 0.02,
+      "rowsSummed": 17,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 14580412.51,
+      "printedTotal": 14580413,
+      "delta": -0.49,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9866647,
+      "printedTotal": 9866647,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 14580412.51,
+      "printedTotal": 14580413,
+      "delta": -0.49,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9866647,
+      "printedTotal": 9866647,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 14408473.91,
+      "printedTotal": 14408474,
+      "delta": -0.09,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9866647,
+      "printedTotal": 9866647,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 14408473.91,
+      "printedTotal": 14408474,
+      "delta": -0.09,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9866647,
+      "printedTotal": 9866647,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-05-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -3545,6 +4408,534 @@
       "derived": 172.37,
       "printed": 172,
       "delta": 0.37,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Ather Energy Ltd",
+      "securityKey": "ather-energy",
+      "field": "gainLoss",
+      "derived": 6003243.96,
+      "printed": 6003244,
+      "delta": -0.04,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Wockhardt Ltd",
+      "securityKey": "wockhardt",
+      "field": "gainLoss",
+      "derived": 1891575.05,
+      "printed": 1891575,
+      "delta": 0.05,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "GREAVES COTTON LTD.",
+      "securityKey": "greaves-cotton",
+      "field": "gainLoss",
+      "derived": 1147628.27,
+      "printed": 1147628,
+      "delta": 0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Shoppers Stop Ltd",
+      "securityKey": "shoppers-stop",
+      "field": "gainLoss",
+      "derived": -1756641.71,
+      "printed": -1756642,
+      "delta": 0.29,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Tejas Networks Limited",
+      "securityKey": "tejas-networks",
+      "field": "gainLoss",
+      "derived": 974537.92,
+      "printed": 974538,
+      "delta": -0.08,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Panacea Biotec Ltd",
+      "securityKey": "panacea-biotec",
+      "field": "gainLoss",
+      "derived": 1505402.8,
+      "printed": 1505403,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Crompton Greaves Consumer Electrical Ltd",
+      "securityKey": "crompton-greaves-consumer-electrical",
+      "field": "gainLoss",
+      "derived": -562325.85,
+      "printed": -562326,
+      "delta": 0.15,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Eureka Forbes Ltd",
+      "securityKey": "eureka-forbes",
+      "field": "gainLoss",
+      "derived": -951986.05,
+      "printed": -951986,
+      "delta": -0.05,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Sterlite Technologies Ltd",
+      "securityKey": "sterlite-technologies",
+      "field": "gainLoss",
+      "derived": 3642579.2,
+      "printed": 3642579,
+      "delta": 0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Jaiprakash Power Ventures Ltd",
+      "securityKey": "jaiprakash-power-ventures",
+      "field": "gainLoss",
+      "derived": -356939.8,
+      "printed": -356940,
+      "delta": 0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Gateway Distriparks Ltd",
+      "securityKey": "gateway-distriparks",
+      "field": "gainLoss",
+      "derived": -438648.1,
+      "printed": -438648,
+      "delta": -0.1,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "SBFC Finance Ltd",
+      "securityKey": "sbfc-finance",
+      "field": "gainLoss",
+      "derived": -489696.95,
+      "printed": -489697,
+      "delta": 0.05,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "VIP Industries Ltd",
+      "securityKey": "vip-industries",
+      "field": "gainLoss",
+      "derived": -1553833.33,
+      "printed": -1553833,
+      "delta": -0.33,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Amrutanjan Health Care Ltd",
+      "securityKey": "amrutanjan-health-care",
+      "field": "gainLoss",
+      "derived": -605583.3,
+      "printed": -605583,
+      "delta": -0.3,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Navneet Education Ltd",
+      "securityKey": "navneet-education",
+      "field": "gainLoss",
+      "derived": -12563.32,
+      "printed": -12563,
+      "delta": -0.32,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Nuvama Wealth Management Ltd",
+      "securityKey": "nuvama-wealth-management",
+      "field": "gainLoss",
+      "derived": 217282.72,
+      "printed": 217283,
+      "delta": -0.28,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Ather Energy Ltd",
+      "securityKey": "ather-energy",
+      "field": "gainLoss",
+      "derived": 4667302.8,
+      "printed": 4667303,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Wockhardt Ltd",
+      "securityKey": "wockhardt",
+      "field": "gainLoss",
+      "derived": 1174094.14,
+      "printed": 1174094,
+      "delta": 0.14,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "GREAVES COTTON LTD.",
+      "securityKey": "greaves-cotton",
+      "field": "gainLoss",
+      "derived": 762402.8,
+      "printed": 762403,
+      "delta": -0.2,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Jaiprakash Power Ventures Ltd",
+      "securityKey": "jaiprakash-power-ventures",
+      "field": "gainLoss",
+      "derived": -603874.97,
+      "printed": -603875,
+      "delta": 0.03,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Shoppers Stop Ltd",
+      "securityKey": "shoppers-stop",
+      "field": "gainLoss",
+      "derived": -756106.78,
+      "printed": -756107,
+      "delta": 0.22,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Gateway Distriparks Ltd",
+      "securityKey": "gateway-distriparks",
+      "field": "gainLoss",
+      "derived": -519997.27,
+      "printed": -519997,
+      "delta": -0.27,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "SBFC Finance Ltd",
+      "securityKey": "sbfc-finance",
+      "field": "gainLoss",
+      "derived": -557185.56,
+      "printed": -557186,
+      "delta": 0.44,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Tejas Networks Limited",
+      "securityKey": "tejas-networks",
+      "field": "gainLoss",
+      "derived": 669514.45,
+      "printed": 669514,
+      "delta": 0.45,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Eureka Forbes Ltd",
+      "securityKey": "eureka-forbes",
+      "field": "gainLoss",
+      "derived": -383033.08,
+      "printed": -383033,
+      "delta": -0.08,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Sterlite Technologies Ltd",
+      "securityKey": "sterlite-technologies",
+      "field": "gainLoss",
+      "derived": 2806233.6,
+      "printed": 2806234,
+      "delta": -0.4,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Nuvama Wealth Management Ltd",
+      "securityKey": "nuvama-wealth-management",
+      "field": "gainLoss",
+      "derived": 802785.26,
+      "printed": 802785,
+      "delta": 0.26,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Panacea Biotec Ltd",
+      "securityKey": "panacea-biotec",
+      "field": "gainLoss",
+      "derived": 737748.78,
+      "printed": 737749,
+      "delta": -0.22,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Amrutanjan Health Care Ltd",
+      "securityKey": "amrutanjan-health-care",
+      "field": "gainLoss",
+      "derived": -613397.44,
+      "printed": -613397,
+      "delta": -0.44,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "Navneet Education Ltd",
+      "securityKey": "navneet-education",
+      "field": "gainLoss",
+      "derived": 2555.89,
+      "printed": 2556,
+      "delta": -0.11,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "SHREE DIGVIJAY CEMENT CO.LTD",
+      "securityKey": "shree-digvijay-cement",
+      "field": "gainLoss",
+      "derived": -261163.5,
+      "printed": -261163,
+      "delta": -0.5,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "CASH",
+      "securityKey": "cash",
+      "field": "marketValue",
+      "derived": 1972031.96,
+      "printed": 1972031.95,
+      "delta": 0.01,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "appraisal",
+      "security": "CASH",
+      "securityKey": "cash",
+      "field": "gainLoss",
+      "derived": 0.01,
+      "printed": 0,
+      "delta": 0.01,
       "severity": "rounding",
       "cause": null,
       "fromPrinted": false
@@ -16138,6 +17529,986 @@
       "severity": "ok"
     },
     {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-20 Sell",
+      "derived": 7900267.08,
+      "printed": 7900267.08,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-20 Sec. Tran. Tax",
+      "derived": 7893815.08,
+      "printed": 7893815.08,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 6893448.61,
+      "printed": 6893448.61,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 4391483.44,
+      "printed": 4391483.43,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 1889797.38,
+      "printed": 1889797.38,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1888797.38,
+      "printed": 1888797.38,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1886297.38,
+      "printed": 1886297.38,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1883797.38,
+      "printed": 1883797.38,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-02 Sell",
+      "derived": 6576714.18,
+      "printed": 6576714.18,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-02 Sec. Tran. Tax",
+      "derived": 6572017.49,
+      "printed": 6572017.49,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-31 Management Fees",
+      "derived": 6469749.85,
+      "printed": 6469749.85,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-01-31 Management Fees",
+      "derived": 6385451.75,
+      "printed": 6385451.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-08-31 Management Fees",
+      "derived": 6291984.01,
+      "printed": 6291984.01,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-12-31 Management Fees",
+      "derived": 6202732.95,
+      "printed": 6202732.95,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-07-31 Management Fees",
+      "derived": 6196671.3,
+      "printed": 6196671.3,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-04-30 Management Fees",
+      "derived": 6110374.63,
+      "printed": 6110374.63,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-11-30 Management Fees",
+      "derived": 6020919.59,
+      "printed": 6020919.59,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-10-31 Management Fees",
+      "derived": 5924967.75,
+      "printed": 5924967.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-03-31 Management Fees",
+      "derived": 5842582.17,
+      "printed": 5842582.17,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-09-30 Management Fees",
+      "derived": 5749609.66,
+      "printed": 5749609.66,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-02-28 Management Fees",
+      "derived": 5672085.12,
+      "printed": 5672085.12,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Buy",
+      "derived": 4671351.68,
+      "printed": 4671351.68,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Buy",
+      "derived": 2669656.6,
+      "printed": 2669656.6,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Trf to TDS A/c",
+      "derived": 2667152.6,
+      "printed": 2667152.6,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Buy",
+      "derived": 1666256.09,
+      "printed": 1666256.09,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Sec. Tran. Tax",
+      "derived": 1665256.09,
+      "printed": 1665256.09,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-03 Dividend",
+      "derived": 1690292.59,
+      "printed": 1690292.59,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Sec. Tran. Tax",
+      "derived": 1688292.59,
+      "printed": 1688292.59,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Sec. Tran. Tax",
+      "derived": 1687292.59,
+      "printed": 1687292.59,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-20 sell Sterlite Technologies Ltd",
+      "derived": 6440633.35,
+      "printed": 6440633.36,
+      "delta": -0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy Amrutanjan Health Care Ltd",
+      "derived": 1001366.47,
+      "printed": 1001366.47,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy GREAVES COTTON LTD.",
+      "derived": 2504465.18,
+      "printed": 2504465.17,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy Shoppers Stop Ltd",
+      "derived": 2504186.05,
+      "printed": 2504186.05,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-02 sell Sterlite Technologies Ltd",
+      "derived": 4688220.11,
+      "printed": 4688220.11,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-15 buy Eureka Forbes Ltd",
+      "derived": 1001733.43,
+      "printed": 1001733.44,
+      "delta": -0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-15 buy Nuvama Wealth Management Ltd",
+      "derived": 2003695.08,
+      "printed": 2003695.08,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-15 buy VIP Industries Ltd",
+      "derived": 1001896.52,
+      "printed": 1001896.51,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-20 Sell",
+      "derived": 6056137.6,
+      "printed": 6056137.6,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-20 Sec. Tran. Tax",
+      "derived": 6051087.6,
+      "printed": 6051087.6,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 5050156.58,
+      "printed": 5050156.59,
+      "delta": -0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 2548191.42,
+      "printed": 2548191.41,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Buy",
+      "derived": 1046907.75,
+      "printed": 1046907.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1045907.75,
+      "printed": 1045907.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1043407.75,
+      "printed": 1043407.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-25 Sec. Tran. Tax",
+      "derived": 1041907.75,
+      "printed": 1041907.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-27 Trf to TDS A/c",
+      "derived": 1039436.75,
+      "printed": 1039436.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-15 Dividend",
+      "derived": 1064146.75,
+      "printed": 1064146.75,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-02 Sell",
+      "derived": 4583834.35,
+      "printed": 4583834.35,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-02 Sec. Tran. Tax",
+      "derived": 4580311.83,
+      "printed": 4580311.83,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-04-30 Management Fees",
+      "derived": 4519305.35,
+      "printed": 4519305.35,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-07-31 Management Fees",
+      "derived": 4513248.66,
+      "printed": 4513248.66,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-03-31 Management Fees",
+      "derived": 4456323.45,
+      "printed": 4456323.45,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-11-30 Management Fees",
+      "derived": 4393804.25,
+      "printed": 4393804.25,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-09-30 Management Fees",
+      "derived": 4330411.02,
+      "printed": 4330411.02,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-12-31 Management Fees",
+      "derived": 4267451.87,
+      "printed": 4267451.87,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-01-31 Management Fees",
+      "derived": 4208071.69,
+      "printed": 4208071.69,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-02-28 Management Fees",
+      "derived": 4154302.98,
+      "printed": 4154302.98,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-08-31 Management Fees",
+      "derived": 4091169.38,
+      "printed": 4091169.38,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-05-31 Management Fees",
+      "derived": 4018906.52,
+      "printed": 4018906.52,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2025-10-31 Management Fees",
+      "derived": 3952828.33,
+      "printed": 3952828.33,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Buy",
+      "derived": 1951361.46,
+      "printed": 1951361.45,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Trf to TDS A/c",
+      "derived": 1948842.45,
+      "printed": 1948842.45,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-15 Sec. Tran. Tax",
+      "derived": 1946842.45,
+      "printed": 1946842.45,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": null,
+      "reportType": "bank-book",
+      "check": "bank book running balance",
+      "row": "2026-06-03 Dividend",
+      "derived": 1972031.95,
+      "printed": 1972031.95,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-20 sell Sterlite Technologies Ltd",
+      "derived": 5041025.52,
+      "printed": 5041025.51,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy Amrutanjan Health Care Ltd",
+      "derived": 1001931.01,
+      "printed": 1001931.02,
+      "delta": -0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy GREAVES COTTON LTD.",
+      "derived": 2504465.18,
+      "printed": 2504465.17,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-05-25 buy Shoppers Stop Ltd",
+      "derived": 1502783.67,
+      "printed": 1502783.66,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-02 sell Sterlite Technologies Ltd",
+      "derived": 3516165.08,
+      "printed": 3516165.08,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-15 buy Eureka Forbes Ltd",
+      "derived": 2003466.88,
+      "printed": 2003466.87,
+      "delta": 0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain",
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
       "accountNo": "3517383",
@@ -16148,6 +18519,34 @@
       "derived": -18986408.15,
       "printed": -18986408.14,
       "delta": -0.01,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-gain",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "reportType": "capital-gain",
+      "check": "realised gain: lots vs statement",
+      "row": "128005 2026-04-01..2026-07-06",
+      "derived": 8043224.41,
+      "printed": 8043224.41,
+      "delta": 0,
+      "matches": true,
+      "severity": "ok"
+    },
+    {
+      "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-gain",
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "reportType": "capital-gain",
+      "check": "realised gain: lots vs statement",
+      "row": "128004 2026-04-01..2026-07-06",
+      "derived": 6302093.85,
+      "printed": 6302093.84,
+      "delta": 0.01,
       "matches": true,
       "severity": "ok"
     }
@@ -16212,22 +18611,116 @@
       "window": "2025-01-06..2026-07-10",
       "severity": "rounding",
       "authoritative": null
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128005",
+      "asOf": "2026-07-06",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "fact-sheet",
+        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-fact-sheet",
+        "value": 92443383
+      },
+      "b": {
+        "reportType": "performance-history",
+        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-history",
+        "value": 92443383.43
+      },
+      "delta": -0.43,
+      "window": "2025-07-30..2026-07-06",
+      "severity": "rounding",
+      "authoritative": null
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "accountNo": "128004",
+      "asOf": "2026-07-06",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "fact-sheet",
+        "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-fact-sheet",
+        "value": 65522325
+      },
+      "b": {
+        "reportType": "performance-history",
+        "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-history",
+        "value": 65522325.4
+      },
+      "delta": -0.4,
+      "window": "2025-07-29..2026-07-06",
+      "severity": "rounding",
+      "authoritative": null
     }
   ],
-  "duplicateHoldings": [],
+  "duplicateHoldings": [
+    {
+      "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",
+      "quantity": 990429.684,
+      "totalCost": 9866647,
+      "marketValue": 14580412.51,
+      "owners": [
+        "ajay-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "occurrences": [
+        {
+          "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+          "owner": "Mr. AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "37702",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+          "owner": "Mr. Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "60117",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        }
+      ],
+      "doubleCountRisk": 14580412.51,
+      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+    },
+    {
+      "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",
+      "quantity": 990429.684,
+      "totalCost": 9866647,
+      "marketValue": 14408473.91,
+      "owners": [
+        "ajay-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "occurrences": [
+        {
+          "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+          "owner": "Mr. AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "37702",
+          "asOf": "2026-05-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+          "owner": "Mr. Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "60117",
+          "asOf": "2026-05-31",
+          "reportType": "holdings"
+        }
+      ],
+      "doubleCountRisk": 14408473.91,
+      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+    }
+  ],
   "unresolved": {
     "securitiesWithoutSymbol": [
-      {
-        "security": "Cash",
-        "securityKey": "cash",
-        "docs": [
-          "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
-          "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
-          "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
-        ]
-      },
       {
         "security": "Dividend / Interest receivable",
         "securityKey": "dividend-interest-receivable",
@@ -16250,8 +18743,131 @@
         ]
       }
     ],
-    "ownerNamesUnmatched": [],
-    "reportTypesWithoutExtractor": [],
+    "ownerNamesUnmatched": [
+      {
+        "name": "AARTI AJAY JAISINGHANI",
+        "docs": [
+          "sanshi-fund-9039671821-2026-07-08-unknown"
+        ]
+      },
+      {
+        "name": "BHARAT AJAY JAISINGHANI",
+        "docs": [
+          "sanshi-fund-9039671854-2026-07-08-unknown"
+        ]
+      }
+    ],
+    "reportTypesWithoutExtractor": [
+      {
+        "provider": "Aditya Birla Sun Life Mutual Fund",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+          "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown"
+        ]
+      },
+      {
+        "provider": "HDFC Mutual Fund",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "hdfc-mutual-fund-16180583-2026-06-01-unknown"
+        ]
+      },
+      {
+        "provider": "Kotak Mahindra Mutual Fund",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown"
+        ]
+      },
+      {
+        "provider": "Mirae Asset Mutual Fund",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown"
+        ]
+      },
+      {
+        "provider": "LKP Securities",
+        "reportType": "holdings",
+        "reason": "no-extractor",
+        "docs": [
+          "lkp-securities-unknown-2026-03-31-holdings"
+        ]
+      },
+      {
+        "provider": "LKP Securities",
+        "reportType": "transaction-statement",
+        "reason": "no-extractor",
+        "docs": [
+          "lkp-securities-unknown-2026-07-02-transaction-statement"
+        ]
+      },
+      {
+        "provider": "Sanshi Fund",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "sanshi-fund-9039671821-2026-07-08-unknown",
+          "sanshi-fund-9039671854-2026-07-08-unknown",
+          "sanshi-fund-9039671912-2026-07-08-unknown",
+          "sanshi-fund-9069671554-2026-07-08-unknown",
+          "sanshi-fund-9069671634-2026-07-08-unknown"
+        ]
+      },
+      {
+        "provider": "360 ONE Private Wealth",
+        "reportType": "unknown",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "360-one-private-wealth-unknown-unknown-unknown",
+          "360-one-private-wealth-unknown-unknown-unknown-2",
+          "360-one-private-wealth-unknown-unknown-unknown-3",
+          "360-one-private-wealth-unknown-unknown-unknown-4",
+          "360-one-private-wealth-unknown-unknown-unknown-5"
+        ]
+      },
+      {
+        "provider": "Green Lantern Capital LLP",
+        "reportType": "contract-note",
+        "reason": "no-reader-for-report-type",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-30-contract-note"
+        ]
+      },
+      {
+        "provider": "Molecule Ventures LLP",
+        "reportType": "transaction-statement",
+        "reason": "no-extractor",
+        "docs": [
+          "molecule-ventures-llp-7810404-2026-06-30-transaction-statement"
+        ]
+      },
+      {
+        "provider": "SVAN Investment Managers LLP",
+        "reportType": "contract-note",
+        "reason": "no-extractor",
+        "docs": [
+          "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
+          "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
+          "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
+          "svan-investment-managers-llp-8710090-2026-05-31-contract-note"
+        ]
+      },
+      {
+        "provider": "Transition Venture Capital",
+        "reportType": "unknown",
+        "reason": "no-extractor",
+        "docs": [
+          "transition-venture-capital-unknown-2026-03-31-unknown",
+          "transition-venture-capital-unknown-2026-03-31-unknown-2"
+        ]
+      }
+    ],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
@@ -16270,8 +18886,230 @@
       "Goldstandard Wealth Private Limited",
       "Green Lantern Capital LLP",
       "Carnelian Asset Management and Advisors Pvt Ltd",
+      "V.E.C Assago Capital Management LLP",
       "360 ONE Private Wealth"
     ]
   },
-  "stitches": []
+  "stitches": [
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 393.4,
+      "parts": [
+        "836 1110232627659"
+      ],
+      "joined": "8361110232627659",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 357.4,
+      "parts": [
+        "836 1110232627659"
+      ],
+      "joined": "8361110232627659",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 329.4,
+      "parts": [
+        "836 1110232627659"
+      ],
+      "joined": "8361110232627659",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 185.4,
+      "parts": [
+        "836 1110232627651"
+      ],
+      "joined": "8361110232627651",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 149.4,
+      "parts": [
+        "836 1110232627651"
+      ],
+      "joined": "8361110232627651",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 121.4,
+      "parts": [
+        "836 1110232627651"
+      ],
+      "joined": "8361110232627651",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 85.4,
+      "parts": [
+        "836 1110232627655"
+      ],
+      "joined": "8361110232627655",
+      "page": 1
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 771,
+      "parts": [
+        "836 1110232627655"
+      ],
+      "joined": "8361110232627655",
+      "page": 2
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 735,
+      "parts": [
+        "836 1110232627655"
+      ],
+      "joined": "8361110232627655",
+      "page": 2
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 639,
+      "parts": [
+        "836 1110232627614"
+      ],
+      "joined": "8361110232627614",
+      "page": 3
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 603,
+      "parts": [
+        "836 1110232627614"
+      ],
+      "joined": "8361110232627614",
+      "page": 3
+    },
+    {
+      "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+      "kind": "same-line",
+      "column": 0,
+      "y": 575,
+      "parts": [
+        "836 1110232627614"
+      ],
+      "joined": "8361110232627614",
+      "page": 3
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -699.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -799.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -699.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -799.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -699.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -799.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -699.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -799.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    }
+  ]
 }

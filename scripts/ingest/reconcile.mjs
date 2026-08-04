@@ -425,7 +425,7 @@ function duplicateHoldings(docs) {
 
 // ── d) + e) Coverage and unresolved ──────────────────────────────────────────
 
-function coverage(docs, pdfCount) {
+function coverage(docs, pdfCount, duplicateSources = []) {
   const byStatus = { ok: [], partial: [], failed: [] };
   for (const d of docs) byStatus[d.status].push(d);
   const byProvider = {};
@@ -436,6 +436,11 @@ function coverage(docs, pdfCount) {
   }
   return {
     pdfsFound: pdfCount,
+    // Files skipped because an identical copy was already extracted. Reported
+    // rather than silently absorbed: a reader counting PDFs in source/ must be
+    // able to see why the archive holds fewer documents than the folder holds
+    // files.
+    duplicateSources,
     parsed: byStatus.ok.length,
     partial: byStatus.partial.length,
     failed: byStatus.failed.length,
@@ -591,7 +596,7 @@ export function reconcile(docs, opts = {}) {
   applyDedupePolicy(docs, duplicates);
   const consolidated = consolidatedValue(docs);
   const dated = datedTableChecks(docs);
-  const cov = coverage(docs, opts.pdfCount ?? docs.length);
+  const cov = coverage(docs, opts.pdfCount ?? docs.length, opts.duplicateSources ?? []);
   const unres = unresolved(docs, symbolMap);
   const stitches = docs.flatMap((d) => (d.stitches ?? []).map((s) => ({ docKey: d.docKey, ...s })));
 
@@ -846,6 +851,14 @@ export function renderMarkdown(r) {
   L.push("");
   L.push(`PDFs found ${r.coverage.pdfsFound} · fully parsed ${r.coverage.parsed} · partial ${r.coverage.partial} · failed ${r.coverage.failed}`);
   L.push("");
+  if (r.coverage.duplicateSources?.length) {
+    L.push(`### Byte-identical duplicates in the drop (${r.coverage.duplicateSources.length}) — extracted once`);
+    L.push("");
+    for (const d of r.coverage.duplicateSources) {
+      L.push(`- \`${esc(d.path)}\` is the same file as \`${esc(d.sameAs)}\``);
+    }
+    L.push("");
+  }
   const providers = Object.entries(r.coverage.byProvider);
   if (providers.length) {
     L.push("| Provider | Report type | OK | Partial | Failed |");

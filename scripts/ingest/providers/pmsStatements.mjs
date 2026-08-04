@@ -55,6 +55,16 @@ export const PROVIDERS = {
     letterhead: /carnelian\s+asset\s+management/i,
     engagement: "PMS",
   },
+  // Prints its own name with the dots (`V.E.C ASSAGO CAPITAL MANAGEMENT LLP`)
+  // and files under a SIX-letter client code, `VECBES0004_145052_…`, which is
+  // why the shared filename gate in classify.mjs takes 1–8 letters rather than
+  // the 1–4 that covered G / GLC / CBP.
+  vecAssago: {
+    name: "V.E.C Assago Capital Management LLP",
+    filePrefix: /^VEC/,
+    letterhead: /V\.?\s*E\.?\s*C\s+ASSAGO/i,
+    engagement: "PMS",
+  },
 };
 
 /** Identify the manager from the letterhead, else from the filename prefix. */
@@ -258,6 +268,19 @@ const CASH_LINE = /^cash\b/i;
 /** The page footer, which lands in whichever column sits above it. */
 const PAGE_FOOTER = /^page\s*\d+(\s*of\s*\d+)?$/i;
 
+/**
+ * The OTHER page footer — a bare print date, and on V.E.C's appraisal a page
+ * number beside it: `07/07/2026  1`. It sits below the grand total, inside the
+ * table's band, so nothing about its position marks it as trailing matter. Read
+ * as a row it became a holding named "07/07/2026" with no quantity, no cost and
+ * no value, which then went to `build-symbols` as an unresolvable security.
+ *
+ * A security name is never a date. That is the whole rule, and it is narrow on
+ * purpose: it tests the NAME, not the row, so a genuine holding printed beside a
+ * date is untouched.
+ */
+const DATE_ONLY = /^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/;
+
 /** Sub-header text that prints inside a data column, not a value. */
 const HEADER_LABEL = /^(accrued\s*income|market\s*value|unit\s*cost|total\s*cost|%\s*(g\s*\/?\s*l|assets)|price|quantity|cost)$/i;
 
@@ -314,9 +337,19 @@ function readIdentity(pages) {
     //   Account : 100023 Ajay Thakurdas Jaisinghani          (Goldstandard appraisal)
     //   Account: 100022 - Ankita Bharat Jaisinghani          (Goldstandard fact sheet)
     //   Account: 3517383 - AJAY T JAISINGHANI - CBP0142      (Carnelian / Green Lantern)
+    //   Account: 128005 - AJAY JAISINGHANI - VECBES0004      (V.E.C Assago)
     // The name is optional, the separating dash is optional, and a trailing
     // client code is consumed rather than read as part of the name.
-    const acct = /^Account\s*:?\s*(\d[\d-]*)(?:\s*-?\s+([A-Za-z][A-Za-z.'\- ]{2,60}?))?(?:\s*-\s*((?:GLC|CBP)\d{3,}))?$/.exec(s);
+    //
+    // CLIENT_CODE is a letter prefix followed by DIGITS, not a fixed list of
+    // three prefixes. It was `(?:GLC|CBP)`, and because the whole pattern is
+    // anchored at both ends, V.E.C's `- VECBES0004` made the entire line fail to
+    // match — so its fact sheet carried no account number, was filed under no
+    // account, and thirty-one V.E.C holdings rendered as Unclassified while the
+    // sector sat in a document the join could not reach. The digits are what
+    // keep this safe: the same dash form also carries the fund name
+    // ("GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND"), which has none.
+    const acct = /^Account\s*:?\s*(\d[\d-]*)(?:\s*-?\s+([A-Za-z][A-Za-z.'\- ]{2,60}?))?(?:\s*-\s*([A-Z]{2,8}\d{3,}))?$/.exec(s);
     if (acct) {
       out.accountNo ??= acct[1];
       if (acct[3]) out.clientCode ??= acct[3];
@@ -340,7 +373,7 @@ function readIdentity(pages) {
     // the client code are what makes this safe — the same dash form also carries
     // the fund ("GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND"), and requiring a
     // numeric code stops the manager's own name being read as the client's.
-    const coded = /^([A-Za-z][A-Za-z.'\- ]{2,60}?)\s*-\s*((?:GLC|CBP)\d{3,})$/.exec(s);
+    const coded = /^([A-Za-z][A-Za-z.'\- ]{2,60}?)\s*-\s*([A-Z]{2,8}\d{3,})$/.exec(s);
     if (coded) {
       out.clientCode ??= coded[2];
       out.owner ??= trimPersonName(coded[1].replace(/\s+/g, " "));
@@ -390,6 +423,9 @@ function readHoldings(pages, warnings) {
     for (const r of rows) {
       const name = clean(r.fields.security);
       const populated = numericFields.filter((f) => parseNumInfo(r.fields[f]).status === "ok");
+
+      // Page furniture that landed inside the table's band — see DATE_ONLY.
+      if (name && (DATE_ONLY.test(name) || PAGE_FOOTER.test(name))) continue;
 
       // A section heading: a bare label with no figures.
       if (name && !populated.length && SECTION_ROW.test(name)) { section = name; continue; }
@@ -538,6 +574,13 @@ function readSectors(pages, warnings) {
     const map = new Map();
     for (const g of groups) {
       if (!g.security || !g.sectorParts.length) continue;
+      // The table's own TOTAL opens a record like any other — it carries a market
+      // value and a percentage. On V.E.C's fact sheet it prints on the same
+      // physical line as the Sector Allocation table's last row, so the
+      // terminator never sees it alone, and it arrived in the book as a holding
+      // called "Total" with the footer's contact line for a sector. A subtotal
+      // label is the table closing, not a security.
+      if (SUBTOTAL_LABEL.test(g.security.trim())) continue;
       map.set(g.security.replace(/\s+/g, " ").trim(), g.sectorParts.join(" ").replace(/\s+/g, " ").trim());
     }
     if (map.size) return { sectors: map, sheet: toAuditSheet("sectors", Object.keys(table.columns), rows) };

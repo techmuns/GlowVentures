@@ -1,0 +1,39 @@
+{
+ "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+ "provider": "HDFC Mutual Fund",
+ "accountNo": "16180583",
+ "ownerSource": null,
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-06-01",
+ "inceptionDate": null,
+ "reportType": "unknown",
+ "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
+ "pages": 3,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"HDFC Mutual Fund\" / reportType unknown"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

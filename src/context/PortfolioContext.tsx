@@ -7,7 +7,8 @@
 // empty state by <Gate> in App.tsx — a book of zeros must never render as if the
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { Portfolio } from "@/lib/types";
+import type { Portfolio, Position } from "@/lib/types";
+import { dedupedPositions, consolidatedMarketValue } from "@/lib/analytics";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, type QuoteFeed } from "@/lib/quotes";
 import { fmtCurrency, displaySecurity } from "@/lib/format";
@@ -87,6 +88,17 @@ export type Basis = "STATEMENT" | "LIVE";
 type Ctx = {
   /** The book with live prices overlaid where a quote exists. */
   portfolio: Portfolio | null;
+  /**
+   * `portfolio.positions` with each `dedupeGroup` counted ONCE.
+   *
+   * Use this for any figure that spans more than one owner — a consolidated NAV,
+   * an allocation chart, a concentration measure, a weight denominator. Use
+   * `portfolio.positions` for anything scoped to ONE account or ONE owner, where
+   * both rows must show exactly as their statements print them.
+   *
+   * Empty when there is no book.
+   */
+  consolidated: Position[];
   /**
    * The book EXACTLY as extracted, never touched by the quote feed.
    *
@@ -207,9 +219,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     if (!basePortfolio) return null;
     if (!quotes) return basePortfolio;
     const positions = applyQuotes(basePortfolio.positions, quotes);
-    const listedValue = positions.reduce((s, p) => s + p.marketValue, 0);
+    // COUNT ONCE. A raw reduce over `positions` double-counts any holding
+    // reported under two members — the 360 ONE AIF is ₹1.46 Cr of exactly that
+    // — and the figure it produces disagreed with BOOK_SUMMARY.totalValue,
+    // which the ingest already deduped. Two definitions of "consolidated NAV"
+    // in one file, one of them wrong on live basis only.
+    const listedValue = consolidatedMarketValue(positions);
     return { ...basePortfolio, positions, listedValue, totalValue: listedValue + basePortfolio.privateValue };
   }, [basePortfolio, quotes]);
+
+  const consolidated = useMemo(
+    () => dedupedPositions(portfolio?.positions ?? []),
+    [portfolio],
+  );
 
   const bookIsEmpty = useMemo(() => isEmptyBook(portfolio), [portfolio]);
 
@@ -252,11 +274,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const refreshQuotes = useCallback(() => { loadQuotes(true); }, [loadQuotes]);
   const value = useMemo<Ctx>(
     () => ({
-      portfolio, statementPortfolio: basePortfolio, basis,
+      portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf,
       quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, refreshQuotes,
     }),
-    [portfolio, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
+    [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
      clearPortfolio, inrPerUsd, fxAsOf, quotesStatus, quotes, livePriced, notLive, unpriceable, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;

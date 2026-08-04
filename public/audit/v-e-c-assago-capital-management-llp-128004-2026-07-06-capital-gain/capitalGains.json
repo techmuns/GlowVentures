@@ -1,0 +1,136 @@
+{
+ "name": "capital-gains",
+ "rows": [
+  [
+   "quantity",
+   "saleRate",
+   "purchaseDate",
+   "purchaseRate",
+   "price31Jan",
+   "purchaseAmt",
+   "daysHeld",
+   "effectiveLT",
+   "security",
+   "saleDate",
+   "saleAmount",
+   "effectiveCost",
+   "shortTerm",
+   "longTerm"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "NSDL-IN300484-30506328"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "20/05/26",
+   "8,217",
+   "406.6792",
+   "3,341,682.99",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "1,066,793.39",
+   "1,066,793.39",
+   "271",
+   "2,274,889.60",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "20/05/26",
+   "4,191",
+   "406.6792",
+   "1,704,392.53",
+   "17/11/25",
+   "117.4444",
+   "N.A",
+   "492,209.48",
+   "492,209.48",
+   "184",
+   "1,212,183.05",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "02/06/26",
+   "6,000",
+   "586.6146",
+   "3,519,687.60",
+   "17/11/25",
+   "117.4444",
+   "N.A",
+   "704,666.40",
+   "704,666.40",
+   "197",
+   "2,815,021.20",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Total",
+   "8,565,763.11",
+   "2,263,669.27",
+   "2,263,669.27",
+   "6,302,093.84",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "This is a computer generated statement and does not require signature."
+  ],
+  [
+   "07/07/2026",
+   "1"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "Capital Gain/Loss Summary (Based on Effective Gain / Indexation)"
+  ],
+  [
+   "01/04-15/06",
+   "16/06-15/09",
+   "16/09-15/12",
+   "16/12-15/03",
+   "16/03-31/03",
+   "Total"
+  ],
+  [
+   "ST Gain/Loss",
+   "6,302,093.84",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "6,302,093.84"
+  ],
+  [
+   "LT Gain/Loss",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "This is a computer generated statement and does not require signature."
+  ],
+  [
+   "07/07/2026",
+   "2"
+  ]
+ ]
+}

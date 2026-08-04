@@ -1,0 +1,191 @@
+{
+ "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+ "provider": "V.E.C Assago Capital Management LLP",
+ "accountNo": "128004",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "VECBES0003",
+ "owner": "ANKITA BHARAT JAISINGHANI",
+ "ownerId": "ankita-jaisinghani",
+ "familyGroup": null,
+ "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-06",
+ "inceptionDate": null,
+ "reportType": "transaction-statement",
+ "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
+ "pages": 2,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "transaction-side-unknown",
+   "detail": "2026-05-27 · \"Trf to TDS A/c\""
+  },
+  {
+   "code": "transaction-side-unknown",
+   "detail": "2026-05-27 · \"TDS Trf to Capital A/c\""
+  },
+  {
+   "code": "transaction-side-unknown",
+   "detail": "2026-06-15 · \"Trf to TDS A/c\""
+  },
+  {
+   "code": "transaction-side-unknown",
+   "detail": "2026-06-15 · \"TDS Trf to Capital A/c\""
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [
+  {
+   "date": "2026-05-20",
+   "settlementDate": "2026-05-21",
+   "side": "sell",
+   "security": "Sterlite Technologies Ltd",
+   "securityKey": "sterlite-technologies",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 12408,
+   "unitPrice": 407.0048,
+   "brokerageRate": 0.3256,
+   "stt": 5050,
+   "otherCharges": null,
+   "gross": 5050115.56,
+   "brokerage": 4040.04,
+   "charges": 9090.04,
+   "net": 5041025.52,
+   "printed": {
+    "settlementAmount": 5041025.51
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  },
+  {
+   "date": "2026-05-25",
+   "settlementDate": "2026-05-25",
+   "side": "buy",
+   "security": "Amrutanjan Health Care Ltd",
+   "securityKey": "amrutanjan-health-care",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 1773,
+   "unitPrice": 564.0896,
+   "brokerageRate": 0.4513,
+   "stt": 1000,
+   "otherCharges": null,
+   "gross": 1000130.86,
+   "brokerage": 800.15,
+   "charges": 1800.15,
+   "net": 1001931.01,
+   "printed": {
+    "settlementAmount": 1001931.02
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  },
+  {
+   "date": "2026-05-25",
+   "settlementDate": "2026-05-25",
+   "side": "buy",
+   "security": "GREAVES COTTON LTD.",
+   "securityKey": "greaves-cotton",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 14541,
+   "unitPrice": 171.9253,
+   "brokerageRate": 0.1375,
+   "stt": 2500,
+   "otherCharges": null,
+   "gross": 2499965.79,
+   "brokerage": 1999.39,
+   "charges": 4499.39,
+   "net": 2504465.18,
+   "printed": {
+    "settlementAmount": 2504465.17
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  },
+  {
+   "date": "2026-05-25",
+   "settlementDate": "2026-05-25",
+   "side": "buy",
+   "security": "Shoppers Stop Ltd",
+   "securityKey": "shoppers-stop",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 4415,
+   "unitPrice": 339.7698,
+   "brokerageRate": 0.2718,
+   "stt": 1500,
+   "otherCharges": null,
+   "gross": 1500083.67,
+   "brokerage": 1200,
+   "charges": 2700,
+   "net": 1502783.67,
+   "printed": {
+    "settlementAmount": 1502783.66
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  },
+  {
+   "date": "2026-06-02",
+   "settlementDate": "2026-06-03",
+   "side": "sell",
+   "security": "Sterlite Technologies Ltd",
+   "securityKey": "sterlite-technologies",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 6000,
+   "unitPrice": 587.0843,
+   "brokerageRate": 0.4697,
+   "stt": 3522.52,
+   "otherCharges": null,
+   "gross": 3522505.8,
+   "brokerage": 2818.2,
+   "charges": 6340.72,
+   "net": 3516165.08,
+   "printed": {
+    "settlementAmount": 3516165.08
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  },
+  {
+   "date": "2026-06-15",
+   "settlementDate": "2026-06-15",
+   "side": "buy",
+   "security": "Eureka Forbes Ltd",
+   "securityKey": "eureka-forbes",
+   "isin": null,
+   "exchange": "NSE",
+   "assetClass": "Equity",
+   "quantity": 4376,
+   "unitPrice": 457.008,
+   "brokerageRate": 0.3656,
+   "stt": 2000,
+   "otherCharges": null,
+   "gross": 1999867.01,
+   "brokerage": 1599.87,
+   "charges": 3599.87,
+   "net": 2003466.88,
+   "printed": {
+    "settlementAmount": 2003466.87
+   },
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement"
+  }
+ ],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-06",
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

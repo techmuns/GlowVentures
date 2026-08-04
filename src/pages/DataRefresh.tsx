@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum } from "@/lib/analytics";
+import { sum, consolidatedMarketValue } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
 import { DASH } from "@/components/Absent";
@@ -18,7 +18,7 @@ export function DataRefresh() {
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
   const asOf = portfolio.asOf;
-  const listedMV = sum(p.map((x) => x.marketValue));
+  const listedMV = consolidatedMarketValue(p);
   const classified = sum(p.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
   const coverage = listedMV > 0 ? (classified / listedMV) * 100 : 0;
   const costNA = new Set(p.filter((x) => x.costUnavailable).map((x) => x.security)).size;

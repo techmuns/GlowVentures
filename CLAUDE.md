@@ -43,7 +43,7 @@ Three corollaries that this book actually needed:
   nulls otherwise. Averaging a missing account in as zero drags the answer
   towards a number nobody measured.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named.** Realised gains exist for three of five accounts here; the other two
+  named.** Realised gains exist for five of nine accounts here; the other four
   render "no capital gain statement issued for this account in this drop", and
   the total says it covers three of five.
 - **A COMPUTED zero is legitimate and stays** — cash has no P&L, a net realised
@@ -74,8 +74,9 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** Three portfolio managers, five accounts,
-three family members, 51 PDFs:
+**What is actually in `source/` today.** Twelve issuers, nine accounts in the
+book, three family members, 28 files expanding to 105 PDFs — of which **103 are
+distinct documents** and 71 parse fully:
 
 | Provider | Accounts | Owner | Strategy | As of |
 | --- | --- | --- | --- | --- |
@@ -84,15 +85,84 @@ three family members, 51 PDFs:
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | GLC Growth Fund | 2026-06-25 |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | GLC Growth Fund | 2026-06-25 |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | Carnelian Bespoke Portfolio | 2026-07-10 |
+| V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
+| V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
+| 360 ONE Private Wealth | CRN37702 | Ajay Jaisinghani | — (issued per CRN, not per mandate) | 2026-06-30 |
+| 360 ONE Private Wealth | CRN60117 | Bharat Jaisinghani | — | 2026-06-30 |
 
-All five are PMS mandates. **There are no 360 ONE statements in this drop** — the
-extractor, the precedence block and two golden cases for it are retained, and the
-golden test reports those cases BLOCKED rather than passing or failing them.
+Seven are PMS mandates on one reporting system; the two 360 ONE accounts are
+Distribution engagements holding a single AIF each.
+
+**One holding is reported under two members, and is counted once.** 360 ONE
+Special Opportunities Fund Series 8 Class A3 appears with byte-identical figures
+under CRN37702 and CRN60117 — ₹1,45,80,412.51 each. Both rows are carried, each
+naming the other through `alsoReportedUnder`; the consolidated total counts the
+`dedupeGroup` once. This is check (c) firing on a real case for the first time,
+and it is what the policy in §4c was written for.
+
+**Twelve issuers are present; four have a reader.** The rest are named in the
+extraction report's coverage section with the reason, and contribute NOTHING to
+the book — no partial figures, no estimates:
+
+| Issuer | Documents | What it is | Status |
+| --- | ---: | --- | --- |
+| Goldstandard / Green Lantern / Carnelian / V.E.C Assago | 74 | PMS statement sets on one reporting system | read |
+| 360 ONE Private Wealth | 4 | client-level PORTFOLIO ANALYSIS REPORT | read |
+| 360 ONE Private Wealth | 5 | distribution letters, statements of earnings | **no reader** |
+| SVAN Investment Managers LLP | 4 | SEBI monthly PMS investor report | **no reader** |
+| Sanshi Fund | 5 | Category-III AIF monthly account statements | **no reader** |
+| Transition Venture Capital | 2 | AIF capital-account statements | **no reader** |
+| Molecule Ventures LLP | 1 | PMS fact sheet (market value only, no quantity) | **no reader** |
+| LKP Securities | 2 | depository holding + transaction statement | **no reader** |
+| Aditya Birla Sun Life / Kotak / HDFC / Mirae Asset MF | 5 | mutual-fund folio statements | **no reader** |
+| Green Lantern Capital LLP | 1 | contract note | **no reader** |
+
+**The mutual-fund folios belong to a DIFFERENT LEGAL ENTITY.** All five are held
+by `HOPE INDIA TRUST` (PAN AABTH4894A), not by a Jaisinghani individual. They are
+not a gap in the family's book; they are a book this drop does not otherwise
+describe, and folding them in would be a decision about whose assets these are.
+
+**Two printed names resolve to no canonical owner** and are reported, never
+invented: `AARTI AJAY JAISINGHANI` and `BHARAT AJAY JAISINGHANI`, both on Sanshi
+Fund statements. The second is NOT assumed to be `bharat-jaisinghani`: the
+registry's initials rule reads `Bharat Thakurdas` and `Bharat T` as one person
+and `Bharat Ajay` as a different one, which is exactly the protection it exists
+for. Adding either is a decision about the family, not a parsing rule.
+
+### Encrypted statements — `GLOW_PDF_PASSWORDS`
+
+Six of the 105 PDFs are encrypted. The passwords are **never committed**; they
+are read from the environment:
+
+```
+GLOW_PDF_PASSWORDS="one,two,three" npm run extract
+```
+
+`passwordsFromEnv()` in `lib/layout.mjs` supplies the list and every attempt is
+tried in order per file, because it is not one password — three different ones
+open six files across three issuers, and which opens which is not printed
+anywhere reliable (the one document that names a Kotak password names one that
+does not open it). The archive records THAT a document was encrypted and which
+list entry opened it, **by position, never the value**.
+
+Two things about this are worth stating plainly rather than leaving implicit:
+
+- These passwords are PANs and a SEBI registration number, so they are
+  personally identifying and cannot live in a tracked file as configuration.
+- They nonetheless appear in `public/audit/*/pages.json`, because **the
+  statements print them on the page** and that file is the faithful text record.
+  Removing them would break provenance for no security gain: `source/` holds the
+  encrypted PDFs themselves in the same repository.
+
+`extractLayout` hands pdfjs a COPY of the bytes per attempt. pdfjs takes
+ownership of the buffer it is given and detaches it, so without the copy the
+second password is tried against zero bytes and fails with a parse error that
+says nothing about passwords.
 
 ### 1. `securityKey`, not ISIN, is the join key
 
 These providers print a security **name and nothing else** — no ISIN, no ticker,
-on any of the 51 statements. A model that requires an ISIN to identify a security
+on any of the PMS statements. A model that requires an ISIN to identify a security
 cannot represent this book at all.
 
 So `Position.securityKey` — a slug of the normalised security name
@@ -171,7 +241,7 @@ The printed figures are kept in `printed.*` as a **CHECK, not a source**. Every
 delta lands in the extraction report's section (a2).
 
 **The one income-inclusive rule, verified exactly.** Across all five appraisals,
-143 of 143 rows satisfy
+every appraisal row satisfies
 
 ```
 printed %Assets = (row market value + row accrued income) / (printed total, itself income-inclusive)
@@ -259,7 +329,7 @@ a decision someone makes, not an accident of parse order.
 
 ### Stage 2 — extraction (`npm run extract`)
 
-**PAGE ROTATION FIRST.** 29 of the 51 statements are `/Rotate 90` pages — every
+**PAGE ROTATION FIRST.** Most of these statements are `/Rotate 90` pages — every
 transaction statement, bank book, capital register, capital gain, dividend,
 corporate benefits, expense statement and CURRENT PORTFOLIO. On such a page the
 glyph transform is `[0, s, -s, 0, tx, ty]`, so `transform[4]` runs DOWN the
@@ -342,7 +412,7 @@ Which report is authoritative for which fact, per provider. Not a default:
 "whichever file we parsed last wins" produces a different book on every run.
 The reconciler reports disagreements; precedence decides what is used.
 
-For all three PMS managers — who share one reporting system and therefore one
+For all four PMS managers — who share one reporting system and therefore one
 precedence block — **PortfolioAppraisal is the clean basis**: its market value
 equals price × quantity exactly. CurrentPortfolio folds accrued income into
 market value on some rows but not others (Sundaram Finance yes, Sonata Software
@@ -379,15 +449,22 @@ product:
   named. Also does not block, because it is understood rather than merely small.
 - `material` — anything else. Reported per row, and it blocks the golden test.
 
-**As of this calibration there are zero material deltas anywhere**: 30 row-sum
-checks, 177 derived-vs-printed, 900 dated-table row checks, 3 cross-report.
+**As of this calibration there are zero material deltas anywhere**: 54 row-sum
+checks, 210 derived-vs-printed, 972 dated-table row checks, 5 cross-report.
 
-Check (c) exists for a real case: 360 ONE Special Opportunities Fund Series 8
-Class A3 appears with byte-identical figures under two family members. Summing
-both double-counts ~1.46 Cr. Deciding which statement owns the position is a
-judgement about the family's affairs, not a parsing rule. (No 360 ONE statement
-is in the current drop, so the check finds nothing — that is an absence of input,
-not a clean bill of health.)
+Check (c) exists for a real case, and this drop contains it: 360 ONE Special
+Opportunities Fund Series 8 Class A3 appears with byte-identical figures under
+CRN37702 and CRN60117. Summing both double-counts ₹1,45,80,412.51. Deciding which
+statement owns the position is a judgement about the family's affairs, not a
+parsing rule, so both rows are carried and the consolidated total counts the
+group once.
+
+**The tags must reach disk.** `applyDedupePolicy` runs inside `reconcile()` and
+writes `dedupeGroup` / `alsoReportedUnder` onto the in-memory holdings.
+`extract.mjs` therefore reconciles BEFORE `writeArchive` — it used to do the
+opposite, which froze untagged rows to disk and left the tag existing only for
+the length of one function call. That was invisible for as long as no drop
+contained a duplicate. The first one that did was ₹1.46 Cr counted twice.
 
 ### Stage 4 — tests (`npm run test:ingest`)
 
@@ -448,7 +525,7 @@ written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is
 | --- | --- | --- |
 | `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | a monthly / quarterly valuation statement |
 | `unrealisedST` / `unrealisedLT`, `stCostBasis`, `ltCostBasis`, `daysToLT` | needs per-lot purchase dates; the CAPITAL REGISTER is a capital-account ledger, not a lot register | a holding statement with lot-level acquisition dates |
-| `privateMarkets` | all five accounts are listed-equity PMS mandates | a private-markets statement |
+| `privateMarkets` | the readable accounts are listed-equity PMS mandates and one AIF unit; the AIF and venture statements in this drop have no reader | a reader for the Sanshi Fund / Transition Venture capital-account statements |
 
 **Cash flows are checked, not assumed.** The capital-register total is compared
 against the performance summary's own Net Capital In/Out over the same window —
@@ -498,7 +575,7 @@ bonus. `dividendReceived` on a position is cash only; non-cash actions live in
 
 The book baked into `glowData.ts` is a POSITION snapshot. The dated record —
 every buy and sell, every capital-gain lot, every dividend — stays in
-`public/audit/` and is fetched by the browser: it is 51 documents, it is already
+`public/audit/` and is fetched by the browser: it is 103 documents, it is already
 gated by the edge password check, and inlining it would put megabytes of
 transaction tape into the JS bundle for pages that may never be opened.
 
@@ -517,7 +594,7 @@ Three things it deliberately does not do:
   book supports are per-ACCOUNT, over external capital movements, on
   `/performance`.
 - **No realised gain where no capital gain statement covers the account.** Two of
-  five accounts issue none. Their sells are real; what they realised was never
+  nine accounts issue none. Their sells are real; what they realised was never
   reported, so the cell is `—`.
 - **No false diagnosis on failure.** When the archive doesn't respond the page
   says the archive didn't respond. It previously told the reader their session
@@ -539,21 +616,21 @@ statement prints `CRIZAC LIMITED-INE0S4R01014`, so the lot keys
 and the realised column showed `—` against every Carnelian sell while the gain
 sat three folders away. `joinKey()` recognises a trailing ISIN by its exact shape
 and re-normalises the remainder through the same `securityKeyOf`, lifting the
-join from 17 of 77 lots to 58. **This is a presentation-layer join, not a repair:**
+join from a minority of lots to 63 of 82. **This is a presentation-layer join, not a repair:**
 the extractor should stop carrying an identifier inside a name field, and until
 it does the archive keeps the key exactly as derived.
 
 ### Two realised totals, and which one is canonical
 
 The capital gain statements' own total is the **printed primitive and is
-canonical**: −₹1,93,11,003 across 77 lots. The roll-up that attributes each lot
+canonical**: −₹49,65,684.69 across 82 lots. The roll-up that attributes each lot
 to the sale that produced it on the transaction tape is a **cross-check**, and it
 is more negative:
 
 ```
-statement (77 lots)   −1,93,11,003     ← canonical, what Capital Gains shows
-attributed (58 lots)  −2,01,76,689     ← cross-check, on Ledger Insights
-unattributed (19)         +8,65,686
+statement (82 lots)     −49,65,684.69   ← canonical, what Capital Gains shows
+attributed (63 lots)    −58,31,370.28   ← cross-check, on Ledger Insights
+unattributed (19 lots)   +8,65,685.59
 ```
 
 The 19 lots the tape never carries are **liquid mutual fund redemptions** — 18
@@ -562,24 +639,29 @@ these managers run beside the equity mandate. The equity transaction statement
 does not print them, so there is no sale row to hang them on. They are net GAINS,
 which is the entire reason the attributed subtotal reads worse: removing gains
 from a loss makes the remainder look bigger. **Unjoined never means dropped** —
-all 77 lots count in the canonical figure. The three lines reconcile exactly, and
+all 82 lots count in the canonical figure. The three lines reconcile exactly, and
 Ledger Insights shows them as three lines for that reason.
 
 ### XIRR: only accounts that can be measured, on one terminal date
 
 Account 510854 publishes no FY performance summary, so its flows carry no opening
 portfolio value. Pooling every account anyway put its ₹5.92 Cr of market value
-into the terminal flow with no opening stake behind it, and returned **174.3%**
-p.a. against **109.7%** for the four accounts that can be measured — a 64.6 pp
+into the terminal flow with no opening stake behind it, and — measured on the
+five-account corpus this rule was written against — returned **174.3%** p.a.
+against **109.7%** for the accounts that could be measured: a 64.6 pp
 overstatement, and exactly the failure the presentation rule names.
 
+Three accounts are now excluded on that test: 510854, and both 360 ONE CRNs,
+whose client-level report carries no flow block at all. The rate covers 6 of 9
+accounts and ₹93.4 Cr of the book's ₹100.8 Cr, and the page says so.
+
 So a consolidated XIRR covers only accounts carrying an opening value, **on both
-sides** (flows AND terminal market value), and the excluded account is named on
+sides** (flows AND terminal market value), and every excluded account is named on
 screen. Both `/cio` and `/performance` close against `portfolio.asOf`, not
 `new Date()` — closing against today on one page and the report date on the other
 gave the same measurement two values. The window is one quarter here, so every
 rate annualises about three months; the pages say so, because an unlabelled
-+109.7% reads as a sustained yearly rate.
++135.8% reads as a sustained yearly rate.
 
 ## Stage 7 — the live layer
 
@@ -593,11 +675,11 @@ book prints an ISIN in its holdings column, so `nseSymbols.json` — which
 `npm run build-symbols` resolves by NAME for exactly that reason — must be read
 on the same key. `quotes.ts` previously exported `symbolForIsin(p.isin)` against
 that map: two identifier spaces, one dictionary, no error anywhere, and a live
-layer that resolved nothing for 143 of 143 positions while looking wired up.
+layer that resolved nothing for any position while looking wired up.
 
-Coverage is 71 of 74 distinct securities, 136 of 143 position rows. The three
-that do not resolve are `Cash`, `Cash — receivable/payable` and the Axis Liquid
-Fund sweep: no NSE listing, so they can never go live. They are counted as
+Coverage is 88 of 89 listed securities. What does not resolve is `Cash`,
+`Cash — receivable/payable`, the Axis Liquid Fund sweep and the 360 ONE AIF: no
+NSE listing, so they can never go live. They are counted as
 `unpriceable`, separately from `notLive`, because folding them together reports a
 permanent feed shortfall no token would ever close.
 
@@ -625,7 +707,7 @@ permanent feed shortfall no token would ever close.
 With no `MUNS_TOKEN` and no network — how it runs locally, and how it will run
 before the token is set — every page renders on statement marks, the pill reads
 `STATEMENT · as of 2026-07-10`, and consolidated NAV is exactly
-**₹83,50,63,590.78**. No blank tiles, no zeros, no unresolved spinners, and no
+**₹1,00,76,09,712.12**. No blank tiles, no zeros, no unresolved spinners, and no
 "session expired" wording for what is a missing upstream.
 
 ## Conventions
@@ -667,6 +749,14 @@ violate any of them.**
 - Identity is `securityKey`, derived from the CLEAN name. If a join fails, fix
   the EXTRACTOR — never re-derive a key in the presentation layer, which hides
   the defect from the reconciler.
+- **A consolidated figure counts each `dedupeGroup` ONCE; a per-account or
+  per-owner figure does not.** `usePortfolio().consolidated` is the deduped set;
+  `portfolio.positions` carries both rows. Getting this backwards fails in both
+  directions and both were live in this repo: a raw sum put ₹1.46 Cr into the
+  consolidated NAV twice and made an allocation weight read 101.4%, and deduping
+  a PER-ACCOUNT breakdown emptied Bharat's 360 ONE row to `0 · ₹0 · ₹0` for an
+  account holding ₹1.46 Cr. The helper existed in `analytics.ts` and was wired
+  into nothing for as long as no drop contained a duplicate.
 - A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
   builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
   composes the docKey. A consolidated figure spans five documents and names none:

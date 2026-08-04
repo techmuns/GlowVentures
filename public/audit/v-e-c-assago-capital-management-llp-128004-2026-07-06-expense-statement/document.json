@@ -1,0 +1,140 @@
+{
+ "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement",
+ "provider": "V.E.C Assago Capital Management LLP",
+ "accountNo": "128004",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "VECBES0003",
+ "owner": "ANKITA BHARAT JAISINGHANI",
+ "ownerId": "ankita-jaisinghani",
+ "familyGroup": null,
+ "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-07-06",
+ "inceptionDate": null,
+ "reportType": "expense-statement",
+ "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_Expensestmt546OT.pdf",
+ "pages": 3,
+ "status": "ok",
+ "warnings": [],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [
+  {
+   "date": "2026-04-30",
+   "settlementDate": "2026-06-12",
+   "detail": "Management Fees",
+   "notes": "612321",
+   "amount": 61006.48,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-05-20",
+   "settlementDate": "2026-05-21",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 5050,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-05-25",
+   "settlementDate": "2026-05-25",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 5000,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": "2026-06-12",
+   "detail": "Management Fees",
+   "notes": "623391",
+   "amount": 72262.86,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-06-02",
+   "settlementDate": "2026-06-03",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 3522.52,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-06-15",
+   "settlementDate": "2026-06-15",
+   "detail": "Sec. Tran. Tax",
+   "notes": "Generated",
+   "amount": 2000,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": null,
+   "detail": "Custody Charges",
+   "notes": "Custody Charges For April 2026",
+   "amount": 1158.7,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-04-30",
+   "settlementDate": null,
+   "detail": "Fund Accountant Fees / Other Expenses",
+   "notes": "Fund Accountant Fees April 2026",
+   "amount": 1129.74,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": null,
+   "detail": "Custody Charges",
+   "notes": "Custody Charges For May 2026",
+   "amount": 1148.78,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-05-31",
+   "settlementDate": null,
+   "detail": "Fund Accountant Fees / Other Expenses",
+   "notes": "Fund Accountant Fees May 2026",
+   "amount": 1156.21,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": null,
+   "detail": "Custody Charges",
+   "notes": "Custody Charges For June 2026",
+   "amount": 1198.09,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": null,
+   "detail": "Fund Accountant Fees / Other Expenses",
+   "notes": "Fund Accountant Fees June 2026",
+   "amount": 1243.36,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  },
+  {
+   "date": "2026-06-30",
+   "settlementDate": null,
+   "detail": "Management Fees",
+   "notes": "625222",
+   "amount": 77709.75,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
+  }
+ ],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-06",
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

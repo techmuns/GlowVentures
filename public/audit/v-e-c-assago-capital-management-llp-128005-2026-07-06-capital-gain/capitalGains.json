@@ -1,0 +1,120 @@
+{
+ "name": "capital-gains",
+ "rows": [
+  [
+   "quantity",
+   "saleRate",
+   "purchaseDate",
+   "purchaseRate",
+   "price31Jan",
+   "purchaseAmt",
+   "daysHeld",
+   "effectiveLT",
+   "security",
+   "saleDate",
+   "saleAmount",
+   "effectiveCost",
+   "shortTerm",
+   "longTerm"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "NSDL-IN300484-30506328"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "20/05/26",
+   "15,853",
+   "406.6792",
+   "6,447,085.36",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "2,058,156.94",
+   "2,058,156.94",
+   "271",
+   "4,388,928.41",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "02/06/26",
+   "8,000",
+   "586.6146",
+   "4,692,916.80",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "1,038,620.80",
+   "1,038,620.80",
+   "284",
+   "3,654,296.00",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Total",
+   "11,140,002.16",
+   "3,096,777.74",
+   "3,096,777.74",
+   "8,043,224.41",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "This is a computer generated statement and does not require signature."
+  ],
+  [
+   "07/07/2026",
+   "1"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "Capital Gain/Loss Summary (Based on Effective Gain / Indexation)"
+  ],
+  [
+   "01/04-15/06",
+   "16/06-15/09",
+   "16/09-15/12",
+   "16/12-15/03",
+   "16/03-31/03",
+   "Total"
+  ],
+  [
+   "ST Gain/Loss",
+   "8,043,224.41",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "8,043,224.41"
+  ],
+  [
+   "LT Gain/Loss",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "This is a computer generated statement and does not require signature."
+  ],
+  [
+   "07/07/2026",
+   "2"
+  ]
+ ]
+}

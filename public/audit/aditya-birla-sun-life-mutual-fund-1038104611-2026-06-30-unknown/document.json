@@ -1,0 +1,43 @@
+{
+ "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+ "provider": "Aditya Birla Sun Life Mutual Fund",
+ "accountNo": "1038104611",
+ "ownerSource": null,
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "unknown",
+ "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+ "pages": 2,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"Aditya Birla Sun Life Mutual Fund\" / reportType unknown"
+  },
+  {
+   "code": "pdf-encrypted",
+   "detail": "opened with GLOW_PDF_PASSWORDS entry #2"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

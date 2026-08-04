@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum } from "@/lib/analytics";
+import { sum} from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, DASH } from "@/components/Absent";
@@ -49,11 +49,15 @@ const acctLabel = (a: { owner?: string | null; provider: string; accountNo: stri
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function ReturnAnalysis() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
   const model = useMemo(() => {
     if (!portfolio) return null;
-    const priced = portfolio.positions.filter((x) => !x.costUnavailable && x.costBasis > 0);
+    // CONSOLIDATED: every figure on this page is book-wide — a return
+    // distribution, a contribution decomposition, a spread between managers —
+    // so a holding reported under two members counts once. Without this the
+    // distribution puts the same 1.46 Cr in the same band twice.
+    const priced = consolidated.filter((x) => !x.costUnavailable && x.costBasis > 0);
     const cost = sum(priced.map((x) => x.costBasis));
     const pnl = sum(priced.map((x) => x.unrealizedPnL));
 
@@ -87,8 +91,15 @@ export function ReturnAnalysis() {
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
+    // PER ACCOUNT, so this reads the full position set, NOT the deduped one.
+    // Deduping here emptied Bharat's 360 ONE account entirely — his only holding
+    // is the AIF also reported under Ajay's CRN, and dedupe keeps whichever row
+    // comes first. The row then rendered `0  ₹0  ₹0`, which says the account
+    // measured nothing when it holds ₹1.46 Cr. Book-wide figures above dedupe;
+    // an account's own row shows its own statement.
+    const pricedByAccount = portfolio.positions.filter((x) => !x.costUnavailable && x.costBasis > 0);
     const byAccount = portfolio.accounts.map((a) => {
-      const rows = priced.filter((x) => x.accountId === a.accountId);
+      const rows = pricedByAccount.filter((x) => x.accountId === a.accountId);
       const c = sum(rows.map((x) => x.costBasis));
       const pl = sum(rows.map((x) => x.unrealizedPnL));
       const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
@@ -152,7 +163,7 @@ export function ReturnAnalysis() {
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
             : `${m.spreadEnds![0].account.provider.split(" ")[0]} to ${m.spreadEnds![1].account.provider.split(" ")[0]}`}
-          hint={m.unrated.length ? `Account ${m.unrated.join(", ")} has no cost basis and is excluded rather than counted as zero.` : undefined}
+          hint={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
         <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}

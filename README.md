@@ -19,7 +19,8 @@ on every page back to the document it came from.
 
 ## The book
 
-Three portfolio managers, five accounts, two family members, 51 PDFs.
+Twelve issuers, nine accounts in the book, three family members, 28 files
+expanding to 105 PDFs (103 distinct documents).
 
 | Provider | Account | Owner | Strategy | Statement date |
 | --- | --- | --- | --- | --- |
@@ -28,14 +29,44 @@ Three portfolio managers, five accounts, two family members, 51 PDFs.
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | GLC Growth Fund | 2026-06-25 |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | GLC Growth Fund | 2026-06-25 |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | Carnelian Bespoke Portfolio | 2026-07-10 |
+| V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
+| V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
+| 360 ONE Private Wealth | CRN37702 | Ajay Jaisinghani | — (issued per CRN) | 2026-06-30 |
+| 360 ONE Private Wealth | CRN60117 | Bharat Jaisinghani | — | 2026-06-30 |
 
-All five are PMS mandates in listed Indian equity. **143 positions, 74 distinct
-securities, consolidated market value ₹83,50,63,590.78 as of 2026-07-10.**
+Seven are PMS mandates in listed Indian equity; the two 360 ONE accounts are
+Distribution engagements holding one AIF each. **180 position rows, 89 distinct
+securities, consolidated market value ₹1,00,76,09,712.12 as of 2026-07-10.**
 
-The accounts are dated individually — Green Lantern closes 15 days before the
-others — so any consolidated total is a blend of report dates. The cockpit never
-hides that: a "2 accounts behind" pill appears wherever a consolidated figure is
-shown, naming which and by how long.
+One holding — 360 ONE Special Opportunities Fund Series 8 Class A3 — is reported
+under BOTH 360 ONE accounts with identical figures. Both rows are carried and
+each names the other; the consolidated total counts it once, which is why 180
+rows contribute 179 positions to the NAV.
+
+The accounts are dated individually — Green Lantern closes 15 days before
+Goldstandard and Carnelian — so any consolidated total is a blend of report
+dates. The cockpit never hides that: an "N accounts behind" pill appears wherever
+a consolidated figure is shown, naming which and by how long.
+
+**Twelve issuers are in the drop; four have a reader.** SVAN's SEBI monthly
+report, Sanshi Fund's and Transition Venture's AIF statements, Molecule's fact
+sheet, LKP's depository statements, four mutual-fund folios and a handful of
+360 ONE distribution letters have none. They are named with their reason in
+`docs/EXTRACTION-REPORT.md` and contribute **nothing** to the book — not a
+partial figure, not an estimate. The mutual-fund folios belong to a different
+legal entity (`HOPE INDIA TRUST`), not to a family member.
+
+### Encrypted statements
+
+Six PDFs are encrypted. Supply the passwords through the environment — they are
+never committed:
+
+```bash
+GLOW_PDF_PASSWORDS="one,two,three" npm run extract
+```
+
+Each is tried in order per file; the archive records that a document was
+encrypted and which list entry opened it, by position and never by value.
 
 ---
 
@@ -175,10 +206,10 @@ each Function caches at the edge with per-ticker freshness inside one bundled
 entry — per-ticker cache entries would spend the whole 50-subrequest budget on
 cache traffic before the first fetch.
 
-**Coverage: 71 of 74 securities resolve to an NSE symbol** (136 of 143 position
-rows). The three that don't are cash, a receivable and the Axis Liquid Fund
-sweep — none has a listing, so they are reported as *unpriceable* rather than as
-a feed shortfall that no token could close. Announcements and insider trades are
+**Coverage: 88 of 89 listed securities resolve to an NSE symbol.** What does not
+resolve is cash, a receivable, the Axis Liquid Fund sweep and the 360 ONE AIF —
+none has an NSE listing, so they are reported as *unpriceable* rather than as a
+feed shortfall that no token could close. Announcements and insider trades are
 keyed by ticker, so they cover only names that resolve to one; unlisted holdings
 are simply absent from those feeds rather than shown as having none.
 
@@ -207,7 +238,7 @@ PDF.
 Everything renders on statement marks with an honest "not live" indicator. No
 blank tiles, no zeros, no spinner that never resolves, and no "session expired"
 wording for what is a missing upstream. Consolidated NAV is exactly
-₹83,50,63,590.78.
+₹1,00,76,09,712.12.
 
 ### Testing the live layer locally
 
@@ -272,7 +303,7 @@ its reason, and each would be filled by a specific statement.
 | **Per-entity YTD** | Needs a per-entity NAV on 1 April | A dated per-entity valuation |
 | **Per-security XIRR** | Transaction statements cover the current period only; a rate over a partial history is a real number for the wrong window | A full transaction history from first purchase |
 | **Consolidated time-weighted return** | Three managers publish different periods, against different benchmarks, from different inception dates | Not a document problem — averaging them would be a category error |
-| **Private markets** | All five accounts are listed-equity PMS mandates | A private-markets statement |
+| **Private markets** | The readable accounts are listed-equity mandates plus one AIF unit; the AIF and venture statements in this drop have no reader | A reader for the Sanshi Fund / Transition Venture capital-account statements |
 | **Live prices for 3 securities** | Cash, a receivable and a liquid-fund sweep have no NSE listing | An AMFI NAV source for the fund |
 
 The **as-of skew** is not a limitation to be fixed but a fact to be shown: Green
@@ -310,7 +341,7 @@ rationale in [CLAUDE.md](./CLAUDE.md); in short:
 | Allocation | Family & Entities | By owning entity, and who custodies each | LIVE |
 | Allocation | Sector Composition | Sector mix with per-sector drill-down | LIVE |
 | Tax | Capital Gains & Tax | Realised by account and asset class, loss harvesting | STATEMENT |
-| Private Markets | Private Markets | Empty in this drop — all five accounts are listed-equity mandates | — |
+| Private Markets | Private Markets | Empty in this drop — the readable accounts are listed-equity mandates and one AIF unit | — |
 | Private Markets | Data Bank | Document repository, empty until a private holding exists | — |
 | Analytics | NAV & Performance | Managers' time-weighted returns, value bridge, money-weighted XIRR | LIVE + STATEMENT |
 | Analytics | Return & Drawdown | Return distribution, contribution by sector and name | LIVE |

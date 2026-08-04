@@ -111,6 +111,33 @@ export const SECTOR_MAP = {
   "Cash and Equivalent": "Cash",
   "Mutual Fund": "Cash",
   "Dividend / Interest receivable": "Cash",
+
+  // ── V.E.C Assago: the NSE MACRO-SECTOR taxonomy ──
+  //
+  // A fourth vocabulary, and a coarser one. The other three managers print an
+  // INDUSTRY ("Housing Finance Company", "Pharmaceuticals"); V.E.C prints the
+  // exchange's eleven macro-sectors, so one string covers what the others split
+  // several ways. That is not a reason to leave them unclassified — each maps to
+  // exactly one GICS sector — but it is why they are listed apart: the same word
+  // means something narrower under the headings above.
+  //
+  // Two need a decision rather than a lookup, and it is recorded here:
+  //   • "Services" is NSE's catch-all for transport, logistics and commercial
+  //     services. The holding under it in this drop is Gateway Distriparks, a
+  //     container-freight operator — Industrials under GICS, which is where the
+  //     other three managers' logistics names already sit.
+  //   • "Power" is generation and transmission, which GICS calls Utilities.
+  "Financial Services": "Financials",
+  "Healthcare": "Health Care",
+  "Automobile and Auto Components": "Consumer Discretionary",
+  "Consumer Durables": "Consumer Discretionary",
+  "Consumer Services": "Consumer Discretionary",
+  "Fast Moving Consumer Goods": "Consumer Staples",
+  "Capital Goods": "Industrials",
+  "Services": "Industrials",
+  "Construction Materials": "Materials",
+  "Telecommunication": "Communication Services",
+  "Power": "Utilities",
 };
 
 /**

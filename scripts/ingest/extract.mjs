@@ -16,9 +16,10 @@
 //     that could not be parsed is recorded as failed with its reason, and both
 //     end up in docs/EXTRACTION-REPORT.md rather than being smoothed away.
 import fs from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractLayout } from "./lib/layout.mjs";
+import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
 import { classify } from "./lib/classify.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
@@ -108,12 +109,20 @@ function extractOne(file, grid) {
   if (grid.error) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "pdf-read-failed", detail: grid.error }] });
   }
+  // Report THAT a document was encrypted and which supplied password opened it —
+  // by position, never the secret. A reader checking this archive against the
+  // PDFs needs to know which files they will be prompted for.
+  const openedWarnings = grid.encrypted
+    ? [{ code: "pdf-encrypted", detail: `opened with GLOW_PDF_PASSWORDS entry #${grid.usedPassword}` }]
+    : [];
   const extractor = meta.provider ? EXTRACTORS[meta.provider] : null;
   if (!extractor) {
     return makeDocument({
       ...base,
       status: "failed",
-      warnings: [{ code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }],
+      // Reason first, provenance second: the report prints the FIRST warning as
+      // the cause, and "opened with password #2" is not why a document failed.
+      warnings: [{ code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }, ...openedWarnings],
     });
   }
 
@@ -121,10 +130,10 @@ function extractOne(file, grid) {
   try {
     result = extractor.extract({ grid, meta: { ...meta, docKey, fileName } });
   } catch (e) {
-    return makeDocument({ ...base, status: "failed", warnings: [{ code: "extractor-threw", detail: e?.message ?? String(e) }] });
+    return makeDocument({ ...base, status: "failed", warnings: [{ code: "extractor-threw", detail: e?.message ?? String(e) }, ...openedWarnings] });
   }
 
-  const warnings = [...(result.warnings ?? [])];
+  const warnings = [...(result.warnings ?? []), ...openedWarnings];
 
   // Resolve the owner from the name the document ENDS UP with, not the one the
   // classifier guessed from flat text. The extractor reads the header off the
@@ -346,11 +355,37 @@ async function main() {
   walk(SOURCE_DIR, (f) => files.push(f));
   files.sort((a, b) => rel(a).localeCompare(rel(b)));
 
+  // The SAME FILE, delivered twice. A drop assembled by hand routinely carries
+  // `X (1).pdf` beside `X.pdf` — this one carries two VEC bank books and two
+  // VEC capital registers that are byte-identical. Extracting both produces two
+  // documents whose only difference is a `-2` on the docKey, and every cash flow
+  // in them is then counted twice in the book. Identical bytes are ONE document:
+  // the first path wins and the rest are recorded as copies of it, so the drop's
+  // redundancy is visible in the report instead of silently doubling a total.
+  const duplicateSources = [];
+  const byHash = new Map();
+  const unique = [];
+  for (const f of files) {
+    const h = crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+    const first = byHash.get(h);
+    if (first) { duplicateSources.push({ path: rel(f), sameAs: rel(first), sha256: h }); continue; }
+    byHash.set(h, f);
+    unique.push(f);
+  }
+  if (duplicateSources.length) {
+    console.log(`  ${duplicateSources.length} byte-identical duplicate file(s) in source/ — extracted once each.`);
+    for (const d of duplicateSources) console.log(`     ${d.path}  ==  ${d.sameAs}`);
+  }
+
+  // Never committed — see passwordsFromEnv(). Six statements in this drop are
+  // encrypted with an identifier that belongs to the family.
+  const passwords = passwordsFromEnv();
+
   const docs = [];
   const grids = new Map();
-  for (const file of files) {
+  for (const file of unique) {
     process.stdout.write(`  reading ${rel(file)} … `);
-    const grid = await extractLayout(new Uint8Array(fs.readFileSync(file)));
+    const grid = await extractLayout(new Uint8Array(fs.readFileSync(file)), { passwords });
     grids.set(rel(file), grid);
     const doc = extractOne(file, grid);
     docs.push(doc);
@@ -360,8 +395,15 @@ async function main() {
   backfillAccountNumbers(docs);
   backfillOwners(docs);
   ensureUniqueDocKeys(docs);
+  // RECONCILE BEFORE WRITING. The duplicate check (c) does more than report — it
+  // TAGS each matching row with its `dedupeGroup` and `alsoReportedUnder`, and
+  // those tags are what stop a consolidated total counting the same position
+  // twice. Writing the archive first froze the untagged rows to disk, so the tag
+  // existed only in memory and the book never saw it. That was invisible while
+  // no drop contained a duplicate; the moment one did — the 360 ONE AIF holding
+  // reported identically under two family members — it was 1.46 Cr counted twice.
+  const report = reconcile(docs, { pdfCount: unique.length, symbolMap: loadSymbolMap(), duplicateSources });
   const manifest = writeArchive(docs, grids);
-  const report = reconcile(docs, { pdfCount: files.length, symbolMap: loadSymbolMap() });
   writeReports(report, DOCS_DIR);
 
   console.log("");

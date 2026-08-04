@@ -1,0 +1,39 @@
+{
+ "docKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+ "provider": "Molecule Ventures LLP",
+ "accountNo": "7810404",
+ "ownerSource": null,
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "transaction-statement",
+ "sourcePath": "source/Molecule_June_2026_392.pdf",
+ "pages": 8,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"Molecule Ventures LLP\" / reportType transaction-statement"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

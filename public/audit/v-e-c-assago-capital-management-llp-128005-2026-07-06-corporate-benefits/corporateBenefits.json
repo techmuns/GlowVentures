@@ -1,0 +1,28 @@
+{
+ "name": "corporate-benefits",
+ "rows": [
+  [
+   "type",
+   "security",
+   "exDate",
+   "entitlement",
+   "quantity",
+   "amount"
+  ],
+  [
+   "Dividend",
+   "Navneet Education Ltd",
+   "03/06/2026",
+   "Dividend @ 1.5",
+   "16,691",
+   "25,036.50"
+  ],
+  [
+   "25,036.50"
+  ],
+  [
+   "07/07/2026",
+   "1"
+  ]
+ ]
+}

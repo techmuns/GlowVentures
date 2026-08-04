@@ -239,11 +239,19 @@ const GOLDEN = [
         marketValue: 14580412.51,
         unrealized: 4713765.51,
         pctGainLoss: 47.77,
-        realized: 2037517.00,
+        // CORRECTED once the statements arrived. This case was BLOCKED — written
+        // from the report's documented structure while no 360 ONE PDF was in the
+        // drop — and it put 20,37,517 under `realized`. The statement prints that
+        // figure in its own column headed "Gain/Loss : Distributed Income *";
+        // the column headed "Realized *" prints 0.00, because no units have been
+        // redeemed. Both are now checked, on the report's own arithmetic:
+        //   unrealized + distributed income + realized = Gain/Loss Total
+        //   4,713,765.51 + 2,037,517.00 + 0.00 = 6,751,282.51
+        distributedIncome: 2037517.00,
+        realized: 0,
         positionIrrPct: 10.86,
         benchmarkIrrPct: 11.93,
         priceAsOn: "2026-06-30",
-        // total gain 6,751,282.51 = unrealized + realized; checked below.
         derived: { totalGain: 6751282.51 },
       },
     ],
@@ -432,8 +440,12 @@ function runCase(manifest, spec) {
         field.startsWith("pct") ? PCT_TOL : MONEY_TOL);
     }
     if (want.derived?.totalGain !== undefined) {
-      const got = (h.unrealized ?? 0) + (h.realized ?? 0);
-      check(`${spec.label} · ${h.security} unrealized+realized = total gain`, got, want.derived.totalGain);
+      // The statement's own identity, all three components: 360 ONE splits
+      // Gain/Loss into Unrealized, Distributed Income and Realized, and prints
+      // their sum as Total. Adding only two of the three passed while
+      // Distributed Income was being read into the wrong field.
+      const got = (h.unrealized ?? 0) + (h.distributedIncome ?? 0) + (h.realized ?? 0);
+      check(`${spec.label} · ${h.security} unrealized+distributed+realized = total gain`, got, want.derived.totalGain);
     }
   }
 

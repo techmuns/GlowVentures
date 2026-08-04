@@ -1,0 +1,39 @@
+{
+ "docKey": "lkp-securities-unknown-2026-03-31-holdings",
+ "provider": "LKP Securities",
+ "accountNo": null,
+ "ownerSource": null,
+ "accountNoSource": null,
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-03-31",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
+ "pages": 1,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"LKP Securities\" / reportType holdings"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

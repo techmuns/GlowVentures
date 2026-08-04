@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum } from "@/lib/analytics";
+import { sum, consolidatedMarketValue } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
 import { xirrWithTerminal } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
@@ -64,7 +64,7 @@ const acctLabel = (a: { owner?: string | null; provider: string; accountNo: stri
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function Performance() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
   const p = portfolio?.positions ?? [];
   const consolidatedWeights = useMemo(() => {
@@ -76,8 +76,12 @@ export function Performance() {
 
   const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const accounts = portfolio.accounts;
-  const priced = p.filter((x) => !x.costUnavailable);
-  const listedMV = sum(p.map((x) => x.marketValue));
+  // Consolidated: counts each dedupeGroup once. `priced` is deduped too, or the
+  // embedded return is computed over a cost and a P&L that include the same
+  // holding twice — it read +17.64% against the CIO's +17.3% on the same book.
+  // The per-account figures below filter by accountId and are unaffected.
+  const priced = consolidated.filter((x) => !x.costUnavailable);
+  const listedMV = consolidatedMarketValue(p);
   const listedCost = sum(priced.map((x) => x.costBasis));
   const listedPnL = sum(priced.map((x) => x.unrealizedPnL));
   const embeddedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : 0;
@@ -178,7 +182,10 @@ export function Performance() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Listed NAV"
           value={<Auditable to={auditHref(LEDGER)} title="Sum of every holding's market value — trace to the ledger">{money(listedMV)}</Auditable>}
-          sub={`${p.length} positions across ${accounts.length} accounts`} icon={<Layers className="h-4 w-4" />} />
+          sub={p.length === consolidated.length
+            ? `${p.length} positions across ${accounts.length} accounts`
+            : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once`}
+          icon={<Layers className="h-4 w-4" />} />
 
         <StatTile label="Embedded return"
           value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money, auditHref(LEDGER))}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
@@ -194,7 +201,7 @@ export function Performance() {
             value={<span className={consolidatedXirr >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedXirr, { sign: true, decimals: 1 })}</span>}
             sub={<>p.a. · {windowNote}</>}
             hint={xirrMissing.length
-              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. Account ${xirrMissing.join(", ")} is excluded on both sides — counting its value without its opening stake would overstate this figure. The window is short, so the annualised rate is volatile: it is a real measurement of a quarter, not a sustained yearly rate.`
+              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure. The window is short, so the annualised rate is volatile: it is a real measurement of a quarter, not a sustained yearly rate.`
               : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}. The window is short, so the annualised rate is volatile.`}
             icon={<Percent className="h-4 w-4" />} />
         )}

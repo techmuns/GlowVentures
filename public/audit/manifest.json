@@ -9,7 +9,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "bank-book",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_BankBook178OT (2).pdf",
   "pages": 4,
   "sections": [
    "bankBook",
@@ -20,7 +20,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-bank-book",
   "label": "Goldstandard Wealth Private Limited · 100023 · bank-book",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_BankBook178OT (2).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_BankBook178OT (2).pdf",
   "sheets": [
    {
     "key": "bankBook",
@@ -46,7 +46,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "capital-register",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
   "pages": 1,
   "sections": [
    "capitalRegister",
@@ -57,7 +57,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-capital-register",
   "label": "Goldstandard Wealth Private Limited · 100023 · capital-register",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_CapitalRegister1173OT (3).pdf",
   "sheets": [
    {
     "key": "capitalRegister",
@@ -83,7 +83,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "corporate-benefits",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
   "pages": 1,
   "sections": [
    "corporateBenefits",
@@ -94,7 +94,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-corporate-benefits",
   "label": "Goldstandard Wealth Private Limited · 100023 · corporate-benefits",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_CorporateBenefitsReport1767OT.pdf",
   "sheets": [
    {
     "key": "corporateBenefits",
@@ -120,7 +120,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "holdings",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
   "pages": 3,
   "sections": [
    "currentPortfolio",
@@ -131,7 +131,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-holdings",
   "label": "Goldstandard Wealth Private Limited · 100023 · holdings",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
   "sheets": [
    {
     "key": "currentPortfolio",
@@ -157,7 +157,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "dividend-statement",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
   "pages": 3,
   "sections": [
    "dividends",
@@ -168,7 +168,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · dividend-statement",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
   "sheets": [
    {
     "key": "dividends",
@@ -194,7 +194,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "expense-statement",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_Expensestmt546OT.pdf",
   "pages": 2,
   "sections": [
    "expenses",
@@ -205,7 +205,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · expense-statement",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_Expensestmt546OT.pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_Expensestmt546OT.pdf",
   "sheets": [
    {
     "key": "expenses",
@@ -231,7 +231,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "appraisal",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
   "pages": 2,
   "sections": [
    "holdings",
@@ -242,7 +242,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
   "label": "Goldstandard Wealth Private Limited · 100023 · appraisal",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
   "sheets": [
    {
     "key": "holdings",
@@ -268,7 +268,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "fact-sheet",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
   "pages": 1,
   "sections": [
    "sectors",
@@ -279,7 +279,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet",
   "label": "Goldstandard Wealth Private Limited · 100023 · fact-sheet",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
   "sheets": [
    {
     "key": "sectors",
@@ -305,7 +305,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-benchmark",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -316,7 +316,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-benchmark",
   "label": "Goldstandard Wealth Private Limited · 100023 · performance-benchmark",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -342,7 +342,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-history",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -353,7 +353,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-history",
   "label": "Goldstandard Wealth Private Limited · 100023 · performance-history",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -379,7 +379,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-summary",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
   "pages": 1,
   "sections": [
    "pages"
@@ -389,7 +389,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-performance-summary",
   "label": "Goldstandard Wealth Private Limited · 100023 · performance-summary",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
   "sheets": [
    {
     "key": "pages",
@@ -409,7 +409,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "transaction-statement",
-  "sourcePath": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
   "pages": 2,
   "sections": [
    "transactions",
@@ -420,7 +420,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement",
   "label": "Goldstandard Wealth Private Limited · 100023 · transaction-statement",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - AJAY/G100023_100024_TransactionStatement_India94OT (3).pdf",
   "sheets": [
    {
     "key": "transactions",
@@ -446,7 +446,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "bank-book",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_BankBook178OT (2).pdf",
   "pages": 4,
   "sections": [
    "bankBook",
@@ -457,7 +457,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-bank-book",
   "label": "Goldstandard Wealth Private Limited · 100022 · bank-book",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_BankBook178OT (2).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_BankBook178OT (2).pdf",
   "sheets": [
    {
     "key": "bankBook",
@@ -483,7 +483,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "capital-register",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
   "pages": 1,
   "sections": [
    "capitalRegister",
@@ -494,7 +494,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-capital-register",
   "label": "Goldstandard Wealth Private Limited · 100022 · capital-register",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf",
   "sheets": [
    {
     "key": "capitalRegister",
@@ -520,7 +520,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "holdings",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
   "pages": 3,
   "sections": [
    "currentPortfolio",
@@ -531,7 +531,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-holdings",
   "label": "Goldstandard Wealth Private Limited · 100022 · holdings",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
   "sheets": [
    {
     "key": "currentPortfolio",
@@ -557,7 +557,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "dividend-statement",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
   "pages": 3,
   "sections": [
    "dividends",
@@ -568,7 +568,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement",
   "label": "Goldstandard Wealth Private Limited · 100022 · dividend-statement",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
   "sheets": [
    {
     "key": "dividends",
@@ -594,7 +594,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "appraisal",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
   "pages": 2,
   "sections": [
    "holdings",
@@ -605,7 +605,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
   "label": "Goldstandard Wealth Private Limited · 100022 · appraisal",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
   "sheets": [
    {
     "key": "holdings",
@@ -631,7 +631,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "fact-sheet",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
   "pages": 1,
   "sections": [
    "sectors",
@@ -642,7 +642,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet",
   "label": "Goldstandard Wealth Private Limited · 100022 · fact-sheet",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
   "sheets": [
    {
     "key": "sectors",
@@ -668,7 +668,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-benchmark",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -679,7 +679,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-benchmark",
   "label": "Goldstandard Wealth Private Limited · 100022 · performance-benchmark",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -705,7 +705,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-history",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -716,7 +716,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-history",
   "label": "Goldstandard Wealth Private Limited · 100022 · performance-history",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -742,7 +742,7 @@
   "strategy": null,
   "asOf": "2026-07-10",
   "reportType": "performance-summary",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
   "pages": 1,
   "sections": [
    "pages"
@@ -752,7 +752,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-performance-summary",
   "label": "Goldstandard Wealth Private Limited · 100022 · performance-summary",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
   "sheets": [
    {
     "key": "pages",
@@ -772,7 +772,7 @@
   "strategy": "Aristos Equity Portfolio",
   "asOf": "2026-07-10",
   "reportType": "transaction-statement",
-  "sourcePath": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
+  "sourcePath": "source/_extracted/ARISTOS - ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
   "pages": 2,
   "sections": [
    "transactions",
@@ -783,7 +783,7 @@
   "fileKey": "goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement",
   "label": "Goldstandard Wealth Private Limited · 100022 · transaction-statement",
   "fy": "2026-07-10",
-  "source": "source/_extracted/ARISTOS__ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
+  "source": "source/_extracted/ARISTOS - ANKITA/G100023_100023_TransactionStatement_India94OT (3).pdf",
   "sheets": [
    {
     "key": "transactions",
@@ -1135,7 +1135,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "bank-book",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_BankBook178OT (3).pdf",
   "pages": 27,
   "sections": [
    "bankBook",
@@ -1146,7 +1146,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-bank-book",
   "label": "Green Lantern Capital LLP · 510861 · bank-book",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_BankBook178OT (3).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_BankBook178OT (3).pdf",
   "sheets": [
    {
     "key": "bankBook",
@@ -1172,7 +1172,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "capital-gain",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_CapitalGain90OT (5).pdf",
   "pages": 5,
   "sections": [
    "capitalGains",
@@ -1183,7 +1183,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-capital-gain",
   "label": "Green Lantern Capital LLP · 510861 · capital-gain",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalGain90OT (5).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_CapitalGain90OT (5).pdf",
   "sheets": [
    {
     "key": "capitalGains",
@@ -1209,7 +1209,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "capital-register",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_CapitalRegister1173OT (2).pdf",
   "pages": 1,
   "sections": [
    "capitalRegister",
@@ -1220,7 +1220,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-capital-register",
   "label": "Green Lantern Capital LLP · 510861 · capital-register",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_CapitalRegister1173OT (2).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_CapitalRegister1173OT (2).pdf",
   "sheets": [
    {
     "key": "capitalRegister",
@@ -1246,7 +1246,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "dividend-statement",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_DividendStatement_India177OT (3).pdf",
   "pages": 2,
   "sections": [
    "dividends",
@@ -1257,7 +1257,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-dividend-statement",
   "label": "Green Lantern Capital LLP · 510861 · dividend-statement",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_DividendStatement_India177OT (3).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_DividendStatement_India177OT (3).pdf",
   "sheets": [
    {
     "key": "dividends",
@@ -1283,7 +1283,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "appraisal",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
   "pages": 2,
   "sections": [
    "holdings",
@@ -1294,7 +1294,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
   "label": "Green Lantern Capital LLP · 510861 · appraisal",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioAppraisal675OT (8).pdf",
   "sheets": [
    {
     "key": "holdings",
@@ -1320,7 +1320,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "fact-sheet",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
   "pages": 1,
   "sections": [
    "sectors",
@@ -1331,7 +1331,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
   "label": "Green Lantern Capital LLP · 510861 · fact-sheet",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortFolioFactSheet6020OT (8).pdf",
   "sheets": [
    {
     "key": "sectors",
@@ -1357,7 +1357,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-07-09",
   "reportType": "performance-history",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -1368,7 +1368,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-07-09-performance-history",
   "label": "Green Lantern Capital LLP · 510861 · performance-history",
   "fy": "2026-07-09",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_portfolioPerfHistory1155OT (6).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -1394,7 +1394,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-04-01",
   "reportType": "performance-summary",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
   "pages": 1,
   "sections": [
    "pages"
@@ -1404,7 +1404,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
   "label": "Green Lantern Capital LLP · 510861 · performance-summary",
   "fy": "2026-04-01",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
   "sheets": [
    {
     "key": "pages",
@@ -1424,7 +1424,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "holdings",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
   "pages": 4,
   "sections": [
    "currentPortfolio",
@@ -1435,7 +1435,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-holdings",
   "label": "Green Lantern Capital LLP · 510861 · holdings",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPositionMain4089OT (9).pdf",
   "sheets": [
    {
     "key": "currentPortfolio",
@@ -1461,7 +1461,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "transaction-statement",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_TransactionStatement_India94OT (9).pdf",
   "pages": 5,
   "sections": [
    "transactions",
@@ -1472,7 +1472,7 @@
   "fileKey": "green-lantern-capital-llp-510861-2026-06-25-transaction-statement",
   "label": "Green Lantern Capital LLP · 510861 · transaction-statement",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__AJAY/GLC0780_40994_TransactionStatement_India94OT (9).pdf",
+  "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_TransactionStatement_India94OT (9).pdf",
   "sheets": [
    {
     "key": "transactions",
@@ -1498,7 +1498,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "bank-book",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
   "pages": 27,
   "sections": [
    "bankBook",
@@ -1509,7 +1509,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-bank-book",
   "label": "Green Lantern Capital LLP · 510854 · bank-book",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_BankBook178OT (4).pdf",
   "sheets": [
    {
     "key": "bankBook",
@@ -1535,7 +1535,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "capital-gain",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
   "pages": 6,
   "sections": [
    "capitalGains",
@@ -1546,7 +1546,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-capital-gain",
   "label": "Green Lantern Capital LLP · 510854 · capital-gain",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalGain90OT (7).pdf",
   "sheets": [
    {
     "key": "capitalGains",
@@ -1572,7 +1572,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "capital-register",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
   "pages": 1,
   "sections": [
    "capitalRegister",
@@ -1583,7 +1583,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-capital-register",
   "label": "Green Lantern Capital LLP · 510854 · capital-register",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalRegister1173OT (4).pdf",
   "sheets": [
    {
     "key": "capitalRegister",
@@ -1609,7 +1609,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "dividend-statement",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
   "pages": 2,
   "sections": [
    "dividends",
@@ -1620,7 +1620,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-dividend-statement",
   "label": "Green Lantern Capital LLP · 510854 · dividend-statement",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_DividendStatement_India177OT (2).pdf",
   "sheets": [
    {
     "key": "dividends",
@@ -1646,7 +1646,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "appraisal",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
   "pages": 2,
   "sections": [
    "holdings",
@@ -1657,7 +1657,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
   "label": "Green Lantern Capital LLP · 510854 · appraisal",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioAppraisal675OT (8).pdf",
   "sheets": [
    {
     "key": "holdings",
@@ -1683,7 +1683,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "fact-sheet",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
   "pages": 1,
   "sections": [
    "sectors",
@@ -1694,7 +1694,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
   "label": "Green Lantern Capital LLP · 510854 · fact-sheet",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (10).pdf",
   "sheets": [
    {
     "key": "sectors",
@@ -1720,7 +1720,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-07-09",
   "reportType": "performance-benchmark",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -1731,7 +1731,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-07-09-performance-benchmark",
   "label": "Green Lantern Capital LLP · 510854 · performance-benchmark",
   "fy": "2026-07-09",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfBM196OT (6).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -1757,7 +1757,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-07-09",
   "reportType": "performance-history",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
   "pages": 1,
   "sections": [
    "returns",
@@ -1768,7 +1768,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-07-09-performance-history",
   "label": "Green Lantern Capital LLP · 510854 · performance-history",
   "fy": "2026-07-09",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (4).pdf",
   "sheets": [
    {
     "key": "returns",
@@ -1794,7 +1794,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "holdings",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
   "pages": 4,
   "sections": [
    "currentPortfolio",
@@ -1805,7 +1805,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-holdings",
   "label": "Green Lantern Capital LLP · 510854 · holdings",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (10).pdf",
   "sheets": [
    {
     "key": "currentPortfolio",
@@ -1831,7 +1831,7 @@
   "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-25",
   "reportType": "transaction-statement",
-  "sourcePath": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+  "sourcePath": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
   "pages": 5,
   "sections": [
    "transactions",
@@ -1842,7 +1842,7 @@
   "fileKey": "green-lantern-capital-llp-510854-2026-06-25-transaction-statement",
   "label": "Green Lantern Capital LLP · 510854 · transaction-statement",
   "fy": "2026-06-25",
-  "source": "source/_extracted/GREEN_LANTERN__ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
+  "source": "source/_extracted/GREEN LANTERN - ANKITA/GLC0776_40752_TransactionStatement_India94OT (7).pdf",
   "sheets": [
    {
     "key": "transactions",
@@ -1854,6 +1854,1755 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+  "provider": "Aditya Birla Sun Life Mutual Fund",
+  "accountNo": "1038104611",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
+  "provider": "Aditya Birla Sun Life Mutual Fund",
+  "accountNo": "1019265797",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
+  "pages": 4,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+  "provider": "HDFC Mutual Fund",
+  "accountNo": "16180583",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-01",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
+  "pages": 3,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+  "label": "HDFC Mutual Fund · 16180583 · unknown",
+  "fy": "2026-06-01",
+  "source": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "4295974",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
+  "pages": 4,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
+  "label": "Kotak Mahindra Mutual Fund · 4295974 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
+  "provider": "Mirae Asset Mutual Fund",
+  "accountNo": "70413280453",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
+  "label": "Mirae Asset Mutual Fund · 70413280453 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "lkp-securities-unknown-2026-03-31-holdings",
+  "provider": "LKP Securities",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-03-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "lkp-securities-unknown-2026-03-31-holdings",
+  "label": "LKP Securities · holdings",
+  "fy": "2026-03-31",
+  "source": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+  "provider": "LKP Securities",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-02",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
+  "pages": 4,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+  "label": "LKP Securities · transaction-statement",
+  "fy": "2026-07-02",
+  "source": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9039671821-2026-07-08-unknown",
+  "provider": "Sanshi Fund",
+  "accountNo": "9039671821",
+  "owner": "AARTI AJAY JAISINGHANI",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-08",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "sanshi-fund-9039671821-2026-07-08-unknown",
+  "label": "Sanshi Fund · 9039671821 · unknown",
+  "fy": "2026-07-08",
+  "source": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9039671854-2026-07-08-unknown",
+  "provider": "Sanshi Fund",
+  "accountNo": "9039671854",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-08",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/SANSHI FUND/9039671854_08072026183817746423.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "sanshi-fund-9039671854-2026-07-08-unknown",
+  "label": "Sanshi Fund · 9039671854 · unknown",
+  "fy": "2026-07-08",
+  "source": "source/_extracted/SANSHI FUND/9039671854_08072026183817746423.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+  "provider": "Sanshi Fund",
+  "accountNo": "9039671912",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-08",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+  "label": "Sanshi Fund · 9039671912 · unknown",
+  "fy": "2026-07-08",
+  "source": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9069671554-2026-07-08-unknown",
+  "provider": "Sanshi Fund",
+  "accountNo": "9069671554",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-08",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/SANSHI FUND/9069671554_08072026184047430124.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "sanshi-fund-9069671554-2026-07-08-unknown",
+  "label": "Sanshi Fund · 9069671554 · unknown",
+  "fy": "2026-07-08",
+  "source": "source/_extracted/SANSHI FUND/9069671554_08072026184047430124.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9069671634-2026-07-08-unknown",
+  "provider": "Sanshi Fund",
+  "accountNo": "9069671634",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-08",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/SANSHI FUND/9069671634_08072026184128510783.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "sanshi-fund-9069671634-2026-07-08-unknown",
+  "label": "Sanshi Fund · 9069671634 · unknown",
+  "fy": "2026-07-08",
+  "source": "source/_extracted/SANSHI FUND/9069671634_08072026184128510783.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": null,
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
+  "pages": 3,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · bank-book",
+  "fy": "",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 61,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-gain",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalGain90OT.pdf",
+  "pages": 2,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-gain",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · capital-gain",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalGain90OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 17,
+    "cols": 14
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-register",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-register",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · capital-register",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 6,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-corporate-benefits",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "corporate-benefits",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CorporateBenefitsReport1767OT.pdf",
+  "pages": 1,
+  "sections": [
+   "corporateBenefits",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-corporate-benefits",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · corporate-benefits",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CorporateBenefitsReport1767OT.pdf",
+  "sheets": [
+   {
+    "key": "corporateBenefits",
+    "name": "corporate-benefits",
+    "rows": 4,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · dividend-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 7,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-expense-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "expense-statement",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_Expensestmt546OT.pdf",
+  "pages": 3,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-expense-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · expense-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_Expensestmt546OT.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 21,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioAppraisal675OT.pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · appraisal",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioAppraisal675OT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 27,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-fact-sheet",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortFolioFactSheet6020OT.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-fact-sheet",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · fact-sheet",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortFolioFactSheet6020OT.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 24,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-benchmark",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfBM196OT.pdf",
+  "pages": 2,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-benchmark",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-benchmark",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfBM196OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-history",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_portfolioPerfHistory1155OT (1).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-history",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-history",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_portfolioPerfHistory1155OT (1).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 5,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfSummary1528OT.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfSummary1528OT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · transaction-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 16,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": null,
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
+  "pages": 3,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · bank-book",
+  "fy": "",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 58,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-gain",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalGain90OT.pdf",
+  "pages": 2,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-gain",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · capital-gain",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalGain90OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 18,
+    "cols": 14
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-register",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalRegister1173OT.pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-register",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · capital-register",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalRegister1173OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 8,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-dividend-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_DividendStatement_India177OT (1).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-dividend-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · dividend-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_DividendStatement_India177OT (1).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 7,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "expense-statement",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_Expensestmt546OT.pdf",
+  "pages": 3,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · expense-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_Expensestmt546OT.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 21,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioAppraisal675OT (1).pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · appraisal",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioAppraisal675OT (1).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 26,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-fact-sheet",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortFolioFactSheet6020OT.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-fact-sheet",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · fact-sheet",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortFolioFactSheet6020OT.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 25,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-benchmark",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfBM196OT.pdf",
+  "pages": 2,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-benchmark",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-benchmark",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfBM196OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-history",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_portfolioPerfHistory1155OT.pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-history",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-history",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_portfolioPerfHistory1155OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 5,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfSummary1528OT.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfSummary1528OT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-07-06",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 4,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · transaction-statement",
+  "fy": "2026-07-06",
+  "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 16,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "37702",
+  "owner": "Mr. AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/360 - AJAY.pdf",
+  "pages": 11,
+  "sections": [
+   "detailed-holding-statement",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+  "label": "360 ONE Private Wealth · 37702 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/360 - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "60117",
+  "owner": "Mr. Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/360 - BHARAT.pdf",
+  "pages": 11,
+  "sections": [
+   "detailed-holding-statement",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+  "label": "360 ONE Private Wealth · 60117 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/360 - BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-unknown-unknown-unknown",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "360-one-private-wealth-unknown-unknown-unknown",
+  "label": "360 ONE Private Wealth · unknown",
+  "fy": "",
+  "source": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "37702",
+  "owner": "Mr. AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/360 ONE WEALTH - AJAY.pdf",
+  "pages": 11,
+  "sections": [
+   "detailed-holding-statement",
+   "corporate-action",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+  "label": "360 ONE Private Wealth · 37702 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/360 ONE WEALTH - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "corporate-action",
+    "name": "corporate-action",
+    "rows": 15,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "60117",
+  "owner": "Mr. Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/360 ONE WEALTH - BHARAT.pdf",
+  "pages": 11,
+  "sections": [
+   "detailed-holding-statement",
+   "corporate-action",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+  "label": "360 ONE Private Wealth · 60117 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/360 ONE WEALTH - BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "corporate-action",
+    "name": "corporate-action",
+    "rows": 21,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-unknown-unknown-unknown-2",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+  "pages": 3,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-2",
+  "label": "360 ONE Private Wealth · unknown",
+  "fy": "",
+  "source": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-unknown-unknown-unknown-3",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+  "pages": 3,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-3",
+  "label": "360 ONE Private Wealth · unknown",
+  "fy": "",
+  "source": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-unknown-unknown-unknown-4",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-4",
+  "label": "360 ONE Private Wealth · unknown",
+  "fy": "",
+  "source": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-unknown-unknown-unknown-5",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-5",
+  "label": "360 ONE Private Wealth · unknown",
+  "fy": "",
+  "source": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-06-30-contract-note",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-06-30",
+  "reportType": "contract-note",
+  "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
+  "pages": 15,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-contract-note",
+  "label": "Green Lantern Capital LLP · 510861 · contract-note",
+  "fy": "2026-06-30",
+  "source": "source/GREEN LANTERN - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 15,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 8,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+  "label": "Molecule Ventures LLP · 7810404 · transaction-statement",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 8,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "contract-note",
+  "sourcePath": "source/SVAN - AJAY [1E444lq6].pdf",
+  "pages": 5,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
+  "label": "SVAN Investment Managers LLP · 8710067 · contract-note",
+  "fy": "2026-06-30",
+  "source": "source/SVAN - AJAY [1E444lq6].pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "contract-note",
+  "sourcePath": "source/SVAN - AJAY [1knFZ18g].pdf",
+  "pages": 6,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
+  "label": "SVAN Investment Managers LLP · 8710067 · contract-note",
+  "fy": "2026-05-31",
+  "source": "source/SVAN - AJAY [1knFZ18g].pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 6,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "contract-note",
+  "sourcePath": "source/SVAN - BHARAT [1DSgHtJU].pdf",
+  "pages": 5,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
+  "label": "SVAN Investment Managers LLP · 8710090 · contract-note",
+  "fy": "2026-06-30",
+  "source": "source/SVAN - BHARAT [1DSgHtJU].pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-05-31-contract-note",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "contract-note",
+  "sourcePath": "source/SVAN - BHARAT [1pRnGtq5].pdf",
+  "pages": 5,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-05-31-contract-note",
+  "label": "SVAN Investment Managers LLP · 8710090 · contract-note",
+  "fy": "2026-05-31",
+  "source": "source/SVAN - BHARAT [1pRnGtq5].pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "transition-venture-capital-unknown-2026-03-31-unknown",
+  "provider": "Transition Venture Capital",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-03-31",
+  "reportType": "unknown",
+  "sourcePath": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "transition-venture-capital-unknown-2026-03-31-unknown",
+  "label": "Transition Venture Capital · unknown",
+  "fy": "2026-03-31",
+  "source": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "transition-venture-capital-unknown-2026-03-31-unknown-2",
+  "provider": "Transition Venture Capital",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-03-31",
+  "reportType": "unknown",
+  "sourcePath": "source/TRANSITION VENTURE-BHARAT JAISINGHANI FAMILY TRUST 2_April_2026 (1).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "fileKey": "transition-venture-capital-unknown-2026-03-31-unknown-2",
+  "label": "Transition Venture Capital · unknown",
+  "fy": "2026-03-31",
+  "source": "source/TRANSITION VENTURE-BHARAT JAISINGHANI FAMILY TRUST 2_April_2026 (1).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
     "cols": 2
    }
   ]

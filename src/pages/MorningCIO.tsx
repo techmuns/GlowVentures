@@ -44,14 +44,17 @@ import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART
 // capital register or bank book), so the headline figure and the per-account
 // table on /performance are the same measurement rather than two.
 export function MorningCIO() {
-  const { portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
 
   const model = useMemo(() => {
     if (!portfolio) return null;
-    const p = portfolio.positions;
+    // CONSOLIDATED throughout this page — every figure spans all nine accounts,
+    // so each dedupeGroup counts once. `portfolio.positions` still carries both
+    // rows for the per-account views elsewhere.
+    const p = consolidated;
     const listedMV = sum(p.map((x) => x.marketValue));
     const listedCost = sum(p.map((x) => x.costBasis));
     const listedPnL = sum(p.map((x) => x.unrealizedPnL));
@@ -174,7 +177,7 @@ export function MorningCIO() {
       r.dated < r.total ? `${r.total - r.dated} of ${r.total} holdings carry no dated first investment and sit outside this XIRR.` : null;
     function xirrCoverage(excluded: string[]) {
       return excluded.length
-        ? `Account ${excluded.join(", ")} is excluded on BOTH sides — its statements carry no opening portfolio value, and counting its market value without its opening stake would overstate the rate.`
+        ? `${excluded.length === 1 ? "Account" : "Accounts"} ${excluded.join(", ")} ${excluded.length === 1 ? "is" : "are"} excluded on BOTH sides — ${excluded.length === 1 ? "its statements carry" : "their statements carry"} no opening portfolio value, and counting ${excluded.length === 1 ? "its market value without its" : "their market value without their"} opening stake would overstate the rate.`
         : null;
     }
     const fundBucket = (
@@ -235,9 +238,9 @@ export function MorningCIO() {
       ownersByKey.set(x.securityKey, s);
     }
     const crossHeld = [...ownersByKey.values()].filter((s) => s.size >= 2).length;
-    const consolidated = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
-    const top10Pct = listedMV > 0 ? (sum(consolidated.slice(0, 10).map(([, v]) => v)) / listedMV) * 100 : null;
-    const largest = consolidated[0];
+    const bySecurity = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
+    const top10Pct = listedMV > 0 ? (sum(bySecurity.slice(0, 10).map(([, v]) => v)) / listedMV) * 100 : null;
+    const largest = bySecurity[0];
     const largestName = (largest && p.find((x) => x.securityKey === largest[0])?.security) || null;
     const largestPct = largest && listedMV > 0 ? (largest[1] / listedMV) * 100 : null;
     const priced = p.filter((x) => !x.costUnavailable);
@@ -367,7 +370,7 @@ export function MorningCIO() {
                 title: "Listed XIRR p.a.",
                 excel: `= XIRR(dated capital movements, market value at ${portfolio.asOf})`,
                 plain: `The single yearly growth rate that makes every dated capital movement balance against what the book is worth — exactly what Excel's XIRR() returns. The flows are each account's own capital register or bank book, with the window's opening portfolio value as the first entry; trades are excluded because they move cash inside an account, not into or out of it.${
-                  m.xirrExcluded.length ? ` Account ${m.xirrExcluded.join(", ")} is excluded on BOTH sides — its statements carry no opening portfolio value, so this covers ${money(m.measuredMV)} of the book's ${money(m.listedMV)}.` : ""
+                  m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on BOTH sides for want of an opening portfolio value, so this covers ${money(m.measuredMV)} of the book's ${money(m.listedMV)}.` : ""
                 }${m.xirrWindowDays ? ` The window is ${m.xirrWindowDays} days, so this annualises about a quarter — a real measurement of that period, not a rate sustained for a year.` : ""}`,
                 auditHref: auditHref(LEDGER),
               }}>{fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })}</Auditable></span>}
@@ -462,7 +465,7 @@ export function MorningCIO() {
                           plain: `${m.privateCount
                             ? "One money-weighted return across the entire book — the accounts' dated capital movements closed against their market value, pooled with the private book's capital calls and latest marks. Private distributions carry no date, so they are credited as if received today; that makes this figure a floor rather than a best case."
                             : "One money-weighted return across the entire book. Every holding here is listed, so this is the same measurement as the listed XIRR above — there is no private flow to pool with it."}${
-                            m.xirrExcluded.length ? ` Account ${m.xirrExcluded.join(", ")} is excluded on both sides for want of an opening portfolio value.` : ""}`,
+                            m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on both sides for want of an opening portfolio value.` : ""}`,
                           worked: `${money(m.measuredMV)} of the book's ${money(m.totalValue)} is covered, closed at ${portfolio.asOf} = ${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a.`,
                           auditHref: auditHref(LEDGER),
                         }}>{fmtPct(m.bookXirr, { sign: true, decimals: 1 })}</Auditable>

@@ -1,0 +1,30 @@
+{
+ "name": "detailed-holding-statement",
+ "rows": [
+  [
+   "priceAsOn",
+   "marketValue",
+   "distributedIncome",
+   "positionIrr",
+   "excessPerformance",
+   "security",
+   "manager",
+   "quantity",
+   "totalCost",
+   "unrealized",
+   "totalGain"
+  ],
+  [
+   "360 ONE SPECIAL",
+   "990,429.684",
+   "9,866,647.00",
+   "14,408,473.91 100.00 %",
+   "4,541,826.91",
+   "2,037,517.00",
+   "6,579,343.91",
+   "10.79 %",
+   "-1.00 %",
+   "29-May-26"
+  ]
+ ]
+}

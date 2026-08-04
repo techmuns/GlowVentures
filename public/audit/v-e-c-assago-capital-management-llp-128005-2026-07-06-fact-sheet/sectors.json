@@ -1,0 +1,148 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Nuvama Wealth Management Ltd",
+   "Financial Services",
+   "2,218,978",
+   "2.40%"
+  ],
+  [
+   "2",
+   "SBFC Finance Ltd",
+   "Financial Services",
+   "4,514,159",
+   "4.88%"
+  ],
+  [
+   "3",
+   "Amrutanjan Health Care Ltd",
+   "Healthcare",
+   "2,896,675",
+   "3.13%"
+  ],
+  [
+   "4",
+   "Panacea Biotec Ltd",
+   "Healthcare",
+   "6,507,151",
+   "7.04%"
+  ],
+  [
+   "5",
+   "Wockhardt Ltd",
+   "Healthcare",
+   "9,397,443",
+   "10.17%"
+  ],
+  [
+   "6",
+   "Sterlite Technologies Ltd",
+   "Telecommunication",
+   "4,681,200",
+   "5.06%"
+  ],
+  [
+   "7",
+   "Tejas Networks Limited",
+   "Telecommunication",
+   "7,478,970",
+   "8.09%"
+  ],
+  [
+   "Automobile and",
+   "9,453,360",
+   "10.23%"
+  ],
+  [
+   "8",
+   "Ather Energy Ltd"
+  ],
+  [
+   "Auto Components"
+  ],
+  [
+   "9",
+   "Crompton Greaves Consumer Electrical Ltd Consumer Durables",
+   "6,042,609",
+   "6.54%"
+  ],
+  [
+   "10",
+   "Eureka Forbes Ltd",
+   "Consumer Durables",
+   "5,052,662",
+   "5.47%"
+  ],
+  [
+   "11",
+   "VIP Industries Ltd",
+   "Consumer Durables",
+   "4,451,026",
+   "4.81%"
+  ],
+  [
+   "12",
+   "Jaiprakash Power Ventures Ltd",
+   "Power",
+   "4,646,880",
+   "5.03%"
+  ],
+  [
+   "13",
+   "Shoppers Stop Ltd",
+   "Consumer Services",
+   "7,849,402",
+   "8.49%"
+  ],
+  [
+   "Fast Moving",
+   "2,489,296",
+   "2.69%"
+  ],
+  [
+   "14",
+   "Navneet Education Ltd"
+  ],
+  [
+   "Consumer Goods"
+  ],
+  [
+   "15",
+   "GREAVES COTTON LTD.",
+   "Capital Goods",
+   "8,653,473",
+   "9.36%"
+  ],
+  [
+   "16",
+   "Gateway Distriparks Ltd",
+   "Services",
+   "4,565,354",
+   "4.94%"
+  ],
+  [
+   "17",
+   "CASH",
+   "Cash and Equivalent",
+   "1,544,746",
+   "1.67%"
+  ],
+  [
+   "Total",
+   "92,443,383",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: Mr. Rajendra Khatu | email:"
+  ]
+ ]
+}

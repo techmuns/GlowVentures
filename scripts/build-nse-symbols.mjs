@@ -77,6 +77,9 @@ export const OVERRIDES = {
   "mishra-dhatu-nigam": "MIDHANI",
   "hindustan-aeronautics": "HAL",
   "glaxosmithkline-pharmaceuticals": "GLAXO",
+  // NSE lists "Crompton Greaves Consumer ElectricalS Limited"; V.E.C's appraisal
+  // prints the singular. One letter, and neither automatic tier bridges it.
+  "crompton-greaves-consumer-electrical": "CROMPTON",
   "jindal-stainless": "JSL",
   "kalpataru-projects-international": "KPIL",
   "banco-products-india": "BANCOINDIA",        // listed as "Banco Products (I) Limited"

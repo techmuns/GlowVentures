@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
@@ -32,7 +32,8 @@ export function StockInfo() {
   }, [securityKey]);
 
   const rows = useMemo(() => (portfolio ? portfolio.positions.filter((p) => p.securityKey === securityKey) : []), [portfolio, securityKey]);
-  const listedMV = useMemo(() => (portfolio ? sum(portfolio.positions.map((x) => x.marketValue)) : 0), [portfolio]);
+  // Denominator for this security's weight in the book — consolidated.
+  const listedMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
   if (!portfolio) return null;
 
@@ -160,7 +161,7 @@ export function StockInfo() {
                         {strategyOf(accIdx, r) && <div className="text-[10px] text-slate-600">{strategyOf(accIdx, r)}</div>}
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">{price(r.avgCost)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={ledgerHref(name)} title="Current value — trace to the ledger">{money(r.marketValue)}</Auditable></td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>

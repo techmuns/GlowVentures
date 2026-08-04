@@ -46,9 +46,14 @@ export function toIso(raw) {
     if (Number(mo) >= 1 && Number(mo) <= 12 && Number(d) >= 1 && Number(d) <= 31) return `${y}-${pad(mo)}-${pad(d)}`;
     return null;
   }
-  if ((m = s.match(/^(\d{1,2})[\s-]*([A-Za-z]{3,})[\s-]*,?[\s-]*(\d{4})$/))) {
+  // `30 Jun 2026` and `30-Jun-26`. The two-digit year reads as 20xx on the same
+  // rule as the numeric form above: 360 ONE's holding statement prints its
+  // "Price As on" and its corporate-action dates this way, and no row in the
+  // drop predates 2000.
+  if ((m = s.match(/^(\d{1,2})[\s-]*([A-Za-z]{3,})[\s-]*,?[\s-]*(\d{2}|\d{4})$/))) {
     const mo = MONTHS[m[2].slice(0, 3).toLowerCase()];
-    return mo ? `${m[3]}-${pad(mo)}-${pad(m[1])}` : null;
+    const y = m[3].length === 2 ? `20${m[3]}` : m[3];
+    return mo ? `${y}-${pad(mo)}-${pad(m[1])}` : null;
   }
   if ((m = s.match(/^([A-Za-z]{3,})[\s-]+(\d{1,2}),?[\s-]+(\d{4})$/))) {
     const mo = MONTHS[m[1].slice(0, 3).toLowerCase()];
@@ -181,11 +186,12 @@ const GOLDSTANDARD_FILE_TYPES = [
  * is the gate; the manager is then read from the letterhead, falling back to the
  * account-code prefix because the appraisal carries no letterhead.
  */
-const PMS_FILE = /^[A-Z]{1,4}\d+_\d+_/i;
+const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
 
 function matchGoldstandard(text, name) {
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
-    || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text);
+    || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
+    || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text);
   const byName = PMS_FILE.test(name);
   if (!byText && !byName) return null;
 
@@ -193,20 +199,28 @@ function matchGoldstandard(text, name) {
   const provider = /GREEN\s+LANTERN\s+CAPITAL/i.test(text) ? "Green Lantern Capital LLP"
     : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
+    : /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text) ? "V.E.C Assago Capital Management LLP"
     : /^GLC/i.test(name) ? "Green Lantern Capital LLP"
     : /^CBP/i.test(name) ? "Carnelian Asset Management and Advisors Pvt Ltd"
+    : /^VEC/i.test(name) ? "V.E.C Assago Capital Management LLP"
     : /^G\d/i.test(name) ? "Goldstandard Wealth Private Limited"
     : null;
   const strategy = /Aristos\s+Equity\s+Portfolio/i.test(text) ? "Aristos Equity Portfolio"
     : /GLC\s+GROWTH\s+FUND/i.test(text) ? "GLC Growth Fund"
     : /CARNELIAN\s+BESPOKE\s+PORTFOLIO/i.test(text) ? "Carnelian Bespoke Portfolio"
+    : /V\.?\s*E\.?\s*C\s+ASSAGO\s+Small\s+and\s+Mid-?Cap\s+Growth/i.test(text) ? "V.E.C ASSAGO Small and Mid-Cap Growth"
     : null;
   const acct = text.match(/Account\s*[:#-]\s*([A-Z0-9-]{2,20})\s+([A-Za-z][A-Za-z.&'\- ]{2,80})/i);
   let accountNo = acct ? acct[1] : null;
   // The strategy name sits right after the owner on the same header line, so its
   // leading token has to stop the name or it reads as part of it.
   let ownerName = acct ? trimPersonName(acct[2], strategy ? [strategy.split(" ")[0]] : []) : null;
-  // The filename repeats the account number twice; trust it when the text didn't parse.
+  // Goldstandard ONLY: its filename repeats the account number twice
+  // (`G100023_100024_…` on account 100024), so the second field is the account
+  // and is trusted when the text didn't parse. This does NOT generalise — V.E.C
+  // files `VECBES0004_145052_…` on account 128005, where the second field is the
+  // client code, and reading it as the account filed the fact sheet under an
+  // account number that appears on no statement.
   if (!accountNo) {
     const fn = name.match(/^G(\d+)_(\d+)_/i);
     if (fn) accountNo = fn[2];
@@ -257,26 +271,69 @@ function genericReportType(text) {
   return null;
 }
 
-const GENERIC_PROVIDER_RULES = [
+/**
+ * ISSUERS come first and are matched on the WHOLE text, because these are the
+ * names that appear on a letterhead and nowhere else.
+ *
+ * The order matters and so does the split below: a manager's own name is not
+ * the only place a financial institution's name appears in its statement. SVAN's
+ * monthly report HOLDS `Edelweiss Financial Services Ltd`, Sanshi Fund prints
+ * the investor's HDFC bank details, Transition Venture prints an HDFC IFSC code
+ * — and matching those against the whole document filed four different managers'
+ * statements under the wrong house. Every one of them looked like a confident
+ * classification.
+ */
+const ISSUER_PROVIDER_RULES = [
   [/360\s*ONE/i, "360 ONE Private Wealth"],
   [/GOLDSTANDARD\s+WEALTH/i, "Goldstandard Wealth Private Limited"],
   [/GREEN\s+LANTERN\s+CAPITAL/i, "Green Lantern Capital LLP"],
   [/CARNELIAN\s+ASSET\s+MANAGEMENT/i, "Carnelian Asset Management and Advisors Pvt Ltd"],
-  [/\bKotak\s+(?:Mahindra\s+)?(?:Bank|Securities|Investment)/i, "Kotak"],
-  [/\bICICI\s+(?:Securities|Prudential|Bank)/i, "ICICI"],
-  [/\bHDFC\s+(?:Securities|Bank|AMC)/i, "HDFC"],
-  [/\bAxis\s+(?:Securities|Bank|AMC)/i, "Axis"],
+  [/V\.?\s*E\.?\s*C\s+ASSAGO/i, "V.E.C Assago Capital Management LLP"],
+  [/SVAN\s+INVESTMENT\s+MANAGERS/i, "SVAN Investment Managers LLP"],
+  [/MOLECULE\s+VENTURES/i, "Molecule Ventures LLP"],
+  [/SANSHI\s+FUND/i, "Sanshi Fund"],
+  [/TRANSITION\s+VENTURE\s+CAPITAL/i, "Transition Venture Capital"],
+  [/LKP\s+SEC|lkpsec\.com/i, "LKP Securities"],
+  // Mutual-fund account statements. Matched on the AMC's FULL registered name,
+  // which appears only on its own statement — never as a holding, where the
+  // house shows up as a listed share ("HDFC Bank Ltd", "Kotak Mahindra Bank
+  // Ltd"). That distinction is why these belong here and the bare bank names
+  // stay in HOUSE_PROVIDER_RULES below.
+  [/Aditya\s+Birla\s+Sun\s+Life\s+(?:Mutual\s+Fund|AMC)/i, "Aditya Birla Sun Life Mutual Fund"],
+  [/Kotak\s+Mahindra\s+Mutual\s+Fund|Kotak\s+Mutual\s+Fund/i, "Kotak Mahindra Mutual Fund"],
+  [/Mirae\s+Asset\s+(?:Mutual\s+Fund|Investment|Asset\s+Management|MF)/i, "Mirae Asset Mutual Fund"],
+  [/HDFC\s+Mutual\s+Fund|HDFC\s+Asset\s+Management/i, "HDFC Mutual Fund"],
   [/\bMotilal\s+Oswal/i, "Motilal Oswal"],
-  [/\bNuvama\b/i, "Nuvama"],
   [/\bJulius\s+Baer/i, "Julius Baer"],
-  [/\bEdelweiss\b/i, "Edelweiss"],
   [/\bAvendus\b/i, "Avendus"],
   [/\bCAMS\b|Computer\s+Age\s+Management/i, "CAMS"],
   [/\bKFin(?:tech)?\b|Karvy/i, "KFintech"],
 ];
 
+/**
+ * CUSTODIAN / BANK / AMC names, matched only against the HEAD of the document —
+ * the letterhead region. These names also occur in a holdings table, a bank
+ * details block and an IFSC code, where they say nothing about who issued the
+ * statement.
+ */
+const HOUSE_PROVIDER_RULES = [
+  [/\bKotak\s+(?:Mahindra\s+)?(?:Bank|Securities|Investment|MF|Mutual)/i, "Kotak"],
+  [/\bICICI\s+(?:Securities|Prudential|Bank)/i, "ICICI"],
+  [/\bHDFC\s+(?:Securities|Bank|AMC|Mutual)/i, "HDFC"],
+  [/\bAditya\s+Birla\s+Sun\s+Life|\bABSL\b/i, "Aditya Birla Sun Life"],
+  [/\bMirae\s+Asset/i, "Mirae Asset"],
+  [/\bAxis\s+(?:Securities|Bank|AMC|Mutual)/i, "Axis"],
+  [/\bNuvama\b/i, "Nuvama"],
+  [/\bEdelweiss\b/i, "Edelweiss"],
+];
+
+/** How much of the text counts as "the letterhead" for the house rules. */
+const LETTERHEAD_CHARS = 700;
+
 function genericProvider(text) {
-  for (const [re, name] of GENERIC_PROVIDER_RULES) if (re.test(text)) return name;
+  for (const [re, name] of ISSUER_PROVIDER_RULES) if (re.test(text)) return name;
+  const head = text.slice(0, LETTERHEAD_CHARS);
+  for (const [re, name] of HOUSE_PROVIDER_RULES) if (re.test(head)) return name;
   return null;
 }
 

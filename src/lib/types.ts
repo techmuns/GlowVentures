@@ -78,7 +78,12 @@ export type Account = {
   accountId: string;        // stable internal id — the join target for Position.accountId
   provider: string;         // issuing platform, e.g. "360 ONE Private Wealth"
   accountNo: string;        // account / folio number as printed
-  strategy: string;         // scheme or strategy, e.g. "Aristos Equity Portfolio"
+  /**
+   * Scheme or strategy, e.g. "Aristos Equity Portfolio". NULL where the provider
+   * names none: 360 ONE's client-level report is issued per CRN, not per
+   * mandate, and prints no strategy line anywhere.
+   */
+  strategy: string | null;
   /** Account holder, as printed on this statement. Spelling varies by provider. */
   owner: string;
   /**
@@ -120,17 +125,33 @@ export type Position = {
   sector: string;           // normalized sector (our taxonomy)
   providerSector?: string | null;  // sector exactly as the provider printed it
   assetClass: AssetClass;
-  // These seven are present on every position in this book: the appraisal prints
-  // quantity, unit cost and price for every row including cash, and the rest are
-  // derived from them. A book whose statements did NOT carry one of them would
-  // have no position to show, which `costUnavailable` below already expresses.
+  // Quantity, cost, value and the two figures derived from them are present on
+  // every position in this book: each appraisal prints quantity and total cost
+  // for every row including cash, and 360 ONE's holding statement prints the
+  // units and the Net Asset Value.
   quantity: number;
-  avgCost: number;
-  currentPrice: number;
   costBasis: number;        // INR
   marketValue: number;      // INR
   unrealizedPnL: number;    // INR
   returnPct: number;
+  /**
+   * PER-UNIT figures, and NULLABLE — not every provider prints them.
+   *
+   * The four PMS appraisals print a Unit Cost and a Market Price on every row.
+   * 360 ONE's Detailed Holding Statement prints neither: an AIF unit is marked
+   * at a Net Asset Value with no NAV per unit and no unit cost anywhere on the
+   * page. So for that holding these two are genuinely absent, and market value
+   * is the printed primitive rather than price x quantity.
+   *
+   * They were `number` while every statement in the book happened to carry them.
+   * Widening is the honest fix: a zero would say the fund's units cost nothing,
+   * and nothing on screen would tell a reader that apart from a measurement.
+   * Render through `src/components/Absent.tsx`. A position whose `currentPrice`
+   * is null is also unpriceable by the live feed, which is already how the AIF
+   * behaves — it has no NSE listing.
+   */
+  avgCost: number | null;
+  currentPrice: number | null;
   /**
    * Cost of lots held under / over a year. NULL, not zero, on this book: the
    * split needs per-lot purchase dates and no statement in the drop carries

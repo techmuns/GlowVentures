@@ -25,7 +25,7 @@ const C = {
 
 type HoldingRow = {
   security: string; sector: string; entities: string; qty: number;
-  avgCost: number; cmp: number; marketValue: number; weight: number;
+  avgCost: number; cmp: number | null; marketValue: number; weight: number;
   pnl: number; returnPct: number; costNA: boolean;
 };
 
@@ -49,7 +49,11 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
     return {
       security: ps[0].security, sector: ps[0].sector,
       entities: [...new Set(ps.map((x) => ownerOf(idx, x)))].join(", "),
-      qty, avgCost: qty > 0 ? cost / qty : 0, cmp: ps[0].currentPrice,
+      // `cmp` is the per-unit mark and is genuinely absent for a holding whose
+      // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
+      // NAV per unit). Exported as null so the sheet renders an empty cell, not
+      // a zero price that would read as a measurement.
+      qty, avgCost: qty > 0 ? cost / qty : 0, cmp: ps[0].currentPrice ?? null,
       marketValue: mv, weight: totalMV > 0 ? (mv / totalMV) * 100 : 0,
       pnl, returnPct: costNA ? 0 : cost > 0 ? (pnl / cost) * 100 : 0, costNA,
     };

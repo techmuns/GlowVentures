@@ -148,15 +148,33 @@ export function extractText(streams) {
     .trim();
 }
 
-/** Read one PDF: { pages, text, error }. Never throws — a bad file is a row, not a crash. */
+/**
+ * Is this document encrypted? An `/Encrypt` entry in a trailer dictionary says
+ * so. It matters here because this reader cannot decrypt: on an encrypted file
+ * every content stream inflates to noise or not at all, so `extractText` returns
+ * an empty or garbage string and the classifier then confidently files the
+ * document under "(unidentified)". Detecting it lets the caller route the file
+ * to the pdfjs path, which can decrypt, instead of guessing from nothing.
+ */
+export function isEncrypted(buf) {
+  return /\/Encrypt[\s\d/<[]/.test(buf.toString("latin1"));
+}
+
+/** Read one PDF: { pages, text, encrypted, error }. Never throws — a bad file is a row, not a crash. */
 export function readPdf(buf) {
   try {
     if (buf.slice(0, 5).toString("latin1") !== "%PDF-") {
-      return { pages: null, text: "", error: "not a PDF (missing %PDF- header)" };
+      return { pages: null, text: "", encrypted: false, error: "not a PDF (missing %PDF- header)" };
     }
+    const encrypted = isEncrypted(buf);
     const streams = decodedStreams(buf);
-    return { pages: pageCount(buf, streams), text: extractText(streams), error: null };
+    return {
+      pages: pageCount(buf, streams),
+      text: encrypted ? "" : extractText(streams),
+      encrypted,
+      error: encrypted ? "encrypted — this reader cannot decrypt" : null,
+    };
   } catch (e) {
-    return { pages: null, text: "", error: e.message };
+    return { pages: null, text: "", encrypted: false, error: e.message };
   }
 }

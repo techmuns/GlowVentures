@@ -10,7 +10,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { byEntity, byCustodian, bySector, sum } from "@/lib/analytics";
+import { byEntity, byCustodian, bySector, sum, consolidatedMarketValue } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, ownerOf } from "@/lib/accounts";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, absentTile } from "@/components/Absent";
@@ -27,7 +27,10 @@ export function FamilyEntities() {
   if (!portfolio) return null;
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
-  const totalMV = sum(p.map((x) => x.marketValue));
+  // The FAMILY total counts each dedupeGroup once; the per-owner rows below do
+  // not dedupe, because each owner's row must show their own statement as
+  // printed. That is the whole of "carry both, count once".
+  const totalMV = consolidatedMarketValue(p);
   // Owner and custodian are separate reads of the account registry: one entity
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.

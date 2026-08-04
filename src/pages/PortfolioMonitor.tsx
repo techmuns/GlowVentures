@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
@@ -18,12 +18,16 @@ import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 
 type EntityPart = {
-  entity: string; quantity: number; avgCost: number; currentPrice: number;
+  // Per-unit figures are nullable for the same reason they are on Position:
+  // 360 ONE marks its AIF at a total value and prints no NAV per unit.
+  entity: string; quantity: number; avgCost: number | null; currentPrice: number | null;
   costBasis: number; marketValue: number; unrealizedPnL: number; returnPct: number; costNA: boolean;
 };
 type Row = {
   key: string; security: string; securityKey: string; sector: string; assetClass: string;
-  entities: string[]; parts: EntityPart[]; quantity: number; avgCost: number; currentPrice: number;
+  // avgCost / currentPrice are PER-UNIT and nullable — 360 ONE prints neither
+  // for its AIF holding. See the note on Position in src/lib/types.ts.
+  entities: string[]; parts: EntityPart[]; quantity: number; avgCost: number | null; currentPrice: number | null;
   costBasis: number; marketValue: number; unrealizedPnL: number; returnPct: number; weight: number;
   costNA: boolean;
   // Live-quote fields. `live: false` means CMP is still the workbook mark — the
@@ -84,7 +88,9 @@ export function PortfolioMonitor() {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
-    const totalMV = sum(base.map((p) => p.marketValue));
+    // Weight denominator — consolidated, so the column sums to 100 rather than
+    // to 101.4 when a holding is reported under two members.
+    const totalMV = consolidatedMarketValue(base);
     let out: Row[];
     if (consolidate) {
       // Consolidated on securityKey: the same company held through two platforms
@@ -256,13 +262,15 @@ export function PortfolioMonitor() {
                           )}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable to={ledgerHref(r.security)} title="Shares held — trace to the ledger">{fmtNum(r.quantity)}</Auditable></td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={ledgerHref(r.security)} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : <Auditable to={ledgerHref(r.security)} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={ledgerHref(r.security)} title="Invested (cost) — trace to the ledger">{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
-                          {r.live
+                          {r.currentPrice === null
+                            ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+                            : r.live
                             ? fmtFromBase(r.currentPrice)
                             : <><Auditable to={ledgerHref(r.security)} title="Market price — trace to the ledger">{fmtFromBase(r.currentPrice)}</Auditable>
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
@@ -324,7 +332,7 @@ export function PortfolioMonitor() {
                                     <tr key={pt.entity}>
                                       <td className="px-3 py-1.5"><span className="text-slate-200">{pt.entity}</span></td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(pt.quantity)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{pt.costNA ? "—" : fmtFromBase(pt.avgCost)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{pt.costNA ? "—" : pt.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(pt.avgCost)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-100">{fmtFromBase(pt.marketValue, { compact: true })}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400">{r.marketValue > 0 ? ((pt.marketValue / r.marketValue) * 100).toFixed(1) : "0.0"}%</td>
                                       <td className={`px-3 py-1.5 text-right mono ${pt.costNA ? "text-slate-500" : changeColor(pt.unrealizedPnL)}`}>{pt.costNA ? "—" : fmtFromBase(pt.unrealizedPnL, { compact: true, sign: true })}</td>
@@ -383,7 +391,7 @@ export function PortfolioMonitor() {
 // Roll the constituent positions of one consolidated security up to one row per
 // owning entity, so an expanded row shows exactly who holds it and how much.
 function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
-  const m = new Map<string, { entity: string; quantity: number; costBasis: number; marketValue: number; currentPrice: number; costUnavailable: boolean }>();
+  const m = new Map<string, { entity: string; quantity: number; costBasis: number; marketValue: number; currentPrice: number | null; costUnavailable: boolean }>();
   for (const x of ps) {
     const who = ownerOf(accIdx, x);
     const e = m.get(who) ?? { entity: who, quantity: 0, costBasis: 0, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false };

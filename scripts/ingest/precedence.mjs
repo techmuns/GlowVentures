@@ -48,10 +48,10 @@ export const FACTS = [
  * the extractor must take it from the first that carries it and record which.
  */
 /**
- * The three PMS managers in this book — Goldstandard, Green Lantern, Carnelian —
- * publish from ONE reporting system: the same report set, the same column
- * layout, the same internal inconsistencies. So they share one precedence block
- * rather than three copies that would drift apart.
+ * The four PMS managers on one reporting system — Goldstandard, Green Lantern,
+ * Carnelian and V.E.C Assago — publish the same report set, the same column
+ * layout and the same internal inconsistencies. So they share one precedence
+ * block rather than four copies that would drift apart.
  *
  * The keys below must match `PROVIDERS[*].name` in providers/pmsStatements.mjs
  * exactly. A key that does not match resolves to no precedence at all, and the
@@ -92,6 +92,11 @@ export const PRECEDENCE = {
   "Goldstandard Wealth Private Limited": PMS_REPORTING_SYSTEM,
   "Green Lantern Capital LLP": PMS_REPORTING_SYSTEM,
   "Carnelian Asset Management and Advisors Pvt Ltd": PMS_REPORTING_SYSTEM,
+  // Fourth manager on the same reporting system: identical report set, identical
+  // filenames, identical column layout. Verified on VECBES0003/0004 before this
+  // key was added — a key added on the strength of the filename alone would
+  // claim precedence over tables nobody checked.
+  "V.E.C Assago Capital Management LLP": PMS_REPORTING_SYSTEM,
 
   "360 ONE Private Wealth": {
     // The 11-page bundle is ONE file; these name the SECTION within it.

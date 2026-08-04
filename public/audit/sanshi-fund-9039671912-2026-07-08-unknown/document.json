@@ -1,0 +1,39 @@
+{
+ "docKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+ "provider": "Sanshi Fund",
+ "accountNo": "9039671912",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "AJAY JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-07-08",
+ "inceptionDate": null,
+ "reportType": "unknown",
+ "sourcePath": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
+ "pages": 2,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"Sanshi Fund\" / reportType unknown"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

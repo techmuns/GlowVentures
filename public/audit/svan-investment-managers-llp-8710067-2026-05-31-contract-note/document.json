@@ -1,0 +1,39 @@
+{
+ "docKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
+ "provider": "SVAN Investment Managers LLP",
+ "accountNo": "8710067",
+ "ownerSource": null,
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-05-31",
+ "inceptionDate": null,
+ "reportType": "contract-note",
+ "sourcePath": "source/SVAN - AJAY [1knFZ18g].pdf",
+ "pages": 6,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"SVAN Investment Managers LLP\" / reportType contract-note"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": []
+}

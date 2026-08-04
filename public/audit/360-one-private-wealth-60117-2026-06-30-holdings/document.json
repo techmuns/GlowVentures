@@ -1,0 +1,148 @@
+{
+ "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+ "provider": "360 ONE Private Wealth",
+ "accountNo": "60117",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Mr. Bharat Jaisinghani",
+ "ownerId": "bharat-jaisinghani",
+ "familyGroup": "Ajay Jaisinghani",
+ "strategy": null,
+ "engagement": "Distribution",
+ "providerEngagement": "Advisory / Distribution",
+ "members": [
+  {
+   "memberId": "CRN60117LE53288",
+   "label": "Advisory (CRN60117LE53288)",
+   "engagement": "Advisory",
+   "providerEngagement": "Advisory"
+  },
+  {
+   "memberId": "CRN60117LE51867",
+   "label": "Distribution (CRN60117LE51867)",
+   "engagement": "Distribution",
+   "providerEngagement": "Distribution"
+  }
+ ],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/360 - BHARAT.pdf",
+ "pages": 11,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "columns-not-matched",
+   "detail": "marketPrice, benchmark"
+  },
+  {
+   "code": "section-reported-empty",
+   "detail": "transaction: the report states \"No data available to generate …\""
+  },
+  {
+   "code": "section-reported-empty",
+   "detail": "corporate-action: the report states \"No data available to generate …\""
+  }
+ ],
+ "holdings": [
+  {
+   "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+   "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",
+   "isin": null,
+   "symbol": null,
+   "assetClass": "AIF",
+   "providerSector": null,
+   "manager": "360 ONE ASSET MANAGEMENT LIMITED",
+   "memberId": null,
+   "quantity": 990429.684,
+   "unitCost": null,
+   "totalCost": 9866647,
+   "marketPrice": null,
+   "accruedIncome": null,
+   "distributedIncome": 2037517,
+   "realized": 0,
+   "positionIrrPct": 10.86,
+   "benchmarkIrrPct": 11.93,
+   "absoluteYieldPct": null,
+   "annualizedYieldPct": null,
+   "priceAsOn": "2026-06-30",
+   "marketValue": 14580412.51,
+   "gainLoss": 4713765.51,
+   "pctGainLoss": 47.77,
+   "pctAssets": 100,
+   "unrealized": 4713765.51,
+   "printed": {
+    "marketValue": 14580412.51,
+    "gainLoss": null,
+    "pctGainLoss": 47.77,
+    "pctAssets": 100,
+    "unrealized": 4713765.51
+   },
+   "marketValueFromPrinted": true,
+   "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+   "alsoReportedUnder": [
+    "ajay-jaisinghani"
+   ],
+   "source": "360-one-private-wealth-60117-2026-06-30-holdings"
+  }
+ ],
+ "totals": {
+  "equityMarketValue": null,
+  "cashValue": null,
+  "totalMarketValue": 14580413,
+  "equityCost": null,
+  "totalCost": 9866647,
+  "gainLoss": null,
+  "pctGainLoss": null,
+  "positionCount": null,
+  "source": "360-one-private-wealth-60117-2026-06-30-holdings"
+ },
+ "returns": [],
+ "flows": {
+  "contribution": null,
+  "withdrawal": null,
+  "netCapitalInOut": null,
+  "realized": 0,
+  "unrealized": 4713765.51,
+  "income": 2037517,
+  "expenses": 0,
+  "fees": null,
+  "profit": null,
+  "corpus": 7829130,
+  "openingCorpus": null,
+  "periodFrom": null,
+  "periodTo": null,
+  "source": "360-one-private-wealth-60117-2026-06-30-holdings"
+ },
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -699.5,
+   "parts": [
+    "+91 9167661705"
+   ],
+   "joined": "+919167661705",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -799.5,
+   "parts": [
+    "+91 8655809497"
+   ],
+   "joined": "+918655809497",
+   "page": 1
+  }
+ ],
+ "derivedPortfolioTotal": 14580412.51
+}

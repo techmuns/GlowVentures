@@ -63,6 +63,38 @@ function authoritative(docs, provider, fact) {
   return null;
 }
 
+/**
+ * One account, one report type, SEVERAL DATES — keep the newest.
+ *
+ * The book is a position SNAPSHOT, and this drop is the first to carry the same
+ * report for one account at two as-of dates: 360 ONE bundles CRN37702 and
+ * CRN60117 at both 31 May 2026 and 30 Jun 2026. Precedence answers "which REPORT
+ * is authoritative"; it says nothing about which ISSUE of that report, so both
+ * matched and `find` returned whichever sorted first — the MAY one, quietly
+ * showing a month-old market value while a newer statement sat in the archive.
+ *
+ * Superseded documents stay in the archive (they are provenance, and the Data
+ * Audit browser lists them); they simply do not feed the book, and each one is
+ * named in the build report so the choice is visible rather than implied.
+ */
+function newestPerReportType(group, notes, label) {
+  const best = new Map();
+  for (const d of group) {
+    const cur = best.get(d.reportType);
+    // Ties break on docKey so the book stays byte-identical across runs.
+    const newer = !cur
+      || (d.asOf ?? "") > (cur.asOf ?? "")
+      || ((d.asOf ?? "") === (cur.asOf ?? "") && d.docKey < cur.docKey);
+    if (newer) best.set(d.reportType, d);
+  }
+  const kept = new Set([...best.values()].map((d) => d.docKey));
+  for (const d of group) {
+    if (kept.has(d.docKey)) continue;
+    notes.push(`${label}: ${d.reportType} ${d.asOf ?? "(no date)"} superseded by ${best.get(d.reportType).asOf} — \`${d.docKey}\` not used`);
+  }
+  return group.filter((d) => kept.has(d.docKey));
+}
+
 // ── Build ────────────────────────────────────────────────────────────────────
 
 function build(docs) {
@@ -129,7 +161,8 @@ function build(docs) {
   const accountBridges = {};
   const unclassified = new Map();
 
-  for (const [key, group] of [...byAccount.entries()].sort()) {
+  for (const [key, allIssues] of [...byAccount.entries()].sort()) {
+    const group = newestPerReportType(allIssues, notes, `account ${key}`);
     const sample = group.find((d) => d.reportType === "appraisal") ?? group[0];
     const provider = sample.provider;
     const accountNo = sample.accountNo;
@@ -476,7 +509,34 @@ function build(docs) {
     .filter((o) => accounts.some((a) => a.ownerId === o.ownerId))
     .map((o) => ({ ownerId: o.ownerId, displayName: o.displayName }));
 
-  const totalValue = r2(sum(positions.map((p) => (isNum(p.marketValue) ? p.marketValue : 0))));
+  /**
+   * CARRY BOTH, COUNT ONCE.
+   *
+   * The same position can appear on two family members' statements — this drop's
+   * 360 ONE Special Opportunities Fund Series 8 Class A3 is reported identically
+   * under CRN37702 and CRN60117. Neither row is suppressed: both are in
+   * `positions`, both show on their own account view, and each carries
+   * `alsoReportedUnder` naming the other. But the CONSOLIDATED total counts each
+   * `dedupeGroup` once, exactly as `dedupedPositions` does in the app and
+   * `consolidatedValue` does in the reconciler. Summing both put 1.46 Cr into the
+   * book's headline twice.
+   */
+  const seenGroups = new Set();
+  let totalValue = 0;
+  let doubleCounted = 0;
+  for (const p of positions) {
+    const mv = isNum(p.marketValue) ? p.marketValue : 0;
+    if (p.dedupeGroup) {
+      if (seenGroups.has(p.dedupeGroup)) { doubleCounted += mv; continue; }
+      seenGroups.add(p.dedupeGroup);
+    }
+    totalValue += mv;
+  }
+  totalValue = r2(totalValue);
+  if (doubleCounted) {
+    notes.push(`${seenGroups.size} holding(s) reported under more than one member: both rows are carried, `
+      + `and ${r2(doubleCounted).toLocaleString("en-IN")} is excluded from the consolidated total so each is counted once`);
+  }
   const asOf = accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) ?? "";
 
   /**

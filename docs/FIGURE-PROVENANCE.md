@@ -80,10 +80,10 @@ Basis: **LIVE** when the quote feed is up, **STATEMENT** otherwise. The pill say
 
 | Figure | Source | Kind | Basis |
 | --- | --- | --- | --- |
-| Consolidated NAV — `₹83,50,63,590.78` | 5 × portfolio appraisal | Derived: Σ (market price × quantity), incl. cash | STATEMENT / LIVE |
+| Consolidated NAV — `₹1,00,76,09,712.12` | 7 × portfolio appraisal + 2 × 360 ONE holding statement | Derived: Σ (market price × quantity), incl. cash; each `dedupeGroup` counted ONCE | STATEMENT / LIVE |
 | Capital invested — `₹70,77,60,828.25` | 5 × portfolio appraisal | Primitive: Σ total cost | STATEMENT always |
 | Embedded gain — `₹12,73,02,762.53` | as above | Derived: market value − cost | STATEMENT / LIVE |
-| Listed XIRR — `+109.7% p.a.` | capital register (or bank book) + performance summary opening value | Derived: Newton–Raphson XIRR, terminal at 2026-07-10 | STATEMENT |
+| Listed XIRR — `+135.8% p.a.` | capital register (or bank book) + performance summary opening value | Derived: Newton–Raphson XIRR, terminal at 2026-07-10, over the 6 of 9 accounts carrying an opening value | STATEMENT |
 | Dry powder | — | **Absent**: no fund commitment in this book | — |
 | Distributions | — | **Absent**: no fund holds, so none has distributed | — |
 | Allocation by asset class | account registry `engagement` + appraisals | Joined | STATEMENT / LIVE |
@@ -158,7 +158,7 @@ Basis: **STATEMENT always.** This page must tie to the capital gain statements.
 
 | Figure | Source | Kind | Basis |
 | --- | --- | --- | --- |
-| Realised gains — `−₹1,93,11,002.95` | 3 × capital gain statement, all 77 lots | Primitive (the manager's own tax determination) | STATEMENT |
+| Realised gains — `−₹49,65,684.69` | 5 × capital gain statement, all 82 lots | Primitive (the manager's own tax determination) | STATEMENT |
 | — of which short-term | `−₹1,89,93,755.70` | Primitive | STATEMENT |
 | — of which long-term | `−₹3,17,247.25` | Primitive | STATEMENT |
 | Realised, by asset class | lots × class joined from appraisals/transaction statements | Joined | STATEMENT |
@@ -175,9 +175,9 @@ visible without changing the figure:
 
 | Asset class | Lots | Short-term | Long-term | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Equity | 58 | −1,98,59,441 | −3,17,247 | **−2,01,76,689** |
+| Equity | 63 | −55,14,123 | −3,17,247 | **−58,31,370** |
 | No class on any statement (DSP Mutual Fund, Axis Liquid Fund — the cash sweep) | 19 | +8,65,686 | 0 | **+8,65,686** |
-| **Total — canonical** | **77** | **−1,89,93,756** | **−3,17,247** | **−1,93,11,003** |
+| **Total — canonical** | **82** | **−46,48,437** | **−3,17,247** | **−49,65,685** |
 
 The two sweep instruments appear on no appraisal and no transaction statement, so
 nothing classifies them. "Mutual Fund" appearing in a printed name is not a
@@ -192,7 +192,7 @@ rupees.
 
 | Figure | Source | Kind | Basis |
 | --- | --- | --- | --- |
-| Everything | — | **Absent**: all five accounts are listed-equity PMS mandates. No PE/VC fund, pre-IPO vehicle, unlisted company or startup appears in any statement | — |
+| Everything | — | **Absent**: the readable accounts hold listed equity and one AIF unit. The AIF and venture statements in this drop (Sanshi Fund, Transition Venture) have no reader, so no private-market figure is asserted from them | — |
 
 Both pages render an empty-segment state driven by the book's own classification,
 not a flag: ingest a private-market statement and the segments, tabs and tables
@@ -210,12 +210,12 @@ are as reported.
 | --- | --- | --- | --- |
 | Listed NAV | appraisals | Derived | LIVE / STATEMENT |
 | Embedded return — `+17.99%` | appraisals | Derived: Σ P&L ÷ Σ cost | LIVE / STATEMENT |
-| Money-weighted XIRR — `+109.7% p.a.` | capital register / bank book + performance summary opening value | Derived | STATEMENT |
+| Money-weighted XIRR — `+135.8% p.a.` | capital register / bank book + performance summary opening value | Derived, 6 of 9 accounts | STATEMENT |
 | Top-10 concentration `51%` | appraisals | Derived | LIVE / STATEMENT |
 | NAV trajectory | — | **Absent**: two dated values per account is not a series | — |
 | TWRR grid (MTD/QTD/FYTD, 1m/3m/6m/1y, since inception) | fact sheet, else performance appraisal | Primitive, as each manager publishes | STATEMENT |
 | Benchmark series | fact sheet / performance benchmark | Primitive | STATEMENT |
-| Consolidated TWRR | — | **Absent**: three managers, different periods, different benchmarks, different inception dates | — |
+| Consolidated TWRR | — | **Absent**: four managers, different periods, different benchmarks, different inception dates | — |
 | Value bridge (opening → closing) | performance summary (FY-to-date) and fact sheet / appraisal (since inception) | Primitive | STATEMENT |
 | Per-account XIRR | capital register / bank book + opening value | Derived | STATEMENT |
 | 510854 XIRR row | — | **Absent**: no performance summary, so no opening value | — |
@@ -253,7 +253,7 @@ Basis: **STATEMENT always.** Every figure here is a dated primitive.
 | Bought / Sold | transaction statement | Derived: Σ settlement | STATEMENT |
 | Window `1 Apr 2026 → 10 Jul 2026` | transaction statement header | Primitive | STATEMENT |
 | Per-row realised | capital gain statement, attributed once per (account, security, date) | Joined | STATEMENT |
-| Realised (canonical) `−₹1.93 Cr` | 3 × capital gain statement, 77 lots | Primitive | STATEMENT |
+| Realised (canonical) `−₹49.7 L` | 5 × capital gain statement, 82 lots | Primitive | STATEMENT |
 | Realised by asset class | as Capital Gains above | Joined | STATEMENT |
 | Attributed / unattributed cross-check | the two above | Derived, reconciles to the rupee | STATEMENT |
 | Lots `77` with purchase + sale dates | capital gain statement | Primitive | STATEMENT |
@@ -372,7 +372,7 @@ Everything the book deliberately does not carry, and what would supply it.
 | --- | --- | --- |
 | `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | A monthly or quarterly valuation statement per account |
 | `unrealisedST` / `unrealisedLT`, `stCostBasis`, `ltCostBasis`, `daysToLT` | Needs per-lot purchase dates for **held** lots. The capital register is a capital-account ledger — contributions, withdrawals, TDS transfers — not a lot register | A holding statement with lot-level acquisition dates |
-| `privateMarkets` | All five accounts are listed-equity PMS mandates | A private-markets statement |
+| `privateMarkets` | The readable accounts are listed-equity mandates plus one AIF unit | A reader for the AIF / venture capital-account statements in this drop |
 | Realised gains for 100022, 100023 | Those managers issued no capital gain statement in this drop | A capital gain statement for those accounts |
 | XIRR for 510854 | No performance summary, so no opening portfolio value | A performance summary covering the window |
 | Per-entity YTD | Needs a per-entity NAV on 1 April | A dated per-entity valuation |
@@ -387,7 +387,7 @@ Everything the book deliberately does not carry, and what would supply it.
 
 | Check | Result |
 | --- | --- |
-| Consolidated NAV vs archive | `₹83,50,63,590.78` — ties per account, per owner and per sector |
+| Consolidated NAV vs archive | `₹1,00,76,09,712.12` — ties per account, per owner and per sector |
 | Reconciliation material deltas | **0** across 30 row-sum, 177 derived-vs-printed, 900 dated-table and 3 cross-report checks |
 | Golden test (figures read off the PDFs by a human) | 114 passed, 0 failed, 2 not checked, 2 blocked |
 | Book regenerates from `source/` | Byte-identical |

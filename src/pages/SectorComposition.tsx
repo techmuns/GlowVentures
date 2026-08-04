@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum } from "@/lib/analytics";
+import { bySector, sum, consolidatedMarketValue } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -23,7 +23,7 @@ export function SectorComposition() {
   const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
-  const totalMV = sum(p.map((x) => x.marketValue));
+  const totalMV = consolidatedMarketValue(p);
   const sectors = bySector(p);
   // Every figure on this page is rebuilt from position market values, so once the
   // quote feed is up they all track live prices — and none of them matches a cell
