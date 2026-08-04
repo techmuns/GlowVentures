@@ -665,8 +665,8 @@ rate annualises about three months; the pages say so, because an unlabelled
 
 ## Stage 7 — the live layer
 
-Six Cloudflare Pages Functions proxy the in-house muns API, with `MUNS_TOKEN`
-held in the Cloudflare environment and never in the browser: `quotes`,
+Eight Cloudflare Pages Functions proxy the in-house muns API, with `MUNS_TOKEN`
+held in the Cloudflare environment and never in the browser: `quotes`, `ratios`,
 `news`, `announcements`, `insider`, `research`, `history`. `fx` needs no token
 (ECB reference rates, keyless) and falls back to a static rate.
 
@@ -709,6 +709,82 @@ before the token is set — every page renders on statement marks, the pill read
 `STATEMENT · as of 2026-07-10`, and consolidated NAV is exactly
 **₹1,00,76,09,712.12**. No blank tiles, no zeros, no unresolved spinners, and no
 "session expired" wording for what is a missing upstream.
+
+## Stage 8 — the client's Family Office Operating System spec
+
+The client's spec describes six layers. Most of it needs data sources this
+cockpit does not have, so **what shipped is the subset the muns API catalogue can
+actually serve**, and the rest is named rather than stubbed. A route that renders
+a frame around data nobody can supply is worse than no route: it reads as a
+feature that is broken instead of one that was never possible.
+
+### What shipped, and what backs it
+
+| Spec item | Where | Backed by |
+| --- | --- | --- |
+| Returns table — daily / weekly / monthly / QTD / FYTD / 1Y / 3Y / 5Y / 10Y / max CAGR | company page | `market_data`, one dated close per horizon |
+| Compare up to four companies | `/compare` | the book, the quote feed, `ratio_source` |
+| Document repository — annual reports, concalls, earnings, announcements | company page | `combined_filings_announcements`, `filings_domestic` |
+| Financial tables, ratios, shareholding | company page | `financial_tables_markdown` (screener.in) |
+| Consensus / street estimates | company page | `street_estimates` |
+| Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
+| Insider trades, corporate announcements, news | company page, `/news` | `insider_trades`, `corp_announcements`, `news_search` |
+
+### Two limits that are load-bearing, and are stated on screen
+
+**There is no price chart, and there cannot be one from this API.** The spec asks
+for interactive charts over adjustable periods. `market_data` returns a four-row
+PREVIEW of any window — a header, the first two rows, a literal `...`, and the
+last two — and writes the real series to a path on its own disk that no
+documented endpoint serves. See the note at the top of `functions/api/history.js`.
+A returns TABLE is a set of "what did this close at on date D" questions, which
+that preview answers exactly; a chart is not, and the card says so rather than
+drawing a line through ten closes.
+
+**The ratio and estimate endpoints return PROSE and it stays prose.** Both are
+`text/plain` with no documented schema. `src/lib/ratios.ts` and
+`src/lib/research.ts` hand the upstream's own words through and compute nothing
+from them. A parsed comparison grid would be the nicer screen and the wrong one:
+nothing in the response says which number is which company's PE, and inventing
+that mapping is how a figure nobody can trace enters a dashboard whose entire
+claim is that every figure traces to a source.
+
+### Investment tools are the ONE thing a reader writes to
+
+`src/lib/watchlist.ts` is the only store in the app that takes user input, and it
+is deliberately nowhere near the book. `glowData.ts` is generated from `source/`
+and regenerates byte-identically; a target price is a judgement, not a statement
+figure, and writing one into the book would break that guarantee on the first
+edit. It lives in `localStorage`, which is a real limitation and is stated on the
+page rather than left to be discovered on a second device.
+
+**A price nobody has set is `null`, never 0.** That matters more here than
+anywhere else in the codebase: a target of zero renders as a real number and
+makes every holding look 100% overvalued — a fabricated figure produced by a
+default, which is the exact failure this book exists to prevent.
+
+### What the spec asks for that NO current API can serve
+
+Named here so the gap stays visible, and so nobody builds a frame around it:
+
+- **Layer 1 — Knowledge & Memory.** Tagged notes from manager meetings, IC
+  discussions, fund pitches, conference notes, books and podcasts, queryable in
+  natural language. Needs a note store, a tagging model and an AI index. The
+  catalogue's `document_search` searches muns' own corpus, not the family's.
+- **All of macro research.** Commodities, global indices, currencies, GDP, CPI,
+  policy rates, credit growth, housing, household savings, vehicle sales, capital
+  market flows. There is no macro or commodity endpoint in the catalogue at all —
+  not a partial one, none.
+- **Industry research.** Industry size, capacity, utilisation, order books, raw
+  material prices. No industry endpoint.
+- **Layer 3 — IPS buckets and GAP analysis.** Growth / Liquidity / Tactical /
+  Hedge / Charity, actual vs desired by geography, market cap, duration. The
+  actuals are in the book; the DESIRED allocations are a family decision nobody
+  has supplied, and inventing a target weight would fabricate the entire gap.
+- **Layer 4 — thesis monitoring** and **Layer 5 — alerts** beyond price levels.
+  Both need a store plus a rules engine; only the price-level half of Layer 5 is
+  possible today, and that is what shipped.
+- **PDF and PowerPoint export.** Excel export exists (`exportPortfolioExcel.ts`).
 
 ## Conventions
 

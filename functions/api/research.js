@@ -55,7 +55,35 @@ const KINDS = {
     body: (t) => JSON.stringify({ ticker: t, form: "concalls" }),
     format: "json",
   },
+  // The client spec asks for a DOCUMENT REPOSITORY per company — annual reports,
+  // quarterly reports, investor presentations, earnings-call transcripts,
+  // corporate announcements — each with a source link. `filings_domestic` above
+  // returns one form at a time; `combined_filings_announcements` returns the lot
+  // across BSE / NSE / DRHP / screener.in in one call, with a date window.
+  //
+  // The window is a YEAR back from today rather than a fixed date: a repository
+  // pinned to a hardcoded start silently stops covering the present the moment it
+  // ships. `end_date` is today for the same reason.
+  documents: {
+    label: "Documents",
+    url: () => "https://devde.muns.io/filings/combined_filings_announcements",
+    method: "POST",
+    accept: "application/json",
+    body: (t) => JSON.stringify({
+      ticker: t,
+      country: "India",
+      form: ["all"],
+      start_date: isoDaysAgo(365),
+      end_date: isoDaysAgo(0),
+    }),
+    format: "json",
+  },
 };
+
+/** `YYYY-MM-DD`, n days before today (UTC). */
+function isoDaysAgo(n) {
+  return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+}
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {

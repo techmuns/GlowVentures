@@ -14,6 +14,8 @@ import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
+import { ReturnsTable } from "@/components/ReturnsTable";
+import { InvestmentTools } from "@/components/InvestmentTools";
 
 // Per-stock drill-down: how one security is held across the family's entities, its
 // tax basis, every dated buy/sell from the ledger, and — from the muns research
@@ -265,6 +267,20 @@ export function StockInfo() {
         </div>
       </Card>
 
+      <ReturnsTable
+        ticker={sym}
+        price={rows[0]?.currentPrice ?? null}
+        priceIsLive={live}
+        asOf={rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf}
+      />
+
+      <InvestmentTools
+        securityKey={securityKey}
+        name={name}
+        price={rows[0]?.currentPrice ?? null}
+        priceIsLive={live}
+      />
+
       <ResearchPanel ticker={sym} name={name} />
 
       {/* Deferred deep-dive panels */}
@@ -286,7 +302,7 @@ export function StockInfo() {
             </div>
           ))}
         </div>
-        <p className="mt-2.5 text-[11px] text-slate-500">Mapped from the client deck. Estimates, financials and concall documents are live in the panel above; these remaining ones need an AI extraction layer, an exchange deal feed, or a price series the current API can\u2019t return.</p>
+        <p className="mt-2.5 text-[11px] text-slate-500">Mapped from the client deck. Estimates, financials, filings and the returns table are live above; these remaining ones need an AI extraction layer, an exchange deal feed, or a price series the current API cannot return.</p>
       </div>
 
       <p className="mt-4 text-[11px] text-slate-500">

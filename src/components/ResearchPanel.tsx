@@ -16,9 +16,15 @@ import {
 // thing every other number on this dashboard can do. Read it, don't compute on it.
 
 const TAB_LABEL: Record<ResearchKind, string> = {
-  estimates: "Street estimates",
   financials: "Financials",
-  concalls: "Concalls & filings",
+  estimates: "Street estimates",
+  // The client spec's DOCUMENT REPOSITORY: annual reports, quarterly reports,
+  // investor presentations, earnings-call transcripts and corporate
+  // announcements, each with a source link. `documents` is the combined feed
+  // across BSE / NSE / DRHP / screener.in; `concalls` is screener.in's transcript
+  // list alone, kept because it is the one the upstream answers most reliably.
+  documents: "Documents",
+  concalls: "Concalls",
 };
 
 export function ResearchPanel({ ticker, name }: { ticker: string | null; name: string }) {

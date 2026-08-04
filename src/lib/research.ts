@@ -6,7 +6,7 @@
 // them, because turning an analyst's sentence into a headline figure is exactly
 // how a wrong number gets into a dashboard that promises every figure traces to a
 // source. If a metric belongs in a tile, it should come from a typed feed.
-export type ResearchKind = "estimates" | "financials" | "concalls";
+export type ResearchKind = "estimates" | "financials" | "concalls" | "documents";
 
 export type ResearchDoc = { url: string; title: string; date: string | null };
 

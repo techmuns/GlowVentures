@@ -17,6 +17,8 @@ import { UploadHistory } from "@/pages/UploadHistory";
 import { DataAudit } from "@/pages/DataAudit";
 import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
+import { CompareCompanies } from "@/pages/CompareCompanies";
+import { Watchlist } from "@/pages/Watchlist";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // A page only renders when there is something real to render. An empty book
@@ -52,6 +54,8 @@ export default function App() {
             <Route path="/stock/:securityKey" element={<Gate><StockInfo /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
+            <Route path="/compare" element={<Gate><CompareCompanies /></Gate>} />
+            <Route path="/watchlist" element={<Gate><Watchlist /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
             <Route path="/private" element={<Gate><PrivateMarkets /></Gate>} />
             <Route path="/data-bank" element={<Gate><DataBank /></Gate>} />

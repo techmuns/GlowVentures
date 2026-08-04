@@ -287,6 +287,45 @@ switches: `THEMES=light`, `WIDTHS=1440,1280,1024`, `FAST=1` (layout only),
 
 ---
 
+## The client spec — what shipped and what has no data source
+
+The client's Family Office Operating System spec describes six layers. What
+shipped is the subset the muns API catalogue can actually serve; the rest is
+named below rather than stubbed, because a route that draws a frame around data
+nobody can supply reads as broken rather than as never-possible.
+
+**Shipped, API-backed:** returns table over the spec's ten horizons · compare up
+to four companies · document repository (annual reports, concalls, earnings,
+corporate announcements) · financial tables, ratios and shareholding · street
+estimates · insider trades and news.
+
+**Shipped, no API needed:** personal watchlist, target price, fair value, entry
+and exit price, price alerts, and a "why we own it" note per holding. These are
+the family's own judgements, stored in the browser and kept deliberately apart
+from the book — `glowData.ts` regenerates byte-identically from `source/`, so a
+judgement can never be written into it.
+
+**Two limits stated on screen rather than worked around:**
+
+- **No price chart.** `market_data` returns a four-row preview of any window and
+  never the series (see `functions/api/history.js`). A returns table is a set of
+  "what did this close at on date D" questions, which the preview answers exactly.
+  A chart is not, so the card says so instead of drawing a line through ten points.
+- **Ratios and estimates stay as prose.** Both endpoints return `text/plain` with
+  no documented schema. Parsing an undocumented blob into a comparison grid is how
+  an untraceable figure gets on screen, so the upstream's words are passed through
+  and nothing computes against them.
+
+**No data source exists for:** Layer 1's tagged knowledge base · all macro
+research (commodities, global indices, currencies, GDP, CPI, policy rates, credit
+growth, housing, household savings, vehicle sales, capital-market flows — the
+catalogue has no macro endpoint of any kind) · industry research · Layer 3's IPS
+buckets and gap analysis (the actuals are in the book; the *desired* allocations
+are a family decision nobody has supplied) · Layer 4 thesis monitoring · Layer 5
+alerts beyond price levels · PDF and PowerPoint export.
+
+---
+
 ## Documented limitations
 
 These are gaps in the source documents, not bugs. Each renders `—` on screen with
@@ -336,10 +375,13 @@ rationale in [CLAUDE.md](./CLAUDE.md); in short:
 | Setup | Data & Refresh | Ingest status, account registry & report dates, holdings CSV export | STATEMENT |
 | Setup | Data Audit | Browser over every extracted statement table | STATEMENT |
 | Daily | Morning CIO | NAV, capital invested, embedded gain, XIRR, allocation, concentration | LIVE |
-| Daily | Portfolio Monitor | All 143 holdings, and the 256-row transaction tape | LIVE |
+| Daily | Portfolio Monitor | Every holding, and the transaction tape | LIVE |
 | Daily | News & Announcements | Market news, exchange filings and insider trades for listed holdings | external feeds |
 | Allocation | Family & Entities | By owning entity, and who custodies each | LIVE |
 | Allocation | Sector Composition | Sector mix with per-sector drill-down | LIVE |
+| Research | Compare Companies | Up to four holdings side by side — position, price, ratios, returns | LIVE + external |
+| Research | Watchlist & Targets | Names we follow, with our own target / fair value / entry / exit and price alerts | LIVE + local |
+| Research | *(per company)* | Returns table, financials, estimates, filings, investment tools — reached from any holding | LIVE + external |
 | Tax | Capital Gains & Tax | Realised by account and asset class, loss harvesting | STATEMENT |
 | Private Markets | Private Markets | Empty in this drop — the readable accounts are listed-equity mandates and one AIF unit | — |
 | Private Markets | Data Bank | Document repository, empty until a private holding exists | — |

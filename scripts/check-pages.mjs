@@ -45,6 +45,9 @@ const ROUTES = [
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   ["family", "/family"],
   ["sectors", "/sectors"],
+  ["compare", "/compare"],
+  ["watchlist", "/watchlist"],
+  ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
   ["capital-gains", "/capital-gains"],
   ["private", "/private"],
   ["data-bank", "/data-bank"],

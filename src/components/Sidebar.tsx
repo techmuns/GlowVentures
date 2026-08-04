@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Landmark, FolderOpen, Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
+  GitCompare, Star,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
@@ -23,6 +24,8 @@ const NAV = [
   { to: "/news", label: "News & Announcements", icon: Newspaper, group: "Daily" },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
+  { to: "/compare", label: "Compare Companies", icon: GitCompare, group: "Research" },
+  { to: "/watchlist", label: "Watchlist & Targets", icon: Star, group: "Research" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
   { to: "/private", label: "Private Markets", icon: Landmark, group: "Private Markets" },
   { to: "/data-bank", label: "Data Bank", icon: FolderOpen, group: "Private Markets" },
