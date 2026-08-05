@@ -47,6 +47,17 @@ const ROUTES = [
   ["sectors", "/sectors"],
   ["compare", "/compare"],
   ["watchlist", "/watchlist"],
+  // FOOS-spec preview pages — illustrative placeholders for spec layers whose
+  // live source does not exist yet. Walked so their light-mode remaps, overflow
+  // and any stray ₹0 are held to the same bar as every real page.
+  ["knowledge", "/knowledge"],
+  ["household", "/household"],
+  ["exposure", "/exposure"],
+  ["macro", "/macro"],
+  ["economy", "/economy"],
+  ["industry", "/industry"],
+  ["thesis", "/thesis"],
+  ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
   ["capital-gains", "/capital-gains"],
   ["private", "/private"],

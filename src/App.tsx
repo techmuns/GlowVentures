@@ -19,6 +19,16 @@ import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
 import { CompareCompanies } from "@/pages/CompareCompanies";
 import { Watchlist } from "@/pages/Watchlist";
+// FOOS-spec preview pages — each implements a spec layer whose live data source
+// does not exist yet, rendered as a clearly-marked illustrative placeholder.
+import { Knowledge } from "@/pages/Knowledge";
+import { MacroResearch } from "@/pages/MacroResearch";
+import { Economy } from "@/pages/Economy";
+import { IndustryResearch } from "@/pages/IndustryResearch";
+import { ExposureIPS } from "@/pages/ExposureIPS";
+import { ThesisMonitor } from "@/pages/ThesisMonitor";
+import { Alerts } from "@/pages/Alerts";
+import { FamilyDashboard } from "@/pages/FamilyDashboard";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // A page only renders when there is something real to render. An empty book
@@ -53,9 +63,19 @@ export default function App() {
                 most of the holdings. */}
             <Route path="/stock/:securityKey" element={<Gate><StockInfo /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
+            <Route path="/household" element={<Gate><FamilyDashboard /></Gate>} />
+            <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             <Route path="/compare" element={<Gate><CompareCompanies /></Gate>} />
             <Route path="/watchlist" element={<Gate><Watchlist /></Gate>} />
+            {/* Preview pages — pure illustrative layouts with no book dependency,
+                so they render even before statements are ingested. */}
+            <Route path="/knowledge" element={<Knowledge />} />
+            <Route path="/macro" element={<MacroResearch />} />
+            <Route path="/economy" element={<Economy />} />
+            <Route path="/industry" element={<IndustryResearch />} />
+            <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
+            <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
             <Route path="/private" element={<Gate><PrivateMarkets /></Gate>} />
             <Route path="/data-bank" element={<Gate><DataBank /></Gate>} />

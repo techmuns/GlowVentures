@@ -3,11 +3,13 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Landmark, FolderOpen, Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Star,
+  GitCompare, Star, BookOpen, LayoutDashboard, Target, Globe, TrendingUp, Factory, Crosshair, BellRing,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
-const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger"]);
+// Pure-preview pages carry no book dependency, so they stay reachable even before
+// statements are ingested (the same as the setup/admin routes).
+const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger", "/knowledge", "/macro", "/economy", "/industry"]);
 
 // Drag-to-resize bounds for the left nav (px). Default 224 (14rem) keeps the
 // Portfolio Monitor holdings table off a horizontal scrollbar at common laptop
@@ -22,10 +24,18 @@ const NAV = [
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/news", label: "News & Announcements", icon: Newspaper, group: "Daily" },
+  { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge", preview: true },
+  { to: "/household", label: "Family Dashboard", icon: LayoutDashboard, group: "Allocation", preview: true },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
+  { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation", preview: true },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
   { to: "/compare", label: "Compare Companies", icon: GitCompare, group: "Research" },
   { to: "/watchlist", label: "Watchlist & Targets", icon: Star, group: "Research" },
+  { to: "/macro", label: "Macro Research", icon: Globe, group: "Research", preview: true },
+  { to: "/economy", label: "Economy & Macro", icon: TrendingUp, group: "Research", preview: true },
+  { to: "/industry", label: "Industry Research", icon: Factory, group: "Research", preview: true },
+  { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor", preview: true },
+  { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor", preview: true },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
   { to: "/private", label: "Private Markets", icon: Landmark, group: "Private Markets" },
   { to: "/data-bank", label: "Data Bank", icon: FolderOpen, group: "Private Markets" },
@@ -101,11 +111,13 @@ export function Sidebar() {
           <div key={group} className="mb-4">
             <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">{group}</div>
             <ul className="space-y-0.5">
-              {items.map(({ to, label, icon: Icon }) => {
+              {items.map((item) => {
+                const { to, label, icon: Icon } = item;
+                const isPreview = "preview" in item && item.preview;
                 const locked = !hasPortfolio && !ALWAYS_ACCESSIBLE.has(to);
                 return (
                   <li key={to}>
-                    <NavLink to={to} title={locked ? "Ingest statements first" : label}
+                    <NavLink to={to} title={locked ? "Ingest statements first" : isPreview ? `${label} — illustrative preview` : label}
                       className={({ isActive }) => [
                         "group flex items-center gap-2 rounded-md px-2.5 py-2 text-[12px] transition-colors",
                         isActive ? "bg-ink-700/80 text-slate-100"
@@ -114,7 +126,9 @@ export function Sidebar() {
                       ].join(" ")}>
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{label}</span>
-                      {locked && <Lock className="ml-auto h-3 w-3 shrink-0 text-slate-700" />}
+                      {locked
+                        ? <Lock className="ml-auto h-3 w-3 shrink-0 text-slate-700" />
+                        : isPreview && <span className="ml-auto shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-semibold uppercase tracking-wide text-amber-400" title="Illustrative preview">Preview</span>}
                     </NavLink>
                   </li>
                 );

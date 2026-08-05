@@ -207,3 +207,29 @@ html:not(.dark) select, html:not(.dark) textarea {
 }
 html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(60, 55, 100, 0.22); }
 html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(60, 55, 100, 0.4); }
+
+/* ---------------------------------------------------------------------------
+   PREVIEW — illustrative placeholder figures (see src/components/Preview.tsx).
+   The client asked to see the shape of unbuilt FOOS pages before their data
+   feeds exist. A preview figure is deliberately distinct from BOTH a real value
+   (bright slate) and an Absent dash (plain slate-500): a muted number with a
+   champagne-dashed underline, so a reader can never mistake a placeholder for a
+   measurement. Custom classes, so each just needs a base (dark) rule and a
+   light-mode override — no Tailwind opacity-variant fan-out.
+   ------------------------------------------------------------------------- */
+.preview-num {
+  color: #8f8bb0;
+  border-bottom: 1px dashed rgba(217, 196, 143, 0.5);
+  cursor: help;
+}
+.preview-hatch {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(217, 196, 143, 0.05) 0, rgba(217, 196, 143, 0.05) 1px,
+    transparent 1px, transparent 7px);
+}
+html:not(.dark) .preview-num { color: #8d889f; border-bottom-color: rgba(184, 146, 60, 0.55); }
+html:not(.dark) .preview-hatch {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(184, 146, 60, 0.055) 0, rgba(184, 146, 60, 0.055) 1px,
+    transparent 1px, transparent 7px);
+}
