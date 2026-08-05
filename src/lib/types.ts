@@ -334,6 +334,35 @@ export type FundInvestment = {
   dpi: number | null;
 };
 
+/**
+ * A CAPITAL COMMITMENT to a drawdown fund — and specifically the part of it that
+ * has NOT been called.
+ *
+ * Deliberately not a `FundInvestment`, and deliberately not a holding. The
+ * fund's current value is already an ordinary position with `assetClass: "AIF"`;
+ * putting it here as well would count it twice. What this carries is the
+ * LIABILITY side — capital the fund can call at any time — which appears nowhere
+ * else in the book and which the Morning CIO's dry-powder tile previously denied
+ * existed while two statements reporting it sat unread.
+ */
+export type Commitment = {
+  accountId: string;
+  name: string;
+  provider: string;
+  ownerId: string | null;
+  asOf: string | null;
+  committed: number;        // INR — the total the family signed up for
+  drawn: number | null;     // INR — capital actually called so far
+  undrawn: number | null;   // INR — the dry powder, AS PRINTED, not derived
+  distributed: number | null;
+  /**
+   * Whether the fund's own three figures agree: committed − drawn = undrawn, to
+   * the rupee. False means the statement disagrees with itself and the figures
+   * are shown as printed rather than reconciled here.
+   */
+  arithmeticHolds: boolean | null;
+};
+
 export type StartupInvestment = {
   name: string;
   investDate: string | null;
@@ -384,6 +413,11 @@ export type Portfolio = {
    * issues none), with the window's opening portfolio value as its first entry.
    */
   accountCashFlows?: Record<string, CashFlow[]>;
+  /**
+   * Undrawn capital commitments. Separate from `privateMarkets` because a
+   * commitment is not an investment — see the type's own note.
+   */
+  commitments: Commitment[];
   privateMarkets: {
     peFunds: FundInvestment[];
     preIpoFunds: FundInvestment[];

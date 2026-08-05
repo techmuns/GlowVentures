@@ -104,18 +104,20 @@ never guessed into the nearest plausible bucket.
 - account 1000633: no time-weighted return series in any statement
 - account 1000633: no flow block in any statement, so no value bridge
 - account 1000633: no external capital movements found, so no money-weighted return series
-- account 360 ONE Private Wealth::37702: holdings 2026-05-31 superseded by 2026-06-30 — `360-one-private-wealth-37702-2026-05-31-holdings` not used
+- account 360 ONE Private Wealth::37702: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-06-30 — `360-one-private-wealth-37702-2026-05-31-holdings`; its dated rows are still counted
+- account 360 ONE Private Wealth::37702: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 37702: no time-weighted return series in any statement
 - account 37702: no flow block in any statement, so no value bridge
 - account 37702: no external capital movements found, so no money-weighted return series
-- account 360 ONE Private Wealth::60117: holdings 2026-05-31 superseded by 2026-06-30 — `360-one-private-wealth-60117-2026-05-31-holdings` not used
+- account 360 ONE Private Wealth::60117: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-06-30 — `360-one-private-wealth-60117-2026-05-31-holdings`; its dated rows are still counted
+- account 360 ONE Private Wealth::60117: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 60117: no time-weighted return series in any statement
 - account 60117: no flow block in any statement, so no value bridge
 - account 60117: no external capital movements found, so no money-weighted return series
 - account 1019265797 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,66,421.41.
 - account 1038104611 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,94,412.48.
 - account 510854: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
-- account Green Lantern Capital LLP::510861: capital-gain 2026-06-25 superseded by 2026-06-30 — `green-lantern-capital-llp-510861-2026-06-25-capital-gain` not used
+- account Green Lantern Capital LLP::510861: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-06-30 — `green-lantern-capital-llp-510861-2026-06-25-capital-gain`; its dated rows are still counted
 - account 16180583: no time-weighted return series in any statement
 - account 16180583: no flow block in any statement, so no value bridge
 - account 16180583: no external capital movements found, so no money-weighted return series
@@ -125,9 +127,11 @@ never guessed into the nearest plausible bucket.
 - account 98245: no external capital movements found, so no money-weighted return series
 - account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,36,386.82.
 - account 7810404: no external capital movements found, so no money-weighted return series
-- account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded by 2026-06-30 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report` not used
+- account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-06-30 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710067: 9 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710067: no external capital movements found, so no money-weighted return series
-- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded by 2026-06-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report` not used
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-06-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710090: no external capital movements found, so no money-weighted return series
 - account 9039671821: no time-weighted return series in any statement
 - account 9039671821: no external capital movements found, so no money-weighted return series

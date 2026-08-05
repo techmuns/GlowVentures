@@ -75,7 +75,34 @@ export function MorningCIO() {
     const debtF = fundTotals(pm.debtFunds);
     const st = startupTotals(pm.startups);
     // Fund-commitment lifecycle (incl. fully-exited "closed" funds).
-    const deploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
+    /**
+     * CAPITAL DEPLOYMENT — from the COMMITMENTS the statements print, not from
+     * `privateMarkets`.
+     *
+     * `privateMarkets` describes fund-of-funds investments with their own TVPI
+     * and DPI, and this book holds none. What it DOES hold is two drawdown AIF
+     * commitments — ₹1.5 Cr each, half called — printed on the Transition
+     * Venture capital-account statements. Reading only `privateMarkets`, this
+     * tile said "no fund commitments in this book" while ₹1.5 Cr of undrawn
+     * capital sat in the archive, callable at any time.
+     *
+     * `undrawn` is taken as each statement PRINTS it rather than derived from
+     * committed − drawn: the fund states all three, and the build records
+     * whether they agree.
+     */
+    const commitments = portfolio.commitments ?? [];
+    const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
+    const deploy = commitments.length
+      ? {
+        committed: sum(commitments.map((c) => c.committed)) + fundDeploy.committed,
+        drawn: sumOrNull([...commitments.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
+        distributed: sumOrNull([...commitments.map((c) => c.distributed), fundDeploy.distributed]) ?? 0,
+        currentValue: fundDeploy.currentValue,
+        unfunded: sumOrNull([...commitments.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
+        tvpi: fundDeploy.tvpi,
+        dpi: fundDeploy.dpi,
+      }
+      : fundDeploy;
     const closedF = fundTotals(pm.closedFunds);
     // How many private instruments the book actually carries. Zero means the
     // segment is ABSENT, not that it measured nothing — every private figure
@@ -273,7 +300,7 @@ export function MorningCIO() {
     return {
       p, listedMV, listedCost, listedPnL, listedRet,
       totalValue, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
-      privateNet, privateGain, privateTotalGain, privateDistributed, deploy,
+      privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       buckets, emptyBuckets, bookXirr, listedXirrPct,
@@ -291,7 +318,9 @@ export function MorningCIO() {
   const donutData = m.buckets.map((b) => ({ name: b.key, value: convertFromBase(b.current) }));
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
-  const hasCommitments = m.fundCount > 0 && m.deploy.committed > 0;
+  // A commitment schedule exists if ANY source reports one — a drawdown AIF's
+  // capital account counts, not only a fund-of-funds block.
+  const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
   const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
   const bucketHref = (b: { sheet: PrivateSheet | null }) => b.sheet ? auditHref({ file: "private", sheet: b.sheet }) : auditHref(LEDGER);
@@ -397,8 +426,8 @@ export function MorningCIO() {
               : "p.a. · money-weighted"}
           icon={<Percent className="h-4 w-4" />} />
 
-        {/* Dry powder and Distributions are FUND facts. With no fund in the book
-            they have no denominator — "₹0 undrawn" would assert a commitment
+        {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
+            in the book they have no denominator — "₹0 undrawn" would assert a
             schedule that draws nothing, which is a different claim entirely. */}
         <Kpi label="Dry powder"
           value={hasCommitments
@@ -406,7 +435,7 @@ export function MorningCIO() {
             : <AbsentValue />}
           sub={hasCommitments
             ? "undrawn fund commitments"
-            : <span className="text-slate-500">no fund commitments in this book</span>}
+            : <span className="text-slate-500">no statement in this book reports a capital commitment</span>}
           icon={<Fuel className="h-4 w-4" />} />
 
         <Kpi label="Distributions"
@@ -531,7 +560,7 @@ export function MorningCIO() {
             ) : (
               <AbsentSection
                 what="No fund commitments"
-                needs="Commitments, capital calls, undrawn dry powder and distributions are fund facts. This book holds no PE, VC, pre-IPO or debt fund, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
+                needs="Commitments, capital calls, undrawn dry powder and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
             )}
           </Card>
 

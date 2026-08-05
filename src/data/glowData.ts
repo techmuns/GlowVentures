@@ -8,8 +8,9 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, CorporateAction,
-  EntityCG, FundInvestment, NavPoint, Position, RealisedByClass, StartupInvestment,
+  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, Commitment,
+  CorporateAction, EntityCG, FundInvestment, NavPoint, Position, RealisedByClass,
+  StartupInvestment,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -17,8 +18,8 @@ export const BOOK_AS_OF = "2026-07-10";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-07-10",
-  "listedValue": 3354323674.24,
-  "privateValue": 0,
+  "listedValue": 1277792840.19,
+  "privateValue": 2076530834.05,
   "totalValue": 3354323674.24,
   "positionsCount": 301,
   "entitiesCount": 6,
@@ -9642,9 +9643,44 @@ export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = [
   }
 ];
 
-// No private-markets holdings in this book: all five accounts are listed-equity
-// PMS mandates. These stay empty rather than being removed, so a later drop that
-// does carry them needs no change to the contract.
+/**
+ * UNDRAWN CAPITAL COMMITMENTS — money owed to a fund on demand.
+ *
+ * NOT a holding and never summed into NAV: the fund's current value is already
+ * a position, and `undrawn` is capital that has not been invested yet. This is
+ * what the Morning CIO's dry-powder tile reads.
+ */
+export const BOOK_COMMITMENTS: Commitment[] = [
+  {
+    "accountId": "transition-venture-capital-TVC262",
+    "name": "Transition Venture Capital Fund I",
+    "provider": "Transition Venture Capital",
+    "ownerId": "bharat-jaisinghani-family-trust-2",
+    "asOf": "2026-03-31",
+    "committed": 15000000,
+    "drawn": 7500000,
+    "undrawn": 7500000,
+    "distributed": 0,
+    "arithmeticHolds": true
+  },
+  {
+    "accountId": "transition-venture-capital-TVC263",
+    "name": "Transition Venture Capital Fund I",
+    "provider": "Transition Venture Capital",
+    "ownerId": "bharat-jaisinghani-family-trust-3",
+    "asOf": "2026-03-31",
+    "committed": 15000000,
+    "drawn": 7500000,
+    "undrawn": 7500000,
+    "distributed": 0,
+    "arithmeticHolds": true
+  }
+];
+
+// Private-markets HOLDINGS are carried as ordinary positions with assetClass
+// "AIF" — see BOOK_SUMMARY.privateValue. These fund/startup collections stay
+// empty because no statement in this drop reports a fund-of-funds structure with
+// its own TVPI and DPI; a later drop that does needs no change to the contract.
 export const BOOK_PE_FUNDS: FundInvestment[] = [];
 export const BOOK_PREIPO_FUNDS: FundInvestment[] = [];
 export const BOOK_UNLISTED_COMPANIES: FundInvestment[] = [];
