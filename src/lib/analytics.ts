@@ -62,19 +62,80 @@ export const consolidatedMarketValue = (positions: Position[]) =>
 export const doubleCountedValue = (positions: Position[]) =>
   sum(positions.map((p) => p.marketValue)) - consolidatedMarketValue(positions);
 
-export type Bucket = { key: string; mv: number; cost: number; pnl: number; count: number; returnPct: number; weight: number };
+/**
+ * A position whose statement reported a usable cost basis.
+ *
+ * Return analysis, contribution decomposition and the winners/losers split are
+ * all questions about a gain, and a gain needs a cost. A depository holding
+ * statement reports a value and no cost, so those positions cannot answer and
+ * must be EXCLUDED — not defaulted to zero, which would report the whole value
+ * as profit at an infinite return.
+ *
+ * Excluding them silently is the other half of the mistake: `unpriced()` counts
+ * what was left out so a page can say "N of M positions, the rest report no cost
+ * basis" instead of quietly answering a narrower question than the heading asks.
+ */
+export type PricedPosition = Position & { costBasis: number; unrealizedPnL: number; returnPct: number };
 
+export const isPriced = (p: Position): p is PricedPosition =>
+  !p.costUnavailable
+  && typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && p.costBasis > 0
+  && typeof p.unrealizedPnL === "number" && Number.isFinite(p.unrealizedPnL)
+  && typeof p.returnPct === "number" && Number.isFinite(p.returnPct);
+
+/** The positions a cost-based figure cannot cover, for naming them on screen. */
+export const unpriced = (positions: Position[]) => positions.filter((p) => !isPriced(p));
+
+export type Bucket = {
+  key: string; mv: number; cost: number | null; pnl: number | null;
+  count: number; returnPct: number | null; weight: number;
+  /** How many of `count` positions reported no cost — the rest of the bucket is still real. */
+  withoutCost: number;
+};
+
+/**
+ * Group positions and total them.
+ *
+ * COST AND P&L MAY BE ABSENT and are summed with `sumOrNull`, because a
+ * depository holding statement reports a value and no cost. Adding those in as
+ * zero would inflate the bucket's return by treating free shares as profit; the
+ * bucket's cost stays null when NO position in it reported one, and
+ * `withoutCost` names how many were skipped when some did — the "shown for those
+ * and the rest are named" rule, at bucket level.
+ *
+ * Market value is not nullable and is summed plainly: every holdings statement
+ * in this book prints one.
+ */
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
-  const m = new Map<string, { mv: number; cost: number; pnl: number; count: number }>();
+  const m = new Map<string, { mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, cost: 0, pnl: 0, count: 0 };
-    c.mv += p.marketValue; c.cost += p.costBasis; c.pnl += p.unrealizedPnL; c.count += 1;
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0 };
+    c.mv += p.marketValue;
+    c.costs.push(p.costBasis);
+    c.pnls.push(p.unrealizedPnL);
+    c.count += 1;
+    if (p.costBasis === null || p.costBasis === undefined) c.withoutCost += 1;
     m.set(k, c);
   }
   const total = [...m.values()].reduce((s, v) => s + v.mv, 0);
   return [...m.entries()]
-    .map(([key, v]) => ({ key, ...v, returnPct: v.cost > 0 ? (v.pnl / v.cost) * 100 : 0, weight: total > 0 ? v.mv / total : 0 }))
+    .map(([key, v]) => {
+      const cost = sumOrNull(v.costs);
+      const pnl = sumOrNull(v.pnls);
+      return {
+        key,
+        mv: v.mv,
+        cost,
+        pnl,
+        count: v.count,
+        withoutCost: v.withoutCost,
+        // A return needs BOTH sides on the same basis. Null when either is
+        // absent — not 0, which reads as "this bucket broke even".
+        returnPct: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        weight: total > 0 ? v.mv / total : 0,
+      };
+    })
     .sort((a, b) => b.mv - a.mv);
 }
 

@@ -1,0 +1,29 @@
+{
+ "name": "expense-summary",
+ "rows": [
+  [
+   "detail",
+   "paid",
+   "payable",
+   "amount"
+  ],
+  [
+   "Fund Accounting Fees",
+   "345.01",
+   "0.00",
+   "345.01"
+  ],
+  [
+   "Sec. Tran. Tax",
+   "608.90",
+   "0.00",
+   "608.90"
+  ],
+  [
+   "Total",
+   "1,312.28",
+   "0.00",
+   "1,312.28"
+  ]
+ ]
+}

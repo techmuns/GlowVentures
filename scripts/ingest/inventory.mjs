@@ -104,10 +104,33 @@ function expandArchives() {
   return report;
 }
 
-// ── 2. Inspect every PDF ─────────────────────────────────────────────────────
+// ── 2. Inspect every file ────────────────────────────────────────────────────
+//
+// EVERY file, not every PDF. The drop is not all PDFs — it carries a manager's
+// portfolio disclosure as .xlsx and a broker's P&L and transaction tape as .xls
+// — and this pass used to filter `.pdf` before it counted anything. The console
+// then said "Inventoried 105 PDF(s)", which was true and told nobody that four
+// files had not been looked at. A file the pipeline cannot read must still be
+// SEEN, or "the drop is fully ingested" is a claim about the files we happened
+// to recognise.
+const READABLE_EXT = /\.pdf$/i;
+
+/** What a non-PDF file is, for the row that reports it. */
+function describeOther(file) {
+  const ext = (path.extname(file) || "").toLowerCase();
+  switch (ext) {
+    case ".xlsx": return { kind: "spreadsheet (Office Open XML)", reason: "no spreadsheet reader — see docs/EXTRACTION-REPORT.md" };
+    case ".xls":  return { kind: "spreadsheet (legacy .xls, often HTML-table)", reason: "no spreadsheet reader — see docs/EXTRACTION-REPORT.md" };
+    case ".csv":  return { kind: "delimited text", reason: "no CSV reader" };
+    case ".docx": return { kind: "Word document", reason: "no Word reader" };
+    case ".zip":  return { kind: "archive", reason: "expanded above; its contents are inventoried individually" };
+    default:      return { kind: ext ? `${ext.slice(1)} file` : "file with no extension", reason: "unrecognised file type" };
+  }
+}
+
 async function inspectPdfs() {
   const pdfs = [];
-  walk(SOURCE_DIR, (f) => { if (/\.pdf$/i.test(f)) pdfs.push(f); });
+  walk(SOURCE_DIR, (f) => { if (READABLE_EXT.test(f)) pdfs.push(f); });
   pdfs.sort((a, b) => rel(a).localeCompare(rel(b)));
 
   const passwords = passwordsFromEnv();
@@ -151,6 +174,44 @@ async function inspectPdfs() {
     });
   }
   return out;
+}
+
+/**
+ * Every file in the drop that is NOT a PDF and not a ZIP we expanded.
+ *
+ * These get a row of their own so the inventory's totals cover the whole folder.
+ * They carry `readError` so they land in the "could not classify" section rather
+ * than in a provider group — the point is that they are visible and named, not
+ * that they are pretended to be understood.
+ */
+function inspectOthers() {
+  const others = [];
+  walk(SOURCE_DIR, (f) => {
+    if (READABLE_EXT.test(f)) return;
+    if (/\.zip$/i.test(f)) return;                       // expanded in step 1
+    if (path.basename(f).toLowerCase() === "readme.md") return;
+    others.push(f);
+  });
+  others.sort((a, b) => rel(a).localeCompare(rel(b)));
+  return others.map((full) => {
+    const stat = fs.statSync(full);
+    const { kind, reason } = describeOther(full);
+    return {
+      path: rel(full),
+      fileName: path.basename(full),
+      bytes: stat.size,
+      size: humanSize(stat.size),
+      pages: null,
+      fromArchive: full.startsWith(EXTRACT_DIR + path.sep),
+      encrypted: false,
+      isPdf: false,
+      fileKind: kind,
+      readError: reason,
+      provider: null, ownerName: null, accountNo: null, asOfDate: null,
+      reportType: "unknown", sections: [], familyGroup: null, strategy: null,
+      confidence: "low", matchedBy: "not a PDF",
+    };
+  });
 }
 
 // ── 3. Group provider → account → as-of → reportType ─────────────────────────
@@ -210,7 +271,7 @@ function overlaps(tree) {
 // ── 4. Render the human report ───────────────────────────────────────────────
 const esc = (s) => String(s ?? "—").replace(/\|/g, "\\|");
 
-function renderMarkdown({ generatedAt, files, tree, archives, unclassified, overlapping }) {
+function renderMarkdown({ generatedAt, files, nonPdfFiles, tree, archives, unclassified, overlapping }) {
   const L = [];
   L.push("# Ingest inventory");
   L.push("");
@@ -236,7 +297,9 @@ function renderMarkdown({ generatedAt, files, tree, archives, unclassified, over
   L.push("");
   L.push("| | |");
   L.push("| --- | --- |");
-  L.push(`| PDFs found | ${files.length} |`);
+  L.push(`| Files found | ${files.length} |`);
+  L.push(`| — of which PDFs | ${files.length - (nonPdfFiles?.length ?? 0)} |`);
+  L.push(`| — of which this pipeline cannot open | ${nonPdfFiles?.length ?? 0} |`);
   L.push(`| Classified | ${classified.length} |`);
   L.push(`| Could not classify | ${unclassified.length} |`);
   L.push(`| From archives | ${files.filter((f) => f.fromArchive).length} |`);
@@ -296,6 +359,21 @@ function renderMarkdown({ generatedAt, files, tree, archives, unclassified, over
     }
   }
 
+  if (nonPdfFiles && nonPdfFiles.length) {
+    L.push(`## Files this pipeline cannot open (${nonPdfFiles.length})`);
+    L.push("");
+    L.push("Listed so the drop's coverage is countable. These are NOT \"could not classify\" —");
+    L.push("that section is for files we opened and could not place. These were never opened,");
+    L.push("which is a different fact and a different fix.");
+    L.push("");
+    L.push("| File | Type | Size | Why |");
+    L.push("| --- | --- | ---: | --- |");
+    for (const f of nonPdfFiles) {
+      L.push(`| \`${esc(f.path)}\` | ${esc(f.fileKind)} | ${f.size} | ${esc(f.readError)} |`);
+    }
+    L.push("");
+  }
+
   L.push("## Could not classify");
   L.push("");
   if (!unclassified.length) {
@@ -342,7 +420,9 @@ async function main() {
   fs.mkdirSync(DOCS_DIR, { recursive: true });
 
   const archiveReport = expandArchives();
-  const files = await inspectPdfs();
+  const pdfFiles = await inspectPdfs();
+  const otherFiles = inspectOthers();
+  const files = [...pdfFiles, ...otherFiles];
   const tree = group(files.filter((f) => !isUnclassified(f)));
   const unclassified = files.filter(isUnclassified);
   const overlapping = overlaps(tree);
@@ -352,7 +432,11 @@ async function main() {
     generatedAt,
     sourceDir: rel(SOURCE_DIR),
     counts: {
-      pdfs: files.length,
+      // `files` is EVERY file in the drop; `pdfs` is the subset this pipeline can
+      // open. Reporting only the second is what hid four files.
+      files: files.length,
+      pdfs: pdfFiles.length,
+      nonPdf: otherFiles.length,
       classified: files.length - unclassified.length,
       unclassified: unclassified.length,
       encrypted: files.filter((f) => f.encrypted).length,
@@ -364,19 +448,24 @@ async function main() {
     archives: archiveReport.archives,
     archiveFailures: archiveReport.failures,
     files,
+    nonPdfFiles: otherFiles,
     groups: tree,
     overlaps: overlapping,
     unclassified,
   };
 
   fs.writeFileSync(JSON_OUT, JSON.stringify(json, null, 2) + "\n");
-  fs.writeFileSync(MD_OUT, renderMarkdown({ generatedAt, files, tree, archives: archiveReport.archives, unclassified, overlapping }));
+  fs.writeFileSync(MD_OUT, renderMarkdown({ generatedAt, files, nonPdfFiles: otherFiles, tree, archives: archiveReport.archives, unclassified, overlapping }));
 
   if (!files.length) {
     console.log("No PDFs found under source/ — wrote an empty inventory.");
     console.log("  Drop the statement ZIPs and PDFs into source/ and re-run `npm run inventory`.");
   } else {
-    console.log(`Inventoried ${files.length} PDF(s) from ${archiveReport.archives.length} archive(s).`);
+    console.log(`Inventoried ${files.length} file(s) from ${archiveReport.archives.length} archive(s): ${pdfFiles.length} PDF(s), ${otherFiles.length} non-PDF.`);
+    if (otherFiles.length) {
+      console.log(`  ${otherFiles.length} file(s) this pipeline cannot open — listed so the drop's coverage is countable:`);
+      for (const o of otherFiles) console.log(`     ${o.path}  (${o.fileKind})`);
+    }
     console.log(`  classified: ${files.length - unclassified.length}   could not classify: ${unclassified.length}`);
     if (overlapping.length) console.log(`  ${overlapping.length} account/date group(s) carry more than one report — see the report.`);
     if (archiveReport.failures.length) console.log(`  ${archiveReport.failures.length} archive entr(ies) failed to extract — listed in the JSON.`);

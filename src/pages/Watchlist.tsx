@@ -73,7 +73,7 @@ export function Watchlist() {
   );
 
   if (!portfolio) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
 
   return (
     <div>

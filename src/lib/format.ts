@@ -5,7 +5,19 @@ export type CurrencyCode = "INR" | "USD" | "EUR" | "GBP";
 const LOCALE_BY_CURRENCY: Record<string, string> = { USD: "en-US", INR: "en-IN", EUR: "en-GB", GBP: "en-GB" };
 const VALID = new Set(["USD", "INR", "EUR", "GBP"]);
 
-export function fmtCurrency(n: number, code = "INR", opts?: { compact?: boolean; sign?: boolean }): string {
+/**
+ * Money, or `—` when the book carries no figure.
+ *
+ * NULL IS NOT ZERO here either. A depository holding statement reports what
+ * shares are worth and not what they cost, so `costBasis` and everything derived
+ * from it are genuinely absent on those positions — and `₹0` beside a ₹23 L
+ * market value would read as a holding acquired for nothing.
+ *
+ * The dash is the floor, not the goal: where the reason is worth stating, the
+ * caller should use `src/components/Absent.tsx`, which requires one.
+ */
+export function fmtCurrency(n: number | null | undefined, code = "INR", opts?: { compact?: boolean; sign?: boolean }): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
   const effective = VALID.has(code) ? code : "INR";
   const locale = LOCALE_BY_CURRENCY[effective] ?? "en-IN";
   const signPrefix = opts?.sign && n > 0 ? "+" : "";
@@ -41,7 +53,17 @@ export function fmtCr(nInr: number, decimals = 1): string {
 /** An absent measurement, everywhere in the UI. Never a zero. */
 export const DASH = "\u2014";
 
-export function fmtPct(n: number, opts?: { sign?: boolean; decimals?: number }): string {
+/**
+ * A percentage, or `—` when there is nothing to format.
+ *
+ * NULL IS NOT ZERO. A return needs a cost basis, and a depository holding
+ * statement reports a value and no cost — so `returnPct` is genuinely absent on
+ * those positions. Rendering `0.00%` there is a measurement of break-even that
+ * nobody made. The dash is what the standing rule asks for; where the reason
+ * matters enough to state, use `src/components/Absent.tsx` instead.
+ */
+export function fmtPct(n: number | null | undefined, opts?: { sign?: boolean; decimals?: number }): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
   const sign = opts?.sign && n > 0 ? "+" : "";
   return `${sign}${n.toFixed(opts?.decimals ?? 2)}%`;
 }
@@ -60,7 +82,15 @@ export function fmtDateTime(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-export function changeColor(n: number): string {
+/**
+ * Gain / loss / neutral colour. An ABSENT figure is neutral, never green.
+ *
+ * A null return coloured as a gain would say the position is up when nobody
+ * measured whether it is — the colour is a claim about the number, and there is
+ * no number.
+ */
+export function changeColor(n: number | null | undefined): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "text-slate-400";
   return n > 0 ? "text-gain" : n < 0 ? "text-loss" : "text-slate-400";
 }
 

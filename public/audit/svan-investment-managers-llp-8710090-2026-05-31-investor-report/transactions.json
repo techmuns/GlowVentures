@@ -1,0 +1,113 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "security",
+   "side",
+   "quantity",
+   "grossRate",
+   "netRate",
+   "netValue"
+  ],
+  [
+   "2026-05-04",
+   "Avalon Technologies Limited",
+   "buy",
+   810,
+   1100.49,
+   1.76,
+   892825.09
+  ],
+  [
+   "2026-05-07",
+   "Paras Defence and Space Technologies",
+   "buy",
+   450,
+   834.09,
+   1.34,
+   375941.4
+  ],
+  [
+   "2026-05-07",
+   "Shyam Metalics and Energy Limited",
+   "sell",
+   1670,
+   880.8,
+   1.41,
+   1468574.55
+  ],
+  [
+   "2026-05-07",
+   "Surya Roshni Ltd",
+   "sell",
+   6000,
+   271.33,
+   0.43,
+   1625404
+  ],
+  [
+   "2026-05-08",
+   "Sterlite Technologies Ltd",
+   "sell",
+   5470,
+   375.95,
+   0.6,
+   2053157.02
+  ],
+  [
+   "2026-05-11",
+   "Paras Defence and Space Technologies",
+   "buy",
+   1835,
+   869.05,
+   1.39,
+   1597262.37
+  ],
+  [
+   "2026-05-19",
+   "Shankara Buildpro Ltd",
+   "sell",
+   670,
+   1159.27,
+   1.86,
+   775467.17
+  ],
+  [
+   "2026-05-20",
+   "Viyash Scientific Limited",
+   "buy",
+   5205,
+   257.02,
+   0.41,
+   1339922.42
+  ],
+  [
+   "2026-05-21",
+   "SG Mart Limited",
+   "sell",
+   580,
+   630.02,
+   1,
+   364829.45
+  ],
+  [
+   "2026-05-29",
+   "Wockhardt Ltd",
+   "buy",
+   1045,
+   1925,
+   3.08,
+   2014843.98
+  ],
+  [
+   "2026-05-29",
+   "Apl Apollo Tubes Ltd",
+   "sell",
+   955,
+   1871.48,
+   2.99,
+   1784404.89
+  ]
+ ]
+}

@@ -1,0 +1,23 @@
+{
+ "name": "summary",
+ "rows": [
+  [
+   "class",
+   "navDate",
+   "nav",
+   "unitsRedeemed",
+   "unitsBalance",
+   "contribution",
+   "valuation"
+  ],
+  [
+   "Class E",
+   "2026-06-30",
+   "161.5675",
+   "0",
+   "1820926.864",
+   "219989000.54",
+   "294202601.1"
+  ]
+ ]
+}

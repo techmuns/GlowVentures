@@ -118,7 +118,8 @@ the book — no partial figures, no estimates:
 | Green Lantern Capital LLP | 1 | contract note | **no reader** |
 
 **The mutual-fund folios belong to a DIFFERENT LEGAL ENTITY.** All five are held
-by `HOPE INDIA TRUST` (PAN AABTH4894A), not by a Jaisinghani individual. They are
+by `HOPE INDIA TRUST` — a different PAN, and one that also unlocks three of the
+encrypted files, so it is not written here — not by a Jaisinghani individual. They are
 not a gap in the family's book; they are a book this drop does not otherwise
 describe, and folding them in would be a decision about whose assets these are.
 

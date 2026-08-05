@@ -4,7 +4,7 @@
 // Node ingest pipeline and this app resolve names with the SAME code — see the
 // long note there for why that matters. This module is the typed front door and
 // adds the cockpit-facing helpers.
-export type { CanonicalOwner, OwnerMatch } from "../../shared/owners.mjs";
+export type { CanonicalOwner, OwnerMatch, PanHolderType } from "../../shared/owners.mjs";
 export {
   OWNERS,
   normalizeOwnerName,
@@ -12,6 +12,7 @@ export {
   resolveOwner,
   ownerIdFor,
   ownerById,
+  panHolderType,
 } from "../../shared/owners.mjs";
 
 import { OWNERS, ownerById } from "../../shared/owners.mjs";

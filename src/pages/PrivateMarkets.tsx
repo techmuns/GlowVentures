@@ -64,7 +64,7 @@ export function PrivateMarkets() {
   if (!portfolio || !model) return null;
 
   const m = model;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const instruments = m.classes.reduce((s, c) => s + c.count, 0);
   const segmentProps: SegmentProps = { portfolio, model: m, money };
   const activeClass = m.classes.find((c) => c.key === view);

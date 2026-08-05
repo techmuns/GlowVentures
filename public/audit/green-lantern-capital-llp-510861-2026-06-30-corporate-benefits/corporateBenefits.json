@@ -1,0 +1,108 @@
+{
+ "name": "corporate-benefits",
+ "rows": [
+  [
+   "type",
+   "security",
+   "exDate",
+   "entitlement",
+   "quantity",
+   "amount"
+  ],
+  [
+   "Bonus Shares",
+   "ZF Commercial Vehicle",
+   "24/06/2026",
+   "Bonus Shares @ 1:5",
+   "860",
+   "0.00"
+  ],
+  [
+   "Control Systems India Ltd"
+  ],
+  [
+   "Dividend",
+   "Bajaj Auto Ltd",
+   "29/05/2026",
+   "Dividend @ 150",
+   "236",
+   "35,400.00"
+  ],
+  [
+   "Dividend",
+   "KSB Ltd",
+   "08/05/2026",
+   "Dividend @ 4.4",
+   "5,239",
+   "23,051.60"
+  ],
+  [
+   "Dividend",
+   "Punjab National Bank",
+   "12/06/2026",
+   "Dividend @ 3",
+   "8,271",
+   "24,813.00"
+  ],
+  [
+   "Dividend",
+   "State Bank Of India",
+   "15/05/2026",
+   "Dividend @ 17.35",
+   "5,090",
+   "88,311.50"
+  ],
+  [
+   "171,576.10"
+  ],
+  [
+   "Spin off",
+   "Vedanta Power Limited",
+   "30/04/2026",
+   "Spin off from Vedanta Ltd",
+   "8,569",
+   "0.00"
+  ],
+  [
+   "Spin off",
+   "Vedanta Aluminium Metal",
+   "30/04/2026",
+   "Spin off from Vedanta Ltd",
+   "8,569",
+   "0.00"
+  ],
+  [
+   "Limited"
+  ],
+  [
+   "Spin off",
+   "Vedanta Ltd",
+   "30/04/2026",
+   "Spin off from Vedanta Ltd",
+   "8,569",
+   "0.00"
+  ],
+  [
+   "Spin off",
+   "Vedanta Iron and Steel",
+   "30/04/2026",
+   "Spin off from Vedanta Ltd",
+   "8,569",
+   "0.00"
+  ],
+  [
+   "Limited"
+  ],
+  [
+   "Spin off",
+   "Vedanta Oil and Gas",
+   "30/04/2026",
+   "Spin off from Vedanta Ltd",
+   "8,569",
+   "0.00"
+  ],
+  [
+   "Limited"
+  ]
+ ]
+}

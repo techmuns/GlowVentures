@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum} from "@/lib/analytics";
+import { sum, isPriced, unpriced } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, DASH } from "@/components/Absent";
@@ -57,7 +57,10 @@ export function ReturnAnalysis() {
     // distribution, a contribution decomposition, a spread between managers —
     // so a holding reported under two members counts once. Without this the
     // distribution puts the same 1.46 Cr in the same band twice.
-    const priced = consolidated.filter((x) => !x.costUnavailable && x.costBasis > 0);
+    const priced = consolidated.filter(isPriced);
+    // Named, not just dropped: a position whose statement reports no cost cannot
+    // answer a question about return, and the page says how many that is.
+    const withoutCost = unpriced(consolidated);
     const cost = sum(priced.map((x) => x.costBasis));
     const pnl = sum(priced.map((x) => x.unrealizedPnL));
 
@@ -97,7 +100,7 @@ export function ReturnAnalysis() {
     // comes first. The row then rendered `0  ₹0  ₹0`, which says the account
     // measured nothing when it holds ₹1.46 Cr. Book-wide figures above dedupe;
     // an account's own row shows its own statement.
-    const pricedByAccount = portfolio.positions.filter((x) => !x.costUnavailable && x.costBasis > 0);
+    const pricedByAccount = portfolio.positions.filter(isPriced);
     const byAccount = portfolio.accounts.map((a) => {
       const rows = pricedByAccount.filter((x) => x.accountId === a.accountId);
       const c = sum(rows.map((x) => x.costBasis));
@@ -114,7 +117,7 @@ export function ReturnAnalysis() {
     const rated = byAccount.filter((a) => a.returnPct !== null);
     const winners = priced.filter((x) => x.unrealizedPnL > 0);
     return {
-      priced, cost, pnl, dist, contrib, sectors, byAccount, winners: winners.length,
+      priced, withoutCost, cost, pnl, dist, contrib, sectors, byAccount, winners: winners.length,
       embeddedRet: cost > 0 ? (pnl / cost) * 100 : null,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
       // Only across accounts that HAVE a return — an account without one is
@@ -126,7 +129,7 @@ export function ReturnAnalysis() {
   }, [portfolio]);
 
   if (!portfolio || !model) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const m = model;
 
   if (!m.priced.length) {

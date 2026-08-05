@@ -20,7 +20,7 @@ export function SectorComposition() {
   const { portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   if (!portfolio) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
   const totalMV = consolidatedMarketValue(p);

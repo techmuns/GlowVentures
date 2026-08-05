@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { BasisPill } from "@/components/BasisPill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { sumOrNull, sum } from "@/lib/analytics";
+import { sumOrNull, sum, isPriced } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
@@ -70,10 +70,12 @@ export function CapitalGains() {
   // every position in this book; the moment a lot-level statement supplies it,
   // this yields candidates and the card renders them instead of the notice.
   const { holdCandidates, crossed, crossedGain } = useMemo(() => {
-    const all = p.filter((x) => x.daysToLT != null && x.unrealizedPnL > 0 && !x.costUnavailable)
+    const all = p.filter((x) => x.daysToLT != null && isPriced(x) && x.unrealizedPnL > 0)
       .map((x) => ({
         ...x,
-        saving: x.unrealizedPnL * (STCG_RATE - LTCG_RATE),
+        // `isPriced` above narrows unrealizedPnL to a number, so this is a real
+        // saving on a real gain rather than a rate applied to nothing.
+        saving: (x.unrealizedPnL as number) * (STCG_RATE - LTCG_RATE),
         ltDate: addDays(asOf, x.daysToLT!),
         daysLeft: x.daysToLT! - elapsed,
       }));
@@ -81,16 +83,16 @@ export function CapitalGains() {
     return {
       holdCandidates: all.filter((x) => x.daysLeft > 0).sort((a, b) => a.daysLeft - b.daysLeft),
       crossed: done.length,
-      crossedGain: sum(done.map((x) => x.unrealizedPnL)),
+      crossedGain: sumOrNull(done.map((x) => x.unrealizedPnL)),
     };
   }, [p, asOf, elapsed]);
 
   const harvest = useMemo(() =>
-    p.filter((x) => x.unrealizedPnL < 0 && !x.costUnavailable)
-      .sort((a, b) => a.unrealizedPnL - b.unrealizedPnL), [p]);
+    p.filter((x) => isPriced(x) && x.unrealizedPnL < 0)
+      .sort((a, b) => (a.unrealizedPnL ?? 0) - (b.unrealizedPnL ?? 0)), [p]);
 
   if (!portfolio) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const accIdx = accountIndex(portfolio.accounts);
   const cg = portfolio.capitalGains;
 
@@ -113,7 +115,7 @@ export function CapitalGains() {
   const harvestRows = harvestQ.trim()
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
-  const harvestTotal = sum(harvest.map((x) => x.unrealizedPnL));
+  const harvestTotal = sumOrNull(harvest.map((x) => x.unrealizedPnL));
   // Rolled up across accounts: the split is about WHAT was sold, not by whom.
   const byClass = (() => {
     const m = new Map<string | null, { assetClass: string | null; lots: number; st: number; lt: number; securities: Set<string> }>();

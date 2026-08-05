@@ -200,6 +200,47 @@ function build(docs) {
     const sectorByKey = new Map((sectorDoc?.holdings ?? []).map((h) => [h.securityKey, h.providerSector]));
     const incomeByKey = new Map((incomeDoc?.holdings ?? []).map((h) => [h.securityKey, h]));
 
+    /**
+     * COST BASIS FROM THE BROKER'S OPENING POSITIONS — checked on quantity.
+     *
+     * A depository holding statement prints ISIN, quantity, rate and value and
+     * NO COST: the depository holds shares, it did not buy them. So the one
+     * account in this book with ISINs was also the one with no cost basis, no
+     * unrealised P&L and no return — ten positions rendering `—` for figures the
+     * same broker prints two files away.
+     *
+     * The broker's Global Details ledger opens each security with the position
+     * carried forward and its total cost. That is the cost of the SAME shares,
+     * as long as it is the same shares — so the join requires the quantities to
+     * MATCH EXACTLY. Belrise carries 12,500 into the year and the depository
+     * statement shows 12,500 on 31/03; it sold 6,000 on 25/06, and if the
+     * valuation had been dated after that the quantities would disagree and this
+     * would supply nothing rather than pricing 12,500 shares at the cost of
+     * 6,500.
+     *
+     * Every position that takes a cost this way records `costBasisSource:
+     * "opening-position"`, so a reader can see that the figure came from another
+     * document and which check let it.
+     */
+    const openingCost = new Map();
+    /** Dated acquisition lots for this account, by security. See openLots below. */
+    const lotsByKey = new Map();
+    for (const d of group) {
+      for (const p of d.positionsAsOf?.positions ?? []) {
+        if (p.securityKey && p.opening) openingCost.set(p.securityKey, p.opening);
+      }
+      for (const l of d.openLots ?? []) {
+        if (!l.securityKey) continue;
+        lotsByKey.set(l.securityKey, [...(lotsByKey.get(l.securityKey) ?? []), l]);
+      }
+    }
+    const costFor = (key, quantity) => {
+      const o = openingCost.get(key);
+      if (!o || !isNum(o.quantity) || !isNum(quantity) || !isNum(o.totalCost)) return null;
+      if (Math.abs(o.quantity - quantity) > 1e-6) return null;   // not the same shares
+      return r2(o.totalCost);
+    };
+
     // ── income, by EVENT TYPE rather than by report ──
     //
     // The two statements overlap but neither contains the other. The DIVIDEND
@@ -256,6 +297,46 @@ function build(docs) {
         unclassified.set(providerSector, (unclassified.get(providerSector) ?? 0) + 1);
       }
       const cp = incomeByKey.get(h.securityKey);
+      // Where the holdings statement prints no cost, the broker's opening
+      // position supplies it — but only when the quantities agree exactly.
+      const joinedCost = isNum(h.totalCost) ? null : costFor(h.securityKey, h.quantity);
+      const costBasis = isNum(h.totalCost) ? h.totalCost : joinedCost;
+      const marketValue = h.marketValue;
+      /**
+       * THE SHORT/LONG-TERM SPLIT, WHERE — AND ONLY WHERE — LOT DATES EXIST.
+       *
+       * India's threshold for listed equity is 12 months. A lot bought more than
+       * 12 months before the valuation date is long-term; anything else is short.
+       * This is a statutory rule applied to a dated fact, not an estimate.
+       *
+       * It is computed for exactly one account, because exactly one broker in
+       * this drop publishes a lot register. Every other position keeps `null` on
+       * all three fields and renders `—`, which is the truth: nobody knows, and
+       * a split assumed from an average holding period would be a tax figure
+       * somebody might act on.
+       */
+      const lots = lotsByKey.get(h.securityKey) ?? [];
+      const dated = lots.filter((l) => l.purchaseDate && isNum(l.totalCost));
+      let stCostBasis = null;
+      let ltCostBasis = null;
+      let daysToLT = null;
+      if (dated.length && asOf) {
+        const asOfMs = Date.parse(asOf);
+        const LT_DAYS = 365;
+        stCostBasis = 0;
+        ltCostBasis = 0;
+        let soonest = null;
+        for (const l of dated) {
+          const held = Math.round((asOfMs - Date.parse(l.purchaseDate)) / 86400000);
+          if (held >= LT_DAYS) ltCostBasis = r2(ltCostBasis + l.totalCost);
+          else {
+            stCostBasis = r2(stCostBasis + l.totalCost);
+            const toGo = LT_DAYS - held;
+            if (soonest === null || toGo < soonest) soonest = toGo;
+          }
+        }
+        daysToLT = soonest;
+      }
       positions.push({
         securityKey: h.securityKey,
         security: h.security,
@@ -270,15 +351,20 @@ function build(docs) {
         quantity: h.quantity,
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
-        costBasis: h.totalCost,
-        marketValue: h.marketValue,
-        unrealizedPnL: h.gainLoss,
-        returnPct: h.pctGainLoss,
-        // Per-lot dates are not in this corpus, so the short/long split cannot
-        // be made. Null, never zero — see the note in the build report.
-        stCostBasis: null,
-        ltCostBasis: null,
-        daysToLT: null,
+        costBasis,
+        /** "opening-position" where the cost came from the broker's ledger, not this statement. */
+        costBasisSource: joinedCost !== null ? "opening-position" : undefined,
+        marketValue,
+        // Derived from whatever cost we ended up with, so a joined cost yields a
+        // gain on the same basis. Both stay null when there is no cost at all —
+        // a market value with no basis under it is not a profit of its own size.
+        unrealizedPnL: isNum(marketValue) && isNum(costBasis) ? r2(marketValue - costBasis) : h.gainLoss,
+        returnPct: isNum(marketValue) && isNum(costBasis) && costBasis
+          ? r2(((marketValue - costBasis) / costBasis) * 100)
+          : h.pctGainLoss,
+        stCostBasis,
+        ltCostBasis,
+        daysToLT,
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
         positionIrrPct: cp?.positionIrrPct ?? null,
@@ -552,9 +638,22 @@ function build(docs) {
   notes.push("navHistory is EMPTY: the corpus carries an opening and a closing "
     + "portfolio value per account and nothing between them. Two points are not a "
     + "series; interpolating between them would draw a path nothing measured.");
-  notes.push("unrealised short/long-term split is NULL on every position: it needs "
-    + "per-lot purchase dates. The CAPITAL REGISTER in this drop is a capital-account "
-    + "ledger (contributions, withdrawals, TDS transfers), not a lot register.");
+  // The short/long split is produced wherever a lot register exists and left
+  // NULL everywhere else — counted rather than asserted, so this note cannot go
+  // stale the way its predecessor did (it claimed the split was impossible on
+  // every position while the broker's lot register sat unread in `source/`).
+  {
+    const withSplit = positions.filter((p) => p.stCostBasis !== null || p.ltCostBasis !== null);
+    const accountsWithSplit = [...new Set(withSplit.map((p) => p.accountId))];
+    notes.push(withSplit.length
+      ? `unrealised short/long-term split is populated on ${withSplit.length} of ${positions.length} position(s), `
+        + `across ${accountsWithSplit.length} of ${accounts.length} account(s) (${accountsWithSplit.join(", ")}): `
+        + "those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. "
+        + "It is NULL on the rest, because the capital register the managed accounts issue is a "
+        + "capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates."
+      : "unrealised short/long-term split is NULL on every position: it needs per-lot purchase dates, "
+        + "and no statement in this drop carries a lot register.");
+  }
 
   return {
     accounts, positions, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,

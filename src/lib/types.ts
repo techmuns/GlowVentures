@@ -125,15 +125,33 @@ export type Position = {
   sector: string;           // normalized sector (our taxonomy)
   providerSector?: string | null;  // sector exactly as the provider printed it
   assetClass: AssetClass;
-  // Quantity, cost, value and the two figures derived from them are present on
-  // every position in this book: each appraisal prints quantity and total cost
-  // for every row including cash, and 360 ONE's holding statement prints the
-  // units and the Net Asset Value.
+  // Quantity and market value are on every position in this book: every
+  // holdings statement in the drop prints both for every row including cash.
   quantity: number;
-  costBasis: number;        // INR
   marketValue: number;      // INR
-  unrealizedPnL: number;    // INR
-  returnPct: number;
+  /**
+   * COST, AND THE TWO FIGURES DERIVED FROM IT — NULLABLE, because a DEPOSITORY
+   * does not know what shares cost.
+   *
+   * The managed accounts all print a total cost per row: their manager bought
+   * the position and reports its basis. LKP's depository holding statement
+   * prints ISIN, quantity, rate and value and no cost at all — CDSL holds the
+   * shares, it did not buy them. Nine of those ten positions recover a cost from
+   * the broker's own opening ledger (`costBasisSource`); the tenth, a liquid ETF
+   * the ledger does not carry, genuinely has none in this drop.
+   *
+   * A zero here would report the whole market value as profit and an infinite
+   * return. Render through `src/components/Absent.tsx`.
+   */
+  costBasis: number | null;      // INR
+  unrealizedPnL: number | null;  // INR
+  returnPct: number | null;
+  /**
+   * Where a cost basis came from another document — "opening-position" means the
+   * broker's carried-forward ledger row, joined only where the quantities match
+   * exactly. Absent when the holdings statement printed the cost itself.
+   */
+  costBasisSource?: "opening-position";
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
@@ -153,9 +171,16 @@ export type Position = {
   avgCost: number | null;
   currentPrice: number | null;
   /**
-   * Cost of lots held under / over a year. NULL, not zero, on this book: the
-   * split needs per-lot purchase dates and no statement in the drop carries
-   * them. See docs/BOOK-REPORT.md.
+   * Cost of lots held under / over a year, on India's 12-month threshold for
+   * listed equity.
+   *
+   * POPULATED ONLY WHERE A LOT REGISTER EXISTS. One broker in this drop
+   * publishes dated acquisition lots; the managed accounts publish a capital
+   * register, which is a capital-account ledger (contributions, withdrawals,
+   * TDS) and carries no purchase dates. So these are real figures on some
+   * positions and NULL on the rest — never a split assumed from an average
+   * holding period, which would be a tax number somebody might act on.
+   * `docs/BOOK-REPORT.md` counts which.
    */
   stCostBasis: number | null;
   ltCostBasis: number | null;

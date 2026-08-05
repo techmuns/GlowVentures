@@ -1,0 +1,35 @@
+{
+ "name": "allocation",
+ "rows": [
+  [
+   "type",
+   "purchaseValue",
+   "marketValue",
+   "pctAUM"
+  ],
+  [
+   "Shares",
+   96415268.38,
+   99735010.2,
+   96
+  ],
+  [
+   "Mutual Funds",
+   "",
+   "",
+   ""
+  ],
+  [
+   "Cash / Bank",
+   4155182.08,
+   4155182.08,
+   4
+  ],
+  [
+   "Total",
+   100570450.47,
+   103890192.28,
+   100
+  ]
+ ]
+}

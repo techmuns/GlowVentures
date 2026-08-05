@@ -8,7 +8,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -56,9 +56,17 @@ export function MorningCIO() {
     // rows for the per-account views elsewhere.
     const p = consolidated;
     const listedMV = sum(p.map((x) => x.marketValue));
-    const listedCost = sum(p.map((x) => x.costBasis));
-    const listedPnL = sum(p.map((x) => x.unrealizedPnL));
-    const listedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : null;
+    // `sumOrNull`: a position whose statement carries no cost must not enter a
+    // book-wide cost as zero — it would understate the basis and overstate the
+    // return on everything else.
+    const listedCost = sumOrNull(p.map((x) => x.costBasis));
+    const listedPnL = sumOrNull(p.map((x) => x.unrealizedPnL));
+    // Both sides must be present AND on the same basis. `sumOrNull` returns null
+    // when no position reported a cost, and a return struck against a missing
+    // denominator is not a small error — it is a different question.
+    const listedRet = listedCost !== null && listedPnL !== null && listedCost > 0
+      ? (listedPnL / listedCost) * 100
+      : null;
 
     const pm = portfolio.privateMarkets;
     const peF = fundTotals(pm.peFunds);
@@ -81,7 +89,7 @@ export function MorningCIO() {
     const privateCurrent = portfolio.privateValue;
     // Capital currently deployed = cost of listed holdings + drawn private (excl. fully-exited funds).
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
-    const totalInvested = listedCost + privateInvested;
+    const totalInvested = sumOrNull([listedCost, privateInvested]);
     const privateGain = privateCurrent - privateInvested;
     // Cash returned by holdings still in the book (startups distribute nothing).
     const privateDistributed = peF.distributed + preF.distributed + unlF.distributed + debtF.distributed;
@@ -90,8 +98,10 @@ export function MorningCIO() {
     // Embedded gain = the two book components (so it reconciles with the
     // Book-performance card). With no private book it IS the listed P&L, and the
     // worked formula below says so rather than adding a phantom "+ ₹0".
-    const embeddedGain = listedPnL + privateGain;
-    const gainPct = totalInvested > 0 ? (embeddedGain / totalInvested) * 100 : null;
+    const embeddedGain = sumOrNull([listedPnL, privateGain]);
+    const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
+      ? (embeddedGain / totalInvested) * 100
+      : null;
 
     // Listed book split by vehicle: in-house "Direct Equity" vs externally-managed
     // "PMS / Managed" — read from the account registry's `engagement` field,
@@ -103,10 +113,13 @@ export function MorningCIO() {
       return a ? !isDirect(a) : true;   // unattributed defaults to managed, not direct
     };
     const eqGroup = (rows: typeof p) => {
-      const cost = sum(rows.map((x) => x.costBasis));
+      const cost = sumOrNull(rows.map((x) => x.costBasis));
       const mv = sum(rows.map((x) => x.marketValue));
-      const pnl = sum(rows.map((x) => x.unrealizedPnL));
-      return { count: rows.length, cost, mv, ret: cost > 0 ? (pnl / cost) * 100 : null };
+      const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
+      return {
+        count: rows.length, cost, mv,
+        ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+      };
     };
     const directEq = eqGroup(p.filter((x) => !managedRow(x)));
     const pmsEq = eqGroup(p.filter(managedRow));
@@ -165,7 +178,10 @@ export function MorningCIO() {
 
     type Basis = "ledger" | "first-investment";
     type Bucket = {
-      key: string; color: string; count: number; invested: number; current: number;
+      key: string; color: string; count: number;
+      /** NULL where no statement in the bucket reports a cost — never 0, see Position.costBasis. */
+      invested: number | null;
+      current: number;
       kind: "MOIC" | "TVPI"; metric: number | null;   // money-multiple, for the popover
       retPct: number | null;                          // total return on cost, for the popover
       distributed: number;                            // cash already returned; 0 for listed & startups
@@ -190,8 +206,8 @@ export function MorningCIO() {
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
     });
     const allBuckets: Bucket[] = [
-      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.mv, directSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
-      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.mv, pmsSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
+      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.mv, directSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
+      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.mv, pmsSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
       { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
@@ -244,8 +260,8 @@ export function MorningCIO() {
     const largestName = (largest && p.find((x) => x.securityKey === largest[0])?.security) || null;
     const largestPct = largest && listedMV > 0 ? (largest[1] / listedMV) * 100 : null;
     const priced = p.filter((x) => !x.costUnavailable);
-    const winners = priced.filter((x) => x.returnPct > 0).length;
-    const losers = priced.filter((x) => x.returnPct < 0).length;
+    const winners = priced.filter((x) => (x.returnPct ?? 0) > 0).length;
+    const losers = priced.filter((x) => (x.returnPct ?? 0) < 0).length;
 
     // NAV history is optional: a book assembled from current-holdings statements
     // has no year-end series until periodic valuation reports are ingested.
@@ -270,7 +286,7 @@ export function MorningCIO() {
 
   if (!portfolio || !model) return null;
   const m = model;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   const donutData = m.buckets.map((b) => ({ name: b.key, value: convertFromBase(b.current) }));
   // Fund commitments exist or they don't. `committed === 0` across zero funds is

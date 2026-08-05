@@ -1,0 +1,77 @@
+{
+ "name": "positions",
+ "rows": [
+  [
+   "security",
+   "scripCode",
+   "netQuantity",
+   "asOf"
+  ],
+  [
+   "Ather Energy Limited",
+   "544397",
+   1240,
+   "2026-07-01"
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "544405",
+   6500,
+   "2026-06-25"
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "531595",
+   0,
+   "2026-06-19"
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "539876",
+   5000,
+   "2025-11-12"
+  ],
+  [
+   "Electronics Mart India Limited",
+   "543626",
+   10000,
+   "2026-01-02"
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "532926",
+   4000,
+   "2026-01-02"
+  ],
+  [
+   "Manorama Industries Limited",
+   "541974",
+   1000,
+   "2026-07-01"
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "543253",
+   6000,
+   "2026-01-02"
+  ],
+  [
+   "Pricol Limited",
+   "540293",
+   2875,
+   "2026-05-05"
+  ],
+  [
+   "Transrail Lighting Limited",
+   "544317",
+   2525,
+   "2025-09-17"
+  ],
+  [
+   "Varun Beverages Limited",
+   "540180",
+   0,
+   "2026-04-21"
+  ]
+ ]
+}

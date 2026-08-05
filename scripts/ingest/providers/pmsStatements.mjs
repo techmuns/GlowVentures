@@ -32,6 +32,7 @@ import {
   makeTransaction, makeCapitalGain, makeIncomeEvent, makeExpense, makeCashFlow,
 } from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
+import { PRECEDENCE } from "../precedence.mjs";
 
 /** Every manager issuing through this reporting system. */
 export const PROVIDERS = {
@@ -53,6 +54,18 @@ export const PROVIDERS = {
     name: "Carnelian Asset Management and Advisors Pvt Ltd",
     filePrefix: /^CBP/,
     letterhead: /carnelian\s+asset\s+management/i,
+    engagement: "PMS",
+  },
+  // Delivers the whole report set as ONE eight-page PDF rather than one file per
+  // report — fact sheet, CURRENT PORTFOLIO, transaction statement, capital gain,
+  // expense statement, back to back. `lib/bundle.mjs` splits it on the title each
+  // page reprints, so each report reaches the reader written for it. Read as a
+  // single fact sheet it yielded holdings with a market value and no quantity,
+  // no unit cost and no price, while pages 2–3 printed all three.
+  molecule: {
+    name: "Molecule Ventures LLP",
+    filePrefix: /^Molecule/i,
+    letterhead: /Molecule\s+Ventures/i,
     engagement: "PMS",
   },
   // Prints its own name with the dots (`V.E.C ASSAGO CAPITAL MANAGEMENT LLP`)
@@ -197,6 +210,33 @@ const EXPENSE_COLUMNS = {
   detail:     [/^detail/],
   notes:      [/^desc\s*notes/],
   amount:     [/^amount/],
+};
+
+/**
+ * EXPENSE STATEMENT **SUMMARY** — a different table under the same title.
+ *
+ * The dated statement above itemises each charge on the day it was raised. This
+ * one totals them BY TYPE over the window and carries no dates at all:
+ *
+ *   Transaction Description   Total Paid Amount   Total Payable Amount   Total Amount
+ *   Management Fees                       0.00             234,014.65      234,014.65
+ *
+ * Both managers who deliver their report set as a single bundle print this form,
+ * and the dated reader finds nothing in it — which is a `failed` document and a
+ * silently missing ₹3.05 L of fees, not a parse error worth chasing. The middle
+ * column is labelled `Total Payable Amount` by one and `Unsettled for the
+ * period` by the other; both mean the same thing and both are matched, because
+ * matching on column INDEX is how a layout change becomes a wrong figure.
+ *
+ * PAID and PAYABLE are kept apart. A management fee accrued and not yet
+ * collected is a liability, not a payment, and summing the two columns would
+ * double every charge that has been settled.
+ */
+const EXPENSE_SUMMARY_COLUMNS = {
+  detail:     [/^(transaction\s*description|description|particulars)/],
+  paid:       [/^total\s*paid/],
+  payable:    [/^(total\s*payable|unsettled)/],
+  amount:     [/^total\s*amount/],
 };
 
 /**
@@ -572,6 +612,31 @@ function readSectors(pages, warnings) {
     }
 
     const map = new Map();
+    // The same groups, with the FIGURES the table prints beside each name.
+    //
+    // Every manager on this reporting system publishes a fact sheet, but only
+    // some also publish an appraisal. Where an appraisal exists it is
+    // authoritative for holdings and this is only the sector join. Where it does
+    // NOT — Molecule Ventures issues a fact sheet and nothing else — these are
+    // the only holdings that manager reports, and the account would otherwise be
+    // absent from the book entirely.
+    //
+    // Market value is the ONLY primitive here: this table carries no quantity
+    // and no cost. Both stay null and render "—", because a cost of zero would
+    // book the whole position as profit.
+    const rowsOut = [];
+    for (const g of groups) {
+      if (!g.security || SUBTOTAL_LABEL.test(g.security.trim())) continue;
+      const mv = parseNum(g.rows.map((r) => r.fields.marketValue).find((v) => parseNumInfo(v).status === "ok"));
+      const pct = parseNum(g.rows.map((r) => r.fields.pctAssets).find((v) => parseNumInfo(v).status === "ok"));
+      if (mv === null) continue;
+      rowsOut.push({
+        security: g.security.replace(/\s+/g, " ").trim(),
+        sector: g.sectorParts.join(" ").replace(/\s+/g, " ").trim() || null,
+        marketValue: mv,
+        pctAssets: pct,
+      });
+    }
     for (const g of groups) {
       if (!g.security || !g.sectorParts.length) continue;
       // The table's own TOTAL opens a record like any other — it carries a market
@@ -583,7 +648,9 @@ function readSectors(pages, warnings) {
       if (SUBTOTAL_LABEL.test(g.security.trim())) continue;
       map.set(g.security.replace(/\s+/g, " ").trim(), g.sectorParts.join(" ").replace(/\s+/g, " ").trim());
     }
-    if (map.size) return { sectors: map, sheet: toAuditSheet("sectors", Object.keys(table.columns), rows) };
+    if (map.size || rowsOut.length) {
+      return { sectors: map, rows: rowsOut, sheet: toAuditSheet("sectors", Object.keys(table.columns), rows) };
+    }
   }
   warn(warnings, "sector-table-not-found", "fact sheet carried no security/sector table");
   return null;
@@ -924,6 +991,43 @@ function readExpenses(pages, source, warnings) {
 }
 
 /**
+ * EXPENSE STATEMENT SUMMARY → charges by type, undated. See the column block.
+ *
+ * `date` stays NULL rather than being filled with the period end. These charges
+ * happened somewhere inside the window and the statement does not say when; a
+ * date invented here would put every fee on one day and make a dated cash-flow
+ * series that no statement supports.
+ */
+function readExpenseSummary(pages, source, warnings, window) {
+  const t = readAcrossPages(pages, EXPENSE_SUMMARY_COLUMNS, { minFields: 2, require: ["detail", "amount"] });
+  if (!t) return null;
+  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+
+  const out = [];
+  let printedTotal = null;
+  for (const r of t.rows) {
+    const detail = clean(r.fields.detail);
+    const amount = parseNum(r.fields.amount);
+    if (!detail || amount === null) continue;
+    // The statement's own Total row is the CHECK on the sum of the rest — it is
+    // not one of the charges. Section (a) compares them.
+    if (/^total$/i.test(detail)) { printedTotal = amount; continue; }
+    out.push(makeExpense({
+      date: null,
+      detail,
+      notes: window?.periodFrom && window?.periodTo ? `${window.periodFrom} to ${window.periodTo}` : null,
+      amount,
+      paid: parseNum(r.fields.paid),
+      payable: parseNum(r.fields.payable),
+      source,
+    }));
+  }
+  return out.length
+    ? { expenses: out, printedTotal, sheet: toAuditSheet("expense-summary", Object.keys(t.columns), t.rows) }
+    : null;
+}
+
+/**
  * CURRENT PORTFOLIO → per-position accrued income and IRR%, and nothing else.
  *
  * Everything else on this report is deliberately discarded. Its market value
@@ -933,15 +1037,31 @@ function readExpenses(pages, source, warnings) {
  * appraisal authoritative; this reader takes only the two fields the appraisal
  * does not carry.
  */
-function readCurrentPortfolio(pages, source, warnings) {
+function readCurrentPortfolio(pages, source, warnings, { primitives = false } = {}) {
   const t = readAcrossPages(pages, CURRENT_PORTFOLIO_COLUMNS, { minFields: 6, require: ["security", "income"] });
   if (!t) {
     warn(warnings, "current-portfolio-table-not-found", "no security/accrued-income table matched");
     return null;
   }
   const out = [];
+  /**
+   * The report's own subtotal rows, kept because %Assets cannot be checked
+   * without them.
+   *
+   * This report's printed %Assets is on the income-inclusive basis its market
+   * value column only partly shares, which is the inconsistency §4b of CLAUDE.md
+   * documents. Reproducing it — `(market value + accrued income) / printed
+   * total` — turns 119 unexplained deltas into a named cause, and it needs the
+   * printed total. Without it every row on every CURRENT PORTFOLIO reports as an
+   * unexplained disagreement and the check stops distinguishing this known basis
+   * difference from a real break.
+   */
+  const subtotals = [];
   for (const r of t.rows) {
     const security = clean(r.fields.security);
+    const isSubtotal = parseNumInfo(r.fields.quantity).status !== "ok"
+      && parseNumInfo(r.fields.marketValue).status === "ok";
+    if (isSubtotal) { subtotals.push({ section: security || null, fields: r.fields }); continue; }
     if (!security) continue;
     const income = parseNum(r.fields.income);
     const irr = parseNum(r.fields.irrPct);
@@ -951,6 +1071,32 @@ function readCurrentPortfolio(pages, source, warnings) {
     out.push(makeHolding({
       security,
       assetClass: CASH_LINE.test(security) ? "Cash" : "Equity",
+      /**
+       * THE PRIMITIVES ARE READ ONLY WHERE PRECEDENCE ASKS FOR THEM.
+       *
+       * `primitives` is true for exactly one manager — Molecule, which publishes
+       * no portfolio appraisal, so this report is the only complete holdings
+       * table it has. Reading it for two fields left its nine holdings with a
+       * market value and no quantity, no cost and no price.
+       *
+       * For Goldstandard, Green Lantern, Carnelian and V.E.C Assago it stays
+       * false and this report keeps the narrow role §4b of CLAUDE.md gives it.
+       * That is not shyness about a duplicate: those four appraisals ARE the
+       * authoritative source, this report's market value folds accrued income in
+       * on some rows and not others, and reading its columns as checks against a
+       * document nothing uses put 48 material deltas and 8 row-sum breaks into
+       * the reconciliation report about an inconsistency already documented and
+       * already measured on the appraisal itself. A check that fires on a
+       * conflict nobody has to resolve trains a reader to skip the section.
+       */
+      quantity: primitives ? parseNum(r.fields.quantity) : null,
+      unitCost: primitives ? parseNum(r.fields.unitCost) : null,
+      totalCost: primitives ? parseNum(r.fields.totalCost) : null,
+      marketPrice: primitives ? parseNum(r.fields.marketPrice) : null,
+      // The printed market value is kept as a CHECK, exactly as everywhere else:
+      // section (a2) is where a row that folds income in becomes visible.
+      marketValue: primitives ? parseNum(r.fields.marketValue) : null,
+      pctAssets: primitives ? parseNum(r.fields.pctAssets) : null,
       accruedIncome: income,
       positionIrrPct: irr,
       annualizedYieldPct: annYield,
@@ -958,7 +1104,15 @@ function readCurrentPortfolio(pages, source, warnings) {
       source,
     }));
   }
-  return out.length ? { holdings: out, sheet: toAuditSheet("current-portfolio", Object.keys(t.columns), t.rows) } : null;
+  return out.length
+    ? {
+      holdings: out,
+      // Its own subtotals: `Total` is the LAST of them, and the section rows
+      // (Shares / Equity / Cash and Equivalent / Other Assets) come before it.
+      totals: primitives ? totalsFrom(subtotals, source, warnings) : null,
+      sheet: toAuditSheet("current-portfolio", Object.keys(t.columns), t.rows),
+    }
+    : null;
 }
 
 /** Performance summary / history: labelled capital and P&L lines. */
@@ -1265,6 +1419,28 @@ export function extract({ grid, meta }) {
     const s = readSectors(pages, warnings);
     if (s) {
       sections.sectors = s.sheet;
+      /**
+       * THE FACT SHEET IS THE SECTOR JOIN AND NOTHING ELSE.
+       *
+       * Its Portfolio Holdings table prints a market value and a weight, and
+       * emitting those as holdings is tempting for a manager who publishes no
+       * appraisal. It is wrong, and the reconciler said so on 177 rows the one
+       * run it was tried:
+       *
+       *   • The table lists EQUITY ONLY — no cash line. Deriving %assets over
+       *     that set divides by a denominator missing the cash, so every weight
+       *     comes out high and the printed column, struck on the full portfolio,
+       *     disagrees with all of them. Molecule's own weights sum to 98.09%
+       *     precisely because the missing 1.91% is the cash the table omits.
+       *   • There is no quantity and no unit cost, so the holdings would carry a
+       *     market value with no basis under it and report their whole value as
+       *     profit if a cost were ever assumed.
+       *
+       * The manager that prompted this — Molecule — publishes a full CURRENT
+       * PORTFOLIO two pages later in the same PDF, with quantity, unit cost and
+       * market price. Splitting the bundle gets the primitives properly; reading
+       * a summary table as if it were a holdings statement never would.
+       */
       holdings = [...s.sectors.entries()].map(([security, providerSector]) =>
         makeHolding({ security, assetClass: "Equity", providerSector, source }));
     }
@@ -1329,14 +1505,23 @@ export function extract({ grid, meta }) {
   }
 
   if (reportType === "expense-statement") {
-    const r = readExpenses(pages, source, warnings);
+    // Dated first, then the by-type summary. Two real tables under one title;
+    // trying the itemised one first means a manager who prints both is read at
+    // the finer grain.
+    const r = readExpenses(pages, source, warnings)
+      ?? readExpenseSummary(pages, source, warnings, window);
     if (r) { expenses = r.expenses; sections.expenses = r.sheet; }
     else warn(warnings, "expense-table-not-found", reportType);
   }
 
   if (reportType === "holdings") {
-    const r = readCurrentPortfolio(pages, source, warnings);
-    if (r) { holdings = r.holdings; sections.currentPortfolio = r.sheet; }
+    // Precedence decides whether this report is the holdings source or the
+    // accrued-income-and-IRR source. It is a committed decision, read here
+    // rather than guessed from what the document happens to contain.
+    const r = readCurrentPortfolio(pages, source, warnings, {
+      primitives: PRECEDENCE[provider?.name]?.holdings?.reportType === "holdings",
+    });
+    if (r) { holdings = r.holdings; totals = r.totals ?? totals; sections.currentPortfolio = r.sheet; }
   }
 
   if (!READABLE.has(reportType)) {

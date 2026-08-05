@@ -1,0 +1,19 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "description",
+   "kind",
+   "units",
+   "amount"
+  ],
+  [
+   "2025-10-17",
+   "Purchase",
+   "contribution",
+   7500,
+   7500000
+  ]
+ ]
+}

@@ -115,7 +115,8 @@ type Ctx = {
   displayCurrency: DisplayCurrency;
   setDisplayCurrency: (c: DisplayCurrency) => void;
   convertFromBase: (n: number) => number;
-  fmtFromBase: (n: number, opts?: { compact?: boolean; sign?: boolean }) => string;
+  /** Money in the display currency, or `—` when the book carries no figure. */
+  fmtFromBase: (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) => string;
   clearPortfolio: () => void;
   inrPerUsd: number;      // live USD→INR rate (₹ per $1)
   fxAsOf: string | null;  // date of the live rate, if fetched
@@ -266,7 +267,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const setDisplayCurrency = useCallback((c: DisplayCurrency) => { setCcy(c); writeDisplayCurrency(c); }, []);
   const convertFromBase = useCallback((n: number) => (displayCurrency === "USD" ? n / inrPerUsd : n), [displayCurrency, inrPerUsd]);
   const fmtFromBase = useCallback(
-    (n: number, opts?: { compact?: boolean; sign?: boolean }) => fmtCurrency(convertFromBase(n), displayCurrency, opts),
+    (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) =>
+      (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency, opts) : "—"),
     [convertFromBase, displayCurrency],
   );
   // Reset to the ingested book (upload override lands in a later prompt).

@@ -1,0 +1,69 @@
+{
+ "name": "trades",
+ "rows": [
+  [
+   "date",
+   "security",
+   "side",
+   "quantity",
+   "rate",
+   "netAmount"
+  ],
+  [
+   "2026-07-01",
+   "Ather Energy Limited",
+   "buy",
+   1240,
+   1155.1509,
+   1432387.06
+  ],
+  [
+   "2026-06-25",
+   "BELRISE INDUSTRIES LIMITED",
+   "sell",
+   6000,
+   251.496,
+   1508976
+  ],
+  [
+   "2026-06-15",
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "sell",
+   3500,
+   217.3123,
+   760592.97
+  ],
+  [
+   "2026-06-19",
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "sell",
+   3500,
+   224.55,
+   785925
+  ],
+  [
+   "2026-07-01",
+   "Manorama Industries Limited",
+   "buy",
+   1000,
+   1619.0316,
+   1619031.6
+  ],
+  [
+   "2026-05-05",
+   "Pricol Limited",
+   "buy",
+   2225,
+   580.9495,
+   1292612.67
+  ],
+  [
+   "2026-04-21",
+   "Varun Beverages Limited",
+   "sell",
+   2700,
+   483.3813,
+   1305129.51
+  ]
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "name": "commitment",
+ "rows": [
+  [
+   "totalCommitment",
+   "contributed",
+   "undrawn",
+   "navPerUnit",
+   "units",
+   "closingValue"
+  ],
+  [
+   15000000,
+   7500000,
+   7500000,
+   2286.1283,
+   7500,
+   17145961.88
+  ]
+ ]
+}

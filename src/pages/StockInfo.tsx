@@ -45,11 +45,14 @@ export function StockInfo() {
   const isin = rows[0]?.isin;
   const cmp = rows[0]?.currentPrice ?? 0;
   const qty = sum(rows.map((r) => r.quantity));
-  const cost = sum(rows.map((r) => r.costBasis));
+  const cost = sumOrNull(rows.map((r) => r.costBasis));
   const mv = sum(rows.map((r) => r.marketValue));
-  const pnl = sum(rows.map((r) => r.unrealizedPnL));
-  const avgCost = qty > 0 ? cost / qty : 0;
-  const ret = cost > 0 ? (pnl / cost) * 100 : 0;
+  const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
+  // Both stay NULL when no statement reported a cost for this name, so the
+  // tiles render `—`. A zero average cost reads as shares acquired for nothing
+  // and a zero return as break-even; neither was measured.
+  const avgCost = cost !== null && qty > 0 ? cost / qty : null;
+  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   const weight = listedMV > 0 ? (mv / listedMV) * 100 : 0;
   // Null, not zero, when no statement supplied the figure — see sumOrNull.
   const stCost = sumOrNull(rows.map((r) => r.stCostBasis));
@@ -64,14 +67,15 @@ export function StockInfo() {
   const held = rows.length;
   const exited = held === 0;
 
-  const price = (n: number) => fmtCurrency(convertFromBase(n), displayCurrency);
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const price = (n: number | null | undefined) =>
+    (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
   const firstBought = buys.length ? buys[buys.length - 1].date : null;
   const lastAdded = buys.length ? buys[0].date : null;
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
-  const ltPct = ltCost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
+  const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
 
   return (
     <div>

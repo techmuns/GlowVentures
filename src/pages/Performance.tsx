@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, sumOrNull } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
 import { xirrWithTerminal } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
@@ -74,7 +74,7 @@ export function Performance() {
   }, [p]);
   if (!portfolio) return null;
 
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const accounts = portfolio.accounts;
   // Consolidated: counts each dedupeGroup once. `priced` is deduped too, or the
   // embedded return is computed over a cost and a P&L that include the same
@@ -82,9 +82,12 @@ export function Performance() {
   // The per-account figures below filter by accountId and are unaffected.
   const priced = consolidated.filter((x) => !x.costUnavailable);
   const listedMV = consolidatedMarketValue(p);
-  const listedCost = sum(priced.map((x) => x.costBasis));
-  const listedPnL = sum(priced.map((x) => x.unrealizedPnL));
-  const embeddedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : 0;
+  const listedCost = sumOrNull(priced.map((x) => x.costBasis));
+  const listedPnL = sumOrNull(priced.map((x) => x.unrealizedPnL));
+  // Null, not 0: an embedded return needs a cost on both sides.
+  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0
+    ? (listedPnL / listedCost) * 100
+    : null;
   const mvOf = (accountId: string) =>
     sum(p.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
 

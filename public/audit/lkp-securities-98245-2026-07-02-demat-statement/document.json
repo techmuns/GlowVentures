@@ -1,0 +1,235 @@
+{
+ "docKey": "lkp-securities-98245-2026-07-02-demat-statement",
+ "provider": "LKP Securities",
+ "accountNo": "98245",
+ "ownerSource": "printed",
+ "accountNoSource": "client-code",
+ "clientCode": "1203000000739979",
+ "owner": "BHARAT AJAY JAISINGHANI",
+ "ownerId": "bharat-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Execution",
+ "providerEngagement": "CDSL demat account — self-directed",
+ "members": [],
+ "asOf": "2026-07-02",
+ "inceptionDate": null,
+ "reportType": "demat-statement",
+ "sourcePath": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
+ "pages": 4,
+ "status": "ok",
+ "warnings": [
+  {
+   "code": "account-no-from-client-code",
+   "detail": "this report prints client code 1203000000739979 but no account number; matched to 98245 via other statements in this drop that print both"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-07-02",
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [
+  {
+   "isin": "INE894V01022",
+   "date": "2026-04-01",
+   "kind": "opening",
+   "quantity": 12500
+  },
+  {
+   "isin": "INE894V01022",
+   "date": "2026-07-02",
+   "kind": "closing",
+   "quantity": 6500
+  },
+  {
+   "isin": "INE180C01042",
+   "date": "2026-04-01",
+   "kind": "opening",
+   "quantity": 7000
+  },
+  {
+   "isin": "INE180C01042",
+   "date": "2026-07-02",
+   "kind": "closing",
+   "quantity": 0
+  },
+  {
+   "isin": "INF732E01037",
+   "date": "2026-04-01",
+   "kind": "opening",
+   "quantity": 17.111
+  },
+  {
+   "isin": "INF732E01037",
+   "date": "2026-07-02",
+   "kind": "closing",
+   "quantity": 17.294
+  },
+  {
+   "isin": "INE726V01018",
+   "date": "2026-04-01",
+   "kind": "opening",
+   "quantity": 650
+  },
+  {
+   "isin": "INE726V01018",
+   "date": "2026-07-02",
+   "kind": "closing",
+   "quantity": 2875
+  },
+  {
+   "isin": "INE200M01039",
+   "date": "2026-04-01",
+   "kind": "opening",
+   "quantity": 2700
+  },
+  {
+   "isin": "INE200M01039",
+   "date": "2026-07-02",
+   "kind": "closing",
+   "quantity": 0
+  }
+ ],
+ "securityNameSource": null,
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 393.4,
+   "parts": [
+    "836 1110232627659"
+   ],
+   "joined": "8361110232627659",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 357.4,
+   "parts": [
+    "836 1110232627659"
+   ],
+   "joined": "8361110232627659",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 329.4,
+   "parts": [
+    "836 1110232627659"
+   ],
+   "joined": "8361110232627659",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 185.4,
+   "parts": [
+    "836 1110232627651"
+   ],
+   "joined": "8361110232627651",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 149.4,
+   "parts": [
+    "836 1110232627651"
+   ],
+   "joined": "8361110232627651",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 121.4,
+   "parts": [
+    "836 1110232627651"
+   ],
+   "joined": "8361110232627651",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 85.4,
+   "parts": [
+    "836 1110232627655"
+   ],
+   "joined": "8361110232627655",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 771,
+   "parts": [
+    "836 1110232627655"
+   ],
+   "joined": "8361110232627655",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 735,
+   "parts": [
+    "836 1110232627655"
+   ],
+   "joined": "8361110232627655",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 639,
+   "parts": [
+    "836 1110232627614"
+   ],
+   "joined": "8361110232627614",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 603,
+   "parts": [
+    "836 1110232627614"
+   ],
+   "joined": "8361110232627614",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 575,
+   "parts": [
+    "836 1110232627614"
+   ],
+   "joined": "8361110232627614",
+   "page": 3
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

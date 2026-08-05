@@ -1,0 +1,105 @@
+{
+ "name": "capital-gains",
+ "rows": [
+  [
+   "quantity",
+   "saleRate",
+   "purchaseDate",
+   "purchaseRate",
+   "price31Jan",
+   "purchaseAmt",
+   "daysHeld",
+   "effectiveLT",
+   "security",
+   "saleDate",
+   "saleAmount",
+   "effectiveCost",
+   "shortTerm",
+   "longTerm"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "NSDL-KMBLCUS-20305827"
+  ],
+  [
+   "GREENPANEL INDUSTRIES-",
+   "24/06/26",
+   "2,000",
+   "189.6973",
+   "379,394.60",
+   "24/10/24",
+   "375.7246",
+   "N.A",
+   "751,449.10",
+   "751,449.10",
+   "608",
+   "0.00",
+   "-372,054.50",
+   "-372,054.50"
+  ],
+  [
+   "INE08ZM01014"
+  ],
+  [
+   "Total",
+   "379,394.60",
+   "751,449.10",
+   "751,449.10",
+   "0.00",
+   "-372,054.50",
+   "-372,054.50"
+  ],
+  [
+   "This is for information purpose only. Please consult with your tax advisor before using this information for any purpose."
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "Capital Gain/Loss Summary (Based on Effective Gain / Indexation)"
+  ],
+  [
+   "01/04-15/06",
+   "16/06-15/09",
+   "16/09-15/12",
+   "16/12-15/03",
+   "16/03-31/03",
+   "Total",
+   "Sale",
+   "Effective Cost"
+  ],
+  [
+   "ST Gain/Loss",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "LT Gain/Loss",
+   "0.00",
+   "-372,054.50",
+   "0.00",
+   "0.00",
+   "0.00",
+   "-372,054.50",
+   "379,394.60",
+   "751,449.10"
+  ],
+  [
+   "This is for information purpose only. Please consult with your tax advisor before using this information for any purpose."
+  ]
+ ]
+}

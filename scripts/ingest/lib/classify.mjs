@@ -14,7 +14,18 @@ export const REPORT_TYPES = [
   "holdings", "appraisal", "fact-sheet", "performance-summary", "performance-history",
   "performance-benchmark", "transaction-statement", "corporate-action", "capital-gain",
   "capital-register", "dividend-statement", "bank-book", "expense-statement",
-  "corporate-benefits", "capital-call", "distribution-notice", "contract-note", "unknown",
+  "corporate-benefits", "capital-call", "distribution-notice", "contract-note",
+  // The SEBI-prescribed PMS INVESTOR REPORT: account overview, portfolio
+  // summary, capital contributions since inception, the period's trades and a
+  // holding report, all in one statement. SVAN issues it monthly and Green
+  // Lantern quarterly, in the same regulator-mandated shape.
+  "investor-report",
+  // A DEPOSITORY movement statement — CDSL's own record of shares entering and
+  // leaving a demat account. Deliberately not "transaction-statement", which it
+  // is titled: a demat debit can be a pledge, a remat or an off-market transfer
+  // with no trade behind it, and the statement prints no price for any of them.
+  "demat-statement",
+  "unknown",
 ];
 
 // ── Date parsing ─────────────────────────────────────────────────────────────
@@ -191,7 +202,8 @@ const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
 function matchGoldstandard(text, name) {
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
     || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
-    || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text);
+    || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text)
+    || /MOLECULE\s+VENTURES/i.test(text);
   const byName = PMS_FILE.test(name);
   if (!byText && !byName) return null;
 
@@ -200,6 +212,7 @@ function matchGoldstandard(text, name) {
     : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
     : /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text) ? "V.E.C Assago Capital Management LLP"
+    : /MOLECULE\s+VENTURES/i.test(text) ? "Molecule Ventures LLP"
     : /^GLC/i.test(name) ? "Green Lantern Capital LLP"
     : /^CBP/i.test(name) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /^VEC/i.test(name) ? "V.E.C Assago Capital Management LLP"
@@ -234,8 +247,16 @@ function matchGoldstandard(text, name) {
     if (re.test(name.replace(/[^A-Za-z]/g, ""))) { reportType = type; matchedBy = "Goldstandard filename"; break; }
   }
   if (reportType === "unknown") {
-    const g = genericReportType(text);
-    if (g) { reportType = g; matchedBy = "Goldstandard signature + content keywords"; }
+    // Molecule's file is named `Molecule_June_2026_392.pdf` — nothing in it maps
+    // to a report type. Its CONTENT is unmistakable: a fact sheet's own
+    // "Portfolio Holdings" table beside a "Sector Allocation" one.
+    if (/Portfolio\s+Holdings/i.test(text) && /Sector\s+Allocation/i.test(text)) {
+      reportType = "fact-sheet";
+      matchedBy = "fact-sheet content (Portfolio Holdings + Sector Allocation)";
+    } else {
+      const g = genericReportType(text);
+      if (g) { reportType = g; matchedBy = "Goldstandard signature + content keywords"; }
+    }
   }
 
   return {
@@ -254,6 +275,22 @@ function matchGoldstandard(text, name) {
 
 // ── Generic content keywords, most specific first ────────────────────────────
 const GENERIC_TYPE_RULES = [
+  // A TITLE, and it comes first for a reason. This report's own footnote reads
+  // "Net Rate includes brokerage, stamp duty, tax and any charge customarily
+  // included in the contract note of broker, STT etc." — so the contract-note
+  // keyword below matched all four SVAN statements and the fifteen-page Green
+  // Lantern bundle, filing a SEBI investor report as a report type this repo has
+  // no reader for. A phrase inside a footnote is not what a document is.
+  [/PMS\s+INVESTOR\s+REPORT/i, "investor-report"],
+  // ── The broker/depository set, all four titled unambiguously. These come
+  // before the looser keyword rules below because three of them contain a phrase
+  // one of those rules matches: the CDSL statement is headed TRANSACTION
+  // STATEMENT and is not a trade record at all, the depository statement is a
+  // holding statement, and the P&L is a capital gain statement that says neither.
+  [/DEPOSITORY\s+HOLDING\s+STATEMENT/i, "holdings"],
+  [/STATEMENT\s+OF\s+ACCOUNT\s+FOR\s+THE\s+PERIOD/i, "demat-statement"],
+  [/Annual\s*P\s*&?(?:amp;)?\s*L/i, "capital-gain"],
+  [/Global\s+Details\s+Report/i, "transaction-statement"],
   [/capital\s+call|drawdown\s+notice|call\s+notice/i, "capital-call"],
   [/distribution\s+notice|redemption\s+(?:notice|advice)|payout\s+advice/i, "distribution-notice"],
   [/contract\s+note/i, "contract-note"],

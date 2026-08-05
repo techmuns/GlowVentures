@@ -21,14 +21,18 @@ type EntityPart = {
   // Per-unit figures are nullable for the same reason they are on Position:
   // 360 ONE marks its AIF at a total value and prints no NAV per unit.
   entity: string; quantity: number; avgCost: number | null; currentPrice: number | null;
-  costBasis: number; marketValue: number; unrealizedPnL: number; returnPct: number; costNA: boolean;
+  costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
 };
 type Row = {
   key: string; security: string; securityKey: string; sector: string; assetClass: string;
   // avgCost / currentPrice are PER-UNIT and nullable — 360 ONE prints neither
   // for its AIF holding. See the note on Position in src/lib/types.ts.
   entities: string[]; parts: EntityPart[]; quantity: number; avgCost: number | null; currentPrice: number | null;
-  costBasis: number; marketValue: number; unrealizedPnL: number; returnPct: number; weight: number;
+  // Cost and the two figures derived from it are NULLABLE for the same reason
+  // the per-unit ones are: a depository holding statement reports a value and no
+  // cost. `costNA` stays the flag the cells switch on; the values themselves are
+  // null rather than 0 so nothing downstream can sum them into a total.
+  costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; weight: number;
   costNA: boolean;
   // Live-quote fields. `live: false` means CMP is still the workbook mark — the
   // row says so rather than letting a month-old price read as current.
@@ -99,16 +103,19 @@ export function PortfolioMonitor() {
       for (const p of base) (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)!).push(p);
       out = [...m.values()].map((ps) => {
         const mv = sum(ps.map((x) => x.marketValue));
-        const cost = sum(ps.map((x) => x.costBasis));
+        // `sumOrNull`: a lot with no reported cost contributes nothing rather
+        // than a zero that would understate the consolidated basis.
+        const cost = sumOrNull(ps.map((x) => x.costBasis));
         const qty = sum(ps.map((x) => x.quantity));
-        const costNA = cost === 0 && mv > 0;
-        const pnl = costNA ? 0 : mv - cost;
+        const costNA = cost === null || (cost === 0 && mv > 0);
+        const pnl = costNA ? null : mv - (cost as number);
         return {
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(ps, accIdx), quantity: qty,
-          avgCost: qty > 0 ? cost / qty : 0, currentPrice: ps[0].currentPrice,
+          avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
-          returnPct: costNA ? 0 : cost > 0 ? (pnl / cost) * 100 : 0, weight: totalMV > 0 ? mv / totalMV : 0,
+          returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
+          weight: totalMV > 0 ? mv / totalMV : 0,
           costNA,
           // A security is live only if every lot of it is — they share one quote,
           // so in practice this is all-or-nothing.
@@ -123,7 +130,7 @@ export function PortfolioMonitor() {
         entities: [ownerOf(accIdx, p)], parts: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: totalMV > 0 ? p.marketValue / totalMV : 0,
-        costNA: !!p.costUnavailable,
+        costNA: !!p.costUnavailable || p.costBasis === null,
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
       }));
     }
@@ -136,8 +143,11 @@ export function PortfolioMonitor() {
     return out;
   }, [positions, accIdx, consolidate, selected, sector, entity, sortKey, asc]);
   const totMV = sum(rows.map((r) => r.marketValue));
-  const totPnL = sum(rows.map((r) => r.unrealizedPnL));
-  const totCost = sum(rows.map((r) => r.costBasis));
+  const totPnL = sumOrNull(rows.map((r) => r.unrealizedPnL));
+  const totCost = sumOrNull(rows.map((r) => r.costBasis));
+  // NULL when the visible rows carry no cost between them — the total-return
+  // cell then renders `—` instead of a 0.00% nobody measured.
+  const totalRet = totCost !== null && totPnL !== null && totCost > 0 ? (totPnL / totCost) * 100 : null;
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   const feedLive = rows.some((r) => r.live);
@@ -152,7 +162,7 @@ export function PortfolioMonitor() {
     return next;
   });
   const setMode = (next: boolean) => { setConsolidate(next); setExpanded(new Set()); };
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
   // styled workbook. exceljs is code-split so it only loads on demand.
   const handleExport = async () => {
@@ -373,8 +383,8 @@ export function PortfolioMonitor() {
                       measurement and drags the total towards it. */}
                   <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const tr = sumOrNull(rows.map((r) => realized.get(r.securityKey) ?? null)); return tr === null ? <AbsentCell reason="no capital gain statement covers any of these names" /> : <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <AbsentCell reason="realised gain is shown in the consolidated view" />}</td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
-                    {feedLive ? fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })
-                              : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })}` }}>{fmtPct(totCost > 0 ? (totPnL / totCost) * 100 : 0, { sign: true })}</Auditable>}
+                    {feedLive ? fmtPct(totalRet, { sign: true })
+                              : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                   </td>
                 </tr>
               </tfoot>
@@ -391,24 +401,31 @@ export function PortfolioMonitor() {
 // Roll the constituent positions of one consolidated security up to one row per
 // owning entity, so an expanded row shows exactly who holds it and how much.
 function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
-  const m = new Map<string, { entity: string; quantity: number; costBasis: number; marketValue: number; currentPrice: number | null; costUnavailable: boolean }>();
+  const m = new Map<string, { entity: string; quantity: number; costs: (number | null)[]; costBasis: number | null; marketValue: number; currentPrice: number | null; costUnavailable: boolean }>();
   for (const x of ps) {
     const who = ownerOf(accIdx, x);
-    const e = m.get(who) ?? { entity: who, quantity: 0, costBasis: 0, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false };
-    e.quantity += x.quantity; e.costBasis += x.costBasis; e.marketValue += x.marketValue;
-    if (x.costUnavailable) e.costUnavailable = true;
+    const e = m.get(who) ?? { entity: who, quantity: 0, costs: [], costBasis: null, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false };
+    e.quantity += x.quantity;
+    // Collected and summed with sumOrNull below, not accumulated with `+=`: a
+    // null cost added to a running total silently becomes NaN, and NaN formats
+    // as "—" for the wrong reason on every entity that holds the name.
+    e.costs.push(x.costBasis);
+    e.marketValue += x.marketValue;
+    if (x.costUnavailable || x.costBasis === null) e.costUnavailable = true;
     m.set(who, e);
   }
+  for (const e of m.values()) e.costBasis = sumOrNull(e.costs);
   return [...m.values()].map((e) => {
     // Cost is "not meaningful" when the source flags it unavailable (even with a
     // placeholder cost) or when no cost basis is present — mirrors the By-entity view.
-    const costNA = e.costUnavailable || (e.costBasis === 0 && e.marketValue > 0);
-    const pnl = costNA ? 0 : e.marketValue - e.costBasis;
+    const cost = e.costBasis;
+    const costNA = e.costUnavailable || cost === null || (cost === 0 && e.marketValue > 0);
+    const pnl = costNA ? null : e.marketValue - (cost as number);
     return {
       entity: e.entity, quantity: e.quantity, currentPrice: e.currentPrice,
-      avgCost: e.quantity > 0 ? e.costBasis / e.quantity : 0, costBasis: e.costBasis,
+      avgCost: !costNA && e.quantity > 0 ? (cost as number) / e.quantity : null, costBasis: cost,
       marketValue: e.marketValue, unrealizedPnL: pnl,
-      returnPct: costNA ? 0 : e.costBasis > 0 ? (pnl / e.costBasis) * 100 : 0, costNA,
+      returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null, costNA,
     };
   }).sort((a, b) => b.marketValue - a.marketValue);
 }

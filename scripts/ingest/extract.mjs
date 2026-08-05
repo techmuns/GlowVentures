@@ -21,10 +21,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
 import { classify } from "./lib/classify.mjs";
-import { makeDocument, makeDocKey, assertNormalized, deriveDocument } from "./lib/document.mjs";
+import { splitBundle, isKnownReportType } from "./lib/bundle.mjs";
+import { readSpreadsheet } from "./lib/sheet.mjs";
+import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
+import { securityKeyOf } from "../../shared/securityKey.mjs";
 import * as pms from "./providers/pmsStatements.mjs";
 import * as threeSixtyOne from "./providers/threeSixtyOne.mjs";
+import * as sanshiFund from "./providers/sanshiFund.mjs";
+import * as investorReport from "./providers/pmsInvestorReport.mjs";
+import * as transitionVenture from "./providers/transitionVenture.mjs";
+import * as lkp from "./providers/lkpSecurities.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -52,9 +59,49 @@ function loadSymbolMap() {
 const EXTRACTORS = Object.fromEntries([
   ...Object.values(pms.PROVIDERS).map((p) => [p.name, pms]),
   [threeSixtyOne.PROVIDER, threeSixtyOne],
+  // Each of these publishes ONE document containing everything, in a layout
+  // that shares nothing with the others — an AIF account statement and a
+  // drawdown capital account.
+  [sanshiFund.PROVIDER, sanshiFund],
+  [transitionVenture.PROVIDER, transitionVenture],
+  // Four documents in three formats — two PDFs and two spreadsheets — for one
+  // self-directed demat account. The only lot register in the drop.
+  [lkp.PROVIDER, lkp],
 ]);
 
-function walk(dir, hit, seen = new Set()) {
+/**
+ * Readers chosen by REPORT TYPE rather than by house, and checked first.
+ *
+ * There is exactly one entry and it earns the mechanism: the PMS INVESTOR REPORT
+ * is prescribed by SEBI, so SVAN's monthly and Green Lantern's quarterly are the
+ * same document with different letterheads — same sections in the same order,
+ * same seven-column holding report, same value bridge. Keying it on the manager
+ * would mean two copies of one reader, and the second one (Green Lantern's,
+ * fifteen pages of a ₹11.69 Cr account) would never have been written, because
+ * the file was classified a contract note and reported as having no reader.
+ */
+const BY_REPORT_TYPE = {
+  [investorReport.REPORT_TYPE]: investorReport,
+};
+
+/** Which reader produced a document, for a warning that has to be actionable. */
+const extractorName = (m) => m?.PROVIDER ?? m?.REPORT_TYPE ?? "the extractor";
+
+/**
+ * Every file the pipeline can OPEN. PDFs, plus the spreadsheet formats the
+ * readers in `providers/` handle.
+ *
+ * Anything else is walked too — see `walkAll` — because a file this stage cannot
+ * read must still appear in the coverage report. Filtering it out before it is
+ * counted is how four files sat in the drop unseen while the console reported
+ * "105 PDFs" and nobody could tell the difference between "all of it" and "all
+ * of what we recognised".
+ */
+const READABLE = /\.(pdf|xls|xlsx)$/i;
+/** …and which of those go to the workbook reader rather than to pdfjs. */
+const SPREADSHEET = /\.(xls|xlsx)$/i;
+
+function walkAll(dir, hit, seen = new Set()) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
   for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
@@ -64,9 +111,13 @@ function walk(dir, hit, seen = new Set()) {
       const real = fs.realpathSync(full);
       if (seen.has(real)) continue;
       seen.add(real);
-      walk(full, hit, seen);
-    } else if (e.isFile() && /\.pdf$/i.test(full)) hit(full);
+      walkAll(full, hit, seen);
+    } else if (e.isFile()) hit(full);
   }
+}
+
+function walk(dir, hit, seen = new Set()) {
+  walkAll(dir, (f) => { if (READABLE.test(f)) hit(f); }, seen);
 }
 
 /** Reading-order text per page, for provenance. */
@@ -75,15 +126,76 @@ const pagesJson = (grid) => ({
   pages: grid.pages.map((p) => ({ page: p.page, text: p.text })),
 });
 
-/** Turn one already-laid-out PDF into a normalized document. */
-function extractOne(file, grid) {
+/**
+ * Split a bundle into its reports, or keep a single-report file whole.
+ *
+ * A part's `reportType` OVERRIDES what the classifier reads off the flat text,
+ * because the classifier sees one blob of pages and the splitter saw which page
+ * carried which title. Everything else — provider, account, owner, as-of — is
+ * still read from that part's own pages, since every page of these statements
+ * reprints the header.
+ */
+function extractDocuments(file, grid) {
+  const parts = splitBundle(grid);
+  if (!parts) return [{ doc: extractOne(file, grid), grid }];
+  return parts.map((p) => ({
+    doc: extractOne(file, p.grid, {
+      reportType: isKnownReportType(p.reportType) ? p.reportType : null,
+      fromPage: p.fromPage,
+      toPage: p.toPage,
+      ofPages: grid.numPages,
+      partCount: parts.length,
+    }),
+    // The pages this document was read from — archived as its own provenance.
+    grid: p.grid,
+  }));
+}
+
+/**
+ * A spreadsheet, read into the SAME page shape a PDF produces.
+ *
+ * `extractLayout` returns `{ pages: [{ page, text, rows, stitches }], numPages }`
+ * and every classifier and reader downstream is written against it. A workbook
+ * has no pages and no coordinates, but it does have sheets and rows — so each
+ * sheet becomes one "page" whose `text` is its rows tab-joined, and the grid
+ * rides along in `sheets` for a reader that wants the cells rather than the text.
+ *
+ * Without this, a `.xls` handed to pdfjs comes back "Invalid PDF structure" and
+ * the file is reported as a corrupt PDF. It is not corrupt; it is a perfectly
+ * good HTML table, and diagnosing it as the wrong thing is worse than not
+ * reading it — somebody goes looking for a broken download that does not exist.
+ */
+function gridFromSpreadsheet(buf) {
+  const wb = readSpreadsheet(buf);
+  return {
+    pages: wb.sheets.map((s, i) => ({
+      page: i + 1,
+      text: s.rows.map((r) => r.join("\t")).join("\n"),
+      rows: [],
+      stitches: [],
+    })),
+    sheets: wb.sheets,
+    numPages: wb.sheets.length,
+    format: wb.format,
+    error: wb.sheets.length ? null : (wb.error ?? "the workbook contained no sheets"),
+    pdfError: null,
+    encrypted: false,
+    usedPassword: null,
+  };
+}
+
+/** Turn one already-laid-out PDF — or one report inside a bundle — into a document. */
+function extractOne(file, grid, part = null) {
   const fileName = path.basename(file);
 
   // Classify from the flat reading-order text — enough for the header fields.
   const flat = grid.pages.map((p) => p.text).join(" ").replace(/\s+/g, " ");
-  const meta = classify({ fileName, text: flat });
+  const classified = classify({ fileName, text: flat });
+  const meta = part?.reportType
+    ? { ...classified, reportType: part.reportType, sections: [part.reportType] }
+    : classified;
 
-  const owner = resolveOwner(meta.ownerName);
+  const owner = resolveOwner(meta.ownerName);   // no PAN yet — the extractor reads it
   const docKey = makeDocKey({
     provider: meta.provider,
     accountNo: meta.accountNo,
@@ -103,6 +215,10 @@ function extractOne(file, grid) {
     reportType: meta.reportType,
     sourcePath: rel(file),
     pages: grid.numPages,
+    // WHICH PAGES OF THE FILE THIS DOCUMENT IS. A reader checking a figure opens
+    // the PDF at a page number, and for a bundle the document's own page 1 is
+    // not the file's. Null for a file that is one report end to end.
+    sourcePages: part ? { from: part.fromPage, to: part.toPage, of: part.ofPages } : null,
     stitches: grid.pages.flatMap((p) => p.stitches.map((s) => ({ ...s, page: p.page }))),
   };
 
@@ -115,7 +231,20 @@ function extractOne(file, grid) {
   const openedWarnings = grid.encrypted
     ? [{ code: "pdf-encrypted", detail: `opened with GLOW_PDF_PASSWORDS entry #${grid.usedPassword}` }]
     : [];
-  const extractor = meta.provider ? EXTRACTORS[meta.provider] : null;
+  // Where a document came out of a bundle, say so on the document itself. The
+  // file name will name only one of the reports inside it, and a reader who
+  // sees `…-capital-gain` sourced from a file called ContractNote needs to know
+  // the split happened rather than suspect the archive.
+  if (part) {
+    openedWarnings.push({
+      code: "from-bundle",
+      detail: `pages ${part.fromPage}–${part.toPage} of ${part.ofPages} in ${path.basename(file)}, which carries ${part.partCount} reports`,
+    });
+  }
+  // The reader is chosen by REPORT TYPE first, then by provider. The SEBI PMS
+  // investor report is one prescribed layout that several managers issue, so it
+  // has one reader; everything else is a house format and is keyed on the house.
+  const extractor = BY_REPORT_TYPE[meta.reportType] ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
   if (!extractor) {
     return makeDocument({
       ...base,
@@ -135,15 +264,36 @@ function extractOne(file, grid) {
 
   const warnings = [...(result.warnings ?? []), ...openedWarnings];
 
+  // A FIELD THE READER PRODUCED AND THE CONTRACT DOES NOT CARRY IS LOST WITHOUT
+  // ERRORING. That is not hypothetical: the Sanshi Fund PAN — the only evidence
+  // that settles two owners this drop cannot otherwise resolve — and Transition
+  // Venture's ₹1.5 Cr undrawn commitment were both read correctly on every run
+  // and dropped by `makeDocument` on every run. Nothing failed and nothing said
+  // so. Adding a field to a reader and forgetting it here now warns.
+  const dropped = Object.keys(result).filter((k) => !DOCUMENT_FIELDS.includes(k));
+  if (dropped.length) {
+    warnings.push({
+      code: "field-not-in-document-contract",
+      detail: `${extractorName(extractor)} returned ${dropped.join(", ")}, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs.`,
+    });
+  }
+
   // Resolve the owner from the name the document ENDS UP with, not the one the
   // classifier guessed from flat text. The extractor reads the header off the
   // coordinate grid and often finds a name where the flat-text classifier found
   // none — resolving before the merge left those documents with a correct owner
   // and a null ownerId, which reads downstream as "unidentified person".
   const finalOwnerName = result.owner ?? meta.ownerName ?? null;
-  const finalOwner = resolveOwner(finalOwnerName);
-  if (!finalOwner.owner && finalOwnerName) {
-    warnings.push({ code: "owner-unresolved", detail: `"${finalOwnerName}" matches no canonical owner — add an alias in shared/owners.mjs` });
+  // The PAN the extractor read off the page, where there is one. It outranks
+  // every name rule: see resolveOwner.
+  const finalOwner = resolveOwner(finalOwnerName, result.pan ?? null);
+  if (!finalOwner.owner && (finalOwnerName || result.pan)) {
+    warnings.push({
+      code: "owner-unresolved",
+      detail: result.pan
+        ? `"${finalOwnerName ?? "(no name printed)"}" / PAN ${result.pan} matches no canonical owner — add the PAN to shared/owners.mjs, which is evidence rather than a spelling`
+        : `"${finalOwnerName}" matches no canonical owner — add an alias in shared/owners.mjs`,
+    });
   }
   // Derive every derivable field from the primitives BEFORE the document is
   // validated or written. Nothing downstream ever sees an un-derived holding.
@@ -222,6 +372,44 @@ function backfillAccountNumbers(docs) {
 }
 
 /**
+ * Fill a missing account number where the PROVIDER has exactly one account.
+ *
+ * The broker's Global Details ledger prints its own title, the exchange and
+ * fifteen trades, and no client identifier anywhere — so it keys `…-unknown-…`
+ * and files away from the three other documents for the same account.
+ *
+ * The join is not a guess about which account a document belongs to; it is the
+ * observation that there is only ONE it could belong to. It applies only when
+ * every other document for that provider in this drop resolves to a single
+ * account number, and every backfilled document records `accountNoSource:
+ * "sole-account"` and warns. A drop that later brings a second account for the
+ * same provider stops satisfying the condition and the join stops happening,
+ * which is the behaviour you want from a rule this permissive.
+ */
+function backfillSoleAccount(docs) {
+  const byProvider = new Map();
+  for (const d of docs) {
+    if (!d.provider || !d.accountNo) continue;
+    const set = byProvider.get(d.provider) ?? new Set();
+    set.add(d.accountNo);
+    byProvider.set(d.provider, set);
+  }
+  for (const d of docs) {
+    if (d.accountNo || !d.provider) continue;
+    const candidates = byProvider.get(d.provider);
+    if (!candidates || candidates.size !== 1) continue;
+    d.accountNo = [...candidates][0];
+    d.accountNoSource = "sole-account";
+    d.warnings.push({
+      code: "account-no-from-sole-account",
+      detail: `this report prints no client identifier; ${d.provider} has exactly one account in this drop (${d.accountNo}), so there is no other account it could belong to.`,
+    });
+    rekey(d);
+  }
+  return docs;
+}
+
+/**
  * Fill a missing owner from another statement for the SAME provider and account.
  *
  * Some reports don't print the client's name anywhere this engine can read it
@@ -257,6 +445,88 @@ function backfillOwners(docs) {
     });
   }
   return docs;
+}
+
+/**
+ * Give a CLIPPED security name the full one another document in this drop prints
+ * for the same ISIN.
+ *
+ * The depository holding statement clips every name to its column width —
+ * `BELRISE INDUSTRIE-EQ`, `CROMPTON GRE CONS-EQ`, `MRS. BECTORS-EQ2/-` — and
+ * that is what the security key is derived from. So the one account in this book
+ * whose statements DO print an ISIN was the one account whose holdings joined to
+ * nothing: not to its own broker's P&L (`BELRISE INDUSTRIES LIMITED`), not to the
+ * NSE symbol table, which `build-symbols` resolves by name for exactly the reason
+ * that no other statement here carries an identifier.
+ *
+ * The ISIN is that identifier, it is unambiguous, and both documents print it.
+ * So the fuller name replaces the clipped one, the ORIGINAL stays in
+ * `printedSecurity`, and the document records `securityNameSource: "isin"`.
+ *
+ * Three constraints keep this from being a rename that hides a defect:
+ *   • it joins on ISIN and nothing else — never on a name resembling a name;
+ *   • it applies only where one ISIN maps to exactly ONE fuller name in the drop;
+ *   • the replacement must CONTAIN the clipped stem, so `BELRISE INDUSTRIE` may
+ *     become `BELRISE INDUSTRIES LIMITED` and can never become a different
+ *     company that happens to share an ISIN typo.
+ */
+function backfillSecurityNames(docs) {
+  const byIsin = new Map();
+  const record = (r) => {
+    if (!r?.isin || !r.security) return;
+    const set = byIsin.get(r.isin) ?? new Set();
+    set.add(r.security);
+    byIsin.set(r.isin, set);
+  };
+  for (const d of docs) {
+    for (const k of ["holdings", "capitalGains", "transactions", "income", "openLots"]) {
+      for (const r of d[k] ?? []) record(r);
+    }
+  }
+
+  /**
+   * Is `short` the depository's abbreviation of `long`?
+   *
+   * The clip is per WORD, not a truncation of the whole string —
+   * `CROMPTON GRE CONS` for `Crompton Greaves Consumer Elec`, `NIP ETNF1D` for
+   * `Nippon India ETF Nifty 1D`. A plain `startsWith` on the joined letters
+   * therefore fails on exactly the names that need this most.
+   *
+   * So every word of the short form must be a PREFIX of the word in the same
+   * position of the long form, and the long form must say more (more words, or
+   * more letters). Word-by-word from the first letter is what makes it safe: two
+   * different companies sharing an ISIN typo cannot satisfy it, and neither can
+   * a name that merely looks similar.
+   */
+  const words = (s) => String(s).toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  function abbreviates(short, long) {
+    const a = words(short);
+    const b = words(long);
+    if (!a.length || b.length < a.length) return false;
+    if (a.every((w, i) => w === b[i]) && a.length === b.length) return false;   // identical, not fuller
+    return a.every((w, i) => b[i].startsWith(w));
+  }
+
+  let renamed = 0;
+  for (const d of docs) {
+    for (const h of d.holdings ?? []) {
+      if (!h.isin) continue;
+      const fuller = [...(byIsin.get(h.isin) ?? [])].filter((n) => n !== h.security && abbreviates(h.security, n));
+      if (fuller.length !== 1) continue;
+      h.printedSecurity ??= h.security;
+      h.security = fuller[0];
+      h.securityKey = securityKeyOf(fuller[0]);
+      renamed++;
+      d.securityNameSource = "isin";
+    }
+    if (d.securityNameSource === "isin") {
+      d.warnings.push({
+        code: "security-name-from-isin",
+        detail: "this report clips security names to the column width; the fuller name printed against the same ISIN elsewhere in this drop is used for the key, and what this document printed is kept in `printedSecurity`.",
+      });
+    }
+  }
+  return renamed;
 }
 
 /**
@@ -309,7 +579,12 @@ function writeArchive(docs, grids) {
         cols: sheet.rows?.reduce((m, r) => Math.max(m, r.length), 0) ?? 0,
       });
     }
-    const grid = grids.get(doc.sourcePath);
+    // Keyed by the DOCUMENT, not by the file: several documents can come out of
+    // one bundle, and each must archive the pages it was actually read from.
+    // Keying by path gave every part of a bundle the whole file's page text, so
+    // the capital-gain document's provenance showed eight pages of a holding
+    // report it had nothing to do with.
+    const grid = grids.get(doc);
     if (grid) {
       const pj = pagesJson(grid);
       fs.writeFileSync(path.join(dir, "pages.json"), JSON.stringify(pj, null, 1) + "\n");
@@ -385,15 +660,26 @@ async function main() {
   const grids = new Map();
   for (const file of unique) {
     process.stdout.write(`  reading ${rel(file)} … `);
-    const grid = await extractLayout(new Uint8Array(fs.readFileSync(file)), { passwords });
-    grids.set(rel(file), grid);
-    const doc = extractOne(file, grid);
-    docs.push(doc);
-    console.log(`${doc.status}${doc.warnings.length ? ` (${doc.warnings.length} warning${doc.warnings.length === 1 ? "" : "s"})` : ""}`);
+    const bytes = fs.readFileSync(file);
+    const grid = SPREADSHEET.test(file)
+      ? gridFromSpreadsheet(bytes)
+      : await extractLayout(new Uint8Array(bytes), { passwords });
+    const produced = extractDocuments(file, grid);
+    for (const { doc, grid: partGrid } of produced) {
+      grids.set(doc, partGrid);
+      docs.push(doc);
+    }
+    const summary = produced
+      .map(({ doc: d }) => `${d.reportType}: ${d.status}${d.warnings.length ? ` (${d.warnings.length}w)` : ""}`)
+      .join(", ");
+    console.log(produced.length > 1 ? `${produced.length} reports — ${summary}` : summary);
   }
 
   backfillAccountNumbers(docs);
+  backfillSoleAccount(docs);
   backfillOwners(docs);
+  const renamed = backfillSecurityNames(docs);
+  if (renamed) console.log(`  ${renamed} clipped security name(s) resolved to their fuller form via ISIN.`);
   ensureUniqueDocKeys(docs);
   // RECONCILE BEFORE WRITING. The duplicate check (c) does more than report — it
   // TAGS each matching row with its `dedupeGroup` and `alsoReportedUnder`, and

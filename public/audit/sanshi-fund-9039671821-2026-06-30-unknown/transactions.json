@@ -1,0 +1,33 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "description",
+   "kind",
+   "units",
+   "amount"
+  ],
+  [
+   "2025-10-03",
+   "Initial Contribution",
+   "contribution",
+   "",
+   750000000
+  ],
+  [
+   "2025-10-03",
+   "Stamp Duty @ 0.005%",
+   "expense",
+   "",
+   37498.13
+  ],
+  [
+   "2025-10-03",
+   "Units Allotment",
+   "contribution",
+   6045934.485,
+   749962501.85
+  ]
+ ]
+}

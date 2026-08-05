@@ -1,0 +1,96 @@
+{
+ "name": "openLots",
+ "rows": [
+  [
+   "security",
+   "purchaseDate",
+   "quantity",
+   "unitCost",
+   "totalCost"
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "2025-09-10",
+   6500,
+   141.89,
+   922285
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "2025-03-04",
+   3000,
+   329.35,
+   988054.8
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "2025-11-12",
+   2000,
+   279.48,
+   558963
+  ],
+  [
+   "Electronics Mart India Limited",
+   "2026-01-02",
+   10000,
+   105.61,
+   1056112
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "2025-04-17",
+   3000,
+   375.25,
+   1125750
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "2026-01-02",
+   1000,
+   282.46,
+   282464.6
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "2025-11-12",
+   2500,
+   258.42,
+   646040
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "2026-01-02",
+   3500,
+   244.99,
+   857455.2
+  ],
+  [
+   "Pricol Limited",
+   "2026-02-05",
+   650,
+   582.66,
+   378730.63
+  ],
+  [
+   "Pricol Limited",
+   "2026-05-05",
+   2225,
+   580.95,
+   1292612.66
+  ],
+  [
+   "Transrail Lighting Limited",
+   "2025-09-10",
+   2500,
+   790.58,
+   1976450
+  ],
+  [
+   "Transrail Lighting Limited",
+   "2025-09-17",
+   25,
+   775.05,
+   19376.25
+  ]
+ ]
+}
