@@ -16,6 +16,7 @@ import { accountIndex, ownerOf, providerOf, strategyOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
 import { ReturnsTable } from "@/components/ReturnsTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
+import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
 
 // Per-stock drill-down: how one security is held across the family's entities, its
 // tax basis, every dated buy/sell from the ledger, and — from the muns research
@@ -283,27 +284,9 @@ export function StockInfo() {
 
       <ResearchPanel ticker={sym} name={name} />
 
-      {/* Deferred deep-dive panels */}
-      <div className="mt-5 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 p-4">
-        <div className="text-[12.5px] font-semibold text-slate-400">Deep-dive — activates as live data lands (later phases)</div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { t: "AI summaries", d: "Filings, concalls & annual reports condensed — the documents are already listed above.", s: "transcripts + AI" },
-            { t: "Catalyst keywords", d: "Who-said-what on concalls, scored against the client's keyword list.", s: "transcripts + AI" },
-            { t: "Block & bulk deals", d: "Institutional / FII activity, block & bulk deals, mutual-fund moves.", s: "exchange feed" },
-            { t: "Technicals", d: "RSI, moving-average crossovers and distance from the 52-week high — needs a full price series.", s: "market-data feed" },
-            { t: "Street chatter", d: "Signal from Valuepickr, X and Substack on this name.", s: "web / RSS" },
-            { t: "Documents", d: "Deal docs & notes attached to this holding, with AI summaries.", s: "data bank (backend)" },
-          ].map((c) => (
-            <div key={c.t} className="rounded-lg border border-ink-700 bg-ink-800 p-3">
-              <div className="text-[12.5px] font-semibold text-slate-300">{c.t}</div>
-              <div className="mt-1 text-[11px] leading-snug text-slate-500">{c.d}</div>
-              <div className="mt-1.5 text-[10px] text-slate-600">source · {c.s}</div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-2.5 text-[11px] text-slate-500">Mapped from the client deck. Estimates, financials, filings and the returns table are live above; these remaining ones need an AI extraction layer, an exchange deal feed, or a price series the current API cannot return.</p>
-      </div>
+      {/* Deep company research — the FOOS spec's full company page, as an
+          illustrative preview below the live sections. */}
+      <CompanyResearchPreview name={name} ticker={sym} />
 
       <p className="mt-4 text-[11px] text-slate-500">
         Figures are live from the current book and the dated ledger. Amounts are auditable — click any dotted number to trace it in <Link to={auditHref(LEDGER)} className="text-champagne-400 hover:underline">Data Audit</Link>.

@@ -43,6 +43,7 @@ const ROUTES = [
   ["cio", "/cio"],
   ["monitor", "/monitor"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
+  ["monitor-plan", "/monitor"],          // same route, Public dashboard toggle clicked
   ["family", "/family"],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
@@ -236,6 +237,10 @@ for (const theme of THEMES) {
       await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
       if (name === "monitor-txns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-plan") {
+        const t = page.getByRole("button", { name: /public dashboard/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
       await page.waitForTimeout(FAST ? 350 : 800);

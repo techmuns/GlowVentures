@@ -10,6 +10,7 @@ import { AbsentSection } from "@/components/Absent";
 import { Overview } from "./private/Overview";
 import { Startups } from "./private/Startups";
 import { FundClass } from "./private/FundClass";
+import { PrivateTrackerPreview } from "./private/PrivateTrackerPreview";
 import type { SegmentProps } from "./private/segment";
 
 // Private Markets — one page, one tab per segment.
@@ -90,6 +91,12 @@ export function PrivateMarkets() {
             private holding and the segments, tiles and tables here populate themselves.
           </p>
         </AbsentSection>
+
+        {/* Below the honest empty state: an ILLUSTRATIVE preview of the FOOS
+            private tracker, so the client can see the shape it will take once a
+            private-markets reader exists. Entirely sample data — it touches the
+            book nowhere (see Preview.tsx doctrine) and is unmistakably marked. */}
+        <PrivateTrackerPreview />
       </div>
     );
   }

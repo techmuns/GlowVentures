@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Globe } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -16,6 +16,8 @@ import { BasisPill } from "@/components/BasisPill";
 import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
+import { PreviewBadge, PreviewNum, PreviewPill } from "@/components/Preview";
+import { readWatchlist, type Watchlist } from "@/lib/watchlist";
 
 type EntityPart = {
   // Per-unit figures are nullable for the same reason they are on Position:
@@ -44,7 +46,7 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 
 export function PortfolioMonitor() {
   const { portfolio, fmtFromBase } = usePortfolio();
-  const [view, setView] = useState<"holdings" | "transactions">("holdings");
+  const [view, setView] = useState<"holdings" | "transactions" | "plan">("holdings");
   const [consolidate, setConsolidate] = useState(true);
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
@@ -198,11 +200,11 @@ export function PortfolioMonitor() {
       {/* View toggle (+ Holdings' by-security / by-entity switch) */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-          {(["holdings", "transactions"] as const).map((m) => (
+          {(["holdings", "transactions", "plan"] as const).map((m) => (
             <button key={m} type="button" onClick={() => setView(m)}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${view === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-              {m === "holdings" ? <Layers className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
-              {m === "holdings" ? "Holdings" : "Transactions"}
+              {m === "holdings" ? <Layers className="h-4 w-4" /> : m === "transactions" ? <ArrowLeftRight className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+              {m === "holdings" ? "Holdings" : m === "transactions" ? "Transactions" : "Public dashboard"}
             </button>
           ))}
         </div>
@@ -381,8 +383,10 @@ export function PortfolioMonitor() {
             </table>
           </div>
         </Card>
-      ) : (
+      ) : view === "transactions" ? (
         <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />
+      ) : (
+        <PublicDashboardView rows={rows} />
       )}
     </div>
   );
@@ -584,6 +588,122 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                 </tr>
               ))}
               {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </>
+  );
+}
+
+// PUBLIC-DASHBOARD view — the FOOS spec's "Dashboard for tracking public
+// investments". It sits beside Holdings and Transactions and reuses the SAME
+// consolidated-by-security `rows` (so weights already respect the dedupe group),
+// laying them out in the spec's own column order.
+//
+// Three kinds of column, kept visually distinct because they carry different
+// claims:
+//   • LIVE, from the book — CMP, buy price, invested, current value, gain,
+//     return, quantity, weight. Bright/mono, exactly as the Holdings table.
+//   • ABSENT — per-security XIRR. This book cannot measure it: the transaction
+//     statements cover the current period only, so a rate would be a real number
+//     for the wrong window. It renders through AbsentCell with that reason, NOT a
+//     preview sample, because the figure is genuinely unavailable rather than
+//     merely un-fed.
+//   • JUDGEMENT / PREVIEW — target amount, target weight, pending to invest,
+//     fair value, its reference year and the valuation method. These are the
+//     family's own calls, not statement figures. Where the family HAS recorded a
+//     target or fair value on the watchlist it is shown bright (real); otherwise
+//     a greyed PreviewNum sample stands in until they do.
+const VAL_METHODS = ["DCF", "P/E re-rating", "EV/EBITDA", "SOTP", "P/B revert"];
+const FV_YEARS = ["FY27E", "FY28E", "FY27E", "FY29E"];
+function PublicDashboardView({ rows }: { rows: Row[] }) {
+  const { fmtFromBase } = usePortfolio();
+  // localStorage is read once per open — edits made on /watchlist this session
+  // won't reflect until the view remounts, which is acceptable for a preview.
+  const wl: Watchlist = useMemo(() => readWatchlist(), []);
+  return (
+    <>
+      {/* Legend — the reader must be able to tell, at a glance, which columns are
+          the book, which are the family's judgement, and which cannot be measured. */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+        <PreviewBadge />
+        <span><span className="text-slate-200">Live from the book:</span> CMP, buy price, invested, current value, gain, return, quantity, weight.</span>
+        <span><span className="text-champagne-400">Target &amp; fair value</span> show the family's own watchlist entries where set, else a greyed sample.</span>
+        <span>Per-security XIRR is <span className="text-slate-500">not available</span> — transaction statements cover the current period only.</span>
+      </div>
+      <Card pad={false} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-ink-800">
+              <tr className="border-b border-ink-700">
+                <th className="label-xs px-2 py-2.5 text-left font-medium">Company</th>
+                <th className="label-xs px-2 py-2.5 text-left font-medium">Sector</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">Qty bought</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Buy price</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">CMP</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">Invested</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Current value</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Absolute gain</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">Return</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">Weight</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium">XIRR</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Target value</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Target weight</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Pending to invest</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Fair value</th>
+                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">FV ref year</th>
+                <th className="label-xs px-2 py-2.5 text-left font-medium whitespace-nowrap">Valuation method</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/70">
+              {rows.map((r, i) => {
+                const e = wl[r.securityKey];
+                // Real judgement figures where the family has set them; a greyed
+                // sample where they have not. Target VALUE = the family's per-unit
+                // target × the quantity actually held.
+                const hasTarget = !!e && e.targetPrice !== null;
+                const hasFair = !!e && e.fairValue !== null;
+                return (
+                  <tr key={r.key} className="hover:bg-ink-700/40">
+                    <td className="px-2 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
+                        {r.costNA && <Pill tone="warn">cost n/a</Pill>}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2.5 text-slate-400">{r.sector}</td>
+                    <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{fmtNum(r.quantity)}</td>
+                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? <AbsentCell reason="no per-unit cost reported for this holding" /> : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(r.avgCost)}</td>
+                    {/* A workbook mark is flagged so it can't read as a live price. */}
+                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
+                      {r.currentPrice === null
+                        ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+                        : r.live
+                        ? fmtFromBase(r.currentPrice)
+                        : <>{fmtFromBase(r.currentPrice)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80" title="No live price — showing the statement mark.">{"◦"}</span></>}
+                    </td>
+                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? <AbsentCell reason="no cost basis reported for this holding" /> : fmtFromBase(r.costBasis, { compact: true })}</td>
+                    <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(r.marketValue, { compact: true })}</td>
+                    <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`}>{r.costNA ? <AbsentCell reason="no cost basis, so gain is not measurable" /> : fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</td>
+                    <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`}>{r.costNA ? <AbsentCell reason="no cost basis, so return is not measurable" /> : fmtPct(r.returnPct, { sign: true })}</td>
+                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{(r.weight * 100).toFixed(1)}%</td>
+                    {/* Genuinely absent — not a preview. */}
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="no per-security XIRR — transaction statements cover the current period only" /></td>
+                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasTarget
+                      ? <span className="text-champagne-400">{fmtFromBase(e!.targetPrice! * r.quantity, { compact: true })}</span>
+                      : <PreviewNum>{fmtFromBase(r.marketValue * 1.25, { compact: true })}</PreviewNum>}</td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{(r.weight * 100 * 1.3 + 0.4).toFixed(1)}%</PreviewNum></td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{fmtFromBase(r.marketValue * 0.18, { compact: true })}</PreviewNum></td>
+                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasFair
+                      ? <span className="text-champagne-400">{fmtFromBase(e!.fairValue!)}</span>
+                      : <PreviewNum>{fmtFromBase((r.currentPrice ?? r.avgCost ?? 100) * 1.18)}</PreviewNum>}</td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{FV_YEARS[i % FV_YEARS.length]}</PreviewNum></td>
+                    <td className="px-2 py-2.5 text-left whitespace-nowrap"><PreviewPill>{VAL_METHODS[i % VAL_METHODS.length]}</PreviewPill></td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && <tr><td colSpan={17} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
             </tbody>
           </table>
         </div>
