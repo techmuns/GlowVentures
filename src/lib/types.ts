@@ -106,6 +106,16 @@ export type Account = {
   inceptionDate?: string | null;
   /** Who holds the assets. For a PMS mandate this is the manager. */
   custodian?: string;
+  /**
+   * Why this account contributes no positions, when it contributes none.
+   *
+   * NULL on every account that holds something. Non-null distinguishes an empty
+   * account (a folio redeemed to nil — a real zero) from one whose statements
+   * simply do not value anything (an AIF income letter, whose units are marked
+   * on another account's report). Both render `₹0` without it, and only one of
+   * them means the money is gone.
+   */
+  noPositionsReason?: string | null;
 };
 
 // One current position: a security held within one account.

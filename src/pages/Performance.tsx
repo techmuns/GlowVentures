@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, consolidatedMarketValue, sumOrNull } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
-import { xirrWithTerminal } from "@/lib/bucketXirr";
+import { xirrWithTerminal, pooledXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
@@ -131,9 +131,24 @@ export function Performance() {
   const measuredFlows = measurable.flatMap((x) => (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
     .map((f) => ({ date: new Date(f.date), amount: f.amount })));
   const measuredMV = sum(measurable.map((x) => x.mv));
-  const consolidatedXirr = measuredFlows.length
-    ? xirrWithTerminal(measuredFlows, measuredMV, new Date(portfolio.asOf))
-    : null;
+  /**
+   * EACH ACCOUNT CLOSES ON ITS OWN REPORT DATE.
+   *
+   * This pooled every account's flows and closed the lot on `portfolio.asOf`,
+   * the NEWEST date in the book. Green Lantern values at 25 June and the others
+   * at 10 July, so that gave its ₹11.69 Cr fifteen days of standing still — and
+   * over a one-quarter window the annualised pool rate came out points below the
+   * same accounts measured one at a time. Two pages, two numbers, one book.
+   *
+   * `pooledXirr` dates each account's terminal inflow at the moment its value
+   * was measured, which is what a money-weighted return means.
+   */
+  const consolidatedXirr = pooledXirr(measurable.map((x) => ({
+    flows: (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
+      .map((f) => ({ date: new Date(f.date), amount: f.amount })),
+    terminalValue: x.mv,
+    asOf: new Date(x.account.asOf),
+  })));
   const xirrMissing = unmeasurable.map((x) => x.account.accountNo);
   // The window every one of these rates annualises. Naming it matters: these
   // flows open on 1 April, so this is a quarter's return expressed per annum.
@@ -392,7 +407,13 @@ export function Performance() {
                 <tr key={x.account.accountId} className="border-t border-ink-700/60">
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(x.account)}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.flows}</td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-200">{money(x.mv)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-200">
+                    {/* `₹0` on an account nobody valued is a claim, not a
+                        measurement — see Account.noPositionsReason. */}
+                    {x.account.noPositionsReason
+                      ? <AbsentCell reason={x.account.noPositionsReason} />
+                      : money(x.mv)}
+                  </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>
                   <td className="px-3 py-2.5 text-right mono">
                     {x.pct == null

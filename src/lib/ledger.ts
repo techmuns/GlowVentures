@@ -73,15 +73,33 @@ type ArchiveDoc = ManifestEntry & {
   income?: ArchiveIncome[]; holdings?: ArchiveHolding[];
 };
 
-/** Which report type is authoritative for which fact — the app-side mirror of
- *  `scripts/ingest/precedence.mjs`. Reading every document that mentions a trade
- *  would count the same trade several times over. */
+/**
+ * Which report types are authoritative for which fact — the app-side mirror of
+ * `scripts/ingest/precedence.mjs`. Reading every document that mentions a trade
+ * would count the same trade several times over.
+ *
+ * EACH FACT NOW NAMES SEVERAL REPORT TYPES, and it has to. These were single
+ * strings written when every account in the book was a PMS mandate on one
+ * reporting system, and the moment other issuers got readers the ledger went
+ * blind to them: `holdings: "appraisal"` sees the four PMS managers and misses
+ * 360 ONE's client report (`holdings`), the SEBI investor report Green Lantern
+ * and SVAN issue (`investor-report`), the AIF account statements (`unknown`) and
+ * the broker's depository statement. Rs 207 Cr of AIF and every SVAN trade were
+ * absent from Ledger Insights while the pages around them counted all of it.
+ *
+ * Order is precedence: the first type present for an account wins, so a manager
+ * publishing both a dedicated transaction statement and an investor report is
+ * read from the finer-grained one and never from both.
+ */
 const AUTHORITATIVE = {
-  transactions: "transaction-statement",
-  capitalGains: "capital-gain",
-  cashIncome: "dividend-statement",
-  nonCashIncome: "corporate-benefits",
-  holdings: "appraisal",
+  transactions: ["transaction-statement", "investor-report"],
+  capitalGains: ["capital-gain"],
+  cashIncome: ["dividend-statement"],
+  nonCashIncome: ["corporate-benefits", "statement-of-earnings"],
+  // A holdings statement, by whatever name its issuer gives it. `unknown` is
+  // last and is real: the AIF account statements carry no report title this
+  // pipeline recognises, and they are still where those units are valued.
+  holdings: ["appraisal", "investor-report", "holdings", "unknown"],
 } as const;
 
 async function fetchJson<T>(path: string): Promise<T | null> {
@@ -113,7 +131,27 @@ export function loadArchive(): Promise<ArchiveDoc[] | null> {
   return archivePromise;
 }
 
-const of = (docs: ArchiveDoc[], reportType: string) => docs.filter((d) => d.reportType === reportType);
+/**
+ * Documents authoritative for one fact, PER ACCOUNT.
+ *
+ * `types` is in precedence order. For each account the FIRST type present wins,
+ * so an account that publishes both a transaction statement and an investor
+ * report is read from one of them — not both, which would double every trade the
+ * two have in common.
+ */
+function of(docs: ArchiveDoc[], types: readonly string[]): ArchiveDoc[] {
+  const byAccount = new Map<string, ArchiveDoc[]>();
+  for (const d of docs) {
+    const k = `${d.provider}\u0000${d.accountNo ?? ""}`;
+    byAccount.set(k, [...(byAccount.get(k) ?? []), d]);
+  }
+  const out: ArchiveDoc[] = [];
+  for (const group of byAccount.values()) {
+    const winner = types.find((t) => group.some((d) => d.reportType === t));
+    if (winner) out.push(...group.filter((d) => d.reportType === winner));
+  }
+  return out;
+}
 
 /** How an account is named on screen: whose money, whose platform, which number. */
 const accountLabel = (d: { owner: string | null; provider: string; accountNo: string }) =>

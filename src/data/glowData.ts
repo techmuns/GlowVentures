@@ -41,7 +41,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
-    "custodian": "360 ONE Alternates Asset Management"
+    "custodian": "360 ONE Alternates Asset Management",
+    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
   {
     "accountId": "360-one-alternates-asset-management-1000633",
@@ -55,7 +56,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
-    "custodian": "360 ONE Alternates Asset Management"
+    "custodian": "360 ONE Alternates Asset Management",
+    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
   {
     "accountId": "360-one-private-wealth-37702",
@@ -82,7 +84,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "360 ONE Private Wealth"
+    "custodian": "360 ONE Private Wealth",
+    "noPositionsReason": null
   },
   {
     "accountId": "360-one-private-wealth-60117",
@@ -109,7 +112,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "360 ONE Private Wealth"
+    "custodian": "360 ONE Private Wealth",
+    "noPositionsReason": null
   },
   {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -123,7 +127,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-10",
     "inceptionDate": "2025-01-06",
-    "custodian": "Carnelian Asset Management and Advisors Pvt Ltd"
+    "custodian": "Carnelian Asset Management and Advisors Pvt Ltd",
+    "noPositionsReason": null
   },
   {
     "accountId": "goldstandard-wealth-private-limited-100022",
@@ -137,7 +142,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-10",
     "inceptionDate": "2025-12-26",
-    "custodian": "Goldstandard Wealth Private Limited"
+    "custodian": "Goldstandard Wealth Private Limited",
+    "noPositionsReason": null
   },
   {
     "accountId": "goldstandard-wealth-private-limited-100023",
@@ -151,7 +157,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-10",
     "inceptionDate": "2025-12-26",
-    "custodian": "Goldstandard Wealth Private Limited"
+    "custodian": "Goldstandard Wealth Private Limited",
+    "noPositionsReason": null
   },
   {
     "accountId": "green-lantern-capital-llp-510854",
@@ -165,7 +172,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-25",
     "inceptionDate": "2025-01-13",
-    "custodian": "Green Lantern Capital LLP"
+    "custodian": "Green Lantern Capital LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "green-lantern-capital-llp-510861",
@@ -179,7 +187,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-25",
     "inceptionDate": "2025-01-16",
-    "custodian": "Green Lantern Capital LLP"
+    "custodian": "Green Lantern Capital LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "hdfc-mutual-fund-16180583",
@@ -193,7 +202,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-01",
     "inceptionDate": null,
-    "custodian": "HDFC Mutual Fund"
+    "custodian": "HDFC Mutual Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "lkp-securities-98245",
@@ -207,7 +217,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
-    "custodian": "LKP Securities"
+    "custodian": "LKP Securities",
+    "noPositionsReason": null
   },
   {
     "accountId": "molecule-ventures-llp-7810404",
@@ -221,7 +232,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": "2024-10-24",
-    "custodian": "Molecule Ventures LLP"
+    "custodian": "Molecule Ventures LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "sanshi-fund-9039671821",
@@ -235,7 +247,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "Sanshi Fund"
+    "custodian": "Sanshi Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "sanshi-fund-9039671854",
@@ -249,7 +262,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "Sanshi Fund"
+    "custodian": "Sanshi Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "sanshi-fund-9039671912",
@@ -263,7 +277,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "Sanshi Fund"
+    "custodian": "Sanshi Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "sanshi-fund-9069671554",
@@ -277,7 +292,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "Sanshi Fund"
+    "custodian": "Sanshi Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "sanshi-fund-9069671634",
@@ -291,7 +307,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "custodian": "Sanshi Fund"
+    "custodian": "Sanshi Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -305,7 +322,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": "2024-09-03",
-    "custodian": "SVAN Investment Managers LLP"
+    "custodian": "SVAN Investment Managers LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710090",
@@ -319,7 +337,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": "2024-12-03",
-    "custodian": "SVAN Investment Managers LLP"
+    "custodian": "SVAN Investment Managers LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "transition-venture-capital-TVC262",
@@ -333,7 +352,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
-    "custodian": "Transition Venture Capital"
+    "custodian": "Transition Venture Capital",
+    "noPositionsReason": null
   },
   {
     "accountId": "transition-venture-capital-TVC263",
@@ -347,7 +367,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
-    "custodian": "Transition Venture Capital"
+    "custodian": "Transition Venture Capital",
+    "noPositionsReason": null
   },
   {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -361,7 +382,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-06",
     "inceptionDate": "2025-07-29",
-    "custodian": "V.E.C Assago Capital Management LLP"
+    "custodian": "V.E.C Assago Capital Management LLP",
+    "noPositionsReason": null
   },
   {
     "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -375,7 +397,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-06",
     "inceptionDate": "2025-07-30",
-    "custodian": "V.E.C Assago Capital Management LLP"
+    "custodian": "V.E.C Assago Capital Management LLP",
+    "noPositionsReason": null
   }
 ];
 

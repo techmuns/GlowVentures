@@ -11,7 +11,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, fundTotals, startupTotals, sumOrNull } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
-import { xirrWithTerminal, xirrPct, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { xirrWithTerminal, xirrPct, pooledXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { auditHref, LEDGER, type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
@@ -113,6 +113,21 @@ export function MorningCIO() {
       + pm.debtFunds.length + pm.closedFunds.length;
 
     const totalValue = portfolio.totalValue;
+    /**
+     * ACCRUED INCOME — declared, not yet received, and NOT in the NAV above.
+     *
+     * §4b keeps accrued income out of market value on purpose: the managers fold
+     * it in on some rows and not others, so the book carries it as its own field
+     * and every market value stays price × quantity on one basis. That is right,
+     * and it left ₹32.94 L on 85 positions appearing NOWHERE on screen — so the
+     * consolidated NAV sat below the managers' own printed totals by exactly that
+     * amount, with nothing to explain the gap to a reader holding the statement.
+     *
+     * Stating it is the other half of the rule. The NAV does not change; the tile
+     * says what is not in it.
+     */
+    const accrued = sumOrNull(p.map((x) => x.accruedIncome));
+    const accruedCount = p.filter((x) => typeof x.accruedIncome === "number" && x.accruedIncome !== 0).length;
     const privateCurrent = portfolio.privateValue;
     // Capital currently deployed = cost of listed holdings + drawn private (excl. fully-exited funds).
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
@@ -179,21 +194,33 @@ export function MorningCIO() {
     };
     /** Flows and terminal market value for one side, measurable accounts only. */
     const measured = (managed: boolean) => {
-      const flows: { date: Date; amount: number }[] = [];
+      /**
+       * PER-ACCOUNT PARTS, each with its OWN as-of.
+       *
+       * These were pooled into one flow list and closed on one page-wide date.
+       * The accounts in this book do not share a report date, so that gave the
+       * ones valued earlier a stretch of flat performance they never had — and
+       * produced a different rate here from the one `/performance` showed for
+       * the same accounts. See `pooledXirr`.
+       */
+      const parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[] = [];
       let mv = 0;
       const excluded: string[] = [];
       for (const a of portfolio.accounts) {
         if (sideOf(a) !== managed) continue;
         if (!hasOpening(a.accountId)) { excluded.push(a.accountNo); continue; }
-        for (const f of portfolio.accountCashFlows?.[a.accountId] ?? []) {
-          flows.push({ date: new Date(f.date), amount: f.amount });
-        }
-        mv += sum(p.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
+        const accountMv = sum(p.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
+        parts.push({
+          flows: (portfolio.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
+          terminalValue: accountMv,
+          asOf: new Date(a.asOf),
+        });
+        mv += accountMv;
       }
-      return { flows, mv, excluded };
+      return { parts, mv, excluded };
     };
-    const listedXirr = (mv: number, flows: { date: Date; amount: number }[]): number | null =>
-      flows.length && mv > 0 ? xirrWithTerminal(flows, mv, asOfDate) : null;
+    const listedXirr = (parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[]): number | null =>
+      pooledXirr(parts);
     const directSide = measured(false), pmsSide = measured(true);
     const xirrExcluded = [...directSide.excluded, ...pmsSide.excluded];
 
@@ -233,8 +260,8 @@ export function MorningCIO() {
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
     });
     const allBuckets: Bucket[] = [
-      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.mv, directSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
-      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.mv, pmsSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
+      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
+      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
       { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
@@ -258,11 +285,17 @@ export function MorningCIO() {
         .filter((f) => f.firstInvest && f.drawn > 0)
         .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
     ];
-    const listedFlows = [...directSide.flows, ...pmsSide.flows];
+    const listedParts = [...directSide.parts, ...pmsSide.parts];
+    const listedFlows = listedParts.flatMap((x) => x.flows);
     const measuredMV = directSide.mv + pmsSide.mv;
-    const listedXirrPct = listedXirr(measuredMV, listedFlows);
-    const bookXirr = listedFlows.length
-      ? xirrPct([...listedFlows, { date: asOfDate, amount: measuredMV }, ...privateFlows])
+    const listedXirrPct = listedXirr(listedParts);
+    // The book-wide rate adds the private flows to the SAME per-account parts,
+    // each still closing on its own as-of — not on one page-wide date.
+    const bookXirr = listedParts.length
+      ? xirrPct([
+        ...listedParts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
+        ...privateFlows,
+      ])
       : null;
     const xirrWindowStart = listedFlows.reduce<Date | null>((a, f) => (!a || f.date < a ? f.date : a), null);
     const xirrWindowDays = xirrWindowStart
@@ -299,7 +332,7 @@ export function MorningCIO() {
 
     return {
       p, listedMV, listedCost, listedPnL, listedRet,
-      totalValue, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
+      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
@@ -376,9 +409,16 @@ export function MorningCIO() {
               ? `= ${money(m.listedMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
               : `= ${money(m.listedMV)} across ${m.p.length} positions`,
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
-          sub={m.privateCount
-            ? `Listed ${money(m.listedMV)} · Private ${money(m.privateCurrent)}`
-            : `${m.p.length} listed positions · no private holdings`}
+          sub={<>
+            {m.privateCount
+              ? `Listed ${money(m.listedMV)} · Private ${money(m.privateCurrent)}`
+              : `${m.p.length} listed positions · no private holdings`}
+            {m.accrued !== null && (
+              <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
+                + {money(m.accrued)} accrued income, not in this figure
+              </span>
+            )}
+          </>}
           icon={<Briefcase className="h-4 w-4" />} />
 
         <Kpi label="Capital invested"
