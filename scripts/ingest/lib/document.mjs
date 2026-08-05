@@ -639,6 +639,27 @@ export function makeDocument(input) {
     dematBalances: input.dematBalances ?? [],
     /** "isin" where clipped security names were resolved — see backfillSecurityNames. */
     securityNameSource: input.securityNameSource ?? null,
+    /**
+     * Why this document's account is NOT in the family book, where it is not.
+     *
+     * Set by a reader that understood the document completely and concluded it
+     * belongs to somebody else (a trust with its own PAN) or to nobody (a
+     * scheme's own disclosure). Distinct from `status: "failed"`, which means the
+     * document could not be read — the coverage table has to tell those apart or
+     * a reader goes looking for a holding that was never there.
+     */
+    excludedFromBook: input.excludedFromBook ?? null,
+    /** A fund's own holdings, for look-through. Never summed into the book. */
+    schemeHoldings: input.schemeHoldings ?? [],
+    /** AIF income split by tax head — see providers/aifDistribution.mjs. */
+    aifEarnings: input.aifEarnings ?? null,
+    /**
+     * Other holders on a JOINT account, where the statement names them. The
+     * account is attributed to the first holder — whose PAN the income is
+     * reported under — and these are carried so a per-person view can say the
+     * holding is shared rather than implying sole ownership.
+     */
+    jointHolders: input.jointHolders ?? [],
     /** Raw tables, for the audit archive: { sectionName: { name, rows } }. */
     sections: input.sections ?? {},
     /** Every stitch the layout engine applied, for provenance. */

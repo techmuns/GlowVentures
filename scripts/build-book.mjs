@@ -160,6 +160,8 @@ function build(docs) {
   const realisedByClass = new Map();
   const accountBridges = {};
   const unclassified = new Map();
+  /** Accounts read in full and deliberately left OUT — see excludedFromBook. */
+  const excludedAccounts = [];
 
   for (const [key, allIssues] of [...byAccount.entries()].sort()) {
     const group = newestPerReportType(allIssues, notes, `account ${key}`);
@@ -175,6 +177,34 @@ function build(docs) {
     const asOf = holdingsDoc?.asOf ?? sample.asOf ?? null;
     const inception = group.map((d) => d.inceptionDate).find(Boolean) ?? null;
     const ownerId = group.map((d) => d.ownerId).find(Boolean) ?? null;
+
+    /**
+     * AN ACCOUNT ITS OWN STATEMENT SAYS IS SOMEBODY ELSE'S.
+     *
+     * The mutual-fund folio reader reads the holder's TAX STATUS off the page.
+     * Three of those folios are held by `HOPE INDIA TRUST` — a separate taxpayer
+     * — and the scheme disclosure has no holder at all. Reading them was right;
+     * ADDING them to a family total would put ₹2.50 Cr of somebody else's money
+     * into this family's net worth.
+     *
+     * `excludedFromBook` carries the reason, and it is honoured HERE rather than
+     * by a filter somewhere further downstream, so the exclusion happens once and
+     * the reason travels with it into the build report. Three properties matter:
+     *
+     *   • the account is NOT in `accounts`, so no page can sum it by accident;
+     *   • the reason is printed, so a reader can see the money exists and why it
+     *     is not counted — the opposite of a figure quietly going missing;
+     *   • it is REVERSIBLE by one entry in shared/owners.mjs, because whether the
+     *     family consolidates its trust is the family's decision, not a parser's.
+     */
+    const excluded = group.map((d) => d.excludedFromBook).find(Boolean) ?? null;
+    if (excluded) {
+      const value = group.map((d) => d.totals?.totalMarketValue).find(isNum) ?? null;
+      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, reason: excluded });
+      notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${excluded}`
+        + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : ""));
+      continue;
+    }
     if (!ownerId) notes.push(`account ${accountNo} (${provider}) resolved to no canonical owner`);
 
     accounts.push({
@@ -657,6 +687,7 @@ function build(docs) {
 
   return {
     accounts, positions, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
+    excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -824,6 +855,31 @@ function report(book) {
     const accs = book.accounts.filter((a) => a.ownerId === o.ownerId);
     const ps = book.positions.filter((p) => accs.some((a) => a.accountId === p.accountId));
     L.push(`| ${o.displayName} | ${accs.length} | ${ps.length} | ${r2(sum(ps.map((p) => (isNum(p.marketValue) ? p.marketValue : 0)))).toLocaleString("en-IN")} |`);
+  }
+  L.push("");
+  L.push("## Read, and deliberately NOT in the book");
+  L.push("");
+  if (!book.excludedAccounts?.length) {
+    L.push("_None — every account this pipeline could read belongs to a canonical owner._");
+  } else {
+    L.push("These statements were read COMPLETELY. They are absent from every total above");
+    L.push("because they belong to somebody else, and that is a different thing from a");
+    L.push("document the pipeline could not open — the coverage table in");
+    L.push("`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a");
+    L.push("single entry in `shared/owners.mjs`, if the family says it should be.");
+    L.push("");
+    L.push("| Account | Provider | Holder | Value on its own statement | Why it is out |");
+    L.push("| --- | --- | --- | ---: | --- |");
+    for (const a of book.excludedAccounts) {
+      L.push(`| ${a.accountNo ?? "—"} | ${a.provider} | ${a.owner ?? "—"} | ${isNum(a.value) ? r2(a.value).toLocaleString("en-IN") : "—"} | ${a.reason.replace(/\s+/g, " ")} |`);
+    }
+    const known = book.excludedAccounts.filter((a) => isNum(a.value));
+    if (known.length) {
+      L.push("");
+      L.push(`Together they carry **${r2(sum(known.map((a) => a.value))).toLocaleString("en-IN")}** across `
+        + `${known.length} account(s). That figure is stated so nobody has to wonder whether `
+        + "the money was missed or excluded.");
+    }
   }
   L.push("");
   L.push("## Sector allocation");

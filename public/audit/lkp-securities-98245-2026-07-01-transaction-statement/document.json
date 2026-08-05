@@ -358,6 +358,10 @@
  },
  "dematBalances": [],
  "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
  "stitches": [],
  "derivedPortfolioTotal": null
 }

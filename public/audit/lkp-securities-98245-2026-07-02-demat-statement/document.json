@@ -109,6 +109,10 @@
   }
  ],
  "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
  "stitches": [
   {
    "kind": "same-line",

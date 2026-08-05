@@ -1,0 +1,1429 @@
+{
+ "name": "schemePortfolio",
+ "rows": [
+  [
+   "security",
+   "isin",
+   "industry",
+   "quantity",
+   "marketValue",
+   "pctNetAssets"
+  ],
+  [
+   "ICICI Bank Limited",
+   "INE090A01021",
+   "Banks",
+   1642209,
+   2258366000,
+   2.91
+  ],
+  [
+   "HDFC Bank Limited",
+   "INE040A01034",
+   "Banks",
+   2179504,
+   1739135000,
+   2.24
+  ],
+  [
+   "Bharti Airtel Limited",
+   "INE397D01024",
+   "Telecom - Services",
+   590557,
+   1093712000,
+   1.41
+  ],
+  [
+   "Nestle India Limited",
+   "INE239A01024",
+   "Food Products",
+   551910,
+   775544000,
+   1
+  ],
+  [
+   "Mahindra & Mahindra Limited",
+   "INE101A01026",
+   "Automobiles",
+   232725,
+   714186000,
+   0.92
+  ],
+  [
+   "Reliance Industries Limited",
+   "INE002A01018",
+   "Petroleum Products",
+   518073,
+   670335000,
+   0.86
+  ],
+  [
+   "Coforge Limited",
+   "INE591G01025",
+   "IT - Software",
+   437107,
+   640668000,
+   0.83
+  ],
+  [
+   "Eternal Limited",
+   "INE758T01015",
+   "Retailing",
+   2283552,
+   604228000,
+   0.78
+  ],
+  [
+   "Kotak Mahindra Bank Limited",
+   "INE237A01036",
+   "Banks",
+   1516615,
+   594892000,
+   0.77
+  ],
+  [
+   "Bharat Electronics Limited",
+   "INE263A01024",
+   "Aerospace & Defense",
+   1422542,
+   585803000,
+   0.75
+  ],
+  [
+   "Maruti Suzuki India Limited",
+   "INE585B01010",
+   "Automobiles",
+   33269,
+   469592000,
+   0.6
+  ],
+  [
+   "Titan Company Limited",
+   "INE280A01028",
+   "Consumer Durables",
+   100415,
+   442228000,
+   0.57
+  ],
+  [
+   "State Bank of India",
+   "INE062A01020",
+   "Banks",
+   385066,
+   395424000,
+   0.51
+  ],
+  [
+   "Torrent Pharmaceuticals Limited",
+   "INE685A01028",
+   "Pharmaceuticals & Biotechnology",
+   62632,
+   289366000,
+   0.37
+  ],
+  [
+   "Hindalco Industries Limited",
+   "INE038A01020",
+   "Non - Ferrous Metals",
+   281858,
+   269625000,
+   0.35
+  ],
+  [
+   "Max Healthcare Institute Limited",
+   "INE027H01010",
+   "Healthcare Services",
+   238208,
+   268996000,
+   0.35
+  ],
+  [
+   "Larsen & Toubro Limited",
+   "INE018A01030",
+   "Construction",
+   61520,
+   254902000,
+   0.33
+  ],
+  [
+   "Power Grid Corporation of India Limited",
+   "INE752E01010",
+   "Power",
+   768202,
+   219936000,
+   0.28
+  ],
+  [
+   "Max Financial Services Limited",
+   "INE180A01020",
+   "Insurance",
+   131699,
+   208611000,
+   0.27
+  ],
+  [
+   "CG Power and Industrial Solutions Limited",
+   "INE067A01029",
+   "Electrical Equipment",
+   218544,
+   208087000,
+   0.27
+  ],
+  [
+   "Muthoot Finance Limited",
+   "INE414G01012",
+   "Finance",
+   69235,
+   207518000,
+   0.27
+  ],
+  [
+   "Tata Steel Limited",
+   "INE081A01020",
+   "Ferrous Metals",
+   1099555,
+   206782000,
+   0.27
+  ],
+  [
+   "Axis Bank Limited",
+   "INE238A01034",
+   "Banks",
+   149018,
+   200534000,
+   0.26
+  ],
+  [
+   "Aadhar Housing Finance Limited",
+   "INE883F01010",
+   "Finance",
+   383159,
+   197557000,
+   0.25
+  ],
+  [
+   "Bajaj Finance Limited",
+   "INE296A01032",
+   "Finance",
+   195753,
+   196683000,
+   0.25
+  ],
+  [
+   "NTPC Limited",
+   "INE733E01010",
+   "Power",
+   521418,
+   185964000,
+   0.24
+  ],
+  [
+   "Tata Consultancy Services Limited",
+   "INE467B01029",
+   "IT - Software",
+   88911,
+   180623000,
+   0.23
+  ],
+  [
+   "Bajaj Finserv Limited",
+   "INE918I01026",
+   "Finance",
+   100555,
+   179008000,
+   0.23
+  ],
+  [
+   "Lenskart Solutions Limited",
+   "INE956O01016",
+   "Retailing",
+   331281,
+   170593000,
+   0.22
+  ],
+  [
+   "The Phoenix Mills Limited",
+   "INE211B01039",
+   "Realty",
+   86173,
+   167917000,
+   0.22
+  ],
+  [
+   "Power Finance Corporation Limited",
+   "INE134E01011",
+   "Finance",
+   390699,
+   165774000,
+   0.21
+  ],
+  [
+   "Oil India Limited",
+   "INE274J01014",
+   "Oil",
+   384724,
+   160411000,
+   0.21
+  ],
+  [
+   "Pidilite Industries Limited",
+   "INE318A01026",
+   "Chemicals & Petrochemicals",
+   99542,
+   158541000,
+   0.2
+  ],
+  [
+   "Sun Pharmaceutical Industries Limited",
+   "INE044A01036",
+   "Pharmaceuticals & Biotechnology",
+   85099,
+   158497000,
+   0.2
+  ],
+  [
+   "Asian Paints Limited",
+   "INE021A01026",
+   "Consumer Durables",
+   59853,
+   157755000,
+   0.2
+  ],
+  [
+   "Krishna Institute Of Medical Sciences Limited",
+   "INE967H01025",
+   "Healthcare Services",
+   181533,
+   147877000,
+   0.19
+  ],
+  [
+   "India Shelter Finance Corporation Limited",
+   "INE922K01024",
+   "Finance",
+   180715,
+   139033000,
+   0.18
+  ],
+  [
+   "Aditya Infotech Limited",
+   "INE819V01029",
+   "Industrial Manufacturing",
+   38021,
+   138663000,
+   0.18
+  ],
+  [
+   "PB Fintech Limited",
+   "INE417T01026",
+   "Financial Technology (Fintech)",
+   78021,
+   127065000,
+   0.16
+  ],
+  [
+   "National Aluminium Company Limited",
+   "INE139A01034",
+   "Non - Ferrous Metals",
+   373496,
+   126839000,
+   0.16
+  ],
+  [
+   "JB Chemicals & Pharmaceuticals Limited",
+   "INE572A01036",
+   "Pharmaceuticals & Biotechnology",
+   54191,
+   124417000,
+   0.16
+  ],
+  [
+   "Azad Engineering Ltd",
+   "INE02IJ01035",
+   "Electrical Equipment",
+   60171,
+   123669000,
+   0.16
+  ],
+  [
+   "Eureka Forbes Ltd",
+   "INE0KCE01017",
+   "Consumer Durables",
+   265641,
+   121796000,
+   0.16
+  ],
+  [
+   "Info Edge (India) Limited",
+   "INE663F01032",
+   "Retailing",
+   124416,
+   121679000,
+   0.16
+  ],
+  [
+   "Cummins India Limited",
+   "INE298A01020",
+   "Industrial Products",
+   20427,
+   115607000,
+   0.15
+  ],
+  [
+   "Five Star Business Finance Limited",
+   "INE128S01021",
+   "Finance",
+   227961,
+   115143000,
+   0.15
+  ],
+  [
+   "Leela Palaces Hotels & Resorts Limited",
+   "INE0AQ201015",
+   "Leisure Services",
+   240603,
+   114395000,
+   0.15
+  ],
+  [
+   "Billionbrains Garage Ventures Ltd",
+   "INE0HOQ01053",
+   "Capital Markets",
+   557867,
+   112728000,
+   0.15
+  ],
+  [
+   "Oil & Natural Gas Corporation Limited",
+   "INE213A01029",
+   "Oil",
+   464800,
+   109182000,
+   0.14
+  ],
+  [
+   "CARE Ratings Limited",
+   "INE752H01013",
+   "Capital Markets",
+   64801,
+   106948000,
+   0.14
+  ],
+  [
+   "Acutaas Chemicals Limited",
+   "INE00FF01025",
+   "Pharmaceuticals & Biotechnology",
+   29459,
+   103878000,
+   0.13
+  ],
+  [
+   "KRN Heat Exchanger And Refrigeration Limited",
+   "INE0Q3J01015",
+   "Industrial Products",
+   82256,
+   103034000,
+   0.13
+  ],
+  [
+   "TD Power Systems Limited",
+   "INE419M01027",
+   "Electrical Equipment",
+   83043,
+   102832000,
+   0.13
+  ],
+  [
+   "360 One WAM Limited",
+   "INE466L01038",
+   "Capital Markets",
+   94508,
+   101558000,
+   0.13
+  ],
+  [
+   "Kirloskar Oil Engines Limited",
+   "INE146L01010",
+   "Industrial Products",
+   39371,
+   93073000,
+   0.12
+  ],
+  [
+   "Onemi Technology Solutions Limited",
+   "INE12F801023",
+   "Finance",
+   326100,
+   91145000,
+   0.12
+  ],
+  [
+   "LTM Limited",
+   "INE214T01019",
+   "IT - Software",
+   25559,
+   90428000,
+   0.12
+  ],
+  [
+   "Vishal Mega Mart Limited",
+   "INE01EA01019",
+   "Retailing",
+   751510,
+   88641000,
+   0.11
+  ],
+  [
+   "AIA Engineering Limited",
+   "INE212H01026",
+   "Industrial Products",
+   17000,
+   86384000,
+   0.11
+  ],
+  [
+   "Poly Medicure Limited",
+   "INE205C01021",
+   "Healthcare Equipment & Supplies",
+   51176,
+   86354000,
+   0.11
+  ],
+  [
+   "Cipla Limited",
+   "INE059A01026",
+   "Pharmaceuticals & Biotechnology",
+   58284,
+   85409000,
+   0.11
+  ],
+  [
+   "TBO Tek Limited",
+   "INE673O01025",
+   "Leisure Services",
+   59031,
+   84397000,
+   0.11
+  ],
+  [
+   "Indigo Paints Limited",
+   "INE09VQ01012",
+   "Consumer Durables",
+   82564,
+   83823000,
+   0.11
+  ],
+  [
+   "Ajax Engineering Limited",
+   "INE274Y01021",
+   "Agricultural, Commercial & Construction Vehicles",
+   149937,
+   81228000,
+   0.1
+  ],
+  [
+   "Gillette India Limited",
+   "INE322A01010",
+   "Personal Products",
+   10486,
+   80527000,
+   0.1
+  ],
+  [
+   "Gland Pharma Limited",
+   "INE068V01023",
+   "Pharmaceuticals & Biotechnology",
+   31840,
+   79441000,
+   0.1
+  ],
+  [
+   "PNB Housing Finance Limited",
+   "INE572E01012",
+   "Finance",
+   71247,
+   73983000,
+   0.1
+  ],
+  [
+   "Vedanta Aluminium Metal Limited",
+   "INE1CDF01017",
+   "Non - Ferrous Metals",
+   159776,
+   71653000,
+   0.09
+  ],
+  [
+   "Dr. Lal Path Labs Limited",
+   "INE600L01024",
+   "Healthcare Services",
+   43188,
+   71096000,
+   0.09
+  ],
+  [
+   "Computer Age Management Services Limited",
+   "INE596I01020",
+   "Capital Markets",
+   88865,
+   70812000,
+   0.09
+  ],
+  [
+   "ICICI Prudential Asset Management Company Limited",
+   "INE346A01027",
+   "Capital Markets",
+   20288,
+   67348000,
+   0.09
+  ],
+  [
+   "Ambuja Cements Limited",
+   "INE079A01024",
+   "Cement & Cement Products",
+   158258,
+   66761000,
+   0.09
+  ],
+  [
+   "Tenneco Clean Air India Limited",
+   "INE19RI01016",
+   "Auto Components",
+   109845,
+   65072000,
+   0.08
+  ],
+  [
+   "Navin Fluorine International Limited",
+   "INE048G01026",
+   "Chemicals & Petrochemicals",
+   8333,
+   64056000,
+   0.08
+  ],
+  [
+   "Godrej Consumer Products Limited",
+   "INE102D01028",
+   "Personal Products",
+   62636,
+   63262000,
+   0.08
+  ],
+  [
+   "Trent Limited",
+   "INE849A01020",
+   "Retailing",
+   19198,
+   63019000,
+   0.08
+  ],
+  [
+   "Fortis Healthcare Limited",
+   "INE061F01013",
+   "Healthcare Services",
+   64642,
+   61859000,
+   0.08
+  ],
+  [
+   "Firstsource Solutions Limited",
+   "INE684F01012",
+   "Commercial Services & Supplies",
+   265243,
+   60595000,
+   0.08
+  ],
+  [
+   "Travel Food Services Limited",
+   "INE103V01028",
+   "Leisure Services",
+   45448,
+   60146000,
+   0.08
+  ],
+  [
+   "Intellect Design Arena Limited",
+   "INE306R01017",
+   "IT - Software",
+   83379,
+   59804000,
+   0.08
+  ],
+  [
+   "Doms Industries Limited",
+   "INE321T01012",
+   "Household Products",
+   24335,
+   56204000,
+   0.07
+  ],
+  [
+   "GE Vernova T&D India Limited",
+   "INE200A01026",
+   "Electrical Equipment",
+   11324,
+   55986000,
+   0.07
+  ],
+  [
+   "Dynamatic Technologies Limited",
+   "INE221B01012",
+   "Industrial Manufacturing",
+   5213,
+   54179000,
+   0.07
+  ],
+  [
+   "Mankind Pharma Limited",
+   "INE634S01028",
+   "Pharmaceuticals & Biotechnology",
+   20283,
+   51632000,
+   0.07
+  ],
+  [
+   "Aether Industries Limited",
+   "INE0BWX01014",
+   "Chemicals & Petrochemicals",
+   36777,
+   49984000,
+   0.06
+  ],
+  [
+   "Sudeep Pharma Limited",
+   "INE0QPI01025",
+   "Chemicals & Petrochemicals",
+   58713,
+   49818000,
+   0.06
+  ],
+  [
+   "Safari Industries (India) Limited",
+   "INE429E01023",
+   "Consumer Durables",
+   30321,
+   48332000,
+   0.06
+  ],
+  [
+   "Tube Investments of India Limited",
+   "INE974X01010",
+   "Auto Components",
+   15097,
+   45733000,
+   0.06
+  ],
+  [
+   "Rainbow Childrens Medicare Limited",
+   "INE961O01016",
+   "Healthcare Services",
+   31523,
+   44580000,
+   0.06
+  ],
+  [
+   "SBI Life Insurance Company Limited",
+   "INE123W01016",
+   "Insurance",
+   23709,
+   41863000,
+   0.05
+  ],
+  [
+   "eClerx Services Limited",
+   "INE738I01010",
+   "Commercial Services & Supplies",
+   29700,
+   39350000,
+   0.05
+  ],
+  [
+   "Nippon Life India Asset Management Limited",
+   "INE298J01013",
+   "Capital Markets",
+   32500,
+   37765000,
+   0.05
+  ],
+  [
+   "Corona Remedies Limited",
+   "INE02ZQ01018",
+   "Pharmaceuticals & Biotechnology",
+   18673,
+   36735000,
+   0.05
+  ],
+  [
+   "S.J.S. Enterprises Limited",
+   "INE284S01014",
+   "Auto Components",
+   15938,
+   35350000,
+   0.05
+  ],
+  [
+   "Cholamandalam Investment and Finance Company Ltd",
+   "INE121A01024",
+   "Finance",
+   18340,
+   32825000,
+   0.04
+  ],
+  [
+   "Mastek Limited",
+   "INE759A01021",
+   "IT - Software",
+   19533,
+   31179000,
+   0.04
+  ],
+  [
+   "Orkla India Limited",
+   "INE16NZ01023",
+   "Food Products",
+   49391,
+   30292000,
+   0.04
+  ],
+  [
+   "Indiqube Spaces Limited",
+   "INE06ST01018",
+   "Commercial Services & Supplies",
+   138870,
+   23518000,
+   0.03
+  ],
+  [
+   "Jyothy Labs Limited",
+   "INE668F01031",
+   "Household Products",
+   109366,
+   20962000,
+   0.03
+  ],
+  [
+   "Vijaya Diagnostic Centre Limited",
+   "INE043W01024",
+   "Healthcare Services",
+   14241,
+   19262000,
+   0.02
+  ],
+  [
+   "Divi's Laboratories Limited",
+   "INE361B01024",
+   "Pharmaceuticals & Biotechnology",
+   2865,
+   18849000,
+   0.02
+  ],
+  [
+   "Neuland Laboratories Limited",
+   "INE794A01010",
+   "Pharmaceuticals & Biotechnology",
+   708,
+   13154000,
+   0.02
+  ],
+  [
+   "Shilpa Medicare Limited",
+   "INE790G01031",
+   "Pharmaceuticals & Biotechnology",
+   20032,
+   11987000,
+   0.02
+  ],
+  [
+   "Awfis Space Solutions Limited",
+   "INE108V01019",
+   "Commercial Services & Supplies",
+   39569,
+   11966000,
+   0.02
+  ],
+  [
+   "Newgen Software Technologies Limited",
+   "INE619B01017",
+   "IT - Software",
+   17487,
+   8246000,
+   0.01
+  ],
+  [
+   "Laxmi Dental Limited",
+   "INE0WO601020",
+   "Healthcare Equipment & Supplies",
+   35729,
+   8040000,
+   0.01
+  ],
+  [
+   "Ajanta Pharma Limited",
+   "INE031B01049",
+   "Pharmaceuticals & Biotechnology",
+   1972,
+   6750000,
+   0.01
+  ],
+  [
+   "Blue Star Limited",
+   "INE472A01039",
+   "Consumer Durables",
+   3960,
+   6448000,
+   0.01
+  ],
+  [
+   "Nucleus Software Exports Limited",
+   "INE096B01018",
+   "IT - Software",
+   7603,
+   5746000,
+   0.01
+  ],
+  [
+   "Cholamandalam Financial Holdings Limited",
+   "INE149A01033",
+   "Finance",
+   2727,
+   4518000,
+   0.01
+  ],
+  [
+   "SHIVALIK BIMETAL CONTROLS LIMITED",
+   "INE386D01027",
+   "Industrial Products",
+   5055,
+   3844000,
+   0
+  ],
+  [
+   "REC Limited",
+   "INE020B01018",
+   "Finance",
+   10106,
+   3677000,
+   0
+  ],
+  [
+   "Clean Max Enviro Energy Solutions Limited",
+   "INE647U01026",
+   "Power",
+   2171,
+   2965000,
+   0
+  ],
+  [
+   "Tech Mahindra Limited",
+   "INE669C01036",
+   "IT - Software",
+   1859,
+   2611000,
+   0
+  ],
+  [
+   "Persistent Systems Limited",
+   "INE262H01021",
+   "IT - Software",
+   192,
+   831000,
+   0
+  ],
+  [
+   "Eicher Motors Limited",
+   "INE066A01021",
+   "Automobiles",
+   93,
+   658000,
+   0
+  ],
+  [
+   "Steel Authority of India Limited",
+   "INE114A01011",
+   "Ferrous Metals",
+   1900,
+   330000,
+   0
+  ],
+  [
+   "Infosys Limited",
+   "INE009A01021",
+   "IT - Software",
+   286,
+   286000,
+   0
+  ],
+  [
+   "Tata Motors Ltd",
+   "INE1TAE01010",
+   "Agricultural, Commercial & Construction Vehicles",
+   300,
+   127000,
+   0
+  ],
+  [
+   "Tata Motors Passenger Vehicles Limited",
+   "INE155A01022",
+   "Automobiles",
+   300,
+   106000,
+   0
+  ],
+  [
+   "Nexus Select Trust - REIT",
+   "INE0NDH25011",
+   "Realty",
+   14538917,
+   2373333000,
+   3.06
+  ],
+  [
+   "Embassy Office Parks REIT",
+   "INE041025011",
+   "Realty",
+   4202345,
+   1840795000,
+   2.37
+  ],
+  [
+   "Brookfield India Real Estate Trust",
+   "INE0FDU25010",
+   "Realty",
+   4297460,
+   1422631000,
+   1.83
+  ],
+  [
+   "Bagmane Prime Office REIT",
+   "INE2OVN25015",
+   "Realty",
+   6350605,
+   659129000,
+   0.85
+  ],
+  [
+   "Knowledge Realty Trust",
+   "INE1JAR25012",
+   "Realty",
+   3120169,
+   360224000,
+   0.46
+  ],
+  [
+   "Citius Transnet Investment Trust",
+   "INE2Q7823014",
+   "Transport Infrastructure",
+   12759556,
+   1368335000,
+   1.76
+  ],
+  [
+   "IndiGrid Infrastructure Trust",
+   "INE219X23014",
+   "Power",
+   7062700,
+   1248756000,
+   1.61
+  ],
+  [
+   "Altius Telecom Infrastructure Trust",
+   "INE0BWS23018",
+   "Telecom - Services",
+   6075000,
+   1029713000,
+   1.33
+  ],
+  [
+   "Raajmarg Infra Investment Trust",
+   "INE2PB023011",
+   "Transport Infrastructure",
+   7166098,
+   820948000,
+   1.06
+  ],
+  [
+   "Roadstar Infra Investment Trust",
+   "INE0JEI23010",
+   "Transport Infrastructure",
+   12900000,
+   741750000,
+   0.96
+  ],
+  [
+   "National Highways Infra Trust",
+   "INE0H7R23014",
+   "Transport Infrastructure",
+   3575000,
+   600421000,
+   0.77
+  ],
+  [
+   "Anantam Highways Trust",
+   "INE1UA823019",
+   "Construction",
+   3050625,
+   317570000,
+   0.41
+  ],
+  [
+   "Vertis Infrastructure Trust",
+   "INE0KXY23015",
+   "Transport Infrastructure",
+   2775000,
+   302475000,
+   0.39
+  ],
+  [
+   "Indus Infra Trust",
+   "INE0NHL23019",
+   "Transport Infrastructure",
+   966387,
+   121871000,
+   0.16
+  ],
+  [
+   "7.44% Power Finance Corporation Limited (15/01/2030) **",
+   "INE134E08NO0",
+   "CRISIL AAA",
+   13500,
+   1363083000,
+   1.76
+  ],
+  [
+   "6.65% Indian Railway Finance Corporation Limited (20/05/2030) **",
+   "INE053F08502",
+   "CRISIL AAA",
+   13750,
+   1358126000,
+   1.75
+  ],
+  [
+   "7.44% National Bank For Agriculture and Rural Development (17/07/2029)",
+   "INE261F08EU4",
+   "CRISIL AAA",
+   12900,
+   1297848000,
+   1.67
+  ],
+  [
+   "7.49% Small Industries Dev Bank of India (11/06/2029) **",
+   "INE556F08KX8",
+   "CRISIL AAA",
+   10000,
+   1007066000,
+   1.3
+  ],
+  [
+   "7.83% Bajaj Housing Finance Limited (18/05/2029)",
+   "INE377Y07649",
+   "CRISIL AAA",
+   8500,
+   855387000,
+   1.1
+  ],
+  [
+   "7.22% Small Industries Dev Bank of India (10/04/2029) **",
+   "INE556F08LC0",
+   "CRISIL AAA",
+   7000,
+   699866000,
+   0.9
+  ],
+  [
+   "7.88% Muthoot Finance Limited (22/11/2028) **",
+   "INE414G07JS2",
+   "CRISIL AA+",
+   7000,
+   694268000,
+   0.89
+  ],
+  [
+   "7.54% Godrej Industries Limited (04/05/2029) **",
+   "INE233A08170",
+   "CRISIL AA+",
+   6300,
+   624044000,
+   0.8
+  ],
+  [
+   "7.57% LIC Housing Finance Limited (23/11/2029)",
+   "INE115A07RJ0",
+   "CRISIL AAA",
+   5300,
+   531850000,
+   0.69
+  ],
+  [
+   "7.64% National Bank For Agriculture and Rural Development (06/12/2029)",
+   "INE261F08EJ7",
+   "ICRA AAA",
+   5000,
+   506162000,
+   0.65
+  ],
+  [
+   "7.01% National Bank For Agriculture and Rural Development (16/03/2029) **",
+   "INE261F08ES8",
+   "CRISIL AAA",
+   5000,
+   497962000,
+   0.64
+  ],
+  [
+   "6.87% REC Limited (31/05/2030) **",
+   "INE020B08FU0",
+   "ICRA AAA",
+   5000,
+   496260000,
+   0.64
+  ],
+  [
+   "7.02% Bajaj Housing Finance Limited (26/05/2028) **",
+   "INE377Y07565",
+   "CRISIL AAA",
+   4500,
+   446276000,
+   0.57
+  ],
+  [
+   "7.4% Power Finance Corporation Limited (08/05/2030) **",
+   "INE134E08KQ1",
+   "CRISIL AAA",
+   440,
+   444033000,
+   0.57
+  ],
+  [
+   "8.19% Cholamandalam Investment and Finance Company Ltd (26/03/2027) **",
+   "INE121A07SM0",
+   "ICRA AA+",
+   4300,
+   431577000,
+   0.56
+  ],
+  [
+   "7.3763% Bajaj Finance Limited (26/06/2028)",
+   "INE296A07TJ4",
+   "CRISIL AAA",
+   4100,
+   408344000,
+   0.53
+  ],
+  [
+   "8.06% Bajaj Finance Limited (15/05/2029) **",
+   "INE296A07SZ2",
+   "CRISIL AAA",
+   4000,
+   403555000,
+   0.52
+  ],
+  [
+   "7.10% Bajaj Housing Finance Limited (16/10/2028) **",
+   "INE377Y07607",
+   "CRISIL AAA",
+   3894,
+   385939000,
+   0.5
+  ],
+  [
+   "8.40% Cholamandalam Investment and Finance Company Ltd (09/08/2028) **",
+   "INE121A07RE9",
+   "ICRA AA+",
+   350000,
+   352775000,
+   0.45
+  ],
+  [
+   "7.77% Bajaj Finance Limited (17/04/2029) **",
+   "INE296A07TW7",
+   "CRISIL AAA",
+   3500,
+   350518000,
+   0.45
+  ],
+  [
+   "8.85% Muthoot Finance Limited (20/12/2028) **",
+   "INE414G07IS4",
+   "CRISIL AA+",
+   3300,
+   334090000,
+   0.43
+  ],
+  [
+   "7.40 % National Bank For Agriculture and Rural Development (29/04/2030) **",
+   "INE261F08EL3",
+   "CRISIL AAA",
+   3300,
+   331914000,
+   0.43
+  ],
+  [
+   "7.39% Small Industries Dev Bank of India (21/03/2030)",
+   "INE556F08KY6",
+   "CRISIL AAA",
+   3200,
+   321556000,
+   0.41
+  ],
+  [
+   "7.07% LIC Housing Finance Limited (29/04/2030) **",
+   "INE115A07RG6",
+   "CRISIL AAA",
+   3200,
+   315807000,
+   0.41
+  ],
+  [
+   "7.5% Indian Railway Finance Corporation Limited (07/09/2029) **",
+   "INE053F07BW9",
+   "CRISIL AAA",
+   250,
+   253655000,
+   0.33
+  ],
+  [
+   "7.38% REC Limited (28/02/2029) **",
+   "INE020B08GD4",
+   "CRISIL AAA",
+   2500,
+   252000000,
+   0.32
+  ],
+  [
+   "7.75% LIC Housing Finance Limited (23/08/2029) **",
+   "INE115A07QU9",
+   "CRISIL AAA",
+   2500,
+   251813000,
+   0.32
+  ],
+  [
+   "8.45% Muthoot Finance Limited (26/06/2029)",
+   "INE414G07JX2",
+   "CRISIL AA+",
+   2500,
+   251395000,
+   0.32
+  ],
+  [
+   "7.42% Small Industries Dev Bank of India (12/03/2029) **",
+   "INE556F08KW0",
+   "CRISIL AAA",
+   2500,
+   251140000,
+   0.32
+  ],
+  [
+   "7.45% Torrent Pharmaceuticals Limited (19/01/2028) **",
+   "INE685A07132",
+   "ICRA AA+",
+   2500,
+   249106000,
+   0.32
+  ],
+  [
+   "8.10% Godrej Industries Limited (22/05/2028) **",
+   "INE233A08154",
+   "CRISIL AA+",
+   2200,
+   220718000,
+   0.28
+  ],
+  [
+   "8.95% Reliance Industries Limited (09/11/2028) **",
+   "INE002A08542",
+   "CRISIL AAA",
+   200,
+   208188000,
+   0.27
+  ],
+  [
+   "8.54% Cholamandalam Investment and Finance Company Ltd (12/04/2029) **",
+   "INE121A07RZ4",
+   "ICRA AA+",
+   1800,
+   182000000,
+   0.23
+  ],
+  [
+   "8.4% Cholamandalam Investment and Finance Company Ltd (18/09/2027) **",
+   "INE121A07SH0",
+   "ICRA AA+",
+   1700,
+   170743000,
+   0.22
+  ],
+  [
+   "8.2301% HDB Financial Services Limited (05/07/2029) **",
+   "INE756I07FQ4",
+   "CRISIL AAA",
+   1500,
+   151646000,
+   0.2
+  ],
+  [
+   "8.40% Godrej Industries Limited (27/08/2027) **",
+   "INE233A08113",
+   "CRISIL AA+",
+   1500,
+   150857000,
+   0.19
+  ],
+  [
+   "7.51% Small Industries Dev Bank of India (12/06/2028) **",
+   "INE556F08KU4",
+   "CRISIL AAA",
+   1500,
+   150789000,
+   0.19
+  ],
+  [
+   "Kotak Mahindra Bank Limited (31/08/2026) ** #",
+   "INE237AD6075",
+   "CRISIL A1+",
+   160,
+   79155000,
+   0.1
+  ],
+  [
+   "HDFC Bank Limited (21/09/2026) ** #",
+   "INE040A16HR5",
+   "CRISIL A1+",
+   40,
+   19719000,
+   0.03
+  ],
+  [
+   "Bank of Baroda (08/03/2027) ** #",
+   "INE028A16LS0",
+   "CARE A1+",
+   40,
+   19113000,
+   0.02
+  ],
+  [
+   "ICICI Prudential Gold ETF",
+   "INF109KC1NT3",
+   "",
+   20350308,
+   2444072000,
+   3.15
+  ],
+  [
+   "DSP Gold ETF",
+   "INF740KA1SW3",
+   "",
+   11155100,
+   1518990000,
+   1.96
+  ],
+  [
+   "Total",
+   "",
+   "",
+   "",
+   55012496000,
+   ""
+  ]
+ ]
+}

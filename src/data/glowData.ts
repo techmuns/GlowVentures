@@ -20,14 +20,42 @@ export const BOOK_SUMMARY: BookSummary = {
   "listedValue": 3354323674.24,
   "privateValue": 0,
   "totalValue": 3354323674.24,
-  "positionsCount": 299,
+  "positionsCount": 301,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 20
+  "accountsCount": 23
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
 export const BOOK_ACCOUNTS: Account[] = [
+  {
+    "accountId": "360-one-alternates-asset-management-1000632",
+    "provider": "360 ONE Alternates Asset Management",
+    "accountNo": "1000632",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": "360 ONE Special Opportunities Fund - Series 8",
+    "engagement": "AIF",
+    "providerEngagement": "Category II AIF — pass-through",
+    "members": [],
+    "asOf": "2026-05-18",
+    "inceptionDate": null,
+    "custodian": "360 ONE Alternates Asset Management"
+  },
+  {
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "provider": "360 ONE Alternates Asset Management",
+    "accountNo": "1000633",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": "360 ONE Special Opportunities Fund - Series 8",
+    "engagement": "AIF",
+    "providerEngagement": "Category II AIF — pass-through",
+    "members": [],
+    "asOf": "2026-05-18",
+    "inceptionDate": null,
+    "custodian": "360 ONE Alternates Asset Management"
+  },
   {
     "accountId": "360-one-private-wealth-37702",
     "provider": "360 ONE Private Wealth",
@@ -151,6 +179,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-06-25",
     "inceptionDate": "2025-01-16",
     "custodian": "Green Lantern Capital LLP"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16180583",
+    "provider": "HDFC Mutual Fund",
+    "accountNo": "16180583",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-07-01",
+    "inceptionDate": null,
+    "custodian": "HDFC Mutual Fund"
   },
   {
     "accountId": "lkp-securities-98245",
@@ -3712,6 +3754,54 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 760,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option",
+    "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
+    "symbol": null,
+    "isin": "INF179KB1HP9",
+    "accountId": "hdfc-mutual-fund-16180583",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 5508.3669,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan",
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "symbol": null,
+    "isin": "INF179KA1RW5",
+    "accountId": "hdfc-mutual-fund-16180583",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 156.834,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
@@ -7302,6 +7392,34 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [];
  */
 export const BOOK_CAPITAL_GAINS: EntityCG[] = [
   {
+    "entity": "Ajay Jaisinghani · 360 1000632",
+    "accountId": "360-one-alternates-asset-management-1000632",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Bharat Jaisinghani · 360 1000633",
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "ownerId": "bharat-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · 360 37702",
     "accountId": "360-one-private-wealth-37702",
     "ownerId": "ajay-jaisinghani",
@@ -7395,6 +7513,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "periodTo": "2026-06-30",
     "lots": 31,
     "source": "green-lantern-capital-llp-510861-2026-06-30-capital-gain"
+  },
+  {
+    "entity": "Bharat Jaisinghani · HDFC 16180583",
+    "accountId": "hdfc-mutual-fund-16180583",
+    "ownerId": "bharat-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
   },
   {
     "entity": "Bharat Jaisinghani · LKP 98245",
@@ -9409,6 +9541,28 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
  * entitlement, not a cash figure to be summed.
  */
 export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = [
+  {
+    "security": "360 ONE Special Opportunities Fund - Series 8 Class A3",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3",
+    "accountId": "360-one-alternates-asset-management-1000632",
+    "kind": "distribution",
+    "exDate": "2025-05-29",
+    "quantity": null,
+    "entitlement": null,
+    "amount": 715619,
+    "source": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice"
+  },
+  {
+    "security": "360 ONE Special Opportunities Fund - Series 8 Class A3",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3",
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "kind": "distribution",
+    "exDate": "2025-05-29",
+    "quantity": null,
+    "entitlement": null,
+    "amount": 715619,
+    "source": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice"
+  },
   {
     "security": "Vedanta Ltd",
     "securityKey": "vedanta",

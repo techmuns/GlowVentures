@@ -1,0 +1,1466 @@
+{
+ "docKey": "scheme-portfolio-disclosure-unknown-2026-06-30-scheme-portfolio",
+ "provider": "Scheme portfolio disclosure",
+ "accountNo": null,
+ "ownerSource": null,
+ "accountNoSource": null,
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": "WhiteOak Capital Multi Asset Allocation Fund",
+ "engagement": "unknown",
+ "providerEngagement": "SEBI monthly scheme portfolio disclosure",
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "scheme-portfolio",
+ "sourcePath": "source/White Oak - Ajay.xlsx",
+ "pages": 1,
+ "status": "ok",
+ "warnings": [
+  {
+   "code": "no-client-position",
+   "detail": "this is the SCHEME's own portfolio disclosure, not a client statement. It carries no folio, no units and no holder — there is no family position in it to consolidate. The holdings are archived as the LOOK-THROUGH for any future statement that does report units of this scheme."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": "this is the SCHEME's own portfolio disclosure, not a client statement. It carries no folio, no units and no holder — there is no family position in it to consolidate. The holdings are archived as the LOOK-THROUGH for any future statement that does report units of this scheme.",
+ "schemeHoldings": [
+  {
+   "security": "ICICI Bank Limited",
+   "isin": "INE090A01021",
+   "industry": "Banks",
+   "quantity": 1642209,
+   "marketValue": 2258366000,
+   "pctNetAssets": 2.91
+  },
+  {
+   "security": "HDFC Bank Limited",
+   "isin": "INE040A01034",
+   "industry": "Banks",
+   "quantity": 2179504,
+   "marketValue": 1739135000,
+   "pctNetAssets": 2.24
+  },
+  {
+   "security": "Bharti Airtel Limited",
+   "isin": "INE397D01024",
+   "industry": "Telecom - Services",
+   "quantity": 590557,
+   "marketValue": 1093712000,
+   "pctNetAssets": 1.41
+  },
+  {
+   "security": "Nestle India Limited",
+   "isin": "INE239A01024",
+   "industry": "Food Products",
+   "quantity": 551910,
+   "marketValue": 775544000,
+   "pctNetAssets": 1
+  },
+  {
+   "security": "Mahindra & Mahindra Limited",
+   "isin": "INE101A01026",
+   "industry": "Automobiles",
+   "quantity": 232725,
+   "marketValue": 714186000,
+   "pctNetAssets": 0.92
+  },
+  {
+   "security": "Reliance Industries Limited",
+   "isin": "INE002A01018",
+   "industry": "Petroleum Products",
+   "quantity": 518073,
+   "marketValue": 670335000,
+   "pctNetAssets": 0.86
+  },
+  {
+   "security": "Coforge Limited",
+   "isin": "INE591G01025",
+   "industry": "IT - Software",
+   "quantity": 437107,
+   "marketValue": 640668000,
+   "pctNetAssets": 0.83
+  },
+  {
+   "security": "Eternal Limited",
+   "isin": "INE758T01015",
+   "industry": "Retailing",
+   "quantity": 2283552,
+   "marketValue": 604228000,
+   "pctNetAssets": 0.78
+  },
+  {
+   "security": "Kotak Mahindra Bank Limited",
+   "isin": "INE237A01036",
+   "industry": "Banks",
+   "quantity": 1516615,
+   "marketValue": 594892000,
+   "pctNetAssets": 0.77
+  },
+  {
+   "security": "Bharat Electronics Limited",
+   "isin": "INE263A01024",
+   "industry": "Aerospace & Defense",
+   "quantity": 1422542,
+   "marketValue": 585803000,
+   "pctNetAssets": 0.75
+  },
+  {
+   "security": "Maruti Suzuki India Limited",
+   "isin": "INE585B01010",
+   "industry": "Automobiles",
+   "quantity": 33269,
+   "marketValue": 469592000,
+   "pctNetAssets": 0.6
+  },
+  {
+   "security": "Titan Company Limited",
+   "isin": "INE280A01028",
+   "industry": "Consumer Durables",
+   "quantity": 100415,
+   "marketValue": 442228000,
+   "pctNetAssets": 0.57
+  },
+  {
+   "security": "State Bank of India",
+   "isin": "INE062A01020",
+   "industry": "Banks",
+   "quantity": 385066,
+   "marketValue": 395424000,
+   "pctNetAssets": 0.51
+  },
+  {
+   "security": "Torrent Pharmaceuticals Limited",
+   "isin": "INE685A01028",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 62632,
+   "marketValue": 289366000,
+   "pctNetAssets": 0.37
+  },
+  {
+   "security": "Hindalco Industries Limited",
+   "isin": "INE038A01020",
+   "industry": "Non - Ferrous Metals",
+   "quantity": 281858,
+   "marketValue": 269625000,
+   "pctNetAssets": 0.35
+  },
+  {
+   "security": "Max Healthcare Institute Limited",
+   "isin": "INE027H01010",
+   "industry": "Healthcare Services",
+   "quantity": 238208,
+   "marketValue": 268996000,
+   "pctNetAssets": 0.35
+  },
+  {
+   "security": "Larsen & Toubro Limited",
+   "isin": "INE018A01030",
+   "industry": "Construction",
+   "quantity": 61520,
+   "marketValue": 254902000,
+   "pctNetAssets": 0.33
+  },
+  {
+   "security": "Power Grid Corporation of India Limited",
+   "isin": "INE752E01010",
+   "industry": "Power",
+   "quantity": 768202,
+   "marketValue": 219936000,
+   "pctNetAssets": 0.28
+  },
+  {
+   "security": "Max Financial Services Limited",
+   "isin": "INE180A01020",
+   "industry": "Insurance",
+   "quantity": 131699,
+   "marketValue": 208611000,
+   "pctNetAssets": 0.27
+  },
+  {
+   "security": "CG Power and Industrial Solutions Limited",
+   "isin": "INE067A01029",
+   "industry": "Electrical Equipment",
+   "quantity": 218544,
+   "marketValue": 208087000,
+   "pctNetAssets": 0.27
+  },
+  {
+   "security": "Muthoot Finance Limited",
+   "isin": "INE414G01012",
+   "industry": "Finance",
+   "quantity": 69235,
+   "marketValue": 207518000,
+   "pctNetAssets": 0.27
+  },
+  {
+   "security": "Tata Steel Limited",
+   "isin": "INE081A01020",
+   "industry": "Ferrous Metals",
+   "quantity": 1099555,
+   "marketValue": 206782000,
+   "pctNetAssets": 0.27
+  },
+  {
+   "security": "Axis Bank Limited",
+   "isin": "INE238A01034",
+   "industry": "Banks",
+   "quantity": 149018,
+   "marketValue": 200534000,
+   "pctNetAssets": 0.26
+  },
+  {
+   "security": "Aadhar Housing Finance Limited",
+   "isin": "INE883F01010",
+   "industry": "Finance",
+   "quantity": 383159,
+   "marketValue": 197557000,
+   "pctNetAssets": 0.25
+  },
+  {
+   "security": "Bajaj Finance Limited",
+   "isin": "INE296A01032",
+   "industry": "Finance",
+   "quantity": 195753,
+   "marketValue": 196683000,
+   "pctNetAssets": 0.25
+  },
+  {
+   "security": "NTPC Limited",
+   "isin": "INE733E01010",
+   "industry": "Power",
+   "quantity": 521418,
+   "marketValue": 185964000,
+   "pctNetAssets": 0.24
+  },
+  {
+   "security": "Tata Consultancy Services Limited",
+   "isin": "INE467B01029",
+   "industry": "IT - Software",
+   "quantity": 88911,
+   "marketValue": 180623000,
+   "pctNetAssets": 0.23
+  },
+  {
+   "security": "Bajaj Finserv Limited",
+   "isin": "INE918I01026",
+   "industry": "Finance",
+   "quantity": 100555,
+   "marketValue": 179008000,
+   "pctNetAssets": 0.23
+  },
+  {
+   "security": "Lenskart Solutions Limited",
+   "isin": "INE956O01016",
+   "industry": "Retailing",
+   "quantity": 331281,
+   "marketValue": 170593000,
+   "pctNetAssets": 0.22
+  },
+  {
+   "security": "The Phoenix Mills Limited",
+   "isin": "INE211B01039",
+   "industry": "Realty",
+   "quantity": 86173,
+   "marketValue": 167917000,
+   "pctNetAssets": 0.22
+  },
+  {
+   "security": "Power Finance Corporation Limited",
+   "isin": "INE134E01011",
+   "industry": "Finance",
+   "quantity": 390699,
+   "marketValue": 165774000,
+   "pctNetAssets": 0.21
+  },
+  {
+   "security": "Oil India Limited",
+   "isin": "INE274J01014",
+   "industry": "Oil",
+   "quantity": 384724,
+   "marketValue": 160411000,
+   "pctNetAssets": 0.21
+  },
+  {
+   "security": "Pidilite Industries Limited",
+   "isin": "INE318A01026",
+   "industry": "Chemicals & Petrochemicals",
+   "quantity": 99542,
+   "marketValue": 158541000,
+   "pctNetAssets": 0.2
+  },
+  {
+   "security": "Sun Pharmaceutical Industries Limited",
+   "isin": "INE044A01036",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 85099,
+   "marketValue": 158497000,
+   "pctNetAssets": 0.2
+  },
+  {
+   "security": "Asian Paints Limited",
+   "isin": "INE021A01026",
+   "industry": "Consumer Durables",
+   "quantity": 59853,
+   "marketValue": 157755000,
+   "pctNetAssets": 0.2
+  },
+  {
+   "security": "Krishna Institute Of Medical Sciences Limited",
+   "isin": "INE967H01025",
+   "industry": "Healthcare Services",
+   "quantity": 181533,
+   "marketValue": 147877000,
+   "pctNetAssets": 0.19
+  },
+  {
+   "security": "India Shelter Finance Corporation Limited",
+   "isin": "INE922K01024",
+   "industry": "Finance",
+   "quantity": 180715,
+   "marketValue": 139033000,
+   "pctNetAssets": 0.18
+  },
+  {
+   "security": "Aditya Infotech Limited",
+   "isin": "INE819V01029",
+   "industry": "Industrial Manufacturing",
+   "quantity": 38021,
+   "marketValue": 138663000,
+   "pctNetAssets": 0.18
+  },
+  {
+   "security": "PB Fintech Limited",
+   "isin": "INE417T01026",
+   "industry": "Financial Technology (Fintech)",
+   "quantity": 78021,
+   "marketValue": 127065000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "National Aluminium Company Limited",
+   "isin": "INE139A01034",
+   "industry": "Non - Ferrous Metals",
+   "quantity": 373496,
+   "marketValue": 126839000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "JB Chemicals & Pharmaceuticals Limited",
+   "isin": "INE572A01036",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 54191,
+   "marketValue": 124417000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "Azad Engineering Ltd",
+   "isin": "INE02IJ01035",
+   "industry": "Electrical Equipment",
+   "quantity": 60171,
+   "marketValue": 123669000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "Eureka Forbes Ltd",
+   "isin": "INE0KCE01017",
+   "industry": "Consumer Durables",
+   "quantity": 265641,
+   "marketValue": 121796000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "Info Edge (India) Limited",
+   "isin": "INE663F01032",
+   "industry": "Retailing",
+   "quantity": 124416,
+   "marketValue": 121679000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "Cummins India Limited",
+   "isin": "INE298A01020",
+   "industry": "Industrial Products",
+   "quantity": 20427,
+   "marketValue": 115607000,
+   "pctNetAssets": 0.15
+  },
+  {
+   "security": "Five Star Business Finance Limited",
+   "isin": "INE128S01021",
+   "industry": "Finance",
+   "quantity": 227961,
+   "marketValue": 115143000,
+   "pctNetAssets": 0.15
+  },
+  {
+   "security": "Leela Palaces Hotels & Resorts Limited",
+   "isin": "INE0AQ201015",
+   "industry": "Leisure Services",
+   "quantity": 240603,
+   "marketValue": 114395000,
+   "pctNetAssets": 0.15
+  },
+  {
+   "security": "Billionbrains Garage Ventures Ltd",
+   "isin": "INE0HOQ01053",
+   "industry": "Capital Markets",
+   "quantity": 557867,
+   "marketValue": 112728000,
+   "pctNetAssets": 0.15
+  },
+  {
+   "security": "Oil & Natural Gas Corporation Limited",
+   "isin": "INE213A01029",
+   "industry": "Oil",
+   "quantity": 464800,
+   "marketValue": 109182000,
+   "pctNetAssets": 0.14
+  },
+  {
+   "security": "CARE Ratings Limited",
+   "isin": "INE752H01013",
+   "industry": "Capital Markets",
+   "quantity": 64801,
+   "marketValue": 106948000,
+   "pctNetAssets": 0.14
+  },
+  {
+   "security": "Acutaas Chemicals Limited",
+   "isin": "INE00FF01025",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 29459,
+   "marketValue": 103878000,
+   "pctNetAssets": 0.13
+  },
+  {
+   "security": "KRN Heat Exchanger And Refrigeration Limited",
+   "isin": "INE0Q3J01015",
+   "industry": "Industrial Products",
+   "quantity": 82256,
+   "marketValue": 103034000,
+   "pctNetAssets": 0.13
+  },
+  {
+   "security": "TD Power Systems Limited",
+   "isin": "INE419M01027",
+   "industry": "Electrical Equipment",
+   "quantity": 83043,
+   "marketValue": 102832000,
+   "pctNetAssets": 0.13
+  },
+  {
+   "security": "360 One WAM Limited",
+   "isin": "INE466L01038",
+   "industry": "Capital Markets",
+   "quantity": 94508,
+   "marketValue": 101558000,
+   "pctNetAssets": 0.13
+  },
+  {
+   "security": "Kirloskar Oil Engines Limited",
+   "isin": "INE146L01010",
+   "industry": "Industrial Products",
+   "quantity": 39371,
+   "marketValue": 93073000,
+   "pctNetAssets": 0.12
+  },
+  {
+   "security": "Onemi Technology Solutions Limited",
+   "isin": "INE12F801023",
+   "industry": "Finance",
+   "quantity": 326100,
+   "marketValue": 91145000,
+   "pctNetAssets": 0.12
+  },
+  {
+   "security": "LTM Limited",
+   "isin": "INE214T01019",
+   "industry": "IT - Software",
+   "quantity": 25559,
+   "marketValue": 90428000,
+   "pctNetAssets": 0.12
+  },
+  {
+   "security": "Vishal Mega Mart Limited",
+   "isin": "INE01EA01019",
+   "industry": "Retailing",
+   "quantity": 751510,
+   "marketValue": 88641000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "AIA Engineering Limited",
+   "isin": "INE212H01026",
+   "industry": "Industrial Products",
+   "quantity": 17000,
+   "marketValue": 86384000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "Poly Medicure Limited",
+   "isin": "INE205C01021",
+   "industry": "Healthcare Equipment & Supplies",
+   "quantity": 51176,
+   "marketValue": 86354000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "Cipla Limited",
+   "isin": "INE059A01026",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 58284,
+   "marketValue": 85409000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "TBO Tek Limited",
+   "isin": "INE673O01025",
+   "industry": "Leisure Services",
+   "quantity": 59031,
+   "marketValue": 84397000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "Indigo Paints Limited",
+   "isin": "INE09VQ01012",
+   "industry": "Consumer Durables",
+   "quantity": 82564,
+   "marketValue": 83823000,
+   "pctNetAssets": 0.11
+  },
+  {
+   "security": "Ajax Engineering Limited",
+   "isin": "INE274Y01021",
+   "industry": "Agricultural, Commercial & Construction Vehicles",
+   "quantity": 149937,
+   "marketValue": 81228000,
+   "pctNetAssets": 0.1
+  },
+  {
+   "security": "Gillette India Limited",
+   "isin": "INE322A01010",
+   "industry": "Personal Products",
+   "quantity": 10486,
+   "marketValue": 80527000,
+   "pctNetAssets": 0.1
+  },
+  {
+   "security": "Gland Pharma Limited",
+   "isin": "INE068V01023",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 31840,
+   "marketValue": 79441000,
+   "pctNetAssets": 0.1
+  },
+  {
+   "security": "PNB Housing Finance Limited",
+   "isin": "INE572E01012",
+   "industry": "Finance",
+   "quantity": 71247,
+   "marketValue": 73983000,
+   "pctNetAssets": 0.1
+  },
+  {
+   "security": "Vedanta Aluminium Metal Limited",
+   "isin": "INE1CDF01017",
+   "industry": "Non - Ferrous Metals",
+   "quantity": 159776,
+   "marketValue": 71653000,
+   "pctNetAssets": 0.09
+  },
+  {
+   "security": "Dr. Lal Path Labs Limited",
+   "isin": "INE600L01024",
+   "industry": "Healthcare Services",
+   "quantity": 43188,
+   "marketValue": 71096000,
+   "pctNetAssets": 0.09
+  },
+  {
+   "security": "Computer Age Management Services Limited",
+   "isin": "INE596I01020",
+   "industry": "Capital Markets",
+   "quantity": 88865,
+   "marketValue": 70812000,
+   "pctNetAssets": 0.09
+  },
+  {
+   "security": "ICICI Prudential Asset Management Company Limited",
+   "isin": "INE346A01027",
+   "industry": "Capital Markets",
+   "quantity": 20288,
+   "marketValue": 67348000,
+   "pctNetAssets": 0.09
+  },
+  {
+   "security": "Ambuja Cements Limited",
+   "isin": "INE079A01024",
+   "industry": "Cement & Cement Products",
+   "quantity": 158258,
+   "marketValue": 66761000,
+   "pctNetAssets": 0.09
+  },
+  {
+   "security": "Tenneco Clean Air India Limited",
+   "isin": "INE19RI01016",
+   "industry": "Auto Components",
+   "quantity": 109845,
+   "marketValue": 65072000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Navin Fluorine International Limited",
+   "isin": "INE048G01026",
+   "industry": "Chemicals & Petrochemicals",
+   "quantity": 8333,
+   "marketValue": 64056000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Godrej Consumer Products Limited",
+   "isin": "INE102D01028",
+   "industry": "Personal Products",
+   "quantity": 62636,
+   "marketValue": 63262000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Trent Limited",
+   "isin": "INE849A01020",
+   "industry": "Retailing",
+   "quantity": 19198,
+   "marketValue": 63019000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Fortis Healthcare Limited",
+   "isin": "INE061F01013",
+   "industry": "Healthcare Services",
+   "quantity": 64642,
+   "marketValue": 61859000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Firstsource Solutions Limited",
+   "isin": "INE684F01012",
+   "industry": "Commercial Services & Supplies",
+   "quantity": 265243,
+   "marketValue": 60595000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Travel Food Services Limited",
+   "isin": "INE103V01028",
+   "industry": "Leisure Services",
+   "quantity": 45448,
+   "marketValue": 60146000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Intellect Design Arena Limited",
+   "isin": "INE306R01017",
+   "industry": "IT - Software",
+   "quantity": 83379,
+   "marketValue": 59804000,
+   "pctNetAssets": 0.08
+  },
+  {
+   "security": "Doms Industries Limited",
+   "isin": "INE321T01012",
+   "industry": "Household Products",
+   "quantity": 24335,
+   "marketValue": 56204000,
+   "pctNetAssets": 0.07
+  },
+  {
+   "security": "GE Vernova T&D India Limited",
+   "isin": "INE200A01026",
+   "industry": "Electrical Equipment",
+   "quantity": 11324,
+   "marketValue": 55986000,
+   "pctNetAssets": 0.07
+  },
+  {
+   "security": "Dynamatic Technologies Limited",
+   "isin": "INE221B01012",
+   "industry": "Industrial Manufacturing",
+   "quantity": 5213,
+   "marketValue": 54179000,
+   "pctNetAssets": 0.07
+  },
+  {
+   "security": "Mankind Pharma Limited",
+   "isin": "INE634S01028",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 20283,
+   "marketValue": 51632000,
+   "pctNetAssets": 0.07
+  },
+  {
+   "security": "Aether Industries Limited",
+   "isin": "INE0BWX01014",
+   "industry": "Chemicals & Petrochemicals",
+   "quantity": 36777,
+   "marketValue": 49984000,
+   "pctNetAssets": 0.06
+  },
+  {
+   "security": "Sudeep Pharma Limited",
+   "isin": "INE0QPI01025",
+   "industry": "Chemicals & Petrochemicals",
+   "quantity": 58713,
+   "marketValue": 49818000,
+   "pctNetAssets": 0.06
+  },
+  {
+   "security": "Safari Industries (India) Limited",
+   "isin": "INE429E01023",
+   "industry": "Consumer Durables",
+   "quantity": 30321,
+   "marketValue": 48332000,
+   "pctNetAssets": 0.06
+  },
+  {
+   "security": "Tube Investments of India Limited",
+   "isin": "INE974X01010",
+   "industry": "Auto Components",
+   "quantity": 15097,
+   "marketValue": 45733000,
+   "pctNetAssets": 0.06
+  },
+  {
+   "security": "Rainbow Childrens Medicare Limited",
+   "isin": "INE961O01016",
+   "industry": "Healthcare Services",
+   "quantity": 31523,
+   "marketValue": 44580000,
+   "pctNetAssets": 0.06
+  },
+  {
+   "security": "SBI Life Insurance Company Limited",
+   "isin": "INE123W01016",
+   "industry": "Insurance",
+   "quantity": 23709,
+   "marketValue": 41863000,
+   "pctNetAssets": 0.05
+  },
+  {
+   "security": "eClerx Services Limited",
+   "isin": "INE738I01010",
+   "industry": "Commercial Services & Supplies",
+   "quantity": 29700,
+   "marketValue": 39350000,
+   "pctNetAssets": 0.05
+  },
+  {
+   "security": "Nippon Life India Asset Management Limited",
+   "isin": "INE298J01013",
+   "industry": "Capital Markets",
+   "quantity": 32500,
+   "marketValue": 37765000,
+   "pctNetAssets": 0.05
+  },
+  {
+   "security": "Corona Remedies Limited",
+   "isin": "INE02ZQ01018",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 18673,
+   "marketValue": 36735000,
+   "pctNetAssets": 0.05
+  },
+  {
+   "security": "S.J.S. Enterprises Limited",
+   "isin": "INE284S01014",
+   "industry": "Auto Components",
+   "quantity": 15938,
+   "marketValue": 35350000,
+   "pctNetAssets": 0.05
+  },
+  {
+   "security": "Cholamandalam Investment and Finance Company Ltd",
+   "isin": "INE121A01024",
+   "industry": "Finance",
+   "quantity": 18340,
+   "marketValue": 32825000,
+   "pctNetAssets": 0.04
+  },
+  {
+   "security": "Mastek Limited",
+   "isin": "INE759A01021",
+   "industry": "IT - Software",
+   "quantity": 19533,
+   "marketValue": 31179000,
+   "pctNetAssets": 0.04
+  },
+  {
+   "security": "Orkla India Limited",
+   "isin": "INE16NZ01023",
+   "industry": "Food Products",
+   "quantity": 49391,
+   "marketValue": 30292000,
+   "pctNetAssets": 0.04
+  },
+  {
+   "security": "Indiqube Spaces Limited",
+   "isin": "INE06ST01018",
+   "industry": "Commercial Services & Supplies",
+   "quantity": 138870,
+   "marketValue": 23518000,
+   "pctNetAssets": 0.03
+  },
+  {
+   "security": "Jyothy Labs Limited",
+   "isin": "INE668F01031",
+   "industry": "Household Products",
+   "quantity": 109366,
+   "marketValue": 20962000,
+   "pctNetAssets": 0.03
+  },
+  {
+   "security": "Vijaya Diagnostic Centre Limited",
+   "isin": "INE043W01024",
+   "industry": "Healthcare Services",
+   "quantity": 14241,
+   "marketValue": 19262000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "Divi's Laboratories Limited",
+   "isin": "INE361B01024",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 2865,
+   "marketValue": 18849000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "Neuland Laboratories Limited",
+   "isin": "INE794A01010",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 708,
+   "marketValue": 13154000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "Shilpa Medicare Limited",
+   "isin": "INE790G01031",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 20032,
+   "marketValue": 11987000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "Awfis Space Solutions Limited",
+   "isin": "INE108V01019",
+   "industry": "Commercial Services & Supplies",
+   "quantity": 39569,
+   "marketValue": 11966000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "Newgen Software Technologies Limited",
+   "isin": "INE619B01017",
+   "industry": "IT - Software",
+   "quantity": 17487,
+   "marketValue": 8246000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "Laxmi Dental Limited",
+   "isin": "INE0WO601020",
+   "industry": "Healthcare Equipment & Supplies",
+   "quantity": 35729,
+   "marketValue": 8040000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "Ajanta Pharma Limited",
+   "isin": "INE031B01049",
+   "industry": "Pharmaceuticals & Biotechnology",
+   "quantity": 1972,
+   "marketValue": 6750000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "Blue Star Limited",
+   "isin": "INE472A01039",
+   "industry": "Consumer Durables",
+   "quantity": 3960,
+   "marketValue": 6448000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "Nucleus Software Exports Limited",
+   "isin": "INE096B01018",
+   "industry": "IT - Software",
+   "quantity": 7603,
+   "marketValue": 5746000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "Cholamandalam Financial Holdings Limited",
+   "isin": "INE149A01033",
+   "industry": "Finance",
+   "quantity": 2727,
+   "marketValue": 4518000,
+   "pctNetAssets": 0.01
+  },
+  {
+   "security": "SHIVALIK BIMETAL CONTROLS LIMITED",
+   "isin": "INE386D01027",
+   "industry": "Industrial Products",
+   "quantity": 5055,
+   "marketValue": 3844000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "REC Limited",
+   "isin": "INE020B01018",
+   "industry": "Finance",
+   "quantity": 10106,
+   "marketValue": 3677000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Clean Max Enviro Energy Solutions Limited",
+   "isin": "INE647U01026",
+   "industry": "Power",
+   "quantity": 2171,
+   "marketValue": 2965000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Tech Mahindra Limited",
+   "isin": "INE669C01036",
+   "industry": "IT - Software",
+   "quantity": 1859,
+   "marketValue": 2611000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Persistent Systems Limited",
+   "isin": "INE262H01021",
+   "industry": "IT - Software",
+   "quantity": 192,
+   "marketValue": 831000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Eicher Motors Limited",
+   "isin": "INE066A01021",
+   "industry": "Automobiles",
+   "quantity": 93,
+   "marketValue": 658000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Steel Authority of India Limited",
+   "isin": "INE114A01011",
+   "industry": "Ferrous Metals",
+   "quantity": 1900,
+   "marketValue": 330000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Infosys Limited",
+   "isin": "INE009A01021",
+   "industry": "IT - Software",
+   "quantity": 286,
+   "marketValue": 286000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Tata Motors Ltd",
+   "isin": "INE1TAE01010",
+   "industry": "Agricultural, Commercial & Construction Vehicles",
+   "quantity": 300,
+   "marketValue": 127000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Tata Motors Passenger Vehicles Limited",
+   "isin": "INE155A01022",
+   "industry": "Automobiles",
+   "quantity": 300,
+   "marketValue": 106000,
+   "pctNetAssets": 0
+  },
+  {
+   "security": "Nexus Select Trust - REIT",
+   "isin": "INE0NDH25011",
+   "industry": "Realty",
+   "quantity": 14538917,
+   "marketValue": 2373333000,
+   "pctNetAssets": 3.06
+  },
+  {
+   "security": "Embassy Office Parks REIT",
+   "isin": "INE041025011",
+   "industry": "Realty",
+   "quantity": 4202345,
+   "marketValue": 1840795000,
+   "pctNetAssets": 2.37
+  },
+  {
+   "security": "Brookfield India Real Estate Trust",
+   "isin": "INE0FDU25010",
+   "industry": "Realty",
+   "quantity": 4297460,
+   "marketValue": 1422631000,
+   "pctNetAssets": 1.83
+  },
+  {
+   "security": "Bagmane Prime Office REIT",
+   "isin": "INE2OVN25015",
+   "industry": "Realty",
+   "quantity": 6350605,
+   "marketValue": 659129000,
+   "pctNetAssets": 0.85
+  },
+  {
+   "security": "Knowledge Realty Trust",
+   "isin": "INE1JAR25012",
+   "industry": "Realty",
+   "quantity": 3120169,
+   "marketValue": 360224000,
+   "pctNetAssets": 0.46
+  },
+  {
+   "security": "Citius Transnet Investment Trust",
+   "isin": "INE2Q7823014",
+   "industry": "Transport Infrastructure",
+   "quantity": 12759556,
+   "marketValue": 1368335000,
+   "pctNetAssets": 1.76
+  },
+  {
+   "security": "IndiGrid Infrastructure Trust",
+   "isin": "INE219X23014",
+   "industry": "Power",
+   "quantity": 7062700,
+   "marketValue": 1248756000,
+   "pctNetAssets": 1.61
+  },
+  {
+   "security": "Altius Telecom Infrastructure Trust",
+   "isin": "INE0BWS23018",
+   "industry": "Telecom - Services",
+   "quantity": 6075000,
+   "marketValue": 1029713000,
+   "pctNetAssets": 1.33
+  },
+  {
+   "security": "Raajmarg Infra Investment Trust",
+   "isin": "INE2PB023011",
+   "industry": "Transport Infrastructure",
+   "quantity": 7166098,
+   "marketValue": 820948000,
+   "pctNetAssets": 1.06
+  },
+  {
+   "security": "Roadstar Infra Investment Trust",
+   "isin": "INE0JEI23010",
+   "industry": "Transport Infrastructure",
+   "quantity": 12900000,
+   "marketValue": 741750000,
+   "pctNetAssets": 0.96
+  },
+  {
+   "security": "National Highways Infra Trust",
+   "isin": "INE0H7R23014",
+   "industry": "Transport Infrastructure",
+   "quantity": 3575000,
+   "marketValue": 600421000,
+   "pctNetAssets": 0.77
+  },
+  {
+   "security": "Anantam Highways Trust",
+   "isin": "INE1UA823019",
+   "industry": "Construction",
+   "quantity": 3050625,
+   "marketValue": 317570000,
+   "pctNetAssets": 0.41
+  },
+  {
+   "security": "Vertis Infrastructure Trust",
+   "isin": "INE0KXY23015",
+   "industry": "Transport Infrastructure",
+   "quantity": 2775000,
+   "marketValue": 302475000,
+   "pctNetAssets": 0.39
+  },
+  {
+   "security": "Indus Infra Trust",
+   "isin": "INE0NHL23019",
+   "industry": "Transport Infrastructure",
+   "quantity": 966387,
+   "marketValue": 121871000,
+   "pctNetAssets": 0.16
+  },
+  {
+   "security": "7.44% Power Finance Corporation Limited (15/01/2030) **",
+   "isin": "INE134E08NO0",
+   "industry": "CRISIL AAA",
+   "quantity": 13500,
+   "marketValue": 1363083000,
+   "pctNetAssets": 1.76
+  },
+  {
+   "security": "6.65% Indian Railway Finance Corporation Limited (20/05/2030) **",
+   "isin": "INE053F08502",
+   "industry": "CRISIL AAA",
+   "quantity": 13750,
+   "marketValue": 1358126000,
+   "pctNetAssets": 1.75
+  },
+  {
+   "security": "7.44% National Bank For Agriculture and Rural Development (17/07/2029)",
+   "isin": "INE261F08EU4",
+   "industry": "CRISIL AAA",
+   "quantity": 12900,
+   "marketValue": 1297848000,
+   "pctNetAssets": 1.67
+  },
+  {
+   "security": "7.49% Small Industries Dev Bank of India (11/06/2029) **",
+   "isin": "INE556F08KX8",
+   "industry": "CRISIL AAA",
+   "quantity": 10000,
+   "marketValue": 1007066000,
+   "pctNetAssets": 1.3
+  },
+  {
+   "security": "7.83% Bajaj Housing Finance Limited (18/05/2029)",
+   "isin": "INE377Y07649",
+   "industry": "CRISIL AAA",
+   "quantity": 8500,
+   "marketValue": 855387000,
+   "pctNetAssets": 1.1
+  },
+  {
+   "security": "7.22% Small Industries Dev Bank of India (10/04/2029) **",
+   "isin": "INE556F08LC0",
+   "industry": "CRISIL AAA",
+   "quantity": 7000,
+   "marketValue": 699866000,
+   "pctNetAssets": 0.9
+  },
+  {
+   "security": "7.88% Muthoot Finance Limited (22/11/2028) **",
+   "isin": "INE414G07JS2",
+   "industry": "CRISIL AA+",
+   "quantity": 7000,
+   "marketValue": 694268000,
+   "pctNetAssets": 0.89
+  },
+  {
+   "security": "7.54% Godrej Industries Limited (04/05/2029) **",
+   "isin": "INE233A08170",
+   "industry": "CRISIL AA+",
+   "quantity": 6300,
+   "marketValue": 624044000,
+   "pctNetAssets": 0.8
+  },
+  {
+   "security": "7.57% LIC Housing Finance Limited (23/11/2029)",
+   "isin": "INE115A07RJ0",
+   "industry": "CRISIL AAA",
+   "quantity": 5300,
+   "marketValue": 531850000,
+   "pctNetAssets": 0.69
+  },
+  {
+   "security": "7.64% National Bank For Agriculture and Rural Development (06/12/2029)",
+   "isin": "INE261F08EJ7",
+   "industry": "ICRA AAA",
+   "quantity": 5000,
+   "marketValue": 506162000,
+   "pctNetAssets": 0.65
+  },
+  {
+   "security": "7.01% National Bank For Agriculture and Rural Development (16/03/2029) **",
+   "isin": "INE261F08ES8",
+   "industry": "CRISIL AAA",
+   "quantity": 5000,
+   "marketValue": 497962000,
+   "pctNetAssets": 0.64
+  },
+  {
+   "security": "6.87% REC Limited (31/05/2030) **",
+   "isin": "INE020B08FU0",
+   "industry": "ICRA AAA",
+   "quantity": 5000,
+   "marketValue": 496260000,
+   "pctNetAssets": 0.64
+  },
+  {
+   "security": "7.02% Bajaj Housing Finance Limited (26/05/2028) **",
+   "isin": "INE377Y07565",
+   "industry": "CRISIL AAA",
+   "quantity": 4500,
+   "marketValue": 446276000,
+   "pctNetAssets": 0.57
+  },
+  {
+   "security": "7.4% Power Finance Corporation Limited (08/05/2030) **",
+   "isin": "INE134E08KQ1",
+   "industry": "CRISIL AAA",
+   "quantity": 440,
+   "marketValue": 444033000,
+   "pctNetAssets": 0.57
+  },
+  {
+   "security": "8.19% Cholamandalam Investment and Finance Company Ltd (26/03/2027) **",
+   "isin": "INE121A07SM0",
+   "industry": "ICRA AA+",
+   "quantity": 4300,
+   "marketValue": 431577000,
+   "pctNetAssets": 0.56
+  },
+  {
+   "security": "7.3763% Bajaj Finance Limited (26/06/2028)",
+   "isin": "INE296A07TJ4",
+   "industry": "CRISIL AAA",
+   "quantity": 4100,
+   "marketValue": 408344000,
+   "pctNetAssets": 0.53
+  },
+  {
+   "security": "8.06% Bajaj Finance Limited (15/05/2029) **",
+   "isin": "INE296A07SZ2",
+   "industry": "CRISIL AAA",
+   "quantity": 4000,
+   "marketValue": 403555000,
+   "pctNetAssets": 0.52
+  },
+  {
+   "security": "7.10% Bajaj Housing Finance Limited (16/10/2028) **",
+   "isin": "INE377Y07607",
+   "industry": "CRISIL AAA",
+   "quantity": 3894,
+   "marketValue": 385939000,
+   "pctNetAssets": 0.5
+  },
+  {
+   "security": "8.40% Cholamandalam Investment and Finance Company Ltd (09/08/2028) **",
+   "isin": "INE121A07RE9",
+   "industry": "ICRA AA+",
+   "quantity": 350000,
+   "marketValue": 352775000,
+   "pctNetAssets": 0.45
+  },
+  {
+   "security": "7.77% Bajaj Finance Limited (17/04/2029) **",
+   "isin": "INE296A07TW7",
+   "industry": "CRISIL AAA",
+   "quantity": 3500,
+   "marketValue": 350518000,
+   "pctNetAssets": 0.45
+  },
+  {
+   "security": "8.85% Muthoot Finance Limited (20/12/2028) **",
+   "isin": "INE414G07IS4",
+   "industry": "CRISIL AA+",
+   "quantity": 3300,
+   "marketValue": 334090000,
+   "pctNetAssets": 0.43
+  },
+  {
+   "security": "7.40 % National Bank For Agriculture and Rural Development (29/04/2030) **",
+   "isin": "INE261F08EL3",
+   "industry": "CRISIL AAA",
+   "quantity": 3300,
+   "marketValue": 331914000,
+   "pctNetAssets": 0.43
+  },
+  {
+   "security": "7.39% Small Industries Dev Bank of India (21/03/2030)",
+   "isin": "INE556F08KY6",
+   "industry": "CRISIL AAA",
+   "quantity": 3200,
+   "marketValue": 321556000,
+   "pctNetAssets": 0.41
+  },
+  {
+   "security": "7.07% LIC Housing Finance Limited (29/04/2030) **",
+   "isin": "INE115A07RG6",
+   "industry": "CRISIL AAA",
+   "quantity": 3200,
+   "marketValue": 315807000,
+   "pctNetAssets": 0.41
+  },
+  {
+   "security": "7.5% Indian Railway Finance Corporation Limited (07/09/2029) **",
+   "isin": "INE053F07BW9",
+   "industry": "CRISIL AAA",
+   "quantity": 250,
+   "marketValue": 253655000,
+   "pctNetAssets": 0.33
+  },
+  {
+   "security": "7.38% REC Limited (28/02/2029) **",
+   "isin": "INE020B08GD4",
+   "industry": "CRISIL AAA",
+   "quantity": 2500,
+   "marketValue": 252000000,
+   "pctNetAssets": 0.32
+  },
+  {
+   "security": "7.75% LIC Housing Finance Limited (23/08/2029) **",
+   "isin": "INE115A07QU9",
+   "industry": "CRISIL AAA",
+   "quantity": 2500,
+   "marketValue": 251813000,
+   "pctNetAssets": 0.32
+  },
+  {
+   "security": "8.45% Muthoot Finance Limited (26/06/2029)",
+   "isin": "INE414G07JX2",
+   "industry": "CRISIL AA+",
+   "quantity": 2500,
+   "marketValue": 251395000,
+   "pctNetAssets": 0.32
+  },
+  {
+   "security": "7.42% Small Industries Dev Bank of India (12/03/2029) **",
+   "isin": "INE556F08KW0",
+   "industry": "CRISIL AAA",
+   "quantity": 2500,
+   "marketValue": 251140000,
+   "pctNetAssets": 0.32
+  },
+  {
+   "security": "7.45% Torrent Pharmaceuticals Limited (19/01/2028) **",
+   "isin": "INE685A07132",
+   "industry": "ICRA AA+",
+   "quantity": 2500,
+   "marketValue": 249106000,
+   "pctNetAssets": 0.32
+  },
+  {
+   "security": "8.10% Godrej Industries Limited (22/05/2028) **",
+   "isin": "INE233A08154",
+   "industry": "CRISIL AA+",
+   "quantity": 2200,
+   "marketValue": 220718000,
+   "pctNetAssets": 0.28
+  },
+  {
+   "security": "8.95% Reliance Industries Limited (09/11/2028) **",
+   "isin": "INE002A08542",
+   "industry": "CRISIL AAA",
+   "quantity": 200,
+   "marketValue": 208188000,
+   "pctNetAssets": 0.27
+  },
+  {
+   "security": "8.54% Cholamandalam Investment and Finance Company Ltd (12/04/2029) **",
+   "isin": "INE121A07RZ4",
+   "industry": "ICRA AA+",
+   "quantity": 1800,
+   "marketValue": 182000000,
+   "pctNetAssets": 0.23
+  },
+  {
+   "security": "8.4% Cholamandalam Investment and Finance Company Ltd (18/09/2027) **",
+   "isin": "INE121A07SH0",
+   "industry": "ICRA AA+",
+   "quantity": 1700,
+   "marketValue": 170743000,
+   "pctNetAssets": 0.22
+  },
+  {
+   "security": "8.2301% HDB Financial Services Limited (05/07/2029) **",
+   "isin": "INE756I07FQ4",
+   "industry": "CRISIL AAA",
+   "quantity": 1500,
+   "marketValue": 151646000,
+   "pctNetAssets": 0.2
+  },
+  {
+   "security": "8.40% Godrej Industries Limited (27/08/2027) **",
+   "isin": "INE233A08113",
+   "industry": "CRISIL AA+",
+   "quantity": 1500,
+   "marketValue": 150857000,
+   "pctNetAssets": 0.19
+  },
+  {
+   "security": "7.51% Small Industries Dev Bank of India (12/06/2028) **",
+   "isin": "INE556F08KU4",
+   "industry": "CRISIL AAA",
+   "quantity": 1500,
+   "marketValue": 150789000,
+   "pctNetAssets": 0.19
+  },
+  {
+   "security": "Kotak Mahindra Bank Limited (31/08/2026) ** #",
+   "isin": "INE237AD6075",
+   "industry": "CRISIL A1+",
+   "quantity": 160,
+   "marketValue": 79155000,
+   "pctNetAssets": 0.1
+  },
+  {
+   "security": "HDFC Bank Limited (21/09/2026) ** #",
+   "isin": "INE040A16HR5",
+   "industry": "CRISIL A1+",
+   "quantity": 40,
+   "marketValue": 19719000,
+   "pctNetAssets": 0.03
+  },
+  {
+   "security": "Bank of Baroda (08/03/2027) ** #",
+   "isin": "INE028A16LS0",
+   "industry": "CARE A1+",
+   "quantity": 40,
+   "marketValue": 19113000,
+   "pctNetAssets": 0.02
+  },
+  {
+   "security": "ICICI Prudential Gold ETF",
+   "isin": "INF109KC1NT3",
+   "industry": null,
+   "quantity": 20350308,
+   "marketValue": 2444072000,
+   "pctNetAssets": 3.15
+  },
+  {
+   "security": "DSP Gold ETF",
+   "isin": "INF740KA1SW3",
+   "industry": null,
+   "quantity": 11155100,
+   "marketValue": 1518990000,
+   "pctNetAssets": 1.96
+  }
+ ],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

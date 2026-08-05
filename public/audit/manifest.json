@@ -1859,27 +1859,34 @@
   ]
  },
  {
-  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1038104611",
-  "owner": null,
+  "owner": "HOPE INDIA TRUST",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
   "pages": 2,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
-  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1889,27 +1896,34 @@
   ]
  },
  {
-  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
+  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1019265797",
-  "owner": null,
+  "owner": "Hope India Trust",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
   "pages": 4,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
-  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1919,27 +1933,34 @@
   ]
  },
  {
-  "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+  "docKey": "hdfc-mutual-fund-16180583-2026-07-01-holdings",
   "provider": "HDFC Mutual Fund",
   "accountNo": "16180583",
-  "owner": null,
-  "ownerId": null,
+  "owner": "Bharat A Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-01",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
   "pages": 3,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
-  "label": "HDFC Mutual Fund · 16180583 · unknown",
-  "fy": "2026-06-01",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "hdfc-mutual-fund-16180583-2026-07-01-holdings",
+  "label": "HDFC Mutual Fund · 16180583 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 3,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1949,27 +1970,34 @@
   ]
  },
  {
-  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
+  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
   "provider": "Kotak Mahindra Mutual Fund",
   "accountNo": "4295974",
-  "owner": null,
+  "owner": "Hope India Trust",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
   "pages": 4,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
-  "label": "Kotak Mahindra Mutual Fund · 4295974 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 4,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1979,27 +2007,34 @@
   ]
  },
  {
-  "docKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
+  "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
   "provider": "Mirae Asset Mutual Fund",
   "accountNo": "70413280453",
-  "owner": null,
+  "owner": "HOPE INDIA TRUST",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-02",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
   "pages": 2,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
-  "label": "Mirae Asset Mutual Fund · 70413280453 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
+  "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
+  "fy": "2026-07-02",
   "source": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3309,13 +3344,13 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
   "asOf": null,
   "reportType": "unknown",
   "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
@@ -3323,10 +3358,10 @@
   "sections": [
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown",
-  "label": "360 ONE Private Wealth · unknown",
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+  "label": "360 ONE Alternates Asset Management · 1000633 · unknown",
   "fy": "",
   "source": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
   "sheets": [
@@ -3427,57 +3462,34 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-2",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-05-18",
+  "reportType": "distribution-notice",
   "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "pages": 3,
   "sections": [
+   "distribution",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 3,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-2",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "label": "360 ONE Alternates Asset Management · 1000633 · distribution-notice",
+  "fy": "2026-05-18",
   "source": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "sheets": [
    {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 3,
-    "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-3",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
-  "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
-  "pages": 3,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-3",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
-  "source": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
-  "sheets": [
+    "key": "distribution",
+    "name": "distribution",
+    "rows": 10,
+    "cols": 3
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3487,27 +3499,71 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-4",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000632",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-05-18",
+  "reportType": "distribution-notice",
+  "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+  "pages": 3,
+  "sections": [
+   "distribution",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice",
+  "label": "360 ONE Alternates Asset Management · 1000632 · distribution-notice",
+  "fy": "2026-05-18",
+  "source": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "distribution",
+    "name": "distribution",
+    "rows": 10,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-06-04",
+  "reportType": "statement-of-earnings",
   "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "pages": 2,
   "sections": [
+   "incomeByTaxHead",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 3,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-4",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "label": "360 ONE Alternates Asset Management · 1000633 · statement-of-earnings",
+  "fy": "2026-06-04",
   "source": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "sheets": [
+   {
+    "key": "incomeByTaxHead",
+    "name": "incomeByTaxHead",
+    "rows": 8,
+    "cols": 2
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3517,27 +3573,34 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-5",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000632-2026-06-04-statement-of-earnings",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000632",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-06-04",
+  "reportType": "statement-of-earnings",
   "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
   "pages": 2,
   "sections": [
+   "incomeByTaxHead",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-5",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "360-one-alternates-asset-management-1000632-2026-06-04-statement-of-earnings",
+  "label": "360 ONE Alternates Asset Management · 1000632 · statement-of-earnings",
+  "fy": "2026-06-04",
   "source": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
   "sheets": [
+   {
+    "key": "incomeByTaxHead",
+    "name": "incomeByTaxHead",
+    "rows": 8,
+    "cols": 2
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -4235,27 +4298,34 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-6",
-  "provider": "360 ONE Private Wealth",
+  "docKey": "scheme-portfolio-disclosure-unknown-2026-06-30-scheme-portfolio",
+  "provider": "Scheme portfolio disclosure",
   "accountNo": null,
   "owner": null,
   "ownerId": null,
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "WhiteOak Capital Multi Asset Allocation Fund",
+  "asOf": "2026-06-30",
+  "reportType": "scheme-portfolio",
   "sourcePath": "source/White Oak - Ajay.xlsx",
   "pages": 1,
   "sections": [
+   "schemePortfolio",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-6",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "scheme-portfolio-disclosure-unknown-2026-06-30-scheme-portfolio",
+  "label": "Scheme portfolio disclosure · scheme-portfolio",
+  "fy": "2026-06-30",
   "source": "source/White Oak - Ajay.xlsx",
   "sheets": [
+   {
+    "key": "schemePortfolio",
+    "name": "schemePortfolio",
+    "rows": 178,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",

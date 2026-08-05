@@ -449,6 +449,10 @@
  "positionsAsOf": null,
  "dematBalances": [],
  "securityNameSource": "isin",
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
  "stitches": [],
  "derivedPortfolioTotal": 9876174.92
 }

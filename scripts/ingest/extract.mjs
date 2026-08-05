@@ -32,6 +32,9 @@ import * as sanshiFund from "./providers/sanshiFund.mjs";
 import * as investorReport from "./providers/pmsInvestorReport.mjs";
 import * as transitionVenture from "./providers/transitionVenture.mjs";
 import * as lkp from "./providers/lkpSecurities.mjs";
+import * as aifDistribution from "./providers/aifDistribution.mjs";
+import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
+import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -67,6 +70,18 @@ const EXTRACTORS = Object.fromEntries([
   // Four documents in three formats — two PDFs and two spreadsheets — for one
   // self-directed demat account. The only lot register in the drop.
   [lkp.PROVIDER, lkp],
+  // 360 ONE's ALTERNATES arm — a different issuer from its wealth arm, and the
+  // only source in this drop for AIF income split by tax head.
+  [aifDistribution.PROVIDER, aifDistribution],
+  // Read in full and kept OUT of the family book: the holder is a trust with
+  // its own PAN. One entry in shared/owners.mjs would change that, and it is a
+  // decision about the family rather than a parsing rule.
+  ...["Aditya Birla Sun Life Mutual Fund", "Kotak Mahindra Mutual Fund",
+    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", mutualFundFolio.PROVIDER]
+    .map((n) => [n, mutualFundFolio]),
+  // A fund's own disclosure. Archived for look-through; contributes nothing,
+  // because it reports no position of ours.
+  [schemePortfolio.PROVIDER, schemePortfolio],
 ]);
 
 /**

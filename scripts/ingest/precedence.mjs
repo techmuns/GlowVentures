@@ -266,6 +266,39 @@ export const PRECEDENCE = {
     expenses:        { reportType: "capital-gain", note: "the P&L's EXPENSES rows: CGST, SGST, STT, stamp duty, exchange TOC." },
   },
 
+  /**
+   * MUTUAL-FUND FOLIOS. One statement a month per folio, carrying units, NAV and
+   * both values — there is no second report to disagree with, so this block
+   * records where each fact comes from rather than choosing between sources.
+   *
+   * The same block serves four AMCs because the FACTS are the same three columns
+   * whatever the layout; `providers/mutualFundFolio.mjs` absorbs the three
+   * different table shapes and hands back one document.
+   */
+  ...Object.fromEntries([
+    "Aditya Birla Sun Life Mutual Fund", "Kotak Mahindra Mutual Fund",
+    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", "Mutual fund folio",
+  ].map((name) => [name, {
+    holdings:      { reportType: "holdings", note: "the folio statement's own scheme blocks." },
+    quantity:      { reportType: "holdings", note: "closing unit balance." },
+    marketPrice:   { reportType: "holdings", note: "NAV on the statement date." },
+    marketValue:   { reportType: "holdings", note: "derived as NAV x units; the printed value is the check." },
+    totalCost:     { reportType: "holdings", note: "cost of investment, where the AMC prints one — ABSL and Mirae do, HDFC and Kotak do not." },
+    accountTotals: { reportType: "holdings" },
+  }])),
+
+  /**
+   * 360 ONE ALTERNATES — per-folio AIF correspondence. It carries NO holdings:
+   * the units are stated but not valued, and the wealth arm's holding statement
+   * is what marks them. What it alone carries is the income, and the income's
+   * TAX CHARACTER.
+   */
+  "360 ONE Alternates Asset Management": {
+    income:       { reportType: "statement-of-earnings", note: "pro-rata share of fund income, split by tax head — long-term, short-term, debt." },
+    expenses:     { reportType: "statement-of-earnings" },
+    cashFlows:    { reportType: "distribution-notice", note: "the dated distribution actually remitted." },
+  },
+
   "360 ONE Private Wealth": {
     // The 11-page bundle is ONE file; these name the SECTION within it.
     holdings:        { reportType: "holdings", section: "detailed-holding-statement", note: "p6." },

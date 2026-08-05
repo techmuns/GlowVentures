@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-05T05:32:33.676Z",
+  "generatedAt": "2026-08-05T05:43:30.852Z",
   "summary": {
     "documents": 113,
-    "parsed": 95,
-    "partial": 7,
-    "failed": 11,
-    "rowSumChecks": 107,
+    "parsed": 105,
+    "partial": 8,
+    "failed": 0,
+    "rowSumChecks": 119,
     "totalMismatches": 51,
     "totalsMaterial": 0,
     "totalsExplained": 20,
-    "totalsRounding": 52,
+    "totalsRounding": 56,
     "derivedVsPrintedDeltas": 250,
     "derivedMaterial": 0,
     "derivedExplained": 89,
@@ -21,7 +21,7 @@
     "crossReportDeltas": 5,
     "suspectedDuplicates": 3,
     "securitiesWithoutSymbol": 11,
-    "ownerNamesUnmatched": 0,
+    "ownerNamesUnmatched": 2,
     "stitchesApplied": 20
   },
   "coverage": {
@@ -38,9 +38,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 95,
-    "partial": 7,
-    "failed": 11,
+    "parsed": 105,
+    "partial": 8,
+    "failed": 0,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -224,31 +224,31 @@
         }
       },
       "Aditya Birla Sun Life Mutual Fund": {
-        "unknown": {
-          "ok": 0,
+        "holdings": {
+          "ok": 2,
           "partial": 0,
-          "failed": 2
+          "failed": 0
         }
       },
       "HDFC Mutual Fund": {
-        "unknown": {
-          "ok": 0,
+        "holdings": {
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         }
       },
       "Kotak Mahindra Mutual Fund": {
-        "unknown": {
-          "ok": 0,
+        "holdings": {
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         }
       },
       "Mirae Asset Mutual Fund": {
-        "unknown": {
-          "ok": 0,
+        "holdings": {
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         }
       },
       "LKP Securities": {
@@ -347,11 +347,23 @@
           "ok": 0,
           "partial": 4,
           "failed": 0
-        },
+        }
+      },
+      "360 ONE Alternates Asset Management": {
         "unknown": {
           "ok": 0,
+          "partial": 1,
+          "failed": 0
+        },
+        "distribution-notice": {
+          "ok": 2,
           "partial": 0,
-          "failed": 6
+          "failed": 0
+        },
+        "statement-of-earnings": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
         }
       },
       "Molecule Ventures LLP": {
@@ -394,119 +406,16 @@
           "partial": 0,
           "failed": 0
         }
+      },
+      "Scheme portfolio disclosure": {
+        "scheme-portfolio": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
       }
     },
-    "failures": [
-      {
-        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
-        "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
-        "provider": "Aditya Birla Sun Life Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Aditya Birla Sun Life Mutual Fund\" / reportType unknown",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
-        ]
-      },
-      {
-        "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
-        "sourcePath": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
-        "provider": "Aditya Birla Sun Life Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Aditya Birla Sun Life Mutual Fund\" / reportType unknown",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
-        ]
-      },
-      {
-        "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
-        "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
-        "provider": "HDFC Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"HDFC Mutual Fund\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
-        "sourcePath": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
-        "provider": "Kotak Mahindra Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Kotak Mahindra Mutual Fund\" / reportType unknown",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #2"
-        ]
-      },
-      {
-        "docKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
-        "sourcePath": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
-        "provider": "Mirae Asset Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Mirae Asset Mutual Fund\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown",
-        "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists"
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown-2",
-        "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #1",
-          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown-3",
-        "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
-          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-3. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown-4",
-        "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #1",
-          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown-5",
-        "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
-          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-5. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-unknown-unknown-unknown-6",
-        "sourcePath": "source/White Oak - Ajay.xlsx",
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: this engine reads 360 ONE's client-level PORTFOLIO ANALYSIS REPORT; this document is a distribution letter or statement of earnings, for which no reader exists",
-          "duplicate-doc-key: 360-one-private-wealth-unknown-unknown-unknown was already claimed by source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf; filed as 360-one-private-wealth-unknown-unknown-unknown-6. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      }
-    ],
+    "failures": [],
     "partials": [
       {
         "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement",
@@ -552,6 +461,15 @@
         ]
       },
       {
+        "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+        "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
+        "reasons": [
+          "advice-only: this is the distribution ADVICE e-mail: it announces a payout of ~6.90% of capital commitment and carries no figures. The detailed letter it promises is the document with the numbers.",
+          "owner-unresolved: \"Investor\" matches no canonical owner — add an alias in shared/owners.mjs",
+          "owner-from-account-number: this report does not print the client name where it can be read; taken from other statements for 360 ONE Alternates Asset Management account 1000633, which all name Bharat Jaisinghani"
+        ]
+      },
+      {
         "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
         "sourcePath": "source/360 ONE WEALTH - AJAY.pdf",
         "reasons": [
@@ -570,8 +488,8 @@
     ]
   },
   "consolidated": {
-    "naive": 3775850714.69,
-    "deduped": 3715307392.11,
+    "naive": 3779121546.15,
+    "deduped": 3718578223.57,
     "doubleCounted": 60543322.58
   },
   "rowSumChecks": [
@@ -1079,6 +997,210 @@
       "printedTotal": 100,
       "delta": -0.01,
       "rowsSummed": 34,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1038104611",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 794412.48,
+      "printedTotal": 794412.48,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1038104611",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 537146.28,
+      "printedTotal": 537146.28,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1038104611",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 766421.41,
+      "printedTotal": 766421.41,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 766430.96,
+      "printedTotal": 766430.96,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "hdfc-mutual-fund-16180583-2026-07-01-holdings",
+      "provider": "HDFC Mutual Fund",
+      "accountNo": "16180583",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 0,
+      "printedTotal": 0,
+      "delta": 0,
+      "rowsSummed": 2,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "4295974",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 773610.75,
+      "printedTotal": 773610.75,
+      "delta": 0,
+      "rowsSummed": 3,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "4295974",
+      "asOf": "2026-07-01",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 3,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
+      "provider": "Mirae Asset Mutual Fund",
+      "accountNo": "70413280453",
+      "asOf": "2026-07-02",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 936386.82,
+      "printedTotal": 936386.82,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
+      "provider": "Mirae Asset Mutual Fund",
+      "accountNo": "70413280453",
+      "asOf": "2026-07-02",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 635724.81,
+      "printedTotal": 635724.81,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
+      "provider": "Mirae Asset Mutual Fund",
+      "accountNo": "70413280453",
+      "asOf": "2026-07-02",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -23380,55 +23502,23 @@
         ]
       }
     ],
-    "ownerNamesUnmatched": [],
-    "reportTypesWithoutExtractor": [
+    "ownerNamesUnmatched": [
       {
-        "provider": "Aditya Birla Sun Life Mutual Fund",
-        "reportType": "unknown",
-        "reason": "no-extractor",
+        "name": "HOPE INDIA TRUST",
         "docs": [
-          "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
-          "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown"
+          "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+          "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
         ]
       },
       {
-        "provider": "HDFC Mutual Fund",
-        "reportType": "unknown",
-        "reason": "no-extractor",
+        "name": "Hope India Trust",
         "docs": [
-          "hdfc-mutual-fund-16180583-2026-06-01-unknown"
-        ]
-      },
-      {
-        "provider": "Kotak Mahindra Mutual Fund",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown"
-        ]
-      },
-      {
-        "provider": "Mirae Asset Mutual Fund",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown"
-        ]
-      },
-      {
-        "provider": "360 ONE Private Wealth",
-        "reportType": "unknown",
-        "reason": "no-reader-for-report-type",
-        "docs": [
-          "360-one-private-wealth-unknown-unknown-unknown",
-          "360-one-private-wealth-unknown-unknown-unknown-2",
-          "360-one-private-wealth-unknown-unknown-unknown-3",
-          "360-one-private-wealth-unknown-unknown-unknown-4",
-          "360-one-private-wealth-unknown-unknown-unknown-5",
-          "360-one-private-wealth-unknown-unknown-unknown-6"
+          "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+          "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings"
         ]
       }
     ],
+    "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
@@ -23465,6 +23555,12 @@
       "SVAN Investment Managers LLP",
       "Transition Venture Capital",
       "LKP Securities",
+      "Aditya Birla Sun Life Mutual Fund",
+      "Kotak Mahindra Mutual Fund",
+      "Mirae Asset Mutual Fund",
+      "HDFC Mutual Fund",
+      "Mutual fund folio",
+      "360 ONE Alternates Asset Management",
       "360 ONE Private Wealth"
     ]
   },
