@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { extractZip } from "./lib/unzip.mjs";
 import { readPdf } from "./lib/pdf.mjs";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
+import { readSpreadsheet } from "./lib/sheet.mjs";
 import { classify, REPORT_TYPES } from "./lib/classify.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -113,7 +114,34 @@ function expandArchives() {
 // files had not been looked at. A file the pipeline cannot read must still be
 // SEEN, or "the drop is fully ingested" is a claim about the files we happened
 // to recognise.
-const READABLE_EXT = /\.pdf$/i;
+/** Which readable files go to the workbook reader rather than to pdfjs. */
+const SPREADSHEET_EXT = /\.(xls|xlsx)$/i;
+/**
+ * Every file this stage can OPEN — the SAME set `npm run extract` reads.
+ *
+ * It was `/\.pdf$/i` while the spreadsheets went to `inspectOthers`, so the
+ * inventory listed three files it could not open and extract read all three
+ * completely. The inventory is what a human reads to decide what is in a drop;
+ * it must not under-report the pipeline's own reach.
+ */
+const READABLE_EXT = /\.(pdf|xls|xlsx)$/i;
+
+/**
+ * Does this text contain WORDS, or only bytes?
+ *
+ * A PDF whose font encoding the flat reader cannot map still yields characters —
+ * one per glyph, space-separated — so a length or emptiness test says it read
+ * fine. Counting runs of four or more letters separates the two cleanly: a page
+ * of English has hundreds, and a page of mojibake has none.
+ *
+ * The threshold is deliberately low. This decides whether to spend a pdfjs parse
+ * on a file, and spending one unnecessarily costs a second; skipping one that
+ * needed it costs a document.
+ */
+const WORD_RUN = /[A-Za-z]{4,}/g;
+function looksLikeProse(text, minWords = 20) {
+  return (String(text ?? "").match(WORD_RUN) ?? []).length >= minWords;
+}
 
 /** What a non-PDF file is, for the row that reports it. */
 function describeOther(file) {
@@ -139,25 +167,71 @@ async function inspectPdfs() {
     const stat = fs.statSync(full);
     const fileName = path.basename(full);
     let pages = null, text = "", error = null, encrypted = false;
-    try {
-      ({ pages, text, encrypted, error } = readPdf(fs.readFileSync(full)));
-    } catch (e) {
-      error = e.message;
+    const bytes = fs.readFileSync(full);
+    if (SPREADSHEET_EXT.test(full)) {
+      /**
+       * A WORKBOOK, READ THE SAME WAY EXTRACT READS IT.
+       *
+       * The inventory used to hand every file to the PDF reader, so the drop's
+       * three spreadsheets arrived with no text and were filed as "could not
+       * classify" — while `npm run extract` read all three completely. Two
+       * stages disagreeing about a file they both open is worse than either
+       * being wrong alone: the inventory is what a human reads to decide what is
+       * in the drop.
+       */
+      const wb = readSpreadsheet(bytes);
+      pages = wb.sheets.length;
+      text = wb.sheets.map((sh) => sh.rows.map((r) => r.join(" ")).join("\n")).join("\n");
+      error = wb.sheets.length ? null : wb.error;
+    } else {
+      try {
+        ({ pages, text, encrypted, error } = readPdf(bytes));
+      } catch (e) {
+        error = e.message;
+      }
     }
     // An encrypted file yields nothing to the flat reader, and a classifier fed
     // nothing files it under "(unidentified)" with the same confidence as a file
     // that genuinely says nothing. Route it through pdfjs, which can decrypt, so
     // the row states either what the document is or that no password opened it.
-    if (encrypted) {
-      const grid = await extractLayout(new Uint8Array(fs.readFileSync(full)), { passwords });
+    /**
+     * …AND WHENEVER THE CHEAP READER RETURNED BYTES BUT NOT WORDS.
+     *
+     * "Encrypted" was one cause of an unreadable file and this condition treated
+     * it as the only one. The 360 ONE Alternates letters are unencrypted PDFs
+     * that the flat reader turns into 71,479 characters of MOJIBAKE — a custom
+     * font encoding it cannot map, yielding `ï ò ì K E ^ ] o K } µ v ] ]` where
+     * the letter's text should be. Non-empty, so an emptiness test passed it
+     * through, and the classifier then filed a perfectly good statement under
+     * "could not classify" while `npm run extract` — which uses pdfjs — read
+     * every figure on it.
+     *
+     * `looksLikeProse` asks the only question that matters: are there WORDS in
+     * here? Real prose has hundreds of four-letter runs; mojibake has none.
+     */
+    //
+    // AND ONE MORE TRIGGER: when the cheap reader's text names no issuer.
+    // `looksLikeProse` catches text that is wholly mojibake, but a PDF can map
+    // half its fonts and garble the rest — enough real words to pass, not enough
+    // to identify. The rule is simply that a cheap answer of "I don't know" is
+    // worth spending a pdfjs parse to check, which is a second per file and only
+    // on the files that need it.
+    if (!SPREADSHEET_EXT.test(full)
+      && (encrypted || !looksLikeProse(text) || !classify({ fileName, text }).provider)) {
+      const grid = await extractLayout(new Uint8Array(bytes), { passwords });
       if (!grid.error) {
         pages = grid.numPages;
         text = grid.pages.map((p) => p.text).join(" ").replace(/\s+/g, " ");
         error = null;
-      } else {
+      } else if (grid.pages?.length) {
+        // pdfjs read pages and still could not place it — keep whatever the flat
+        // reader gave, and let the row say what it can.
+      } else if (encrypted) {
         error = passwords.length
           ? "encrypted — no supplied password opened it"
           : "encrypted — set GLOW_PDF_PASSWORDS to read it";
+      } else {
+        error = grid.error ?? "no text layer this pipeline could read";
       }
     }
     const guess = classify({ fileName, text });

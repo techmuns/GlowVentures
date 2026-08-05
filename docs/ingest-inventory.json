@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-05T04:38:06.421Z",
+  "generatedAt": "2026-08-05T06:10:14.851Z",
   "sourceDir": "source",
   "counts": {
     "files": 109,
-    "pdfs": 105,
-    "nonPdf": 4,
-    "classified": 98,
-    "unclassified": 11,
+    "pdfs": 108,
+    "nonPdf": 1,
+    "classified": 107,
+    "unclassified": 2,
     "encrypted": 6,
     "fromArchives": 91,
     "archivesExpanded": 10,
-    "pages": 336
+    "pages": 339
   },
   "reportTypes": [
     "holdings",
@@ -30,6 +30,10 @@
     "capital-call",
     "distribution-notice",
     "contract-note",
+    "investor-report",
+    "demat-statement",
+    "scheme-portfolio",
+    "statement-of-earnings",
     "unknown"
   ],
   "archives": [
@@ -116,15 +120,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "bank-book",
       "sections": [
         "bank-book"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -138,15 +142,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "capital-register",
       "sections": [
         "capital-register"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -160,15 +164,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "corporate-benefits",
       "sections": [
         "corporate-benefits"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -182,16 +186,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
-      "asOfDate": null,
+      "ownerName": "Ajay Thakurdas Jaisinghani Description Market",
+      "accountNo": "100023",
+      "asOfDate": "2026-07-10",
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -204,15 +208,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "dividend-statement",
       "sections": [
         "dividend-statement"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -226,15 +230,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "expense-statement",
       "sections": [
         "expense-statement"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -248,16 +252,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
-      "asOfDate": null,
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
+      "asOfDate": "2026-07-10",
       "reportType": "appraisal",
       "sections": [
         "appraisal"
       ],
       "familyGroup": null,
-      "strategy": null,
-      "confidence": "medium",
+      "strategy": "Aristos Equity Portfolio",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -272,14 +276,14 @@
       "provider": "Goldstandard Wealth Private Limited",
       "ownerName": null,
       "accountNo": "100024",
-      "asOfDate": null,
+      "asOfDate": "2026-07-10",
       "reportType": "fact-sheet",
       "sections": [
         "fact-sheet"
       ],
       "familyGroup": null,
-      "strategy": null,
-      "confidence": "medium",
+      "strategy": "Aristos Equity Portfolio",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -292,8 +296,8 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "performance-benchmark",
       "sections": [
@@ -314,16 +318,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
-      "asOfDate": null,
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
+      "asOfDate": "2026-07-10",
       "reportType": "performance-history",
       "sections": [
         "performance-history"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -336,16 +340,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
-      "asOfDate": null,
+      "ownerName": "Ajay Thakurdas Jaisinghani Market Value",
+      "accountNo": "100023",
+      "asOfDate": "2026-04-01",
       "reportType": "performance-summary",
       "sections": [
         "performance-summary"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -358,15 +362,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100024",
+      "ownerName": "Ajay Thakurdas Jaisinghani",
+      "accountNo": "100023",
       "asOfDate": null,
       "reportType": "transaction-statement",
       "sections": [
         "transaction-statement"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -380,15 +384,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
       "asOfDate": null,
       "reportType": "bank-book",
       "sections": [
         "bank-book"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -402,15 +406,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
       "asOfDate": null,
       "reportType": "capital-register",
       "sections": [
         "capital-register"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -424,16 +428,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
-      "asOfDate": null,
+      "ownerName": "Ankita Bharat Jaisinghani Description Market",
+      "accountNo": "100022",
+      "asOfDate": "2026-07-10",
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -446,15 +450,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
       "asOfDate": null,
       "reportType": "dividend-statement",
       "sections": [
         "dividend-statement"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -468,16 +472,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
-      "asOfDate": null,
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
+      "asOfDate": "2026-07-10",
       "reportType": "appraisal",
       "sections": [
         "appraisal"
       ],
       "familyGroup": null,
-      "strategy": null,
-      "confidence": "medium",
+      "strategy": "Aristos Equity Portfolio",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -492,14 +496,14 @@
       "provider": "Goldstandard Wealth Private Limited",
       "ownerName": null,
       "accountNo": "100023",
-      "asOfDate": null,
+      "asOfDate": "2026-07-10",
       "reportType": "fact-sheet",
       "sections": [
         "fact-sheet"
       ],
       "familyGroup": null,
-      "strategy": null,
-      "confidence": "medium",
+      "strategy": "Aristos Equity Portfolio",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -512,8 +516,8 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
       "asOfDate": null,
       "reportType": "performance-benchmark",
       "sections": [
@@ -534,16 +538,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
-      "asOfDate": null,
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
+      "asOfDate": "2026-07-10",
       "reportType": "performance-history",
       "sections": [
         "performance-history"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -556,16 +560,16 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
-      "asOfDate": null,
+      "ownerName": "Ankita Bharat Jaisinghani Market Value",
+      "accountNo": "100022",
+      "asOfDate": "2026-04-01",
       "reportType": "performance-summary",
       "sections": [
         "performance-summary"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "high",
       "matchedBy": "Goldstandard filename"
     },
     {
@@ -578,15 +582,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Goldstandard Wealth Private Limited",
-      "ownerName": null,
-      "accountNo": "100023",
+      "ownerName": "Ankita Bharat Jaisinghani",
+      "accountNo": "100022",
       "asOfDate": null,
       "reportType": "transaction-statement",
       "sections": [
         "transaction-statement"
       ],
       "familyGroup": null,
-      "strategy": null,
+      "strategy": "Aristos Equity Portfolio",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -1241,8 +1245,10 @@
       "ownerName": null,
       "accountNo": "1038104611",
       "asOfDate": "2026-06-30",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -1261,8 +1267,10 @@
       "ownerName": null,
       "accountNo": "1019265797",
       "asOfDate": "2026-06-30",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -1281,8 +1289,10 @@
       "ownerName": null,
       "accountNo": "16180583",
       "asOfDate": "2026-06-01",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -1301,8 +1311,10 @@
       "ownerName": null,
       "accountNo": "4295974",
       "asOfDate": "2026-06-30",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -1321,8 +1333,10 @@
       "ownerName": null,
       "accountNo": "I/We",
       "asOfDate": "2026-06-30",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -1363,6 +1377,50 @@
       "ownerName": null,
       "accountNo": null,
       "asOfDate": "2026-07-02",
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
+      "fileName": "98245_519_01072026181641.xls",
+      "bytes": 12299,
+      "size": "12.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LKP Securities",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-01",
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
+      "fileName": "98245_666181903_01072026181913.xls",
+      "bytes": 6116,
+      "size": "6.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LKP Securities",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-01",
       "reportType": "transaction-statement",
       "sections": [
         "transaction-statement"
@@ -2031,7 +2089,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Private Wealth",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -2041,7 +2099,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "medium",
       "matchedBy": "generic keywords"
     },
     {
@@ -2053,7 +2111,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Private Wealth",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -2063,7 +2121,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "medium",
       "matchedBy": "generic keywords"
     },
     {
@@ -2075,7 +2133,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -2084,7 +2142,7 @@
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
-      "matchedBy": "nothing matched"
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/360 ONE WEALTH - AJAY.pdf",
@@ -2095,7 +2153,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Private Wealth",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -2105,7 +2163,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "medium",
       "matchedBy": "generic keywords"
     },
     {
@@ -2117,7 +2175,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Private Wealth",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -2127,7 +2185,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "medium",
       "matchedBy": "generic keywords"
     },
     {
@@ -2139,16 +2197,18 @@
       "fromArchive": false,
       "encrypted": true,
       "readError": null,
-      "provider": "360 ONE Private Wealth",
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
-      "familyGroup": null,
-      "accountNo": null,
+      "accountNo": "1000633",
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "distribution-notice",
+      "sections": [
+        "distribution-notice"
+      ],
+      "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
-      "matchedBy": "360 ONE signature"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
@@ -2159,16 +2219,18 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
-      "accountNo": null,
+      "accountNo": "1000632",
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "distribution-notice",
+      "sections": [
+        "distribution-notice"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
@@ -2179,16 +2241,18 @@
       "fromArchive": false,
       "encrypted": true,
       "readError": null,
-      "provider": "360 ONE Private Wealth",
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
-      "familyGroup": null,
       "accountNo": null,
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "statement-of-earnings",
+      "sections": [
+        "statement-of-earnings"
+      ],
+      "familyGroup": null,
       "strategy": null,
       "confidence": "medium",
-      "matchedBy": "360 ONE signature"
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
@@ -2199,16 +2263,18 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "statement-of-earnings",
+      "sections": [
+        "statement-of-earnings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/GREEN LANTERN - AJAY.pdf",
@@ -2223,9 +2289,9 @@
       "ownerName": "AJAY T JAISINGHANI",
       "accountNo": "510861",
       "asOfDate": "2026-06-30",
-      "reportType": "contract-note",
+      "reportType": "investor-report",
       "sections": [
-        "contract-note"
+        "investor-report"
       ],
       "familyGroup": null,
       "strategy": "GLC Growth Fund",
@@ -2267,9 +2333,9 @@
       "ownerName": null,
       "accountNo": "8710067",
       "asOfDate": "2026-06-30",
-      "reportType": "contract-note",
+      "reportType": "investor-report",
       "sections": [
-        "contract-note"
+        "investor-report"
       ],
       "familyGroup": null,
       "strategy": null,
@@ -2289,9 +2355,9 @@
       "ownerName": null,
       "accountNo": "8710067",
       "asOfDate": "2026-05-31",
-      "reportType": "contract-note",
+      "reportType": "investor-report",
       "sections": [
-        "contract-note"
+        "investor-report"
       ],
       "familyGroup": null,
       "strategy": null,
@@ -2311,9 +2377,9 @@
       "ownerName": null,
       "accountNo": "8710090",
       "asOfDate": "2026-06-30",
-      "reportType": "contract-note",
+      "reportType": "investor-report",
       "sections": [
-        "contract-note"
+        "investor-report"
       ],
       "familyGroup": null,
       "strategy": null,
@@ -2333,9 +2399,9 @@
       "ownerName": null,
       "accountNo": "8710090",
       "asOfDate": "2026-05-31",
-      "reportType": "contract-note",
+      "reportType": "investor-report",
       "sections": [
-        "contract-note"
+        "investor-report"
       ],
       "familyGroup": null,
       "strategy": null,
@@ -2383,6 +2449,28 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/White Oak - Ajay.xlsx",
+      "fileName": "White Oak - Ajay.xlsx",
+      "bytes": 168162,
+      "size": "164.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Scheme portfolio disclosure",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-06-30",
+      "reportType": "scheme-portfolio",
+      "sections": [
+        "scheme-portfolio"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/_extracted/LKP /PASSWORD.docx",
       "fileName": "PASSWORD.docx",
       "bytes": 13893,
@@ -2393,72 +2481,6 @@
       "isPdf": false,
       "fileKind": "Word document",
       "readError": "no Word reader",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
-      "fileName": "98245_519_01072026181641.xls",
-      "bytes": 12299,
-      "size": "12.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
-      "fileName": "98245_666181903_01072026181913.xls",
-      "bytes": 6116,
-      "size": "6.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/White Oak - Ajay.xlsx",
-      "fileName": "White Oak - Ajay.xlsx",
-      "bytes": 168162,
-      "size": "164.2 KB",
-      "pages": null,
-      "fromArchive": false,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (Office Open XML)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -2493,80 +2515,14 @@
       "strategy": null,
       "confidence": "low",
       "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
-      "fileName": "98245_519_01072026181641.xls",
-      "bytes": 12299,
-      "size": "12.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
-      "fileName": "98245_666181903_01072026181913.xls",
-      "bytes": 6116,
-      "size": "6.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/White Oak - Ajay.xlsx",
-      "fileName": "White Oak - Ajay.xlsx",
-      "bytes": 168162,
-      "size": "164.2 KB",
-      "pages": null,
-      "fromArchive": false,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (Office Open XML)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
     }
   ],
   "groups": {
     "Goldstandard Wealth Private Limited": {
       "accounts": {
-        "100023": {
-          "owner": null,
-          "strategy": null,
+        "100022": {
+          "owner": "Ankita Bharat Jaisinghani",
+          "strategy": "Aristos Equity Portfolio",
           "asOfDates": {
             "(unidentified)": {
               "reportTypes": {
@@ -2592,17 +2548,6 @@
                     ]
                   }
                 ],
-                "holdings": [
-                  {
-                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
-                    "pages": 3,
-                    "size": "43.9 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ],
                 "dividend-statement": [
                   {
                     "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_DividendStatement_India177OT (2).pdf",
@@ -2614,28 +2559,6 @@
                     ]
                   }
                 ],
-                "appraisal": [
-                  {
-                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
-                    "pages": 2,
-                    "size": "34.9 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "appraisal"
-                    ]
-                  }
-                ],
-                "fact-sheet": [
-                  {
-                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
-                    "pages": 1,
-                    "size": "34.7 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "fact-sheet"
-                    ]
-                  }
-                ],
                 "performance-benchmark": [
                   {
                     "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfBM196OT (4).pdf",
@@ -2644,28 +2567,6 @@
                     "confidence": "medium",
                     "sections": [
                       "performance-benchmark"
-                    ]
-                  }
-                ],
-                "performance-history": [
-                  {
-                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
-                    "pages": 1,
-                    "size": "29.6 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-history"
-                    ]
-                  }
-                ],
-                "performance-summary": [
-                  {
-                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
-                    "pages": 1,
-                    "size": "27.6 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-summary"
                     ]
                   }
                 ],
@@ -2681,14 +2582,68 @@
                   }
                 ]
               },
-              "fileCount": 10
+              "fileCount": 5
+            },
+            "2026-07-10": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_CurrentPortfolio2086OT (3).pdf",
+                    "pages": 3,
+                    "size": "43.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioAppraisal675OT (3).pdf",
+                    "pages": 2,
+                    "size": "34.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_portfolioPerfHistory1155OT (4).pdf",
+                    "pages": 1,
+                    "size": "29.6 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (3).pdf",
+                    "pages": 1,
+                    "size": "27.6 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 10
+          "fileCount": 9
         },
-        "100024": {
-          "owner": null,
-          "strategy": null,
+        "100023": {
+          "owner": "Ajay Thakurdas Jaisinghani",
+          "strategy": "Aristos Equity Portfolio",
           "asOfDates": {
             "(unidentified)": {
               "reportTypes": {
@@ -2725,17 +2680,6 @@
                     ]
                   }
                 ],
-                "holdings": [
-                  {
-                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
-                    "pages": 3,
-                    "size": "44.4 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ],
                 "dividend-statement": [
                   {
                     "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_DividendStatement_India177OT (3).pdf",
@@ -2758,28 +2702,6 @@
                     ]
                   }
                 ],
-                "appraisal": [
-                  {
-                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
-                    "pages": 2,
-                    "size": "35.1 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "appraisal"
-                    ]
-                  }
-                ],
-                "fact-sheet": [
-                  {
-                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
-                    "pages": 1,
-                    "size": "34.6 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "fact-sheet"
-                    ]
-                  }
-                ],
                 "performance-benchmark": [
                   {
                     "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfBM196OT (4).pdf",
@@ -2788,28 +2710,6 @@
                     "confidence": "medium",
                     "sections": [
                       "performance-benchmark"
-                    ]
-                  }
-                ],
-                "performance-history": [
-                  {
-                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
-                    "pages": 1,
-                    "size": "30.0 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-history"
-                    ]
-                  }
-                ],
-                "performance-summary": [
-                  {
-                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
-                    "pages": 1,
-                    "size": "28.0 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-summary"
                     ]
                   }
                 ],
@@ -2825,10 +2725,98 @@
                   }
                 ]
               },
-              "fileCount": 12
+              "fileCount": 7
+            },
+            "2026-07-10": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_CurrentPortfolio2086OT (4).pdf",
+                    "pages": 3,
+                    "size": "44.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioAppraisal675OT (4).pdf",
+                    "pages": 2,
+                    "size": "35.1 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_portfolioPerfHistory1155OT (3).pdf",
+                    "pages": 1,
+                    "size": "30.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ],
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/ARISTOS - ANKITA/G100023_100023_PortFolioFactSheet6020OT (3).pdf",
+                    "pages": 1,
+                    "size": "34.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 4
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortfolioPerfSummary1528OT (5).pdf",
+                    "pages": 1,
+                    "size": "28.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
           "fileCount": 12
+        },
+        "100024": {
+          "owner": null,
+          "strategy": "Aristos Equity Portfolio",
+          "asOfDates": {
+            "2026-07-10": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/ARISTOS - AJAY/G100023_100024_PortFolioFactSheet6020OT (5).pdf",
+                    "pages": 1,
+                    "size": "34.6 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
         }
       },
       "fileCount": 22
@@ -3219,14 +3207,14 @@
             },
             "2026-06-30": {
               "reportTypes": {
-                "contract-note": [
+                "investor-report": [
                   {
                     "path": "source/GREEN LANTERN - AJAY.pdf",
                     "pages": 15,
                     "size": "308.8 KB",
                     "confidence": "high",
                     "sections": [
-                      "contract-note"
+                      "investor-report"
                     ]
                   }
                 ]
@@ -3279,13 +3267,15 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "unknown": [
+                "holdings": [
                   {
                     "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
                     "pages": 4,
                     "size": "439.0 KB",
                     "confidence": "high",
-                    "sections": []
+                    "sections": [
+                      "holdings"
+                    ]
                   }
                 ]
               },
@@ -3300,13 +3290,15 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "unknown": [
+                "holdings": [
                   {
                     "path": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
                     "pages": 2,
                     "size": "429.4 KB",
                     "confidence": "high",
-                    "sections": []
+                    "sections": [
+                      "holdings"
+                    ]
                   }
                 ]
               },
@@ -3326,13 +3318,15 @@
           "asOfDates": {
             "2026-06-01": {
               "reportTypes": {
-                "unknown": [
+                "holdings": [
                   {
                     "path": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
                     "pages": 3,
                     "size": "143.9 KB",
                     "confidence": "high",
-                    "sections": []
+                    "sections": [
+                      "holdings"
+                    ]
                   }
                 ]
               },
@@ -3352,13 +3346,15 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "unknown": [
+                "holdings": [
                   {
                     "path": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
                     "pages": 4,
                     "size": "826.0 KB",
                     "confidence": "high",
-                    "sections": []
+                    "sections": [
+                      "holdings"
+                    ]
                   }
                 ]
               },
@@ -3378,13 +3374,15 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "unknown": [
+                "holdings": [
                   {
                     "path": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
                     "pages": 2,
                     "size": "677.9 KB",
                     "confidence": "high",
-                    "sections": []
+                    "sections": [
+                      "holdings"
+                    ]
                   }
                 ]
               },
@@ -3420,11 +3418,38 @@
             },
             "2026-07-02": {
               "reportTypes": {
-                "transaction-statement": [
+                "demat-statement": [
                   {
                     "path": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
                     "pages": 4,
                     "size": "33.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-07-01": {
+              "reportTypes": {
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
+                    "pages": 1,
+                    "size": "12.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
+                    "pages": 1,
+                    "size": "6.0 KB",
                     "confidence": "high",
                     "sections": [
                       "transaction-statement"
@@ -3432,13 +3457,13 @@
                   }
                 ]
               },
-              "fileCount": 1
+              "fileCount": 2
             }
           },
-          "fileCount": 2
+          "fileCount": 4
         }
       },
-      "fileCount": 2
+      "fileCount": 4
     },
     "Sanshi Fund": {
       "accounts": {
@@ -3874,20 +3899,125 @@
           "asOfDates": {
             "(unidentified)": {
               "reportTypes": {
-                "unknown": [
+                "corporate-action": [
+                  {
+                    "path": "source/360 - AJAY.pdf",
+                    "pages": 11,
+                    "size": "289.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
+                    "path": "source/360 - BHARAT.pdf",
+                    "pages": 11,
+                    "size": "288.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
+                    "path": "source/360 ONE WEALTH - AJAY.pdf",
+                    "pages": 11,
+                    "size": "290.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
+                    "path": "source/360 ONE WEALTH - BHARAT.pdf",
+                    "pages": 11,
+                    "size": "288.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 4
+            }
+          },
+          "fileCount": 4
+        }
+      },
+      "fileCount": 4
+    },
+    "360 ONE Alternates Asset Management": {
+      "accounts": {
+        "1000632": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "distribution-notice": [
+                  {
+                    "path": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
+                    "pages": 3,
+                    "size": "686.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "distribution-notice"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "1000633": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "distribution-notice": [
                   {
                     "path": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
                     "pages": 3,
                     "size": "689.3 KB",
-                    "confidence": "medium",
-                    "sections": []
-                  },
+                    "confidence": "high",
+                    "sections": [
+                      "distribution-notice"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "statement-of-earnings": [
                   {
                     "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
                     "pages": 2,
                     "size": "875.2 KB",
                     "confidence": "medium",
-                    "sections": []
+                    "sections": [
+                      "statement-of-earnings"
+                    ]
+                  },
+                  {
+                    "path": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+                    "pages": 2,
+                    "size": "872.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "statement-of-earnings"
+                    ]
                   }
                 ]
               },
@@ -3897,7 +4027,7 @@
           "fileCount": 2
         }
       },
-      "fileCount": 2
+      "fileCount": 4
     },
     "Molecule Ventures LLP": {
       "accounts": {
@@ -3935,14 +4065,14 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "contract-note": [
+                "investor-report": [
                   {
                     "path": "source/SVAN - AJAY [1E444lq6].pdf",
                     "pages": 5,
                     "size": "107.0 KB",
                     "confidence": "high",
                     "sections": [
-                      "contract-note"
+                      "investor-report"
                     ]
                   }
                 ]
@@ -3951,14 +4081,14 @@
             },
             "2026-05-31": {
               "reportTypes": {
-                "contract-note": [
+                "investor-report": [
                   {
                     "path": "source/SVAN - AJAY [1knFZ18g].pdf",
                     "pages": 6,
                     "size": "108.5 KB",
                     "confidence": "high",
                     "sections": [
-                      "contract-note"
+                      "investor-report"
                     ]
                   }
                 ]
@@ -3974,14 +4104,14 @@
           "asOfDates": {
             "2026-06-30": {
               "reportTypes": {
-                "contract-note": [
+                "investor-report": [
                   {
                     "path": "source/SVAN - BHARAT [1DSgHtJU].pdf",
                     "pages": 5,
                     "size": "106.1 KB",
                     "confidence": "high",
                     "sections": [
-                      "contract-note"
+                      "investor-report"
                     ]
                   }
                 ]
@@ -3990,14 +4120,14 @@
             },
             "2026-05-31": {
               "reportTypes": {
-                "contract-note": [
+                "investor-report": [
                   {
                     "path": "source/SVAN - BHARAT [1pRnGtq5].pdf",
                     "pages": 5,
                     "size": "107.0 KB",
                     "confidence": "high",
                     "sections": [
-                      "contract-note"
+                      "investor-report"
                     ]
                   }
                 ]
@@ -4042,49 +4172,37 @@
         }
       },
       "fileCount": 2
+    },
+    "Scheme portfolio disclosure": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-06-30": {
+              "reportTypes": {
+                "scheme-portfolio": [
+                  {
+                    "path": "source/White Oak - Ajay.xlsx",
+                    "pages": 1,
+                    "size": "164.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "scheme-portfolio"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
     }
   },
   "overlaps": [
-    {
-      "provider": "Goldstandard Wealth Private Limited",
-      "account": "100024",
-      "asOf": "(unidentified)",
-      "fileCount": 12,
-      "reportTypes": [
-        "bank-book",
-        "capital-register",
-        "corporate-benefits",
-        "holdings",
-        "dividend-statement",
-        "expense-statement",
-        "appraisal",
-        "fact-sheet",
-        "performance-benchmark",
-        "performance-history",
-        "performance-summary",
-        "transaction-statement"
-      ],
-      "duplicateTypes": []
-    },
-    {
-      "provider": "Goldstandard Wealth Private Limited",
-      "account": "100023",
-      "asOf": "(unidentified)",
-      "fileCount": 10,
-      "reportTypes": [
-        "bank-book",
-        "capital-register",
-        "holdings",
-        "dividend-statement",
-        "appraisal",
-        "fact-sheet",
-        "performance-benchmark",
-        "performance-history",
-        "performance-summary",
-        "transaction-statement"
-      ],
-      "duplicateTypes": []
-    },
     {
       "provider": "V.E.C Assago Capital Management LLP",
       "account": "128005",
@@ -4104,6 +4222,22 @@
         "bank-book",
         "capital-register"
       ]
+    },
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100023",
+      "asOf": "(unidentified)",
+      "fileCount": 7,
+      "reportTypes": [
+        "bank-book",
+        "capital-register",
+        "corporate-benefits",
+        "dividend-statement",
+        "expense-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
     },
     {
       "provider": "V.E.C Assago Capital Management LLP",
@@ -4137,6 +4271,20 @@
       "duplicateTypes": []
     },
     {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100022",
+      "asOf": "(unidentified)",
+      "fileCount": 5,
+      "reportTypes": [
+        "bank-book",
+        "capital-register",
+        "dividend-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
       "provider": "Green Lantern Capital LLP",
       "account": "510861",
       "asOf": "(unidentified)",
@@ -4151,6 +4299,19 @@
       "duplicateTypes": []
     },
     {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100023",
+      "asOf": "2026-07-10",
+      "fileCount": 4,
+      "reportTypes": [
+        "holdings",
+        "appraisal",
+        "performance-history",
+        "fact-sheet"
+      ],
+      "duplicateTypes": []
+    },
+    {
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
       "account": "3517383",
       "asOf": "(unidentified)",
@@ -4160,6 +4321,30 @@
         "capital-gain",
         "dividend-statement",
         "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "360 ONE Private Wealth",
+      "account": "(unidentified)",
+      "asOf": "(unidentified)",
+      "fileCount": 4,
+      "reportTypes": [
+        "corporate-action"
+      ],
+      "duplicateTypes": [
+        "corporate-action"
+      ]
+    },
+    {
+      "provider": "Goldstandard Wealth Private Limited",
+      "account": "100022",
+      "asOf": "2026-07-10",
+      "fileCount": 3,
+      "reportTypes": [
+        "holdings",
+        "appraisal",
+        "performance-history"
       ],
       "duplicateTypes": []
     },
@@ -4210,6 +4395,17 @@
       ]
     },
     {
+      "provider": "LKP Securities",
+      "account": "(unidentified)",
+      "asOf": "2026-07-01",
+      "fileCount": 2,
+      "reportTypes": [
+        "capital-gain",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
       "provider": "Sanshi Fund",
       "account": "00841000060394",
       "asOf": "2026-07-08",
@@ -4256,15 +4452,15 @@
       ]
     },
     {
-      "provider": "360 ONE Private Wealth",
+      "provider": "360 ONE Alternates Asset Management",
       "account": "(unidentified)",
       "asOf": "(unidentified)",
       "fileCount": 2,
       "reportTypes": [
-        "unknown"
+        "statement-of-earnings"
       ],
       "duplicateTypes": [
-        "unknown"
+        "statement-of-earnings"
       ]
     },
     {
@@ -4282,50 +4478,6 @@
   ],
   "unclassified": [
     {
-      "path": "source/360 - AJAY.pdf",
-      "fileName": "360 - AJAY.pdf",
-      "bytes": 296296,
-      "size": "289.4 KB",
-      "pages": 11,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "corporate-action",
-      "sections": [
-        "corporate-action"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/360 - BHARAT.pdf",
-      "fileName": "360 - BHARAT.pdf",
-      "bytes": 294931,
-      "size": "288.0 KB",
-      "pages": 11,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "corporate-action",
-      "sections": [
-        "corporate-action"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
       "path": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "fileName": "360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "bytes": 111130,
@@ -4334,100 +4486,16 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
       "reportType": "unknown",
       "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/360 ONE WEALTH - AJAY.pdf",
-      "fileName": "360 ONE WEALTH - AJAY.pdf",
-      "bytes": 297843,
-      "size": "290.9 KB",
-      "pages": 11,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "corporate-action",
-      "sections": [
-        "corporate-action"
-      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
       "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/360 ONE WEALTH - BHARAT.pdf",
-      "fileName": "360 ONE WEALTH - BHARAT.pdf",
-      "bytes": 295703,
-      "size": "288.8 KB",
-      "pages": 11,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "corporate-action",
-      "sections": [
-        "corporate-action"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
-      "fileName": "360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
-      "bytes": 703340,
-      "size": "686.9 KB",
-      "pages": 3,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
-      "fileName": "360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
-      "bytes": 893572,
-      "size": "872.6 KB",
-      "pages": 2,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/LKP /PASSWORD.docx",
@@ -4440,72 +4508,6 @@
       "isPdf": false,
       "fileKind": "Word document",
       "readError": "no Word reader",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
-      "fileName": "98245_519_01072026181641.xls",
-      "bytes": 12299,
-      "size": "12.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
-      "fileName": "98245_666181903_01072026181913.xls",
-      "bytes": 6116,
-      "size": "6.0 KB",
-      "pages": null,
-      "fromArchive": true,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (legacy .xls, often HTML-table)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "not a PDF"
-    },
-    {
-      "path": "source/White Oak - Ajay.xlsx",
-      "fileName": "White Oak - Ajay.xlsx",
-      "bytes": 168162,
-      "size": "164.2 KB",
-      "pages": null,
-      "fromArchive": false,
-      "encrypted": false,
-      "isPdf": false,
-      "fileKind": "spreadsheet (Office Open XML)",
-      "readError": "no spreadsheet reader — see docs/EXTRACTION-REPORT.md",
       "provider": null,
       "ownerName": null,
       "accountNo": null,

@@ -364,11 +364,25 @@ const ISSUER_PROVIDER_RULES = [
   // ALTERNATES ASSET MANAGEMENT LIMITED", which the broader `360 ONE` rule below
   // also matches. Two arms of one group, two document families, two readers.
   [/360\s*ONE\s+ALTERNATES/i, "360 ONE Alternates Asset Management"],
-  // The WEALTH arm, named as it names itself. A bare `360 ONE` also matches
-  // `360 One WAM Limited`, which is a LISTED COMPANY — WhiteOak's multi-asset
-  // fund holds Rs 10.16 Cr of it, and that one row filed the fund's own scheme
-  // disclosure under this provider and sent it to a client-report reader.
-  [/360\s*ONE\s+(?:PRIVATE\s+)?WEALTH|360\s*ONE\s+DISTRIBUTION|PORTFOLIO\s+ANALYSIS\s+REPORT/i, "360 ONE Private Wealth"],
+  /**
+   * The wealth arm, identified by its own REPORT TITLE and its EMAIL DOMAIN.
+   *
+   * The bare name cannot be used on the whole text: `360 One WAM Limited` is a
+   * listed company and WhiteOak's multi-asset fund holds ₹10.16 Cr of it, so one
+   * row inside a 348-row table filed that fund's own scheme disclosure under this
+   * provider and sent it to a client-report reader.
+   *
+   * The title alone is not enough either. In the FLAT reading order the
+   * inventory uses, the address block lands between the two halves of it —
+   * `PORTFOLIO Mr. AJAY T JAISINGHANI, 1301 B BEAU MONDE … ANALYSIS REPORT
+   * CLIENT LEVEL` — so the title matches in the coordinate grid and not in the
+   * inventory's text, and the two stages disagreed about a file they both read.
+   *
+   * `@360.one` is on the letterhead of every one of these documents (the
+   * relationship manager's address) and can appear in a holdings table only if a
+   * fund starts printing its holdings' e-mail addresses.
+   */
+  [/PORTFOLIO\s+ANALYSIS\s+REPORT|@360\.one\b/i, "360 ONE Private Wealth"],
   [/GOLDSTANDARD\s+WEALTH/i, "Goldstandard Wealth Private Limited"],
   [/GREEN\s+LANTERN\s+CAPITAL/i, "Green Lantern Capital LLP"],
   [/CARNELIAN\s+ASSET\s+MANAGEMENT/i, "Carnelian Asset Management and Advisors Pvt Ltd"],
@@ -402,6 +416,15 @@ const ISSUER_PROVIDER_RULES = [
  * statement.
  */
 const HOUSE_PROVIDER_RULES = [
+  // 360 ONE on a LETTERHEAD is the issuer; 360 ONE in a holdings table is a
+  // share of a listed company. Only the first 700 characters count.
+  [/360\s*ONE/i, "360 ONE Private Wealth"],
+  // The AMCs, on their own letterhead. Their support domains are the one token
+  // that survives whatever the flat reading order does to the address block.
+  [/hdfcfund\.com|HDFC\s+Asset\s+Management/i, "HDFC Mutual Fund"],
+  [/kotakmf\.com/i, "Kotak Mahindra Mutual Fund"],
+  [/mutualfund\.adityabirlacapital\.com|Aditya\s+Birla\s+Sun\s+Life\s+AMC/i, "Aditya Birla Sun Life Mutual Fund"],
+  [/miraeassetmf\.co\.in/i, "Mirae Asset Mutual Fund"],
   [/\bKotak\s+(?:Mahindra\s+)?(?:Bank|Securities|Investment|MF|Mutual)/i, "Kotak"],
   [/\bICICI\s+(?:Securities|Prudential|Bank)/i, "ICICI"],
   [/\bHDFC\s+(?:Securities|Bank|AMC|Mutual)/i, "HDFC"],
