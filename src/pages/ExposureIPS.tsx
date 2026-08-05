@@ -39,11 +39,13 @@ export function ExposureIPS() {
     return m;
   }, [consolidated]);
   const topHoldings = useMemo(() => bySecurity(consolidated).slice(0, 10).map((b) => ({ ...b, name: nameByKey.get(b.key) ?? b.key })), [consolidated, nameByKey]);
-  const contributors = useMemo(() => [...consolidated].sort((a, b) => b.unrealizedPnL - a.unrealizedPnL).slice(0, 5), [consolidated]);
-  const laggards = useMemo(() => [...consolidated].sort((a, b) => a.unrealizedPnL - b.unrealizedPnL).slice(0, 5), [consolidated]);
+  // costBasis / unrealizedPnL are nullable where no statement reported a cost;
+  // a missing figure sorts as 0 (neutral) rather than distorting the ranking.
+  const contributors = useMemo(() => [...consolidated].sort((a, b) => (b.unrealizedPnL ?? 0) - (a.unrealizedPnL ?? 0)).slice(0, 5), [consolidated]);
+  const laggards = useMemo(() => [...consolidated].sort((a, b) => (a.unrealizedPnL ?? 0) - (b.unrealizedPnL ?? 0)).slice(0, 5), [consolidated]);
 
   if (!portfolio) return null;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
 
   return (
     <div>

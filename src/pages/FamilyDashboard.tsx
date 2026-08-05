@@ -11,7 +11,7 @@ import { StockLink } from "@/components/StockLink";
 import { AbsentCell } from "@/components/Absent";
 import { PreviewBadge, PreviewNum, PreviewPill, previewTile } from "@/components/Preview";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { byEntity, bySecurity, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
+import { byEntity, bySecurity, consolidatedMarketValue, dedupedPositions, sumOrNull } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { entityXirrPct } from "@/lib/returns";
 import { fmtPct, changeColor } from "@/lib/format";
@@ -51,8 +51,11 @@ export function FamilyDashboard() {
   }, [portfolio, consolidated, scope, accIdx]);
 
   const mv = useMemo(() => (scope === FAMILY ? consolidatedMarketValue(scoped) : scoped.reduce((s, p) => s + p.marketValue, 0)), [scoped, scope]);
-  const cost = useMemo(() => scoped.reduce((s, p) => s + p.costBasis, 0), [scoped]);
-  const retPct = cost > 0 ? ((mv - cost) / cost) * 100 : 0;
+  // costBasis is nullable where no statement reported a cost — sum only the real
+  // ones (sumOrNull), and leave the return absent rather than dividing by a cost
+  // that folded missing figures in as zero.
+  const cost = useMemo(() => sumOrNull(scoped.map((p) => p.costBasis)), [scoped]);
+  const retPct = cost !== null && cost > 0 ? ((mv - cost) / cost) * 100 : null;
   const xirr = useMemo(() => (portfolio && scope !== FAMILY ? entityXirrPct(portfolio, scope, mv) : null), [portfolio, scope, mv]);
 
   // Top exposures by security, aggregated across accounts in scope.

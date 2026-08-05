@@ -38,14 +38,14 @@ export function ThesisMonitor() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
   const rows = useMemo(() => {
     const nameByKey = new Map<string, string>();
-    const priceByKey = new Map<string, { price: number | null; ret: number }>();
+    const priceByKey = new Map<string, number | null>();
     for (const p of consolidated) {
       if (!nameByKey.has(p.securityKey)) nameByKey.set(p.securityKey, p.security);
-      if (!priceByKey.has(p.securityKey)) priceByKey.set(p.securityKey, { price: p.currentPrice ?? null, ret: p.returnPct });
+      if (!priceByKey.has(p.securityKey)) priceByKey.set(p.securityKey, p.currentPrice ?? null);
     }
     return bySecurity(consolidated).slice(0, 12).map((b, i) => ({
       key: b.key, name: nameByKey.get(b.key) ?? b.key, mv: b.mv, ret: b.returnPct,
-      price: priceByKey.get(b.key)?.price ?? null, t: THESIS[i % THESIS.length], flag: FLAGS[i % FLAGS.length],
+      price: priceByKey.get(b.key) ?? null, t: THESIS[i % THESIS.length], flag: FLAGS[i % FLAGS.length],
     }));
   }, [consolidated]);
 
