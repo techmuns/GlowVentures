@@ -58,7 +58,7 @@ export function SectorComposition() {
       <PageHeader eyebrow="Allocation" title="Sector Composition"
         right={<div className="flex items-center gap-2">
           <BasisPill liveText={feedLive ? "Live prices" : "Workbook marks"}
-            hint="Sector values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy \u2014 each provider's own label is kept per position." />
+            hint="Sector values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy — each provider's own label is kept per position." />
           <Pill tone="info">{sectors.length} sectors</Pill>
         </div>} />
       <Card className="mt-1">

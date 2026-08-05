@@ -104,7 +104,7 @@ export function StockInfo() {
           <div className="text-right">
             <div className="mono text-2xl font-semibold text-slate-100">{price(cmp)}</div>
             <div className="mt-0.5 text-[10.5px] text-slate-500">
-              {live ? `CMP \u00b7 live${sym ? ` \u00b7 ${sym}` : ""}` : `CMP \u00b7 statement mark${rows[0] ? `, ${accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf}` : ""} \u2014 no live quote for this security`}
+              {live ? `CMP \u00b7 live${sym ? ` \u00b7 ${sym}` : ""}` : `CMP \u00b7 statement mark${rows[0] ? `, ${accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf}` : ""} — no live quote for this security`}
             </div>
           </div>
         )}
@@ -139,7 +139,7 @@ export function StockInfo() {
         </Card>
       ) : (
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <Card className="lg:col-span-2" title="Position by account" subtitle="How this name is held \u2014 owning entity, and the platform that runs the account" pad={false}>
+          <Card className="lg:col-span-2" title="Position by account" subtitle="How this name is held — owning entity, and the platform that runs the account" pad={false}>
             <div className="overflow-x-auto">
               <table className="min-w-full whitespace-nowrap text-sm">
                 <thead className="border-b border-ink-700">
