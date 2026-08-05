@@ -1859,27 +1859,34 @@
   ]
  },
  {
-  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
+  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1038104611",
-  "owner": null,
+  "owner": "HOPE INDIA TRUST",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
   "pages": 2,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-06-30-unknown",
-  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1889,27 +1896,34 @@
   ]
  },
  {
-  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
+  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1019265797",
-  "owner": null,
+  "owner": "Hope India Trust",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
   "pages": 4,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-06-30-unknown",
-  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1919,27 +1933,34 @@
   ]
  },
  {
-  "docKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
+  "docKey": "hdfc-mutual-fund-16180583-2026-07-01-holdings",
   "provider": "HDFC Mutual Fund",
   "accountNo": "16180583",
-  "owner": null,
-  "ownerId": null,
+  "owner": "Bharat A Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-01",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
   "pages": 3,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "hdfc-mutual-fund-16180583-2026-06-01-unknown",
-  "label": "HDFC Mutual Fund · 16180583 · unknown",
-  "fy": "2026-06-01",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "hdfc-mutual-fund-16180583-2026-07-01-holdings",
+  "label": "HDFC Mutual Fund · 16180583 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 3,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1949,27 +1970,34 @@
   ]
  },
  {
-  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
+  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
   "provider": "Kotak Mahindra Mutual Fund",
   "accountNo": "4295974",
-  "owner": null,
+  "owner": "Hope India Trust",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-01",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
   "pages": 4,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 2,
-  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-06-30-unknown",
-  "label": "Kotak Mahindra Mutual Fund · 4295974 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
+  "fy": "2026-07-01",
   "source": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 4,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -1979,27 +2007,34 @@
   ]
  },
  {
-  "docKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
+  "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
   "provider": "Mirae Asset Mutual Fund",
   "accountNo": "70413280453",
-  "owner": null,
+  "owner": "HOPE INDIA TRUST",
   "ownerId": null,
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "unknown",
+  "asOf": "2026-07-02",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
   "pages": 2,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-06-30-unknown",
-  "label": "Mirae Asset Mutual Fund · 70413280453 · unknown",
-  "fy": "2026-06-30",
+  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
+  "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
+  "fy": "2026-07-02",
   "source": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2009,11 +2044,11 @@
   ]
  },
  {
-  "docKey": "lkp-securities-unknown-2026-03-31-holdings",
+  "docKey": "lkp-securities-98245-2026-03-31-holdings",
   "provider": "LKP Securities",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-03-31",
@@ -2021,15 +2056,22 @@
   "sourcePath": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
   "pages": 1,
   "sections": [
+   "holdings",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "lkp-securities-unknown-2026-03-31-holdings",
-  "label": "LKP Securities · holdings",
+  "fileKey": "lkp-securities-98245-2026-03-31-holdings",
+  "label": "LKP Securities · 98245 · holdings",
   "fy": "2026-03-31",
   "source": "source/_extracted/LKP 2/02072026_1030 holding.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 11,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2039,27 +2081,34 @@
   ]
  },
  {
-  "docKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
+  "docKey": "lkp-securities-98245-2026-07-02-demat-statement",
   "provider": "LKP Securities",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-02",
-  "reportType": "transaction-statement",
+  "reportType": "demat-statement",
   "sourcePath": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
   "pages": 4,
   "sections": [
+   "balances",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "lkp-securities-unknown-2026-07-02-transaction-statement",
-  "label": "LKP Securities · transaction-statement",
+  "fileKey": "lkp-securities-98245-2026-07-02-demat-statement",
+  "label": "LKP Securities · 98245 · demat-statement",
   "fy": "2026-07-02",
   "source": "source/_extracted/LKP 2/08DPC9U_1203000000739979_02072026103012.pdf",
   "sheets": [
+   {
+    "key": "balances",
+    "name": "balances",
+    "rows": 11,
+    "cols": 4
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2069,27 +2118,136 @@
   ]
  },
  {
-  "docKey": "sanshi-fund-9039671821-2026-07-08-unknown",
+  "docKey": "lkp-securities-98245-2026-06-30-capital-gain",
+  "provider": "LKP Securities",
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
+  "pages": 1,
+  "sections": [
+   "realisedLots",
+   "openLots",
+   "charges",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "lkp-securities-98245-2026-06-30-capital-gain",
+  "label": "LKP Securities · 98245 · capital-gain",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/LKP 2/98245_519_01072026181641.xls",
+  "sheets": [
+   {
+    "key": "realisedLots",
+    "name": "realisedLots",
+    "rows": 5,
+    "cols": 9
+   },
+   {
+    "key": "openLots",
+    "name": "openLots",
+    "rows": 13,
+    "cols": 5
+   },
+   {
+    "key": "charges",
+    "name": "charges",
+    "rows": 7,
+    "cols": 2
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "lkp-securities-98245-2026-07-01-transaction-statement",
+  "provider": "LKP Securities",
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-01",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
+  "pages": 1,
+  "sections": [
+   "trades",
+   "positions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "lkp-securities-98245-2026-07-01-transaction-statement",
+  "label": "LKP Securities · 98245 · transaction-statement",
+  "fy": "2026-07-01",
+  "source": "source/_extracted/LKP 2/98245_666181903_01072026181913.xls",
+  "sheets": [
+   {
+    "key": "trades",
+    "name": "trades",
+    "rows": 8,
+    "cols": 6
+   },
+   {
+    "key": "positions",
+    "name": "positions",
+    "rows": 12,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sanshi-fund-9039671821-2026-06-30-unknown",
   "provider": "Sanshi Fund",
   "accountNo": "9039671821",
   "owner": "AARTI AJAY JAISINGHANI",
-  "ownerId": null,
+  "ownerId": "aarti-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-07-08",
+  "strategy": "Sanshi Fund-I (Open Ended AIF CAT-III)",
+  "asOf": "2026-06-30",
   "reportType": "unknown",
   "sourcePath": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
   "pages": 2,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "sanshi-fund-9039671821-2026-07-08-unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "sanshi-fund-9039671821-2026-06-30-unknown",
   "label": "Sanshi Fund · 9039671821 · unknown",
-  "fy": "2026-07-08",
+  "fy": "2026-06-30",
   "source": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 5
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2099,27 +2257,41 @@
   ]
  },
  {
-  "docKey": "sanshi-fund-9039671854-2026-07-08-unknown",
+  "docKey": "sanshi-fund-9039671854-2026-06-30-unknown",
   "provider": "Sanshi Fund",
   "accountNo": "9039671854",
   "owner": "BHARAT AJAY JAISINGHANI",
-  "ownerId": null,
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-07-08",
+  "strategy": "Sanshi Fund-I (Open Ended AIF CAT-III)",
+  "asOf": "2026-06-30",
   "reportType": "unknown",
   "sourcePath": "source/_extracted/SANSHI FUND/9039671854_08072026183817746423.pdf",
   "pages": 2,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "sanshi-fund-9039671854-2026-07-08-unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "sanshi-fund-9039671854-2026-06-30-unknown",
   "label": "Sanshi Fund · 9039671854 · unknown",
-  "fy": "2026-07-08",
+  "fy": "2026-06-30",
   "source": "source/_extracted/SANSHI FUND/9039671854_08072026183817746423.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 5
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2129,27 +2301,41 @@
   ]
  },
  {
-  "docKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+  "docKey": "sanshi-fund-9039671912-2026-06-30-unknown",
   "provider": "Sanshi Fund",
   "accountNo": "9039671912",
   "owner": "AJAY JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-07-08",
+  "strategy": "Sanshi Fund-I (Open Ended AIF CAT-III)",
+  "asOf": "2026-06-30",
   "reportType": "unknown",
   "sourcePath": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
   "pages": 2,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "sanshi-fund-9039671912-2026-07-08-unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "sanshi-fund-9039671912-2026-06-30-unknown",
   "label": "Sanshi Fund · 9039671912 · unknown",
-  "fy": "2026-07-08",
+  "fy": "2026-06-30",
   "source": "source/_extracted/SANSHI FUND/9039671912_08072026183609383211.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 5
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2159,27 +2345,41 @@
   ]
  },
  {
-  "docKey": "sanshi-fund-9069671554-2026-07-08-unknown",
+  "docKey": "sanshi-fund-9069671554-2026-06-30-unknown",
   "provider": "Sanshi Fund",
   "accountNo": "9069671554",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-07-08",
+  "strategy": "Sanshi Fund-I (Open Ended AIF CAT-III)",
+  "asOf": "2026-06-30",
   "reportType": "unknown",
   "sourcePath": "source/_extracted/SANSHI FUND/9069671554_08072026184047430124.pdf",
   "pages": 2,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "sanshi-fund-9069671554-2026-07-08-unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "sanshi-fund-9069671554-2026-06-30-unknown",
   "label": "Sanshi Fund · 9069671554 · unknown",
-  "fy": "2026-07-08",
+  "fy": "2026-06-30",
   "source": "source/_extracted/SANSHI FUND/9069671554_08072026184047430124.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 13,
+    "cols": 5
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2189,27 +2389,41 @@
   ]
  },
  {
-  "docKey": "sanshi-fund-9069671634-2026-07-08-unknown",
+  "docKey": "sanshi-fund-9069671634-2026-06-30-unknown",
   "provider": "Sanshi Fund",
   "accountNo": "9069671634",
   "owner": "AJAY JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-07-08",
+  "strategy": "Sanshi Fund-I (Open Ended AIF CAT-III)",
+  "asOf": "2026-06-30",
   "reportType": "unknown",
   "sourcePath": "source/_extracted/SANSHI FUND/9069671634_08072026184128510783.pdf",
   "pages": 2,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "sanshi-fund-9069671634-2026-07-08-unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "sanshi-fund-9069671634-2026-06-30-unknown",
   "label": "Sanshi Fund · 9069671634 · unknown",
-  "fy": "2026-07-08",
+  "fy": "2026-06-30",
   "source": "source/_extracted/SANSHI FUND/9069671634_08072026184128510783.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 10,
+    "cols": 5
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3130,13 +3344,13 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
   "asOf": null,
   "reportType": "unknown",
   "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
@@ -3144,10 +3358,10 @@
   "sections": [
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown",
-  "label": "360 ONE Private Wealth · unknown",
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+  "label": "360 ONE Alternates Asset Management · 1000633 · unknown",
   "fy": "",
   "source": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
   "sheets": [
@@ -3248,28 +3462,35 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-2",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-05-18",
+  "reportType": "distribution-notice",
   "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "pages": 3,
   "sections": [
+   "distribution",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 3,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-2",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "label": "360 ONE Alternates Asset Management · 1000633 · distribution-notice",
+  "fy": "2026-05-18",
   "source": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "sheets": [
    {
+    "key": "distribution",
+    "name": "distribution",
+    "rows": 10,
+    "cols": 3
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
     "rows": 3,
@@ -3278,27 +3499,34 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-3",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000632",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-05-18",
+  "reportType": "distribution-notice",
   "sourcePath": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
   "pages": 3,
   "sections": [
+   "distribution",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-3",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice",
+  "label": "360 ONE Alternates Asset Management · 1000632 · distribution-notice",
+  "fy": "2026-05-18",
   "source": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
   "sheets": [
+   {
+    "key": "distribution",
+    "name": "distribution",
+    "rows": 10,
+    "cols": 3
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3308,57 +3536,34 @@
   ]
  },
  {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-4",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-06-04",
+  "reportType": "statement-of-earnings",
   "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "pages": 2,
   "sections": [
+   "incomeByTaxHead",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 3,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-4",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "label": "360 ONE Alternates Asset Management · 1000633 · statement-of-earnings",
+  "fy": "2026-06-04",
   "source": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "sheets": [
    {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 2,
+    "key": "incomeByTaxHead",
+    "name": "incomeByTaxHead",
+    "rows": 8,
     "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "360-one-private-wealth-unknown-unknown-unknown-5",
-  "provider": "360 ONE Private Wealth",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
-  "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
-  "pages": 2,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "360-one-private-wealth-unknown-unknown-unknown-5",
-  "label": "360 ONE Private Wealth · unknown",
-  "fy": "",
-  "source": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
-  "sheets": [
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3368,57 +3573,92 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-2026-06-30-contract-note",
+  "docKey": "360-one-alternates-asset-management-1000632-2026-06-04-statement-of-earnings",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000632",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-06-04",
+  "reportType": "statement-of-earnings",
+  "sourcePath": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+  "pages": 2,
+  "sections": [
+   "incomeByTaxHead",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "360-one-alternates-asset-management-1000632-2026-06-04-statement-of-earnings",
+  "label": "360 ONE Alternates Asset Management · 1000632 · statement-of-earnings",
+  "fy": "2026-06-04",
+  "source": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "incomeByTaxHead",
+    "name": "incomeByTaxHead",
+    "rows": 8,
+    "cols": 2
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "strategy": "GLC Growth Fund",
   "asOf": "2026-06-30",
-  "reportType": "contract-note",
+  "reportType": "investor-report",
   "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
-  "pages": 15,
+  "pages": 8,
   "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-contract-note",
-  "label": "Green Lantern Capital LLP · 510861 · contract-note",
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
+  "label": "Green Lantern Capital LLP · 510861 · investor-report",
   "fy": "2026-06-30",
   "source": "source/GREEN LANTERN - AJAY.pdf",
   "sheets": [
    {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 15,
-    "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
-  "provider": "Molecule Ventures LLP",
-  "accountNo": "7810404",
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-06-30",
-  "reportType": "transaction-statement",
-  "sourcePath": "source/Molecule_June_2026_392.pdf",
-  "pages": 8,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
-  "label": "Molecule Ventures LLP · 7810404 · transaction-statement",
-  "fy": "2026-06-30",
-  "source": "source/Molecule_June_2026_392.pdf",
-  "sheets": [
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 35,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 101,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 32,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3428,27 +3668,34 @@
   ]
  },
  {
-  "docKey": "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
-  "provider": "SVAN Investment Managers LLP",
-  "accountNo": "8710067",
-  "owner": null,
-  "ownerId": null,
+  "docKey": "green-lantern-capital-llp-510861-2026-06-30-capital-gain",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-30",
-  "reportType": "contract-note",
-  "sourcePath": "source/SVAN - AJAY [1E444lq6].pdf",
+  "reportType": "capital-gain",
+  "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
   "pages": 5,
   "sections": [
+   "capitalGains",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "svan-investment-managers-llp-8710067-2026-06-30-contract-note",
-  "label": "SVAN Investment Managers LLP · 8710067 · contract-note",
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-capital-gain",
+  "label": "Green Lantern Capital LLP · 510861 · capital-gain",
   "fy": "2026-06-30",
-  "source": "source/SVAN - AJAY [1E444lq6].pdf",
+  "source": "source/GREEN LANTERN - AJAY.pdf",
   "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 71,
+    "cols": 14
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3458,117 +3705,34 @@
   ]
  },
  {
-  "docKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
-  "provider": "SVAN Investment Managers LLP",
-  "accountNo": "8710067",
-  "owner": null,
-  "ownerId": null,
+  "docKey": "green-lantern-capital-llp-510861-2026-06-30-expense-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-05-31",
-  "reportType": "contract-note",
-  "sourcePath": "source/SVAN - AJAY [1knFZ18g].pdf",
-  "pages": 6,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "svan-investment-managers-llp-8710067-2026-05-31-contract-note",
-  "label": "SVAN Investment Managers LLP · 8710067 · contract-note",
-  "fy": "2026-05-31",
-  "source": "source/SVAN - AJAY [1knFZ18g].pdf",
-  "sheets": [
-   {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 6,
-    "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
-  "provider": "SVAN Investment Managers LLP",
-  "accountNo": "8710090",
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
   "asOf": "2026-06-30",
-  "reportType": "contract-note",
-  "sourcePath": "source/SVAN - BHARAT [1DSgHtJU].pdf",
-  "pages": 5,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "svan-investment-managers-llp-8710090-2026-06-30-contract-note",
-  "label": "SVAN Investment Managers LLP · 8710090 · contract-note",
-  "fy": "2026-06-30",
-  "source": "source/SVAN - BHARAT [1DSgHtJU].pdf",
-  "sheets": [
-   {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 5,
-    "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "svan-investment-managers-llp-8710090-2026-05-31-contract-note",
-  "provider": "SVAN Investment Managers LLP",
-  "accountNo": "8710090",
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-05-31",
-  "reportType": "contract-note",
-  "sourcePath": "source/SVAN - BHARAT [1pRnGtq5].pdf",
-  "pages": 5,
-  "sections": [
-   "pages"
-  ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "svan-investment-managers-llp-8710090-2026-05-31-contract-note",
-  "label": "SVAN Investment Managers LLP · 8710090 · contract-note",
-  "fy": "2026-05-31",
-  "source": "source/SVAN - BHARAT [1pRnGtq5].pdf",
-  "sheets": [
-   {
-    "key": "pages",
-    "name": "Raw page text",
-    "rows": 5,
-    "cols": 2
-   }
-  ]
- },
- {
-  "docKey": "transition-venture-capital-unknown-2026-03-31-unknown",
-  "provider": "Transition Venture Capital",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
-  "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-03-31",
-  "reportType": "unknown",
-  "sourcePath": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "reportType": "expense-statement",
+  "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
   "pages": 1,
   "sections": [
+   "expenses",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "transition-venture-capital-unknown-2026-03-31-unknown",
-  "label": "Transition Venture Capital · unknown",
-  "fy": "2026-03-31",
-  "source": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-expense-statement",
+  "label": "Green Lantern Capital LLP · 510861 · expense-statement",
+  "fy": "2026-06-30",
+  "source": "source/GREEN LANTERN - AJAY.pdf",
   "sheets": [
+   {
+    "key": "expenses",
+    "name": "expense-summary",
+    "rows": 5,
+    "cols": 4
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3578,27 +3742,590 @@
   ]
  },
  {
-  "docKey": "transition-venture-capital-unknown-2026-03-31-unknown-2",
-  "provider": "Transition Venture Capital",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "green-lantern-capital-llp-510861-2026-06-30-corporate-benefits",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-06-30",
+  "reportType": "corporate-benefits",
+  "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
+  "pages": 1,
+  "sections": [
+   "corporateBenefits",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "green-lantern-capital-llp-510861-2026-06-30-corporate-benefits",
+  "label": "Green Lantern Capital LLP · 510861 · corporate-benefits",
+  "fy": "2026-06-30",
+  "source": "source/GREEN LANTERN - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "corporateBenefits",
+    "name": "corporate-benefits",
+    "rows": 16,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GROWTH",
+  "asOf": "2026-06-30",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
+  "label": "Molecule Ventures LLP · 7810404 · fact-sheet",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 17,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 2,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
+  "label": "Molecule Ventures LLP · 7810404 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 28,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-transaction-statement",
+  "label": "Molecule Ventures LLP · 7810404 · transaction-statement",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 6,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-capital-gain",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "capital-gain",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 2,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-capital-gain",
+  "label": "Molecule Ventures LLP · 7810404 · capital-gain",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 15,
+    "cols": 14
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-06-30-expense-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "expense-statement",
+  "sourcePath": "source/Molecule_June_2026_392.pdf",
+  "pages": 1,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-06-30-expense-statement",
+  "label": "Molecule Ventures LLP · 7810404 · expense-statement",
+  "fy": "2026-06-30",
+  "source": "source/Molecule_June_2026_392.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expense-summary",
+    "rows": 4,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-06-30",
+  "reportType": "investor-report",
+  "sourcePath": "source/SVAN - AJAY [1E444lq6].pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710067 · investor-report",
+  "fy": "2026-06-30",
+  "source": "source/SVAN - AJAY [1E444lq6].pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 47,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 6,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 39,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-05-31",
+  "reportType": "investor-report",
+  "sourcePath": "source/SVAN - AJAY [1knFZ18g].pdf",
+  "pages": 6,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710067 · investor-report",
+  "fy": "2026-05-31",
+  "source": "source/SVAN - AJAY [1knFZ18g].pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 47,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 10,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 38,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 6,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-06-30",
+  "reportType": "investor-report",
+  "sourcePath": "source/SVAN - BHARAT [1DSgHtJU].pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710090 · investor-report",
+  "fy": "2026-06-30",
+  "source": "source/SVAN - BHARAT [1DSgHtJU].pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 46,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 6,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 28,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-05-31",
+  "reportType": "investor-report",
+  "sourcePath": "source/SVAN - BHARAT [1pRnGtq5].pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710090 · investor-report",
+  "fy": "2026-05-31",
+  "source": "source/SVAN - BHARAT [1pRnGtq5].pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 46,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 12,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 28,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
+  "provider": "Transition Venture Capital",
+  "accountNo": "TVC263",
+  "owner": "BHARAT JAISINGHANI FAMILY TRUST 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": "Transition Venture Capital Fund I",
+  "asOf": "2026-03-31",
+  "reportType": "unknown",
+  "sourcePath": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "pages": 1,
+  "sections": [
+   "commitment",
+   "transactions",
+   "capitalAccount",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
+  "label": "Transition Venture Capital · TVC263 · unknown",
+  "fy": "2026-03-31",
+  "source": "source/TRANSITION VENTURE -BHARAT JAISINGHANI FAMILY TRUST 3_April_2026 (1).pdf",
+  "sheets": [
+   {
+    "key": "commitment",
+    "name": "commitment",
+    "rows": 2,
+    "cols": 6
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 5
+   },
+   {
+    "key": "capitalAccount",
+    "name": "capitalAccount",
+    "rows": 9,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
+  "provider": "Transition Venture Capital",
+  "accountNo": "TVC262",
+  "owner": "BHARAT JAISINGHANI FAMILY TRUST 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": "Transition Venture Capital Fund I",
   "asOf": "2026-03-31",
   "reportType": "unknown",
   "sourcePath": "source/TRANSITION VENTURE-BHARAT JAISINGHANI FAMILY TRUST 2_April_2026 (1).pdf",
   "pages": 1,
   "sections": [
+   "commitment",
+   "transactions",
+   "capitalAccount",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
-  "fileKey": "transition-venture-capital-unknown-2026-03-31-unknown-2",
-  "label": "Transition Venture Capital · unknown",
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
+  "label": "Transition Venture Capital · TVC262 · unknown",
   "fy": "2026-03-31",
   "source": "source/TRANSITION VENTURE-BHARAT JAISINGHANI FAMILY TRUST 2_April_2026 (1).pdf",
   "sheets": [
+   {
+    "key": "commitment",
+    "name": "commitment",
+    "rows": 2,
+    "cols": 6
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 5
+   },
+   {
+    "key": "capitalAccount",
+    "name": "capitalAccount",
+    "rows": 9,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "scheme-portfolio-disclosure-unknown-2026-06-30-scheme-portfolio",
+  "provider": "Scheme portfolio disclosure",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": "WhiteOak Capital Multi Asset Allocation Fund",
+  "asOf": "2026-06-30",
+  "reportType": "scheme-portfolio",
+  "sourcePath": "source/White Oak - Ajay.xlsx",
+  "pages": 1,
+  "sections": [
+   "schemePortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "scheme-portfolio-disclosure-unknown-2026-06-30-scheme-portfolio",
+  "label": "Scheme portfolio disclosure · scheme-portfolio",
+  "fy": "2026-06-30",
+  "source": "source/White Oak - Ajay.xlsx",
+  "sheets": [
+   {
+    "key": "schemePortfolio",
+    "name": "schemePortfolio",
+    "rows": 178,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",

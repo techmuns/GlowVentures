@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { extractZip } from "./lib/unzip.mjs";
 import { readPdf } from "./lib/pdf.mjs";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
+import { readSpreadsheet } from "./lib/sheet.mjs";
 import { classify, REPORT_TYPES } from "./lib/classify.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -104,10 +105,60 @@ function expandArchives() {
   return report;
 }
 
-// ── 2. Inspect every PDF ─────────────────────────────────────────────────────
+// ── 2. Inspect every file ────────────────────────────────────────────────────
+//
+// EVERY file, not every PDF. The drop is not all PDFs — it carries a manager's
+// portfolio disclosure as .xlsx and a broker's P&L and transaction tape as .xls
+// — and this pass used to filter `.pdf` before it counted anything. The console
+// then said "Inventoried 105 PDF(s)", which was true and told nobody that four
+// files had not been looked at. A file the pipeline cannot read must still be
+// SEEN, or "the drop is fully ingested" is a claim about the files we happened
+// to recognise.
+/** Which readable files go to the workbook reader rather than to pdfjs. */
+const SPREADSHEET_EXT = /\.(xls|xlsx)$/i;
+/**
+ * Every file this stage can OPEN — the SAME set `npm run extract` reads.
+ *
+ * It was `/\.pdf$/i` while the spreadsheets went to `inspectOthers`, so the
+ * inventory listed three files it could not open and extract read all three
+ * completely. The inventory is what a human reads to decide what is in a drop;
+ * it must not under-report the pipeline's own reach.
+ */
+const READABLE_EXT = /\.(pdf|xls|xlsx)$/i;
+
+/**
+ * Does this text contain WORDS, or only bytes?
+ *
+ * A PDF whose font encoding the flat reader cannot map still yields characters —
+ * one per glyph, space-separated — so a length or emptiness test says it read
+ * fine. Counting runs of four or more letters separates the two cleanly: a page
+ * of English has hundreds, and a page of mojibake has none.
+ *
+ * The threshold is deliberately low. This decides whether to spend a pdfjs parse
+ * on a file, and spending one unnecessarily costs a second; skipping one that
+ * needed it costs a document.
+ */
+const WORD_RUN = /[A-Za-z]{4,}/g;
+function looksLikeProse(text, minWords = 20) {
+  return (String(text ?? "").match(WORD_RUN) ?? []).length >= minWords;
+}
+
+/** What a non-PDF file is, for the row that reports it. */
+function describeOther(file) {
+  const ext = (path.extname(file) || "").toLowerCase();
+  switch (ext) {
+    case ".xlsx": return { kind: "spreadsheet (Office Open XML)", reason: "no spreadsheet reader — see docs/EXTRACTION-REPORT.md" };
+    case ".xls":  return { kind: "spreadsheet (legacy .xls, often HTML-table)", reason: "no spreadsheet reader — see docs/EXTRACTION-REPORT.md" };
+    case ".csv":  return { kind: "delimited text", reason: "no CSV reader" };
+    case ".docx": return { kind: "Word document", reason: "no Word reader" };
+    case ".zip":  return { kind: "archive", reason: "expanded above; its contents are inventoried individually" };
+    default:      return { kind: ext ? `${ext.slice(1)} file` : "file with no extension", reason: "unrecognised file type" };
+  }
+}
+
 async function inspectPdfs() {
   const pdfs = [];
-  walk(SOURCE_DIR, (f) => { if (/\.pdf$/i.test(f)) pdfs.push(f); });
+  walk(SOURCE_DIR, (f) => { if (READABLE_EXT.test(f)) pdfs.push(f); });
   pdfs.sort((a, b) => rel(a).localeCompare(rel(b)));
 
   const passwords = passwordsFromEnv();
@@ -116,25 +167,71 @@ async function inspectPdfs() {
     const stat = fs.statSync(full);
     const fileName = path.basename(full);
     let pages = null, text = "", error = null, encrypted = false;
-    try {
-      ({ pages, text, encrypted, error } = readPdf(fs.readFileSync(full)));
-    } catch (e) {
-      error = e.message;
+    const bytes = fs.readFileSync(full);
+    if (SPREADSHEET_EXT.test(full)) {
+      /**
+       * A WORKBOOK, READ THE SAME WAY EXTRACT READS IT.
+       *
+       * The inventory used to hand every file to the PDF reader, so the drop's
+       * three spreadsheets arrived with no text and were filed as "could not
+       * classify" — while `npm run extract` read all three completely. Two
+       * stages disagreeing about a file they both open is worse than either
+       * being wrong alone: the inventory is what a human reads to decide what is
+       * in the drop.
+       */
+      const wb = readSpreadsheet(bytes);
+      pages = wb.sheets.length;
+      text = wb.sheets.map((sh) => sh.rows.map((r) => r.join(" ")).join("\n")).join("\n");
+      error = wb.sheets.length ? null : wb.error;
+    } else {
+      try {
+        ({ pages, text, encrypted, error } = readPdf(bytes));
+      } catch (e) {
+        error = e.message;
+      }
     }
     // An encrypted file yields nothing to the flat reader, and a classifier fed
     // nothing files it under "(unidentified)" with the same confidence as a file
     // that genuinely says nothing. Route it through pdfjs, which can decrypt, so
     // the row states either what the document is or that no password opened it.
-    if (encrypted) {
-      const grid = await extractLayout(new Uint8Array(fs.readFileSync(full)), { passwords });
+    /**
+     * …AND WHENEVER THE CHEAP READER RETURNED BYTES BUT NOT WORDS.
+     *
+     * "Encrypted" was one cause of an unreadable file and this condition treated
+     * it as the only one. The 360 ONE Alternates letters are unencrypted PDFs
+     * that the flat reader turns into 71,479 characters of MOJIBAKE — a custom
+     * font encoding it cannot map, yielding `ï ò ì K E ^ ] o K } µ v ] ]` where
+     * the letter's text should be. Non-empty, so an emptiness test passed it
+     * through, and the classifier then filed a perfectly good statement under
+     * "could not classify" while `npm run extract` — which uses pdfjs — read
+     * every figure on it.
+     *
+     * `looksLikeProse` asks the only question that matters: are there WORDS in
+     * here? Real prose has hundreds of four-letter runs; mojibake has none.
+     */
+    //
+    // AND ONE MORE TRIGGER: when the cheap reader's text names no issuer.
+    // `looksLikeProse` catches text that is wholly mojibake, but a PDF can map
+    // half its fonts and garble the rest — enough real words to pass, not enough
+    // to identify. The rule is simply that a cheap answer of "I don't know" is
+    // worth spending a pdfjs parse to check, which is a second per file and only
+    // on the files that need it.
+    if (!SPREADSHEET_EXT.test(full)
+      && (encrypted || !looksLikeProse(text) || !classify({ fileName, text }).provider)) {
+      const grid = await extractLayout(new Uint8Array(bytes), { passwords });
       if (!grid.error) {
         pages = grid.numPages;
         text = grid.pages.map((p) => p.text).join(" ").replace(/\s+/g, " ");
         error = null;
-      } else {
+      } else if (grid.pages?.length) {
+        // pdfjs read pages and still could not place it — keep whatever the flat
+        // reader gave, and let the row say what it can.
+      } else if (encrypted) {
         error = passwords.length
           ? "encrypted — no supplied password opened it"
           : "encrypted — set GLOW_PDF_PASSWORDS to read it";
+      } else {
+        error = grid.error ?? "no text layer this pipeline could read";
       }
     }
     const guess = classify({ fileName, text });
@@ -151,6 +248,44 @@ async function inspectPdfs() {
     });
   }
   return out;
+}
+
+/**
+ * Every file in the drop that is NOT a PDF and not a ZIP we expanded.
+ *
+ * These get a row of their own so the inventory's totals cover the whole folder.
+ * They carry `readError` so they land in the "could not classify" section rather
+ * than in a provider group — the point is that they are visible and named, not
+ * that they are pretended to be understood.
+ */
+function inspectOthers() {
+  const others = [];
+  walk(SOURCE_DIR, (f) => {
+    if (READABLE_EXT.test(f)) return;
+    if (/\.zip$/i.test(f)) return;                       // expanded in step 1
+    if (path.basename(f).toLowerCase() === "readme.md") return;
+    others.push(f);
+  });
+  others.sort((a, b) => rel(a).localeCompare(rel(b)));
+  return others.map((full) => {
+    const stat = fs.statSync(full);
+    const { kind, reason } = describeOther(full);
+    return {
+      path: rel(full),
+      fileName: path.basename(full),
+      bytes: stat.size,
+      size: humanSize(stat.size),
+      pages: null,
+      fromArchive: full.startsWith(EXTRACT_DIR + path.sep),
+      encrypted: false,
+      isPdf: false,
+      fileKind: kind,
+      readError: reason,
+      provider: null, ownerName: null, accountNo: null, asOfDate: null,
+      reportType: "unknown", sections: [], familyGroup: null, strategy: null,
+      confidence: "low", matchedBy: "not a PDF",
+    };
+  });
 }
 
 // ── 3. Group provider → account → as-of → reportType ─────────────────────────
@@ -210,7 +345,7 @@ function overlaps(tree) {
 // ── 4. Render the human report ───────────────────────────────────────────────
 const esc = (s) => String(s ?? "—").replace(/\|/g, "\\|");
 
-function renderMarkdown({ generatedAt, files, tree, archives, unclassified, overlapping }) {
+function renderMarkdown({ generatedAt, files, nonPdfFiles, tree, archives, unclassified, overlapping }) {
   const L = [];
   L.push("# Ingest inventory");
   L.push("");
@@ -236,7 +371,9 @@ function renderMarkdown({ generatedAt, files, tree, archives, unclassified, over
   L.push("");
   L.push("| | |");
   L.push("| --- | --- |");
-  L.push(`| PDFs found | ${files.length} |`);
+  L.push(`| Files found | ${files.length} |`);
+  L.push(`| — of which PDFs | ${files.length - (nonPdfFiles?.length ?? 0)} |`);
+  L.push(`| — of which this pipeline cannot open | ${nonPdfFiles?.length ?? 0} |`);
   L.push(`| Classified | ${classified.length} |`);
   L.push(`| Could not classify | ${unclassified.length} |`);
   L.push(`| From archives | ${files.filter((f) => f.fromArchive).length} |`);
@@ -296,6 +433,21 @@ function renderMarkdown({ generatedAt, files, tree, archives, unclassified, over
     }
   }
 
+  if (nonPdfFiles && nonPdfFiles.length) {
+    L.push(`## Files this pipeline cannot open (${nonPdfFiles.length})`);
+    L.push("");
+    L.push("Listed so the drop's coverage is countable. These are NOT \"could not classify\" —");
+    L.push("that section is for files we opened and could not place. These were never opened,");
+    L.push("which is a different fact and a different fix.");
+    L.push("");
+    L.push("| File | Type | Size | Why |");
+    L.push("| --- | --- | ---: | --- |");
+    for (const f of nonPdfFiles) {
+      L.push(`| \`${esc(f.path)}\` | ${esc(f.fileKind)} | ${f.size} | ${esc(f.readError)} |`);
+    }
+    L.push("");
+  }
+
   L.push("## Could not classify");
   L.push("");
   if (!unclassified.length) {
@@ -342,7 +494,9 @@ async function main() {
   fs.mkdirSync(DOCS_DIR, { recursive: true });
 
   const archiveReport = expandArchives();
-  const files = await inspectPdfs();
+  const pdfFiles = await inspectPdfs();
+  const otherFiles = inspectOthers();
+  const files = [...pdfFiles, ...otherFiles];
   const tree = group(files.filter((f) => !isUnclassified(f)));
   const unclassified = files.filter(isUnclassified);
   const overlapping = overlaps(tree);
@@ -352,7 +506,11 @@ async function main() {
     generatedAt,
     sourceDir: rel(SOURCE_DIR),
     counts: {
-      pdfs: files.length,
+      // `files` is EVERY file in the drop; `pdfs` is the subset this pipeline can
+      // open. Reporting only the second is what hid four files.
+      files: files.length,
+      pdfs: pdfFiles.length,
+      nonPdf: otherFiles.length,
       classified: files.length - unclassified.length,
       unclassified: unclassified.length,
       encrypted: files.filter((f) => f.encrypted).length,
@@ -364,19 +522,24 @@ async function main() {
     archives: archiveReport.archives,
     archiveFailures: archiveReport.failures,
     files,
+    nonPdfFiles: otherFiles,
     groups: tree,
     overlaps: overlapping,
     unclassified,
   };
 
   fs.writeFileSync(JSON_OUT, JSON.stringify(json, null, 2) + "\n");
-  fs.writeFileSync(MD_OUT, renderMarkdown({ generatedAt, files, tree, archives: archiveReport.archives, unclassified, overlapping }));
+  fs.writeFileSync(MD_OUT, renderMarkdown({ generatedAt, files, nonPdfFiles: otherFiles, tree, archives: archiveReport.archives, unclassified, overlapping }));
 
   if (!files.length) {
     console.log("No PDFs found under source/ — wrote an empty inventory.");
     console.log("  Drop the statement ZIPs and PDFs into source/ and re-run `npm run inventory`.");
   } else {
-    console.log(`Inventoried ${files.length} PDF(s) from ${archiveReport.archives.length} archive(s).`);
+    console.log(`Inventoried ${files.length} file(s) from ${archiveReport.archives.length} archive(s): ${pdfFiles.length} PDF(s), ${otherFiles.length} non-PDF.`);
+    if (otherFiles.length) {
+      console.log(`  ${otherFiles.length} file(s) this pipeline cannot open — listed so the drop's coverage is countable:`);
+      for (const o of otherFiles) console.log(`     ${o.path}  (${o.fileKind})`);
+    }
     console.log(`  classified: ${files.length - unclassified.length}   could not classify: ${unclassified.length}`);
     if (overlapping.length) console.log(`  ${overlapping.length} account/date group(s) carry more than one report — see the report.`);
     if (archiveReport.failures.length) console.log(`  ${archiveReport.failures.length} archive entr(ies) failed to extract — listed in the JSON.`);

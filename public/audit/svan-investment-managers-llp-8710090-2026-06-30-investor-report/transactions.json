@@ -1,0 +1,59 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "security",
+   "side",
+   "quantity",
+   "grossRate",
+   "netRate",
+   "netValue"
+  ],
+  [
+   "2026-06-09",
+   "GLAND PHARMA LIMITED",
+   "buy",
+   845,
+   2289.94,
+   3.67,
+   1938099.05
+  ],
+  [
+   "2026-06-12",
+   "Avalon Technologies Limited",
+   "sell",
+   1005,
+   1600.67,
+   2.56,
+   1606104
+  ],
+  [
+   "2026-06-18",
+   "Paras Defence and Space Technologies",
+   "sell",
+   315,
+   1285.85,
+   2.05,
+   404395.55
+  ],
+  [
+   "2026-06-19",
+   "Paras Defence and Space Technologies",
+   "sell",
+   395,
+   1436,
+   2.29,
+   566313.74
+  ],
+  [
+   "2026-06-25",
+   "Syrma SGS Technology Limited",
+   "sell",
+   250,
+   1467.13,
+   2.35,
+   366194.75
+  ]
+ ]
+}

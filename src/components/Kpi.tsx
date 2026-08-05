@@ -4,7 +4,12 @@ import { ReactNode } from "react";
 // fit across a strip inside the app frame (with the left nav) without the value
 // breaking onto two lines. Used by the CIO cockpit and the Stock Info page.
 export function Kpi({ label, value, sub, delta, icon }: {
-  label: string; value: ReactNode; sub?: ReactNode; delta?: number; icon?: ReactNode;
+  label: string; value: ReactNode; sub?: ReactNode;
+  /**
+   * The percentage arrow. NULL renders nothing at all — a tile whose figure the
+   * book does not carry must not show "■ 0.0%", which reads as a measured flat.
+   */
+  delta?: number | null; icon?: ReactNode;
 }) {
   return (
     <div className="card p-4">

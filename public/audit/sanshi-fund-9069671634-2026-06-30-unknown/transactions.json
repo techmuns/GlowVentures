@@ -1,0 +1,75 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "description",
+   "kind",
+   "units",
+   "amount"
+  ],
+  [
+   "2025-04-30",
+   "Initial Contribution",
+   "contribution",
+   "",
+   27500000
+  ],
+  [
+   "2025-04-30",
+   "Stamp Duty @ 0.005%",
+   "expense",
+   "",
+   1374.93
+  ],
+  [
+   "2025-04-30",
+   "Units Allotment",
+   "contribution",
+   276847.775,
+   27498625.06
+  ],
+  [
+   "2025-06-17",
+   "Drawdown",
+   "contribution",
+   "",
+   27500000
+  ],
+  [
+   "2025-06-17",
+   "Stamp Duty @ 0.005%",
+   "expense",
+   "",
+   1374.93
+  ],
+  [
+   "2025-06-17",
+   "Units Allotment",
+   "contribution",
+   251252.442,
+   54997250.07
+  ],
+  [
+   "2025-09-03",
+   "Top Up",
+   "contribution",
+   "",
+   150000000
+  ],
+  [
+   "2025-09-03",
+   "Stamp Duty @ 0.005%",
+   "expense",
+   "",
+   7499.63
+  ],
+  [
+   "2025-09-03",
+   "Units Allotment",
+   "contribution",
+   1233164.412,
+   204989750.47
+  ]
+ ]
+}

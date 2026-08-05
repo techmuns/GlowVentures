@@ -17,6 +17,7 @@ import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
+  BOOK_COMMITMENTS,
 } from "@/data/glowData";
 
 // Re-export so components can keep importing these from the context module.
@@ -46,6 +47,10 @@ function defaultPortfolio(): Portfolio {
     accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
     // Keyed by owner — what the per-entity XIRR reads.
     entityCashFlows: BOOK_ENTITY_CASH_FLOWS,
+    // Undrawn capital the family owes a fund on demand. NOT a holding — the
+    // fund's value is already a position — and not part of `privateMarkets`,
+    // which describes investments made.
+    commitments: BOOK_COMMITMENTS,
     privateMarkets: {
       peFunds: BOOK_PE_FUNDS, preIpoFunds: BOOK_PREIPO_FUNDS, unlistedCompanies: BOOK_UNLISTED_COMPANIES,
       debtFunds: BOOK_DEBT_FUNDS, closedFunds: BOOK_CLOSED_FUNDS, startups: BOOK_STARTUPS,
@@ -115,7 +120,8 @@ type Ctx = {
   displayCurrency: DisplayCurrency;
   setDisplayCurrency: (c: DisplayCurrency) => void;
   convertFromBase: (n: number) => number;
-  fmtFromBase: (n: number, opts?: { compact?: boolean; sign?: boolean }) => string;
+  /** Money in the display currency, or `—` when the book carries no figure. */
+  fmtFromBase: (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) => string;
   clearPortfolio: () => void;
   inrPerUsd: number;      // live USD→INR rate (₹ per $1)
   fxAsOf: string | null;  // date of the live rate, if fetched
@@ -266,7 +272,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const setDisplayCurrency = useCallback((c: DisplayCurrency) => { setCcy(c); writeDisplayCurrency(c); }, []);
   const convertFromBase = useCallback((n: number) => (displayCurrency === "USD" ? n / inrPerUsd : n), [displayCurrency, inrPerUsd]);
   const fmtFromBase = useCallback(
-    (n: number, opts?: { compact?: boolean; sign?: boolean }) => fmtCurrency(convertFromBase(n), displayCurrency, opts),
+    (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) =>
+      (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency, opts) : "—"),
     [convertFromBase, displayCurrency],
   );
   // Reset to the ingested book (upload override lands in a later prompt).

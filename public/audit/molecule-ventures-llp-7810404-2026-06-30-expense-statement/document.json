@@ -1,0 +1,82 @@
+{
+ "docKey": "molecule-ventures-llp-7810404-2026-06-30-expense-statement",
+ "provider": "Molecule Ventures LLP",
+ "accountNo": "7810404",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "MOLECULE392",
+ "owner": "AJAY JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "expense-statement",
+ "sourcePath": "source/Molecule_June_2026_392.pdf",
+ "pages": 1,
+ "status": "ok",
+ "warnings": [
+  {
+   "code": "from-bundle",
+   "detail": "pages 8–8 of 8 in Molecule_June_2026_392.pdf, which carries 5 reports"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [
+  {
+   "date": null,
+   "settlementDate": null,
+   "detail": "Fund Accounting Fees",
+   "notes": "2026-06-01 to 2026-06-30",
+   "amount": 345.01,
+   "paid": 345.01,
+   "payable": 0,
+   "source": "molecule-ventures-llp-7810404-2026-06-30-expense-statement"
+  },
+  {
+   "date": null,
+   "settlementDate": null,
+   "detail": "Sec. Tran. Tax",
+   "notes": "2026-06-01 to 2026-06-30",
+   "amount": 608.9,
+   "paid": 608.9,
+   "payable": 0,
+   "source": "molecule-ventures-llp-7810404-2026-06-30-expense-statement"
+  }
+ ],
+ "periodFrom": "2026-06-01",
+ "periodTo": "2026-06-30",
+ "pan": null,
+ "sourcePages": {
+  "from": 8,
+  "to": 8,
+  "of": 8
+ },
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

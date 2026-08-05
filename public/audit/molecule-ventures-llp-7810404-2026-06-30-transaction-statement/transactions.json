@@ -1,0 +1,50 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "settleDate",
+   "settlement",
+   "description",
+   "tranDate",
+   "security",
+   "exchange",
+   "quantity",
+   "unitPrice",
+   "brokerage",
+   "stt"
+  ],
+  [
+   "Current Period Transactions"
+  ],
+  [
+   "Current Period Settled Transactions"
+  ],
+  [
+   "Shares - Listed"
+  ],
+  [
+   "Sell",
+   "24/06/2026",
+   "25/06/2026",
+   "GREENPANEL INDUSTRIES",
+   "NSE",
+   "2,000.000",
+   "190.0336",
+   "0.3363",
+   "380.10",
+   "379,014.50"
+  ],
+  [
+   "Buy",
+   "24/06/2026",
+   "24/06/2026",
+   "SASKEN COMMUNICATION TECHNOLOGIES LTD.",
+   "NSE",
+   "100.000",
+   "2,288.4049",
+   "4.3935",
+   "228.80",
+   "229,508.64"
+  ]
+ ]
+}

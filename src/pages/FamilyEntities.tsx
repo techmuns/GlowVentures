@@ -67,7 +67,7 @@ export function FamilyEntities() {
     const s = holdingsQ.trim().toLowerCase();
     return s ? rows.filter((h) => h.security.toLowerCase().includes(s) || (h.isin ?? "").toLowerCase().includes(s)) : rows;
   })();
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   return (
     <div>
       <PageHeader eyebrow="Allocation" title="Family & Entities"

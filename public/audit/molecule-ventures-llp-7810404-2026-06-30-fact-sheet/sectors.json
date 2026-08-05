@@ -1,0 +1,100 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "CHEMFAB ALKALIS LIMITED",
+   "CHEMICALS",
+   "369,200",
+   "3.28%"
+  ],
+  [
+   "2",
+   "ARVIND FASHIONS LIMITED",
+   "OTHERS",
+   "1,883,800",
+   "16.75%"
+  ],
+  [
+   "3",
+   "SANSERA ENGINEERING LIMITED",
+   "OTHERS",
+   "2,556,960",
+   "22.73%"
+  ],
+  [
+   "SASKEN COMMUNICATION",
+   "INFORMATION",
+   "216,160",
+   "1.92%"
+  ],
+  [
+   "4"
+  ],
+  [
+   "TECHNOLOGIES LTD.",
+   "TECHNOLOGY"
+  ],
+  [
+   "5",
+   "DCW LIMITED",
+   "BASIC MATERIALS",
+   "142,320",
+   "1.27%"
+  ],
+  [
+   "6",
+   "INDIAN METALS AND FERRO ALLOYS LTD. BASIC MATERIALS",
+   "1,899,000",
+   "16.88%"
+  ],
+  [
+   "7",
+   "JAYASWAL NECO INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "1,953,850",
+   "17.37%"
+  ],
+  [
+   "8",
+   "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "1,371,496",
+   "12.19%"
+  ],
+  [
+   "9",
+   "MANALI PETROCHEMICAL LTD.",
+   "BASIC MATERIALS",
+   "641,000",
+   "5.70%"
+  ],
+  [
+   "Cash and",
+   "214,463",
+   "1.91%"
+  ],
+  [
+   "10",
+   "Cash"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "Total",
+   "11,248,249",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: Nirav Parikh | email:"
+  ]
+ ]
+}

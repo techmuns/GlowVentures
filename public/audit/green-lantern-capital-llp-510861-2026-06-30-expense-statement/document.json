@@ -1,0 +1,92 @@
+{
+ "docKey": "green-lantern-capital-llp-510861-2026-06-30-expense-statement",
+ "provider": "Green Lantern Capital LLP",
+ "accountNo": "510861",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": "GLC0780",
+ "owner": "AJAY T JAISINGHANI",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+ "engagement": "PMS",
+ "providerEngagement": "Portfolio Management Service",
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "expense-statement",
+ "sourcePath": "source/GREEN LANTERN - AJAY.pdf",
+ "pages": 1,
+ "status": "ok",
+ "warnings": [
+  {
+   "code": "from-bundle",
+   "detail": "pages 14–14 of 15 in GREEN LANTERN - AJAY.pdf, which carries 4 reports"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [
+  {
+   "date": null,
+   "settlementDate": null,
+   "detail": "Other Expenses",
+   "notes": "2026-04-01 to 2026-06-30",
+   "amount": 50146,
+   "paid": 0,
+   "payable": 50146,
+   "source": "green-lantern-capital-llp-510861-2026-06-30-expense-statement"
+  },
+  {
+   "date": null,
+   "settlementDate": null,
+   "detail": "Management Fees",
+   "notes": "2026-04-01 to 2026-06-30",
+   "amount": 234014.65,
+   "paid": 0,
+   "payable": 234014.65,
+   "source": "green-lantern-capital-llp-510861-2026-06-30-expense-statement"
+  },
+  {
+   "date": null,
+   "settlementDate": null,
+   "detail": "Sec. Tran. Tax",
+   "notes": "2026-04-01 to 2026-06-30",
+   "amount": 21164.14,
+   "paid": 21054.86,
+   "payable": 109.28,
+   "source": "green-lantern-capital-llp-510861-2026-06-30-expense-statement"
+  }
+ ],
+ "periodFrom": "2026-04-01",
+ "periodTo": "2026-06-30",
+ "pan": null,
+ "sourcePages": {
+  "from": 14,
+  "to": 14,
+  "of": 15
+ },
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

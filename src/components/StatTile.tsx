@@ -3,7 +3,13 @@ import { ReactNode } from "react";
 function changeColor(n: number) { return n > 0 ? "text-gain" : n < 0 ? "text-loss" : "text-slate-400"; }
 
 export function StatTile({ label, value, sub, delta, icon, hint }: {
-  label: string; value: ReactNode; sub?: ReactNode; delta?: number; icon?: ReactNode; hint?: ReactNode;
+  label: string; value: ReactNode; sub?: ReactNode;
+  /**
+   * The percentage arrow. NULL is accepted and renders NOTHING — a tile whose
+   * figure the book does not carry must not show a "■ 0.00%" that reads as a
+   * measured flat move.
+   */
+  delta?: number | null; icon?: ReactNode; hint?: ReactNode;
 }) {
   return (
     <div className="card p-5">

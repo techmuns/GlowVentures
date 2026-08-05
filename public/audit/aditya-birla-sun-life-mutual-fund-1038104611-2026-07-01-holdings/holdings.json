@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "",
+   "ABSL Liquid Fund - Direct-Growth",
+   1752.565,
+   453.2856,
+   "2026-06-30",
+   537146.28,
+   794412.48
+  ]
+ ]
+}

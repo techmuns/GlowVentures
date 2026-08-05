@@ -1,0 +1,37 @@
+{
+ "name": "incomeByTaxHead",
+ "rows": [
+  [
+   "head",
+   "amount"
+  ],
+  [
+   "Long Term Capital Gain/(Loss) on Listed Equity Share (STT Paid)",
+   -1767
+  ],
+  [
+   "Short Term Capital Gain/(Loss) on Listed Equity Share (STT Paid)",
+   725037
+  ],
+  [
+   "Short Term Capital Gain/(Loss) on Debt/Liquid Mutual Funds",
+   14836
+  ],
+  [
+   "Total Income",
+   738106
+  ],
+  [
+   "Total Expenses",
+   -26437
+  ],
+  [
+   "Net Income Post Expenses",
+   711669
+  ],
+  [
+   "TDS",
+   -73811
+  ]
+ ]
+}

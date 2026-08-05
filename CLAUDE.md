@@ -43,9 +43,9 @@ Three corollaries that this book actually needed:
   nulls otherwise. Averaging a missing account in as zero drags the answer
   towards a number nobody measured.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named.** Realised gains exist for five of nine accounts here; the other four
-  render "no capital gain statement issued for this account in this drop", and
-  the total says it covers three of five.
+  named.** Realised gains exist for 7 of 23 accounts here; the other 16 render
+  "no capital gain statement issued for this account in this drop", and the total
+  says how many it covers.
 - **A COMPUTED zero is legitimate and stays** — cash has no P&L, a net realised
   loss owes no tax — but the reason goes in the tile, not in a tooltip. A reader
   scanning `₹0` beside a −₹1.97 Cr loss must be able to see it is the arithmetic.
@@ -67,31 +67,76 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
-- `scripts/ingest/*` — the PDF intake pipeline.
+- `scripts/ingest/*` — the statement intake pipeline. `lib/bundle.mjs` splits a
+  multi-report PDF; `lib/sheet.mjs` reads the spreadsheets (an `.xls` in this drop
+  is an HTML table, not BIFF — the format is sniffed from the bytes, never the
+  extension); `providers/*` is one reader per document family.
+- `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — undrawn capital owed
+  to a drawdown fund. Not a holding, and never summed into NAV.
 
 ## The data model, and why it differs from a workbook-sourced book
 
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** Twelve issuers, nine accounts in the
-book, three family members, 28 files expanding to 105 PDFs — of which **103 are
-distinct documents** and 71 parse fully:
+**What is actually in `source/` today.** Fourteen issuers, 23 accounts in the
+book, six holders, 28 files expanding to 109 — of which **113 documents** are
+extracted (three PDFs are BUNDLES carrying several reports each) and every one of
+them reads: 105 ok, 8 partial, **0 failed**.
 
-| Provider | Accounts | Owner | Strategy | As of |
-| --- | --- | --- | --- | --- |
-| Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-07-10 |
-| Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-07-10 |
-| Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | GLC Growth Fund | 2026-06-25 |
-| Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | GLC Growth Fund | 2026-06-25 |
-| Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | Carnelian Bespoke Portfolio | 2026-07-10 |
-| V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
-| V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 |
-| 360 ONE Private Wealth | CRN37702 | Ajay Jaisinghani | — (issued per CRN, not per mandate) | 2026-06-30 |
-| 360 ONE Private Wealth | CRN60117 | Bharat Jaisinghani | — | 2026-06-30 |
+| Provider | Accounts | Owner | As of | Market value |
+| --- | --- | --- | --- | ---: |
+| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹976.8 Cr |
+| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹294.2 Cr |
+| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹293.5 Cr |
+| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹284.6 Cr |
+| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹195.7 Cr |
+| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-07-10 | ₹400.1 Cr |
+| Goldstandard Wealth | 100023 | Ajay Jaisinghani | 2026-07-10 | ₹181.2 Cr |
+| Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-07-10 | ₹77.5 Cr |
+| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-06-30 | ₹159.8 Cr |
+| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-06-30 | ₹103.8 Cr |
+| Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-06-25 | ₹117.0 Cr |
+| Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-06-25 | ₹59.2 Cr |
+| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-07-06 | ₹92.4 Cr |
+| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-07-06 | ₹65.5 Cr |
+| Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹17.1 Cr each |
+| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-06-30 | ₹14.6 Cr each* |
+| Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-06-30 | ₹11.2 Cr |
+| LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹9.9 Cr |
+| 360 ONE Alternates | 1000632 / 1000633 | Ajay / Bharat Jaisinghani | 2026-05-18 | — (income only) |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-07-01 | ₹0 (redeemed) |
 
-Seven are PMS mandates on one reporting system; the two 360 ONE accounts are
-Distribution engagements holding a single AIF each.
+\* the same holding, reported under both CRNs — see §4c. Counted once.
+
+**Consolidated ₹335.43 Cr**: listed ₹127.78 Cr, private ₹207.65 Cr. The split is
+on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
+privateValue: 0` — true when every account was a listed-equity mandate, and false
+the moment the AIF statements got a reader, at which point 62% of the book was
+being reported under a label that did not describe it.
+
+Six PMS mandates run on one reporting system (Goldstandard, Green Lantern,
+Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-III
+AIF folios; two are drawdown AIF capital accounts held by TRUSTS; two are 360 ONE
+Distribution engagements; one is a self-directed demat account; one is a joint
+mutual-fund folio.
+
+**Read completely, and deliberately NOT in the book.** Four mutual-fund folios
+(₹32,70,831.46) are held by `HOPE INDIA TRUST` — a separate taxpayer, filed by
+each AMC as `Status : Trust`. WhiteOak's monthly scheme portfolio disclosure has
+no folio, no units and no holder at all; it is the SCHEME's own holdings.
+`docs/BOOK-REPORT.md` names all of them with their value, so nobody has to wonder
+whether the money was missed or excluded, and one entry in `shared/owners.mjs`
+reverses it if the family says the trust belongs here.
+
+**A folio that was excluded on an unchecked premise.** This book's note used to
+say all five mutual-fund folios were the trust's. HDFC 16180583 prints
+`Bharat A Jaisinghani`, `Tax Status : Individual` and `Joint 1 : ANKITA
+JAISINGHANI`, with both their PANs. It is the family's own and now in the book —
+at a value of ₹0, because both its schemes have been redeemed to nil units. That
+is a MEASURED zero and keeps its zero; contrast the two 360 ONE Alternates
+folios, which no statement values at all and which render `—` with the reason.
+
 
 **One holding is reported under two members, and is counted once.** 360 ONE
 Special Opportunities Fund Series 8 Class A3 appears with byte-identical figures
@@ -100,38 +145,77 @@ naming the other through `alsoReportedUnder`; the consolidated total counts the
 `dedupeGroup` once. This is check (c) firing on a real case for the first time,
 and it is what the policy in §4c was written for.
 
-**Twelve issuers are present; four have a reader.** The rest are named in the
-extraction report's coverage section with the reason, and contribute NOTHING to
-the book — no partial figures, no estimates:
+**Every issuer has a reader.** Getting there took four of them, and each earned
+its own file because the layouts share nothing:
 
-| Issuer | Documents | What it is | Status |
-| --- | ---: | --- | --- |
-| Goldstandard / Green Lantern / Carnelian / V.E.C Assago | 74 | PMS statement sets on one reporting system | read |
-| 360 ONE Private Wealth | 4 | client-level PORTFOLIO ANALYSIS REPORT | read |
-| 360 ONE Private Wealth | 5 | distribution letters, statements of earnings | **no reader** |
-| SVAN Investment Managers LLP | 4 | SEBI monthly PMS investor report | **no reader** |
-| Sanshi Fund | 5 | Category-III AIF monthly account statements | **no reader** |
-| Transition Venture Capital | 2 | AIF capital-account statements | **no reader** |
-| Molecule Ventures LLP | 1 | PMS fact sheet (market value only, no quantity) | **no reader** |
-| LKP Securities | 2 | depository holding + transaction statement | **no reader** |
-| Aditya Birla Sun Life / Kotak / HDFC / Mirae Asset MF | 5 | mutual-fund folio statements | **no reader** |
-| Green Lantern Capital LLP | 1 | contract note | **no reader** |
+| Reader | Documents | What it reads |
+| --- | ---: | --- |
+| `providers/pmsStatements.mjs` | 76 | the house statement sets — six managers, one reporting system |
+| `providers/pmsInvestorReport.mjs` | 5 | the SEBI PMS INVESTOR REPORT, keyed on the REPORT TYPE rather than the house: SVAN issues it monthly and Green Lantern quarterly, and it is one prescribed layout |
+| `providers/threeSixtyOne.mjs` | 4 | 360 ONE Private Wealth's client-level PORTFOLIO ANALYSIS REPORT |
+| `providers/aifDistribution.mjs` | 5 | 360 ONE ALTERNATES — a different issuer from the wealth arm. Distribution letters and statements of earnings, carrying AIF income split by TAX HEAD |
+| `providers/sanshiFund.mjs` | 5 | Category-III AIF monthly account statements |
+| `providers/transitionVenture.mjs` | 2 | drawdown AIF capital accounts — the only source of an undrawn COMMITMENT |
+| `providers/lkpSecurities.mjs` | 4 | a self-directed demat account, in three file formats — the only LOT REGISTER in the book |
+| `providers/mutualFundFolio.mjs` | 5 | folio statements, three different layouts behind one reader |
+| `providers/schemePortfolio.mjs` | 1 | a fund's own SEBI portfolio disclosure — archived for look-through, worth nothing to the book |
 
-**The mutual-fund folios belong to a DIFFERENT LEGAL ENTITY.** All five are held
-by `HOPE INDIA TRUST` (PAN AABTH4894A), not by a Jaisinghani individual. They are
-not a gap in the family's book; they are a book this drop does not otherwise
-describe, and folding them in would be a decision about whose assets these are.
+**Three files are BUNDLES.** `lib/bundle.mjs` splits a PDF by the report title
+each page reprints, because a run of pages sharing one title is a document:
 
-**Two printed names resolve to no canonical owner** and are reported, never
-invented: `AARTI AJAY JAISINGHANI` and `BHARAT AJAY JAISINGHANI`, both on Sanshi
-Fund statements. The second is NOT assumed to be `bharat-jaisinghani`: the
-registry's initials rule reads `Bharat Thakurdas` and `Bharat T` as one person
-and `Bharat Ajay` as a different one, which is exactly the protection it exists
-for. Adding either is a decision about the family, not a parsing rule.
+- `Molecule_June_2026_392.pdf` — 8pp: fact sheet, CURRENT PORTFOLIO, transaction
+  statement, capital gain, expense statement. Filed as a single fact sheet, its
+  holdings arrived with a market value and no quantity, no unit cost and no price
+  while pages 2–3 printed all three.
+- `GREEN LANTERN - AJAY.pdf` — 15pp: PMS INVESTOR REPORT, capital gain, expense
+  statement, corporate benefits. Filed as a contract note, a type with no reader,
+  so 15 pages of a ₹11.7 Cr account contributed nothing while the coverage table
+  reported "no reader" about a document four readers here already handle.
+- 360 ONE's client report carries its transaction and corporate-action statements
+  inside the holdings document, which is why superseding one issue of it used to
+  discard that month's corporate actions.
+
+A file whose pages resolve to FEWER THAN TWO report types is not a bundle and is
+returned untouched, so every single-report PDF takes the path it always took.
+
+**A phrase in a footnote is not what a document is.** All four SVAN statements
+were classified `contract-note` because the report's own footnote reads "…
+customarily included in the contract note of broker". Title rules now run before
+keyword rules. The same class of mistake, one layer up: `360 One WAM Limited` is
+a listed company, WhiteOak's fund holds ₹10.16 Cr of it, and matching `360 ONE`
+against the whole text filed that scheme's disclosure under 360 ONE Private
+Wealth. Issuer rules match the LETTERHEAD; only titles match the whole document.
+
+**Whose folio is it? The statement says, in words.** Every AMC prints the
+holder's tax status because it must — `Status : Trust`, `Tax Status :
+Individual` — and that printed word is what decides whether a folio belongs in a
+family book. Not the PAN: two of these mask it (`XXXXX4894A`), so a PAN-only rule
+would have failed on exactly the statements that needed it. Where a PAN IS
+printed in full it is used too, and its fourth character says whether the holder
+is an individual (`P`) or a trust (`T`).
+
+**Owners resolve on PAN first.** `shared/owners.mjs` tries the PAN before any
+name rule, because a PAN is issued once per taxpayer and printed on the page
+while a name is a spelling. That settled a question this book had reasoned the
+wrong way round: `BHARAT AJAY JAISINGHANI` and `BHARAT JAISINGHANI` print the
+same PAN and are one man. The initials rule was right about what it could see; it
+simply had no access to the fact, and neither did anyone else, because the fact
+was on page one of a statement nobody had a reader for. Two aliases seeded by
+analogy and observed on no statement were removed.
+
+The fourth character of a PAN also keeps the two Transition Venture TRUSTS from
+being folded into the man they are named after — `T` is a separate taxpayer, not
+a nickname — and `AARTI AJAY JAISINGHANI` is now a canonical owner on her own PAN
+and her own folio. Leaving her unresolved was not the neutral choice it looked
+like: her ₹976.8 Cr was already in the consolidated total, attributed to nobody.
+
+**A PAN that is also a document password is NOT written into the registry.** The
+alias it justifies is listed instead and the evidence recorded in words. Anyone
+extending `shared/owners.mjs` follows the same rule.
 
 ### Encrypted statements — `GLOW_PDF_PASSWORDS`
 
-Six of the 105 PDFs are encrypted. The passwords are **never committed**; they
+Six of the PDFs in this drop are encrypted. The passwords are **never committed**; they
 are read from the environment:
 
 ```
@@ -301,7 +385,7 @@ new owner.
 ## The ingest pipeline
 
 ```
-source/*.{zip,pdf}          raw statements — committed, NEVER served to a browser
+source/*.{zip,pdf,xls,xlsx} raw statements — committed, NEVER served to a browser
    |  npm run inventory     what is in the drop, grouped and classified
    v
 docs/INGEST-INVENTORY.md    provider -> account -> as-of -> reportType
@@ -328,6 +412,17 @@ overlapping reports that sometimes disagree*, and which one is authoritative is
 a decision someone makes, not an accident of parse order.
 
 ### Stage 2 — extraction (`npm run extract`)
+
+**ONE FILE IS NOT ONE DOCUMENT.** `lib/bundle.mjs` runs first: every page of these
+statements reprints its report title, so a run of pages sharing one title is a
+document, and a page with no title continues the one before it. Three files in
+this drop carry several reports each. A file resolving to fewer than two report
+types is not a bundle and is returned untouched.
+
+**NOT EVERY FILE IS A PDF.** `lib/sheet.mjs` reads Office Open XML and the HTML
+tables that brokers name `.xls`, sniffing the format from the FIRST BYTES rather
+than the extension — handed to pdfjs, an HTML table comes back "Invalid PDF
+structure" and gets reported as a corrupt download that does not exist.
 
 **PAGE ROTATION FIRST.** Most of these statements are `/Rotate 90` pages — every
 transaction statement, bank book, capital register, capital gain, dividend,
@@ -449,8 +544,10 @@ product:
   named. Also does not block, because it is understood rather than merely small.
 - `material` — anything else. Reported per row, and it blocks the golden test.
 
-**As of this calibration there are zero material deltas anywhere**: 54 row-sum
-checks, 210 derived-vs-printed, 972 dated-table row checks, 5 cross-report.
+**As of this calibration there are zero material deltas anywhere**: 119 row-sum
+checks, 250 derived-vs-printed, 1,112 dated-table row checks, 5 cross-report.
+Every delta that is not `ok` is `explained` or `rounding`, and every `explained`
+one names a basis difference reproduced exactly — never a widened tolerance.
 
 Check (c) exists for a real case, and this drop contains it: 360 ONE Special
 Opportunities Fund Series 8 Class A3 appears with byte-identical figures under
@@ -458,6 +555,17 @@ CRN37702 and CRN60117. Summing both double-counts ₹1,45,80,412.51. Deciding wh
 statement owns the position is a judgement about the family's affairs, not a
 parsing rule, so both rows are carried and the consolidated total counts the
 group once.
+
+**A SNAPSHOT SUPERSEDES; A DATED ROW DOES NOT.** `newestPerReportType` keeps the
+newest issue of each report type per account, which is right for a holding
+statement — June restates May, and counting both doubles the account. It is wrong
+for a trade, and this drop is the first where that matters: SVAN's May investor
+report was superseded by June's and May's trades went with it, 360 ONE's bundle
+carries a corporate-action statement INSIDE its holdings document so superseding
+May discarded May's corporate actions, and Green Lantern's two capital gain
+statements cover different windows. Dated rows are therefore unioned across every
+issue and deduped on their own identity — the same row printed on two statements
+counts once, and two different rows sharing a date both survive.
 
 **The tags must reach disk.** `applyDedupePolicy` runs inside `reconcile()` and
 writes `dedupeGroup` / `alsoReportedUnder` onto the in-memory holdings.
@@ -524,8 +632,35 @@ written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is
 | Not populated | Why | What would fix it |
 | --- | --- | --- |
 | `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | a monthly / quarterly valuation statement |
-| `unrealisedST` / `unrealisedLT`, `stCostBasis`, `ltCostBasis`, `daysToLT` | needs per-lot purchase dates; the CAPITAL REGISTER is a capital-account ledger, not a lot register | a holding statement with lot-level acquisition dates |
-| `privateMarkets` | the readable accounts are listed-equity PMS mandates and one AIF unit; the AIF and venture statements in this drop have no reader | a reader for the Sanshi Fund / Transition Venture capital-account statements |
+| `stCostBasis` / `ltCostBasis` / `daysToLT` on 294 of 301 positions | needs per-lot purchase dates. The CAPITAL REGISTER the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS), not a lot register | a holding statement with lot-level acquisition dates, which ONE broker in this drop publishes — see below |
+| `privateMarkets.peFunds` etc. | no statement here reports a fund-of-funds structure with its own TVPI and DPI. The AIF HOLDINGS are ordinary positions with `assetClass: "AIF"`, and the undrawn COMMITMENTS are `BOOK_COMMITMENTS` | a fund-of-funds statement |
+
+**The short/long-term split IS produced now, for one account.** LKP's `519:
+Annual P&L II` is a lot register: one row per lot with both the buy date and the
+sale date, and a row with no sale is an OPEN lot carrying its acquisition date.
+So days held, the ST/LT split of unrealised gain and the cost basis on each side
+are all measurable there, on India's 12-month threshold for listed equity — and
+`null` on the other 22 accounts, which is the truth rather than a split estimated
+from an average holding period. `docs/BOOK-REPORT.md` COUNTS which, so the note
+cannot go stale the way its predecessor did: it claimed the split was impossible
+on every position while the register sat unread in `source/`.
+
+**A depository does not know what shares cost.** LKP's holding statement prints
+ISIN, quantity, rate and value and no cost — CDSL holds the shares, it did not
+buy them. Nine of those ten positions recover a cost from the broker's own
+opening ledger row, joined ONLY where the quantities match exactly, and recorded
+as `costBasisSource: "opening-position"`. The tenth, a liquid ETF the ledger does
+not carry, genuinely has none. So `costBasis`, `unrealizedPnL` and `returnPct`
+are `number | null` on `Position`: a zero cost reports the whole market value as
+profit at an infinite return.
+
+**Undrawn capital is not a holding.** `BOOK_COMMITMENTS` carries what the family
+has committed to a drawdown fund and not yet paid — ₹75 L per Transition Venture
+trust. It is a LIABILITY the fund can call, kept apart from `positions` because
+the fund's current value is already one and adding it here would count ₹3.43 Cr
+twice. The Morning CIO's dry-powder tile read `privateMarkets`, found it empty
+and printed "no fund commitments in this book" while both statements sat in the
+archive. Denying a figure is worse than omitting it: a reader plans around it.
 
 **Cash flows are checked, not assumed.** The capital-register total is compared
 against the performance summary's own Net Capital In/Out over the same window —
@@ -575,7 +710,7 @@ bonus. `dividendReceived` on a position is cash only; non-cash actions live in
 
 The book baked into `glowData.ts` is a POSITION snapshot. The dated record —
 every buy and sell, every capital-gain lot, every dividend — stays in
-`public/audit/` and is fetched by the browser: it is 103 documents, it is already
+`public/audit/` and is fetched by the browser: it is 113 documents, it is already
 gated by the edge password check, and inlining it would put megabytes of
 transaction tape into the JS bundle for pages that may never be opened.
 
@@ -593,9 +728,11 @@ Three things it deliberately does not do:
   history is a real number for the wrong window. The money-weighted returns this
   book supports are per-ACCOUNT, over external capital movements, on
   `/performance`.
-- **No realised gain where no capital gain statement covers the account.** Two of
-  nine accounts issue none. Their sells are real; what they realised was never
-  reported, so the cell is `—`.
+- **No realised gain where no capital gain statement covers the account.**
+  Sixteen of 23 accounts issue none — the AIF folios, the 360 ONE engagements and
+  the mutual-fund folio among them. Their sells are real; what they realised was
+  never reported, so the cell is `—`, and Capital Gains names every account it
+  does not cover.
 - **No false diagnosis on failure.** When the archive doesn't respond the page
   says the archive didn't respond. It previously told the reader their session
   had expired and to sign in again — for a fetch aimed at a path this pipeline
@@ -616,14 +753,26 @@ statement prints `CRIZAC LIMITED-INE0S4R01014`, so the lot keys
 and the realised column showed `—` against every Carnelian sell while the gain
 sat three folders away. `joinKey()` recognises a trailing ISIN by its exact shape
 and re-normalises the remainder through the same `securityKeyOf`, lifting the
-join from a minority of lots to 63 of 82. **This is a presentation-layer join, not a repair:**
-the extractor should stop carrying an identifier inside a name field, and until
-it does the archive keeps the key exactly as derived.
+join from a minority of lots to 63 of 82. **This is a presentation-layer join,
+not a repair:** the extractor should stop carrying an identifier inside a name
+field, and until it does the archive keeps the key exactly as derived.
+`splitSecurityName` in `shared/securityKey.mjs` now does that at ingest for every
+record type, so a drop where this fires on the read side is a signal that a new
+provider has the same habit.
 
 ### Two realised totals, and which one is canonical
 
 The capital gain statements' own total is the **printed primitive and is
-canonical**: −₹49,65,684.69 across 82 lots. The roll-up that attributes each lot
+canonical** — now −₹41,29,763.63 across 90 lots, from 7 of 23 accounts. The lot
+count grew because two things were being dropped: Green Lantern 510861 issues
+capital gain statements over TWO windows (its house set's, and the one inside its
+investor-report bundle) and `find` took whichever sorted first, and LKP's and
+Molecule's statements had no reader at all. Dated rows are now unioned across
+every issue of every report and deduped on their own identity — see
+`datedRowsAcross` in `scripts/build-book.mjs`.
+
+The worked example below is from the calibration that established the rule, on
+the nine-account corpus, and the arithmetic it demonstrates is unchanged: The roll-up that attributes each lot
 to the sale that produced it on the transaction tape is a **cross-check**, and it
 is more negative:
 
@@ -651,17 +800,31 @@ five-account corpus this rule was written against — returned **174.3%** p.a.
 against **109.7%** for the accounts that could be measured: a 64.6 pp
 overstatement, and exactly the failure the presentation rule names.
 
-Three accounts are now excluded on that test: 510854, and both 360 ONE CRNs,
-whose client-level report carries no flow block at all. The rate covers 6 of 9
-accounts and ₹93.4 Cr of the book's ₹100.8 Cr, and the page says so.
+Every account whose statements carry no opening portfolio value is excluded, and
+that is most of them now: 510854 publishes no FY performance summary, the 360 ONE
+client report carries no flow block at all, and the AIF folios report a
+contribution history without a dated opening valuation. **The rate covers 6 of 23
+accounts and ₹93.4 Cr of the book's ₹335.4 Cr** — 28% — and `/performance` names
+every excluded account with the document it is missing. A rate over a quarter of
+the book presented as the book's rate would be the same "missing value blended in
+as zero" failure, one level up.
 
 So a consolidated XIRR covers only accounts carrying an opening value, **on both
 sides** (flows AND terminal market value), and every excluded account is named on
-screen. Both `/cio` and `/performance` close against `portfolio.asOf`, not
-`new Date()` — closing against today on one page and the report date on the other
+screen. **EACH ACCOUNT CLOSES ON ITS OWN AS-OF, and `pooledXirr` is what does it.** The
+statements do not share a report date: Green Lantern values at 25 June, V.E.C at
+6 July, the rest at 10 July. Pooling every flow and closing the lot on the newest
+date credits the earlier accounts with fifteen days of standing still, and over a
+quarter's window that is worth **5.44 pp** — 135.98% against 141.42% for the same
+six accounts. Neither figure was wrong on its own terms, which is precisely why
+two pages showed two numbers for one book. A money-weighted return means every
+cash flow at the date it happened, and a terminal value is a cash flow.
+
+Both pages also close against the book's own report dates rather than
+`new Date()`: closing against today on one page and the report date on the other
 gave the same measurement two values. The window is one quarter here, so every
 rate annualises about three months; the pages say so, because an unlabelled
-+135.8% reads as a sustained yearly rate.
++141% reads as a sustained yearly rate.
 
 ## Stage 7 — the live layer
 
@@ -670,18 +833,22 @@ held in the Cloudflare environment and never in the browser: `quotes`, `ratios`,
 `news`, `announcements`, `insider`, `research`, `history`. `fx` needs no token
 (ECB reference rates, keyless) and falls back to a static rate.
 
-**The symbol bridge is keyed on `securityKey`, not ISIN.** No provider in this
-book prints an ISIN in its holdings column, so `nseSymbols.json` — which
+**The symbol bridge is keyed on `securityKey`, not ISIN.** Only ONE holdings
+statement in this book prints an ISIN — LKP's depository statement, and it clips
+every name to the column width (`CROMPTON GRE CONS-`), so the one account with
+identifiers was the one that joined to nothing until the fuller name printed
+against the same ISIN elsewhere in the drop was matched word by word. So
+`nseSymbols.json` — which
 `npm run build-symbols` resolves by NAME for exactly that reason — must be read
 on the same key. `quotes.ts` previously exported `symbolForIsin(p.isin)` against
 that map: two identifier spaces, one dictionary, no error anywhere, and a live
 layer that resolved nothing for any position while looking wired up.
 
-Coverage is 88 of 89 listed securities. What does not resolve is `Cash`,
-`Cash — receivable/payable`, the Axis Liquid Fund sweep and the 360 ONE AIF: no
-NSE listing, so they can never go live. They are counted as
-`unpriceable`, separately from `notLive`, because folding them together reports a
-permanent feed shortfall no token would ever close.
+Coverage is 139 of 157 distinct securities. What does not resolve is `Cash`, the
+liquid-fund sweeps, the AIF units and a handful of names with no NSE listing —
+they can never go live. They are counted as `unpriceable`, separately from
+`notLive`, because folding them together reports a permanent feed shortfall no
+token would ever close.
 
 ### BASIS — the discipline that keeps the book checkable
 
@@ -707,7 +874,7 @@ permanent feed shortfall no token would ever close.
 With no `MUNS_TOKEN` and no network — how it runs locally, and how it will run
 before the token is set — every page renders on statement marks, the pill reads
 `STATEMENT · as of 2026-07-10`, and consolidated NAV is exactly
-**₹1,00,76,09,712.12**. No blank tiles, no zeros, no unresolved spinners, and no
+**₹3,35,43,23,674.24**. No blank tiles, no zeros, no unresolved spinners, and no
 "session expired" wording for what is a missing upstream.
 
 ## Stage 8 — the client's Family Office Operating System spec

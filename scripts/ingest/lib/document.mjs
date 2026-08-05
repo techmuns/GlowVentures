@@ -125,6 +125,14 @@ export function makeHolding(input) {
     securityKey: named.securityKey ?? securityKeyOf(named.security),
     isin: named.isin ?? null,
     symbol: input.symbol ?? null,
+    /**
+     * What THIS statement printed, where the name in `security` came from
+     * elsewhere. The depository holding statement clips names to its column
+     * width; the fuller form is joined on ISIN (see backfillSecurityNames) and
+     * the clipped original is kept, because the archive's job is to show what the
+     * document said.
+     */
+    printedSecurity: input.printedSecurity ?? null,
     assetClass: input.assetClass ?? null,
     providerSector: input.providerSector ?? null,
     /** Manager / scheme sleeve, where the provider reports one (360 ONE). */
@@ -249,7 +257,24 @@ export function deriveHolding(h, portfolioTotal = null) {
  */
 export function deriveDocument(doc) {
   const withValues = doc.holdings.map((h) => deriveHolding(h, null));
-  const portfolioTotal = withValues.reduce((t, h) => t + (h.marketValue ?? 0), 0) || null;
+  let portfolioTotal = withValues.reduce((t, h) => t + (h.marketValue ?? 0), 0) || null;
+
+  /**
+   * NO DENOMINATOR WHERE THE REPORT DID NOT PRINT THE WHOLE PORTFOLIO.
+   *
+   * %assets is a share OF THE TOTAL, so it can only be derived when the rows in
+   * hand ARE the total. Green Lantern's quarterly investor report subtotals its
+   * Shares section without printing the securities in it, leaving two rows worth
+   * ₹39 L standing for a ₹11.69 Cr account — and a weight derived over those two
+   * would show the cash line at 98% of a portfolio it is 3.34% of.
+   *
+   * That is not a small error, it is a figure computed from a collection that
+   * isn't the one the label names. The denominator is withheld instead, every
+   * `pctAssets` on the document stays null, and the statement's own column
+   * remains in `printed.pctAssets` where a reader can see it.
+   */
+  if (doc.sectionsWithoutRows?.length) portfolioTotal = null;
+
   return {
     ...doc,
     derivedPortfolioTotal: portfolioTotal === null ? null : r2(portfolioTotal),
@@ -309,6 +334,15 @@ export function makeReturnSeries(input) {
     m3: num(input.m3),
     m6: num(input.m6),
     y1: num(input.y1),
+    // MULTI-YEAR trailing periods, as SVAN's SEBI monthly report labels them:
+    // 1 Year / 3 Years / 5 Years / 10 Years / Since Inception. A fourth
+    // vocabulary, and separate fields for the same reason the others are: a
+    // 3-year annualised TWRR is not a since-inception one, and this book's
+    // accounts are young enough that most of these columns are genuinely blank.
+    // Blank stays null and renders "—"; it never becomes zero.
+    y3: num(input.y3),
+    y5: num(input.y5),
+    y10: num(input.y10),
     si: num(input.si),
     siAnnualised: input.siAnnualised ?? null,
     /** "after" | "before" | null — whether returns are net of fees, per the
@@ -408,6 +442,13 @@ export function makeTransaction(input) {
     brokerageRate: num(input.brokerageRate),
     stt: num(input.stt),
     otherCharges: num(input.otherCharges),
+    /**
+     * Decimal places the RATE columns are printed at, where the report prints
+     * its settlement on an unrounded rate. Null means the printed figures
+     * reproduce the settlement exactly and the reconciler holds this row to the
+     * rupee. See the SEBI investor report's trade table, which prints two.
+     */
+    ratePrecision: input.ratePrecision ?? null,
     // ── derived by deriveTransaction ──
     gross: null,
     brokerage: null,
@@ -492,11 +533,19 @@ export function makeIncomeEvent(input) {
 /** One charge, from the expense statement or the bank book's expense column. */
 export function makeExpense(input) {
   return {
+    /** Null where the report totals by type over a window instead of dating each charge. */
     date: input.date ?? null,
     settlementDate: input.settlementDate ?? null,
     detail: String(input.detail ?? "").trim(),
     notes: input.notes ?? null,
     amount: num(input.amount),
+    /**
+     * Settled vs still owed, where the summary form splits them. Kept apart: an
+     * accrued management fee is a liability, not a payment, and adding the two
+     * columns would double every charge already collected.
+     */
+    paid: num(input.paid),
+    payable: num(input.payable),
     source: input.source ?? null,
   };
 }
@@ -552,12 +601,81 @@ export function makeDocument(input) {
     /** The window the dated rows above cover, from the report's own header. */
     periodFrom: input.periodFrom ?? null,
     periodTo: input.periodTo ?? null,
+    /**
+     * PAN — the investor's permanent account number, where the statement prints
+     * it. The only identifier every Indian issuer in this drop shares, and the
+     * only evidence that settles which family member a printed name belongs to
+     * when the name itself resolves to nobody. See shared/owners.mjs.
+     */
+    pan: input.pan ?? null,
+    /** Which pages of a bundled PDF this document is — see lib/bundle.mjs. */
+    sourcePages: input.sourcePages ?? null,
+    /** { balance, change } — accrued income, and the report's own movement in it. */
+    accrual: input.accrual ?? null,
+    /** Sections a report subtotalled without printing their rows. */
+    sectionsWithoutRows: input.sectionsWithoutRows ?? [],
+    /** The client-portfolio XIRR the report states, as a percentage. */
+    clientXirrPct: input.clientXirrPct ?? null,
+    /** Drawdown funds: { total, contributed, undrawn, distributed }. Not a holding. */
+    commitment: input.commitment ?? null,
+    /** An AIF's capital account, itemised by the fund. */
+    capitalAccount: input.capitalAccount ?? [],
+    /** A NAV struck after tax, where the fund prints both bases. */
+    postTaxNav: input.postTaxNav ?? null,
+    unitsRedeemed: input.unitsRedeemed ?? null,
+    /**
+     * DATED ACQUISITION LOTS for positions still held — the lot register.
+     * `{ security, purchaseDate, quantity, unitCost, totalCost }`. Only a broker
+     * publishes this; it is what makes a short/long-term split of UNREALISED gain
+     * measurable, and its absence everywhere else is why that split is `—`.
+     */
+    openLots: input.openLots ?? [],
+    /**
+     * Net quantity per security as of a DIFFERENT date from the valuation, kept
+     * apart from the holdings so the two dates cannot be silently combined.
+     */
+    positionsAsOf: input.positionsAsOf ?? null,
+    /** Depository opening/closing balances per ISIN, from a CDSL statement. */
+    dematBalances: input.dematBalances ?? [],
+    /** "isin" where clipped security names were resolved — see backfillSecurityNames. */
+    securityNameSource: input.securityNameSource ?? null,
+    /**
+     * Why this document's account is NOT in the family book, where it is not.
+     *
+     * Set by a reader that understood the document completely and concluded it
+     * belongs to somebody else (a trust with its own PAN) or to nobody (a
+     * scheme's own disclosure). Distinct from `status: "failed"`, which means the
+     * document could not be read — the coverage table has to tell those apart or
+     * a reader goes looking for a holding that was never there.
+     */
+    excludedFromBook: input.excludedFromBook ?? null,
+    /** A fund's own holdings, for look-through. Never summed into the book. */
+    schemeHoldings: input.schemeHoldings ?? [],
+    /** AIF income split by tax head — see providers/aifDistribution.mjs. */
+    aifEarnings: input.aifEarnings ?? null,
+    /**
+     * Other holders on a JOINT account, where the statement names them. The
+     * account is attributed to the first holder — whose PAN the income is
+     * reported under — and these are carried so a per-person view can say the
+     * holding is shared rather than implying sole ownership.
+     */
+    jointHolders: input.jointHolders ?? [],
     /** Raw tables, for the audit archive: { sectionName: { name, rows } }. */
     sections: input.sections ?? {},
     /** Every stitch the layout engine applied, for provenance. */
     stitches: input.stitches ?? [],
   };
 }
+
+/**
+ * Every field `makeDocument` carries. Anything an extractor returns that is not
+ * in here is DROPPED, silently and without erroring — which is how the Sanshi
+ * PAN and Transition Venture's ₹1.5 Cr undrawn commitment were computed
+ * correctly on every run and never once reached disk. `extractOne` checks an
+ * extractor's result against this and warns, so the next field added to a reader
+ * and forgotten here fails loudly instead of vanishing.
+ */
+export const DOCUMENT_FIELDS = Object.freeze(Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })));
 
 /** Throw if a document breaks the contract — called on every extractor result. */
 export function assertNormalized(doc) {

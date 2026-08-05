@@ -1,0 +1,68 @@
+{
+ "name": "capitalAccount",
+ "rows": [
+  [
+   "particular",
+   "type",
+   "opening",
+   "forTheYear",
+   "closing"
+  ],
+  [
+   "Clients Capital Account",
+   "Source of Funds",
+   0,
+   7500000,
+   7500000
+  ],
+  [
+   "Short Term Market Gain",
+   "Income",
+   0,
+   68737.27,
+   68737.27
+  ],
+  [
+   "Management Fees",
+   "Expenditure",
+   0,
+   -89261.78,
+   -89261.78
+  ],
+  [
+   "Bank Charges",
+   "Expenditure",
+   0,
+   -1.37,
+   -1.37
+  ],
+  [
+   "Other Expenses",
+   "Expenditure",
+   0,
+   -1.85,
+   -1.85
+  ],
+  [
+   "Operating Expenses",
+   "Expenditure",
+   0,
+   -29753.94,
+   -29753.94
+  ],
+  [
+   "Set up Expenses",
+   "Expenditure",
+   0,
+   -221250,
+   -221250
+  ],
+  [
+   "Stamp Duty",
+   "Expenditure",
+   0,
+   -117.37,
+   -117.37
+  ]
+ ]
+}

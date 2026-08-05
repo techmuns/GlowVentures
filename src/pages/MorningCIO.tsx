@@ -8,10 +8,10 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
-import { xirrWithTerminal, xirrPct, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { xirrWithTerminal, xirrPct, pooledXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { auditHref, LEDGER, type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
@@ -56,9 +56,17 @@ export function MorningCIO() {
     // rows for the per-account views elsewhere.
     const p = consolidated;
     const listedMV = sum(p.map((x) => x.marketValue));
-    const listedCost = sum(p.map((x) => x.costBasis));
-    const listedPnL = sum(p.map((x) => x.unrealizedPnL));
-    const listedRet = listedCost > 0 ? (listedPnL / listedCost) * 100 : null;
+    // `sumOrNull`: a position whose statement carries no cost must not enter a
+    // book-wide cost as zero — it would understate the basis and overstate the
+    // return on everything else.
+    const listedCost = sumOrNull(p.map((x) => x.costBasis));
+    const listedPnL = sumOrNull(p.map((x) => x.unrealizedPnL));
+    // Both sides must be present AND on the same basis. `sumOrNull` returns null
+    // when no position reported a cost, and a return struck against a missing
+    // denominator is not a small error — it is a different question.
+    const listedRet = listedCost !== null && listedPnL !== null && listedCost > 0
+      ? (listedPnL / listedCost) * 100
+      : null;
 
     const pm = portfolio.privateMarkets;
     const peF = fundTotals(pm.peFunds);
@@ -67,7 +75,34 @@ export function MorningCIO() {
     const debtF = fundTotals(pm.debtFunds);
     const st = startupTotals(pm.startups);
     // Fund-commitment lifecycle (incl. fully-exited "closed" funds).
-    const deploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
+    /**
+     * CAPITAL DEPLOYMENT — from the COMMITMENTS the statements print, not from
+     * `privateMarkets`.
+     *
+     * `privateMarkets` describes fund-of-funds investments with their own TVPI
+     * and DPI, and this book holds none. What it DOES hold is two drawdown AIF
+     * commitments — ₹1.5 Cr each, half called — printed on the Transition
+     * Venture capital-account statements. Reading only `privateMarkets`, this
+     * tile said "no fund commitments in this book" while ₹1.5 Cr of undrawn
+     * capital sat in the archive, callable at any time.
+     *
+     * `undrawn` is taken as each statement PRINTS it rather than derived from
+     * committed − drawn: the fund states all three, and the build records
+     * whether they agree.
+     */
+    const commitments = portfolio.commitments ?? [];
+    const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
+    const deploy = commitments.length
+      ? {
+        committed: sum(commitments.map((c) => c.committed)) + fundDeploy.committed,
+        drawn: sumOrNull([...commitments.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
+        distributed: sumOrNull([...commitments.map((c) => c.distributed), fundDeploy.distributed]) ?? 0,
+        currentValue: fundDeploy.currentValue,
+        unfunded: sumOrNull([...commitments.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
+        tvpi: fundDeploy.tvpi,
+        dpi: fundDeploy.dpi,
+      }
+      : fundDeploy;
     const closedF = fundTotals(pm.closedFunds);
     // How many private instruments the book actually carries. Zero means the
     // segment is ABSENT, not that it measured nothing — every private figure
@@ -78,10 +113,25 @@ export function MorningCIO() {
       + pm.debtFunds.length + pm.closedFunds.length;
 
     const totalValue = portfolio.totalValue;
+    /**
+     * ACCRUED INCOME — declared, not yet received, and NOT in the NAV above.
+     *
+     * §4b keeps accrued income out of market value on purpose: the managers fold
+     * it in on some rows and not others, so the book carries it as its own field
+     * and every market value stays price × quantity on one basis. That is right,
+     * and it left ₹32.94 L on 85 positions appearing NOWHERE on screen — so the
+     * consolidated NAV sat below the managers' own printed totals by exactly that
+     * amount, with nothing to explain the gap to a reader holding the statement.
+     *
+     * Stating it is the other half of the rule. The NAV does not change; the tile
+     * says what is not in it.
+     */
+    const accrued = sumOrNull(p.map((x) => x.accruedIncome));
+    const accruedCount = p.filter((x) => typeof x.accruedIncome === "number" && x.accruedIncome !== 0).length;
     const privateCurrent = portfolio.privateValue;
     // Capital currently deployed = cost of listed holdings + drawn private (excl. fully-exited funds).
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
-    const totalInvested = listedCost + privateInvested;
+    const totalInvested = sumOrNull([listedCost, privateInvested]);
     const privateGain = privateCurrent - privateInvested;
     // Cash returned by holdings still in the book (startups distribute nothing).
     const privateDistributed = peF.distributed + preF.distributed + unlF.distributed + debtF.distributed;
@@ -90,8 +140,10 @@ export function MorningCIO() {
     // Embedded gain = the two book components (so it reconciles with the
     // Book-performance card). With no private book it IS the listed P&L, and the
     // worked formula below says so rather than adding a phantom "+ ₹0".
-    const embeddedGain = listedPnL + privateGain;
-    const gainPct = totalInvested > 0 ? (embeddedGain / totalInvested) * 100 : null;
+    const embeddedGain = sumOrNull([listedPnL, privateGain]);
+    const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
+      ? (embeddedGain / totalInvested) * 100
+      : null;
 
     // Listed book split by vehicle: in-house "Direct Equity" vs externally-managed
     // "PMS / Managed" — read from the account registry's `engagement` field,
@@ -103,10 +155,13 @@ export function MorningCIO() {
       return a ? !isDirect(a) : true;   // unattributed defaults to managed, not direct
     };
     const eqGroup = (rows: typeof p) => {
-      const cost = sum(rows.map((x) => x.costBasis));
+      const cost = sumOrNull(rows.map((x) => x.costBasis));
       const mv = sum(rows.map((x) => x.marketValue));
-      const pnl = sum(rows.map((x) => x.unrealizedPnL));
-      return { count: rows.length, cost, mv, ret: cost > 0 ? (pnl / cost) * 100 : null };
+      const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
+      return {
+        count: rows.length, cost, mv,
+        ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+      };
     };
     const directEq = eqGroup(p.filter((x) => !managedRow(x)));
     const pmsEq = eqGroup(p.filter(managedRow));
@@ -139,21 +194,33 @@ export function MorningCIO() {
     };
     /** Flows and terminal market value for one side, measurable accounts only. */
     const measured = (managed: boolean) => {
-      const flows: { date: Date; amount: number }[] = [];
+      /**
+       * PER-ACCOUNT PARTS, each with its OWN as-of.
+       *
+       * These were pooled into one flow list and closed on one page-wide date.
+       * The accounts in this book do not share a report date, so that gave the
+       * ones valued earlier a stretch of flat performance they never had — and
+       * produced a different rate here from the one `/performance` showed for
+       * the same accounts. See `pooledXirr`.
+       */
+      const parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[] = [];
       let mv = 0;
       const excluded: string[] = [];
       for (const a of portfolio.accounts) {
         if (sideOf(a) !== managed) continue;
         if (!hasOpening(a.accountId)) { excluded.push(a.accountNo); continue; }
-        for (const f of portfolio.accountCashFlows?.[a.accountId] ?? []) {
-          flows.push({ date: new Date(f.date), amount: f.amount });
-        }
-        mv += sum(p.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
+        const accountMv = sum(p.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
+        parts.push({
+          flows: (portfolio.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
+          terminalValue: accountMv,
+          asOf: new Date(a.asOf),
+        });
+        mv += accountMv;
       }
-      return { flows, mv, excluded };
+      return { parts, mv, excluded };
     };
-    const listedXirr = (mv: number, flows: { date: Date; amount: number }[]): number | null =>
-      flows.length && mv > 0 ? xirrWithTerminal(flows, mv, asOfDate) : null;
+    const listedXirr = (parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[]): number | null =>
+      pooledXirr(parts);
     const directSide = measured(false), pmsSide = measured(true);
     const xirrExcluded = [...directSide.excluded, ...pmsSide.excluded];
 
@@ -165,7 +232,10 @@ export function MorningCIO() {
 
     type Basis = "ledger" | "first-investment";
     type Bucket = {
-      key: string; color: string; count: number; invested: number; current: number;
+      key: string; color: string; count: number;
+      /** NULL where no statement in the bucket reports a cost — never 0, see Position.costBasis. */
+      invested: number | null;
+      current: number;
       kind: "MOIC" | "TVPI"; metric: number | null;   // money-multiple, for the popover
       retPct: number | null;                          // total return on cost, for the popover
       distributed: number;                            // cash already returned; 0 for listed & startups
@@ -190,8 +260,8 @@ export function MorningCIO() {
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
     });
     const allBuckets: Bucket[] = [
-      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.mv, directSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
-      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.mv, pmsSide.flows), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
+      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
+      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
       { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
@@ -215,11 +285,17 @@ export function MorningCIO() {
         .filter((f) => f.firstInvest && f.drawn > 0)
         .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
     ];
-    const listedFlows = [...directSide.flows, ...pmsSide.flows];
+    const listedParts = [...directSide.parts, ...pmsSide.parts];
+    const listedFlows = listedParts.flatMap((x) => x.flows);
     const measuredMV = directSide.mv + pmsSide.mv;
-    const listedXirrPct = listedXirr(measuredMV, listedFlows);
-    const bookXirr = listedFlows.length
-      ? xirrPct([...listedFlows, { date: asOfDate, amount: measuredMV }, ...privateFlows])
+    const listedXirrPct = listedXirr(listedParts);
+    // The book-wide rate adds the private flows to the SAME per-account parts,
+    // each still closing on its own as-of — not on one page-wide date.
+    const bookXirr = listedParts.length
+      ? xirrPct([
+        ...listedParts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
+        ...privateFlows,
+      ])
       : null;
     const xirrWindowStart = listedFlows.reduce<Date | null>((a, f) => (!a || f.date < a ? f.date : a), null);
     const xirrWindowDays = xirrWindowStart
@@ -244,8 +320,8 @@ export function MorningCIO() {
     const largestName = (largest && p.find((x) => x.securityKey === largest[0])?.security) || null;
     const largestPct = largest && listedMV > 0 ? (largest[1] / listedMV) * 100 : null;
     const priced = p.filter((x) => !x.costUnavailable);
-    const winners = priced.filter((x) => x.returnPct > 0).length;
-    const losers = priced.filter((x) => x.returnPct < 0).length;
+    const winners = priced.filter((x) => (x.returnPct ?? 0) > 0).length;
+    const losers = priced.filter((x) => (x.returnPct ?? 0) < 0).length;
 
     // NAV history is optional: a book assembled from current-holdings statements
     // has no year-end series until periodic valuation reports are ingested.
@@ -256,8 +332,8 @@ export function MorningCIO() {
 
     return {
       p, listedMV, listedCost, listedPnL, listedRet,
-      totalValue, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
-      privateNet, privateGain, privateTotalGain, privateDistributed, deploy,
+      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
+      privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       buckets, emptyBuckets, bookXirr, listedXirrPct,
@@ -270,12 +346,14 @@ export function MorningCIO() {
 
   if (!portfolio || !model) return null;
   const m = model;
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   const donutData = m.buckets.map((b) => ({ name: b.key, value: convertFromBase(b.current) }));
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
-  const hasCommitments = m.fundCount > 0 && m.deploy.committed > 0;
+  // A commitment schedule exists if ANY source reports one — a drawdown AIF's
+  // capital account counts, not only a fund-of-funds block.
+  const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
   const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
   const bucketHref = (b: { sheet: PrivateSheet | null }) => b.sheet ? auditHref({ file: "private", sheet: b.sheet }) : auditHref(LEDGER);
@@ -331,9 +409,16 @@ export function MorningCIO() {
               ? `= ${money(m.listedMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
               : `= ${money(m.listedMV)} across ${m.p.length} positions`,
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
-          sub={m.privateCount
-            ? `Listed ${money(m.listedMV)} · Private ${money(m.privateCurrent)}`
-            : `${m.p.length} listed positions · no private holdings`}
+          sub={<>
+            {m.privateCount
+              ? `Listed ${money(m.listedMV)} · Private ${money(m.privateCurrent)}`
+              : `${m.p.length} listed positions · no private holdings`}
+            {m.accrued !== null && (
+              <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
+                + {money(m.accrued)} accrued income, not in this figure
+              </span>
+            )}
+          </>}
           icon={<Briefcase className="h-4 w-4" />} />
 
         <Kpi label="Capital invested"
@@ -381,8 +466,8 @@ export function MorningCIO() {
               : "p.a. · money-weighted"}
           icon={<Percent className="h-4 w-4" />} />
 
-        {/* Dry powder and Distributions are FUND facts. With no fund in the book
-            they have no denominator — "₹0 undrawn" would assert a commitment
+        {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
+            in the book they have no denominator — "₹0 undrawn" would assert a
             schedule that draws nothing, which is a different claim entirely. */}
         <Kpi label="Dry powder"
           value={hasCommitments
@@ -390,7 +475,7 @@ export function MorningCIO() {
             : <AbsentValue />}
           sub={hasCommitments
             ? "undrawn fund commitments"
-            : <span className="text-slate-500">no fund commitments in this book</span>}
+            : <span className="text-slate-500">no statement in this book reports a capital commitment</span>}
           icon={<Fuel className="h-4 w-4" />} />
 
         <Kpi label="Distributions"
@@ -515,7 +600,7 @@ export function MorningCIO() {
             ) : (
               <AbsentSection
                 what="No fund commitments"
-                needs="Commitments, capital calls, undrawn dry powder and distributions are fund facts. This book holds no PE, VC, pre-IPO or debt fund, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
+                needs="Commitments, capital calls, undrawn dry powder and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
             )}
           </Card>
 

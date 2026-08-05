@@ -34,6 +34,8 @@
    "detail": "Management Fees",
    "notes": "612321",
    "amount": 61006.48,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -42,6 +44,8 @@
    "detail": "Sec. Tran. Tax",
    "notes": "Generated",
    "amount": 5050,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -50,6 +54,8 @@
    "detail": "Sec. Tran. Tax",
    "notes": "Generated",
    "amount": 5000,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -58,6 +64,8 @@
    "detail": "Management Fees",
    "notes": "623391",
    "amount": 72262.86,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -66,6 +74,8 @@
    "detail": "Sec. Tran. Tax",
    "notes": "Generated",
    "amount": 3522.52,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -74,6 +84,8 @@
    "detail": "Sec. Tran. Tax",
    "notes": "Generated",
    "amount": 2000,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -82,6 +94,8 @@
    "detail": "Custody Charges",
    "notes": "Custody Charges For April 2026",
    "amount": 1158.7,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -90,6 +104,8 @@
    "detail": "Fund Accountant Fees / Other Expenses",
    "notes": "Fund Accountant Fees April 2026",
    "amount": 1129.74,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -98,6 +114,8 @@
    "detail": "Custody Charges",
    "notes": "Custody Charges For May 2026",
    "amount": 1148.78,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -106,6 +124,8 @@
    "detail": "Fund Accountant Fees / Other Expenses",
    "notes": "Fund Accountant Fees May 2026",
    "amount": 1156.21,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -114,6 +134,8 @@
    "detail": "Custody Charges",
    "notes": "Custody Charges For June 2026",
    "amount": 1198.09,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -122,6 +144,8 @@
    "detail": "Fund Accountant Fees / Other Expenses",
    "notes": "Fund Accountant Fees June 2026",
    "amount": 1243.36,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   },
   {
@@ -130,11 +154,30 @@
    "detail": "Management Fees",
    "notes": "625222",
    "amount": 77709.75,
+   "paid": null,
+   "payable": null,
    "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement"
   }
  ],
  "periodFrom": "2026-04-01",
  "periodTo": "2026-07-06",
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
  "stitches": [],
  "derivedPortfolioTotal": null
 }

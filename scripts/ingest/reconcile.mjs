@@ -58,10 +58,29 @@ function rowSumChecks(doc) {
    */
   const accrued = round2(all.reduce((t, h) => t + (isNum(h.accruedIncome) ? h.accruedIncome : 0), 0));
 
+  /**
+   * A SECTION THE REPORT SUBTOTALLED WITHOUT PRINTING ITS ROWS.
+   *
+   * Green Lantern's quarterly investor report prints `Shares 98,943,579.34
+   * 112,998,541.36 96.65` and not one of the securities behind it — the detail
+   * is in that manager's portfolio appraisal, which precedence already names
+   * authoritative. The row sum here is therefore SHORT BY A KNOWN AMOUNT that
+   * the document itself declares, and reporting it as an unexplained break would
+   * put a ₹11.3 Cr material delta in the report for a document that is behaving
+   * exactly as printed.
+   *
+   * The shortfall is checked against the declared subtotals rather than waved
+   * through: it is explained only when the two agree to the rupee.
+   */
+  const missingSections = doc.sectionsWithoutRows ?? [];
+  const missingValue = round2(missingSections.reduce((t, s) => t + (isNum(s.printedValue) ? s.printedValue : 0), 0));
+  const missingNames = missingSections.map((s) => s.section).join(", ");
+
   const check = (label, sum, printed, tolerance = MONEY_TOLERANCE, incomeInclusive = false) => {
     if (!sum || !isNum(printed)) return;
     const delta = round2(sum.value - printed);
     const explainedByIncome = incomeInclusive && accrued > 0 && Math.abs(delta + accrued) <= 1;
+    const explainedByMissing = missingValue > 0 && Math.abs(delta + missingValue) <= 1;
     out.push({
       docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
       asOf: doc.asOf, reportType: doc.reportType,
@@ -70,11 +89,13 @@ function rowSumChecks(doc) {
       rowsSummed: sum.rows, rowsMissingField: sum.missing,
       matches: Math.abs(delta) <= tolerance,
       severity: Math.abs(delta) <= tolerance ? "ok"
-        : explainedByIncome ? "explained"
+        : explainedByIncome || explainedByMissing ? "explained"
         : Math.abs(delta) <= 1 ? "rounding" : "material",
       cause: explainedByIncome
         ? `printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (${accrued.toLocaleString("en-IN")}).`
-        : null,
+        : explainedByMissing
+          ? `this report subtotals ${missingNames} without printing the per-security rows. Delta equals the declared subtotal (${missingValue.toLocaleString("en-IN")}); those holdings come from another report for this account.`
+          : null,
       accruedIncome: accrued || null,
     });
   };
@@ -161,6 +182,25 @@ function explainedByIncomeBasis(h, printedTotal) {
 }
 
 /**
+ * Does this row's printed MARKET VALUE fold in the accrued income the reader
+ * separated out — exactly?
+ *
+ * The same basis difference as above, one column to the left. The SEBI investor
+ * report's Market Value column is income-inclusive on rows carrying an accrual:
+ * SVAN prints GHCL at 2,729,426.75 against 6,085 shares at 436.55, which is
+ * 2,656,406.75 plus ₹12.00 a share of declared dividend.
+ *
+ * Checked by ADDING BACK the figure the reader booked and requiring the printed
+ * value to the paisa. A row where that fails stays material — it means the
+ * residual came from something other than the accrual, and a tolerance would
+ * have hidden it.
+ */
+function explainedByAccrual(h) {
+  if (!isNum(h.marketValue) || !isNum(h.accruedIncome) || !isNum(h.printed?.marketValue)) return false;
+  return Math.abs(round2(h.marketValue + h.accruedIncome) - h.printed.marketValue) <= MONEY_TOLERANCE;
+}
+
+/**
  * Compare every DERIVED figure against the one the statement printed.
  *
  * This is where a report's own internal inconsistency becomes visible instead of
@@ -179,16 +219,19 @@ function derivedVsPrinted(doc) {
       if (!isNum(derived) || !isNum(printed)) continue;
       const delta = round2(derived - printed);
       if (delta === 0) continue;
-      const basis = field === "pctAssets" && explainedByIncomeBasis(h, doc.totals?.totalMarketValue);
+      const pctBasis = field === "pctAssets" && explainedByIncomeBasis(h, doc.totals?.totalMarketValue);
+      const mvBasis = field === "marketValue" && explainedByAccrual(h);
       out.push({
         docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
         asOf: doc.asOf, reportType: doc.reportType,
         security: h.security, securityKey: h.securityKey,
         field, derived, printed, delta,
-        severity: basis ? "explained" : classifyDelta(field, delta),
-        cause: basis
+        severity: pctBasis || mvBasis ? "explained" : classifyDelta(field, delta),
+        cause: pctBasis
           ? "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly."
-          : null,
+          : mvBasis
+            ? "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa."
+            : null,
         // A value copied from the statement cannot disagree with itself; if this
         // is ever true alongside a delta, the copy path is broken.
         fromPrinted: !!h.marketValueFromPrinted,
@@ -476,21 +519,54 @@ function coverage(docs, pdfCount, duplicateSources = []) {
  */
 function datedTableChecks(docs) {
   const out = [];
-  const add = (doc, check, key, derived, printed, tolerance = MONEY_TOLERANCE) => {
+  /**
+   * `explained` carries an optional { limit, cause }: a delta the STATEMENT'S OWN
+   * printing precision accounts for, reproduced rather than tolerated. A cause
+   * without a limit that covers the delta leaves it material, so a real break
+   * cannot hide behind an explanation that does not reach it.
+   */
+  const add = (doc, check, key, derived, printed, tolerance = MONEY_TOLERANCE, explained = null) => {
     if (!isNum(derived) || !isNum(printed)) return;
     const delta = round2(derived - printed);
+    const ok = Math.abs(delta) <= tolerance;
+    const byPrecision = !ok && explained && Math.abs(delta) <= explained.limit;
     out.push({
       docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
       asOf: doc.asOf, reportType: doc.reportType,
       check, row: key, derived, printed, delta,
-      matches: Math.abs(delta) <= tolerance,
-      severity: Math.abs(delta) <= tolerance ? "ok" : classifyDelta("amount", delta),
+      matches: ok,
+      severity: ok ? "ok" : byPrecision ? "explained" : classifyDelta("amount", delta),
+      cause: byPrecision ? explained.cause : null,
     });
   };
 
   for (const doc of docs) {
     for (const t of doc.transactions ?? []) {
-      add(doc, "transaction settlement", `${t.date} ${t.side} ${t.security}`, t.net, t.printed?.settlementAmount);
+      /**
+       * WHERE THE SETTLEMENT IS STRUCK ON A RATE THE REPORT ROUNDS BEFORE
+       * PRINTING IT, this check can only be as exact as that rounding allows.
+       *
+       * The SEBI investor report prints both trade rates to two decimals and
+       * settles on the unrounded one: Gland Pharma's 1,300 shares at a printed
+       * 2,293.61 derive 2,981,693 against a printed 2,981,690.92. Half a paisa
+       * per unit is ₹6.50 on that trade, and the ₹2.08 gap sits inside it.
+       *
+       * The allowance is computed from the precision the READER recorded, not
+       * applied as a blanket widening: the house transaction statements print
+       * four decimals, carry no `ratePrecision`, and stay held to the rupee —
+       * which is what caught brokerage being a per-unit rate on all 256 of them.
+       */
+      const q = isNum(t.quantity) ? Math.abs(t.quantity) : 0;
+      const allowance = isNum(t.ratePrecision) && q
+        ? round2(0.5 * 10 ** -t.ratePrecision * q)
+        : 0;
+      add(doc, "transaction settlement", `${t.date} ${t.side} ${t.security}`,
+        t.net, t.printed?.settlementAmount, MONEY_TOLERANCE, allowance
+          ? {
+            limit: allowance,
+            cause: `settlement is struck on an unrounded rate; the report prints its rates to ${t.ratePrecision}dp, so a derived settlement can only agree to ±${allowance.toLocaleString("en-IN")} on ${q.toLocaleString("en-IN")} units`,
+          }
+          : null);
     }
 
     // The bank book's own running balance is the check on its own flows.
@@ -616,6 +692,7 @@ export function reconcile(docs, opts = {}) {
       derivedRounding: derived.filter((d) => d.severity === "rounding").length,
       datedChecks: dated.length,
       datedMaterial: dated.filter((d) => d.severity === "material").length,
+      datedExplained: dated.filter((d) => d.severity === "explained").length,
       datedRounding: dated.filter((d) => d.severity === "rounding").length,
       crossReportDeltas: deltas.length,
       suspectedDuplicates: duplicates.length,

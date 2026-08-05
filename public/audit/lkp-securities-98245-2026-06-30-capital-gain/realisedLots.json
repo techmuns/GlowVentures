@@ -1,0 +1,60 @@
+{
+ "name": "realisedLots",
+ "rows": [
+  [
+   "security",
+   "isin",
+   "purchaseDate",
+   "saleDate",
+   "quantity",
+   "purchaseAmount",
+   "shortTerm",
+   "longTerm",
+   "daysHeld"
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "INE894V01022",
+   "2025-09-10",
+   "2026-06-25",
+   6000,
+   851340,
+   657636,
+   0,
+   288
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "INE180C01042",
+   "2025-07-10",
+   "2026-06-15",
+   3500,
+   621800.55,
+   138792.42,
+   0,
+   340
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "INE180C01042",
+   "2025-07-10",
+   "2026-06-19",
+   3500,
+   621800.55,
+   164124.45,
+   0,
+   344
+  ],
+  [
+   "Varun Beverages Limited",
+   "INE200M01039",
+   "2025-07-10",
+   "2026-04-21",
+   2700,
+   1247182.11,
+   57947.4,
+   0,
+   285
+  ]
+ ]
+}

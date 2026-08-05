@@ -1,0 +1,33 @@
+{
+ "name": "charges",
+ "rows": [
+  [
+   "detail",
+   "amount"
+  ],
+  [
+   "CGST",
+   1034.84
+  ],
+  [
+   "SEBITOC",
+   5.66
+  ],
+  [
+   "SGST",
+   1034.84
+  ],
+  [
+   "STAMP DUTY",
+   194
+  ],
+  [
+   "STT",
+   5660
+  ],
+  [
+   "TOC NSE Exchange",
+   173.75
+  ]
+ ]
+}

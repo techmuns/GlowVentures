@@ -14,7 +14,25 @@ export const REPORT_TYPES = [
   "holdings", "appraisal", "fact-sheet", "performance-summary", "performance-history",
   "performance-benchmark", "transaction-statement", "corporate-action", "capital-gain",
   "capital-register", "dividend-statement", "bank-book", "expense-statement",
-  "corporate-benefits", "capital-call", "distribution-notice", "contract-note", "unknown",
+  "corporate-benefits", "capital-call", "distribution-notice", "contract-note",
+  // The SEBI-prescribed PMS INVESTOR REPORT: account overview, portfolio
+  // summary, capital contributions since inception, the period's trades and a
+  // holding report, all in one statement. SVAN issues it monthly and Green
+  // Lantern quarterly, in the same regulator-mandated shape.
+  "investor-report",
+  // A DEPOSITORY movement statement — CDSL's own record of shares entering and
+  // leaving a demat account. Deliberately not "transaction-statement", which it
+  // is titled: a demat debit can be a pledge, a remat or an off-market transfer
+  // with no trade behind it, and the statement prints no price for any of them.
+  "demat-statement",
+  // A fund's own holdings, published under SEBI's disclosure rules. Carries no
+  // client and no units — archived for look-through, worth nothing to the book.
+  "scheme-portfolio",
+  // A Category-II AIF's pass-through income for one folio, split by TAX HEAD.
+  // The only place in this drop that says which rate the family's AIF income
+  // attracts, which is not a detail a "distribution-notice" would carry.
+  "statement-of-earnings",
+  "unknown",
 ];
 
 // ── Date parsing ─────────────────────────────────────────────────────────────
@@ -120,8 +138,29 @@ function fieldAfter(text, label, pattern = String.raw`([^:|]{2,80}?)`) {
  * Holdings are AIF/PMS units — no ISIN, no ticker.
  */
 function match360One(text, name) {
-  const hit = /360\s*ONE/i.test(text) || /PORTFOLIO\s+ANALYSIS\s+REPORT/i.test(text) || /\b360one\b/i.test(name);
+  /**
+   * THE LETTERHEAD, NOT THE WHOLE DOCUMENT.
+   *
+   * `360 ONE` also appears as a HOLDING — `360 One WAM Limited` is a listed
+   * company, and WhiteOak's multi-asset fund holds ₹10.16 Cr of it. Matching the
+   * whole text filed that scheme's monthly portfolio disclosure, a document with
+   * no client and no position in it, under 360 ONE Private Wealth and handed it
+   * to a reader written for a client-level portfolio analysis report.
+   *
+   * Exactly the trap ISSUER_PROVIDER_RULES / HOUSE_PROVIDER_RULES were split to
+   * avoid further down this file; this seeded matcher runs BEFORE that split and
+   * had never been given the same discipline. The report title stays matched on
+   * the whole text, because it is a title and appears once.
+   */
+  const head = text.slice(0, LETTERHEAD_CHARS);
+  const hit = /360\s*ONE/i.test(head) || /PORTFOLIO\s+ANALYSIS\s+REPORT/i.test(text) || /\b360one\b/i.test(name);
   if (!hit) return null;
+  // The group's ALTERNATES arm publishes per-folio AIF correspondence — a
+  // distribution letter, a statement of earnings — which is a different document
+  // family from the wealth arm's client-level report and has its own reader.
+  // Claiming it here sent five statements to a reader that could only say it had
+  // none for them.
+  if (/360\s*ONE\s+ALTERNATES/i.test(text) && !/PORTFOLIO\s+ANALYSIS\s+REPORT/i.test(text)) return null;
   const crn = text.match(/CRN[\s:#-]*([A-Z0-9-]{4,20})/i);
   const client = trimPersonName(fieldAfter(text, "Client\\s*Name(?:\\s*\\(CRN[^)]*\\))?"));
   const family = trimPersonName(fieldAfter(text, "Family\\s*Name"));
@@ -191,7 +230,8 @@ const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
 function matchGoldstandard(text, name) {
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
     || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
-    || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text);
+    || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text)
+    || /MOLECULE\s+VENTURES/i.test(text);
   const byName = PMS_FILE.test(name);
   if (!byText && !byName) return null;
 
@@ -200,6 +240,7 @@ function matchGoldstandard(text, name) {
     : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
     : /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text) ? "V.E.C Assago Capital Management LLP"
+    : /MOLECULE\s+VENTURES/i.test(text) ? "Molecule Ventures LLP"
     : /^GLC/i.test(name) ? "Green Lantern Capital LLP"
     : /^CBP/i.test(name) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /^VEC/i.test(name) ? "V.E.C Assago Capital Management LLP"
@@ -234,8 +275,16 @@ function matchGoldstandard(text, name) {
     if (re.test(name.replace(/[^A-Za-z]/g, ""))) { reportType = type; matchedBy = "Goldstandard filename"; break; }
   }
   if (reportType === "unknown") {
-    const g = genericReportType(text);
-    if (g) { reportType = g; matchedBy = "Goldstandard signature + content keywords"; }
+    // Molecule's file is named `Molecule_June_2026_392.pdf` — nothing in it maps
+    // to a report type. Its CONTENT is unmistakable: a fact sheet's own
+    // "Portfolio Holdings" table beside a "Sector Allocation" one.
+    if (/Portfolio\s+Holdings/i.test(text) && /Sector\s+Allocation/i.test(text)) {
+      reportType = "fact-sheet";
+      matchedBy = "fact-sheet content (Portfolio Holdings + Sector Allocation)";
+    } else {
+      const g = genericReportType(text);
+      if (g) { reportType = g; matchedBy = "Goldstandard signature + content keywords"; }
+    }
   }
 
   return {
@@ -254,6 +303,33 @@ function matchGoldstandard(text, name) {
 
 // ── Generic content keywords, most specific first ────────────────────────────
 const GENERIC_TYPE_RULES = [
+  // A TITLE, and it comes first for a reason. This report's own footnote reads
+  // "Net Rate includes brokerage, stamp duty, tax and any charge customarily
+  // included in the contract note of broker, STT etc." — so the contract-note
+  // keyword below matched all four SVAN statements and the fifteen-page Green
+  // Lantern bundle, filing a SEBI investor report as a report type this repo has
+  // no reader for. A phrase inside a footnote is not what a document is.
+  [/PMS\s+INVESTOR\s+REPORT/i, "investor-report"],
+  // ── A fund's OWN portfolio, not a client's. Matched first because the row of
+  // holdings inside it will match almost any content keyword below.
+  [/Portfolio\s+Statement\s+as\s+on|Monthly\s+Portfolio\s+(?:Statement|Disclosure)/i, "scheme-portfolio"],
+  // A mutual-fund FOLIO statement — units, NAV and a value per scheme, which is
+  // a holdings statement whatever the AMC titles it. Matched on the phrase every
+  // one of them prints beside the folio number, so the looser `holding
+  // statement` keyword below cannot claim a PMS report by mistake.
+  [/Market Value of Balance Units at NAV|Your Account At A Glance|PORTFOLIO SUMMARY[\s\S]{0,200}?Unit Balance/i, "holdings"],
+  // ── AIF pass-through correspondence, per folio.
+  [/STATEMENT\s+OF\s+EARNINGS/i, "statement-of-earnings"],
+  [/INCOME\s+DISTRIBUTION\s+LETTER/i, "distribution-notice"],
+  // ── The broker/depository set, all four titled unambiguously. These come
+  // before the looser keyword rules below because three of them contain a phrase
+  // one of those rules matches: the CDSL statement is headed TRANSACTION
+  // STATEMENT and is not a trade record at all, the depository statement is a
+  // holding statement, and the P&L is a capital gain statement that says neither.
+  [/DEPOSITORY\s+HOLDING\s+STATEMENT/i, "holdings"],
+  [/STATEMENT\s+OF\s+ACCOUNT\s+FOR\s+THE\s+PERIOD/i, "demat-statement"],
+  [/Annual\s*P\s*&?(?:amp;)?\s*L/i, "capital-gain"],
+  [/Global\s+Details\s+Report/i, "transaction-statement"],
   [/capital\s+call|drawdown\s+notice|call\s+notice/i, "capital-call"],
   [/distribution\s+notice|redemption\s+(?:notice|advice)|payout\s+advice/i, "distribution-notice"],
   [/contract\s+note/i, "contract-note"],
@@ -284,7 +360,29 @@ function genericReportType(text) {
  * classification.
  */
 const ISSUER_PROVIDER_RULES = [
-  [/360\s*ONE/i, "360 ONE Private Wealth"],
+  // The ALTERNATES arm comes first and must: it signs its letters "360 ONE
+  // ALTERNATES ASSET MANAGEMENT LIMITED", which the broader `360 ONE` rule below
+  // also matches. Two arms of one group, two document families, two readers.
+  [/360\s*ONE\s+ALTERNATES/i, "360 ONE Alternates Asset Management"],
+  /**
+   * The wealth arm, identified by its own REPORT TITLE and its EMAIL DOMAIN.
+   *
+   * The bare name cannot be used on the whole text: `360 One WAM Limited` is a
+   * listed company and WhiteOak's multi-asset fund holds ₹10.16 Cr of it, so one
+   * row inside a 348-row table filed that fund's own scheme disclosure under this
+   * provider and sent it to a client-report reader.
+   *
+   * The title alone is not enough either. In the FLAT reading order the
+   * inventory uses, the address block lands between the two halves of it —
+   * `PORTFOLIO Mr. AJAY T JAISINGHANI, 1301 B BEAU MONDE … ANALYSIS REPORT
+   * CLIENT LEVEL` — so the title matches in the coordinate grid and not in the
+   * inventory's text, and the two stages disagreed about a file they both read.
+   *
+   * `@360.one` is on the letterhead of every one of these documents (the
+   * relationship manager's address) and can appear in a holdings table only if a
+   * fund starts printing its holdings' e-mail addresses.
+   */
+  [/PORTFOLIO\s+ANALYSIS\s+REPORT|@360\.one\b/i, "360 ONE Private Wealth"],
   [/GOLDSTANDARD\s+WEALTH/i, "Goldstandard Wealth Private Limited"],
   [/GREEN\s+LANTERN\s+CAPITAL/i, "Green Lantern Capital LLP"],
   [/CARNELIAN\s+ASSET\s+MANAGEMENT/i, "Carnelian Asset Management and Advisors Pvt Ltd"],
@@ -303,6 +401,7 @@ const ISSUER_PROVIDER_RULES = [
   [/Kotak\s+Mahindra\s+Mutual\s+Fund|Kotak\s+Mutual\s+Fund/i, "Kotak Mahindra Mutual Fund"],
   [/Mirae\s+Asset\s+(?:Mutual\s+Fund|Investment|Asset\s+Management|MF)/i, "Mirae Asset Mutual Fund"],
   [/HDFC\s+Mutual\s+Fund|HDFC\s+Asset\s+Management/i, "HDFC Mutual Fund"],
+  [/WhiteOak\s+Capital|White\s*Oak\s+Capital/i, "Scheme portfolio disclosure"],
   [/\bMotilal\s+Oswal/i, "Motilal Oswal"],
   [/\bJulius\s+Baer/i, "Julius Baer"],
   [/\bAvendus\b/i, "Avendus"],
@@ -317,6 +416,15 @@ const ISSUER_PROVIDER_RULES = [
  * statement.
  */
 const HOUSE_PROVIDER_RULES = [
+  // 360 ONE on a LETTERHEAD is the issuer; 360 ONE in a holdings table is a
+  // share of a listed company. Only the first 700 characters count.
+  [/360\s*ONE/i, "360 ONE Private Wealth"],
+  // The AMCs, on their own letterhead. Their support domains are the one token
+  // that survives whatever the flat reading order does to the address block.
+  [/hdfcfund\.com|HDFC\s+Asset\s+Management/i, "HDFC Mutual Fund"],
+  [/kotakmf\.com/i, "Kotak Mahindra Mutual Fund"],
+  [/mutualfund\.adityabirlacapital\.com|Aditya\s+Birla\s+Sun\s+Life\s+AMC/i, "Aditya Birla Sun Life Mutual Fund"],
+  [/miraeassetmf\.co\.in/i, "Mirae Asset Mutual Fund"],
   [/\bKotak\s+(?:Mahindra\s+)?(?:Bank|Securities|Investment|MF|Mutual)/i, "Kotak"],
   [/\bICICI\s+(?:Securities|Prudential|Bank)/i, "ICICI"],
   [/\bHDFC\s+(?:Securities|Bank|AMC|Mutual)/i, "HDFC"],

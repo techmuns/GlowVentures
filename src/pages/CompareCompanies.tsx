@@ -9,7 +9,7 @@ import { StockLink } from "@/components/StockLink";
 import { Markdown } from "@/components/Markdown";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull } from "@/lib/analytics";
 import { symbolFor } from "@/lib/quotes";
 import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
@@ -115,7 +115,7 @@ export function CompareCompanies() {
 
   if (!portfolio) return null;
   const totalMV = consolidatedMarketValue(portfolio.positions);
-  const money = (n: number, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
 
   const filtered = candidates
     .filter((c) => !picked.includes(c.securityKey))
@@ -229,21 +229,23 @@ export function CompareCompanies() {
                     : fmtFromBase(c.rows[0].currentPrice!))}
                 {metric("Average cost", "Total cost over total quantity", (c) => {
                   const qty = sum(c.rows.map((r) => r.quantity));
-                  const cost = sum(c.rows.map((r) => r.costBasis));
-                  return qty > 0 ? fmtFromBase(cost / qty) : <AbsentCell reason="no quantity" />;
+                  const cost = sumOrNull(c.rows.map((r) => r.costBasis));
+                  return cost !== null && qty > 0
+                    ? fmtFromBase(cost / qty)
+                    : <AbsentCell reason={qty > 0 ? "no cost basis on any statement for this name" : "no quantity"} />;
                 })}
                 {metric("Invested", "Cost basis across every account holding it", (c) =>
-                  money(sum(c.rows.map((r) => r.costBasis))))}
+                  money(sumOrNull(c.rows.map((r) => r.costBasis))))}
                 {metric("Current value", "Market value across every account", (c) =>
                   money(sum(c.rows.map((r) => r.marketValue))))}
                 {metric("Unrealised P&L", "Current value less cost", (c) => {
-                  const pnl = sum(c.rows.map((r) => r.unrealizedPnL));
+                  const pnl = sumOrNull(c.rows.map((r) => r.unrealizedPnL));
                   return <span className={changeColor(pnl)}>{money(pnl, true)}</span>;
                 })}
                 {metric("Return on cost", "Holding-period return, not annualised", (c) => {
-                  const cost = sum(c.rows.map((r) => r.costBasis));
-                  const pnl = sum(c.rows.map((r) => r.unrealizedPnL));
-                  return cost > 0
+                  const cost = sumOrNull(c.rows.map((r) => r.costBasis));
+                  const pnl = sumOrNull(c.rows.map((r) => r.unrealizedPnL));
+                  return cost !== null && pnl !== null && cost > 0
                     ? <span className={changeColor(pnl / cost)}>{fmtPct((pnl / cost) * 100, { sign: true })}</span>
                     : <AbsentCell reason="no cost basis" />;
                 })}

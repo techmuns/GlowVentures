@@ -50,6 +50,39 @@ export function xirrWithTerminal(flows: DatedFlow[], terminalValue: number, asOf
   return xirrPct([...flows, { date: asOf, amount: terminalValue }]);
 }
 
+/**
+ * A pooled money-weighted return where each account CLOSES ON ITS OWN AS-OF.
+ *
+ * `xirrWithTerminal` takes one terminal date, which is right for one account and
+ * wrong for a pool of them. This book's statements do not share a report date —
+ * Green Lantern values at 25 June, the others at 10 July — so closing everything
+ * on the newest date credits Green Lantern's ₹11.69 Cr with fifteen days of
+ * standing still. Over a quarter's window that is not a rounding difference: it
+ * drags the annualised pool rate down by several points against the same
+ * accounts measured individually, and neither figure is wrong on its own terms,
+ * which is exactly why two pages showed two numbers for one book.
+ *
+ * Each account therefore contributes ONE terminal inflow dated at the moment its
+ * value was actually measured, and the solver sees the whole set at once. That is
+ * what a money-weighted return means: every cash flow at the date it happened.
+ *
+ * Accounts with no flows or no positive terminal value are skipped by the CALLER,
+ * not silently here — see `/performance`, which names each excluded account. This
+ * function will not invent a stake it was not given.
+ */
+export function pooledXirr(
+  parts: { flows: DatedFlow[]; terminalValue: number; asOf: Date }[],
+): number | null {
+  const usable = parts.filter((p) => p.flows.length && p.terminalValue > 0);
+  if (!usable.length) return null;
+  const all: DatedFlow[] = [];
+  for (const p of usable) {
+    all.push(...p.flows);
+    all.push({ date: p.asOf, amount: p.terminalValue });
+  }
+  return xirrPct(all);
+}
+
 /** Pooled XIRR across fund commitments: capital called at first investment → value today. */
 export function fundXirr(funds: FundInvestment[], asOf: Date): XirrResult {
   if (!funds.length) return NONE;

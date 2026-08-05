@@ -1,0 +1,32 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF179KA1RW5",
+   "HDFC Small Cap Fund - Direct Growth Plan",
+   0,
+   156.834,
+   "2026-06-30",
+   null,
+   0
+  ],
+  [
+   "INF179KB1HP9",
+   "HDFC Liquid Fund-Direct Plan-Growth Option",
+   0,
+   5508.3669,
+   "2026-06-30",
+   null,
+   0
+  ]
+ ]
+}

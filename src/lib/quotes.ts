@@ -172,8 +172,12 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     // `costUnavailable` and carries cost 0). `marketValue − 0` would book their
     // entire value as profit, so P&L and return stay "not meaningful" exactly as
     // the statement has them, and only the price and market value move.
-    const costNA = !!p.costUnavailable || !(p.costBasis > 0);
-    const unrealizedPnL = costNA ? 0 : marketValue - p.costBasis;
+    // `costBasis` is NULL where the statement reported none — a depository
+    // holding statement prints a value and no cost. Null, not zero: `marketValue
+    // − 0` would book the whole position as profit at an infinite return.
+    const cost = p.costBasis;
+    const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);
+    const unrealizedPnL = costNA ? p.unrealizedPnL : marketValue - (cost as number);
     const dayChangePct = q.prevClose && q.prevClose > 0 ? ((q.price - q.prevClose) / q.prevClose) * 100 : null;
     return {
       ...p,
@@ -182,7 +186,7 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
       currentPrice: q.price,
       marketValue,
       unrealizedPnL,
-      returnPct: costNA ? p.returnPct : (unrealizedPnL / p.costBasis) * 100,
+      returnPct: costNA || unrealizedPnL === null ? p.returnPct : (unrealizedPnL / (cost as number)) * 100,
       prevClose: q.prevClose,
       dayChange: dayChangePct == null ? null : marketValue - p.quantity * (q.prevClose as number),
       dayChangePct,

@@ -15,6 +15,15 @@ export type FormulaDef = {
 
 type Money = (n: number, sign?: boolean) => string;
 
+/**
+ * A figure inside a worked example, or the em-dash when the book does not carry
+ * it. A popover that reads `= ₹23,25,000 − ₹0 ÷ ₹0 × 100` teaches the reader a
+ * calculation nobody performed; `= ₹23,25,000 − — ÷ — × 100` shows exactly which
+ * input is missing, which is the question they clicked to ask.
+ */
+const has = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
+const orDash = <T,>(n: number | null | undefined, f: (v: number) => string) => (has(n) ? f(n) : "—");
+
 // Build a Data Audit deep-link: opens the extracted sheet and filters/highlights
 // rows. `find` matches any cell that CONTAINS the text (a security name, an
 // account number…); `eq` matches any cell that EXACTLY equals the value (use for
@@ -74,19 +83,27 @@ export const privateHref = (sheet: PrivateSheet, name: string) => auditHref({ fi
 const pct = (n: number, dp = 2) => `${n >= 0 ? "+" : ""}${n.toFixed(dp)}%`;
 
 // ── Reusable formula builders for the metrics that repeat across tables ────────
-export const pnlFormula = (mv: number, cost: number, pnl: number, m: Money, href?: string): FormulaDef => ({
+export const pnlFormula = (mv: number, cost: number | null | undefined, pnl: number | null | undefined, m: Money, href?: string): FormulaDef => ({
   title: "Unrealised P&L",
   excel: "= Market value − Cost",
   plain: "What the shares you still hold are worth today, minus what you paid for them. It's on paper — nothing has been sold.",
-  worked: `= ${m(mv)} − ${m(cost)} = ${m(pnl, true)}`,
+  worked: `= ${m(mv)} − ${orDash(cost, (c) => m(c))} = ${orDash(pnl, (v) => m(v, true))}`,
   auditHref: href,
 });
 
-export const returnFormula = (mv: number, cost: number, retPct: number, m: Money, href?: string): FormulaDef => ({
+export const returnFormula = (
+  mv: number,
+  cost: number | null | undefined,
+  retPct: number | null | undefined,
+  m: Money,
+  href?: string,
+): FormulaDef => ({
   title: "Return",
   excel: "= (Market value − Cost) ÷ Cost × 100",
-  plain: "How much the holding has gained or lost against what you paid, as a percentage.",
-  worked: `= (${m(mv)} − ${m(cost)}) ÷ ${m(cost)} × 100 = ${pct(retPct)}`,
+  plain: has(cost)
+    ? "How much the holding has gained or lost against what you paid, as a percentage."
+    : "This holding's statement reports a market value and no cost — a depository holds shares, it does not record what they cost — so there is nothing to measure the gain against.",
+  worked: `= (${m(mv)} − ${orDash(cost, (c) => m(c))}) ÷ ${orDash(cost, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`,
   auditHref: href,
 });
 
@@ -113,11 +130,11 @@ export const netReturnFormula = (
   };
 };
 
-export const weightFormula = (mv: number, total: number, wPct: number, m: Money): FormulaDef => ({
+export const weightFormula = (mv: number, total: number, wPct: number | null | undefined, m: Money): FormulaDef => ({
   title: "Weight",
   excel: "= Market value ÷ Total market value × 100",
   plain: "How big this holding is as a share of the whole listed book.",
-  worked: `= ${m(mv)} ÷ ${m(total)} × 100 = ${wPct.toFixed(1)}%`,
+  worked: `= ${m(mv)} ÷ ${m(total)} × 100 = ${orDash(wPct, (v) => `${v.toFixed(1)}%`)}`,
 });
 
 export const sumFormula = (title: string, plain: string, parts: { label: string; value: number }[], total: number, m: Money): FormulaDef => ({
@@ -127,10 +144,10 @@ export const sumFormula = (title: string, plain: string, parts: { label: string;
   worked: `= ${parts.map((p) => m(p.value)).join(" + ")} = ${m(total)}`,
 });
 
-export const embeddedReturnFormula = (pnl: number, cost: number, retPct: number, m: Money, href?: string): FormulaDef => ({
+export const embeddedReturnFormula = (pnl: number | null | undefined, cost: number | null | undefined, retPct: number | null | undefined, m: Money, href?: string): FormulaDef => ({
   title: "Embedded return",
   excel: "= Unrealised P&L ÷ Cost × 100",
   plain: "The gain still sitting inside the book — unrealised profit measured against what those holdings cost.",
-  worked: `= ${m(pnl)} ÷ ${m(cost)} × 100 = ${pct(retPct)}`,
+  worked: `= ${orDash(pnl, (v) => m(v))} ÷ ${orDash(cost, (v) => m(v))} × 100 = ${orDash(retPct, pct)}`,
   auditHref: href,
 });
