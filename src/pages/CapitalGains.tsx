@@ -64,32 +64,70 @@ export function CapitalGains() {
 
   const p = portfolio?.positions ?? [];
   const asOf = portfolio?.asOf ?? today;
-  const elapsed = daysBetween(asOf, today);
 
-  // The planner's calculation, unchanged and dormant. `daysToLT` is null on
-  // every position in this book; the moment a lot-level statement supplies it,
-  // this yields candidates and the card renders them instead of the notice.
+  /**
+   * `daysToLT` IS COUNTED FROM ITS OWN ACCOUNT'S REPORT DATE, NOT THE BOOK'S.
+   *
+   * `build-book` derives it as `365 − (days held at THAT DOCUMENT's as-of)`, so
+   * the date a lot turns long-term is `account.asOf + daysToLT`. This anchored
+   * every candidate to `portfolio.asOf` — the NEWEST date in the book — and the
+   * only account that publishes a lot register is LKP, which reports on
+   * 2026-03-31 against a book as-of of 2026-07-10.
+   *
+   * A hundred and one days of drift, and it was on screen: the planner's one
+   * live candidate, Belrise Industries with ₹5.51 L of unrealised gain, was
+   * shown crossing to long-term on 2026-12-20 when its lots actually cross on
+   * 2026-09-10. That is not a presentation detail — it is the whole output of
+   * the card. A family reading "hold until December" defers a sale three months
+   * longer than the ₹41,353 of tax saving requires.
+   *
+   * `elapsed` had the same fault: measured from the book's as-of it read 27 days
+   * where the LKP lots have actually aged 128.
+   */
+  const accountAsOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of portfolio?.accounts ?? []) m.set(a.accountId, a.asOf);
+    return m;
+  }, [portfolio]);
+
   const { holdCandidates, crossed, crossedGain } = useMemo(() => {
     const all = p.filter((x) => x.daysToLT != null && isPriced(x) && x.unrealizedPnL > 0)
-      .map((x) => ({
-        ...x,
-        // `isPriced` above narrows unrealizedPnL to a number, so this is a real
-        // saving on a real gain rather than a rate applied to nothing.
-        saving: (x.unrealizedPnL as number) * (STCG_RATE - LTCG_RATE),
-        ltDate: addDays(asOf, x.daysToLT!),
-        daysLeft: x.daysToLT! - elapsed,
-      }));
+      .map((x) => {
+        const from = accountAsOf.get(x.accountId) ?? asOf;
+        return {
+          ...x,
+          // `isPriced` above narrows unrealizedPnL to a number, so this is a real
+          // saving on a real gain rather than a rate applied to nothing.
+          saving: (x.unrealizedPnL as number) * (STCG_RATE - LTCG_RATE),
+          ltDate: addDays(from, x.daysToLT!),
+          daysLeft: x.daysToLT! - daysBetween(from, today),
+        };
+      });
     const done = all.filter((x) => x.daysLeft <= 0);
     return {
       holdCandidates: all.filter((x) => x.daysLeft > 0).sort((a, b) => a.daysLeft - b.daysLeft),
       crossed: done.length,
       crossedGain: sumOrNull(done.map((x) => x.unrealizedPnL)),
     };
-  }, [p, asOf, elapsed]);
+  }, [p, asOf, today, accountAsOf]);
 
   const harvest = useMemo(() =>
     p.filter((x) => isPriced(x) && x.unrealizedPnL < 0)
       .sort((a, b) => (a.unrealizedPnL ?? 0) - (b.unrealizedPnL ?? 0)), [p]);
+
+  // Which positions the planner can see at all, and whose. Stated on the card,
+  // because a planner covering 7 of 301 positions that does not say so reads as
+  // a planner covering the book.
+  const datedLots = useMemo(() => p.filter((x) => x.daysToLT != null), [p]);
+  const datedAccounts = useMemo(() => {
+    const byId = new Map((portfolio?.accounts ?? []).map((a) => [a.accountId, a]));
+    return [...new Set(datedLots.map((x) => x.accountId))]
+      .map((id) => {
+        const a = byId.get(id);
+        return a ? `${a.provider.split(" ")[0]} ${a.accountNo} (as of ${a.asOf})` : id;
+      })
+      .sort();
+  }, [datedLots, portfolio]);
 
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -344,12 +382,21 @@ export function CapitalGains() {
             : "Deferring a short-term winner past one year moves its gain from 20% to 12.5%"}>
           {holdCandidates.length === 0 ? (
             <AbsentSection
-              what="No lot acquisition dates in this book"
-              needs={`The planner works out how long each lot has left before its gain becomes long-term, which
-                needs the date that lot was bought. The CAPITAL REGISTER these managers issue is a
-                capital-account ledger — contributions, withdrawals, TDS transfers — not a lot register, and no
-                other statement in the drop carries acquisition dates. A lot-level holding statement switches
-                this on; the calculation is already wired and dormant.`} />
+              what={datedLots.length
+                ? `No short-term winner left to defer on the ${datedAccounts.length === 1 ? "one account" : `${datedAccounts.length} accounts`} that publish lot dates`
+                : "No lot acquisition dates in this book"}
+              needs={datedLots.length
+                ? `The planner covers ${datedLots.length} position(s) on ${datedAccounts.join(", ")} — the only
+                  account(s) here whose broker publishes a LOT REGISTER with dated acquisitions. None of them is
+                  currently a short-term holding at a gain, so there is nothing to defer. The other
+                  ${(portfolio.accounts.length - datedAccounts.length)} accounts issue a CAPITAL REGISTER, which
+                  is a capital-account ledger — contributions, withdrawals, TDS transfers — and carries no
+                  purchase dates, so their lots cannot be aged at all.`
+                : `The planner works out how long each lot has left before its gain becomes long-term, which
+                  needs the date that lot was bought. The CAPITAL REGISTER these managers issue is a
+                  capital-account ledger — contributions, withdrawals, TDS transfers — not a lot register, and no
+                  other statement in the drop carries acquisition dates. A lot-level holding statement switches
+                  this on; the calculation is already wired and dormant.`} />
           ) : (
             <div className="max-h-[440px] overflow-auto">
               <table className="min-w-full text-sm">
@@ -372,12 +419,19 @@ export function CapitalGains() {
                   ))}
                 </tbody>
               </table>
-              {crossed > 0 && (
-                <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] text-slate-500">
+              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                {crossed > 0 && <>
                   {crossed} position{crossed === 1 ? "" : "s"} carrying {money(crossedGain)} of gain passed the
-                  one-year mark since {fmtDate(asOf)}.
-                </p>
-              )}
+                  one-year mark since {datedAccounts.length === 1 ? "that account's" : "their accounts'"} report
+                  date{datedAccounts.length === 1 ? "" : "s"}.{" "}
+                </>}
+                {/* SCOPE, on the same rule the realised total follows: a figure that exists for SOME accounts
+                    is shown for those and the rest are named. Each lot is aged from ITS OWN account's report
+                    date — the only lot register here closes 2026-03-31 while the book closes 2026-07-10. */}
+                Covers {datedLots.length} position{datedLots.length === 1 ? "" : "s"} on {datedAccounts.join(", ")},
+                the only account{datedAccounts.length === 1 ? "" : "s"} publishing a lot register. Each is aged
+                from its own report date, not the book's.
+              </p>
             </div>
           )}
         </Card>
