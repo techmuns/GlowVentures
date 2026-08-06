@@ -672,8 +672,19 @@ written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is
 | Not populated | Why | What would fix it |
 | --- | --- | --- |
 | `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | a monthly / quarterly valuation statement |
-| `stCostBasis` / `ltCostBasis` / `daysToLT` on 294 of 301 positions | needs per-lot purchase dates. The CAPITAL REGISTER the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS), not a lot register | a holding statement with lot-level acquisition dates, which ONE broker in this drop publishes — see below |
+| `stCostBasis` / `ltCostBasis` / `daysToLT` on 296 of 301 positions | needs per-lot purchase dates. The CAPITAL REGISTER the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS), not a lot register | a holding statement with lot-level acquisition dates, which ONE broker in this drop publishes — see below |
 | `privateMarkets.peFunds` etc. | no statement here reports a fund-of-funds structure with its own TVPI and DPI. The AIF HOLDINGS are ordinary positions with `assetClass: "AIF"`, and the undrawn COMMITMENTS are `BOOK_COMMITMENTS` | a fund-of-funds statement |
+
+**The split is produced only where the lots ACCOUNT FOR THE UNITS HELD.** The
+register and the holdings statement are drawn at different dates, so they drift:
+Pricol's register carries 650 units bought 05/02 and 2,225 bought 05/05 against a
+holding of 650, and summing both put a short-term basis of ₹16,71,343.29 on a
+position whose entire cost is ₹3,78,730.63 — a tax basis 4.4x the money in it.
+Belrise's register carries 6,500 against 12,500 held, so the split covered 52% of
+the position and the uncovered ₹8,51,340 silently read as "long-term ₹0". Both
+now render `—` and are NAMED in the book report. Five positions reconcile exactly
+and keep their split; that is the same rule `costFor` already applies to the cost
+join, and for the same reason.
 
 **The short/long-term split IS produced now, for one account.** LKP's `519:
 Annual P&L II` is a lot register: one row per lot with both the buy date and the

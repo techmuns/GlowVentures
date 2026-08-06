@@ -421,7 +421,7 @@
    "isin": null,
    "symbol": null,
    "printedSecurity": null,
-   "assetClass": "Equity",
+   "assetClass": "Cash",
    "providerSector": null,
    "manager": null,
    "memberId": null,

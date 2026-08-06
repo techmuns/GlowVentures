@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-05T06:10:28.531Z",
+  "generatedAt": "2026-08-06T05:42:58.207Z",
   "summary": {
     "documents": 113,
     "parsed": 105,
@@ -20,7 +20,7 @@
     "datedRounding": 14,
     "crossReportDeltas": 5,
     "suspectedDuplicates": 3,
-    "securitiesWithoutSymbol": 11,
+    "securitiesWithoutSymbol": 10,
     "ownerNamesUnmatched": 2,
     "stitchesApplied": 20
   },
@@ -1999,7 +1999,7 @@
       "rowSum": 11033785.75,
       "printedTotal": 11033786,
       "delta": -0.25,
-      "rowsSummed": 10,
+      "rowsSummed": 9,
       "rowsMissingField": 0,
       "matches": false,
       "severity": "rounding",
@@ -2016,7 +2016,7 @@
       "rowSum": 10310431,
       "printedTotal": 10310430,
       "delta": 1,
-      "rowsSummed": 10,
+      "rowsSummed": 9,
       "rowsMissingField": 0,
       "matches": false,
       "severity": "rounding",
@@ -23451,13 +23451,6 @@
         "securityKey": "manali-petrochemical",
         "docs": [
           "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
-          "molecule-ventures-llp-7810404-2026-06-30-holdings"
-        ]
-      },
-      {
-        "security": "Tax Deducted at Source",
-        "securityKey": "tax-deducted-at-source",
-        "docs": [
           "molecule-ventures-llp-7810404-2026-06-30-holdings"
         ]
       },

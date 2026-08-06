@@ -302,8 +302,28 @@ const SECTION_ROW = /^(equity|equities|cash|mutual\s*fund|debt|bond|liquid|other
  */
 const SUBTOTAL_LABEL = /^(equity|equities|cash|debt|bonds?|liquid|others?|total|grand\s*total)$/i;
 
-/** A holding line that IS cash, by its own name rather than by its section. */
-const CASH_LINE = /^cash\b/i;
+/**
+ * A holding line that IS a cash-equivalent, by its own name rather than by its
+ * section.
+ *
+ * `Cash Rec/Payable` matched from the start; `Tax Deducted at Source` did not,
+ * and fell to the `: "Equity"` default. Molecule's CURRENT PORTFOLIO prints it
+ * under OTHER ASSETS —
+ *
+ *     Tax Deducted at Source  -0  1.00  -0  1.00  -0  0  0  0.00  0.00  -0.00
+ *
+ * — beside Cash, at a unit price of 1.00, which is how these statements write a
+ * rupee-denominated claim rather than a security. Extracting it was right: it is
+ * a printed row and a future drop can carry a real balance on it. Calling it
+ * EQUITY was not. Asset class is what a thing IS, and a withholding receivable
+ * from the tax authority is not a share; it was landing in the Equity class and
+ * the Unclassified sector, and rendering on the holdings table as a company
+ * priced at ₹1.
+ *
+ * Its value here is nil, so no total moves — which is exactly why it would have
+ * gone on being wrong unnoticed.
+ */
+const CASH_LINE = /^(cash\b|tax\s+deducted\s+at\s+source\b)/i;
 
 /** The page footer, which lands in whichever column sits above it. */
 const PAGE_FOOTER = /^page\s*\d+(\s*of\s*\d+)?$/i;

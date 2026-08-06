@@ -273,6 +273,8 @@ function build(docs) {
   const unclassified = new Map();
   /** Accounts read in full and deliberately left OUT — see excludedFromBook. */
   const excludedAccounts = [];
+  /** Positions whose lot register does not account for the units held — no split. */
+  const splitUnreconciled = [];
   /**
    * UNDRAWN CAPITAL — money the family OWES a fund on demand.
    *
@@ -526,7 +528,41 @@ function build(docs) {
       let stCostBasis = null;
       let ltCostBasis = null;
       let daysToLT = null;
-      if (dated.length && asOf) {
+      /**
+       * THE LOTS MUST ACCOUNT FOR THE UNITS ACTUALLY HELD, OR THERE IS NO SPLIT.
+       *
+       * This summed every dated lot the register carried, whether or not those
+       * units are still in the position, and the two ways that fails were both
+       * live:
+       *
+       *   PRICOL — register carries 650 units bought 05/02 and 2,225 bought
+       *   05/05; the holding statement says 650. Summing both put a short-term
+       *   cost of ₹16,71,343.29 on a position whose ENTIRE cost is ₹3,78,730.63
+       *   — a tax basis 4.4x the money in the holding, on 2,225 units the family
+       *   no longer owns.
+       *
+       *   BELRISE — register carries one lot of 6,500; the holding is 12,500. The
+       *   split covered 52% of the position and the other ₹8,51,340 of cost
+       *   silently became "long-term ₹0", which reads as a measurement and is
+       *   not one.
+       *
+       * The register and the holdings statement are also drawn at different
+       * dates, which is how the two drift apart in the first place. So the split
+       * is produced only when the lots reconcile to the held quantity exactly —
+       * the same discipline `costFor` already applies to the cost join, and for
+       * the same reason. Where they do not, all three fields stay null and the
+       * position is NAMED in the book report rather than carrying a partial
+       * basis nobody can act on.
+       */
+      const lotQty = dated.reduce((s, l) => s + (isNum(l.quantity) ? l.quantity : NaN), 0);
+      const lotsCoverPosition = dated.length && isNum(h.quantity)
+        && Number.isFinite(lotQty) && Math.abs(lotQty - h.quantity) < 1e-6;
+      if (dated.length && !lotsCoverPosition) {
+        splitUnreconciled.push({
+          security: h.security, accountId, held: h.quantity, lotQty: Number.isFinite(lotQty) ? lotQty : null,
+        });
+      }
+      if (lotsCoverPosition && asOf) {
         const asOfMs = Date.parse(asOf);
         const LT_DAYS = 365;
         stCostBasis = 0;
@@ -894,6 +930,14 @@ function build(docs) {
         + "capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates."
       : "unrealised short/long-term split is NULL on every position: it needs per-lot purchase dates, "
         + "and no statement in this drop carries a lot register.");
+    // Named, never silently dropped: a register that does not account for the
+    // units held cannot split them, and saying so is the whole point.
+    for (const u of splitUnreconciled) {
+      notes.push(`no short/long-term split for ${u.security} (${u.accountId}): the lot register accounts for `
+        + `${u.lotQty ?? "an unknown number of"} unit(s) against ${u.held} held, so the lots do not cover the `
+        + "position. Splitting on them would put a tax basis on units the position does not contain, or treat "
+        + "the uncovered cost as long-term when it is simply unknown.");
+    }
   }
 
   return {
