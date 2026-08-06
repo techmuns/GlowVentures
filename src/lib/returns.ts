@@ -5,6 +5,7 @@
 //   • YTD   — needs entityNavHistory (a per-entity opening NAV for the FY).
 import type { Portfolio } from "./types";
 import { xirr } from "./xirr";
+import { totalReturnFromXirr } from "./bucketXirr";
 import { fyStartYear } from "./analytics";
 
 // Annualized money-weighted return (XIRR) for one owning entity (keyed by the
@@ -18,6 +19,25 @@ export function entityXirrPct(portfolio: Portfolio, owner: string, currentMV: nu
   dated.push({ date: new Date(portfolio.asOf), amount: currentMV });
   const r = xirr(dated);
   return r == null ? null : r * 100;
+}
+
+/**
+ * Money-weighted return an entity has earned TO DATE — the XIRR de-annualised to
+ * the window its flows actually span. The flows open ~1 April and close on the
+ * as-of date, so the annualised rate reads well over 100% off a strong quarter;
+ * this is the cumulative return over that quarter instead, which is what the
+ * Morning CIO and Performance pages now show. Null when the XIRR is null.
+ */
+export function entityReturnToDatePct(portfolio: Portfolio, owner: string, currentMV: number): number | null {
+  const ann = entityXirrPct(portfolio, owner, currentMV);
+  if (ann == null) return null;
+  const flows = portfolio.entityCashFlows?.[owner] ?? [];
+  const start = flows.reduce<number | null>((a, f) => {
+    const t = new Date(f.date).getTime();
+    return a == null || t < a ? t : a;
+  }, null);
+  const days = start == null ? null : Math.round((new Date(portfolio.asOf).getTime() - start) / 864e5);
+  return totalReturnFromXirr(ann, days);
 }
 
 // Financial-year-to-date return (1 Apr → as-of) for one owning entity, using the

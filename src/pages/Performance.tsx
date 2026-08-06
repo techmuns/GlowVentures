@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, consolidatedMarketValue, sumOrNull } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
-import { xirrWithTerminal, pooledXirr } from "@/lib/bucketXirr";
+import { xirrWithTerminal, pooledXirr, totalReturnFromXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
@@ -174,11 +174,16 @@ export function Performance() {
   const lastClose = closeDates[closeDates.length - 1] ?? portfolio.asOf;
   const daysTo = (d: string) => (windowStart ? Math.round((Date.parse(d) - Date.parse(windowStart)) / 864e5) : null);
   const windowNote = !windowStart
-    ? "annualised"
+    ? "to date"
     : firstClose === lastClose
-      ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days), annualised`
-      : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days), `
-        + "annualised — each account closes on its own report date";
+      ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days)`
+      : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days) — each account closes on its own report date`;
+  // The headline is the money-weighted return actually EARNED to date, not the
+  // XIRR annualised — an annualised quarter reads >100% p.a. and misleads on a
+  // cockpit. De-annualised over the window the pool closes on; the p.a. rate is
+  // kept in the hint. Matches the Morning CIO, so the two pages state one number.
+  const consWindowDays = daysTo(lastClose);
+  const consolidatedTotalReturn = totalReturnFromXirr(consolidatedXirr, consWindowDays);
 
   // ── Time-weighted returns, per account, from each manager's own report ──
   const twrr = accounts.map((a) => {
@@ -232,12 +237,12 @@ export function Performance() {
               "XIRR needs dated external flows. No statement in this book carries them.")}
             icon={<Percent className="h-4 w-4" />} />
         ) : (
-          <StatTile label="Money-weighted return (XIRR)"
-            value={<span className={consolidatedXirr >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedXirr, { sign: true, decimals: 1 })}</span>}
-            sub={<>p.a. · {windowNote}</>}
-            hint={xirrMissing.length
-              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure. The window is short, so the annualised rate is volatile: it is a real measurement of a quarter, not a sustained yearly rate.`
-              : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}. The window is short, so the annualised rate is volatile.`}
+          <StatTile label="Money-weighted return (to date)"
+            value={<span className={(consolidatedTotalReturn ?? 0) >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
+            sub={<>to date · {windowNote}</>}
+            hint={`${xirrMissing.length
+              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
+              : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}; the annualised XIRR${consolidatedXirr != null ? ` is ${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a.` : ""}, kept off the tile because a >100% annualised quarter reads as a sustained yearly rate.`}
             icon={<Percent className="h-4 w-4" />} />
         )}
 
@@ -406,8 +411,8 @@ export function Performance() {
       </Card>
 
       {/* ── Money-weighted return, per account ── */}
-      <Card className="mt-5" title="Money-weighted return (XIRR), per account"
-        subtitle="From each account's own dated capital movements, closed against its current market value">
+      <Card className="mt-5" title="Money-weighted return to date, per account"
+        subtitle="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
@@ -416,7 +421,7 @@ export function Performance() {
                 <th className="px-3 py-2 text-right">Dated flows</th>
                 <th className="px-3 py-2 text-right">Market value</th>
                 <th className="px-3 py-2 text-right">Terminal date</th>
-                <th className="px-3 py-2 text-right">XIRR p.a.</th>
+                <th className="px-3 py-2 text-right" title="Money-weighted return earned to date — the annualised XIRR de-annualised to the account's window.">Return (to date)</th>
               </tr>
             </thead>
             <tbody>
@@ -435,7 +440,7 @@ export function Performance() {
                   <td className="px-3 py-2.5 text-right mono">
                     {x.pct == null
                       ? <span className="text-[11px] text-slate-500">{DASH} {x.reason}</span>
-                      : <span className={x.pct >= 0 ? "text-gain" : "text-loss"}>{fmtPct(x.pct, { sign: true, decimals: 1 })}</span>}
+                      : (() => { const tr = totalReturnFromXirr(x.pct, daysTo(x.account.asOf)); return <span className={(tr ?? 0) >= 0 ? "text-gain" : "text-loss"} title={`${fmtPct(x.pct, { sign: true, decimals: 1 })} p.a. annualised`}>{fmtPct(tr, { sign: true, decimals: 1 })}</span>; })()}
                   </td>
                 </tr>
               ))}
@@ -452,9 +457,9 @@ export function Performance() {
                 <td className="px-3 py-2.5 text-right mono text-slate-200">{money(measuredMV)}</td>
                 <td className="px-3 py-2.5 text-right mono text-slate-400">{portfolio.asOf}</td>
                 <td className="px-3 py-2.5 text-right mono">
-                  {consolidatedXirr == null
+                  {consolidatedTotalReturn == null
                     ? <span className="text-slate-500">{DASH}</span>
-                    : <span className={consolidatedXirr >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedXirr, { sign: true, decimals: 1 })}</span>}
+                    : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"} title={consolidatedXirr != null ? `${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a. annualised` : undefined}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
                 </td>
               </tr>
             </tbody>
@@ -479,8 +484,10 @@ export function Performance() {
           )}
           <p>
             <span className="font-medium text-slate-400">The window is one quarter.</span> These flows open on
-            1 April and close on the report date, so every rate in this table annualises about three months.
-            That is a real money-weighted measurement of that period — not a rate the book has sustained for a year.
+            1 April and close on the report date, so each figure is the money-weighted return earned over about three
+            months — the return <em>to date</em>, not annualised. The annualised XIRR p.a. behind each is in its
+            tooltip; it is kept off the table because an annualised quarter can read well over 100% and be mistaken for
+            a sustained yearly rate.
           </p>
         </div>
       </Card>

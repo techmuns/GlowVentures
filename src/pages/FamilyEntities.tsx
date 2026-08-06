@@ -14,7 +14,7 @@ import { byEntity, byCustodian, bySector, sum, consolidatedMarketValue } from "@
 import { DIRECT, accountIndex, custodyLabelOf, ownerOf } from "@/lib/accounts";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, absentTile } from "@/components/Absent";
-import { entityXirrPct, entityYtdPct } from "@/lib/returns";
+import { entityXirrPct, entityReturnToDatePct, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
@@ -151,14 +151,15 @@ export function FamilyEntities() {
                     <th className="label-xs px-4 py-2 text-right font-medium">Positions</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&L</th>
                     <th className="label-xs px-4 py-2 text-right font-medium" title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium" title="Money-weighted annualized return (Excel XIRR) over dated cash flows">XIRR</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium" title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</th>
                     <th className="label-xs px-4 py-2 text-right font-medium" title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</th>
                     <th className="label-xs px-4 py-2 text-left font-medium">Custody</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
                   {entities.map((e) => {
-                    const xirrPct = entityXirrPct(portfolio, e.key, e.mv);
+                    const xirrPct = entityReturnToDatePct(portfolio, e.key, e.mv);
+                    const xirrAnn = entityXirrPct(portfolio, e.key, e.mv);
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     return (
                       <tr key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
@@ -171,7 +172,7 @@ export function FamilyEntities() {
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no dated capital movements for this entity — needs a capital register or bank book" />
-                            : fmtPct(xirrPct, { sign: true })}
+                            : <span title={xirrAnn == null ? undefined : `${fmtPct(xirrAnn, { sign: true })} p.a. annualised`}>{fmtPct(xirrPct, { sign: true })}</span>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}>
                           {ytdPct == null
