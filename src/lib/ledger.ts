@@ -48,7 +48,34 @@ type ArchiveTxn = {
   assetClass: string | null;
   quantity: number | null; unitPrice: number | null;
   gross: number | null; charges: number | null; net: number | null;
+  /** The statement's OWN settlement figure. See `settledAmount`. */
+  printed?: { settlementAmount?: number | null } | null;
 };
+
+/**
+ * WHAT THIS TRADE SETTLED AT — the statement's own figure first.
+ *
+ * `net` is DERIVED: `unitPrice x quantity + brokerageRate x quantity ± STT`. The
+ * formula is right and the parse is right, but on the SEBI PMS investor report
+ * the inputs are PRINTED ROUNDED — price and brokerage rate to two decimals —
+ * and the manager settled at full precision. So the reconstruction lands near
+ * the printed settlement rather than on it.
+ *
+ * Measured across all 409 trades in this drop: 249 agree exactly, 112 within a
+ * rupee, and 48 do not — every one of them on Green Lantern's or SVAN's investor
+ * report, worst case ₹32.98 on 7,778 units of Vedanta Iron and Steel where the
+ * rate prints as `0.04`. Every delta sits INSIDE the printing precision of its
+ * own inputs (±0.005 x quantity on each of price and rate), which is what says
+ * the extractor is sound and the rounding is the limit.
+ *
+ * None of that helps a reader holding the PDF. The statement says ₹1,63,526.54
+ * and the tape said ₹1,63,493.56. The settlement amount is a PRINTED PRIMITIVE
+ * in its own right, so it is what the tape shows; the derivation stays as the
+ * cross-check it was built to be, and section (a3) of the reconciliation keeps
+ * comparing them. Derive what the statement does not print — not what it does.
+ */
+const settledAmount = (t: ArchiveTxn): number =>
+  t.printed?.settlementAmount ?? t.net ?? t.gross ?? 0;
 type ArchiveLot = {
   security: string; securityKey: string;
   saleDate: string | null; purchaseDate: string | null;
@@ -328,7 +355,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
     if (!t.date) continue;
     const side = t.side === "sell" ? "Sell" : "Buy";
     const qty = t.quantity ?? 0;
-    const amount = t.net ?? t.gross ?? 0;
+    const amount = settledAmount(t);
     const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
     // A sell's realised gain exists only where that account's manager issued
     // a capital gain statement. Null renders "—", never 0.
@@ -623,7 +650,7 @@ export async function loadSales(): Promise<SalesData | null> {
       m.set(t.securityKey, e);
     }
     e.soldQty += t.quantity ?? 0;
-    e.proceeds += t.net ?? t.gross ?? 0;
+    e.proceeds += settledAmount(t);
     const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
     if (claimed.has(key)) continue;
     const r = realised.get(key);
@@ -691,7 +718,7 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
     name = displaySecurity(t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    const qty = t.quantity ?? 0, amount = t.net ?? t.gross ?? 0;
+    const qty = t.quantity ?? 0, amount = settledAmount(t);
     txns.push({
       date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
       rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
