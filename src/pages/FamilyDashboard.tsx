@@ -138,7 +138,7 @@ export function FamilyDashboard() {
           value={scope === FAMILY
             ? <span className={changeColor(retPct)}>{fmtPct(retPct, { sign: true })}</span>
             : xirr == null
-              ? <span className="text-slate-500" title="No dated capital movements for this entity">—</span>
+              ? <AbsentCell reason="no dated capital movements for this entity, so a money-weighted return cannot be measured" />
               : <span className={changeColor(xirr)}>{fmtPct(xirr, { sign: true })}</span>}
           sub={scope === FAMILY ? "holding-period, live" : xirr == null ? "not measurable" : "money-weighted"}
           icon={<TrendingUp className="h-4 w-4" />} />

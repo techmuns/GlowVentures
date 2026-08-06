@@ -91,8 +91,8 @@ export function DataRefresh() {
         <StatTile label="Accounts" value={portfolio.accounts.length}
           sub={providers.length ? `${providers.length} provider${providers.length === 1 ? "" : "s"} · ${stale.length} behind latest` : "no accounts yet"}
           icon={<Layers className="h-4 w-4" />} />
-        <StatTile label="Sector coverage" value={listedMV > 0 ? `${coverage.toFixed(1)}%` : "—"}
-          sub={`${costNA} names cost-unavailable`} icon={<ShieldCheck className="h-4 w-4" />} />
+        <StatTile label="Sector coverage" value={listedMV > 0 ? `${coverage.toFixed(1)}%` : DASH}
+          sub={listedMV > 0 ? `${costNA} names cost-unavailable` : "no positions to classify yet"} icon={<ShieldCheck className="h-4 w-4" />} />
       </div>
 
       <Card className="mt-5" title="Accounts & report dates"
@@ -145,8 +145,8 @@ export function DataRefresh() {
                 book has no private holding at all, so the figure is absent. */}
             <Row label="Private book" value={hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}
               muted={!hasPrivate} />
-            <Row label="Sector classification" value={listedMV > 0 ? `${coverage.toFixed(1)}% of listed NAV` : "—"} />
-            <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "—"} muted={withIsin < p.length} />
+            <Row label="Sector classification" value={listedMV > 0 ? `${coverage.toFixed(1)}% of listed NAV` : "no positions to classify yet"} />
+            <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length} />
             <Row label="Cost-unavailable names" value={`${costNA} (excluded from P&L)`} />
             <Row label="Private instruments"
               value={hasPrivate ? `${pm.startups.length} startups · ${fundCount} funds/cos` : "None in this book"}

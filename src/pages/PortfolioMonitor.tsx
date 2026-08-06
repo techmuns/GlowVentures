@@ -290,7 +290,11 @@ export function PortfolioMonitor() {
                         </td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} on the position since previous close` : undefined}>
-                          {r.live && r.dayChangePct != null ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%` : "—"}
+                          {r.live && r.dayChangePct != null
+                            ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
+                            : <AbsentCell reason={r.currentPrice === null
+                                ? "this holding is marked at a total value, not a per-unit price, so it has no day move"
+                                : "no live quote for this security, so there is no previous close to move from"} />}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">
                           {r.live ? fmtFromBase(r.marketValue, { compact: true })
@@ -599,9 +603,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                   <td className="px-3 py-2 text-slate-400">{t.account}</td>
                   <td className="px-3 py-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
                   <td className="px-3 py-2 text-right mono text-slate-300"><Auditable to={ledgerHref(t.security)} title="Shares transacted — trace to the ledger">{fmtNum(Math.round(t.qty))}</Auditable></td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? <Auditable to={ledgerHref(t.security)} title="Trade price — trace to the ledger">{fmtFromBase(t.price)}</Auditable> : "—"}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? <Auditable to={ledgerHref(t.security)} title="Trade value — trace to the ledger">{fmtFromBase(t.amount, { compact: true })}</Auditable> : "—"}</td>
-                  <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? "—" : <Auditable to={ledgerHref(t.security)} title="Realized profit on this sale — trace to the ledger">{fmtFromBase(t.realized, { compact: true, sign: true })}</Auditable>}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? <Auditable to={ledgerHref(t.security)} title="Trade price — trace to the ledger">{fmtFromBase(t.price)}</Auditable> : <AbsentCell reason="this trade row reports no unit price on its statement" />}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? <Auditable to={ledgerHref(t.security)} title="Trade value — trace to the ledger">{fmtFromBase(t.amount, { compact: true })}</Auditable> : <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />}</td>
+                  <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : <Auditable to={ledgerHref(t.security)} title="Realized profit on this sale — trace to the ledger">{fmtFromBase(t.realized, { compact: true, sign: true })}</Auditable>}</td>
                 </tr>
               ))}
               {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
