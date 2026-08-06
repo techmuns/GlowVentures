@@ -15,6 +15,7 @@ import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
 import { fetchReturnsTable, type ReturnsTable } from "@/lib/returnsTable";
 import { readWatchlist, upsidePct } from "@/lib/watchlist";
+import { accountIndex } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
 
 // COMPARE UP TO FOUR COMPANIES — the client spec's comparison screen.
@@ -55,6 +56,8 @@ export function CompareCompanies() {
   const [ratios, setRatios] = useState<Ratios | RatiosError | null | undefined>(undefined);
   const [returns, setReturns] = useState<Record<string, ReturnsTable | null>>({});
   const watchlist = useMemo(() => readWatchlist(), []);
+  // Per-account report dates — a statement mark closes on its own account's date.
+  const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
 
   // One row per SECURITY, not per position: the same name is held by several
   // accounts and comparing it against itself is not a comparison.
@@ -98,13 +101,28 @@ export function CompareCompanies() {
   // Returns: one call PER company. Each is twelve dated closes, and the history
   // endpoint caps a single request at sixteen dates, so four companies cannot
   // share one call.
+  //
+  // EACH RETURN CLOSES ON THE DATE ITS PRICE WAS MEASURED. This omitted the
+  // as-of argument entirely, so `fetchReturnsTable` fell back to its
+  // `new Date()` default and measured every horizon to TODAY — including for a
+  // company whose `currentPrice` is still the statement mark, because the feed
+  // never resolved it. `ReturnsTable` on the company page already states why
+  // that is wrong: closing a return against today using a month-old mark reports
+  // the market's move over a window the price never covered. Same feed, same
+  // holdings, two different rules, and this page was on the wrong one.
   useEffect(() => {
     let alive = true;
     for (const c of chosen) {
-      const price = c.rows[0]?.currentPrice ?? null;
+      const row = c.rows[0];
+      const price = row?.currentPrice ?? null;
       if (!c.symbol || price === null || !(price > 0)) continue;
       if (c.securityKey in returns) continue;
-      fetchReturnsTable(c.symbol, price).then((t) => {
+      // A statement mark closes on the account's own report date; a live price
+      // closes now.
+      const to = row?.live
+        ? new Date()
+        : new Date((accIdx.get(row!.accountId)?.asOf ?? portfolio!.asOf) + "T00:00:00Z");
+      fetchReturnsTable(c.symbol, price, to).then((t) => {
         if (alive) setReturns((r) => ({ ...r, [c.securityKey]: t }));
       });
     }
