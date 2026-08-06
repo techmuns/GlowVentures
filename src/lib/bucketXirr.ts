@@ -39,6 +39,26 @@ export type XirrResult = {
 
 const NONE: XirrResult = { pct: null, dated: 0, total: 0 };
 
+/**
+ * Convert an ANNUALISED money-weighted rate into the TOTAL return earned over
+ * its window — the money-weighted answer to "how much has this made to date",
+ * not "at what yearly pace".
+ *
+ * XIRR annualises, so a strong quarter compounds to a yearly rate well over
+ * 100% — which reads as a return the book has sustained for a year when the
+ * flows only span a quarter. Raising (1 + r) to the fraction of a year the
+ * window actually covers gives the cumulative return instead:
+ *   (1 + r)^(days / 365) − 1.
+ *
+ * Null in → null out. A non-positive window returns the rate unchanged (there is
+ * no window to de-annualise over).
+ */
+export function totalReturnFromXirr(annualPct: number | null, windowDays: number | null): number | null {
+  if (annualPct == null) return null;
+  if (windowDays == null || windowDays <= 0) return annualPct;
+  return ((1 + annualPct / 100) ** (windowDays / 365) - 1) * 100;
+}
+
 export function xirrPct(flows: DatedFlow[]): number | null {
   const r = xirr(flows);
   return r == null ? null : r * 100;

@@ -57,6 +57,11 @@ export function PortfolioMonitor() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sector, setSector] = useState("All");
   const [entity, setEntity] = useState("All");
+  // Asset-class filter — Equity / AIF / Mutual Fund / Cash were shown in one flat
+  // list, so a ₹176 Cr AIF folio sat between two equity lines as if it were the
+  // same kind of thing. This filters to one class; the holdings table also
+  // sections by class with a subtotal when all are shown.
+  const [assetClass, setAssetClass] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("marketValue");
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -78,6 +83,10 @@ export function PortfolioMonitor() {
   const owner = (p: Position) => ownerOf(accIdx, p);
   const sectors = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.sector))).sort()], [positions]);
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
+  // Asset classes present, in a fixed reading order (listed → alternatives → cash).
+  const CLASS_ORDER = ["Equity", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+  const classOrd = (c: string) => { const i = CLASS_ORDER.indexOf(c); return i < 0 ? CLASS_ORDER.length : i; };
+  const assetClasses = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.assetClass))).sort((a, b) => classOrd(a) - classOrd(b))], [positions]); // eslint-disable-line react-hooks/exhaustive-deps
   // Company pick-list, biggest holding first (matches the table's default sort).
   const securityNames = useMemo(() => {
     const mv = new Map<string, number>();
@@ -94,6 +103,7 @@ export function PortfolioMonitor() {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
+    if (assetClass !== "All") base = base.filter((p) => p.assetClass === assetClass);
     // Weight denominator — consolidated, so the column sums to 100 rather than
     // to 101.4 when a holding is reported under two members.
     const totalMV = consolidatedMarketValue(base);
@@ -143,7 +153,18 @@ export function PortfolioMonitor() {
       return asc ? cmp : -cmp;
     });
     return out;
-  }, [positions, accIdx, consolidate, selected, sector, entity, sortKey, asc]);
+  }, [positions, accIdx, consolidate, selected, sector, entity, assetClass, sortKey, asc]);
+  // Rows grouped by asset class, so Equity / AIF / Mutual Fund / Cash read as the
+  // distinct things they are rather than as one mixed ledger. Sectioning only
+  // when more than one class is on screen.
+  const classGroups = useMemo(() => {
+    const g = new Map<string, Row[]>();
+    for (const r of rows) (g.get(r.assetClass) ?? g.set(r.assetClass, []).get(r.assetClass)!).push(r);
+    return [...g.entries()]
+      .map(([cls, rs]) => ({ cls, rows: rs, subtotal: sum(rs.map((x) => x.marketValue)) }))
+      .sort((a, b) => classOrd(a.cls) - classOrd(b.cls));
+  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const showClassSections = assetClass === "All" && classGroups.length > 1;
   const totMV = sum(rows.map((r) => r.marketValue));
   const totPnL = sumOrNull(rows.map((r) => r.unrealizedPnL));
   const totCost = sumOrNull(rows.map((r) => r.costBasis));
@@ -200,6 +221,9 @@ export function PortfolioMonitor() {
         <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
+        <select value={assetClass} onChange={(e) => setAssetClass(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+          {assetClasses.map((s) => <option key={s} value={s}>{s === "All" ? "All asset classes" : s}</option>)}
+        </select>
         <button onClick={handleExport} disabled={exporting}
           className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
           title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
@@ -248,7 +272,19 @@ export function PortfolioMonitor() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {rows.map((r) => {
+                {classGroups.map((grp) => (
+                  <Fragment key={grp.cls}>
+                    {showClassSections && (
+                      <tr className="bg-ink-900/50">
+                        <td colSpan={13} className="px-2 py-1.5">
+                          <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
+                            {grp.cls}
+                            <span className="font-normal normal-case tracking-normal text-slate-500">· {grp.rows.length} {grp.rows.length === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {grp.rows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   return (
@@ -286,7 +322,7 @@ export function PortfolioMonitor() {
                             ? fmtFromBase(r.currentPrice)
                             : <><Auditable to={ledgerHref(r.security)} title="Market price — trace to the ledger">{fmtFromBase(r.currentPrice)}</Auditable>
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
-                                  title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>\u25e6</span></>}
+                                  title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} on the position since previous close` : undefined}>
@@ -363,7 +399,9 @@ export function PortfolioMonitor() {
                       )}
                     </Fragment>
                   );
-                })}
+                    })}
+                  </Fragment>
+                ))}
                 {rows.length === 0 && <tr><td colSpan={13} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">

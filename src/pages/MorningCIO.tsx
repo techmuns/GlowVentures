@@ -8,10 +8,10 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
-import { xirrWithTerminal, xirrPct, pooledXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { auditHref, LEDGER, type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
@@ -128,22 +128,32 @@ export function MorningCIO() {
      */
     const accrued = sumOrNull(p.map((x) => x.accruedIncome));
     const accruedCount = p.filter((x) => typeof x.accruedIncome === "number" && x.accruedIncome !== 0).length;
-    const privateCurrent = portfolio.privateValue;
-    // Capital currently deployed = cost of listed holdings + drawn private (excl. fully-exited funds).
+    // `p` (consolidated) holds EVERY position — the AIF units included — so
+    // listedMV / listedCost / listedPnL already carry the whole book. The
+    // fund-of-funds model (privateMarkets) is the only thing SEPARATE from
+    // positions, and it is empty here; its markup adds on top, but the AIF VALUE
+    // must never be added again, because listedPnL already holds the AIF's gain.
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
-    const totalInvested = sumOrNull([listedCost, privateInvested]);
+    const privateCurrent = st.fairValue + peF.currentValue + preF.currentValue + unlF.currentValue + debtF.currentValue;
+    const totalInvested = sumOrNull([listedCost, privateCount ? privateInvested : null]);
     const privateGain = privateCurrent - privateInvested;
     // Cash returned by holdings still in the book (startups distribute nothing).
     const privateDistributed = peF.distributed + preF.distributed + unlF.distributed + debtF.distributed;
     const privateTotalGain = privateCurrent + privateDistributed - privateInvested;
     const privateNet = privateInvested > 0 ? (privateCurrent + privateDistributed) / privateInvested : null;
-    // Embedded gain = the two book components (so it reconciles with the
-    // Book-performance card). With no private book it IS the listed P&L, and the
-    // worked formula below says so rather than adding a phantom "+ ₹0".
-    const embeddedGain = sumOrNull([listedPnL, privateGain]);
+    // Embedded gain = the book's own unrealised P&L (AIF units already inside it)
+    // plus the fund model's markup where one exists. Adding `portfolio.privateValue
+    // − 0` on top — the AIF value against a fund model that reports no cost — is
+    // what put embedded gain at 99.8% of invested, almost the whole NAV.
+    const embeddedGain = sumOrNull([listedPnL, privateCount ? privateGain : null]);
     const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
       ? (embeddedGain / totalInvested) * 100
       : null;
+    // Asset-class listed/private split, the same rule the rest of the app uses:
+    // the AIF book is private even though the fund-of-funds model is empty. Drives
+    // the NAV caption and the concentration line so neither claims "no private".
+    const pp = publicPrivateSplit(p);
+    const hasPrivateClass = pp.private > 0;
 
     // Listed book split by vehicle: in-house "Direct Equity" vs externally-managed
     // "PMS / Managed" — read from the account registry's `engagement` field,
@@ -163,8 +173,18 @@ export function MorningCIO() {
         ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
     };
-    const directEq = eqGroup(p.filter((x) => !managedRow(x)));
-    const pmsEq = eqGroup(p.filter(managedRow));
+    // Equity ONLY on the vehicle split — the AIF units, mutual funds and cash
+    // that also sit in `p` were being folded into "PMS / Managed" and shown as
+    // equity, which is exactly why the allocation read as one asset class. They
+    // now get their own buckets below.
+    const isEquity = (x: (typeof p)[number]) => x.assetClass === "Equity" || x.assetClass === "ETF";
+    const directEq = eqGroup(p.filter((x) => isEquity(x) && !managedRow(x)));
+    const pmsEq = eqGroup(p.filter((x) => isEquity(x) && managedRow(x)));
+    // Non-equity asset classes, each as its own bucket. AIF is 62% of this book.
+    const classGroup = (cls: string) => eqGroup(p.filter((x) => x.assetClass === cls));
+    const aifEq = classGroup("AIF");
+    const mfEq = classGroup("Mutual Fund");
+    const cashEq = classGroup("Cash");
 
     // ── Money-weighted returns, from the book's own dated flows ──
     //
@@ -259,9 +279,19 @@ export function MorningCIO() {
       retPct: f.drawn > 0 ? ((f.currentValue + f.distributed - f.drawn) / f.drawn) * 100 : null,
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
     });
+    // A bucket for a non-equity asset class — no dated capital-movement flows, so
+    // no money-weighted rate; its total return on cost is what the row shows.
+    const classBucket = (key: string, color: string, g: typeof directEq): Bucket => ({
+      key, color, count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
+      metric: g.cost !== null && g.cost > 0 ? g.mv / g.cost : null,
+      retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
+    });
     const allBuckets: Bucket[] = [
       { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
       { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
+      classBucket("AIF", "#a855f7", aifEq),
+      classBucket("Mutual Fund", "#22d3ee", mfEq),
+      classBucket("Cash", "#64748b", cashEq),
       { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
@@ -301,6 +331,12 @@ export function MorningCIO() {
     const xirrWindowDays = xirrWindowStart
       ? Math.round((asOfDate.getTime() - xirrWindowStart.getTime()) / 864e5)
       : null;
+    // The family reads the headline as an ANNUAL return, so an XIRR annualised
+    // over a quarter (>100% p.a. in a strong quarter) misleads. De-annualise it
+    // to the money-weighted return actually earned over the window — the total to
+    // date, which is what these pages now show.
+    const listedTotalReturn = totalReturnFromXirr(listedXirrPct, xirrWindowDays);
+    const bookTotalReturn = totalReturnFromXirr(bookXirr, xirrWindowDays);
 
     // Concentration, consolidated on securityKey across accounts. ISIN cannot do
     // this here: the same company arrives from two platforms with two spellings
@@ -333,10 +369,11 @@ export function MorningCIO() {
     return {
       p, listedMV, listedCost, listedPnL, listedRet,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
+      pp, hasPrivateClass,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      buckets, emptyBuckets, bookXirr, listedXirrPct,
+      buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       distinctNames: byKey.size, crossHeld, top10Pct,
       largestName, largestKey: largest?.[0] ?? "", largestPct, winners, losers,
@@ -360,33 +397,30 @@ export function MorningCIO() {
   // XIRR, with the multiple and the return-on-cost kept a click away. Both bases
   // run the identical solver; what each popover explains is how finely its
   // source dates the money.
-  const XIRR_EXCEL = "= XIRR(dated cash flows, today's value)";
-  const xirrCell = (b: typeof m.buckets[number]) => {
-    if (b.xirr == null) {
+  // TOTAL RETURN TO DATE per bucket — not annualised. An XIRR annualises a
+  // sub-year window into a rate the book has not sustained for a year (>100% p.a.
+  // off one strong quarter); the family asked to see the return actually earned
+  // to date, so every row shows total return on the capital in it, and the
+  // money-weighted figure (de-annualised) lives once in the footer total.
+  const returnCell = (b: typeof m.buckets[number]) => {
+    if (b.retPct == null) {
       return (
-        <span className="text-slate-500" title="No dated capital movements for this bucket, so there is no money-weighted return to show.">
+        <span className="text-slate-500" title="No cost basis reported for this bucket, so there is no return to show.">
           {DASH}
         </span>
       );
     }
     const mult = b.metric == null ? DASH : `${b.metric.toFixed(2)}×`;
-    const roc = b.retPct == null ? DASH : fmtPct(b.retPct, { sign: true, decimals: 1 });
-    const plain: Record<typeof b.xirrBasis, string> = {
-      ledger: "The yearly growth rate that makes every dated capital movement balance against what the holdings are worth right now — exactly what Excel's XIRR() returns. The flows are each account's own capital register or bank book, with the window's opening portfolio value as the first entry.",
-      "first-investment": "Excel's XIRR() over this bucket's dated flows — capital called at first investment, closed against distributions plus today's NAV. The source dates the first investment but not the distributions, so cash already returned is credited as if it arrived today, which makes this a conservative floor.",
-    };
     const formula = {
-      title: `${b.key} — XIRR p.a.`,
-      excel: XIRR_EXCEL,
-      plain: `${plain[b.xirrBasis]}${b.xirrNote ? ` ${b.xirrNote}` : ""}`,
-      worked: b.xirrBasis === "ledger"
-        ? `${money(b.invested)} invested → ${money(b.current)} today · ${mult} · ${roc} on cost`
-        : `${money(b.invested)} invested → ${money(b.current)} today${b.distributed > 0 ? ` + ${money(b.distributed)} already returned` : ""} · ${b.kind} ${mult} · ${roc} total`,
-      auditHref: b.xirrBasis === "ledger" ? auditHref(LEDGER) : bucketHref(b),
+      title: `${b.key} — total return to date`,
+      excel: b.distributed > 0 ? "= (Current value + Cash returned − Invested) ÷ Invested" : "= (Current value − Invested) ÷ Invested",
+      plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.current)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.`,
+      worked: `${money(b.invested)} invested → ${money(b.current)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total`,
+      auditHref: bucketHref(b),
     };
     return (
-      <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.xirr)}`}>
-        <Auditable formula={formula}>{fmtPct(b.xirr, { sign: true, decimals: 1 })}</Auditable>
+      <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.retPct)}`}>
+        <Auditable formula={formula}>{fmtPct(b.retPct, { sign: true, decimals: 1 })}</Auditable>
       </span>
     );
   };
@@ -410,8 +444,8 @@ export function MorningCIO() {
               : `= ${money(m.listedMV)} across ${m.p.length} positions`,
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
           sub={<>
-            {m.privateCount
-              ? `Listed ${money(m.listedMV)} · Private ${money(m.privateCurrent)}`
+            {m.hasPrivateClass
+              ? `Listed ${money(m.pp.listed)} · Private ${money(m.pp.private)}`
               : `${m.p.length} listed positions · no private holdings`}
             {m.accrued !== null && (
               <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
@@ -448,22 +482,22 @@ export function MorningCIO() {
           }}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</Auditable></span>}
           delta={m.gainPct ?? undefined} sub="on invested" icon={<TrendingUp className="h-4 w-4" />} />
 
-        <Kpi label="Listed XIRR"
-          value={m.listedXirrPct == null
+        <Kpi label="Listed return"
+          value={m.listedTotalReturn == null
             ? <AbsentValue />
-            : <span className={changeColor(m.listedXirrPct)}><Auditable formula={{
-                title: "Listed XIRR p.a.",
-                excel: `= XIRR(dated capital movements, market value at ${portfolio.asOf})`,
-                plain: `The single yearly growth rate that makes every dated capital movement balance against what the book is worth — exactly what Excel's XIRR() returns. The flows are each account's own capital register or bank book, with the window's opening portfolio value as the first entry; trades are excluded because they move cash inside an account, not into or out of it.${
+            : <span className={changeColor(m.listedTotalReturn)}><Auditable formula={{
+                title: "Listed return to date (money-weighted)",
+                excel: "= (1 + XIRR)^(window ÷ 365) − 1",
+                plain: `The money-weighted return the listed book has actually earned to date — Excel's XIRR() over each account's dated capital movements (capital register or bank book, with the window's opening portfolio value first), de-annualised to the window it covers so it reads as a return to date rather than a yearly pace. Trades are excluded because they move cash inside an account, not into or out of it.${
                   m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on BOTH sides for want of an opening portfolio value, so this covers ${money(m.measuredMV)} of the book's ${money(m.listedMV)}.` : ""
-                }${m.xirrWindowDays ? ` The window is ${m.xirrWindowDays} days, so this annualises about a quarter — a real measurement of that period, not a rate sustained for a year.` : ""}`,
+                }${m.xirrWindowDays && m.listedXirrPct != null ? ` Over a ${m.xirrWindowDays}-day window; that is ${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised.` : ""}`,
                 auditHref: auditHref(LEDGER),
-              }}>{fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })}</Auditable></span>}
-          sub={m.listedXirrPct == null
+              }}>{fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}</Auditable></span>}
+          sub={m.listedTotalReturn == null
             ? <span className="text-slate-500">no dated capital movements in these statements</span>
             : m.xirrWindowDays
-              ? <span title="These flows open on 1 April; the rate annualises that window.">p.a. · {m.xirrWindowDays}-day window</span>
-              : "p.a. · money-weighted"}
+              ? <span title="Money-weighted return to date, over the window these flows cover (opening on 1 April).">to date · {m.xirrWindowDays}-day window</span>
+              : "to date · money-weighted"}
           icon={<Percent className="h-4 w-4" />} />
 
         {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
@@ -491,7 +525,7 @@ export function MorningCIO() {
       {/* Allocation hero + right column */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2" title="Allocation by asset class"
-          subtitle="Invested, current value & annualised return per bucket — the CIO's first view"
+          subtitle="Invested, current value & total return to date per bucket — the CIO's first view"
           right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
@@ -517,7 +551,7 @@ export function MorningCIO() {
                     <th className="label-xs px-2 py-2 text-left font-medium">Asset class</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Invested</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Current</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap">XIRR p.a.</th>
+                    <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap" title="Total return to date on the capital in each bucket — cumulative, not annualised.">Return (total)</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Weight</th>
                   </tr>
                 </thead>
@@ -532,7 +566,7 @@ export function MorningCIO() {
                       </td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap"><Auditable to={bucketHref(b)} title={`${b.key} — trace to source`}>{money(b.current)}</Auditable></td>
-                      <td className="px-2 py-2.5 text-right whitespace-nowrap">{xirrCell(b)}</td>
+                      <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
                     </tr>
                   ))}
@@ -542,18 +576,18 @@ export function MorningCIO() {
                     <td className="px-2 py-2.5 text-left text-slate-200">Total</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>
-                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.bookXirr == null ? "text-slate-500" : changeColor(m.bookXirr)}`}>
-                      {m.bookXirr == null ? DASH : (
+                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.bookTotalReturn == null ? "text-slate-500" : changeColor(m.bookTotalReturn)}`}>
+                      {m.bookTotalReturn == null ? DASH : (
                         <Auditable formula={{
-                          title: "Whole-book XIRR p.a.",
-                          excel: "= XIRR(every dated flow, listed & private, + today's value)",
+                          title: "Whole-book return to date (money-weighted)",
+                          excel: "= (1 + XIRR)^(window ÷ 365) − 1",
                           plain: `${m.privateCount
                             ? "One money-weighted return across the entire book — the accounts' dated capital movements closed against their market value, pooled with the private book's capital calls and latest marks. Private distributions carry no date, so they are credited as if received today; that makes this figure a floor rather than a best case."
-                            : "One money-weighted return across the entire book. Every holding here is listed, so this is the same measurement as the listed XIRR above — there is no private flow to pool with it."}${
+                            : "One money-weighted return across the entire book. Every holding here is listed, so this is the same measurement as the listed return above — there is no private flow to pool with it."} This is the return actually earned over the ${m.xirrWindowDays ?? "measured"}-day window — the annualised XIRR is de-annualised to it, so it reads as a return to date rather than a yearly pace the book has not run for a year.${
                             m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on both sides for want of an opening portfolio value.` : ""}`,
-                          worked: `${money(m.measuredMV)} of the book's ${money(m.totalValue)} is covered, closed at ${portfolio.asOf} = ${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a.`,
+                          worked: `${money(m.measuredMV)} of the book's ${money(m.totalValue)} is covered, closed at ${portfolio.asOf} = ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} to date${m.bookXirr != null ? ` (${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a. annualised)` : ""}`,
                           auditHref: auditHref(LEDGER),
-                        }}>{fmtPct(m.bookXirr, { sign: true, decimals: 1 })}</Auditable>
+                        }}>{fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })}</Auditable>
                       )}
                     </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300">100%</td>
@@ -571,11 +605,11 @@ export function MorningCIO() {
             </p>
           )}
           <p className="mt-3 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-            <span className="font-medium text-slate-400">XIRR p.a.</span> is the money-weighted annual return — Excel's <span className="mono">XIRR()</span> over dated cash flows. Because it accounts for <em>when</em> capital went in, a listed book and a ten-year fund are comparable on one scale. Every row uses the same calculation; what differs is how finely the source dates the money, and each popover says which. The listed buckets take each account's external capital movements from its capital register or bank book and close against live prices. Fund buckets date only the first investment — distributions carry no date, so cash already returned is credited as if it arrived today, making those a conservative floor. <span className="font-medium text-slate-400">Money-multiples</span> (MOIC / TVPI) and return-on-cost are in each popover. <span className="font-medium text-slate-400">PMS / Managed</span> is listed equity run through external managers, taken from each account's stated engagement in the registry rather than guessed from its label; the rest is held direct.
-            {m.closedInvested > 0 && <> Invested is capital currently deployed; fully-exited funds ({money(m.closedInvested)} in → {money(m.closedDistributed)} back) are excluded from the rows but included in the whole-book XIRR.</>}
-            {" "}<span className="font-medium text-slate-400">Every XIRR here closes at {portfolio.asOf}</span>, the book's own report date — the same terminal date the per-account table on NAV &amp; Performance uses, so the two pages state one measurement rather than two.
-            {m.xirrExcluded.length > 0 && <> Account {m.xirrExcluded.join(", ")} sits outside every XIRR on this page, flows AND market value: its statements carry no opening portfolio value, and counting what it is worth without what it started from would overstate the rate.</>}
-            {m.xirrWindowDays ? <> The flows open on 1 April, so these rates annualise a {m.xirrWindowDays}-day window — a real measurement of that period, not a rate the book has sustained for a year.</> : null}
+            <span className="font-medium text-slate-400">Return (total)</span> on each row is the cumulative return to date on the capital in that bucket — market value against cost, not annualised — so a strong quarter reads as the quarter's gain, not a yearly pace the book has not run for a year. The <span className="font-medium text-slate-400">whole-book total</span> is money-weighted: Excel's <span className="mono">XIRR()</span> over every account's dated capital movements, closed against market value, then de-annualised to the window it covers. Each popover carries the money-multiple and, for the book total, the annualised p.a. figure behind it. <span className="font-medium text-slate-400">PMS / Managed</span> is listed equity run through external managers, taken from each account's stated engagement in the registry rather than guessed from its label; the rest is held direct. <span className="font-medium text-slate-400">AIF</span>, <span className="font-medium text-slate-400">Mutual Fund</span> and <span className="font-medium text-slate-400">Cash</span> are shown as their own asset classes rather than folded into the equity buckets.
+            {m.closedInvested > 0 && <> Invested is capital currently deployed; fully-exited funds ({money(m.closedInvested)} in → {money(m.closedDistributed)} back) are excluded from the rows but included in the whole-book return.</>}
+            {" "}<span className="font-medium text-slate-400">Every return here closes at {portfolio.asOf}</span>, the book's own report date — the same terminal date the per-account table on NAV &amp; Performance uses, so the two pages state one measurement rather than two.
+            {m.xirrExcluded.length > 0 && <> Account {m.xirrExcluded.join(", ")} sits outside the money-weighted whole-book figure, flows AND market value: its statements carry no opening portfolio value, and counting what it is worth without what it started from would overstate the return.</>}
+            {m.xirrWindowDays ? <> The measured window is {m.xirrWindowDays} days; the whole-book figure is the money-weighted return earned over it — the annualised p.a. rate sits in its popover, not on the tile, because an unlabelled +140% reads as a sustained yearly return.</> : null}
           </p>
         </Card>
 
@@ -613,8 +647,8 @@ export function MorningCIO() {
               <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
                 <span className="text-slate-400">Listed / Private</span>
                 <span className="mono text-slate-100">
-                  {m.privateCount
-                    ? `${(m.listedMV / m.totalValue * 100).toFixed(0)} / ${(m.privateCurrent / m.totalValue * 100).toFixed(0)}`
+                  {m.hasPrivateClass
+                    ? `${(m.pp.listed / m.totalValue * 100).toFixed(0)} / ${(m.pp.private / m.totalValue * 100).toFixed(0)}`
                     : <span title="Every holding in this book is listed. There is no private-market statement in the drop, so the private share is absent rather than 0%.">100% listed · private {DASH}</span>}
                 </span>
               </div>
@@ -642,12 +676,10 @@ export function MorningCIO() {
                 <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.listedPnL)}`}>{money(m.listedPnL, true)}</div></div>
                 <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.listedRet == null ? "text-slate-500" : changeColor(m.listedRet)}`}>{m.listedRet == null ? DASH : fmtPct(m.listedRet, { sign: true, decimals: 1 })}</div></div>
                 <div>
-                  <div className="text-[11px] text-slate-500">XIRR p.a.</div>
-                  <div className={`mono text-[15px] font-semibold ${m.listedXirrPct == null ? "text-slate-500" : "text-slate-100"}`}
-                    title={m.xirrExcluded.length
-                      ? `Covers ${money(m.measuredMV)} of ${money(m.listedMV)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value. Annualised over a ${m.xirrWindowDays}-day window.`
-                      : m.xirrWindowDays ? `Annualised over a ${m.xirrWindowDays}-day window.` : undefined}>
-                    {m.listedXirrPct == null ? DASH : fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })}
+                  <div className="text-[11px] text-slate-500">Return (money-wtd)</div>
+                  <div className={`mono text-[15px] font-semibold ${m.listedTotalReturn == null ? "text-slate-500" : "text-slate-100"}`}
+                    title={`Money-weighted return to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}.${m.xirrExcluded.length ? ` Covers ${money(m.measuredMV)} of ${money(m.listedMV)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value.` : ""}`}>
+                    {m.listedTotalReturn == null ? DASH : fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}
                   </div>
                 </div>
               </div>

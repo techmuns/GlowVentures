@@ -6,10 +6,12 @@ import { Pill } from "@/components/Pill";
 import { ViewToggle, useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { privateValueModel, type PrivateClassKey } from "@/lib/privateValue";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { isPrivateClass } from "@/lib/analytics";
 import { AbsentSection } from "@/components/Absent";
 import { Overview } from "./private/Overview";
 import { Startups } from "./private/Startups";
 import { FundClass } from "./private/FundClass";
+import { Alternatives } from "./private/Alternatives";
 import { PrivateTrackerPreview } from "./private/PrivateTrackerPreview";
 import type { SegmentProps } from "./private/segment";
 
@@ -44,8 +46,12 @@ const VIEW_ALIASES: Partial<Record<string, ViewKey>> = {
 };
 
 export function PrivateMarkets() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
   const model = useMemo(() => (portfolio ? privateValueModel(portfolio) : null), [portfolio]);
+  // The AIF units the book actually holds — private by asset class, but position-
+  // shaped rather than fund-of-funds shaped, so the fund model above never sees
+  // them. Surfaced as an Alternatives segment; see private/Alternatives.
+  const altCount = useMemo(() => new Set(consolidated.filter(isPrivateClass).map((p) => p.securityKey)).size, [consolidated]);
 
   // Tabs are generated from the classification, so adding or emptying a segment
   // in the book changes the segment table and the tabs together.
@@ -66,15 +72,15 @@ export function PrivateMarkets() {
 
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
-  const instruments = m.classes.reduce((s, c) => s + c.count, 0);
+  const fundInstruments = m.classes.reduce((s, c) => s + c.count, 0);
+  const instruments = fundInstruments + altCount;
   const segmentProps: SegmentProps = { portfolio, model: m, money };
   const activeClass = m.classes.find((c) => c.key === view);
 
-  // THE SEGMENT IS EMPTY, so nothing here is measured — and a strip of ₹0 tiles
-  // says the opposite: that the family put in nothing and got nothing back. It
-  // is driven by the model, not hardcoded: ingest a private-markets statement
-  // and privateValueModel yields classes, the tabs appear and the page comes
-  // alive with no change here.
+  // Only when the book carries NEITHER a fund-of-funds instrument NOR an AIF/
+  // alternatives position is there nothing to measure. An AIF holding is private
+  // by asset class and belongs on this page — showing the "no private holdings"
+  // empty state over ₹207.65 Cr of AIF is the exact bug this fixes.
   if (!instruments) {
     return (
       <div>
@@ -109,10 +115,14 @@ export function PrivateMarkets() {
       {/* The book-level figures used to sit in a six-tile strip repeated above
           every tab. They now live in the Overview segment table, where each one
           is next to the rows it sums — and the other tabs carry the totals for
-          their own segment instead. */}
+          their own segment instead. Overview also carries the Alternatives (AIF)
+          segment, which is position-shaped rather than fund-shaped. */}
       <div>
         <ViewToggle views={views} active={view} onChange={setView} />
-        {view === "overview" && <Overview {...segmentProps} />}
+        {view === "overview" && <>
+          {altCount > 0 && <Alternatives />}
+          {fundInstruments > 0 && <div className={altCount > 0 ? "mt-5" : ""}><Overview {...segmentProps} /></div>}
+        </>}
         {view === "startups" && <Startups {...segmentProps} />}
         {activeClass && activeClass.key !== "startups" && <FundClass cls={activeClass} money={money} />}
       </div>
