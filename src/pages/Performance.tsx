@@ -150,18 +150,35 @@ export function Performance() {
     asOf: new Date(x.account.asOf),
   })));
   const xirrMissing = unmeasurable.map((x) => x.account.accountNo);
-  // The window every one of these rates annualises. Naming it matters: these
-  // flows open on 1 April, so this is a quarter's return expressed per annum.
+  /**
+   * THE WINDOW THE LABEL NAMES MUST BE THE WINDOW THE RATE MEASURED.
+   *
+   * This closed the stated window on `portfolio.asOf` — one date — while
+   * `pooledXirr` directly above closes each account on ITS OWN as-of. The rate
+   * was right and its caption was not: it read "2026-04-01 → 2026-07-10
+   * (100 days)" for a pool in which Green Lantern actually closes on 25 June,
+   * fifteen days earlier. A reader checking the annualisation against the window
+   * on screen would not reproduce the number, which is the same defect as the
+   * one the comment above describes — just moved from the arithmetic into the
+   * sentence beside it.
+   *
+   * So the caption states a RANGE whenever the pool's report dates differ, and a
+   * single date when they agree.
+   */
   const windowStart = measuredFlows.reduce<string | null>((a, f) => {
     const iso = f.date.toISOString().slice(0, 10);
     return !a || iso < a ? iso : a;
   }, null);
-  const windowDays = windowStart
-    ? Math.round((Date.parse(portfolio.asOf) - Date.parse(windowStart)) / 864e5)
-    : null;
-  const windowNote = windowStart && windowDays
-    ? `over ${windowStart} → ${portfolio.asOf} (${windowDays} days), annualised`
-    : "annualised";
+  const closeDates = [...new Set(measurable.map((x) => x.account.asOf))].sort();
+  const firstClose = closeDates[0] ?? portfolio.asOf;
+  const lastClose = closeDates[closeDates.length - 1] ?? portfolio.asOf;
+  const daysTo = (d: string) => (windowStart ? Math.round((Date.parse(d) - Date.parse(windowStart)) / 864e5) : null);
+  const windowNote = !windowStart
+    ? "annualised"
+    : firstClose === lastClose
+      ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days), annualised`
+      : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days), `
+        + "annualised — each account closes on its own report date";
 
   // ── Time-weighted returns, per account, from each manager's own report ──
   const twrr = accounts.map((a) => {
