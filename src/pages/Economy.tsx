@@ -1,21 +1,27 @@
+import { useEffect, useState } from "react";
 import {
   TrendingUp, Percent, Users, Landmark, Building, Home, PiggyBank, ShoppingCart, BarChart3, CalendarClock, Sparkles,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
-import { PreviewBanner, PreviewBadge, PreviewNum } from "@/components/Preview";
+import { Pill } from "@/components/Pill";
+import { PreviewBadge, PreviewNum } from "@/components/Preview";
+import { fetchEconomy, fmtEcon, econChange, type EconFeed } from "@/lib/economy";
 
 // LAYER 2 · B–H (FOOS spec) — Macro economic indicators, Fixed income & credit,
-// Banking & financial system, Housing, Household, Consumption, Capital markets.
-// The catalogue serves none of these; the page previews the indicator grid and
-// the data-release calendar the spec centres on.
+// Banking, Housing, Household, Consumption, Capital markets. LIVE for the handful
+// of India series a free source (World Bank, latest annual) publishes — growth,
+// inflation, government debt, unemployment; the rest stay illustrative until an
+// economic-data feed is added, since no free source publishes them at the
+// frequency the spec asks for.
 
-type Row = { name: string; value: string; chg: string };
+// `code` maps a row to a /api/economy indicator; rows without one stay preview.
+type Row = { name: string; value: string; chg: string; code?: string };
 
 const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Economic growth", icon: TrendingUp, rows: [
-      { name: "GDP (YoY)", value: "6.7%", chg: "+0.3pp" },
+      { name: "GDP (YoY)", value: "6.7%", chg: "+0.3pp", code: "gdp_growth" },
       { name: "Industrial Production", value: "5.2%", chg: "+0.6pp" },
       { name: "Manufacturing PMI", value: "58.1", chg: "+1.2" },
       { name: "Capacity Utilisation", value: "76.4%", chg: "+0.8pp" },
@@ -23,7 +29,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Inflation", icon: Percent, rows: [
-      { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp" },
+      { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp", code: "cpi" },
       { name: "Core CPI", value: "3.9%", chg: "-0.1pp" },
       { name: "WPI", value: "2.6%", chg: "+0.4pp" },
       { name: "Rural / Urban CPI", value: "5.1 / 4.5%", chg: "-0.1pp" },
@@ -31,7 +37,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Labour market", icon: Users, rows: [
-      { name: "Unemployment Rate", value: "7.1%", chg: "-0.3pp" },
+      { name: "Unemployment Rate", value: "7.1%", chg: "-0.3pp", code: "unemployment" },
       { name: "Labour Participation", value: "42.4%", chg: "+0.2pp" },
       { name: "US Non-Farm Payrolls", value: "206k", chg: "-38k" },
       { name: "Wage Growth", value: "4.1%", chg: "+0.2pp" },
@@ -40,7 +46,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Government", icon: Landmark, rows: [
       { name: "Fiscal Deficit (% GDP)", value: "5.1%", chg: "-0.2pp" },
-      { name: "Govt Debt / GDP", value: "81.2%", chg: "+0.4pp" },
+      { name: "Govt Debt / GDP", value: "81.2%", chg: "+0.4pp", code: "govt_debt_gdp" },
       { name: "GST Collections", value: "₹1.82 L Cr", chg: "+8.4%" },
       { name: "E-way Bills", value: "103.2 mn", chg: "+6.1%" },
     ],
@@ -103,19 +109,40 @@ const RELEASES = [
 ];
 
 export function Economy() {
+  const [econ, setEcon] = useState<EconFeed | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    fetchEconomy().then((f) => { if (alive) setEcon(f); });
+    return () => { alive = false; };
+  }, []);
+
+  const liveCount = econ?.ok
+    ? CATEGORIES.reduce((n, c) => n + c.rows.filter((r) => r.code && econ.indicators[r.code]).length, 0)
+    : 0;
+
   return (
     <div>
       <PageHeader
         eyebrow="Research · Layer 2B"
         title="Economy & Macro Indicators"
         subtitle="Growth, inflation, labour, government, fixed income, banking, housing, household, consumption and capital-market series — with a release calendar and AI commentary."
-        right={<PreviewBadge />}
+        right={liveCount > 0
+          ? <Pill tone="gain">{liveCount} live · World Bank</Pill>
+          : <PreviewBadge />}
       />
 
-      <PreviewBanner source="a macro-economic data provider" layer="FOOS Layer 2B–2H">
-        Fixed income & credit, banking, housing, household, consumption and capital-market series all need an
-        economic-data feed the current API does not include.
-      </PreviewBanner>
+      <div className="mb-5 rounded-lg border border-ink-700 bg-ink-800/40 px-4 py-3 text-[12px] leading-relaxed text-slate-400">
+        {liveCount > 0 ? (
+          <>Growth, inflation, government debt and unemployment are <span className="text-gain">live</span> from the
+          World Bank (latest annual figure, labelled with its year). The remaining series — fixed income & credit,
+          banking, housing, household, consumption and capital markets — need a dedicated economic-data feed the
+          current API does not include, and stay illustrative.</>
+        ) : (
+          <>A handful of India series (growth, inflation, government debt, unemployment) go live from the World Bank
+          when the edge function is reachable; the rest need a dedicated economic-data feed the current API does not
+          include. All figures below are illustrative in this environment.</>
+        )}
+      </div>
 
       {/* Release calendar — the spec's signature macro feature */}
       <Card className="preview-hatch" title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-champagne-400" /> Data release calendar</span>}
@@ -150,21 +177,41 @@ export function Economy() {
 
       {/* Indicator grid */}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 items-start">
-        {CATEGORIES.map((cat) => (
-          <Card key={cat.title} className="preview-hatch" title={<span className="flex items-center gap-2 text-[13px]"><cat.icon className="h-4 w-4 text-slate-500" />{cat.title}</span>} right={<PreviewBadge />}>
+        {CATEGORIES.map((cat) => {
+          const catLive = econ?.ok ? cat.rows.filter((r) => r.code && econ.indicators[r.code!]).length : 0;
+          const catAllPreview = catLive === 0;
+          return (
+          <Card key={cat.title} className={catAllPreview ? "preview-hatch" : undefined} title={<span className="flex items-center gap-2 text-[13px]"><cat.icon className="h-4 w-4 text-slate-500" />{cat.title}</span>} right={catLive > 0 ? <Pill tone="gain">{catLive} live</Pill> : <PreviewBadge />}>
             <ul className="space-y-2">
-              {cat.rows.map((r) => (
-                <li key={r.name} className="flex items-center justify-between gap-2 text-[12px]">
-                  <span className="text-slate-400">{r.name}</span>
-                  <span className="flex items-center gap-1.5 shrink-0">
-                    <PreviewNum>{r.value}</PreviewNum>
-                    <span className="text-[10px] text-slate-600" title="Placeholder — not live data">{r.chg}</span>
-                  </span>
-                </li>
-              ))}
+              {cat.rows.map((r) => {
+                const ind = r.code && econ?.ok ? econ.indicators[r.code] : undefined;
+                if (ind) {
+                  const chg = econChange(ind);
+                  return (
+                    <li key={r.name} className="flex items-center justify-between gap-2 text-[12px]">
+                      <span className="text-slate-300">{r.name}</span>
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <span className="h-1.5 w-1.5 rounded-full bg-gain" title={`Live · World Bank ${ind.year}`} />
+                        <span className="tabular-nums font-medium text-slate-200">{fmtEcon(ind.value)}</span>
+                        {chg && <span className="text-[10px] text-slate-500" title={`vs ${ind.prevYear}`}>{chg}</span>}
+                      </span>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={r.name} className="flex items-center justify-between gap-2 text-[12px]">
+                    <span className="text-slate-400">{r.name}</span>
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <PreviewNum>{r.value}</PreviewNum>
+                      <span className="text-[10px] text-slate-600" title="Placeholder — not live data">{r.chg}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
