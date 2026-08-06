@@ -153,6 +153,92 @@ function of(docs: ArchiveDoc[], types: readonly string[]): ArchiveDoc[] {
   return out;
 }
 
+/**
+ * A SNAPSHOT SUPERSEDES; A DATED ROW DOES NOT — and this file honoured neither
+ * half. `of()` returns EVERY issue of the winning report type, which is right for
+ * a trade and wrong for a holding, and nothing downstream deduped the rows.
+ *
+ * Use `newestOf` for a fact that RESTATES (holdings, quantities, market value)
+ * and `datedRows` for one that ACCUMULATES (trades, lots, income). `scripts/
+ * build-book.mjs` has made this distinction since the first drop that needed it;
+ * the runtime ledger had not, so the two disagreed about the same archive.
+ *
+ * Per account, the newest issue of the winning type. Both 360 ONE CRNs publish
+ * their client report for May AND June, and `loadSales` summed the two into its
+ * held-quantity index: ₹1.46 Cr of AIF units counted as ₹2.90 Cr, and every one
+ * of SVAN's 45 securities counted at twice its quantity. Avalon Technologies is
+ * on SVAN's May holdings and gone from June — a genuine EXIT, reported as still
+ * held because May's quantity was still being added in.
+ */
+function newestOf(docs: ArchiveDoc[], types: readonly string[]): ArchiveDoc[] {
+  const out: ArchiveDoc[] = [];
+  for (const group of byAccount(of(docs, types)).values()) {
+    const newest = group.reduce((a, d) => (d.asOf > a.asOf ? d : a), group[0]);
+    out.push(...group.filter((d) => d.asOf === newest.asOf));
+  }
+  return out;
+}
+
+function byAccount(docs: ArchiveDoc[]): Map<string, ArchiveDoc[]> {
+  const m = new Map<string, ArchiveDoc[]>();
+  for (const d of docs) {
+    const k = `${d.provider} ${d.accountNo ?? ""}`;
+    m.set(k, [...(m.get(k) ?? []), d]);
+  }
+  return m;
+}
+
+/**
+ * Every dated row of one kind, across every issue an account published, each
+ * counted ONCE — the read-side mirror of `datedRowsAcross` in build-book.
+ *
+ * Green Lantern 510861 issues a capital gain statement to 25 June (28 lots) and
+ * another to 30 June (31 lots), and the first is a strict SUBSET of the second.
+ * Reading both put 118 lots and −₹43,69,132.88 on the Capital Gains page against
+ * the book's own 90 lots and −₹41,29,763.63, and split the term wrongly by
+ * ₹4.44 L short and ₹6.84 L long. The independent figure that says the 28 rows
+ * should not be there twice is the wider statement's own printed total,
+ * −₹49,893.94 for that account, which the deduped set reproduces exactly.
+ *
+ * A REPEAT WITHIN ONE DOCUMENT IS DATA; A REPEAT ACROSS TWO IS A DUPLICATE. Green
+ * Lantern's transaction statement prints the same Anup Engineering buy twice
+ * consecutively because it happened twice, so each row carries its ORDINAL among
+ * identical rows on its own document. And the ACCOUNT is in the key: the same
+ * name bought on the same day in two accounts is two trades, not one.
+ */
+const ROW_FIELDS = [
+  "date", "saleDate", "purchaseDate", "exDate", "receivedDate", "settlementDate",
+  "securityKey", "side", "kind", "exchange", "entitlement", "quantity",
+  "unitPrice", "ratePerUnit", "gross", "charges", "net", "netAmount",
+  "saleRate", "saleAmount", "purchaseRate", "purchaseAmount",
+  "daysHeld", "shortTerm", "longTerm", "receivable", "received", "tds",
+] as const;
+
+function datedRows<K extends "transactions" | "capitalGains" | "income">(
+  docs: ArchiveDoc[], types: readonly string[], kind: K,
+): { doc: ArchiveDoc; row: NonNullable<ArchiveDoc[K]>[number] }[] {
+  const out: { doc: ArchiveDoc; row: NonNullable<ArchiveDoc[K]>[number] }[] = [];
+  for (const group of byAccount(of(docs, types)).values()) {
+    const seen = new Set<string>();
+    // Newest first, so a row printed on two issues keeps the newest statement's
+    // copy and its `source` back-reference.
+    for (const doc of [...group].sort((a, b) => b.asOf.localeCompare(a.asOf))) {
+      const ordinal = new Map<string, number>();
+      for (const row of (doc[kind] ?? []) as NonNullable<ArchiveDoc[K]>) {
+        const r = row as unknown as Record<string, unknown>;
+        const base = [kind, doc.accountNo, ...ROW_FIELDS.map((f) => String(r[f] ?? ""))].join("");
+        const n = (ordinal.get(base) ?? 0) + 1;
+        ordinal.set(base, n);
+        const k = `${base}#${n}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push({ doc, row });
+      }
+    }
+  }
+  return out;
+}
+
 /** How an account is named on screen: whose money, whose platform, which number. */
 const accountLabel = (d: { owner: string | null; provider: string; accountNo: string }) =>
   `${d.owner ?? d.accountNo} · ${d.provider.split(" ")[0]} ${d.accountNo}`;
@@ -206,12 +292,10 @@ export type TxnData = {
  *  account's sell with the other's gain. */
 function realisedIndex(docs: ArchiveDoc[]): Map<string, number> {
   const m = new Map<string, number>();
-  for (const d of of(docs, AUTHORITATIVE.capitalGains)) {
-    for (const l of d.capitalGains ?? []) {
-      if (!l.saleDate) continue;
-      const k = `${d.accountNo}|${l.securityKey}@${l.saleDate}`;
-      m.set(k, (m.get(k) ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0));
-    }
+  for (const { doc, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (!l.saleDate) continue;
+    const k = `${doc.accountNo}|${l.securityKey}@${l.saleDate}`;
+    m.set(k, (m.get(k) ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0));
   }
   return m;
 }
@@ -236,37 +320,37 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const claimed = new Set<string>();
 
   for (const d of src) {
-    const account = accountLabel(d);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    for (const t of d.transactions ?? []) {
-      if (!t.date) continue;
-      const side = t.side === "sell" ? "Sell" : "Buy";
-      const qty = t.quantity ?? 0;
-      const amount = t.net ?? t.gross ?? 0;
-      const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
-      // A sell's realised gain exists only where that account's manager issued
-      // a capital gain statement. Null renders "—", never 0.
-      let realized: number | null = null;
-      let realizedNote: string | undefined;
-      if (side === "Sell") {
-        const v = realised.get(key);
-        if (v === undefined) {
-          realizedNote = "no capital gain lot in the statements matches this sale";
-        } else if (claimed.has(key)) {
-          realizedNote = "this sale's realised gain is shown on its first row for the day — the capital gain statement settles the day's sale, not each printed row";
-        } else {
-          claimed.add(key);
-          realized = v;
-        }
+  }
+  for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
+    const account = accountLabel(d);
+    if (!t.date) continue;
+    const side = t.side === "sell" ? "Sell" : "Buy";
+    const qty = t.quantity ?? 0;
+    const amount = t.net ?? t.gross ?? 0;
+    const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
+    // A sell's realised gain exists only where that account's manager issued
+    // a capital gain statement. Null renders "—", never 0.
+    let realized: number | null = null;
+    let realizedNote: string | undefined;
+    if (side === "Sell") {
+      const v = realised.get(key);
+      if (v === undefined) {
+        realizedNote = "no capital gain lot in the statements matches this sale";
+      } else if (claimed.has(key)) {
+        realizedNote = "this sale's realised gain is shown on its first row for the day — the capital gain statement settles the day's sale, not each printed row";
+      } else {
+        claimed.add(key);
+        realized = v;
       }
-      txns.push({
-        date: t.date, security: displaySecurity(t.security), securityKey: t.securityKey,
-        account, ownerId: d.ownerId, side, qty,
-        price: t.unitPrice ?? (qty > 0 ? amount / qty : 0),
-        amount, realized, realizedNote,
-      });
     }
+    txns.push({
+      date: t.date, security: displaySecurity(t.security), securityKey: t.securityKey,
+      account, ownerId: d.ownerId, side, qty,
+      price: t.unitPrice ?? (qty > 0 ? amount / qty : 0),
+      amount, realized, realizedNote,
+    });
   }
   txns.sort((a, b) => b.date.localeCompare(a.date));   // newest first
 
@@ -338,23 +422,21 @@ export async function loadRealisedLots(): Promise<LotData | null> {
     }
   }
   const lots: Lot[] = [];
-  for (const d of src) {
+  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
     const account = accountLabel(d);
-    for (const l of d.capitalGains ?? []) {
-      const st = l.shortTerm ?? 0, lt = l.longTerm ?? 0;
-      lots.push({
-        securityKey: l.securityKey, security: displaySecurity(l.security), account,
-        assetClass: classOf.get(l.securityKey) ?? null,
-        purchaseDate: l.purchaseDate, saleDate: l.saleDate, quantity: l.quantity,
-        purchaseAmount: l.purchaseAmount, saleAmount: l.saleAmount, daysHeld: l.daysHeld,
-        shortTerm: l.shortTerm, longTerm: l.longTerm, gain: st + lt,
-        // The MANAGER made this determination on the statement; it is read, not
-        // re-derived from daysHeld — the holding-period rule differs by asset.
-        term: l.shortTerm !== null && l.shortTerm !== 0 ? "Short"
-          : l.longTerm !== null && l.longTerm !== 0 ? "Long" : null,
-        source: d.docKey,
-      });
-    }
+    const st = l.shortTerm ?? 0, lt = l.longTerm ?? 0;
+    lots.push({
+      securityKey: l.securityKey, security: displaySecurity(l.security), account,
+      assetClass: classOf.get(l.securityKey) ?? null,
+      purchaseDate: l.purchaseDate, saleDate: l.saleDate, quantity: l.quantity,
+      purchaseAmount: l.purchaseAmount, saleAmount: l.saleAmount, daysHeld: l.daysHeld,
+      shortTerm: l.shortTerm, longTerm: l.longTerm, gain: st + lt,
+      // The MANAGER made this determination on the statement; it is read, not
+      // re-derived from daysHeld — the holding-period rule differs by asset.
+      term: l.shortTerm !== null && l.shortTerm !== 0 ? "Short"
+        : l.longTerm !== null && l.longTerm !== 0 ? "Long" : null,
+      source: d.docKey,
+    });
   }
   lots.sort((a, b) => (b.saleDate ?? "").localeCompare(a.saleDate ?? ""));
 
@@ -417,23 +499,31 @@ export async function loadIncome(): Promise<IncomeData | null> {
   const cash: IncomeRow[] = [], corporate: IncomeRow[] = [];
   const seen = new Set<string>();
 
-  for (const d of src) {
+  // Each issuer's own repeated issues are deduped first (`datedRows`), then the
+  // cross-REPORT rule below removes a cash event the corporate benefits report
+  // reprints from the dividend statement. Two different rules for two different
+  // duplications: identical rows on two issues of ONE report are the same event
+  // printed twice, while the same event on two DIFFERENT reports is matched on
+  // (date, security, amount) because the two layouts carry different columns.
+  const events = [
+    ...datedRows(docs, AUTHORITATIVE.cashIncome, "income"),
+    ...datedRows(docs, AUTHORITATIVE.nonCashIncome, "income"),
+  ];
+  for (const { doc: d, row: ev } of events) {
     const account = accountLabel(d);
-    for (const ev of d.income ?? []) {
-      const row: IncomeRow = {
-        security: displaySecurity(ev.security), securityKey: ev.securityKey, account,
-        kind: ev.kind, date: ev.exDate ?? ev.receivedDate, quantity: ev.quantity,
-        ratePerUnit: ev.ratePerUnit, net: ev.netAmount, tds: ev.tds,
-        entitlement: ev.entitlement, source: d.docKey,
-      };
-      if (CASH_KIND.test(ev.kind)) {
-        const k = `${d.accountNo}|${row.date}|${ev.securityKey}|${ev.netAmount}`;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        cash.push(row);
-      } else {
-        corporate.push(row);
-      }
+    const row: IncomeRow = {
+      security: displaySecurity(ev.security), securityKey: ev.securityKey, account,
+      kind: ev.kind, date: ev.exDate ?? ev.receivedDate, quantity: ev.quantity,
+      ratePerUnit: ev.ratePerUnit, net: ev.netAmount, tds: ev.tds,
+      entitlement: ev.entitlement, source: d.docKey,
+    };
+    if (CASH_KIND.test(ev.kind)) {
+      const k = `${d.accountNo}|${row.date}|${ev.securityKey}|${ev.netAmount}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      cash.push(row);
+    } else {
+      corporate.push(row);
     }
   }
   cash.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
@@ -501,8 +591,13 @@ export type SalesData = {
 export async function loadSales(): Promise<SalesData | null> {
   const docs = await loadArchive();
   if (!docs) return null;
+  // A HOLDING RESTATES; ONLY THE NEWEST ISSUE COUNTS. Both 360 ONE CRNs and both
+  // SVAN accounts publish a May report and a June one, and summing across them
+  // counted 89 securities at twice their quantity. Avalon Technologies is on
+  // SVAN's May holdings and gone from June — an EXIT, which the doubled index
+  // reported as still held and this page therefore counted as a trim.
   const held = new Map<string, number>();
-  for (const d of of(docs, AUTHORITATIVE.holdings)) {
+  for (const d of newestOf(docs, AUTHORITATIVE.holdings)) {
     for (const h of d.holdings ?? []) held.set(h.securityKey, (held.get(h.securityKey) ?? 0) + (h.quantity ?? 0));
   }
   const realised = realisedIndex(docs);
@@ -515,24 +610,24 @@ export async function loadSales(): Promise<SalesData | null> {
   for (const d of of(docs, AUTHORITATIVE.transactions)) {
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    for (const t of d.transactions ?? []) {
-      if (t.side !== "sell" || !t.date) continue;
-      let e = m.get(t.securityKey);
-      if (!e) {
-        e = {
-          securityKey: t.securityKey, security: displaySecurity(t.security),
-          soldQty: 0, proceeds: 0, realized: null, heldQty: held.get(t.securityKey) ?? 0,
-          exited: false, hasRealised: false,
-        };
-        m.set(t.securityKey, e);
-      }
-      e.soldQty += t.quantity ?? 0;
-      e.proceeds += t.net ?? t.gross ?? 0;
-      const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
-      if (claimed.has(key)) continue;
-      const r = realised.get(key);
-      if (r !== undefined) { claimed.add(key); e.realized = (e.realized ?? 0) + r; e.hasRealised = true; }
+  }
+  for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
+    if (t.side !== "sell" || !t.date) continue;
+    let e = m.get(t.securityKey);
+    if (!e) {
+      e = {
+        securityKey: t.securityKey, security: displaySecurity(t.security),
+        soldQty: 0, proceeds: 0, realized: null, heldQty: held.get(t.securityKey) ?? 0,
+        exited: false, hasRealised: false,
+      };
+      m.set(t.securityKey, e);
     }
+    e.soldQty += t.quantity ?? 0;
+    e.proceeds += t.net ?? t.gross ?? 0;
+    const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
+    if (claimed.has(key)) continue;
+    const r = realised.get(key);
+    if (r !== undefined) { claimed.add(key); e.realized = (e.realized ?? 0) + r; e.hasRealised = true; }
   }
 
   const rows = [...m.values()];
@@ -543,14 +638,13 @@ export async function loadSales(): Promise<SalesData | null> {
   // Which statement lots the tape never carried, so the gap between the two
   // totals is a named set of securities rather than a residual.
   const unattributed = [];
-  for (const d of of(docs, AUTHORITATIVE.capitalGains)) {
-    for (const l of d.capitalGains ?? []) {
-      if (!l.saleDate) continue;
-      if (claimed.has(`${d.accountNo}|${l.securityKey}@${l.saleDate}`)) continue;
-      unattributed.push(l);
-    }
+  const lotRows = datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains");
+  for (const { doc: d, row: l } of lotRows) {
+    if (!l.saleDate) continue;
+    if (claimed.has(`${d.accountNo}|${l.securityKey}@${l.saleDate}`)) continue;
+    unattributed.push(l);
   }
-  const allLots = of(docs, AUTHORITATIVE.capitalGains).flatMap((d) => d.capitalGains ?? []);
+  const allLots = lotRows.map(({ row }) => row);
   const realisedOf = (ls: typeof allLots) => ls.reduce((s, l) => s + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0);
   return {
     asOf: newestAsOf(docs),
@@ -591,31 +685,27 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
   let name = securityKey;
   let periodFrom: string | null = null, periodTo: string | null = null;
 
-  for (const d of of(docs, AUTHORITATIVE.transactions)) {
+  for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
     const account = accountLabel(d);
-    for (const t of d.transactions ?? []) {
-      if (t.securityKey !== securityKey || !t.date) continue;
-      name = displaySecurity(t.security);
-      if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
-      if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-      const qty = t.quantity ?? 0, amount = t.net ?? t.gross ?? 0;
-      txns.push({
-        date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
-        rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
-      });
-    }
+    if (t.securityKey !== securityKey || !t.date) continue;
+    name = displaySecurity(t.security);
+    if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
+    if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
+    const qty = t.quantity ?? 0, amount = t.net ?? t.gross ?? 0;
+    txns.push({
+      date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
+      rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
+    });
   }
   txns.sort((a, b) => b.date.localeCompare(a.date));
 
   let realized: number | null = null;
   const lotDates: string[] = [];
-  for (const d of of(docs, AUTHORITATIVE.capitalGains)) {
-    for (const l of d.capitalGains ?? []) {
-      if (l.securityKey !== securityKey) continue;
-      if (name === securityKey) name = displaySecurity(l.security);
-      realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
-      if (l.purchaseDate) lotDates.push(l.purchaseDate);
-    }
+  for (const { row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (l.securityKey !== securityKey) continue;
+    if (name === securityKey) name = displaySecurity(l.security);
+    realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
+    if (l.purchaseDate) lotDates.push(l.purchaseDate);
   }
   return { securityKey, name, txns, realizedProfit: realized, periodFrom, periodTo, lotDates: lotDates.sort() };
 }

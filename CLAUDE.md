@@ -721,6 +721,31 @@ the dividend statement, non-cash from corporate benefits, holdings from the
 appraisal. Reading every document that mentions a trade would count it several
 times.
 
+**It applies the supersede rule too, and for a long time it did not.**
+`precedence` picks the winning report TYPE per account; it does not pick an
+ISSUE, and four accounts publish the same report twice. So the runtime ledger
+read both and disagreed with the book generated from the same archive:
+
+- `newestOf` is for a fact that RESTATES. Both 360 ONE CRNs and both SVAN
+  accounts issue a May report and a June one, and the held-quantity index summed
+  them — 47 of 164 securities carried at twice their quantity, ₹1.46 Cr of AIF
+  units counted as ₹2.90 Cr, and **Avalon Technologies, on SVAN's May holdings
+  and gone from June, reported as still held**. A genuine exit shown as a trim.
+- `datedRows` is for a fact that ACCUMULATES. Green Lantern 510861 issues a
+  capital gain statement to 25 June (28 lots) and another to 30 June (31), and
+  the first is a strict SUBSET of the second. Reading both put **118 lots and
+  −₹43,69,132.88 on Capital Gains against the book's own 90 and −₹41,29,763.63**,
+  and split the term wrongly by ₹4.44 L short and ₹6.84 L long — the figure that
+  drives a tax estimate. The independent figure that says those 28 rows do not
+  belong twice is the wider statement's own printed total, −₹49,893.94 for that
+  account, which the deduped set reproduces exactly.
+
+`datedRows` keys a row on its own fields **plus the account**, and on its
+ORDINAL among identical rows of its own document, because a repeat within one
+document is data and a repeat across two is a duplicate — the same rule, and the
+same reasoning, as `datedRowsAcross` in `scripts/build-book.mjs`. Any new loader
+here must pick one of the two helpers; `of()` alone is the bug.
+
 Three things it deliberately does not do:
 
 - **No per-security XIRR.** That needs every lot from first purchase; these
