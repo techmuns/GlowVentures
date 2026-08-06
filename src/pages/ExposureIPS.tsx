@@ -8,6 +8,7 @@ import { Pill } from "@/components/Pill";
 import { BasisPill } from "@/components/BasisPill";
 import { StockLink } from "@/components/StockLink";
 import { PreviewBadge, PreviewNum, PreviewChart } from "@/components/Preview";
+import { AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { bySector, bySecurity, consolidatedMarketValue } from "@/lib/analytics";
 import { fmtPct, changeColor } from "@/lib/format";
@@ -21,12 +22,23 @@ import { fmtPct, changeColor } from "@/lib/format";
 // and the monthwise projections are family decisions or need a valuation series —
 // those render as clearly-marked PREVIEW.
 
-// Illustrative desired weights per sector name — a family IPS decision the book
-// does not carry. Keyed loosely; anything unmatched shows a sample target.
-const DESIRED_BY_SECTOR: Record<string, number> = {
-  "Financial Services": 24, Financials: 24, "Information Technology": 14, Industrials: 12,
-  "Consumer Discretionary": 10, "Health Care": 8, Materials: 8, Energy: 6, "Consumer Staples": 6,
-};
+// THERE IS NO DESIRED-WEIGHT TABLE HERE, AND THERE MUST NOT BE ONE.
+//
+// This held nine sector targets, with `?? 5` for anything unmatched, and the
+// column beside it printed `gap = actual − desired` in percentage points. The
+// actual side is real, measured off the family's own holdings; the desired side
+// was typed into this file; and the GAP — the only figure a reader looks at, the
+// one that says buy or sell — was arithmetic between the two.
+//
+// CLAUDE.md names this exact case in the list of things no current source can
+// serve: the actuals are in the book, "the DESIRED allocations are a family
+// decision nobody has supplied, and inventing a target weight would fabricate
+// the entire gap". A greyed +6.7pp against Financial Services is not a shape,
+// it is an instruction, and it was produced by subtracting a real number from an
+// invented one.
+//
+// So the actual column stays live and the desired and gap columns render `—`
+// with the reason. When the family records an IPS, one map here fills both.
 
 export function ExposureIPS() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
@@ -81,7 +93,7 @@ export function ExposureIPS() {
 
       {/* GAP analysis by sector — actual real, desired preview */}
       <Card className="mt-5" title={<span className="flex items-center gap-2"><Target className="h-4 w-4 text-champagne-400" /> GAP analysis — by sector</span>}
-        subtitle="Actual weight is live from the book; desired weight is the illustrative IPS target" right={<Pill tone="info">actual live · desired preview</Pill>} pad={false}>
+        subtitle="Actual weight is live from the book; the desired weight is a family IPS decision, and none has been recorded" right={<Pill tone="info">actual live · desired not set</Pill>} pad={false}>
         <div className="overflow-x-auto">
           <table className="min-w-full text-[13px]">
             <thead className="border-b border-ink-700">
@@ -94,20 +106,15 @@ export function ExposureIPS() {
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
-              {sectors.slice(0, 12).map((s) => {
-                const actual = s.weight * 100;
-                const desired = DESIRED_BY_SECTOR[s.key] ?? 5;
-                const gap = actual - desired;
-                return (
-                  <tr key={s.key} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5 font-medium text-slate-200">{s.key}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{money(s.mv)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-200">{actual.toFixed(1)}%</td>
-                    <td className="px-4 py-2.5 text-right"><PreviewNum>{desired}%</PreviewNum></td>
-                    <td className="px-4 py-2.5 text-right"><span className="preview-num mono" title="Illustrative — needs a desired weight">{gap >= 0 ? "+" : ""}{gap.toFixed(1)}pp</span></td>
-                  </tr>
-                );
-              })}
+              {sectors.slice(0, 12).map((s) => (
+                <tr key={s.key} className="hover:bg-ink-700/40">
+                  <td className="px-4 py-2.5 font-medium text-slate-200">{s.key}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-300">{money(s.mv)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-200">{(s.weight * 100).toFixed(1)}%</td>
+                  <td className="px-4 py-2.5 text-right"><AbsentCell reason="no IPS target weight recorded for this sector — a family decision, not a statement figure" /></td>
+                  <td className="px-4 py-2.5 text-right"><AbsentCell reason="the gap is actual minus desired, and no desired weight is set" /></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

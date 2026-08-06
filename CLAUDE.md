@@ -22,6 +22,43 @@ default. This applies to every layer:
 - The ingest classifier writes `null` for a field it can't determine, and files
   it can't place go in a "could not classify" section rather than under a guess.
 
+### The preview convention, and the two lines it must not cross
+
+`src/components/Preview.tsx` renders a GREYED SAMPLE so the client can see the
+shape of a FOOS-spec screen before its source exists. That is legitimate for a
+page that is nothing but a mock. It went wrong twice, in ways worth naming
+because both looked compliant — badged, hatched, muted, `title`-tagged:
+
+**1. A preview figure must never be arithmetic on the family's own money.**
+`PublicDashboardView` printed Target value = `marketValue × 1.25`, Pending to
+invest = `× 0.18`, Target weight = `weight × 1.3 + 0.4`, Fair value =
+`(price ?? cost ?? 100) × 1.18` — the `100` a per-share price invented outright.
+Each sat in the same ROW as that holding's real market value. `ExposureIPS`
+computed `gap = actual − desired` from a real actual and a typed-in desired, and
+the gap is the only figure a reader acts on. Greying a number marks it not-live;
+it does not stop it being a number ABOUT THIS HOLDING. The book's own rule for
+this exact field already said so: a price nobody set is `null`, never a default,
+because a default is "a fabricated figure produced by a default, which is the
+exact failure this book exists to prevent". `× 1.25` is worse than `0` — it is
+plausible. **These render `AbsentCell` with a reason.**
+
+**2. A preview must never assert a FACT about a real, named counterparty.**
+Alerts carried "Aristos: fund manager resigned" at high severity; Thesis &
+Triggers, "Carnelian: FM change flagged in filing"; Knowledge, a dated manager
+meeting where the family "exited on governance concerns after promoter pledge
+rose". Aristos is the strategy SVAN runs for two of these accounts; Carnelian and
+Green Lantern run two more. **A greyed number reads as illustrative; a sentence
+does not.** A reader who sees that their manager resigned has learnt something,
+and no badge unlearns it. Each of those cards now states the CONDITION it would
+evaluate — true whether or not it ever fires — and says plainly that nothing has
+fired. Index-cycled categorical attributions are the same failure in miniature:
+`VAL_METHODS[i % 5]` assigned "DCF" to real companies by ROW ORDER, so sorting
+the table changed which company was valued by DCF.
+
+The test to apply: **would this still be honest if the badge were cropped out of
+a screenshot?** Sample macro series on a page with no family data pass it.
+Anything sharing a row, a tile or a sentence with the book does not.
+
 ### The presentation half of the same rule
 
 The rule above governs the model. It has a twin on screen, and the screen is

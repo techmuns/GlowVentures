@@ -63,6 +63,35 @@ export const doubleCountedValue = (positions: Position[]) =>
   sum(positions.map((p) => p.marketValue)) - consolidatedMarketValue(positions);
 
 /**
+ * PUBLIC vs PRIVATE, over any subset of positions — the split `BOOK_SUMMARY`
+ * carries family-wide, computed the same way for one member's rows.
+ *
+ * The class list mirrors `PRIVATE_CLASSES` in `scripts/build-book.mjs` exactly.
+ * It has to: two sites computing the same split from different rules is how a
+ * page ends up disagreeing with the book it renders, and this one did — the
+ * Family Dashboard labelled the WHOLE ₹335.43 Cr "Public (listed)" and rendered
+ * private as absent with the reason "no private-market holding in this book",
+ * while `BOOK_SUMMARY.privateValue` read ₹207.65 Cr. That reason was true of an
+ * earlier drop and false from the moment the AIF statements got a reader — the
+ * same stale premise CLAUDE.md records being corrected once already, reasserted
+ * on a new page.
+ *
+ * `privateValue` is NOT `total − listed`: a class this list does not name would
+ * then silently become private. Both sides are summed from the positions.
+ */
+const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
+
+export const isPrivateClass = (p: Position) => PRIVATE_CLASSES.has(p.assetClass);
+
+export function publicPrivateSplit(positions: Position[]): { listed: number; private: number } {
+  const rows = dedupedPositions(positions);
+  return {
+    listed: sum(rows.filter((p) => !isPrivateClass(p)).map((p) => p.marketValue)),
+    private: sum(rows.filter(isPrivateClass).map((p) => p.marketValue)),
+  };
+}
+
+/**
  * A position whose statement reported a usable cost basis.
  *
  * Return analysis, contribution decomposition and the winners/losers split are

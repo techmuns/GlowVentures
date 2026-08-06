@@ -16,38 +16,59 @@ import { readWatchlist, firedAlerts, ALERT_WORDING } from "@/lib/watchlist";
 // prices (set them on a holding's company page). Every other category needs a
 // rules engine plus data the book does not carry — those are PREVIEW.
 
-type Cat = { key: string; label: string; icon: typeof Scale; samples: { sev: "high" | "med" | "low"; text: string }[] };
+/**
+ * WHAT EACH ALERT CATEGORY WOULD WATCH — NOT SAMPLE ALERTS THAT HAVE FIRED.
+ *
+ * These were written as illustrative alert TEXT, and three of them named a real
+ * manager and asserted a real event: "Aristos: fund manager resigned" at high
+ * severity, "Carnelian: style drift toward large-cap", "GLC: AUM up 3x in 12
+ * months". Aristos is the strategy SVAN runs for two of this family's accounts,
+ * Carnelian and Green Lantern manage two more; between them that is ₹78 Cr of
+ * this book.
+ *
+ * A GREYED NUMBER READS AS ILLUSTRATIVE; A FACTUAL CLAIM DOES NOT. A reader who
+ * sees a red high-severity line saying their fund manager resigned has learnt
+ * something, and no amount of badge or hatch unlearns it — the sentence is
+ * either true or it is not, and this one was invented to fill a layout. That is
+ * the standing rule's own words: nothing on screen may be hardcoded that isn't
+ * derived from the book, and no entity names or dates among them.
+ *
+ * So each category now states the CONDITION it would evaluate. A rule is a
+ * description of the page's own logic, true whether or not it has ever fired,
+ * and it shows the client the same layout without asserting anything about
+ * anyone. Real price alerts, which the watchlist genuinely fires, render above
+ * these from live data.
+ */
+type Cat = { key: string; label: string; icon: typeof Scale; rules: string[] };
 
 const CATEGORIES: Cat[] = [
-  { key: "ips", label: "IPS", icon: Scale, samples: [
-    { sev: "high", text: "Growth bucket 62% vs 60% max — exceeds allocation" },
-    { sev: "low", text: "Hedge bucket 6% vs 6% target — in band" },
+  { key: "ips", label: "IPS", icon: Scale, rules: [
+    "A bucket's actual weight leaves its IPS band",
+    "Drift from the target allocation exceeds the rebalancing threshold",
   ]},
-  { key: "liquidity", label: "Liquidity", icon: Droplets, samples: [
-    { sev: "med", text: "7-day liquidity coverage below 12-month threshold" },
-    { sev: "low", text: "Cash buffer sufficient for next quarter's calls" },
+  { key: "liquidity", label: "Liquidity", icon: Droplets, rules: [
+    "Liquidity coverage falls below the horizon set in the IPS",
+    "The cash buffer no longer covers the next period's committed calls",
   ]},
-  { key: "manager", label: "Manager", icon: UserCog, samples: [
-    { sev: "high", text: "Aristos: fund manager resigned" },
-    { sev: "med", text: "GLC: AUM up 3× in 12 months — capacity risk" },
-    { sev: "med", text: "Carnelian: style drift toward large-cap" },
+  { key: "manager", label: "Manager", icon: UserCog, rules: [
+    "A mandate's key personnel change, as disclosed by the manager",
+    "A mandate's AUM grows past its stated capacity",
+    "A mandate's holdings drift outside its stated style or market cap",
   ]},
-  { key: "macro", label: "Macro", icon: Globe2, samples: [
-    { sev: "med", text: "India liquidity cycle deteriorating" },
-    { sev: "low", text: "US 10Y crossed 4.3% — duration watch" },
+  { key: "macro", label: "Macro", icon: Globe2, rules: [
+    "A tracked policy rate, yield or currency crosses a level the family set",
+    "A macro series the family watches breaks its trend",
   ]},
-  { key: "private", label: "Private investment", icon: PhoneCall, samples: [
-    { sev: "high", text: "Capital call due 20 Aug — ₹2.4 Cr" },
-    { sev: "med", text: "Board meeting pending — portfolio co. review" },
+  { key: "private", label: "Private investment", icon: PhoneCall, rules: [
+    "A drawdown fund issues a capital call against an undrawn commitment",
+    "A portfolio company schedules a board meeting or reports a round",
   ]},
-  { key: "proposal", label: "New proposal", icon: FilePlus2, samples: [
-    { sev: "med", text: "Fresh commitment proposed — pending approval" },
-    { sev: "low", text: "Check against current liquidity before sign-off" },
+  { key: "proposal", label: "New proposal", icon: FilePlus2, rules: [
+    "A new commitment is proposed and awaits approval",
+    "A proposal is checked against current liquidity before sign-off",
   ]},
 ];
 
-const SEV_TONE: Record<string, string> = { high: "text-loss", med: "text-amber-400", low: "text-slate-400" };
-const SEV_LABEL: Record<string, string> = { high: "High", med: "Medium", low: "Low" };
 
 export function Alerts() {
   const { portfolio, fmtFromBase } = usePortfolio();
@@ -102,21 +123,25 @@ export function Alerts() {
         )}
       </Card>
 
-      {/* Preview alert categories */}
+      {/* What each category WOULD watch. Conditions, not fired alerts — see the
+          note on CATEGORIES for why an invented alert text is not a placeholder. */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CATEGORIES.map((cat) => (
-          <Card key={cat.key} className="preview-hatch" title={<span className="flex items-center gap-2 text-[13px]"><cat.icon className="h-4 w-4 text-slate-500" />{cat.label}</span>} right={<PreviewBadge />}>
+          <Card key={cat.key} className="preview-hatch"
+            title={<span className="flex items-center gap-2 text-[13px]"><cat.icon className="h-4 w-4 text-slate-500" />{cat.label}</span>}
+            subtitle="Conditions this category would watch"
+            right={<PreviewBadge label="Not wired" />}>
             <ul className="space-y-2">
-              {cat.samples.map((s) => (
-                <li key={s.text} className="flex items-start gap-2 rounded-md border border-ink-700 bg-ink-800/60 p-2.5">
-                  <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${s.sev === "high" ? "bg-red-500" : s.sev === "med" ? "bg-amber-400" : "bg-slate-500"}`} />
-                  <div>
-                    <div className="text-[12px] text-slate-300" title="Placeholder — not live data">{s.text}</div>
-                    <span className={`text-[10px] font-medium ${SEV_TONE[s.sev]}`}>{SEV_LABEL[s.sev]} severity</span>
-                  </div>
+              {cat.rules.map((r) => (
+                <li key={r} className="flex items-start gap-2 rounded-md border border-ink-700 bg-ink-800/60 p-2.5">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-600" />
+                  <div className="text-[12px] leading-snug text-slate-400">{r}</div>
                 </li>
               ))}
             </ul>
+            <p className="mt-2.5 text-[10.5px] text-slate-500">
+              No alert of this kind has fired — nothing evaluates these yet.
+            </p>
           </Card>
         ))}
       </div>

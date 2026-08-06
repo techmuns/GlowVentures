@@ -627,13 +627,34 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
 //     for the wrong window. It renders through AbsentCell with that reason, NOT a
 //     preview sample, because the figure is genuinely unavailable rather than
 //     merely un-fed.
-//   • JUDGEMENT / PREVIEW — target amount, target weight, pending to invest,
-//     fair value, its reference year and the valuation method. These are the
-//     family's own calls, not statement figures. Where the family HAS recorded a
-//     target or fair value on the watchlist it is shown bright (real); otherwise
-//     a greyed PreviewNum sample stands in until they do.
-const VAL_METHODS = ["DCF", "P/E re-rating", "EV/EBITDA", "SOTP", "P/B revert"];
-const FV_YEARS = ["FY27E", "FY28E", "FY27E", "FY29E"];
+//   • JUDGEMENT — target amount, target weight, pending to invest, fair value,
+//     its reference year and the valuation method. These are the family's own
+//     calls, not statement figures. Where the family HAS recorded one on the
+//     watchlist it is shown; where they have not, the cell is ABSENT with the
+//     reason.
+//
+// THE JUDGEMENT COLUMNS USED TO CARRY A SAMPLE, AND THE SAMPLE WAS ARITHMETIC ON
+// THE FAMILY'S OWN MONEY. Target value was `marketValue x 1.25`, pending to
+// invest `x 0.18`, target weight `weight x 1.3 + 0.4`, fair value
+// `(price ?? cost ?? 100) x 1.18` — note the literal 100, a per-share price
+// invented outright when a holding is marked at a total value. Each sat in the
+// same row as that holding's real market value, under a heading a reader has
+// every reason to read as the family's own target.
+//
+// Greying a figure marks it as not-live. It does not stop it being a NUMBER
+// ABOUT THIS HOLDING, and ₹15.5 Cr beside a real ₹12.4 Cr is a target somebody
+// could act on. The book's own rule for exactly this field says so: a price
+// nobody has set is null, never a default, "a fabricated figure produced by a
+// default, which is the exact failure this book exists to prevent". A default of
+// x1.25 is worse than a default of zero, because it is plausible.
+//
+// FV reference year and valuation method were worse still — `FV_YEARS[i % 4]`
+// and `VAL_METHODS[i % 5]` assigned "FY28E" and "DCF" to real companies by ROW
+// INDEX. Sorting the table changed which company was valued by DCF.
+//
+// So the columns stay, because the spec asks for them and the reader should see
+// where the family's judgement will live. They render `—` with a reason until
+// the family records one on that name's company page.
 function PublicDashboardView({ rows }: { rows: Row[] }) {
   const { fmtFromBase } = usePortfolio();
   // localStorage is read once per open — edits made on /watchlist this session
@@ -644,9 +665,9 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
       {/* Legend — the reader must be able to tell, at a glance, which columns are
           the book, which are the family's judgement, and which cannot be measured. */}
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
-        <PreviewBadge />
+        <PreviewBadge label="Judgement columns" />
         <span><span className="text-slate-200">Live from the book:</span> CMP, buy price, invested, current value, gain, return, quantity, weight.</span>
-        <span><span className="text-champagne-400">Target &amp; fair value</span> show the family's own watchlist entries where set, else a greyed sample.</span>
+        <span><span className="text-champagne-400">Target &amp; fair value</span> are the family's own — shown where recorded on a name's company page, <span className="text-slate-500">—</span> where not.</span>
         <span>Per-security XIRR is <span className="text-slate-500">not available</span> — transaction statements cover the current period only.</span>
       </div>
       <Card pad={false} className="flex min-h-0 flex-1 flex-col">
@@ -707,16 +728,20 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
                     <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{(r.weight * 100).toFixed(1)}%</td>
                     {/* Genuinely absent — not a preview. */}
                     <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="no per-security XIRR — transaction statements cover the current period only" /></td>
+                    {/* Target VALUE = the family's per-unit target x the quantity
+                        actually held. Real where they set one; absent where not. */}
                     <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasTarget
                       ? <span className="text-champagne-400">{fmtFromBase(e!.targetPrice! * r.quantity, { compact: true })}</span>
-                      : <PreviewNum>{fmtFromBase(r.marketValue * 1.25, { compact: true })}</PreviewNum>}</td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{(r.weight * 100 * 1.3 + 0.4).toFixed(1)}%</PreviewNum></td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{fmtFromBase(r.marketValue * 0.18, { compact: true })}</PreviewNum></td>
+                      : <AbsentCell reason="no target price set for this name — record one on its company page" />}</td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="a target weight is an IPS decision, and the family has supplied none" /></td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="pending to invest is the gap to a target weight, and no target weight is set" /></td>
                     <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasFair
                       ? <span className="text-champagne-400">{fmtFromBase(e!.fairValue!)}</span>
-                      : <PreviewNum>{fmtFromBase((r.currentPrice ?? r.avgCost ?? 100) * 1.18)}</PreviewNum>}</td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><PreviewNum>{FV_YEARS[i % FV_YEARS.length]}</PreviewNum></td>
-                    <td className="px-2 py-2.5 text-left whitespace-nowrap"><PreviewPill>{VAL_METHODS[i % VAL_METHODS.length]}</PreviewPill></td>
+                      : <AbsentCell reason="no fair value recorded for this name — record one on its company page" />}</td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap">{hasFair
+                      ? <AbsentCell reason="the watchlist records a fair value but not the year it is struck for" />
+                      : <AbsentCell reason="no fair value recorded, so it has no reference year" />}</td>
+                    <td className="px-2 py-2.5 text-left whitespace-nowrap"><AbsentCell reason="no valuation method recorded for this name" /></td>
                   </tr>
                 );
               })}

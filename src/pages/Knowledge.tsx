@@ -47,26 +47,29 @@ const EXAMPLE_QUERIES: { q: string; a: string }[] = [
   },
 ];
 
-// Sample tagged notes — the spec's tagging model: Asset Class, Geography, Theme,
-// Source, Manager, Risk, Decision status.
-const NOTES: {
-  note: string; date: string; source: string; manager: string; theme: string;
-  assetClass: string; geography: string; risk: string; status: string;
-}[] = [
-  { note: "SMID valuations stretched; rotating to quality compounders", date: "12 Jun 2026", source: "Manager meeting", manager: "Aristos", theme: "SMID", assetClass: "Equity", geography: "India", risk: "Moderate", status: "Invested" },
-  { note: "Manufacturing capex cycle broadening beyond autos", date: "28 May 2026", source: "IC discussion", manager: "GLC", theme: "Manufacturing", assetClass: "Equity", geography: "India", risk: "Moderate", status: "Approved" },
-  { note: "Private credit yields attractive vs listed debt", date: "09 May 2026", source: "Fund pitch", manager: "Carnelian", theme: "Credit", assetClass: "AIF", geography: "India", risk: "High", status: "Watchlist" },
-  { note: "AI infra a multi-year theme; prefer picks-and-shovels", date: "21 Apr 2026", source: "Conference", manager: "V.E.C Assago", theme: "AI", assetClass: "Equity", geography: "Global", risk: "High", status: "Research" },
-  { note: "Exited on governance concerns after promoter pledge rose", date: "03 Apr 2026", source: "Manager meeting", manager: "Aristos", theme: "Financials", assetClass: "Equity", geography: "India", risk: "High", status: "Exited" },
+// THE TAGGING MODEL, NOT SAMPLE NOTES.
+//
+// This was five sample rows in the shape of real minutes: a dated note, a named
+// manager and a decision status. Three of the five named Aristos, Carnelian and
+// V.E.C Assago — managers who run this family's money — and one recorded that
+// the family "exited on governance concerns after promoter pledge rose" on
+// 03 Apr 2026, a meeting that never happened about a concern nobody raised.
+//
+// A minute is a record of what someone said. Inventing one and dating it is not
+// a placeholder in the sense the rest of this file uses the word; it is a
+// fabricated document, and it names a real counterparty. So the table shows the
+// spec's tagging DIMENSIONS and the vocabulary each would take, which is what a
+// reader actually needs to see to judge whether the model fits how the family
+// works — and it attributes nothing to anyone.
+const TAG_MODEL: { dimension: string; values: string[]; why: string }[] = [
+  { dimension: "Source", values: ["Manager meeting", "IC discussion", "Fund pitch", "Conference", "Book", "Podcast"], why: "where the note came from, so a view can be filtered to primary sources" },
+  { dimension: "Manager", values: ["the manager the note concerns"], why: "resolved against the account registry, so a note joins to the mandate it is about" },
+  { dimension: "Asset class", values: ["Equity", "AIF", "Bond", "Unlisted", "Cash"], why: "the same vocabulary the book uses, so notes and holdings filter alike" },
+  { dimension: "Geography", values: ["India", "Global"], why: "the spec's geography split for the IPS gap" },
+  { dimension: "Theme", values: ["the family's own theme labels"], why: "free tags, because a theme list is a house view and not ours to seed" },
+  { dimension: "Risk", values: ["Low", "Moderate", "High"], why: "the note-taker's own read, recorded rather than derived" },
+  { dimension: "Decision status", values: ["Research", "Watchlist", "Approved", "Invested", "Exited"], why: "the pipeline a note moves along, so an IC can see what is outstanding" },
 ];
-
-const STATUS_TONE: Record<string, string> = {
-  Invested: "text-gain",
-  Approved: "text-champagne-400",
-  Watchlist: "text-amber-400",
-  Research: "text-slate-400",
-  Exited: "text-loss",
-};
 
 export function Knowledge() {
   const [query, setQuery] = useState("");
@@ -137,36 +140,29 @@ export function Knowledge() {
           </ul>
         </Card>
 
-        {/* Tagged notes */}
-        <Card className="lg:col-span-2 preview-hatch" title="Tagged notes" subtitle="Every note carries Asset Class · Geography · Theme · Source · Manager · Risk · Decision status" right={<PreviewBadge />} pad={false}>
+        {/* The tagging model. Not sample minutes — see the note on TAG_MODEL. */}
+        <Card className="lg:col-span-2 preview-hatch" title="The tagging model"
+          subtitle="What every note would carry, and why each dimension is there"
+          right={<PreviewBadge label="Not wired" />} pad={false}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-[12.5px]">
               <thead className="border-b border-ink-700">
                 <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Note</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Theme</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Manager</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Source</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Risk</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Status</th>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Dimension</th>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Vocabulary</th>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Why it is there</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {NOTES.map((n) => (
-                  <tr key={n.note}>
+                {TAG_MODEL.map((d) => (
+                  <tr key={d.dimension}>
+                    <td className="px-4 py-2.5 whitespace-nowrap font-medium text-slate-200">{d.dimension}</td>
                     <td className="px-4 py-2.5">
-                      <div className="max-w-xs text-slate-300">{n.note}</div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                        <PreviewPill>{n.assetClass}</PreviewPill>
-                        <PreviewPill>{n.geography}</PreviewPill>
-                        <span className="text-[10px] text-slate-600">{n.date}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {d.values.map((v) => <PreviewPill key={v}>{v}</PreviewPill>)}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5"><PreviewPill>{n.theme}</PreviewPill></td>
-                    <td className="px-4 py-2.5 text-slate-400">{n.manager}</td>
-                    <td className="px-4 py-2.5 text-slate-400">{n.source}</td>
-                    <td className="px-4 py-2.5 text-slate-400">{n.risk}</td>
-                    <td className={`px-4 py-2.5 font-medium ${STATUS_TONE[n.status] ?? "text-slate-400"}`} title="Placeholder — not live data">{n.status}</td>
+                    <td className="px-4 py-2.5 max-w-md whitespace-normal leading-snug text-slate-500">{d.why}</td>
                   </tr>
                 ))}
               </tbody>
@@ -174,8 +170,9 @@ export function Knowledge() {
           </div>
           <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
             <Tag className="mr-1 inline h-3 w-3" />
-            Decision status flows <span className="text-slate-400">Watchlist → Research → Approved → Invested → Exited</span>. The tag
-            vocabulary and the AI index are illustrative here — wiring them up needs a private note store the family owns.
+            Decision status flows <span className="text-slate-400">Watchlist → Research → Approved → Invested → Exited</span>.
+            <span className="text-slate-400"> No note has been recorded</span> — this table is the model a note store would
+            use, not a sample of the family's minutes. Wiring it up needs a private note store the family owns.
           </p>
         </Card>
       </div>
