@@ -220,6 +220,7 @@ export type Position = {
   dayChangePct?: number | null;
   low52?: number | null;
   high52?: number | null;
+  marketCap?: number | null;  // ₹, from the quote feed — for the company market-data block
   quoteAgeS?: number;         // seconds since the quote was pulled upstream
 };
 

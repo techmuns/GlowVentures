@@ -288,9 +288,11 @@ export function StockInfo() {
 
       <ResearchPanel ticker={sym} name={name} />
 
-      {/* Deep company research — the FOOS spec's full company page, as an
-          illustrative preview below the live sections. */}
-      <CompanyResearchPreview name={name} ticker={sym} />
+      {/* Deep company research — live 52-week range & insider trades, a pointer
+          to the live Research panel above, and previews for the sections no
+          endpoint serves as structured data yet. */}
+      <CompanyResearchPreview name={name} ticker={sym} price={rows[0]?.currentPrice ?? null} live={live}
+        low52={rows[0]?.low52 ?? null} high52={rows[0]?.high52 ?? null} />
 
       <p className="mt-4 text-[11px] text-slate-500">
         Figures are live from the current book and the dated ledger. Amounts are auditable — click any dotted number to trace it in <Link to={auditHref(LEDGER)} className="text-champagne-400 hover:underline">Data Audit</Link>.

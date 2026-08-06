@@ -192,6 +192,7 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
       dayChangePct,
       low52: q.low52,
       high52: q.high52,
+      marketCap: q.marketCap,
       quoteAgeS: q.ageS,
     };
   });
