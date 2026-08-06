@@ -1,0 +1,44 @@
+name: CI
+
+# Guards the two things a family-office cockpit cannot regress on: the app must
+# build, and the baked book (src/data/glowData.ts) must still be exactly what the
+# committed audit archive regenerates — the "regenerates byte-identically from
+# source/" guarantee the whole reconciliation rests on. A drift here is how the
+# private-markets model and the asset-class split silently fell out of sync.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # 1. The app type-checks and builds.
+      - name: Build
+        run: npm run build
+
+      # 2. The book regenerates BYTE-IDENTICALLY from the committed audit archive.
+      #    build-book reads public/audit/ (committed) — no source PDFs or
+      #    passwords needed — so a non-empty diff means glowData.ts was hand-edited
+      #    or drifted from its archive, which must never happen.
+      - name: Book is byte-identical to its archive
+        run: |
+          npm run build-book
+          if ! git diff --quiet -- src/data/glowData.ts docs/BOOK-REPORT.md; then
+            echo "::error::glowData.ts / BOOK-REPORT.md are not byte-identical to what the audit archive regenerates."
+            git --no-pager diff --stat -- src/data/glowData.ts docs/BOOK-REPORT.md
+            exit 1
+          fi
+
+      # 3. The ingest & reconciliation test suites pass (parseNum, layout,
+      #    pipeline, and the golden figures a human read off the real statements).
+      - name: Ingest tests
+        run: npm run test:ingest

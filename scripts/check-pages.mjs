@@ -80,6 +80,27 @@ const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announc
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
+// DATA INVARIANTS — the client's own data complaints, encoded so they cannot
+// silently regress. Checked against the rendered page text on the primary
+// theme/width. Each returns true when the page is CORRECT.
+const INVARIANTS = {
+  // "on the dashboard there's only one asset class" — the CIO allocation must
+  // surface more than equity, and state the listed/private split.
+  cio: [
+    ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+    ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
+  ],
+  // "the private market tabs appears to be empty" — the AIF book must render.
+  private: [
+    ["private page surfaces the AIF book, not the empty state", (t) => /alternative holdings|Alternatives/i.test(t) && !/No private-market holdings in this book/.test(t)],
+  ],
+  // "in the portfolio monitor I can see all kinds of investments being mixed" —
+  // holdings must be sectioned by asset class.
+  monitor: [
+    ["holdings are sectioned by asset class", (t) => /\bequity\b/i.test(t) && /\d+\s+holdings/i.test(t)],
+  ],
+};
+
 /**
  * Elements painting a DARK surface or near-invisible text while the page is in
  * light mode. Run in the browser so it reads COMPUTED colour — the only way to
@@ -254,6 +275,10 @@ for (const theme of THEMES) {
         : [];
       const overflow = await page.evaluate(OVERFLOW);
       const contrast = FAST ? [] : await page.evaluate(theme === "light" ? DARK_IN_LIGHT : LIGHT_IN_DARK);
+      // Data invariants — only the primary theme/width, where innerText is real.
+      const invariants = !FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]
+        ? INVARIANTS[name].filter(([, test]) => !test(text)).map(([desc]) => desc)
+        : [];
       if (SHOTS && width === WIDTHS[0]) {
         await page.screenshot({ path: `${OUT}/${theme}-${name}.png`, fullPage: true });
       }
@@ -261,7 +286,7 @@ for (const theme of THEMES) {
         theme, width, name, path,
         errors: errors.filter((e) => !ENVIRONMENT_NOISE.test(e)),
         failed: [...new Set(failed.filter((f) => !ENVIRONMENT_NOISE.test(f)))],
-        overflow, contrast, zeros,
+        overflow, contrast, zeros, invariants,
       });
       await ctx.close();
     }
@@ -272,13 +297,15 @@ writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2));
 
 let broken = 0;
 for (const r of report) {
-  const hard = r.errors.length + r.failed.length + (r.overflow ? 1 : 0) + r.contrast.length;
+  const inv = r.invariants ?? [];
+  const hard = r.errors.length + r.failed.length + (r.overflow ? 1 : 0) + r.contrast.length + inv.length;
   if (hard) broken++;
   const tag = `${r.theme}/${r.width}`.padEnd(11);
   const ok = hard ? "✗" : "✓";
   if (hard || (r.theme === THEMES[0] && r.width === WIDTHS[0])) {
-    console.log(`${ok} ${tag} ${r.name.padEnd(14)} err=${r.errors.length} req=${r.failed.length} overflow=${r.overflow ? r.overflow.overflow + "px" : "-"} contrast=${r.contrast.length} zeroish=${r.zeros.length}`);
+    console.log(`${ok} ${tag} ${r.name.padEnd(14)} err=${r.errors.length} req=${r.failed.length} overflow=${r.overflow ? r.overflow.overflow + "px" : "-"} contrast=${r.contrast.length} zeroish=${r.zeros.length}${inv.length ? ` invariant=${inv.length}` : ""}`);
   }
+  for (const i of inv) console.log(`    INVARIANT FAILED  ${i}`);
   for (const e of r.errors) console.log(`    ERR  ${e.slice(0, 200)}`);
   for (const f of r.failed) console.log(`    REQ  ${f.slice(0, 160)}`);
   if (r.overflow) console.log(`    OVERFLOW ${r.overflow.overflow}px — widest: ${r.overflow.worst?.where ?? "?"} (+${r.overflow.worst?.past}px)`);
