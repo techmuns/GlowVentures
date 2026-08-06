@@ -12,7 +12,7 @@ import { fmtPct, changeColor } from "@/lib/format";
 import { sum, isPriced, unpriced } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
-import { AbsentSection, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { auditHref, LEDGER, stockHref } from "@/lib/auditFormulas";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
@@ -100,15 +100,38 @@ export function ReturnAnalysis() {
     // comes first. The row then rendered `0  ₹0  ₹0`, which says the account
     // measured nothing when it holds ₹1.46 Cr. Book-wide figures above dedupe;
     // an account's own row shows its own statement.
+    // AN EMPTY SUM IS NOT A MEASUREMENT OF ZERO. `sum([])` is 0, so an account
+    // this page found no priced rows for rendered `0 · ₹0 · ₹0` — and two
+    // accounts here have no rows at all because NO STATEMENT VALUES THEM. The
+    // 360 ONE Alternates folios (1000632, 1000633) issue distribution letters and
+    // statements of earnings and never a valuation; the book already says so in
+    // `Account.noPositionsReason`, and this table printed ₹0 over the top of it.
+    // That is the standing rule's exact failure — a measured zero and an absent
+    // measurement looking the same — against an account whose units ARE marked,
+    // on another member's statement.
+    //
+    // Contrast HDFC 16180583, which really is ₹0: both its schemes are redeemed
+    // to nil units, its `noPositionsReason` is null, and its zero stays.
     const pricedByAccount = portfolio.positions.filter(isPriced);
     const byAccount = portfolio.accounts.map((a) => {
       const rows = pricedByAccount.filter((x) => x.accountId === a.accountId);
+      const held = portfolio.positions.filter((x) => x.accountId === a.accountId).length;
+      const measured = rows.length > 0;
       const c = sum(rows.map((x) => x.costBasis));
       const pl = sum(rows.map((x) => x.unrealizedPnL));
       const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
       return {
-        account: a, names: rows.length, cost: c, pnl: pl,
-        returnPct: c > 0 ? (pl / c) * 100 : null,
+        account: a, names: rows.length, held,
+        // Null, not zero, when nothing on this account carries a cost to sum.
+        cost: measured ? c : null,
+        pnl: measured ? pl : null,
+        returnPct: measured && c > 0 ? (pl / c) * 100 : null,
+        // Why the row is empty: the book's own reason where it has one, else the
+        // fact that the account's holdings report no cost.
+        absentReason: a.noPositionsReason
+          ?? (held === 0
+            ? "no holding on this account in the book"
+            : "no holding on this account reports a cost basis, so cost and gain are not measurable"),
         best: sorted[0] ?? null,
         worst: sorted[sorted.length - 1] ?? null,
       };
@@ -257,12 +280,18 @@ export function ReturnAnalysis() {
               {m.byAccount.map((a) => (
                 <tr key={a.account.accountId} className="border-t border-ink-700/60">
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(a.account)}</td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-400">{a.names}</td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-300">{money(a.cost)}</td>
-                  <td className={`px-3 py-2.5 text-right mono ${changeColor(a.pnl)}`}>{money(a.pnl, true)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">
+                    {a.cost === null ? <AbsentCell reason={a.absentReason} /> : a.names}
+                  </td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-300">
+                    {a.cost === null ? <AbsentCell reason={a.absentReason} /> : money(a.cost)}
+                  </td>
+                  <td className={`px-3 py-2.5 text-right mono ${a.pnl === null ? "" : changeColor(a.pnl)}`}>
+                    {a.pnl === null ? <AbsentCell reason={a.absentReason} /> : money(a.pnl, true)}
+                  </td>
                   <td className="px-3 py-2.5 text-right mono">
                     {a.returnPct === null
-                      ? <span className="text-slate-500" title="no cost basis on this account's rows">{DASH}</span>
+                      ? <AbsentCell reason={a.absentReason} />
                       : <span className={changeColor(a.returnPct)}>{fmtPct(a.returnPct, { sign: true, decimals: 1 })}</span>}
                   </td>
                   <td className="px-3 py-2.5">

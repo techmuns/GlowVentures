@@ -123,8 +123,25 @@ type Ctx = {
   /** Money in the display currency, or `—` when the book carries no figure. */
   fmtFromBase: (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) => string;
   clearPortfolio: () => void;
-  inrPerUsd: number;      // live USD→INR rate (₹ per $1)
-  fxAsOf: string | null;  // date of the live rate, if fetched
+  inrPerUsd: number;      // USD→INR rate (₹ per $1) — see fxIsLive
+  fxAsOf: string | null;  // date of the live rate, if the feed supplied one
+  /**
+   * Whether `inrPerUsd` came from the feed or from the static fallback.
+   *
+   * EVERY USD FIGURE IN THE COCKPIT IS THIS ONE NUMBER'S DIVISOR, so a stale one
+   * is not a cosmetic problem — it is wrong by its own drift, everywhere at
+   * once, and it looks exactly like a live rate. The chip rendered `$1 = ₹83.50`
+   * identically either way, with "fallback rate" only in a `title` tooltip: gone
+   * on touch, gone in a screenshot, gone for anyone not hovering.
+   *
+   * This is the same distinction the quote feed already makes visible — a price
+   * the feed could not supply keeps its statement mark and is FLAGGED, rather
+   * than passing a month-old mark off as current. The rate deserves no less.
+   *
+   * Inferred from `fxAsOf` before, which is a different fact: a feed that
+   * answers without a date is live and undated, not a fallback.
+   */
+  fxIsLive: boolean;
   // ── Live quotes ───────────────────────────────────────────────────────────
   quotesStatus: QuotesStatus;
   quotesAsOf: string | null;   // when the feed was pulled
@@ -157,9 +174,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // static rate so conversions never block on the network.
   const [inrPerUsd, setInrPerUsd] = useState<number>(DEFAULT_INR_PER_USD);
   const [fxAsOf, setFxAsOf] = useState<string | null>(null);
+  const [fxIsLive, setFxIsLive] = useState(false);
   useEffect(() => {
     let alive = true;
-    fetchInrPerUsd().then((r) => { if (alive && r) { setInrPerUsd(r.inrPerUsd); setFxAsOf(r.date); } });
+    fetchInrPerUsd().then((r) => {
+      if (!alive || !r) return;
+      setInrPerUsd(r.inrPerUsd);
+      setFxAsOf(r.date);
+      setFxIsLive(true);
+    });
     return () => { alive = false; };
   }, []);
   // ── Live intraday quotes ────────────────────────────────────────────────────
@@ -282,11 +305,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Ctx>(
     () => ({
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
-      bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf,
+      bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
       quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, refreshQuotes,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, quotesStatus, quotes, livePriced, notLive, unpriceable, refreshQuotes],
+     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, unpriceable, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 }

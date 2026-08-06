@@ -11,7 +11,7 @@ function readInitialTheme(): boolean {
 }
 
 function CurrencySwitch() {
-  const { displayCurrency, setDisplayCurrency, inrPerUsd, fxAsOf } = usePortfolio();
+  const { displayCurrency, setDisplayCurrency, inrPerUsd, fxAsOf, fxIsLive } = usePortfolio();
   return (
     <div className="flex items-center gap-2">
       <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency">
@@ -26,10 +26,21 @@ function CurrencySwitch() {
           );
         })}
       </div>
+      {/* THE RATE SAYS WHETHER IT IS ONE. Every USD figure in the cockpit is this
+          number's divisor, so a stale fallback is wrong everywhere at once — and
+          it rendered identically to a live rate, with "fallback rate" only in a
+          tooltip that a touch device, a screenshot and a non-hovering reader all
+          miss. The quote feed already flags a price it could not refresh; the
+          rate gets the same treatment, in the chip rather than behind it. */}
       {displayCurrency === "USD" && (
-        <span className="hidden whitespace-nowrap text-[11px] tabular text-slate-400 sm:inline"
-          title={`USD → INR reference rate${fxAsOf ? ` · as of ${fxAsOf}` : " · fallback rate"}`}>
+        <span
+          className={["hidden items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] tabular sm:inline-flex",
+            fxIsLive ? "text-slate-400" : "border border-amber-500/40 bg-amber-500/10 text-amber-400"].join(" ")}
+          title={fxIsLive
+            ? `USD → INR reference rate${fxAsOf ? ` · as of ${fxAsOf}` : ""}`
+            : "The FX feed did not respond. Every USD figure on screen is converted at a STATIC fallback rate, not today's — switch to INR for figures that tie to the statements."}>
           $1 = ₹{inrPerUsd.toFixed(2)}
+          {!fxIsLive && <span className="font-semibold uppercase tracking-wide">· fallback</span>}
         </span>
       )}
     </div>
