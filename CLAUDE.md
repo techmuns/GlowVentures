@@ -175,12 +175,15 @@ is a MEASURED zero and keeps its zero; contrast the two 360 ONE Alternates
 folios, which no statement values at all and which render `—` with the reason.
 
 
-**One holding is reported under two members, and is counted once.** 360 ONE
-Special Opportunities Fund Series 8 Class A3 appears with byte-identical figures
-under CRN37702 and CRN60117 — ₹1,45,80,412.51 each. Both rows are carried, each
-naming the other through `alsoReportedUnder`; the consolidated total counts the
-`dedupeGroup` once. This is check (c) firing on a real case for the first time,
-and it is what the policy in §4c was written for.
+**Two holdings are reported under two members each, and are counted once.**
+360 ONE Special Opportunities Fund Series 8 Class A3 appears with byte-identical
+figures under CRN37702 and CRN60117 (₹1,45,80,412.51 each), and Transition
+Venture Capital Fund I — Class A1 under both Bharat Jaisinghani family trusts
+(₹1,71,26,374.76 each). Both rows of each are carried, naming the other through
+`alsoReportedUnder`; the consolidated total counts the `dedupeGroup` once.
+**₹3.17 Cr of double-count in total** — the figure to test any book-wide
+aggregate against. This is check (c) firing on real cases, and it is what the
+policy in §4c was written for.
 
 **Every issuer has a reader.** Getting there took four of them, and each earned
 its own file because the layouts share nothing:

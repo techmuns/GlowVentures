@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
 import { DASH } from "@/components/Absent";
@@ -18,8 +18,14 @@ export function DataRefresh() {
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
   const asOf = portfolio.asOf;
+  // BOTH SIDES OF A RATIO ON ONE MEASUREMENT. The denominator already deduped
+  // (`consolidatedMarketValue` does it internally) while the numerator summed
+  // the raw set, so a duplicated holding that HAD a sector would have pushed
+  // coverage over 100%. Neither of this drop's two duplicated holdings carries
+  // one, which is the only reason the figure reads correctly today.
+  const deduped = dedupedPositions(p);
   const listedMV = consolidatedMarketValue(p);
-  const classified = sum(p.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
+  const classified = sum(deduped.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
   const coverage = listedMV > 0 ? (classified / listedMV) * 100 : 0;
   const costNA = new Set(p.filter((x) => x.costUnavailable).map((x) => x.security)).size;
   const withIsin = p.filter((x) => !!x.isin).length;

@@ -17,11 +17,31 @@ import { holdingHref, auditHref, LEDGER, returnFormula, weightFormula } from "@/
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
 
 export function SectorComposition() {
-  const { portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
-  const p = portfolio.positions;
+  /**
+   * EVERY FIGURE ON THIS PAGE IS BOOK-WIDE, SO IT READS THE DEDUPED SET.
+   *
+   * This ran `bySector` over `portfolio.positions`, which carries BOTH rows of a
+   * holding reported under two members, while its own printed total came from
+   * `consolidatedMarketValue`, which counts each group once. The two sides were
+   * on different measurements: the sectors summed to ₹338.61 Cr beside a total
+   * of ₹335.43 Cr, Unclassified read ₹239.14 Cr against a true ₹235.97 Cr, and
+   * the weights added to 100.95%.
+   *
+   * Two groups are duplicated in this drop, not one — 360 ONE Special
+   * Opportunities Series 8 under both CRNs (₹1.46 Cr) and Transition Venture
+   * Fund I under both family trusts (₹1.71 Cr) — so the over-count is ₹3.17 Cr.
+   * The drill-down rows come from the same set, or a sector's holdings would not
+   * add up to the sector.
+   *
+   * Per-ACCOUNT and per-OWNER views do the opposite and show both rows as
+   * printed; that is Family & Entities, and it is right there for the same
+   * reason it is wrong here.
+   */
+  const p = consolidated;
   const accIdx = accountIndex(portfolio.accounts);
   const totalMV = consolidatedMarketValue(p);
   const sectors = bySector(p);
