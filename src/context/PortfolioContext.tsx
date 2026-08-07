@@ -8,7 +8,7 @@
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Portfolio, Position } from "@/lib/types";
-import { dedupedPositions, consolidatedMarketValue } from "@/lib/analytics";
+import { dedupedPositions, publicPrivateSplit } from "@/lib/analytics";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, type QuoteFeed } from "@/lib/quotes";
 import { fmtCurrency, displaySecurity } from "@/lib/format";
@@ -248,13 +248,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     if (!basePortfolio) return null;
     if (!quotes) return basePortfolio;
     const positions = applyQuotes(basePortfolio.positions, quotes);
-    // COUNT ONCE. A raw reduce over `positions` double-counts any holding
-    // reported under two members — the 360 ONE AIF is ₹1.46 Cr of exactly that
-    // — and the figure it produces disagreed with BOOK_SUMMARY.totalValue,
-    // which the ingest already deduped. Two definitions of "consolidated NAV"
-    // in one file, one of them wrong on live basis only.
-    const listedValue = consolidatedMarketValue(positions);
-    return { ...basePortfolio, positions, listedValue, totalValue: listedValue + basePortfolio.privateValue };
+    // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
+    //
+    // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
+    // is ₹1.46 Cr reported under two members), then splits by assetClass exactly
+    // as `BOOK_SUMMARY` does. That matters on LIVE basis: an earlier fix set
+    // `listedValue = consolidatedMarketValue(positions)` — the WHOLE deduped book,
+    // AIF units included — and then added `privateValue` on top, counting the
+    // ₹207.65 Cr AIF book twice and inflating live NAV to ~₹544 Cr against a real
+    // ₹335 Cr. Live prices move only listed marks; the AIF has no live quote and
+    // its share stays at its statement value, which is why re-splitting the
+    // live-overlaid positions leaves `private` unchanged and `total` correct.
+    const { listed: listedValue, private: privateValue } = publicPrivateSplit(positions);
+    return { ...basePortfolio, positions, listedValue, privateValue, totalValue: listedValue + privateValue };
   }, [basePortfolio, quotes]);
 
   const consolidated = useMemo(

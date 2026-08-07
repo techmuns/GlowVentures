@@ -89,6 +89,19 @@ const INVARIANTS = {
   cio: [
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
     ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
+    // "are there no investments in direct equity?" — listed equity is one
+    // consolidated Equity asset class, not the empty "Direct Equity" row it was.
+    ["equity is a consolidated asset class, not an empty 'Direct Equity' row", (t) => /\bEquity\b/.test(t)],
+    // The AIF was double-counted into NAV on live basis (₹544 Cr vs a real
+    // ₹335 Cr). check:pages runs on STATEMENT basis, so the consolidated NAV is
+    // deterministically ₹335.43 Cr — guard the correct band and forbid the
+    // double-counted ₹5xx Cr.
+    ["consolidated NAV ties to ~₹335 Cr, not the double-counted ₹5xx Cr", (t) => /₹33[0-9](\.\d+)?\s*Cr/.test(t) && !/₹5\d\d(\.\d+)?\s*Cr/.test(t)],
+  ],
+  // "why are 70% holdings in unclassified" — the sector view must be the listed
+  // book only, with the AIF/private book named as excluded rather than folded in.
+  sectors: [
+    ["sector view is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
   ],
   // "the private market tabs appears to be empty" — the AIF book must render.
   private: [

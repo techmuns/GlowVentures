@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum, consolidatedMarketValue } from "@/lib/analytics";
+import { bySector, sum, consolidatedMarketValue, isPrivateClass } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -41,10 +41,18 @@ export function SectorComposition() {
    * printed; that is Family & Entities, and it is right there for the same
    * reason it is wrong here.
    */
-  const p = consolidated;
+  // SECTOR IS A LISTED-EQUITY VIEW. An AIF or other private holding is a fund
+  // wrapper with no equity sector, so every one of them lands in "Unclassified".
+  // At 62% of this book that swamped the chart — Unclassified read 70.6% with
+  // "Sanshi Fund-I" as its top holding — and buried the actual equity sectors
+  // this page exists to show. So the page is the LISTED book only; the private
+  // book is NAMED as excluded below rather than folded in as a false sector.
   const accIdx = accountIndex(portfolio.accounts);
+  const p = consolidated.filter((x) => !isPrivateClass(x));
   const totalMV = consolidatedMarketValue(p);
+  const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
   const sectors = bySector(p);
+  const unclassified = sectors.find((s) => s.key === "Unclassified") ?? null;
   // Every figure on this page is rebuilt from position market values, so once the
   // quote feed is up they all track live prices — and none of them matches a cell
   // in the source extract any more. Live figures render plain; only a book still on its
@@ -205,6 +213,11 @@ export function SectorComposition() {
             </table>
           </div>
         </Card>
+      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+        This is the <span className="font-medium text-slate-400">listed book</span> — {money(totalMV)} across {p.length} holdings, each counted once.
+        {privateMV > 0 && <> The <span className="font-medium text-slate-400">private book</span> ({money(privateMV)} of AIF units, {((privateMV / (totalMV + privateMV)) * 100).toFixed(0)}% of the whole book) is excluded here: a fund wrapper carries no equity sector, so folding it in would put the majority of the book under a single false “Unclassified” slice and hide the sectors this view exists to show. It is broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span>.</>}
+        {unclassified && <> Within the listed book, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
+      </p>
     </div>
   );
 }

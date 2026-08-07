@@ -18,10 +18,11 @@ import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 
-// Morning CIO — asset-class cockpit. Summarises the whole book by asset class
-// (Direct Equity, PMS / Managed, Startups, Unlisted, PE/VC, Pre-IPO, Debt) with
+// Morning CIO — asset-class cockpit. Summarises the whole book by asset class —
+// what a holding IS (Equity, AIF, Mutual Fund, Cash, and — where the book carries
+// them — Startups, Unlisted, PE/VC, Pre-IPO, Debt), never by how it is run — with
 // invested / current / return, plus capital deployment, concentration and book
-// performance.
+// performance. Every figure is CONSOLIDATED: each dedupeGroup counted once.
 //
 // WHAT CHANGED FOR THIS BOOK, AND WHY. Every private-market bucket is EMPTY —
 // these five accounts are discretionary PMS mandates in listed Indian equity,
@@ -173,13 +174,25 @@ export function MorningCIO() {
         ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
     };
-    // Equity ONLY on the vehicle split — the AIF units, mutual funds and cash
-    // that also sit in `p` were being folded into "PMS / Managed" and shown as
-    // equity, which is exactly why the allocation read as one asset class. They
-    // now get their own buckets below.
+    // ALLOCATION IS BY ASSET CLASS — what a holding IS, not how it is run. Every
+    // listed equity is ONE "Equity" class regardless of vehicle: the family's PMS
+    // mandates and its self-directed LKP demat hold the same asset, so they
+    // consolidate into a single row. Splitting equity by vehicle here — "PMS /
+    // Managed" vs "Direct Equity" — put an engagement on an asset-class axis (the
+    // model forbids exactly that), left an empty "Direct Equity" row because only
+    // one ₹0 folio is tagged engagement "Direct", and filed ₹9.9 Cr of the
+    // family's own self-directed stock (LKP, engagement "Execution") under "PMS".
+    // How the equity is RUN is stated in the caption instead.
     const isEquity = (x: (typeof p)[number]) => x.assetClass === "Equity" || x.assetClass === "ETF";
-    const directEq = eqGroup(p.filter((x) => isEquity(x) && !managedRow(x)));
-    const pmsEq = eqGroup(p.filter((x) => isEquity(x) && managedRow(x)));
+    const equityRows = p.filter(isEquity);
+    const equity = eqGroup(equityRows);
+    // Vehicle split WITHIN equity, for the caption only — self-directed is the
+    // family running the account itself (a demat/execution or truly direct
+    // engagement); everything else is run through an external manager.
+    const engOf = (x: (typeof p)[number]) => accIdx.get(x.accountId)?.engagement ?? "";
+    const isSelfDirected = (x: (typeof p)[number]) => engOf(x) === "Direct" || engOf(x) === "Execution";
+    const equitySelfMV = sum(equityRows.filter(isSelfDirected).map((x) => x.marketValue));
+    const equityManagedMV = sum(equityRows.filter((x) => !isSelfDirected(x)).map((x) => x.marketValue));
     // Non-equity asset classes, each as its own bucket. AIF is 62% of this book.
     const classGroup = (cls: string) => eqGroup(p.filter((x) => x.assetClass === cls));
     const aifEq = classGroup("AIF");
@@ -281,14 +294,13 @@ export function MorningCIO() {
     });
     // A bucket for a non-equity asset class — no dated capital-movement flows, so
     // no money-weighted rate; its total return on cost is what the row shows.
-    const classBucket = (key: string, color: string, g: typeof directEq): Bucket => ({
+    const classBucket = (key: string, color: string, g: typeof equity): Bucket => ({
       key, color, count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
       metric: g.cost !== null && g.cost > 0 ? g.mv / g.cost : null,
       retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
     });
     const allBuckets: Bucket[] = [
-      { key: "Direct Equity", color: "#d9c48f", count: directEq.count, invested: directEq.cost, current: directEq.mv, kind: "MOIC", metric: directEq.cost !== null && directEq.cost > 0 ? directEq.mv / directEq.cost : null, retPct: directEq.ret, distributed: 0, xirr: listedXirr(directSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(directSide.excluded), sheet: null },
-      { key: "PMS / Managed", color: "#c3a962", count: pmsEq.count, invested: pmsEq.cost, current: pmsEq.mv, kind: "MOIC", metric: pmsEq.cost !== null && pmsEq.cost > 0 ? pmsEq.mv / pmsEq.cost : null, retPct: pmsEq.ret, distributed: 0, xirr: listedXirr(pmsSide.parts), xirrBasis: "ledger", xirrNote: xirrCoverage(pmsSide.excluded), sheet: null },
+      { key: "Equity", color: "#d9c48f", count: equity.count, invested: equity.cost, current: equity.mv, kind: "MOIC", metric: equity.cost !== null && equity.cost > 0 ? equity.mv / equity.cost : null, retPct: equity.ret, distributed: 0, xirr: listedXirr([...directSide.parts, ...pmsSide.parts]), xirrBasis: "ledger", xirrNote: xirrCoverage(xirrExcluded), sheet: null },
       classBucket("AIF", "#a855f7", aifEq),
       classBucket("Mutual Fund", "#22d3ee", mfEq),
       classBucket("Cash", "#64748b", cashEq),
@@ -373,6 +385,7 @@ export function MorningCIO() {
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
+      equityManagedMV, equitySelfMV,
       buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       distinctNames: byKey.size, crossHeld, top10Pct,
@@ -605,7 +618,7 @@ export function MorningCIO() {
             </p>
           )}
           <p className="mt-3 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-            <span className="font-medium text-slate-400">Return (total)</span> on each row is the cumulative return to date on the capital in that bucket — market value against cost, not annualised — so a strong quarter reads as the quarter's gain, not a yearly pace the book has not run for a year. The <span className="font-medium text-slate-400">whole-book total</span> is money-weighted: Excel's <span className="mono">XIRR()</span> over every account's dated capital movements, closed against market value, then de-annualised to the window it covers. Each popover carries the money-multiple and, for the book total, the annualised p.a. figure behind it. <span className="font-medium text-slate-400">PMS / Managed</span> is listed equity run through external managers, taken from each account's stated engagement in the registry rather than guessed from its label; the rest is held direct. <span className="font-medium text-slate-400">AIF</span>, <span className="font-medium text-slate-400">Mutual Fund</span> and <span className="font-medium text-slate-400">Cash</span> are shown as their own asset classes rather than folded into the equity buckets.
+            <span className="font-medium text-slate-400">Return (total)</span> on each row is the cumulative return to date on the capital in that bucket — market value against cost, not annualised — so a strong quarter reads as the quarter's gain, not a yearly pace the book has not run for a year. The <span className="font-medium text-slate-400">whole-book total</span> is money-weighted: Excel's <span className="mono">XIRR()</span> over every account's dated capital movements, closed against market value, then de-annualised to the window it covers. Each popover carries the money-multiple and, for the book total, the annualised p.a. figure behind it. <span className="font-medium text-slate-400">Equity</span> consolidates every listed holding into one asset class regardless of how it is run — {m.equitySelfMV > 0 ? <>{money(m.equityManagedMV)} through external PMS managers and {money(m.equitySelfMV)} self-directed (the family's own demat)</> : <>all of it through external PMS managers</>} — because an asset class is what a holding IS, not who manages it. <span className="font-medium text-slate-400">AIF</span>, <span className="font-medium text-slate-400">Mutual Fund</span> and <span className="font-medium text-slate-400">Cash</span> are each their own asset class.
             {m.closedInvested > 0 && <> Invested is capital currently deployed; fully-exited funds ({money(m.closedInvested)} in → {money(m.closedDistributed)} back) are excluded from the rows but included in the whole-book return.</>}
             {" "}<span className="font-medium text-slate-400">Every return here closes at {portfolio.asOf}</span>, the book's own report date — the same terminal date the per-account table on NAV &amp; Performance uses, so the two pages state one measurement rather than two.
             {m.xirrExcluded.length > 0 && <> Account {m.xirrExcluded.join(", ")} sits outside the money-weighted whole-book figure, flows AND market value: its statements carry no opening portfolio value, and counting what it is worth without what it started from would overstate the return.</>}
