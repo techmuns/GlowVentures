@@ -75,8 +75,13 @@ export function CompareCompanies() {
         rows: [p],
       });
     }
-    return [...m.values()].sort((a, b) =>
-      sum(b.rows.map((r) => r.marketValue)) - sum(a.rows.map((r) => r.marketValue)));
+    // COUNT ONCE per candidate: a name reported under two members (360 ONE, the
+    // Transition trust) shares one securityKey, so its lots include both rows.
+    // Dedupe them or "Weight in book" doubles — while the column's own hint says
+    // "each duplicate counted once".
+    return [...m.values()]
+      .map((c) => ({ ...c, rows: dedupedPositions(c.rows) }))
+      .sort((a, b) => sum(b.rows.map((r) => r.marketValue)) - sum(a.rows.map((r) => r.marketValue)));
   }, [portfolio]);
 
   const chosen = useMemo(

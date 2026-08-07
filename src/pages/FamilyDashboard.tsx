@@ -13,7 +13,7 @@ import { PreviewBadge, PreviewPill } from "@/components/Preview";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { byEntity, bySecurity, consolidatedMarketValue, dedupedPositions, publicPrivateSplit, sumOrNull } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
-import { entityXirrPct } from "@/lib/returns";
+import { ownerMeasuredReturn } from "@/lib/returns";
 import { fmtPct, changeColor } from "@/lib/format";
 
 // LAYER 6 — FAMILY DASHBOARD (FOOS spec). Per family member and for the whole
@@ -76,7 +76,11 @@ export function FamilyDashboard() {
   // that folded missing figures in as zero.
   const cost = useMemo(() => sumOrNull(scoped.map((p) => p.costBasis)), [scoped]);
   const retPct = cost !== null && cost > 0 ? ((mv - cost) / cost) * 100 : null;
-  const xirr = useMemo(() => (portfolio && scope !== FAMILY ? entityXirrPct(portfolio, scope, mv) : null), [portfolio, scope, mv]);
+  // Money-weighted return for one member — measurable accounts only, de-annualised
+  // to the window (a sibling of what /performance and Morning CIO show). Closing
+  // the member's whole value against partial openings previously produced an
+  // annualised tile figure in the thousands of percent.
+  const mwr = useMemo(() => (portfolio && scope !== FAMILY ? ownerMeasuredReturn(portfolio, portfolio.positions, scope) : null), [portfolio, scope]);
 
   // Top exposures by security, aggregated across accounts in scope.
   const topExposures = useMemo(() => {
@@ -134,13 +138,15 @@ export function FamilyDashboard() {
         <StatTile label="Cash available" {...absentTile(TILE_ABSENT.cash)} icon={<Droplets className="h-4 w-4" />} />
         <StatTile label="Liquidity coverage" {...absentTile(TILE_ABSENT.liq)} icon={<Gauge className="h-4 w-4" />} />
         <StatTile
-          label={scope === FAMILY ? "Return on cost" : "Annual return (XIRR)"}
+          label={scope === FAMILY ? "Return on cost" : "Return (to date)"}
           value={scope === FAMILY
             ? <span className={changeColor(retPct)}>{fmtPct(retPct, { sign: true })}</span>
-            : xirr == null
-              ? <AbsentCell reason="no dated capital movements for this entity, so a money-weighted return cannot be measured" />
-              : <span className={changeColor(xirr)}>{fmtPct(xirr, { sign: true })}</span>}
-          sub={scope === FAMILY ? "holding-period, live" : xirr == null ? "not measurable" : "money-weighted"}
+            : mwr == null || mwr.toDatePct == null
+              ? <AbsentCell reason="no account for this member carries an opening portfolio value, so a money-weighted return cannot be measured without overstating it" />
+              : <span className={changeColor(mwr.toDatePct)}
+                  title={`${mwr.annPct == null ? "" : `${fmtPct(mwr.annPct, { sign: true })} p.a. annualised. `}Covers ${money(mwr.measuredMV)} of ${money(mwr.totalMV)}${mwr.excluded.length ? ` — ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value` : ""}.`}>
+                  {fmtPct(mwr.toDatePct, { sign: true })}</span>}
+          sub={scope === FAMILY ? "holding-period, live" : mwr == null || mwr.toDatePct == null ? "not measurable" : "money-weighted · to date"}
           icon={<TrendingUp className="h-4 w-4" />} />
         <StatTile label="Benchmark return" {...absentTile(TILE_ABSENT.bench)} icon={<TrendingUp className="h-4 w-4" />} />
       </div>

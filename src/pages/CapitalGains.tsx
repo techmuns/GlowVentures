@@ -501,9 +501,10 @@ export function CapitalGains() {
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
         Tax figures are <span className="font-medium text-slate-400">illustrative</span>, using current Indian
         equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do
-        not net losses across heads or years, and exclude surcharge and cess. Not tax advice. Unrealised figures
-        move with live prices; realised figures are as each manager's capital gain statement reports them, each
-        over its own window.
+        not net losses across heads or years, and exclude surcharge and cess. Not tax advice. This page is on a
+        <span className="font-medium text-slate-400"> statement basis</span> so every figure ties to the source PDF:
+        realised figures are as each manager's capital gain statement reports them, each over its own window, and
+        unrealised figures are at the statement mark — the live feed does not move them here.
       </p>
     </div>
   );

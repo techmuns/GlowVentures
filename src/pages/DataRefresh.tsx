@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, dedupedPositions, isPrivateClass } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
 import { DASH } from "@/components/Absent";
@@ -24,8 +24,12 @@ export function DataRefresh() {
   // coverage over 100%. Neither of this drop's two duplicated holdings carries
   // one, which is the only reason the figure reads correctly today.
   const deduped = dedupedPositions(p);
-  const listedMV = consolidatedMarketValue(p);
-  const classified = sum(deduped.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
+  // Sector coverage is a LISTED-book ratio: AIF/private units carry no equity
+  // sector, so a denominator that included them understated coverage (~78% →
+  // ~30%). Both sides now run over the listed book only.
+  const listedRows = deduped.filter((x) => !isPrivateClass(x));
+  const listedMV = sum(listedRows.map((x) => x.marketValue));
+  const classified = sum(listedRows.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
   const coverage = listedMV > 0 ? (classified / listedMV) * 100 : 0;
   const costNA = new Set(p.filter((x) => x.costUnavailable).map((x) => x.security)).size;
   const withIsin = p.filter((x) => !!x.isin).length;
@@ -92,7 +96,7 @@ export function DataRefresh() {
           sub={providers.length ? `${providers.length} provider${providers.length === 1 ? "" : "s"} · ${stale.length} behind latest` : "no accounts yet"}
           icon={<Layers className="h-4 w-4" />} />
         <StatTile label="Sector coverage" value={listedMV > 0 ? `${coverage.toFixed(1)}%` : DASH}
-          sub={listedMV > 0 ? `${costNA} names cost-unavailable` : "no positions to classify yet"} icon={<ShieldCheck className="h-4 w-4" />} />
+          sub={listedMV > 0 ? `of the listed book · ${costNA} names cost-unavailable` : "no listed positions to classify yet"} icon={<ShieldCheck className="h-4 w-4" />} />
       </div>
 
       <Card className="mt-5" title="Accounts & report dates"

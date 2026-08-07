@@ -7,7 +7,7 @@ import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
 import { displaySecurity } from "./format";
 import { accountIndex, ownerOf } from "./accounts";
-import { sumOrNull } from "./analytics";
+import { sumOrNull, dedupedPositions, consolidatedMarketValue } from "./analytics";
 
 // Brand palette (ARGB — leading FF = opaque).
 const C = {
@@ -35,13 +35,17 @@ type HoldingRow = {
 // Grouped on securityKey, so names arriving without an ISIN consolidate too.
 function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
   const idx = accountIndex(accounts);
-  const totalMV = positions.reduce((s, p) => s + p.marketValue, 0);
+  // CONSOLIDATED export: each dedupeGroup counts once, so the grand total is the
+  // true ₹335.43 Cr NAV and the two dually-reported holdings appear at their real
+  // value rather than 2×. Summing the raw set exported ₹338.6 Cr.
+  const totalMV = consolidatedMarketValue(positions);
   const m = new Map<string, Position[]>();
   for (const p of positions) {
     const arr = m.get(p.securityKey);
     if (arr) arr.push(p); else m.set(p.securityKey, [p]);
   }
-  const rows = [...m.values()].map((ps): HoldingRow => {
+  const rows = [...m.values()].map((raw): HoldingRow => {
+    const ps = dedupedPositions(raw);          // collapse same-dedupeGroup rows
     const mv = ps.reduce((s, x) => s + x.marketValue, 0);
     // `sumOrNull`, not a plain sum: a position whose statement reported no cost
     // must not contribute a zero here. It would drag the group's average cost
@@ -52,7 +56,7 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
     const pnl = costNA ? 0 : mv - (cost as number);
     return {
       security: ps[0].security, sector: ps[0].sector,
-      entities: [...new Set(ps.map((x) => ownerOf(idx, x)))].join(", "),
+      entities: [...new Set(raw.map((x) => ownerOf(idx, x)))].join(", "),
       // `cmp` is the per-unit mark and is genuinely absent for a holding whose
       // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
       // NAV per unit). Exported as null so the sheet renders an empty cell, not

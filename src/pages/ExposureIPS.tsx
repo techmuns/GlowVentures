@@ -10,7 +10,7 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge, PreviewNum, PreviewChart } from "@/components/Preview";
 import { AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue } from "@/lib/analytics";
+import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass } from "@/lib/analytics";
 import { fmtPct, changeColor } from "@/lib/format";
 
 // LAYER 3 — PORTFOLIO & EXPOSURE (FOOS spec). Family charter & IPS buckets, GAP
@@ -44,7 +44,12 @@ export function ExposureIPS() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
   const totalMV = useMemo(() => consolidatedMarketValue(consolidated), [consolidated]);
-  const sectors = useMemo(() => bySector(consolidated), [consolidated]);
+  // Sector GAP is a LISTED-equity view. An AIF/private holding is a fund wrapper
+  // with no equity sector, so folding it in put 62% of the book under a single
+  // "Unclassified" slice. The private book is named as excluded below.
+  const listed = useMemo(() => consolidated.filter((x) => !isPrivateClass(x)), [consolidated]);
+  const listedMV = useMemo(() => consolidatedMarketValue(listed), [listed]);
+  const sectors = useMemo(() => bySector(listed), [listed]);
   const nameByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of consolidated) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
@@ -119,8 +124,11 @@ export function ExposureIPS() {
           </table>
         </div>
         <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-          The GAP also spans geography, market-cap, duration, tangible vs intangible, entity and advisor allocation — actuals
-          for those need a look-through the book does not yet carry, so they are previewed below.
+          Sectors cover the <span className="font-medium text-slate-400">listed book</span> ({money(listedMV)}); the
+          private book ({money(totalMV - listedMV)} of AIF units) carries no equity sector and is excluded here rather
+          than shown as one large "Unclassified" slice. The GAP also spans geography, market-cap, duration, tangible vs
+          intangible, entity and advisor allocation — actuals for those need a look-through the book does not yet carry,
+          so they are previewed below.
         </p>
       </Card>
 

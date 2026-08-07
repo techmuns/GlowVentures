@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull, consolidatedMarketValue } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
@@ -99,7 +99,7 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
-  const rows = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV } = useMemo(() => {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
@@ -114,16 +114,24 @@ export function PortfolioMonitor() {
       const m = new Map<string, Position[]>();
       for (const p of base) (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)!).push(p);
       out = [...m.values()].map((ps) => {
-        const mv = sum(ps.map((x) => x.marketValue));
+        // COUNT EACH dedupeGroup ONCE. This is the CONSOLIDATED (by-security)
+        // view, so a holding reported under two members — 360 ONE Special Opp
+        // (both CRNs) and Transition Fund I (both trusts) share one securityKey —
+        // must contribute its value once. Summing the raw lots showed those two
+        // rows at 2× and pushed the footer to ₹338.6 Cr against a ₹335.43 Cr NAV.
+        // `dedupedPositions` collapses only same-dedupeGroup rows; a name held by
+        // several DIFFERENT accounts still sums all of them.
+        const dps = dedupedPositions(ps);
+        const mv = sum(dps.map((x) => x.marketValue));
         // `sumOrNull`: a lot with no reported cost contributes nothing rather
         // than a zero that would understate the consolidated basis.
-        const cost = sumOrNull(ps.map((x) => x.costBasis));
-        const qty = sum(ps.map((x) => x.quantity));
+        const cost = sumOrNull(dps.map((x) => x.costBasis));
+        const qty = sum(dps.map((x) => x.quantity));
         const costNA = cost === null || (cost === 0 && mv > 0);
         const pnl = costNA ? null : mv - (cost as number);
         return {
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
-          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(ps, accIdx), quantity: qty,
+          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(dps, accIdx), quantity: qty,
           avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
@@ -131,8 +139,8 @@ export function PortfolioMonitor() {
           costNA,
           // A security is live only if every lot of it is — they share one quote,
           // so in practice this is all-or-nothing.
-          live: ps.every((x) => x.live),
-          dayChange: sum(ps.map((x) => x.dayChange ?? 0)),
+          live: dps.every((x) => x.live),
+          dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
           dayChangePct: ps[0].dayChangePct ?? null,
         };
       });
@@ -152,7 +160,18 @@ export function PortfolioMonitor() {
       const cmp = typeof av === "string" ? String(av).localeCompare(String(bv)) : (av as number) - (bv as number);
       return asc ? cmp : -cmp;
     });
-    return out;
+    // Footer totals are CONSOLIDATED in every view (each dedupeGroup once), so the
+    // family total is the true ₹335.43 Cr NAV regardless of grouping. `rawMV` is
+    // the sum of displayed rows — equal to the total in the by-security view, and
+    // ₹3.17 Cr higher in the by-entity view where both members' rows are shown as
+    // printed; the caption names that gap rather than letting the footer assert it.
+    const db = dedupedPositions(base);
+    return {
+      rows: out, totMV: totalMV,
+      totCost: sumOrNull(db.map((x) => x.costBasis)),
+      totPnL: sumOrNull(db.map((x) => x.unrealizedPnL)),
+      rawMV: sum(out.map((r) => r.marketValue)),
+    };
   }, [positions, accIdx, consolidate, selected, sector, entity, assetClass, sortKey, asc]);
   // Rows grouped by asset class, so Equity / AIF / Mutual Fund / Cash read as the
   // distinct things they are rather than as one mixed ledger. Sectioning only
@@ -165,12 +184,12 @@ export function PortfolioMonitor() {
       .sort((a, b) => classOrd(a.cls) - classOrd(b.cls));
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const showClassSections = assetClass === "All" && classGroups.length > 1;
-  const totMV = sum(rows.map((r) => r.marketValue));
-  const totPnL = sumOrNull(rows.map((r) => r.unrealizedPnL));
-  const totCost = sumOrNull(rows.map((r) => r.costBasis));
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
   const totalRet = totCost !== null && totPnL !== null && totCost > 0 ? (totPnL / totCost) * 100 : null;
+  // In the by-entity view the displayed rows include both members' copies of a
+  // dually-reported holding; name the gap so the footer (consolidated) reads true.
+  const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   const feedLive = rows.some((r) => r.live);
@@ -434,6 +453,14 @@ export function PortfolioMonitor() {
               </tfoot>
             </table>
           </div>
+          {dupGap > 0 && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              The rows above show each member's statement as printed. Two holdings are reported under two members,
+              so the visible rows sum to {money(rawMV)} while the family total counts each once at {money(totMV)}
+              (a {money(dupGap)} overlap). Switch to <span className="font-medium text-slate-400">By security</span> to
+              see them consolidated.
+            </p>
+          )}
         </Card>
       ) : view === "transactions" ? (
         <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />

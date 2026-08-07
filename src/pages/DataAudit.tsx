@@ -232,8 +232,9 @@ export function DataAudit() {
             </div>
             <h2 className="mt-5 text-lg font-semibold text-slate-100">Couldn't load the archive</h2>
             <p className="mt-2 text-sm text-slate-400">
-              The source workbooks couldn't be loaded. Refresh the page to try again — if this keeps
-              happening, your session may have expired; sign in again from the login screen.
+              The audit archive under <span className="mono text-slate-300">public/audit/</span> couldn't be fetched.
+              This usually means the site is still deploying or the network is briefly unavailable — refresh to retry.
+              It is not a sign-in problem: this data is served statically, so signing in again will not change it.
             </p>
           </div>
         </div>

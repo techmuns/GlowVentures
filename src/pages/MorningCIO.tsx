@@ -8,7 +8,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -170,7 +170,7 @@ export function MorningCIO() {
       const mv = sum(rows.map((x) => x.marketValue));
       const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
       return {
-        count: rows.length, cost, mv,
+        count: rows.length, cost, mv, pnl,
         ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
     };
@@ -198,6 +198,12 @@ export function MorningCIO() {
     const aifEq = classGroup("AIF");
     const mfEq = classGroup("Mutual Fund");
     const cashEq = classGroup("Cash");
+    // The "Book performance — Listed vs private" card must split on ASSET CLASS,
+    // not on the fund-of-funds model. That model (privateMarkets.*) is empty here,
+    // so gating the private card on it labelled the ₹207.65 Cr AIF book as
+    // "Listed". listedBook = non-private classes; privateBook = AIF/Unlisted/etc.
+    const listedBook = eqGroup(p.filter((x) => !isPrivateClass(x)));
+    const privateBook = eqGroup(p.filter(isPrivateClass));
 
     // ── Money-weighted returns, from the book's own dated flows ──
     //
@@ -385,7 +391,7 @@ export function MorningCIO() {
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      equityManagedMV, equitySelfMV,
+      equityManagedMV, equitySelfMV, listedBook, privateBook,
       buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       distinctNames: byKey.size, crossHeld, top10Pct,
@@ -684,35 +690,38 @@ export function MorningCIO() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
               <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[0] }} />Listed book</div>
-              <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.listedCost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.listedMV)}</span> today</div>
+              <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.listedBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.listedBook.mv)}</span> today</div>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.listedPnL)}`}>{money(m.listedPnL, true)}</div></div>
-                <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.listedRet == null ? "text-slate-500" : changeColor(m.listedRet)}`}>{m.listedRet == null ? DASH : fmtPct(m.listedRet, { sign: true, decimals: 1 })}</div></div>
+                <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.listedBook.pnl)}`}>{money(m.listedBook.pnl, true)}</div></div>
+                <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.listedBook.ret == null ? "text-slate-500" : changeColor(m.listedBook.ret)}`}>{m.listedBook.ret == null ? DASH : fmtPct(m.listedBook.ret, { sign: true, decimals: 1 })}</div></div>
                 <div>
                   <div className="text-[11px] text-slate-500">Return (money-wtd)</div>
                   <div className={`mono text-[15px] font-semibold ${m.listedTotalReturn == null ? "text-slate-500" : "text-slate-100"}`}
-                    title={`Money-weighted return to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}.${m.xirrExcluded.length ? ` Covers ${money(m.measuredMV)} of ${money(m.listedMV)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value.` : ""}`}>
+                    title={`Money-weighted return to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}.${m.xirrExcluded.length ? ` Covers ${money(m.measuredMV)} of ${money(m.listedBook.mv)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value.` : ""}`}>
                     {m.listedTotalReturn == null ? DASH : fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}
                   </div>
                 </div>
               </div>
             </div>
-            {m.privateCount ? (
+            {m.privateBook.count > 0 ? (
               <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[1] }} />Private book</div>
-                <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.privateInvested)}</span> invested → <span className="font-semibold text-slate-100">{money(m.privateCurrent)}</span> today</div>
+                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[1] }} />Private book <span className="text-slate-600">· AIF</span></div>
+                <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.privateBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.privateBook.mv)}</span> today</div>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                  <div><div className="text-[11px] text-slate-500">Total gain</div><div className={`mono text-[15px] font-semibold ${changeColor(m.privateTotalGain)}`}>{money(m.privateTotalGain, true)}</div></div>
-                  <div><div className="text-[11px] text-slate-500">Total return</div><div className="mono text-[15px] font-semibold text-slate-100">{m.privateNet == null ? DASH : `${m.privateNet.toFixed(2)}×`}</div></div>
-                  <div><div className="text-[11px] text-slate-500">Distributions</div><div className="mono text-[15px] font-semibold text-slate-100">{money(m.privateDistributed)}</div></div>
+                  <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.privateBook.pnl)}`}>{money(m.privateBook.pnl, true)}</div></div>
+                  <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.privateBook.ret == null ? "text-slate-500" : changeColor(m.privateBook.ret)}`}>{m.privateBook.ret == null ? DASH : fmtPct(m.privateBook.ret, { sign: true, decimals: 1 })}</div></div>
                 </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                  AIF units marked at the fund's stated NAV. These carry no dated capital-account flows in this drop, so
+                  there is no money-weighted return or distribution schedule to show — the fund's own value already is one.
+                </p>
               </div>
             ) : (
               <div className="rounded-xl border border-dashed border-ink-600/70 bg-ink-900/60 p-4">
                 <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-ink-600" />Private book</div>
                 <div className="mt-2.5 text-[19px] font-semibold text-slate-500">{DASH}</div>
                 <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">
-                  There is no private book to compare against. Invested, gain, multiple and distributions all need
+                  There is no private book to compare against. Invested, gain and return all need
                   a private holding to measure, and no statement in this drop carries one.
                 </p>
               </div>

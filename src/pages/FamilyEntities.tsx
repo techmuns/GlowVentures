@@ -10,11 +10,11 @@ import { SearchInput } from "@/components/SearchInput";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { byEntity, byCustodian, bySector, sum, consolidatedMarketValue } from "@/lib/analytics";
+import { byEntity, byCustodian, bySector, sum, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, ownerOf } from "@/lib/accounts";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, absentTile } from "@/components/Absent";
-import { entityXirrPct, entityReturnToDatePct, entityYtdPct } from "@/lib/returns";
+import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
@@ -35,7 +35,11 @@ export function FamilyEntities() {
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.
   const entities = byEntity(p, portfolio.accounts);
-  const cust = byCustodian(p, portfolio.accounts);
+  // Custody is a FAMILY-level allocation ("how much sits at each platform"), so it
+  // counts each dedupeGroup once. Run over the raw set it summed both rows of the
+  // 360 ONE AIF (both CRNs → 360 ONE) and Transition Fund I (both trusts →
+  // Transition), so custodian totals came to ₹338.61 Cr, ₹3.17 Cr over family NAV.
+  const cust = byCustodian(dedupedPositions(p), portfolio.accounts);
   // Which platforms hold each owner's assets — the honest answer to "custody"
   // at entity granularity, where a single label would be a guess.
   const custodiansByOwner = new Map<string, Set<string>>();
@@ -158,8 +162,13 @@ export function FamilyEntities() {
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
                   {entities.map((e) => {
-                    const xirrPct = entityReturnToDatePct(portfolio, e.key, e.mv);
-                    const xirrAnn = entityXirrPct(portfolio, e.key, e.mv);
+                    // Money-weighted return over this owner's MEASURABLE accounts
+                    // only — closing the whole entity MV against partial openings
+                    // returned +147%/+353% here for real family members.
+                    const mwr = ownerMeasuredReturn(portfolio, p, e.key);
+                    const xirrPct = mwr.toDatePct;
+                    const coverNote = mwr.annPct == null ? undefined
+                      : `${fmtPct(mwr.annPct, { sign: true })} p.a. annualised. Covers ${money(mwr.measuredMV)} of ${money(e.mv)}${mwr.excluded.length ? ` — ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     return (
                       <tr key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
@@ -171,8 +180,8 @@ export function FamilyEntities() {
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, auditHref({ ...LEDGER, find: e.key }))}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
-                            ? <AbsentCell reason="no dated capital movements for this entity — needs a capital register or bank book" />
-                            : <span title={xirrAnn == null ? undefined : `${fmtPct(xirrAnn, { sign: true })} p.a. annualised`}>{fmtPct(xirrPct, { sign: true })}</span>}
+                            ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
+                            : <span title={coverNote}>{fmtPct(xirrPct, { sign: true })}</span>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}>
                           {ytdPct == null

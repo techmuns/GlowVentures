@@ -67,11 +67,14 @@ export function Performance() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
   const p = portfolio?.positions ?? [];
+  // Concentration numerator counts each dedupeGroup once — over the raw set,
+  // Transition Fund I and the 360 ONE AIF (each reported twice) entered at 2×
+  // while the denominator (`listedMV`) already deduped, overstating the top-10.
   const consolidatedWeights = useMemo(() => {
     const m = new Map<string, number>();
-    for (const x of p) m.set(x.securityKey, (m.get(x.securityKey) ?? 0) + x.marketValue);
+    for (const x of consolidated) m.set(x.securityKey, (m.get(x.securityKey) ?? 0) + x.marketValue);
     return [...m.values()].sort((a, b) => b - a);
-  }, [p]);
+  }, [consolidated]);
   if (!portfolio) return null;
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -215,12 +218,12 @@ export function Performance() {
       <PageHeader eyebrow="Analytics" title="NAV &amp; Performance"
         subtitle="Time-weighted returns as each manager publishes them, the value bridge from opening to closing, and a money-weighted return over the real dated flows."
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Listed NAV and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
+          <BasisPill liveText="Live prices" hint="Consolidated NAV and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
           <Pill tone="info">{accounts.length} accounts</Pill>
         </div>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Listed NAV"
+        <StatTile label="Consolidated NAV"
           value={<Auditable to={auditHref(LEDGER)} title="Sum of every holding's market value — trace to the ledger">{money(listedMV)}</Auditable>}
           sub={p.length === consolidated.length
             ? `${p.length} positions across ${accounts.length} accounts`
@@ -247,8 +250,8 @@ export function Performance() {
         )}
 
         <StatTile label="Top-10 concentration"
-          value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the listed book sits in just its ten biggest single names.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable>}
-          sub="of listed NAV in the 10 biggest names" icon={<Crosshair className="h-4 w-4" />} />
+          value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the consolidated book sits in just its ten biggest holdings.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable>}
+          sub="of consolidated NAV in the 10 biggest holdings" icon={<Crosshair className="h-4 w-4" />} />
       </div>
 
       {/* ── NAV trajectory: absent, and why ── */}

@@ -108,9 +108,27 @@ const INVARIANTS = {
     ["private page surfaces the AIF book, not the empty state", (t) => /alternative holdings|Alternatives/i.test(t) && !/No private-market holdings in this book/.test(t)],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
-  // holdings must be sectioned by asset class.
+  // holdings must be sectioned by asset class; and the by-security total counts
+  // each dedupeGroup once (₹335.43 Cr, never the double-counted ₹338.6 Cr).
   monitor: [
     ["holdings are sectioned by asset class", (t) => /\bequity\b/i.test(t) && /\d+\s+holdings/i.test(t)],
+    ["by-security total counts each dedupeGroup once, not ₹338.6 Cr", (t) => !/₹\s?338\.6\s*Cr/.test(t)],
+  ],
+  // Audit: the per-entity money-weighted return must be measured over accounts
+  // that carry an opening portfolio value only. Closing an owner's WHOLE market
+  // value against partial openings produced +147% / +2,624% p.a. for real family
+  // members. A de-annualised to-date figure here never reaches four digits, so a
+  // 4-digit percentage anywhere on these pages is the blow-up regressing.
+  family: [
+    ["no per-entity XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
+  ],
+  household: [
+    ["member return is de-annualised to-date, no XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
+  ],
+  // Exposure & IPS sector GAP is a listed-only view; the private book is named
+  // as excluded rather than folded in as one giant "Unclassified" slice.
+  exposure: [
+    ["sector GAP is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
   ],
 };
 

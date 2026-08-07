@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, consolidatedMarketValue } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
@@ -35,8 +35,16 @@ export function StockInfo() {
   }, [securityKey]);
 
   const rows = useMemo(() => (portfolio ? portfolio.positions.filter((p) => p.securityKey === securityKey) : []), [portfolio, securityKey]);
-  // Denominator for this security's weight in the book — consolidated.
-  const listedMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
+  // COUNT ONCE. Two of this book's securities are reported under two members
+  // (360 ONE Special Opp under both CRNs, Transition Fund I under both trusts);
+  // both share this securityKey, so summing the raw rows doubled this name's
+  // value, quantity, cost and P&L. `dedupedPositions` collapses only the
+  // dedupeGroup rows — a name held by several different accounts still sums all.
+  const drows = useMemo(() => dedupedPositions(rows), [rows]);
+  // Denominator for this security's weight — the whole consolidated book (each
+  // dedupeGroup once). This is "% of book", not "% of listed book": the stock
+  // page shows any holding, AIF units included, and those are not listed.
+  const bookMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
   if (!portfolio) return null;
 
@@ -45,27 +53,27 @@ export function StockInfo() {
   const providerSector = rows[0]?.providerSector;
   const isin = rows[0]?.isin;
   const cmp = rows[0]?.currentPrice ?? 0;
-  const qty = sum(rows.map((r) => r.quantity));
-  const cost = sumOrNull(rows.map((r) => r.costBasis));
-  const mv = sum(rows.map((r) => r.marketValue));
-  const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
+  const qty = sum(drows.map((r) => r.quantity));
+  const cost = sumOrNull(drows.map((r) => r.costBasis));
+  const mv = sum(drows.map((r) => r.marketValue));
+  const pnl = sumOrNull(drows.map((r) => r.unrealizedPnL));
   // Both stay NULL when no statement reported a cost for this name, so the
   // tiles render `—`. A zero average cost reads as shares acquired for nothing
   // and a zero return as break-even; neither was measured.
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
-  const weight = listedMV > 0 ? (mv / listedMV) * 100 : 0;
+  const weight = bookMV > 0 ? (mv / bookMV) * 100 : 0;
   // Null, not zero, when no statement supplied the figure — see sumOrNull.
-  const stCost = sumOrNull(rows.map((r) => r.stCostBasis));
-  const ltCost = sumOrNull(rows.map((r) => r.ltCostBasis));
-  const div = sumOrNull(rows.map((r) => r.dividendReceived));
+  const stCost = sumOrNull(drows.map((r) => r.stCostBasis));
+  const ltCost = sumOrNull(drows.map((r) => r.ltCostBasis));
+  const div = sumOrNull(drows.map((r) => r.dividendReceived));
   // Live-quote state for this name. Every lot shares one quote, so this is
   // all-or-nothing in practice; the day move is summed across the lots.
   const sym = rows[0] ? symbolFor(rows[0]) : null;
-  const live = rows.length > 0 && rows.every((r) => r.live);
+  const live = drows.length > 0 && drows.every((r) => r.live);
   const dayPct = live ? rows[0]?.dayChangePct ?? null : null;
-  const dayChange = sum(rows.map((r) => r.dayChange ?? 0));
-  const held = rows.length;
+  const dayChange = sum(drows.map((r) => r.dayChange ?? 0));
+  const held = drows.length;
   const exited = held === 0;
 
   const price = (n: number | null | undefined) =>
@@ -116,7 +124,7 @@ export function StockInfo() {
 
       {/* KPI strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Holding value" value={<Auditable to={ledgerHref(name)} title="Holding value — trace to the ledger">{fmtFromBase(mv, { compact: true })}</Auditable>} sub={`${weight.toFixed(1)}% of listed book`} icon={<Wallet className="h-4 w-4" />} />
+        <Kpi label="Holding value" value={<Auditable to={ledgerHref(name)} title="Holding value — trace to the ledger">{fmtFromBase(mv, { compact: true })}</Auditable>} sub={`${weight.toFixed(1)}% of book`} icon={<Wallet className="h-4 w-4" />} />
         <Kpi label="Quantity" value={fmtNum(qty)} sub="shares held" icon={<Layers className="h-4 w-4" />} />
         <Kpi label="Avg cost" value={<span className="mono">{price(avgCost)}</span>} sub={`invested ${money(cost)}`} icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}><Auditable to={ledgerHref(name)} title="Unrealised P&L — trace to the ledger">{fmtFromBase(pnl, { compact: true, sign: true })}</Auditable></span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />

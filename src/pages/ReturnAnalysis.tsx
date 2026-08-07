@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum, isPriced, unpriced } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -80,11 +80,16 @@ export function ReturnAnalysis() {
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
+    // A private holding (AIF unit) carries no equity sector; keying it under
+    // "Unclassified" made a fund wrapper the single largest "sector". Bucket it
+    // under its asset class ("AIF") instead — its P&L still counts, so the rows
+    // still sum to the embedded return, but the label is honest.
     const bySector = new Map<string, { pnl: number; cost: number; mv: number }>();
     for (const x of priced) {
-      const e = bySector.get(x.sector) ?? { pnl: 0, cost: 0, mv: 0 };
+      const secKey = isPrivateClass(x) ? x.assetClass : x.sector;
+      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0 };
       e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
-      bySector.set(x.sector, e);
+      bySector.set(secKey, e);
     }
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
