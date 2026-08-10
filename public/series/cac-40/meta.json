@@ -15,6 +15,7 @@
   "upstreamCurrency": "EUR"
  },
  "note": null,
+ "accumulating": false,
  "first": "1990-03-01",
  "last": "2026-08-07",
  "count": 9254,

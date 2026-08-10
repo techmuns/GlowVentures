@@ -56,6 +56,30 @@ const wb = (country, indicator) => ({
 });
 
 /**
+ * RBI current policy rates. ACCUMULATING: the RBI publishes the rate in effect
+ * today and no history, so the store builds the series one run at a time.
+ */
+const rbi = (label) => ({
+  adapter: "rbi",
+  label,
+  symbol: label,
+  name: "Reserve Bank of India",
+  url: "https://www.rbi.org.in/",
+  provenance: "scraped-official",
+  accumulating: true,
+});
+
+/** IEX day-ahead spot power. ACCUMULATING, same reason. */
+const iex = () => ({
+  adapter: "iex",
+  symbol: "DAM MCP",
+  name: "Indian Energy Exchange",
+  url: "https://www.iexindia.com/market-data/day-ahead-market/market-snapshot",
+  provenance: "scraped-official",
+  accumulating: true,
+});
+
+/**
  * Every series. `id` is the stable key used on disk, in the URL and in exports —
  * it never changes once published, because a chart someone bookmarked resolves
  * through it.
@@ -72,8 +96,8 @@ export const SERIES = [
   { id: "coal-south-africa", label: "Thermal Coal (South African)", category: "commodities", group: "Energy", unit: "USD/t", band: [5, 1500], frequency: "monthly", source: pink("Coal, South African") },
   { id: "coking-coal", label: "Coking Coal", category: "commodities", group: "Energy", unit: "USD/t", band: null, source: null,
     absent: "Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus." },
-  { id: "electricity-india", label: "Electricity (IEX spot)", category: "commodities", group: "Energy", unit: "INR/kWh", band: null, source: null,
-    absent: "Indian Energy Exchange publishes a daily market snapshot with no API. Scheduled for the Phase 2 India harvest." },
+  { id: "electricity-india", label: "Electricity (IEX day-ahead)", category: "commodities", group: "Energy", unit: "INR/MWh", band: [100, 25000], source: iex(),
+    note: "The day's AVERAGE market clearing price across all 96 fifteen-minute blocks. Indian spot power swings from roughly ₹1,100 to the ₹10,000 ceiling within a single day, so no one block is 'the price'." },
 
   // ── Precious metals ───────────────────────────────────────────────────────
   { id: "gold", label: "Gold", category: "commodities", group: "Precious Metals", unit: "USD/oz", band: [50, 20000], source: yahoo("GC=F") },
@@ -160,6 +184,23 @@ export const SERIES = [
     absent: "No free daily feed carries the Indian benchmark G-Sec yield, and FRED — which publishes it monthly — is not reachable from the harvest environment. RBI publishes it daily on its own site; that is the Phase 2 India harvest." },
   { id: "credit-spreads", label: "Corporate Credit Spreads", category: "rates", group: "Credit Markets", unit: "%", band: null, source: null,
     absent: "ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source." },
+
+  // ── Policy rates — RBI, the spec's Layer 2D "Policy Rates" block ─────────
+  // Accumulating: one observation per run. Every horizon is absent until the
+  // store has held them long enough to answer one, which is the honest state.
+  { id: "india-repo-rate", label: "RBI Repo Rate", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("Policy Repo Rate") },
+  { id: "india-sdf-rate", label: "Standing Deposit Facility", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("Standing Deposit Facility Rate") },
+  { id: "india-msf-rate", label: "Marginal Standing Facility", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("Marginal Standing Facility Rate") },
+  { id: "india-bank-rate", label: "RBI Bank Rate", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("Bank Rate") },
+  { id: "india-reverse-repo", label: "Fixed Reverse Repo Rate", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("Fixed Reverse Repo Rate") },
+  { id: "india-crr", label: "Cash Reserve Ratio (CRR)", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("CRR") },
+  { id: "india-slr", label: "Statutory Liquidity Ratio (SLR)", category: "rates", group: "Policy Rates", unit: "%", band: [0, 60], source: rbi("SLR") },
+
+  // ── Capital markets — declared, and why it is not yet wired ──────────────
+  { id: "india-mf-aum", label: "Mutual Fund AAUM", category: "economy", group: "Capital markets", unit: "INR Cr", band: null, source: null,
+    absent: "AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency." },
+  { id: "india-sip-flows", label: "SIP Contributions", category: "economy", group: "Capital markets", unit: "INR Cr", band: null, source: null,
+    absent: "Same AMFI monthly workbooks, same BIFF blocker." },
 
   // ── Economy — annual, and lagged by a year or more. Charted as history ────
   { id: "india-gdp-growth", label: "India GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("IN", "NY.GDP.MKTP.KD.ZG") },

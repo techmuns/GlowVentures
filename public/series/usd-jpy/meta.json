@@ -15,6 +15,7 @@
   "upstreamCurrency": "JPY"
  },
  "note": null,
+ "accumulating": false,
  "first": "1996-10-30",
  "last": "2026-08-06",
  "count": 7720,

@@ -6,9 +6,9 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 64 series, 344,149 points
+- **Harvested:** 72 series, 344,157 points
 - **Failed:** 0
-- **Declared absent:** 8 (the spec asks for them; no source we have serves them)
+- **Declared absent:** 9 (the spec asks for them; no source we have serves them)
 
 ## Harvested
 
@@ -21,6 +21,7 @@ not have.
 | Natural Gas (Europe) | Energy | 799 | 1960-01-01 | 2026-07-01 | USD/MMBtu | World Bank Pink Sheet `Natural gas, Europe` | official-file |
 | Thermal Coal (Australian) | Energy | 679 | 1970-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
 | Thermal Coal (South African) | Energy | 511 | 1984-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Coal, South African` | official-file |
+| Electricity (IEX day-ahead) | Energy | 1 | 2026-08-10 | 2026-08-10 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,508 | 2000-08-30 | 2026-08-07 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,510 | 2000-08-30 | 2026-08-07 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,536 | 1997-10-29 | 2026-08-07 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -69,6 +70,13 @@ not have.
 | US 13 Week T-Bill | Government Bonds | 14,169 | 1970-01-02 | 2026-08-07 | % | Yahoo Finance `^IRX` | official-api |
 | US 5 Year Treasury | Government Bonds | 14,169 | 1970-01-02 | 2026-08-07 | % | Yahoo Finance `^FVX` | official-api |
 | US 30 Year Treasury | Government Bonds | 12,395 | 1977-02-15 | 2026-08-07 | % | Yahoo Finance `^TYX` | official-api |
+| RBI Repo Rate | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 1 | 2026-08-10 | 2026-08-10 | % | Reserve Bank of India `SLR` | scraped-official |
 | India GDP growth | Economic growth | 65 | 1961-12-31 | 2025-12-31 | % | World Bank Open Data `NY.GDP.MKTP.KD.ZG` | official-api |
 | India CPI inflation | Inflation | 66 | 1960-12-31 | 2025-12-31 | % | World Bank Open Data `FP.CPI.TOTL.ZG` | official-api |
 | India unemployment rate | Labour market | 35 | 1991-12-31 | 2025-12-31 | % | World Bank Open Data `SL.UEM.TOTL.ZS` | official-api |
@@ -136,10 +144,11 @@ illustrative number.
 | Series | Group | Why it is absent |
 | --- | --- | --- |
 | Coking Coal | Energy | Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus. |
-| Electricity (IEX spot) | Energy | Indian Energy Exchange publishes a daily market snapshot with no API. Scheduled for the Phase 2 India harvest. |
 | CRB Commodity Index | Others | Refinitiv/CoreCommodity proprietary — no free feed at any frequency. The Bloomberg Commodity Index is carried alongside as a comparable basket, under its own name. |
 | Baltic Dry Index | Others | Baltic Exchange licenses the BDI; no free API publishes it. Queued for the Phase 1 aggregator harvest. |
 | Container Freight Index | Others | Freightos FBX and Drewry WCI publish weekly on their own pages with no API. Queued for the Phase 1 aggregator harvest. |
 | Rail Freight | Others | Indian Railways freight volumes come from the Ministry of Railways monthly release — Phase 2 India harvest. |
 | India 10 Year G-Sec | Government Bonds | No free daily feed carries the Indian benchmark G-Sec yield, and FRED — which publishes it monthly — is not reachable from the harvest environment. RBI publishes it daily on its own site; that is the Phase 2 India harvest. |
 | Corporate Credit Spreads | Credit Markets | ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source. |
+| Mutual Fund AAUM | Capital markets | AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency. |
+| SIP Contributions | Capital markets | Same AMFI monthly workbooks, same BIFF blocker. |

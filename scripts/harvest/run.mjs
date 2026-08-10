@@ -28,8 +28,10 @@ import { computeReturns } from "./lib/returns.mjs";
 import * as yahoo from "./adapters/yahoo.mjs";
 import * as worldbankPink from "./adapters/worldbankPink.mjs";
 import * as worldbankApi from "./adapters/worldbankApi.mjs";
+import * as rbi from "./adapters/rbi.mjs";
+import * as iex from "./adapters/iex.mjs";
 
-const ADAPTERS = { yahoo, worldbankPink, worldbankApi };
+const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex };
 const CONCURRENCY = 4;          // polite against a free upstream
 const only = process.argv.includes("--only")
   ? process.argv[process.argv.indexOf("--only") + 1]?.split(",")
@@ -132,6 +134,10 @@ async function harvestOne(spec) {
       upstreamCurrency: fetched.upstreamCurrency,
     },
     note: spec.note ?? null,
+    // A source that publishes only a CURRENT value: the store builds its history
+    // one run at a time, so the UI must say "accumulating since" rather than
+    // present a two-point series as though it were a record going back years.
+    accumulating: spec.source.accumulating === true,
     first: points[0].t,
     last: points[points.length - 1].t,
     count: points.length,

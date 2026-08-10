@@ -126,6 +126,17 @@ export function computeReturns(points, kind = "price", frequency = "daily") {
     if (v < lo) lo = v;
     seen++;
   }
-  if (seen > 0) { out.high52 = hi; out.low52 = lo; }
+  // A "52-WEEK HIGH" HAS TO DESCRIBE A YEAR, and two readings do not.
+  //
+  // An accumulating series starts with a single point, and reporting its own
+  // value as both the high and the low of the year states a range nothing
+  // measured. An ANNUAL series is worse: it has one or two observations inside
+  // any 365-day window, so its "52-week range" would just be this year's figure
+  // against last year's — a year-on-year change wearing the wrong label. So the
+  // window must hold several observations AND span most of a year, and annual
+  // series never report one at all.
+  const oldestInWindow = points.find((p) => ms(p.t) >= cutoff);
+  const windowDays = oldestInWindow ? (asOfMs - ms(oldestInWindow.t)) / DAY : 0;
+  if (frequency !== "annual" && seen >= 8 && windowDays >= 180) { out.high52 = hi; out.low52 = lo; }
   return out;
 }

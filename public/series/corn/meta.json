@@ -15,6 +15,7 @@
   "upstreamCurrency": "USX"
  },
  "note": null,
+ "accumulating": false,
  "first": "2000-07-17",
  "last": "2026-08-07",
  "count": 6520,

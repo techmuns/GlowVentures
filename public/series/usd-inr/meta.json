@@ -15,6 +15,7 @@
   "upstreamCurrency": "INR"
  },
  "note": null,
+ "accumulating": false,
  "first": "2003-12-01",
  "last": "2026-08-06",
  "count": 5883,

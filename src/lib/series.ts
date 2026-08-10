@@ -22,6 +22,13 @@ export type SeriesMeta = {
   id: string; label: string; category: string; group: string;
   unit: string; kind: SeriesKind; frequency: string;
   provenance: string; source: SeriesSource; note: string | null;
+  /**
+   * True when the source publishes only a CURRENT value and the store is
+   * building the history itself, one run at a time (RBI's policy rates, IEX's
+   * day-ahead price). The UI must say "accumulating since" rather than present
+   * two observations as though they were a record going back years.
+   */
+  accumulating?: boolean;
   first: string; last: string; count: number;
   retrievedAt: string;
   /** Set when the source has not published within its own cadence. */

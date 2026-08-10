@@ -15,6 +15,7 @@
   "upstreamCurrency": "USD"
  },
  "note": null,
+ "accumulating": false,
  "first": "2014-05-06",
  "last": "2026-08-07",
  "count": 3046,

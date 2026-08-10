@@ -15,6 +15,7 @@
   "upstreamCurrency": null
  },
  "note": null,
+ "accumulating": false,
  "first": "1967-01-01",
  "last": "2026-07-01",
  "count": 715,

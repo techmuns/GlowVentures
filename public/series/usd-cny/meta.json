@@ -15,6 +15,7 @@
   "upstreamCurrency": "CNY"
  },
  "note": null,
+ "accumulating": false,
  "first": "2001-06-24",
  "last": "2026-08-06",
  "count": 6288,

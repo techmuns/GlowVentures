@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-10T09:34:57.674Z",
+ "generatedAt": "2026-08-10T09:53:17.455Z",
  "categories": [
   {
    "key": "commodities",
@@ -40,6 +40,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2007-07-30",
    "last": "2026-08-07",
    "count": 4735,
@@ -130,6 +131,7 @@
     "upstreamCurrency": "USD"
    },
    "note": "WTI settled NEGATIVE on 20 April 2020 (−$37.63). The band allows it because it happened; a floor at zero would reject a real print.",
+   "accumulating": false,
    "first": "2000-08-23",
    "last": "2026-08-07",
    "count": 6517,
@@ -220,6 +222,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-08-30",
    "last": "2026-08-07",
    "count": 6514,
@@ -310,6 +313,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1977-01-01",
    "last": "2026-07-01",
    "count": 595,
@@ -388,6 +392,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -466,6 +471,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1970-01-01",
    "last": "2026-07-01",
    "count": 679,
@@ -544,6 +550,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1984-01-01",
    "last": "2026-07-01",
    "count": 511,
@@ -606,6 +613,48 @@
    "low52": 90.6
   },
   {
+   "id": "electricity-india",
+   "label": "Electricity (IEX day-ahead)",
+   "category": "commodities",
+   "group": "Energy",
+   "unit": "INR/MWh",
+   "kind": "price",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Indian Energy Exchange",
+    "symbol": "DAM MCP",
+    "url": "https://www.iexindia.com/market-data/day-ahead-market/market-snapshot",
+    "exchange": "IEX",
+    "upstreamCurrency": null
+   },
+   "note": "The day's AVERAGE market clearing price across all 96 fifteen-minute blocks. Indian spot power swings from roughly ₹1,100 to the ₹10,000 ceiling within a single day, so no one block is 'the price'.",
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:52:50.957Z",
+   "staleSince": null,
+   "last_value": 3772.465,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
    "id": "gold",
    "label": "Gold",
    "category": "commodities",
@@ -622,6 +671,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-08-30",
    "last": "2026-08-07",
    "count": 6508,
@@ -712,6 +762,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-08-30",
    "last": "2026-08-07",
    "count": 6510,
@@ -802,6 +853,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1997-10-29",
    "last": "2026-08-07",
    "count": 6536,
@@ -892,6 +944,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1998-09-28",
    "last": "2026-08-07",
    "count": 6547,
@@ -982,6 +1035,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-08-30",
    "last": "2026-08-07",
    "count": 6513,
@@ -1072,6 +1126,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2014-05-06",
    "last": "2026-08-07",
    "count": 3046,
@@ -1162,6 +1217,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2008-10-20",
    "last": "2026-08-07",
    "count": 4438,
@@ -1252,6 +1308,7 @@
     "upstreamCurrency": null
    },
    "note": "The band starts at 50 because zinc genuinely traded near $180/t through the 1960s. An earlier 200 floor blocked eighteen real observations — the gate working correctly against a band that was wrong.",
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -1330,6 +1387,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -1408,6 +1466,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -1486,6 +1545,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -1564,6 +1624,7 @@
     "upstreamCurrency": null
    },
    "note": "Quoted per DRY METRIC TONNE UNIT (dmtu), the World Bank's own basis — one percent of iron content per tonne. It is not the $/tonne headline the trade press quotes, and the two differ by roughly the ore grade.",
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -1642,6 +1703,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-07-17",
    "last": "2026-08-07",
    "count": 6532,
@@ -1732,6 +1794,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1999-09-14",
    "last": "2026-08-07",
    "count": 6742,
@@ -1822,6 +1885,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-07-17",
    "last": "2026-08-07",
    "count": 6520,
@@ -1912,6 +1976,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-09-15",
    "last": "2026-08-07",
    "count": 6512,
@@ -2002,6 +2067,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-01-03",
    "last": "2026-08-07",
    "count": 6670,
@@ -2092,6 +2158,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-03-01",
    "last": "2026-08-07",
    "count": 6631,
@@ -2182,6 +2249,7 @@
     "upstreamCurrency": "USX"
    },
    "note": null,
+   "accumulating": false,
    "first": "2000-01-03",
    "last": "2026-08-07",
    "count": 6668,
@@ -2272,6 +2340,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -2350,6 +2419,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1999-01-01",
    "last": "2026-07-01",
    "count": 331,
@@ -2428,6 +2498,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -2506,6 +2577,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1967-01-01",
    "last": "2026-07-01",
    "count": 715,
@@ -2584,6 +2656,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -2662,6 +2735,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-01-01",
    "last": "2026-07-01",
    "count": 799,
@@ -2740,6 +2814,7 @@
     "upstreamCurrency": "USD"
    },
    "note": "Shown IN PLACE OF the CRB index the spec names. CRB is Refinitiv's proprietary index with no free feed; BCOM is a different index tracking a similar basket, and is labelled as itself rather than presented as CRB.",
+   "accumulating": false,
    "first": "1991-01-02",
    "last": "2026-07-17",
    "count": 8923,
@@ -2830,6 +2905,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1970-01-02",
    "last": "2026-08-07",
    "count": 14271,
@@ -2920,6 +2996,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1971-02-05",
    "last": "2026-08-07",
    "count": 13993,
@@ -3010,6 +3087,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1992-01-02",
    "last": "2026-08-07",
    "count": 8711,
@@ -3100,6 +3178,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1987-09-10",
    "last": "2026-08-07",
    "count": 9801,
@@ -3190,6 +3269,7 @@
     "upstreamCurrency": "GBP"
    },
    "note": null,
+   "accumulating": false,
    "first": "1984-01-03",
    "last": "2026-08-07",
    "count": 10761,
@@ -3280,6 +3360,7 @@
     "upstreamCurrency": "EUR"
    },
    "note": null,
+   "accumulating": false,
    "first": "1987-12-30",
    "last": "2026-08-07",
    "count": 9762,
@@ -3370,6 +3451,7 @@
     "upstreamCurrency": "EUR"
    },
    "note": null,
+   "accumulating": false,
    "first": "1990-03-01",
    "last": "2026-08-07",
    "count": 9254,
@@ -3460,6 +3542,7 @@
     "upstreamCurrency": "JPY"
    },
    "note": null,
+   "accumulating": false,
    "first": "1970-01-05",
    "last": "2026-08-07",
    "count": 13917,
@@ -3550,6 +3633,7 @@
     "upstreamCurrency": "HKD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1986-12-31",
    "last": "2026-08-07",
    "count": 9772,
@@ -3640,6 +3724,7 @@
     "upstreamCurrency": "CNY"
    },
    "note": null,
+   "accumulating": false,
    "first": "1997-07-02",
    "last": "2026-08-07",
    "count": 7050,
@@ -3730,6 +3815,7 @@
     "upstreamCurrency": "INR"
    },
    "note": null,
+   "accumulating": false,
    "first": "2007-09-17",
    "last": "2026-08-07",
    "count": 4634,
@@ -3820,6 +3906,7 @@
     "upstreamCurrency": "INR"
    },
    "note": null,
+   "accumulating": false,
    "first": "1997-07-01",
    "last": "2026-08-07",
    "count": 7169,
@@ -3910,6 +3997,7 @@
     "upstreamCurrency": "INR"
    },
    "note": null,
+   "accumulating": false,
    "first": "2003-12-01",
    "last": "2026-08-06",
    "count": 5883,
@@ -4000,6 +4088,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2003-12-01",
    "last": "2026-08-06",
    "count": 5886,
@@ -4090,6 +4179,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "2003-12-01",
    "last": "2026-08-06",
    "count": 5898,
@@ -4180,6 +4270,7 @@
     "upstreamCurrency": "JPY"
    },
    "note": null,
+   "accumulating": false,
    "first": "1996-10-30",
    "last": "2026-08-06",
    "count": 7720,
@@ -4270,6 +4361,7 @@
     "upstreamCurrency": "CNY"
    },
    "note": null,
+   "accumulating": false,
    "first": "2001-06-24",
    "last": "2026-08-06",
    "count": 6288,
@@ -4360,6 +4452,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1971-01-04",
    "last": "2026-08-07",
    "count": 14117,
@@ -4450,6 +4543,7 @@
     "upstreamCurrency": "USD"
    },
    "note": "CBOE's 10-year Treasury yield index — the yield itself, in percent, not a price.",
+   "accumulating": false,
    "first": "1970-01-02",
    "last": "2026-08-07",
    "count": 14169,
@@ -4540,6 +4634,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1970-01-02",
    "last": "2026-08-07",
    "count": 14169,
@@ -4630,6 +4725,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1970-01-02",
    "last": "2026-08-07",
    "count": 14169,
@@ -4720,6 +4816,7 @@
     "upstreamCurrency": "USD"
    },
    "note": null,
+   "accumulating": false,
    "first": "1977-02-15",
    "last": "2026-08-07",
    "count": 12395,
@@ -4794,6 +4891,300 @@
    "low52": 4.539
   },
   {
+   "id": "india-repo-rate",
+   "label": "RBI Repo Rate",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "Policy Repo Rate",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:52:50.957Z",
+   "staleSince": null,
+   "last_value": 5.25,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-sdf-rate",
+   "label": "Standing Deposit Facility",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "Standing Deposit Facility Rate",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:53:17.455Z",
+   "staleSince": null,
+   "last_value": 5,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-msf-rate",
+   "label": "Marginal Standing Facility",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "Marginal Standing Facility Rate",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:53:17.455Z",
+   "staleSince": null,
+   "last_value": 5.5,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-bank-rate",
+   "label": "RBI Bank Rate",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "Bank Rate",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:53:17.455Z",
+   "staleSince": null,
+   "last_value": 5.5,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-reverse-repo",
+   "label": "Fixed Reverse Repo Rate",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "Fixed Reverse Repo Rate",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:53:17.455Z",
+   "staleSince": null,
+   "last_value": 3.35,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-crr",
+   "label": "Cash Reserve Ratio (CRR)",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "CRR",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:52:50.957Z",
+   "staleSince": null,
+   "last_value": 3,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
+   "id": "india-slr",
+   "label": "Statutory Liquidity Ratio (SLR)",
+   "category": "rates",
+   "group": "Policy Rates",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "scraped-official",
+   "source": {
+    "name": "Reserve Bank of India",
+    "symbol": "SLR",
+    "url": "https://www.rbi.org.in/",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "accumulating": true,
+   "first": "2026-08-10",
+   "last": "2026-08-10",
+   "count": 1,
+   "retrievedAt": "2026-08-10T09:52:50.957Z",
+   "staleSince": null,
+   "last_value": 18,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": null,
+    "y3": null,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {},
+   "high52": null,
+   "low52": null
+  },
+  {
    "id": "india-gdp-growth",
    "label": "India GDP growth",
    "category": "economy",
@@ -4810,6 +5201,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1961-12-31",
    "last": "2025-12-31",
    "count": 65,
@@ -4856,8 +5248,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 7.5667,
-   "low52": 7.0993
+   "high52": null,
+   "low52": null
   },
   {
    "id": "india-cpi",
@@ -4876,6 +5268,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-12-31",
    "last": "2025-12-31",
    "count": 66,
@@ -4922,8 +5315,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 4.953,
-   "low52": 2.3988
+   "high52": null,
+   "low52": null
   },
   {
    "id": "india-unemployment",
@@ -4942,6 +5335,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1991-12-31",
    "last": "2025-12-31",
    "count": 35,
@@ -4988,8 +5382,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 4.219,
-   "low52": 4.173
+   "high52": null,
+   "low52": null
   },
   {
    "id": "india-govt-debt-gdp",
@@ -5008,6 +5402,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1990-12-31",
    "last": "2018-12-31",
    "count": 29,
@@ -5054,8 +5449,8 @@
      "2018-12-31"
     ]
    },
-   "high52": 47.5836,
-   "low52": 46.5225
+   "high52": null,
+   "low52": null
   },
   {
    "id": "india-gross-savings",
@@ -5074,6 +5469,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1975-12-31",
    "last": "2025-12-31",
    "count": 51,
@@ -5120,8 +5516,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 34.7497,
-   "low52": 34.6967
+   "high52": null,
+   "low52": null
   },
   {
    "id": "india-exports-gdp",
@@ -5140,6 +5536,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-12-31",
    "last": "2025-12-31",
    "count": 66,
@@ -5186,8 +5583,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 22.263,
-   "low52": 22.064
+   "high52": null,
+   "low52": null
   },
   {
    "id": "us-gdp-growth",
@@ -5206,6 +5603,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1961-12-31",
    "last": "2025-12-31",
    "count": 65,
@@ -5252,8 +5650,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 2.7932,
-   "low52": 2.1614
+   "high52": null,
+   "low52": null
   },
   {
    "id": "us-cpi",
@@ -5272,6 +5670,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1960-12-31",
    "last": "2024-12-31",
    "count": 65,
@@ -5318,8 +5717,8 @@
      "2024-12-31"
     ]
    },
-   "high52": 2.9495,
-   "low52": 2.9495
+   "high52": null,
+   "low52": null
   },
   {
    "id": "us-unemployment",
@@ -5338,6 +5737,7 @@
     "upstreamCurrency": null
    },
    "note": null,
+   "accumulating": false,
    "first": "1991-12-31",
    "last": "2025-12-31",
    "count": 35,
@@ -5384,8 +5784,8 @@
      "2025-12-31"
     ]
    },
-   "high52": 4.198,
-   "low52": 4.022
+   "high52": null,
+   "low52": null
   }
  ],
  "absent": [
@@ -5396,14 +5796,6 @@
    "group": "Energy",
    "unit": "USD/t",
    "absent": "Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus."
-  },
-  {
-   "id": "electricity-india",
-   "label": "Electricity (IEX spot)",
-   "category": "commodities",
-   "group": "Energy",
-   "unit": "INR/kWh",
-   "absent": "Indian Energy Exchange publishes a daily market snapshot with no API. Scheduled for the Phase 2 India harvest."
   },
   {
    "id": "crb-index",
@@ -5452,6 +5844,22 @@
    "group": "Credit Markets",
    "unit": "%",
    "absent": "ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source."
+  },
+  {
+   "id": "india-mf-aum",
+   "label": "Mutual Fund AAUM",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "absent": "AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency."
+  },
+  {
+   "id": "india-sip-flows",
+   "label": "SIP Contributions",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "absent": "Same AMFI monthly workbooks, same BIFF blocker."
   }
  ],
  "failed": []

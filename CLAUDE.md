@@ -1144,6 +1144,37 @@ the S&P's daily closes running to 1970 and the Pink Sheet's commodity prices to
 | `yahoo.mjs` | 40 | daily | commodities with a futures contract, all twelve indices, six FX pairs, the US Treasury curve (3M/5Y/10Y/30Y) |
 | `worldbankPink.mjs` | 15 | monthly | what no free daily feed carries — thermal coal, LNG, iron ore, palm oil, rubber, the licensed LME metals (zinc, nickel, lead, tin) and the fertiliser complex |
 | `worldbankApi.mjs` | 9 | annual | India and US growth, inflation, unemployment, government debt, gross savings — the Economy page's live rows |
+| `rbi.mjs` | 7 | accumulating | RBI's current policy rates — repo, SDF, MSF, bank rate, reverse repo, CRR, SLR |
+| `iex.mjs` | 1 | accumulating | Indian day-ahead spot power, the day's average clearing price |
+
+**AN ACCUMULATING SOURCE PUBLISHES ONLY TODAY, AND THE STORE BUILDS THE REST.**
+The RBI states the rate in effect now and offers no downloadable history; IEX
+shows one day's market snapshot. Each run contributes ONE observation and `merge`
+keeps every earlier one, so the series is built here a day at a time — which is
+exactly what the accumulate-never-truncate rule was written for. `accumulating:
+true` travels in the meta, and the UI marks those rows **building · N** rather
+than presenting two observations as a trend. Every horizon stays absent until the
+store has held the series long enough to answer one; that is the honest state,
+not a broken chart.
+
+**A 52-week high has to describe a year.** An accumulating series starts with one
+point, and reporting its own value as both the high and the low of the year
+states a range nothing measured. An ANNUAL series is worse — one or two readings
+inside any 365-day window would make its "52-week range" a year-on-year change
+wearing the wrong label. The window must hold at least eight observations and
+span 180 days, and annual series never report one.
+
+**RBI rates are matched by label WITH A BOUNDARY.** "Repo Rate" is a substring of
+both "Policy Repo Rate" and "Fixed Reverse Repo Rate", so an unanchored search
+binds the wrong number to the wrong rate — and both are percentages in the same
+range, so the result reads perfectly plausibly. Every pattern is anchored so the
+label cannot be preceded by another word character. The same reasoning as the
+`securityKey` ISIN suffix rule.
+
+**IEX stores the day's AVERAGE across all 96 blocks**, and says so. Indian spot
+power runs from roughly ₹1,100 to the ₹10,000 ceiling within one day, so a single
+block would be an arbitrary pick. A day that parses fewer than 90 blocks is
+refused rather than averaged into a figure that looks like a full day's price.
 
 **The Pink Sheet's URL is versioned per release and is DISCOVERED, not hardcoded.**
 The file sits under a path containing a release hash that changes monthly, so the
@@ -1219,9 +1250,13 @@ upstream reports is a finding.
 **A series the spec asks for and nothing serves is DECLARED ABSENT**, with the
 reason and the phase that will fill it, and rendered as such — thermal coal, iron
 ore, the LME metals, palm oil, rubber, the CRB, the Baltic Dry, India's 10-year.
-As of Phase 1 eight remain: coking coal (the Pink Sheet publishes thermal only),
-Indian spot electricity, the CRB, the Baltic Dry, container and rail freight,
-India's 10-year G-Sec and corporate credit spreads.
+As of Phase 2 nine remain: coking coal (the Pink Sheet publishes thermal only),
+the CRB, the Baltic Dry, container and rail freight, India's 10-year G-Sec,
+corporate credit spreads, and AMFI's mutual-fund and SIP flows. AMFI is the
+interesting one: it publishes ~100 monthly reports back to 2018 — real history,
+not a latest value — but they are legacy BIFF `.xls` workbooks, which neither
+ExcelJS nor this repo's own `sheet.mjs` (built for OOXML and for the HTML tables
+brokers misname `.xls`) can open. It needs a BIFF reader added as a dependency.
 The Bloomberg Commodity Index is carried in place of the CRB **under its own
 name**, because it is a different index and presenting it as CRB would be a
 fabrication with a badge on it.

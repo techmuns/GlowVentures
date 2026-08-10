@@ -73,10 +73,10 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Banking & policy", icon: Building, rows: [
-      { name: "Repo Rate", value: "6.50%", chg: "0bp" },
-      { name: "CRR / SLR", value: "4.5 / 18.0%", chg: "0bp" },
-      { name: "Bank Credit Growth", value: "15.4%", chg: "-0.6pp" },
-      { name: "NBFC Credit Growth", value: "17.9%", chg: "-0.4pp" },
+      { name: "Repo Rate", value: "6.50%", chg: "0bp", seriesId: "india-repo-rate" },
+      { name: "Cash Reserve Ratio", value: "4.5%", chg: "0bp", seriesId: "india-crr" },
+      { name: "Statutory Liquidity Ratio", value: "18.0%", chg: "0bp", seriesId: "india-slr" },
+      { name: "Bank Rate", value: "6.75%", chg: "0bp", seriesId: "india-bank-rate" },
     ],
   },
   {

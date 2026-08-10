@@ -264,6 +264,10 @@ export function MacroResearch() {
           {rows.some((r) => r.kind === "yield") && <> A <span className="font-medium text-slate-400">yield</span> series
           reports the absolute change in <span className="font-medium text-slate-400">basis points</span>, not a
           percentage return — the US 10-year going 0.5% to 4.3% is +380bp, and calling it "+760%" would be a category error.</>}
+          {rows.some((r) => r.accumulating) && <> A row marked <span className="font-medium text-slate-400">building</span> comes
+          from a source that publishes only its current value — RBI's policy rates and IEX's day-ahead price have no
+          downloadable history — so the store accumulates one observation per run and every horizon stays absent until
+          it can answer one. A two-point series is shown as two points, not as a trend.</>}
           {" "}Click any row to chart it; click several to overlay them.
         </p>
       </Card>
@@ -324,6 +328,12 @@ function SeriesRow({ row, active, onClick }: { row: SeriesEntry; active: boolean
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-champagne-400" : "bg-gain"}`}
             title={active ? "Charted" : `Live · ${row.source.name} · close ${row.last}`} />
           {row.label}
+          {row.accumulating && (
+            <span className="text-[10px] text-slate-500"
+              title={`${row.source.name} publishes only the current value — no history is available to download. This series is being built one observation per harvest, and has ${row.count} so far since ${row.first}. Every horizon stays absent until the store has held it long enough to answer one.`}>
+              building · {row.count}
+            </span>
+          )}
           {row.staleSince && (
             <span className="text-[10px] text-amber-400" title={`The source has not published since ${row.staleSince}. The level shown is that day's close.`}>
               stale

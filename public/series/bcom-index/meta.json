@@ -15,6 +15,7 @@
   "upstreamCurrency": "USD"
  },
  "note": "Shown IN PLACE OF the CRB index the spec names. CRB is Refinitiv's proprietary index with no free feed; BCOM is a different index tracking a similar basket, and is labelled as itself rather than presented as CRB.",
+ "accumulating": false,
  "first": "1991-01-02",
  "last": "2026-07-17",
  "count": 8923,
