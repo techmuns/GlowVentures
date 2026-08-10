@@ -26,8 +26,10 @@ import { readSeries, writeSeries, writeIndex, readIndex, merge, writeIfChanged }
 import { validate, freshness } from "./lib/validate.mjs";
 import { computeReturns } from "./lib/returns.mjs";
 import * as yahoo from "./adapters/yahoo.mjs";
+import * as worldbankPink from "./adapters/worldbankPink.mjs";
+import * as worldbankApi from "./adapters/worldbankApi.mjs";
 
-const ADAPTERS = { yahoo };
+const ADAPTERS = { yahoo, worldbankPink, worldbankApi };
 const CONCURRENCY = 4;          // polite against a free upstream
 const only = process.argv.includes("--only")
   ? process.argv[process.argv.indexOf("--only") + 1]?.split(",")
@@ -73,10 +75,37 @@ async function harvestOne(spec) {
       detail: `catalogue says "${spec.unit}", upstream reports "${fetched.upstreamCurrency}"`,
     });
   }
+  // The Pink Sheet PRINTS its unit in the sheet ("$/mt", "$/dmtu"). Comparing it
+  // against what the catalogue declares is the check that catches the World Bank
+  // changing a basis — the failure that would otherwise put a per-dmtu iron-ore
+  // price on a chart labelled per tonne.
+  if (fetched.upstreamUnit) {
+    // "$/mt" and "USD/t" are the same unit written two ways, so the comparison
+    // normalises the numerator and the denominator separately against a small
+    // vocabulary. Matching on raw text instead reported a mismatch on every
+    // Pink Sheet series, which would train a reader to ignore the one finding
+    // that matters — the World Bank actually changing a basis.
+    const DENOM = { mt: "t", t: "t", tonne: "t", troyoz: "oz", oz: "oz" };
+    const norm = (u) => {
+      const [num = "", den = ""] = String(u).toLowerCase().replace(/\s+/g, "").split("/");
+      const n = num.replace(/^\$$/, "usd");
+      const d = DENOM[den] ?? den;
+      return `${n}/${d}`;
+    };
+    if (norm(fetched.upstreamUnit) !== norm(spec.unit)) {
+      findings.push({
+        severity: "warn", rule: "unit-mismatch",
+        detail: `catalogue says "${spec.unit}", the sheet prints "${fetched.upstreamUnit}"`,
+      });
+    }
+  }
 
+  // Frequency governs BOTH which horizons exist (a monthly series has no "1D"
+  // return) and how long silence has to run before the source counts as stale.
+  const frequency = spec.frequency ?? "daily";
   const kind = spec.unit === "%" ? "yield" : "price";
-  const stats = computeReturns(points, kind);
-  const fresh = freshness("daily", points[points.length - 1].t);
+  const stats = computeReturns(points, kind, frequency);
+  const fresh = freshness(frequency, points[points.length - 1].t);
 
   // IDEMPOTENCE. `retrievedAt` is the one field that would otherwise differ on
   // every run, rewriting all 37 meta files nightly and producing a commit whose
@@ -93,12 +122,12 @@ async function harvestOne(spec) {
     group: spec.group,
     unit: spec.unit,
     kind,
-    frequency: "daily",
+    frequency,
     provenance: spec.source.provenance,
     source: {
       name: spec.source.name,
       symbol: spec.source.symbol,
-      url: spec.source.url,
+      url: fetched.sourceUrl ?? spec.source.url,
       exchange: fetched.exchange,
       upstreamCurrency: fetched.upstreamCurrency,
     },

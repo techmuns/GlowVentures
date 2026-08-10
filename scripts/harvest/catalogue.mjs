@@ -23,6 +23,7 @@ export const CATEGORIES = [
   { key: "indices", label: "Global Indices" },
   { key: "currencies", label: "Currencies" },
   { key: "rates", label: "Rates & Bonds" },
+  { key: "economy", label: "Economy" },
 ];
 
 const yahoo = (symbol) => ({
@@ -30,6 +31,27 @@ const yahoo = (symbol) => ({
   symbol,
   name: "Yahoo Finance",
   url: `https://finance.yahoo.com/quote/${encodeURIComponent(symbol)}`,
+  provenance: "official-api",
+});
+
+/** World Bank Pink Sheet — monthly commodity prices, matched by HEADER TEXT. */
+const pink = (column) => ({
+  adapter: "worldbankPink",
+  column,
+  symbol: column,
+  name: "World Bank Pink Sheet",
+  url: "https://www.worldbank.org/en/research/commodity-markets",
+  provenance: "official-file",
+});
+
+/** World Bank Open Data — annual indicators, keyless REST. */
+const wb = (country, indicator) => ({
+  adapter: "worldbankApi",
+  country,
+  indicator,
+  symbol: indicator,
+  name: "World Bank Open Data",
+  url: `https://data.worldbank.org/indicator/${indicator}?locations=${country}`,
   provenance: "official-api",
 });
 
@@ -44,12 +66,12 @@ export const SERIES = [
   { id: "wti-crude", label: "WTI Crude", category: "commodities", group: "Energy", unit: "USD/bbl", band: [-50, 400], source: yahoo("CL=F"),
     note: "WTI settled NEGATIVE on 20 April 2020 (−$37.63). The band allows it because it happened; a floor at zero would reject a real print." },
   { id: "natural-gas", label: "Natural Gas", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.1, 100], source: yahoo("NG=F") },
-  { id: "lng", label: "LNG", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: null, source: null,
-    absent: "No free daily LNG benchmark. The World Bank Pink Sheet carries a monthly Japan/Europe LNG price — wired in Phase 1." },
+  { id: "lng", label: "LNG (Japan)", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.5, 100], frequency: "monthly", source: pink("Liquefied natural gas, Japan") },
+  { id: "natural-gas-europe", label: "Natural Gas (Europe)", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.1, 200], frequency: "monthly", source: pink("Natural gas, Europe") },
+  { id: "thermal-coal", label: "Thermal Coal (Australian)", category: "commodities", group: "Energy", unit: "USD/t", band: [5, 1500], frequency: "monthly", source: pink("Coal, Australian") },
+  { id: "coal-south-africa", label: "Thermal Coal (South African)", category: "commodities", group: "Energy", unit: "USD/t", band: [5, 1500], frequency: "monthly", source: pink("Coal, South African") },
   { id: "coking-coal", label: "Coking Coal", category: "commodities", group: "Energy", unit: "USD/t", band: null, source: null,
-    absent: "No free daily series. World Bank Pink Sheet publishes it monthly — wired in Phase 1." },
-  { id: "thermal-coal", label: "Thermal Coal", category: "commodities", group: "Energy", unit: "USD/t", band: null, source: null,
-    absent: "No free daily series. World Bank Pink Sheet publishes Australian thermal coal monthly — wired in Phase 1." },
+    absent: "Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus." },
   { id: "electricity-india", label: "Electricity (IEX spot)", category: "commodities", group: "Energy", unit: "INR/kWh", band: null, source: null,
     absent: "Indian Energy Exchange publishes a daily market snapshot with no API. Scheduled for the Phase 2 India harvest." },
 
@@ -63,16 +85,13 @@ export const SERIES = [
   { id: "copper", label: "Copper", category: "commodities", group: "Industrial Metals", unit: "USD/lb", band: [0.1, 50], source: yahoo("HG=F") },
   { id: "aluminium", label: "Aluminium", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: [200, 10000], source: yahoo("ALI=F") },
   { id: "steel-hrc", label: "Steel (HRC)", category: "commodities", group: "Industrial Metals", unit: "USD/short ton", band: [100, 5000], source: yahoo("HRC=F") },
-  { id: "zinc", label: "Zinc", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: null, source: null,
-    absent: "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1." },
-  { id: "nickel", label: "Nickel", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: null, source: null,
-    absent: "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1." },
-  { id: "lead", label: "Lead", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: null, source: null,
-    absent: "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1." },
-  { id: "tin", label: "Tin", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: null, source: null,
-    absent: "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1." },
-  { id: "iron-ore", label: "Iron Ore", category: "commodities", group: "Industrial Metals", unit: "USD/dmt", band: null, source: null,
-    absent: "No free daily series. World Bank Pink Sheet publishes it monthly — wired in Phase 1." },
+  { id: "zinc", label: "Zinc", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: [50, 20000], frequency: "monthly", source: pink("Zinc"),
+    note: "The band starts at 50 because zinc genuinely traded near $180/t through the 1960s. An earlier 200 floor blocked eighteen real observations — the gate working correctly against a band that was wrong." },
+  { id: "nickel", label: "Nickel", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: [1000, 100000], frequency: "monthly", source: pink("Nickel") },
+  { id: "lead", label: "Lead", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: [100, 20000], frequency: "monthly", source: pink("Lead") },
+  { id: "tin", label: "Tin", category: "commodities", group: "Industrial Metals", unit: "USD/t", band: [1000, 100000], frequency: "monthly", source: pink("Tin") },
+  { id: "iron-ore", label: "Iron Ore (cfr spot)", category: "commodities", group: "Industrial Metals", unit: "USD/dmtu", band: [1, 500], frequency: "monthly", source: pink("Iron ore, cfr spot"),
+    note: "Quoted per DRY METRIC TONNE UNIT (dmtu), the World Bank's own basis — one percent of iron content per tonne. It is not the $/tonne headline the trade press quotes, and the two differ by roughly the ore grade." },
 
   // ── Agriculture ───────────────────────────────────────────────────────────
   // Yahoo quotes these in US CENTS (currency `USX`). Declared as cents here.
@@ -83,10 +102,14 @@ export const SERIES = [
   { id: "cotton", label: "Cotton", category: "commodities", group: "Agriculture", unit: "USc/lb", band: [10, 400], source: yahoo("CT=F") },
   { id: "sugar", label: "Sugar", category: "commodities", group: "Agriculture", unit: "USc/lb", band: [1, 100], source: yahoo("SB=F") },
   { id: "coffee", label: "Coffee", category: "commodities", group: "Agriculture", unit: "USc/lb", band: [20, 1000], source: yahoo("KC=F") },
-  { id: "palm-oil", label: "Palm Oil", category: "commodities", group: "Agriculture", unit: "USD/t", band: null, source: null,
-    absent: "Traded on Bursa Malaysia (FCPO), not carried by any free daily feed. World Bank Pink Sheet has it monthly — Phase 1." },
-  { id: "rubber", label: "Rubber", category: "commodities", group: "Agriculture", unit: "USD/t", band: null, source: null,
-    absent: "Traded on OSE/TOCOM, not carried by any free daily feed. World Bank Pink Sheet has it monthly — Phase 1." },
+  { id: "palm-oil", label: "Palm Oil", category: "commodities", group: "Agriculture", unit: "USD/t", band: [50, 10000], frequency: "monthly", source: pink("Palm oil") },
+  { id: "rubber", label: "Rubber (TSR20)", category: "commodities", group: "Agriculture", unit: "USD/kg", band: [0.1, 50], frequency: "monthly", source: pink("Rubber, TSR20") },
+
+  // ── Fertilisers — the spec asks for these under Industry Research ─────────
+  { id: "urea", label: "Urea", category: "commodities", group: "Fertilisers", unit: "USD/t", band: [10, 2000], frequency: "monthly", source: pink("Urea") },
+  { id: "dap", label: "DAP", category: "commodities", group: "Fertilisers", unit: "USD/t", band: [10, 2000], frequency: "monthly", source: pink("DAP") },
+  { id: "phosphate-rock", label: "Phosphate Rock", category: "commodities", group: "Fertilisers", unit: "USD/t", band: [5, 1000], frequency: "monthly", source: pink("Phosphate rock") },
+  { id: "potassium-chloride", label: "Potash (KCl)", category: "commodities", group: "Fertilisers", unit: "USD/t", band: [10, 2000], frequency: "monthly", source: pink("Potassium chloride") },
 
   // ── Other commodity aggregates ────────────────────────────────────────────
   {
@@ -130,8 +153,24 @@ export const SERIES = [
     id: "us-10y", label: "US 10 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TNX"),
     note: "CBOE's 10-year Treasury yield index — the yield itself, in percent, not a price.",
   },
+  { id: "us-3m", label: "US 13 Week T-Bill", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^IRX") },
+  { id: "us-5y", label: "US 5 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^FVX") },
+  { id: "us-30y", label: "US 30 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TYX") },
   { id: "india-10y", label: "India 10 Year G-Sec", category: "rates", group: "Government Bonds", unit: "%", band: null, source: null,
-    absent: "No free daily feed carries the Indian benchmark G-Sec yield. RBI publishes it daily and FRED monthly — both wired in Phase 2." },
+    absent: "No free daily feed carries the Indian benchmark G-Sec yield, and FRED — which publishes it monthly — is not reachable from the harvest environment. RBI publishes it daily on its own site; that is the Phase 2 India harvest." },
+  { id: "credit-spreads", label: "Corporate Credit Spreads", category: "rates", group: "Credit Markets", unit: "%", band: null, source: null,
+    absent: "ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source." },
+
+  // ── Economy — annual, and lagged by a year or more. Charted as history ────
+  { id: "india-gdp-growth", label: "India GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("IN", "NY.GDP.MKTP.KD.ZG") },
+  { id: "india-cpi", label: "India CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("IN", "FP.CPI.TOTL.ZG") },
+  { id: "india-unemployment", label: "India unemployment rate", category: "economy", group: "Labour market", unit: "%", band: [0, 60], frequency: "annual", source: wb("IN", "SL.UEM.TOTL.ZS") },
+  { id: "india-govt-debt-gdp", label: "India government debt / GDP", category: "economy", group: "Government", unit: "%", band: [0, 300], frequency: "annual", source: wb("IN", "GC.DOD.TOTL.GD.ZS") },
+  { id: "india-gross-savings", label: "India gross savings / GDP", category: "economy", group: "Household", unit: "%", band: [0, 100], frequency: "annual", source: wb("IN", "NY.GNS.ICTR.ZS") },
+  { id: "india-exports-gdp", label: "India exports / GDP", category: "economy", group: "Trade", unit: "%", band: [0, 300], frequency: "annual", source: wb("IN", "NE.EXP.GNFS.ZS") },
+  { id: "us-gdp-growth", label: "US GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("US", "NY.GDP.MKTP.KD.ZG") },
+  { id: "us-cpi", label: "US CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("US", "FP.CPI.TOTL.ZG") },
+  { id: "us-unemployment", label: "US unemployment rate", category: "economy", group: "Labour market", unit: "%", band: [0, 60], frequency: "annual", source: wb("US", "SL.UEM.TOTL.ZS") },
 ];
 
 export const BY_ID = new Map(SERIES.map((s) => [s.id, s]));

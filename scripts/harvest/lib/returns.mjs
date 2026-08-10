@@ -61,20 +61,40 @@ export const HORIZONS = [
   { key: "max", label: "Max", back: () => null, annualised: true },
 ];
 
+/** How many days one observation covers, per publication frequency. */
+const PERIOD_DAYS = { daily: 1, weekly: 7, monthly: 28, quarterly: 89, annual: 360 };
+
 /**
  * @param points ascending [{t,v}]
  * @param kind   "price" (ratio returns, CAGR over a year) | "yield" (absolute pp change)
+ * @param frequency how often the source publishes — governs which horizons EXIST
  * @returns { asOf, last, returns: {key: number|null}, high52, low52, spans: {key: [from,to]} }
  */
-export function computeReturns(points, kind = "price") {
+export function computeReturns(points, kind = "price", frequency = "daily") {
   if (!points.length) return null;
   const lastPt = points[points.length - 1];
   const asOfMs = ms(lastPt.t);
   const firstMs = ms(points[0].t);
+  const periodDays = PERIOD_DAYS[frequency] ?? 1;
   const out = { asOf: lastPt.t, last: lastPt.v, returns: {}, spans: {}, high52: null, low52: null };
 
   for (const h of HORIZONS) {
     const targetMs = h.back(asOfMs);
+
+    // A HORIZON SHORTER THAN THE PUBLICATION PERIOD DOES NOT EXIST.
+    //
+    // The World Bank publishes commodity prices MONTHLY. Asking for a "1 day"
+    // return of a monthly series and resolving it by nearest-earlier
+    // observation returns LAST MONTH's price — a month-over-month change
+    // rendered under a column headed "1D". Every horizon whose own window is
+    // shorter than one observation period is absent instead, which is the same
+    // rule as "a horizon the series cannot reach back to is null", applied at
+    // the other end of the scale.
+    if (targetMs !== null && (asOfMs - targetMs) < periodDays * 86400000) {
+      out.returns[h.key] = null;
+      continue;
+    }
+
     // `max` runs from the first observation; every other horizon needs the
     // series to actually reach its start date.
     const fromPt = targetMs === null ? points[0] : (targetMs < firstMs ? null : closeOnOrBefore(points, targetMs));

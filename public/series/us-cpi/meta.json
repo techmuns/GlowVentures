@@ -1,0 +1,23 @@
+{
+ "id": "us-cpi",
+ "label": "US CPI inflation",
+ "category": "economy",
+ "group": "Inflation",
+ "unit": "%",
+ "kind": "yield",
+ "frequency": "annual",
+ "provenance": "official-api",
+ "source": {
+  "name": "World Bank Open Data",
+  "symbol": "FP.CPI.TOTL.ZG",
+  "url": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=500",
+  "exchange": null,
+  "upstreamCurrency": null
+ },
+ "note": null,
+ "first": "1960-12-31",
+ "last": "2024-12-31",
+ "count": 65,
+ "retrievedAt": "2026-08-10T09:33:18.721Z",
+ "staleSince": null
+}

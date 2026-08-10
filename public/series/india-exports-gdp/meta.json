@@ -1,0 +1,23 @@
+{
+ "id": "india-exports-gdp",
+ "label": "India exports / GDP",
+ "category": "economy",
+ "group": "Trade",
+ "unit": "%",
+ "kind": "yield",
+ "frequency": "annual",
+ "provenance": "official-api",
+ "source": {
+  "name": "World Bank Open Data",
+  "symbol": "NE.EXP.GNFS.ZS",
+  "url": "https://api.worldbank.org/v2/country/IN/indicator/NE.EXP.GNFS.ZS?format=json&per_page=500",
+  "exchange": null,
+  "upstreamCurrency": null
+ },
+ "note": null,
+ "first": "1960-12-31",
+ "last": "2025-12-31",
+ "count": 66,
+ "retrievedAt": "2026-08-10T09:33:18.721Z",
+ "staleSince": null
+}

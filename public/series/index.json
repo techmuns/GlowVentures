@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-10T09:10:30.527Z",
+ "generatedAt": "2026-08-10T09:34:57.674Z",
  "categories": [
   {
    "key": "commodities",
@@ -16,6 +16,10 @@
   {
    "key": "rates",
    "label": "Rates & Bonds"
+  },
+  {
+   "key": "economy",
+   "label": "Economy"
   }
  ],
  "series": [
@@ -288,6 +292,318 @@
    },
    "high52": 7.46,
    "low52": 2.523
+  },
+  {
+   "id": "lng",
+   "label": "LNG (Japan)",
+   "category": "commodities",
+   "group": "Energy",
+   "unit": "USD/MMBtu",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Liquefied natural gas, Japan",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1977-01-01",
+   "last": "2026-07-01",
+   "count": 595,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 11.8,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 0.08481764206955678,
+    "m3": -24.600638977635782,
+    "m6": 4.240282685512375,
+    "qtd": null,
+    "ytd": 4.240282685512375,
+    "y1": -0.9235936188077165,
+    "y3": -3.151226587119249,
+    "y5": 2.6374841535737437,
+    "y10": 5.729661917554241,
+    "max": 2.9713758308904215
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1977-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 15.65,
+   "low52": 11.1
+  },
+  {
+   "id": "natural-gas-europe",
+   "label": "Natural Gas (Europe)",
+   "category": "commodities",
+   "group": "Energy",
+   "unit": "USD/MMBtu",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Natural gas, Europe",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 18.06,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 19.05075807514831,
+    "m3": 17.196625567813093,
+    "m6": 90.50632911392402,
+    "qtd": null,
+    "ytd": 90.50632911392402,
+    "y1": 55.42168674698795,
+    "y3": 23.656538468875745,
+    "y5": 7.6208588761769835,
+    "y10": 14.48487880374989,
+    "max": 5.896894428935262
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 18.06,
+   "low52": 9.48
+  },
+  {
+   "id": "thermal-coal",
+   "label": "Thermal Coal (Australian)",
+   "category": "commodities",
+   "group": "Energy",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Coal, Australian",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1970-01-01",
+   "last": "2026-07-01",
+   "count": 679,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 131.9,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -4.76534296028881,
+    "m3": 0.763941940412538,
+    "m6": 22.46982358402971,
+    "qtd": null,
+    "ytd": 22.46982358402971,
+    "y1": 16.829052258635958,
+    "y3": -2.106181872925106,
+    "y5": -2.7972493473892968,
+    "y10": 7.982630596844453,
+    "max": 5.13295788907695
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1970-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 138.6,
+   "low52": 106.3
+  },
+  {
+   "id": "coal-south-africa",
+   "label": "Thermal Coal (South African)",
+   "category": "commodities",
+   "group": "Energy",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Coal, South African",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1984-01-01",
+   "last": "2026-07-01",
+   "count": 511,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 96.3,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 0,
+    "m3": 1.5822784810126667,
+    "m6": 5.940594059405924,
+    "qtd": null,
+    "ytd": 5.940594059405924,
+    "y1": 2.8846153846153966,
+    "y3": -0.17243430130879922,
+    "y5": -4.668346953300118,
+    "y10": 4.435163195047109,
+    "max": 2.8394886935782404
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1984-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 96.3,
+   "low52": 90.6
   },
   {
    "id": "gold",
@@ -920,6 +1236,396 @@
    "low52": 793
   },
   {
+   "id": "zinc",
+   "label": "Zinc",
+   "category": "commodities",
+   "group": "Industrial Metals",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Zinc",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": "The band starts at 50 because zinc genuinely traded near $180/t through the 1960s. An earlier 200 floor blocked eighteen real observations — the gate working correctly against a band that was wrong.",
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:34:57.674Z",
+   "staleSince": null,
+   "last_value": 3599,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 1.6953941791466587,
+    "m3": 6.985731272294893,
+    "m6": 13.60479797979799,
+    "qtd": null,
+    "ytd": 13.60479797979799,
+    "y1": 30.256967064784646,
+    "y3": 14.3779418896546,
+    "y5": 4.07184318427356,
+    "y10": 5.127366160037905,
+    "max": 4.0247674795505395
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 3599,
+   "low52": 2763
+  },
+  {
+   "id": "nickel",
+   "label": "Nickel",
+   "category": "commodities",
+   "group": "Industrial Metals",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Nickel",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 16651,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -5.327496020013644,
+    "m3": -7.298741788219576,
+    "m6": 11.871808653587745,
+    "qtd": null,
+    "ytd": 11.871808653587745,
+    "y1": 10.755620593321801,
+    "y3": -7.575128566487265,
+    "y5": -2.418542584781791,
+    "y10": 4.958949804309465,
+    "max": 3.5555620145865774
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 18806,
+   "low52": 14671
+  },
+  {
+   "id": "lead",
+   "label": "Lead",
+   "category": "commodities",
+   "group": "Industrial Metals",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Lead",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 1842,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -5.344295991778003,
+    "m3": -4.5595854922279795,
+    "m6": -5.051546391752582,
+    "qtd": null,
+    "ytd": -5.051546391752582,
+    "y1": -7.576517812343198,
+    "y3": -4.4108018554527835,
+    "y5": -4.657576232337835,
+    "y10": 0.03808702737020386,
+    "max": 3.3493540436626557
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 1998,
+   "low52": 1842
+  },
+  {
+   "id": "tin",
+   "label": "Tin",
+   "category": "commodities",
+   "group": "Industrial Metals",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Tin",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 52971,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -0.1244414276825645,
+    "m3": 8.533786829488177,
+    "m6": 28.508005822416305,
+    "qtd": null,
+    "ytd": 28.508005822416305,
+    "y1": 57.60487950014876,
+    "y3": 22.59756321680111,
+    "y5": 9.261218166031782,
+    "y10": 11.507711466071612,
+    "max": 4.914805492970609
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 53563,
+   "low52": 33610
+  },
+  {
+   "id": "iron-ore",
+   "label": "Iron Ore (cfr spot)",
+   "category": "commodities",
+   "group": "Industrial Metals",
+   "unit": "USD/dmtu",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Iron ore, cfr spot",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": "Quoted per DRY METRIC TONNE UNIT (dmtu), the World Bank's own basis — one percent of iron content per tonne. It is not the $/tonne headline the trade press quotes, and the two differ by roughly the ore grade.",
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 98.2,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -2.57936507936507,
+    "m3": -7.445805843543818,
+    "m6": -6.118546845124273,
+    "qtd": null,
+    "ytd": -6.118546845124273,
+    "y1": 0.9249743062692772,
+    "y3": -4.961363574440226,
+    "y5": -14.436272669929927,
+    "y10": 5.535577192204433,
+    "max": 3.291339410195282
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 108.6,
+   "low52": 97.3
+  },
+  {
    "id": "wheat",
    "label": "Wheat",
    "category": "commodities",
@@ -1548,6 +2254,474 @@
    },
    "high52": 432.35,
    "low52": 244.4
+  },
+  {
+   "id": "palm-oil",
+   "label": "Palm Oil",
+   "category": "commodities",
+   "group": "Agriculture",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Palm oil",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 1101,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -0.27173913043477826,
+    "m3": -3.926701570680624,
+    "m6": 12.346938775510207,
+    "qtd": null,
+    "ytd": 12.346938775510207,
+    "y1": 12.807377049180335,
+    "y3": 7.793368901997422,
+    "y5": 0.7050451669224023,
+    "y10": 4.968416397274744,
+    "max": 2.362832611556387
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 1146,
+   "low52": 976
+  },
+  {
+   "id": "rubber",
+   "label": "Rubber (TSR20)",
+   "category": "commodities",
+   "group": "Agriculture",
+   "unit": "USD/kg",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Rubber, TSR20",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1999-01-01",
+   "last": "2026-07-01",
+   "count": 331,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 2.14,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -4.8888888888888875,
+    "m3": 3.8834951456310662,
+    "m6": 22.988505747126453,
+    "qtd": null,
+    "ytd": 22.988505747126453,
+    "y1": 27.380952380952394,
+    "y3": 18.070213319667694,
+    "y5": 5.596244056002431,
+    "y10": 5.274560324877342,
+    "max": 4.733356741979522
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1999-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 2.25,
+   "low52": 1.68
+  },
+  {
+   "id": "urea",
+   "label": "Urea",
+   "category": "commodities",
+   "group": "Fertilisers",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Urea",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 400,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -11.719267269918344,
+    "m3": -53.32010736375305,
+    "m6": 1.9108280254777066,
+    "qtd": null,
+    "ytd": 1.9108280254777066,
+    "y1": -19.354838709677423,
+    "y3": 6.130152841374881,
+    "y5": -1.9551733971560403,
+    "y10": 8.253726820414432,
+    "max": 3.4363424133086795
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 856.9,
+   "low52": 392.5
+  },
+  {
+   "id": "dap",
+   "label": "DAP",
+   "category": "commodities",
+   "group": "Fertilisers",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "DAP",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1967-01-01",
+   "last": "2026-07-01",
+   "count": 715,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 781.3,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -0.3189589180913499,
+    "m3": 7.720943058044938,
+    "m6": 24.50996015936253,
+    "qtd": null,
+    "ytd": 24.50996015936253,
+    "y1": 6.154891304347809,
+    "y3": 19.411794907317525,
+    "y5": 4.972213455603658,
+    "y10": 9.857299408797559,
+    "max": 4.176069744786948
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1967-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 795.1,
+   "low52": 619.2
+  },
+  {
+   "id": "phosphate-rock",
+   "label": "Phosphate Rock",
+   "category": "commodities",
+   "group": "Fertilisers",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Phosphate rock",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 170,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 8.349267049075838,
+    "m3": 11.475409836065564,
+    "m6": 11.475409836065564,
+    "qtd": null,
+    "ytd": 11.475409836065564,
+    "y1": 11.475409836065564,
+    "y3": -20.819316627362006,
+    "y5": 6.343619607898998,
+    "y10": 4.402578717370598,
+    "max": 3.9418243432289612
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 170,
+   "low52": 152.5
+  },
+  {
+   "id": "potassium-chloride",
+   "label": "Potash (KCl)",
+   "category": "commodities",
+   "group": "Fertilisers",
+   "unit": "USD/t",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "World Bank Pink Sheet",
+    "symbol": "Potassium chloride",
+    "url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-01-01",
+   "last": "2026-07-01",
+   "count": 799,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 396.5,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -1.4906832298136607,
+    "m3": -1.1961126339396944,
+    "m6": 10.66145687970974,
+    "qtd": null,
+    "ytd": 10.66145687970974,
+    "y1": 9.379310344827596,
+    "y3": 5.122904266174966,
+    "y5": -8.932726692527348,
+    "y10": 3.4485695139937267,
+    "max": 4.0386615241846835
+   },
+   "spans": {
+    "m1": [
+     "2026-06-01",
+     "2026-07-01"
+    ],
+    "m3": [
+     "2026-04-01",
+     "2026-07-01"
+    ],
+    "m6": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "ytd": [
+     "2025-12-01",
+     "2026-07-01"
+    ],
+    "y1": [
+     "2025-07-01",
+     "2026-07-01"
+    ],
+    "y3": [
+     "2023-07-01",
+     "2026-07-01"
+    ],
+    "y5": [
+     "2021-07-01",
+     "2026-07-01"
+    ],
+    "y10": [
+     "2016-07-01",
+     "2026-07-01"
+    ],
+    "max": [
+     "1960-01-01",
+     "2026-07-01"
+    ]
+   },
+   "high52": 405,
+   "low52": 352
   },
   {
    "id": "bcom-index",
@@ -3348,32 +4522,880 @@
    },
    "high52": 4.745,
    "low52": 3.953
+  },
+  {
+   "id": "us-3m",
+   "label": "US 13 Week T-Bill",
+   "category": "rates",
+   "group": "Government Bonds",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "official-api",
+   "source": {
+    "name": "Yahoo Finance",
+    "symbol": "^IRX",
+    "url": "https://finance.yahoo.com/quote/%5EIRX",
+    "exchange": "Cboe Indices",
+    "upstreamCurrency": "USD"
+   },
+   "note": null,
+   "first": "1970-01-02",
+   "last": "2026-08-07",
+   "count": 14169,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 3.71,
+   "returns": {
+    "d1": -0.02200000000000024,
+    "w1": 0.028000000000000025,
+    "m1": -0.0129999999999999,
+    "m3": 0.11499999999999977,
+    "m6": 0.1200000000000001,
+    "qtd": -0.02200000000000024,
+    "ytd": 0.1629999999999998,
+    "y1": -0.42799999999999994,
+    "y3": -1.5650000000000004,
+    "y5": 3.667,
+    "y10": 3.417,
+    "max": -4.21
+   },
+   "spans": {
+    "d1": [
+     "2026-08-06",
+     "2026-08-07"
+    ],
+    "w1": [
+     "2026-07-31",
+     "2026-08-07"
+    ],
+    "m1": [
+     "2026-07-08",
+     "2026-08-07"
+    ],
+    "m3": [
+     "2026-05-08",
+     "2026-08-07"
+    ],
+    "m6": [
+     "2026-02-06",
+     "2026-08-07"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-08-07"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-08-07"
+    ],
+    "y1": [
+     "2025-08-07",
+     "2026-08-07"
+    ],
+    "y3": [
+     "2023-08-08",
+     "2026-08-07"
+    ],
+    "y5": [
+     "2021-08-06",
+     "2026-08-07"
+    ],
+    "y10": [
+     "2016-08-09",
+     "2026-08-07"
+    ],
+    "max": [
+     "1970-01-02",
+     "2026-08-07"
+    ]
+   },
+   "high52": 4.143,
+   "low52": 3.507
+  },
+  {
+   "id": "us-5y",
+   "label": "US 5 Year Treasury",
+   "category": "rates",
+   "group": "Government Bonds",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "official-api",
+   "source": {
+    "name": "Yahoo Finance",
+    "symbol": "^FVX",
+    "url": "https://finance.yahoo.com/quote/%5EFVX",
+    "exchange": "Cboe Indices",
+    "upstreamCurrency": "USD"
+   },
+   "note": null,
+   "first": "1970-01-02",
+   "last": "2026-08-07",
+   "count": 14169,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 4.362,
+   "returns": {
+    "d1": -0.027000000000000135,
+    "w1": -0.09799999999999986,
+    "m1": 0.05400000000000027,
+    "m3": 0.3490000000000002,
+    "m6": 0.6070000000000002,
+    "qtd": 0.17600000000000016,
+    "ytd": 0.6400000000000001,
+    "y1": 0.5720000000000001,
+    "y3": 0.24899999999999967,
+    "y5": 3.597,
+    "y10": 3.255,
+    "max": -3.8279999999999994
+   },
+   "spans": {
+    "d1": [
+     "2026-08-06",
+     "2026-08-07"
+    ],
+    "w1": [
+     "2026-07-31",
+     "2026-08-07"
+    ],
+    "m1": [
+     "2026-07-08",
+     "2026-08-07"
+    ],
+    "m3": [
+     "2026-05-08",
+     "2026-08-07"
+    ],
+    "m6": [
+     "2026-02-06",
+     "2026-08-07"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-08-07"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-08-07"
+    ],
+    "y1": [
+     "2025-08-07",
+     "2026-08-07"
+    ],
+    "y3": [
+     "2023-08-08",
+     "2026-08-07"
+    ],
+    "y5": [
+     "2021-08-06",
+     "2026-08-07"
+    ],
+    "y10": [
+     "2016-08-09",
+     "2026-08-07"
+    ],
+    "max": [
+     "1970-01-02",
+     "2026-08-07"
+    ]
+   },
+   "high52": 4.461,
+   "low52": 3.512
+  },
+  {
+   "id": "us-30y",
+   "label": "US 30 Year Treasury",
+   "category": "rates",
+   "group": "Government Bonds",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "daily",
+   "provenance": "official-api",
+   "source": {
+    "name": "Yahoo Finance",
+    "symbol": "^TYX",
+    "url": "https://finance.yahoo.com/quote/%5ETYX",
+    "exchange": "Cboe Indices",
+    "upstreamCurrency": "USD"
+   },
+   "note": null,
+   "first": "1977-02-15",
+   "last": "2026-08-07",
+   "count": 12395,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 5.211,
+   "returns": {
+    "d1": -0.0019999999999997797,
+    "w1": -0.06400000000000006,
+    "m1": 0.1459999999999999,
+    "m3": 0.26400000000000023,
+    "m6": 0.35599999999999987,
+    "qtd": 0.30900000000000016,
+    "ytd": 0.37100000000000044,
+    "y1": 0.39500000000000046,
+    "y3": 1.0070000000000006,
+    "y5": 3.277,
+    "y10": 2.954,
+    "max": -2.489
+   },
+   "spans": {
+    "d1": [
+     "2026-08-06",
+     "2026-08-07"
+    ],
+    "w1": [
+     "2026-07-31",
+     "2026-08-07"
+    ],
+    "m1": [
+     "2026-07-08",
+     "2026-08-07"
+    ],
+    "m3": [
+     "2026-05-08",
+     "2026-08-07"
+    ],
+    "m6": [
+     "2026-02-06",
+     "2026-08-07"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-08-07"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-08-07"
+    ],
+    "y1": [
+     "2025-08-07",
+     "2026-08-07"
+    ],
+    "y3": [
+     "2023-08-08",
+     "2026-08-07"
+    ],
+    "y5": [
+     "2021-08-06",
+     "2026-08-07"
+    ],
+    "y10": [
+     "2016-08-09",
+     "2026-08-07"
+    ],
+    "max": [
+     "1977-02-15",
+     "2026-08-07"
+    ]
+   },
+   "high52": 5.275,
+   "low52": 4.539
+  },
+  {
+   "id": "india-gdp-growth",
+   "label": "India GDP growth",
+   "category": "economy",
+   "group": "Economic growth",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "NY.GDP.MKTP.KD.ZG",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/NY.GDP.MKTP.KD.ZG?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1961-12-31",
+   "last": "2025-12-31",
+   "count": 65,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 7.5667,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": 0.4673999999999996,
+    "y1": 0.4673999999999996,
+    "y3": -0.04269999999999996,
+    "y5": 13.3444,
+    "y10": -0.42959999999999976,
+    "max": 3.844
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1961-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 7.5667,
+   "low52": 7.0993
+  },
+  {
+   "id": "india-cpi",
+   "label": "India CPI inflation",
+   "category": "economy",
+   "group": "Inflation",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "FP.CPI.TOTL.ZG",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/FP.CPI.TOTL.ZG?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-12-31",
+   "last": "2025-12-31",
+   "count": 66,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 2.3988,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": -2.5542000000000002,
+    "y1": -2.5542000000000002,
+    "y3": -4.3002,
+    "y5": -4.224600000000001,
+    "y10": -2.5082,
+    "max": 0.6189
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1960-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 4.953,
+   "low52": 2.3988
+  },
+  {
+   "id": "india-unemployment",
+   "label": "India unemployment rate",
+   "category": "economy",
+   "group": "Labour market",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "SL.UEM.TOTL.ZS",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/SL.UEM.TOTL.ZS?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1991-12-31",
+   "last": "2025-12-31",
+   "count": 35,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 4.219,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": 0.04600000000000026,
+    "y1": 0.04600000000000026,
+    "y3": -0.6029999999999998,
+    "y5": -3.6399999999999997,
+    "y10": -3.4099999999999993,
+    "max": -3.4219999999999997
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1991-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 4.219,
+   "low52": 4.173
+  },
+  {
+   "id": "india-govt-debt-gdp",
+   "label": "India government debt / GDP",
+   "category": "economy",
+   "group": "Government",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "GC.DOD.TOTL.GD.ZS",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/GC.DOD.TOTL.GD.ZS?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1990-12-31",
+   "last": "2018-12-31",
+   "count": 29,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": "2018-12-31",
+   "last_value": 46.5225,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": -1.0610999999999962,
+    "y1": -1.0610999999999962,
+    "y3": -3.4421999999999997,
+    "y5": -3.7892999999999972,
+    "y10": -10.7697,
+    "max": -4.260799999999996
+   },
+   "spans": {
+    "ytd": [
+     "2017-12-31",
+     "2018-12-31"
+    ],
+    "y1": [
+     "2017-12-31",
+     "2018-12-31"
+    ],
+    "y3": [
+     "2015-12-31",
+     "2018-12-31"
+    ],
+    "y5": [
+     "2013-12-31",
+     "2018-12-31"
+    ],
+    "y10": [
+     "2008-12-31",
+     "2018-12-31"
+    ],
+    "max": [
+     "1990-12-31",
+     "2018-12-31"
+    ]
+   },
+   "high52": 47.5836,
+   "low52": 46.5225
+  },
+  {
+   "id": "india-gross-savings",
+   "label": "India gross savings / GDP",
+   "category": "economy",
+   "group": "Household",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "NY.GNS.ICTR.ZS",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/NY.GNS.ICTR.ZS?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1975-12-31",
+   "last": "2025-12-31",
+   "count": 51,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 34.6967,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": -0.05299999999999727,
+    "y1": -0.05299999999999727,
+    "y3": 1.3258999999999972,
+    "y5": 6.0169999999999995,
+    "y10": 2.2428000000000026,
+    "max": 21.598599999999998
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1975-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 34.7497,
+   "low52": 34.6967
+  },
+  {
+   "id": "india-exports-gdp",
+   "label": "India exports / GDP",
+   "category": "economy",
+   "group": "Trade",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "NE.EXP.GNFS.ZS",
+    "url": "https://api.worldbank.org/v2/country/IN/indicator/NE.EXP.GNFS.ZS?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-12-31",
+   "last": "2025-12-31",
+   "count": 66,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 22.263,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": 0.19900000000000162,
+    "y1": 0.19900000000000162,
+    "y3": -1.777199999999997,
+    "y5": 3.5805000000000007,
+    "y10": 2.4498000000000033,
+    "max": 17.7998
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1960-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 22.263,
+   "low52": 22.064
+  },
+  {
+   "id": "us-gdp-growth",
+   "label": "US GDP growth",
+   "category": "economy",
+   "group": "Economic growth",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "NY.GDP.MKTP.KD.ZG",
+    "url": "https://api.worldbank.org/v2/country/US/indicator/NY.GDP.MKTP.KD.ZG?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1961-12-31",
+   "last": "2025-12-31",
+   "count": 65,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 2.1614,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": -0.6318000000000001,
+    "y1": -0.6318000000000001,
+    "y3": -0.3628,
+    "y5": 4.2428,
+    "y10": -0.7842000000000002,
+    "max": -0.13859999999999983
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1961-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 2.7932,
+   "low52": 2.1614
+  },
+  {
+   "id": "us-cpi",
+   "label": "US CPI inflation",
+   "category": "economy",
+   "group": "Inflation",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "FP.CPI.TOTL.ZG",
+    "url": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1960-12-31",
+   "last": "2024-12-31",
+   "count": 65,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 2.9495,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": -1.1667999999999998,
+    "y1": -1.1667999999999998,
+    "y3": -1.7483999999999997,
+    "y5": 1.1373,
+    "y10": 1.3273,
+    "max": 1.4915
+   },
+   "spans": {
+    "ytd": [
+     "2023-12-31",
+     "2024-12-31"
+    ],
+    "y1": [
+     "2023-12-31",
+     "2024-12-31"
+    ],
+    "y3": [
+     "2021-12-31",
+     "2024-12-31"
+    ],
+    "y5": [
+     "2019-12-31",
+     "2024-12-31"
+    ],
+    "y10": [
+     "2014-12-31",
+     "2024-12-31"
+    ],
+    "max": [
+     "1960-12-31",
+     "2024-12-31"
+    ]
+   },
+   "high52": 2.9495,
+   "low52": 2.9495
+  },
+  {
+   "id": "us-unemployment",
+   "label": "US unemployment rate",
+   "category": "economy",
+   "group": "Labour market",
+   "unit": "%",
+   "kind": "yield",
+   "frequency": "annual",
+   "provenance": "official-api",
+   "source": {
+    "name": "World Bank Open Data",
+    "symbol": "SL.UEM.TOTL.ZS",
+    "url": "https://api.worldbank.org/v2/country/US/indicator/SL.UEM.TOTL.ZS?format=json&per_page=500",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": null,
+   "first": "1991-12-31",
+   "last": "2025-12-31",
+   "count": 35,
+   "retrievedAt": "2026-08-10T09:33:18.721Z",
+   "staleSince": null,
+   "last_value": 4.198,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": null,
+    "m6": null,
+    "qtd": null,
+    "ytd": 0.17600000000000016,
+    "y1": 0.17600000000000016,
+    "y3": 0.5480000000000005,
+    "y5": -3.8569999999999993,
+    "y10": -1.0819999999999999,
+    "max": -2.6019999999999994
+   },
+   "spans": {
+    "ytd": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y1": [
+     "2024-12-31",
+     "2025-12-31"
+    ],
+    "y3": [
+     "2022-12-31",
+     "2025-12-31"
+    ],
+    "y5": [
+     "2020-12-31",
+     "2025-12-31"
+    ],
+    "y10": [
+     "2015-12-31",
+     "2025-12-31"
+    ],
+    "max": [
+     "1991-12-31",
+     "2025-12-31"
+    ]
+   },
+   "high52": 4.198,
+   "low52": 4.022
   }
  ],
  "absent": [
-  {
-   "id": "lng",
-   "label": "LNG",
-   "category": "commodities",
-   "group": "Energy",
-   "unit": "USD/MMBtu",
-   "absent": "No free daily LNG benchmark. The World Bank Pink Sheet carries a monthly Japan/Europe LNG price — wired in Phase 1."
-  },
   {
    "id": "coking-coal",
    "label": "Coking Coal",
    "category": "commodities",
    "group": "Energy",
    "unit": "USD/t",
-   "absent": "No free daily series. World Bank Pink Sheet publishes it monthly — wired in Phase 1."
-  },
-  {
-   "id": "thermal-coal",
-   "label": "Thermal Coal",
-   "category": "commodities",
-   "group": "Energy",
-   "unit": "USD/t",
-   "absent": "No free daily series. World Bank Pink Sheet publishes Australian thermal coal monthly — wired in Phase 1."
+   "absent": "Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus."
   },
   {
    "id": "electricity-india",
@@ -3382,62 +5404,6 @@
    "group": "Energy",
    "unit": "INR/kWh",
    "absent": "Indian Energy Exchange publishes a daily market snapshot with no API. Scheduled for the Phase 2 India harvest."
-  },
-  {
-   "id": "zinc",
-   "label": "Zinc",
-   "category": "commodities",
-   "group": "Industrial Metals",
-   "unit": "USD/t",
-   "absent": "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1."
-  },
-  {
-   "id": "nickel",
-   "label": "Nickel",
-   "category": "commodities",
-   "group": "Industrial Metals",
-   "unit": "USD/t",
-   "absent": "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1."
-  },
-  {
-   "id": "lead",
-   "label": "Lead",
-   "category": "commodities",
-   "group": "Industrial Metals",
-   "unit": "USD/t",
-   "absent": "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1."
-  },
-  {
-   "id": "tin",
-   "label": "Tin",
-   "category": "commodities",
-   "group": "Industrial Metals",
-   "unit": "USD/t",
-   "absent": "LME pricing is licensed. World Bank Pink Sheet carries it monthly — wired in Phase 1."
-  },
-  {
-   "id": "iron-ore",
-   "label": "Iron Ore",
-   "category": "commodities",
-   "group": "Industrial Metals",
-   "unit": "USD/dmt",
-   "absent": "No free daily series. World Bank Pink Sheet publishes it monthly — wired in Phase 1."
-  },
-  {
-   "id": "palm-oil",
-   "label": "Palm Oil",
-   "category": "commodities",
-   "group": "Agriculture",
-   "unit": "USD/t",
-   "absent": "Traded on Bursa Malaysia (FCPO), not carried by any free daily feed. World Bank Pink Sheet has it monthly — Phase 1."
-  },
-  {
-   "id": "rubber",
-   "label": "Rubber",
-   "category": "commodities",
-   "group": "Agriculture",
-   "unit": "USD/t",
-   "absent": "Traded on OSE/TOCOM, not carried by any free daily feed. World Bank Pink Sheet has it monthly — Phase 1."
   },
   {
    "id": "crb-index",
@@ -3477,7 +5443,15 @@
    "category": "rates",
    "group": "Government Bonds",
    "unit": "%",
-   "absent": "No free daily feed carries the Indian benchmark G-Sec yield. RBI publishes it daily and FRED monthly — both wired in Phase 2."
+   "absent": "No free daily feed carries the Indian benchmark G-Sec yield, and FRED — which publishes it monthly — is not reachable from the harvest environment. RBI publishes it daily on its own site; that is the Phase 2 India harvest."
+  },
+  {
+   "id": "credit-spreads",
+   "label": "Corporate Credit Spreads",
+   "category": "rates",
+   "group": "Credit Markets",
+   "unit": "%",
+   "absent": "ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source."
   }
  ],
  "failed": []

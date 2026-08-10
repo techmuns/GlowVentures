@@ -1135,8 +1135,41 @@ a returns table with 3/5/10-year and max CAGR, 52-week high/low, interactive
 charts, overlay-and-compare, export. Every one of those is a function of a stored
 series. `market_data` returns a FOUR-ROW PREVIEW of any window (see the note atop
 `functions/api/history.js`), so no amount of request-time proxying can answer
-them. The store can, and it needs no token: 37 series, ~296,000 daily closes, the
-S&P's running to 1970.
+them. The store can, and it needs no token: **64 series** across three adapters,
+the S&P's daily closes running to 1970 and the Pink Sheet's commodity prices to
+1960.
+
+| Adapter | Series | Frequency | What it serves |
+| --- | ---: | --- | --- |
+| `yahoo.mjs` | 40 | daily | commodities with a futures contract, all twelve indices, six FX pairs, the US Treasury curve (3M/5Y/10Y/30Y) |
+| `worldbankPink.mjs` | 15 | monthly | what no free daily feed carries — thermal coal, LNG, iron ore, palm oil, rubber, the licensed LME metals (zinc, nickel, lead, tin) and the fertiliser complex |
+| `worldbankApi.mjs` | 9 | annual | India and US growth, inflation, unemployment, government debt, gross savings — the Economy page's live rows |
+
+**The Pink Sheet's URL is versioned per release and is DISCOVERED, not hardcoded.**
+The file sits under a path containing a release hash that changes monthly, so the
+adapter reads the landing page and takes the link the World Bank is currently
+publishing. A hardcoded path keeps returning 200 while serving a frozen file —
+the failure nobody notices until someone asks why a price stopped moving. Columns
+are matched by HEADER TEXT for the same reason `lib/table.mjs` does it on
+statement PDFs: the sheet gains and drops columns between releases, and a
+positional read would keep working while returning a different commodity.
+
+**A horizon shorter than the publication period does not exist.** The Pink Sheet
+is monthly; resolving a "1 day" return by nearest-earlier observation returns
+LAST MONTH's price under a column headed 1D. `computeReturns` takes the series'
+frequency and leaves those cells absent — the same rule as "a horizon the series
+cannot reach is null", applied at the other end of the scale. Annual series
+likewise carry no 1D, 1W, 1M or QTD.
+
+**FRED is unreachable from the harvest environment** (connection refused, not a
+proxy fix), which is why the US 10-year comes from CBOE's `^TNX` via Yahoo rather
+than `DGS10`, and why ICE BofA credit spreads are declared absent rather than
+wired. If the runner ever gains FRED access, both are a catalogue entry away.
+
+**A band exists to catch the SOURCE changing, not to second-guess history.** The
+first zinc band started at $200/t and blocked eighteen real observations from the
+1960s, when zinc genuinely traded near $180. The gate behaved correctly against a
+band that was wrong; bands are now set from each series' own observed range.
 
 **Year chunks, because git stores whole blobs.** A 26-year daily series rewritten
 nightly would add megabytes of objects a day, forever. Chunked by year a run
@@ -1186,6 +1219,9 @@ upstream reports is a finding.
 **A series the spec asks for and nothing serves is DECLARED ABSENT**, with the
 reason and the phase that will fill it, and rendered as such — thermal coal, iron
 ore, the LME metals, palm oil, rubber, the CRB, the Baltic Dry, India's 10-year.
+As of Phase 1 eight remain: coking coal (the Pink Sheet publishes thermal only),
+Indian spot electricity, the CRB, the Baltic Dry, container and rail freight,
+India's 10-year G-Sec and corporate credit spreads.
 The Bloomberg Commodity Index is carried in place of the CRB **under its own
 name**, because it is a different index and presenting it as CRB would be a
 fabrication with a badge on it.

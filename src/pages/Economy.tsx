@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   TrendingUp, Percent, Users, Landmark, Building, Home, PiggyBank, ShoppingCart, BarChart3, CalendarClock, Sparkles,
 } from "lucide-react";
@@ -6,22 +6,34 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { PreviewBadge, PreviewNum } from "@/components/Preview";
-import { fetchEconomy, fmtEcon, econChange, type EconFeed } from "@/lib/economy";
+import { SeriesChart } from "@/components/SeriesChart";
+import {
+  fetchSeriesIndex, fetchSeriesPoints, fmtReturn, returnTone,
+  type SeriesIndex, type SeriesEntry, type Point,
+} from "@/lib/series";
 
 // LAYER 2 · B–H (FOOS spec) — Macro economic indicators, Fixed income & credit,
-// Banking, Housing, Household, Consumption, Capital markets. LIVE for the handful
-// of India series a free source (World Bank, latest annual) publishes — growth,
-// inflation, government debt, unemployment; the rest stay illustrative until an
-// economic-data feed is added, since no free source publishes them at the
-// frequency the spec asks for.
+// Banking, Housing, Household, Consumption, Capital markets.
+//
+// THE LIVE ROWS NOW COME FROM THE SERIES STORE, NOT A LATEST-VALUE CALL.
+// This page used to read `/api/economy`, which returns an indicator's newest
+// observation and its predecessor: enough to fill a tile, useless for the chart
+// and the history the spec asks for. The same World Bank indicators are now
+// harvested into `public/series/` with their FULL run — India's CPI goes back to
+// 1960 — so a row carries sixty-five years behind it and can be charted.
+//
+// These are ANNUAL and LAGGED, and the page says so rather than implying they
+// are current. They are also RATES, so the change is in percentage points; a
+// "percentage return" on an inflation rate is the same category error as one on
+// a bond yield.
 
-// `code` maps a row to a /api/economy indicator; rows without one stay preview.
-type Row = { name: string; value: string; chg: string; code?: string };
+// `seriesId` maps a row to a harvested series; rows without one stay preview.
+type Row = { name: string; value: string; chg: string; seriesId?: string };
 
 const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Economic growth", icon: TrendingUp, rows: [
-      { name: "GDP (YoY)", value: "6.7%", chg: "+0.3pp", code: "gdp_growth" },
+      { name: "GDP growth (YoY)", value: "6.7%", chg: "+0.3pp", seriesId: "india-gdp-growth" },
       { name: "Industrial Production", value: "5.2%", chg: "+0.6pp" },
       { name: "Manufacturing PMI", value: "58.1", chg: "+1.2" },
       { name: "Capacity Utilisation", value: "76.4%", chg: "+0.8pp" },
@@ -29,7 +41,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Inflation", icon: Percent, rows: [
-      { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp", code: "cpi" },
+      { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp", seriesId: "india-cpi" },
       { name: "Core CPI", value: "3.9%", chg: "-0.1pp" },
       { name: "WPI", value: "2.6%", chg: "+0.4pp" },
       { name: "Rural / Urban CPI", value: "5.1 / 4.5%", chg: "-0.1pp" },
@@ -37,7 +49,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Labour market", icon: Users, rows: [
-      { name: "Unemployment Rate", value: "7.1%", chg: "-0.3pp", code: "unemployment" },
+      { name: "Unemployment Rate", value: "7.1%", chg: "-0.3pp", seriesId: "india-unemployment" },
       { name: "Labour Participation", value: "42.4%", chg: "+0.2pp" },
       { name: "US Non-Farm Payrolls", value: "206k", chg: "-38k" },
       { name: "Wage Growth", value: "4.1%", chg: "+0.2pp" },
@@ -46,7 +58,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Government", icon: Landmark, rows: [
       { name: "Fiscal Deficit (% GDP)", value: "5.1%", chg: "-0.2pp" },
-      { name: "Govt Debt / GDP", value: "81.2%", chg: "+0.4pp", code: "govt_debt_gdp" },
+      { name: "Govt Debt / GDP", value: "81.2%", chg: "+0.4pp", seriesId: "india-govt-debt-gdp" },
       { name: "GST Collections", value: "₹1.82 L Cr", chg: "+8.4%" },
       { name: "E-way Bills", value: "103.2 mn", chg: "+6.1%" },
     ],
@@ -54,7 +66,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Fixed income & credit", icon: BarChart3, rows: [
       { name: "India 10Y", value: "6.98%", chg: "-4bp" },
-      { name: "US 10Y", value: "4.28%", chg: "+6bp" },
+      { name: "US 10Y", value: "4.28%", chg: "+6bp", seriesId: "us-10y" },
       { name: "AAA Credit Spread", value: "62bp", chg: "+3bp" },
       { name: "Yield Curve (10Y–2Y)", value: "+18bp", chg: "+2bp" },
     ],
@@ -77,7 +89,7 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Household", icon: PiggyBank, rows: [
-      { name: "Household Debt / GDP", value: "40.1%", chg: "+0.5pp" },
+      { name: "Gross savings / GDP", value: "40.1%", chg: "+0.5pp", seriesId: "india-gross-savings" },
       { name: "Financial Savings", value: "5.3% GDP", chg: "-0.2pp" },
       { name: "Physical Savings", value: "12.1% GDP", chg: "+0.3pp" },
       { name: "Equity in Asset Mix", value: "6.4%", chg: "+0.4pp" },
@@ -109,16 +121,35 @@ const RELEASES = [
 ];
 
 export function Economy() {
-  const [econ, setEcon] = useState<EconFeed | undefined>(undefined);
+  const [index, setIndex] = useState<SeriesIndex | null | undefined>(undefined);
+  const [charted, setCharted] = useState<string | null>(null);
+  const [points, setPoints] = useState<Record<string, Point[]>>({});
+
   useEffect(() => {
     let alive = true;
-    fetchEconomy().then((f) => { if (alive) setEcon(f); });
+    fetchSeriesIndex().then((i) => { if (alive) setIndex(i); });
     return () => { alive = false; };
   }, []);
 
-  const liveCount = econ?.ok
-    ? CATEGORIES.reduce((n, c) => n + c.rows.filter((r) => r.code && econ.indicators[r.code]).length, 0)
-    : 0;
+  /** Harvested series, by id — the row lookup for every live figure below. */
+  const byId = useMemo(() => {
+    const m = new Map<string, SeriesEntry>();
+    for (const s of index?.series ?? []) m.set(s.id, s);
+    return m;
+  }, [index]);
+
+  const chartedSeries = charted ? byId.get(charted) ?? null : null;
+  useEffect(() => {
+    if (!chartedSeries || points[chartedSeries.id]) return;
+    let alive = true;
+    fetchSeriesPoints(chartedSeries).then((p) => {
+      if (alive) setPoints((prev) => ({ ...prev, [chartedSeries.id]: p }));
+    });
+    return () => { alive = false; };
+  }, [chartedSeries, points]);
+
+  const liveCount = CATEGORIES.reduce(
+    (n, c) => n + c.rows.filter((r) => r.seriesId && byId.has(r.seriesId)).length, 0);
 
   return (
     <div>
@@ -127,20 +158,22 @@ export function Economy() {
         title="Economy & Macro Indicators"
         subtitle="Growth, inflation, labour, government, fixed income, banking, housing, household, consumption and capital-market series — with a release calendar and AI commentary."
         right={liveCount > 0
-          ? <Pill tone="gain">{liveCount} live · World Bank</Pill>
+          ? <Pill tone="gain">{liveCount} live · series store</Pill>
           : <PreviewBadge />}
       />
 
       <div className="mb-5 rounded-lg border border-ink-700 bg-ink-800/40 px-4 py-3 text-[12px] leading-relaxed text-slate-400">
         {liveCount > 0 ? (
-          <>Growth, inflation, government debt and unemployment are <span className="text-gain">live</span> from the
-          World Bank (latest annual figure, labelled with its year). The remaining series — fixed income & credit,
-          banking, housing, household, consumption and capital markets — need a dedicated economic-data feed the
-          current API does not include, and stay illustrative.</>
+          <>Growth, inflation, unemployment, government debt, gross savings and the US 10-year are{" "}
+          <span className="text-gain">live</span> from the harvested series store — each with its full history
+          (India's CPI runs from 1960), so any of them can be charted by clicking the row. The World Bank series are
+          ANNUAL and lagged; the observation year is shown on every figure. The remaining rows — the rest of fixed
+          income, banking, housing, household, consumption and capital markets — come from Indian statistical sources
+          with no API and arrive with the Phase 2 India harvest; they stay illustrative until then.</>
         ) : (
-          <>A handful of India series (growth, inflation, government debt, unemployment) go live from the World Bank
-          when the edge function is reachable; the rest need a dedicated economic-data feed the current API does not
-          include. All figures below are illustrative in this environment.</>
+          <>The series store did not load. Every live figure on this page is read from{" "}
+          <span className="mono">public/series/</span>, which is committed and served statically — so this is a
+          deployment problem rather than a missing feed. All figures below are illustrative until it loads.</>
         )}
       </div>
 
@@ -175,31 +208,70 @@ export function Economy() {
         </div>
       </Card>
 
+      {/* Chart — opens when a live indicator row is clicked. A rate series is a
+          BAR chart on purpose: consecutive annual rates are separate readings,
+          and joining them with a line implies a path between two yearly figures
+          that nothing measured. */}
+      {chartedSeries && (
+        <Card className="mb-5"
+          title={<span className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-champagne-400" />{chartedSeries.label}</span>}
+          subtitle={`${chartedSeries.unit} · ${chartedSeries.source.name} · ${chartedSeries.count} ${chartedSeries.frequency} observations, ${chartedSeries.first.slice(0, 4)} to ${chartedSeries.last.slice(0, 4)}`}
+          right={
+            <button onClick={() => setCharted(null)}
+              className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[11px] text-slate-400 hover:bg-ink-700/60">
+              Close
+            </button>
+          }>
+          {points[chartedSeries.id]?.length
+            ? <SeriesChart series={[{ meta: chartedSeries, points: points[chartedSeries.id] }]} type="bar" height={260} />
+            : <div className="grid h-[260px] place-items-center text-[12px] text-slate-500">Loading observations…</div>}
+          {chartedSeries.staleSince && (
+            <p className="mt-2 text-[11px] leading-relaxed text-amber-400/90">
+              The source has published nothing since {chartedSeries.staleSince.slice(0, 4)}. The figure shown is that
+              year's reading, not an estimate of today.
+            </p>
+          )}
+        </Card>
+      )}
+
       {/* Indicator grid */}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 items-start">
         {CATEGORIES.map((cat) => {
-          const catLive = econ?.ok ? cat.rows.filter((r) => r.code && econ.indicators[r.code!]).length : 0;
+          const catLive = cat.rows.filter((r) => r.seriesId && byId.has(r.seriesId)).length;
           const catAllPreview = catLive === 0;
           return (
           <Card key={cat.title} className={catAllPreview ? "preview-hatch" : undefined} title={<span className="flex items-center gap-2 text-[13px]"><cat.icon className="h-4 w-4 text-slate-500" />{cat.title}</span>} right={catLive > 0 ? <Pill tone="gain">{catLive} live</Pill> : <PreviewBadge />}>
             <ul className="space-y-2">
               {cat.rows.map((r) => {
-                const ind = r.code && econ?.ok ? econ.indicators[r.code] : undefined;
-                if (ind) {
-                  const chg = econChange(ind);
+                const e = r.seriesId ? byId.get(r.seriesId) : undefined;
+                if (e) {
+                  // The year-on-year move, in percentage points — these are all
+                  // rates, so a ratio "return" on them would be meaningless.
+                  const yoy = e.returns.y1;
                   return (
-                    <li key={r.name} className="flex items-center justify-between gap-2 text-[12px]">
-                      <span className="text-slate-300">{r.name}</span>
-                      <span className="flex items-center gap-1.5 shrink-0">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gain" title={`Live · World Bank ${ind.year}`} />
-                        <span className="tabular-nums font-medium text-slate-200">{fmtEcon(ind.value)}</span>
-                        {chg && <span className="text-[10px] text-slate-500" title={`vs ${ind.prevYear}`}>{chg}</span>}
-                      </span>
+                    <li key={r.name}>
+                      <button onClick={() => setCharted(e.id)}
+                        className="flex w-full items-center justify-between gap-2 rounded px-1 py-0.5 text-left text-[12px] transition-colors hover:bg-ink-700/40">
+                        <span className="text-slate-300">{r.name}</span>
+                        <span className="flex items-center gap-1.5 shrink-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-gain"
+                            title={`Live · ${e.source.name} · ${e.frequency} · observation dated ${e.last}`} />
+                          <span className="tabular-nums font-medium text-slate-200">
+                            {e.last_value.toFixed(1)}{e.unit === "%" ? "%" : ""}
+                          </span>
+                          <span className={`text-[10px] ${returnTone(yoy)}`} title={`Change over one year, to ${e.last}`}>
+                            {fmtReturn(yoy, e.kind)}
+                          </span>
+                        </span>
+                      </button>
+                      <div className="px-1 text-[9.5px] text-slate-600">
+                        {e.last.slice(0, 4)}{e.staleSince ? " · source has not updated since" : ""}
+                      </div>
                     </li>
                   );
                 }
                 return (
-                  <li key={r.name} className="flex items-center justify-between gap-2 text-[12px]">
+                  <li key={r.name} className="flex items-center justify-between gap-2 px-1 text-[12px]">
                     <span className="text-slate-400">{r.name}</span>
                     <span className="flex items-center gap-1.5 shrink-0">
                       <PreviewNum>{r.value}</PreviewNum>
