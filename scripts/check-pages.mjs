@@ -130,6 +130,15 @@ const INVARIANTS = {
   exposure: [
     ["sector GAP is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
   ],
+  // Phase 4: Industry Research composes the harvested store into per-industry
+  // input-cost dashboards. The economics half must be LIVE (real series with
+  // sources), and the structure half must be NAMED as absent rather than shown
+  // as illustrative numbers — the state the page was in before.
+  industry: [
+    ["input costs are live from the series store", (t) => /live inputs/i.test(t) && /input & output prices/i.test(t)],
+    ["structure gaps are named, not drawn", (t) => /asked for, not yet sourced/i.test(t)],
+    ["sector match is not passed off as an industry classification", (t) => /GICS sector/i.test(t)],
+  ],
   // Phase 3: the company page draws a real price chart and a returns table from
   // /api/prices. In this headless run the edge function does not exist, so the
   // card must degrade to a NAMED absence — never to the old "a chart is

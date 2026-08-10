@@ -1117,6 +1117,33 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
+## Stage 9c — Industry Research, composed from the store
+
+The spec splits an industry dashboard in two, and only one half is sourceable.
+**INDUSTRY ECONOMICS** — raw material prices, input cost trends — is entirely
+live, because Phases 0–2 harvested exactly those inputs: coal, iron ore, HRC,
+the base metals, crude, gas, spot power and the fertiliser complex. Each of the
+seven industries declares which store series ARE its input and output prices,
+with the role each one plays, and the page renders them with their own returns
+and a rebased basket chart.
+
+**INDUSTRY STRUCTURE** — size, capacity, utilisation, order books, realisations —
+is named as absent with its real reason per industry, not drawn. CEA, the
+Ministry of Coal and the JPC publish capacity and production monthly, but as PDF
+and XLS behind dynamic selectors: a reader per source, not a URL.
+
+**THE BOOK CARRIES SECTORS, NOT INDUSTRIES.** `Position.sector` is GICS
+("Materials", "Utilities"); nothing in the archive says "Cement". So the exposure
+panel names the SECTORS it matched and says plainly that these are holdings in a
+related sector — never that those companies operate in the industry above.
+Asserting an industry no statement stated is a fabricated classification, the
+same failure class as an index-cycled valuation method.
+
+Where a series is a global benchmark rather than the Indian price — US Midwest
+HRC, seaborne coal, international urea — the row says so and the gap is listed
+in the absent card. A benchmark standing in silently for a domestic price is the
+kind of substitution a reader would never detect.
+
 ## Stage 9b — company price history (`/api/prices`)
 
 **Store what is read in aggregate; PROXY what is read one at a time.** Macro

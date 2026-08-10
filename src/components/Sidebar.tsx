@@ -33,7 +33,7 @@ const NAV = [
   { to: "/watchlist", label: "Watchlist & Targets", icon: Star, group: "Research" },
   { to: "/macro", label: "Macro Research", icon: Globe, group: "Research" },
   { to: "/economy", label: "Economy & Macro", icon: TrendingUp, group: "Research" },
-  { to: "/industry", label: "Industry Research", icon: Factory, group: "Research", preview: true },
+  { to: "/industry", label: "Industry Research", icon: Factory, group: "Research" },
   { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor", preview: true },
   { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor", preview: true },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },

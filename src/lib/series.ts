@@ -89,6 +89,27 @@ export async function fetchSeriesIndex(): Promise<SeriesIndex | null> {
  * in coverage is a gap, not an error.
  */
 export async function fetchSeriesPoints(meta: SeriesMeta, fromYear?: number): Promise<Point[]> {
+  // ONLY DAILY SERIES ARE CHUNKED BY YEAR. A monthly or annual series is small
+  // enough to live in one `series.json`, which is what the store writes for it
+  // (see `writeSeries` in scripts/harvest/lib/store.mjs). Asking for year chunks
+  // regardless returned 404 for every one of them and resolved to an EMPTY
+  // series — so all fifteen Pink Sheet commodities and all nine World Bank
+  // indicators rendered a blank chart while their returns table, which is served
+  // from the manifest, looked perfectly healthy. A chart that quietly draws
+  // nothing is worse than one that says it has nothing.
+  if (meta.frequency !== "daily") {
+    try {
+      const r = await fetch(`${BASE}/${meta.id}/series.json`);
+      if (!r.ok) return [];
+      const c = (await r.json()) as { t: string[]; v: number[] };
+      const out: Point[] = [];
+      for (let i = 0; i < (c?.t?.length ?? 0); i++) out.push({ t: c.t[i], v: c.v[i] });
+      return out;
+    } catch {
+      return [];
+    }
+  }
+
   const firstYear = Number(meta.first.slice(0, 4));
   const lastYear = Number(meta.last.slice(0, 4));
   const start = Math.max(firstYear, fromYear ?? firstYear);
