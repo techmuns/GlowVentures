@@ -1117,6 +1117,31 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
+## Stage 9b — company price history (`/api/prices`)
+
+**Store what is read in aggregate; PROXY what is read one at a time.** Macro
+Research shows forty series in one table, so it reads the harvested store.
+A COMPANY page shows one company, and one edge-cached call answers it
+completely — committing 140 securities' daily history would add megabytes of git
+objects every trading day, forever, to serve a page that needs one of them.
+
+`functions/api/prices.js` returns a security's whole daily close history from
+Yahoo's chart endpoint plus the spec's returns table. It replaces
+`functions/api/history.js` + `src/lib/returnsTable.ts`, which asked muns
+`market_data` ONE QUESTION PER HORIZON — twelve upstream calls per company —
+because that endpoint returns a four-row preview and never a series. The company
+page consequently had no chart at all, and said so. It has one now: Aurobindo
+comes back with 7,671 closes from 1996.
+
+**`computeReturns` lives in `shared/seriesReturns.mjs`** and is imported by BOTH
+the harvester and this function. Two implementations of "what is a 10-year CAGR
+when the listing is two years old" is how one page ends up disagreeing with
+another; the answer (absent, never a shorter window relabelled) is written once.
+
+**Only settled sessions, here too.** Today's in-progress bar is excluded, so a
+1-day return is never measured against a price that was never a close. The live
+price is a separate measurement and the page labels it as one.
+
 ## Stage 9 — the macro series store (`npm run harvest`)
 
 ```

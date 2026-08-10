@@ -280,12 +280,7 @@ export function StockInfo() {
         </div>
       </Card>
 
-      <ReturnsTable
-        ticker={sym}
-        price={rows[0]?.currentPrice ?? null}
-        priceIsLive={live}
-        asOf={rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf}
-      />
+      <ReturnsTable ticker={sym} name={name} />
 
       <InvestmentTools
         securityKey={securityKey}

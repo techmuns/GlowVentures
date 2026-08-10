@@ -13,7 +13,8 @@ import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull } from "@/lib
 import { symbolFor } from "@/lib/quotes";
 import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
-import { fetchReturnsTable, type ReturnsTable } from "@/lib/returnsTable";
+import { fetchPriceHistory, type PriceResult } from "@/lib/prices";
+import { HORIZON_COLS, fmtReturn } from "@/lib/series";
 import { readWatchlist, upsidePct } from "@/lib/watchlist";
 import { accountIndex } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
@@ -31,7 +32,8 @@ import type { Position } from "@/lib/types";
 //   Price, market cap, 52-week range        the quote feed — a verified shape
 //   Target price, upside                    the family's own view (local)
 //   Ratios (PE, PB, EV/EBITDA, ROE, ROCE…)  muns ratio_source — PROSE, verbatim
-//   Returns over ten horizons               muns market_data, one close per period
+//   Returns over twelve horizons            /api/prices — the security's own
+//                                           settled closes, computed at the edge
 //
 // The ratio block is shown as the upstream wrote it rather than parsed into a
 // grid. That is a deliberate limit: the endpoint returns text/plain with no
@@ -54,7 +56,7 @@ export function CompareCompanies() {
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
   const [ratios, setRatios] = useState<Ratios | RatiosError | null | undefined>(undefined);
-  const [returns, setReturns] = useState<Record<string, ReturnsTable | null>>({});
+  const [returns, setReturns] = useState<Record<string, PriceResult>>({});
   const watchlist = useMemo(() => readWatchlist(), []);
   // Per-account report dates — a statement mark closes on its own account's date.
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -103,31 +105,25 @@ export function CompareCompanies() {
     return () => { alive = false; };
   }, [tickers.join(",")]);
 
-  // Returns: one call PER company. Each is twelve dated closes, and the history
-  // endpoint caps a single request at sixteen dates, so four companies cannot
-  // share one call.
+  // Returns: ONE call per company against `/api/prices`, which returns the whole
+  // daily close history and the returns table computed from it at the edge.
   //
-  // EACH RETURN CLOSES ON THE DATE ITS PRICE WAS MEASURED. This omitted the
-  // as-of argument entirely, so `fetchReturnsTable` fell back to its
-  // `new Date()` default and measured every horizon to TODAY — including for a
-  // company whose `currentPrice` is still the statement mark, because the feed
-  // never resolved it. `ReturnsTable` on the company page already states why
-  // that is wrong: closing a return against today using a month-old mark reports
-  // the market's move over a window the price never covered. Same feed, same
-  // holdings, two different rules, and this page was on the wrong one.
+  // This replaces a per-DATE lookup loop. The old path asked the muns
+  // `market_data` endpoint one question per horizon — twelve upstream calls per
+  // company, capped at sixteen dates — because that endpoint returns a four-row
+  // preview of a window rather than a series. It also had to be told which date
+  // to close against, and got it wrong for a while: it measured every horizon to
+  // TODAY even for a company whose price was still a month-old statement mark.
+  //
+  // That whole class of bug is gone here. The edge computes every horizon from
+  // the security's own settled closes, so there is no "as of" to pass and no way
+  // for two pages to disagree — the company page reads the identical payload.
   useEffect(() => {
     let alive = true;
     for (const c of chosen) {
-      const row = c.rows[0];
-      const price = row?.currentPrice ?? null;
-      if (!c.symbol || price === null || !(price > 0)) continue;
+      if (!c.symbol) continue;
       if (c.securityKey in returns) continue;
-      // A statement mark closes on the account's own report date; a live price
-      // closes now.
-      const to = row?.live
-        ? new Date()
-        : new Date((accIdx.get(row!.accountId)?.asOf ?? portfolio!.asOf) + "T00:00:00Z");
-      fetchReturnsTable(c.symbol, price, to).then((t) => {
+      fetchPriceHistory(c.symbol).then((t) => {
         if (alive) setReturns((r) => ({ ...r, [c.securityKey]: t }));
       });
     }
@@ -303,18 +299,29 @@ export function CompareCompanies() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {(returns[chosen[0].securityKey]?.rows ?? []).map((row) => (
-                  <tr key={row.key}>
-                    <th scope="row" className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-medium text-slate-400">{row.label}</th>
+                {HORIZON_COLS.map((col) => (
+                  <tr key={col.key}>
+                    <th scope="row" className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-medium text-slate-400">
+                      {col.label}{col.annualised ? " (CAGR)" : ""}
+                    </th>
                     {chosen.map((c) => {
                       const t = returns[c.securityKey];
                       if (t === undefined) return <td key={c.securityKey} className="px-4 py-2 text-right text-[11px] text-slate-600">…</td>;
-                      const r = t?.rows.find((x) => x.key === row.key);
+                      if (!t.ok) {
+                        return (
+                          <td key={c.securityKey} className="px-4 py-2 text-right">
+                            <AbsentCell reason={c.symbol ? `no price history resolved for this company (${t.reason})` : "no NSE symbol, so no closes to measure against"} />
+                          </td>
+                        );
+                      }
+                      const v = t.returns[col.key];
+                      const span = t.spans[col.key];
                       return (
-                        <td key={c.securityKey} className={`px-4 py-2 text-right mono ${r?.pct == null ? "" : changeColor(r.pct)}`}>
-                          {r?.pct == null
-                            ? <AbsentCell reason={r?.reason ?? (c.symbol ? "no closes resolved for this company" : "no NSE symbol, so no closes to measure against")} />
-                            : fmtPct(r.pct, { sign: true, decimals: 1 })}
+                        <td key={c.securityKey} className={`px-4 py-2 text-right mono ${v == null ? "" : changeColor(v)}`}
+                          title={span ? `${span[0]} → ${span[1]}` : undefined}>
+                          {v == null
+                            ? <AbsentCell reason={`this listing only goes back to ${t.first}, so the ${col.label} horizon cannot be measured — it is absent rather than computed over a shorter window`} />
+                            : fmtReturn(v, "price")}
                         </td>
                       );
                     })}
@@ -323,12 +330,11 @@ export function CompareCompanies() {
               </tbody>
             </table>
           </div>
-          {!returns[chosen[0].securityKey] && (
-            <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] text-slate-500">
-              Resolving closes — or none could be resolved for the first selection, in which case the
-              rows above stay empty rather than showing another company’s periods.
-            </p>
-          )}
+          <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
+            Every horizon is measured from each company’s OWN settled closes, to its own last trading day — so the
+            columns are comparable and a young listing simply has no long horizon rather than a since-listing figure
+            standing in for one. 3Y/5Y/10Y/Max are annualised.
+          </p>
         </Card>
       )}
 

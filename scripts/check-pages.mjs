@@ -76,7 +76,7 @@ const ROUTES = [
 // the web font CDN is unreachable, and /api/* are Cloudflare Pages Functions that
 // only exist on the deployed site. Neither is an application error, and folding
 // them in would bury the ones that are.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|history|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|prices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -129,6 +129,14 @@ const INVARIANTS = {
   // as excluded rather than folded in as one giant "Unclassified" slice.
   exposure: [
     ["sector GAP is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
+  ],
+  // Phase 3: the company page draws a real price chart and a returns table from
+  // /api/prices. In this headless run the edge function does not exist, so the
+  // card must degrade to a NAMED absence — never to the old "a chart is
+  // impossible" claim, which stopped being true when the series arrived.
+  stock: [
+    ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
+    ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
   ],
   // Phase 0: Macro Research renders from the committed series store, not a live
   // API — so it is live in this headless run with no token and no network. If

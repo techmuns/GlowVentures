@@ -1,142 +1,170 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { LineChart as LineIcon, AreaChart as AreaIcon, BarChart3 } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { AbsentCell, AbsentSection } from "@/components/Absent";
-import { fmtPct, changeColor, fmtDate } from "@/lib/format";
-import { fetchReturnsTable, type ReturnsTable as Table } from "@/lib/returnsTable";
+import { AbsentSection } from "@/components/Absent";
+import { SeriesChart, type ChartType } from "@/components/SeriesChart";
+import { changeColor } from "@/lib/format";
+import { fetchPriceHistory, toPoints, priceErrorReason, type PriceHistory } from "@/lib/prices";
+import { HORIZON_COLS, RANGES, fmtLevel, fmtReturn, type RangeKey, type SeriesMeta, type Point } from "@/lib/series";
 
-// The client spec's RETURNS TABLE for one security.
+// THE SPEC'S RETURNS TABLE AND PRICE CHART, for one security.
 //
-// Each row is an independent measurement: a close the feed resolved, the price
-// today, and the return between them. A horizon the feed cannot answer shows a
-// dash and says why — it never falls back to a nearer date, which would label a
-// nine-month return as a one-year one.
+//   1 Day · 1 Week · 1 Month · 3M · 6M · QTD · YTD · 1 Year · 3 / 5 / 10 Year
+//   CAGR · Max available CAGR · 52-week high and low
 //
-// The spec also asks for an interactive price chart over adjustable periods. It
-// is not here and the card says so rather than drawing one: the muns
-// `market_data` endpoint returns a four-row PREVIEW of any window, never the
-// series, so there is no path to plot. A line drawn through the ten closes below
-// would look like a price history and be nothing of the sort.
+// WHAT CHANGED, AND WHY THE CHART EXISTS NOW
+// ──────────────────────────────────────────
+// This card used to say a chart was impossible, and it was right at the time:
+// the muns `market_data` endpoint returns a four-row PREVIEW of any window and
+// never the series, so the table was assembled from ten separate lookups and
+// there was nothing to plot. `/api/prices` returns the whole daily history in
+// one call — Aurobindo comes back with 7,672 closes from 1996 — so the chart the
+// spec asks for is now drawn from real closes, and the max-available CAGR is
+// measured from the security's actual first trading day rather than a guess.
+//
+// EVERY HORIZON IS STILL INDEPENDENT. A horizon the listing does not reach back
+// to renders `—`, never a nearer date silently relabelled: a company listed in
+// 2023 has no 10-year CAGR, and showing its since-listing return in that column
+// would be a different measurement wearing the wrong name. The rule is enforced
+// once, in `shared/seriesReturns.mjs`, shared with the macro harvester.
 
-export function ReturnsTable({ ticker, price, priceIsLive, asOf }: {
+const CHART_TYPES: { key: ChartType; icon: typeof LineIcon; label: string }[] = [
+  { key: "line", icon: LineIcon, label: "Line" },
+  { key: "area", icon: AreaIcon, label: "Area" },
+  { key: "bar", icon: BarChart3, label: "Bar" },
+];
+
+export function ReturnsTable({ ticker, name }: {
   /** NSE symbol. Null when the security has none — the card says so. */
   ticker: string | null;
-  /** The price returns are measured TO. */
-  price: number | null;
-  /** True when `price` came from the live feed rather than a statement mark. */
-  priceIsLive: boolean;
-  /** The book's as-of date, used when the price is a statement mark. */
-  asOf: string;
+  /** Display name, for the chart legend. */
+  name: string;
 }) {
-  const [table, setTable] = useState<Table | null | undefined>(undefined);
+  const [data, setData] = useState<PriceHistory | { ok: false; reason: string } | null | undefined>(undefined);
+  const [range, setRange] = useState<RangeKey>("5Y");
+  const [chartType, setChartType] = useState<ChartType>("area");
 
   useEffect(() => {
-    if (!ticker || price === null || !(price > 0)) { setTable(null); return; }
     let alive = true;
-    setTable(undefined);
-    // Measured to TODAY on a live price and to the book's as-of date on a
-    // statement mark. Closing a return against today using a month-old mark
-    // would report the market's move over a window the price never covered.
-    const to = priceIsLive ? new Date() : new Date(asOf + "T00:00:00Z");
-    fetchReturnsTable(ticker, price, to).then((r) => { if (alive) setTable(r); });
+    setData(undefined);
+    if (!ticker) { setData(null); return; }
+    fetchPriceHistory(ticker).then((r) => { if (alive) setData(r); });
     return () => { alive = false; };
-  }, [ticker, price, priceIsLive, asOf]);
+  }, [ticker]);
 
-  const basis = priceIsLive ? "the live price" : `the statement mark of ${fmtDate(asOf)}`;
+  const live = data && data.ok ? data : null;
 
-  if (!ticker) {
+  // A synthetic meta so the shared chart component can render this the same way
+  // it renders a macro series — one chart implementation, not two.
+  const meta: SeriesMeta | null = useMemo(() => live && ({
+    id: live.symbol, label: name, category: "company", group: "",
+    unit: live.currency === "INR" ? "INR" : live.currency ?? "index",
+    kind: "price", frequency: "daily", provenance: "official-api",
+    source: { name: live.source, symbol: live.symbol, url: `https://finance.yahoo.com/quote/${encodeURIComponent(live.symbol)}`, exchange: live.exchange, upstreamCurrency: live.currency },
+    note: null, first: live.first, last: live.last, count: live.count,
+    retrievedAt: "", staleSince: null,
+  }), [live, name]);
+
+  const points: Point[] = useMemo(() => {
+    if (!live || !meta) return [];
+    const all = toPoints(live);
+    const days = RANGES.find((r) => r.key === range)?.days;
+    if (days == null) return all;
+    const cutoff = Date.parse(live.last + "T00:00:00Z") - days * 86400000;
+    return all.filter((p) => Date.parse(p.t + "T00:00:00Z") >= cutoff);
+  }, [live, meta, range]);
+
+  if (data === undefined) {
+    return <Card className="mt-5" title="Price history & returns" subtitle="Loading closes…"><div className="h-56" /></Card>;
+  }
+
+  if (!live) {
+    const reason = priceErrorReason(
+      (data as { ok: false; reason: string }) ?? { ok: false, reason: "no symbol" },
+      !!ticker,
+    );
     return (
-      <Card className="mt-5" title="Returns">
-        <AbsentSection
-          what="No NSE symbol is mapped to this security"
-          needs="Returns are measured against exchange closes, so a security with no listing — cash, a receivable, a fund unit — has none to measure against. See docs/BOOK-REPORT.md for the securities in that position."
-        />
+      <Card className="mt-5" title="Price history & returns">
+        <AbsentSection what="No price history for this security" needs={reason} />
       </Card>
     );
   }
-  if (price === null || !(price > 0)) {
-    return (
-      <Card className="mt-5" title="Returns">
-        <AbsentSection
-          what="No price to measure returns to"
-          needs="This holding is marked at a total value with no per-unit price — 360 ONE reports its AIF that way. A return needs a price on both ends."
-        />
-      </Card>
-    );
-  }
+
+  const unit = meta!.unit;
 
   return (
-    <Card
-      className="mt-5"
-      title="Returns"
-      subtitle={<>Measured to {basis}. Each row is one close the feed resolved — nothing between them is drawn or assumed.</>}
-      right={<Pill>{ticker}</Pill>}
-      pad={false}
-    >
-      {table === undefined && (
-        <div className="px-5 py-8 text-center text-xs text-slate-500">Resolving closes…</div>
-      )}
-      {table === null && (
-        <div className="px-5 py-6">
-          <AbsentSection
-            what="The price-history service didn't answer"
-            needs="Returns come from the muns market_data endpoint. When it is unreachable this card stays empty rather than showing a return computed from a price we don't have."
-          />
+    <Card className="mt-5"
+      title="Price history & returns"
+      subtitle={`${live.count.toLocaleString()} daily closes from ${live.first} · ${live.source} (${live.symbol})${live.exchange ? ` · ${live.exchange}` : ""}`}
+      right={
+        <div className="flex flex-wrap items-center gap-1">
+          {CHART_TYPES.map((t) => (
+            <button key={t.key} onClick={() => setChartType(t.key)} title={t.label}
+              className={`rounded-md border px-2 py-1 transition-colors ${chartType === t.key
+                ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
+                : "border-ink-700 bg-ink-800 text-slate-400 hover:bg-ink-700/60"}`}>
+              <t.icon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+          <span className="mx-1 h-4 w-px bg-ink-700" />
+          {RANGES.map((r) => (
+            <button key={r.key} onClick={() => setRange(r.key)}
+              className={`rounded-md border px-2 py-1 text-[11px] font-medium transition-colors ${range === r.key
+                ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
+                : "border-ink-700 bg-ink-800 text-slate-400 hover:bg-ink-700/60"}`}>
+              {r.label}
+            </button>
+          ))}
         </div>
-      )}
-      {table && (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-[13px]">
-              <thead>
-                <tr className="border-b border-ink-700/70">
-                  <th className="label-xs px-4 py-2 text-left font-medium">Period</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">From close</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">On</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Basis</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {table.rows.map((r) => (
-                  <tr key={r.key}>
-                    <td className="px-4 py-2 font-medium text-slate-200">{r.label}</td>
-                    <td className="px-4 py-2 text-right mono text-slate-400">
-                      {r.from ? r.from.close.toLocaleString("en-IN", { maximumFractionDigits: 2 }) : <AbsentCell reason={r.reason ?? undefined} />}
-                    </td>
-                    <td className="px-4 py-2 text-[12px] text-slate-500">
-                      {r.from ? fmtDate(r.from.date) : <AbsentCell reason={r.reason ?? undefined} />}
-                    </td>
-                    <td className={`px-4 py-2 text-right mono ${r.pct === null ? "" : changeColor(r.pct)}`}>
-                      {r.pct === null ? <AbsentCell reason={r.reason ?? undefined} /> : fmtPct(r.pct, { sign: true, decimals: 2 })}
-                    </td>
-                    <td className="px-4 py-2 text-[11px] text-slate-500">
-                      {r.pct === null ? "—"
-                        : r.annualised ? `annualised over ${r.elapsedYears!.toFixed(1)} years`
-                        : r.elapsedYears !== null && r.elapsedYears < 1 && r.key !== "QTD" && r.key !== "YTD" && ["3Y", "5Y", "10Y", "MAX"].includes(r.key)
-                          ? `total — only ${(r.elapsedYears * 12).toFixed(0)} months of history`
-                          : "total"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-            <strong className="text-slate-400">No price chart.</strong>{" "}
-            The spec asks for interactive charts over adjustable periods. The market-data
-            endpoint this cockpit has returns a four-row preview of any window — a header,
-            the first two rows and the last two — and never the series itself, so there is
-            nothing to plot. The table above is what that preview can answer honestly: one
-            close per period. A chart needs a full-series endpoint.
-            {table.unresolved.length > 0 && (
-              <> {table.unresolved.length} period{table.unresolved.length === 1 ? "" : "s"} could
-              not be resolved and {table.unresolved.length === 1 ? "is" : "are"} shown as absent
-              rather than filled from a nearer date.</>
-            )}
-          </p>
-        </>
-      )}
+      }>
+      {points.length > 1
+        ? <SeriesChart series={[{ meta: meta!, points }]} type={chartType} height={260} />
+        : <div className="grid h-[260px] place-items-center text-[12px] text-slate-500">Not enough closes in this window to draw a chart.</div>}
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full whitespace-nowrap text-[12.5px]">
+          <thead>
+            <tr className="border-b border-ink-700">
+              {HORIZON_COLS.map((c) => (
+                <th key={c.key} className="label-xs px-3 py-2 text-right font-medium"
+                  title={c.annualised ? `${c.label} compound annual growth rate` : `${c.label} return`}>
+                  {c.label}{c.annualised ? "*" : ""}
+                </th>
+              ))}
+              <th className="label-xs px-3 py-2 text-right font-medium">52W High</th>
+              <th className="label-xs px-3 py-2 text-right font-medium">52W Low</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {HORIZON_COLS.map((c) => {
+                const v = live.returns[c.key];
+                const span = live.spans[c.key];
+                return (
+                  <td key={c.key} className={`px-3 py-2.5 text-right mono ${v == null ? "text-slate-600" : changeColor(v)}`}
+                    title={span ? `${span[0]} → ${span[1]}` : "This listing does not reach back that far, so the horizon is absent rather than measured over a shorter window."}>
+                    {fmtReturn(v, "price")}
+                  </td>
+                );
+              })}
+              <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtLevel(live.high52, unit)}</td>
+              <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtLevel(live.low52, unit)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-2 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
+        <span className="font-medium text-slate-400">*</span> 3Y/5Y/10Y/Max are annualised (CAGR); the shorter horizons
+        are cumulative. Measured on settled closes only, to{" "}
+        <span className="text-slate-400">{live.last}</span> — today's in-progress move is not in these figures, and the
+        live price above is a separate measurement.{" "}
+        <span className="font-medium text-slate-400">Every horizon is independent</span>: a cell is{" "}
+        <span className="mono">—</span> when this listing does not reach back that far, never a shorter window
+        relabelled, so a company listed in 2023 shows no 10-year CAGR and an honest max from its first trading day
+        ({live.first}).
+      </p>
     </Card>
   );
 }
