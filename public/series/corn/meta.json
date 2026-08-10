@@ -1,0 +1,23 @@
+{
+ "id": "corn",
+ "label": "Corn",
+ "category": "commodities",
+ "group": "Agriculture",
+ "unit": "USc/bu",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "ZC=F",
+  "url": "https://finance.yahoo.com/quote/ZC%3DF",
+  "exchange": "CBOT",
+  "upstreamCurrency": "USX"
+ },
+ "note": null,
+ "first": "2000-07-17",
+ "last": "2026-08-07",
+ "count": 6520,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

@@ -82,6 +82,10 @@ html:not(.dark) .bg-ink-700\/40 { background-color: rgba(250, 248, 241, 0.7); }
 html:not(.dark) .bg-ink-700\/30 { background-color: rgba(250, 248, 241, 0.55); }
 html:not(.dark) .bg-ink-800\/40 { background-color: rgba(255, 255, 255, 0.55); }
 html:not(.dark) .bg-ink-900\/50 { background-color: rgba(239, 236, 227, 0.6); }
+/* Group header rows in the macro returns table. Tailwind emits every opacity
+   variant as its own class, so each one needs its own remap or it paints the
+   dark surface straight onto the light page. */
+html:not(.dark) .bg-ink-900\/40 { background-color: rgba(239, 236, 227, 0.55); }
 /* Active/selected nav item — was falling back to dark indigo; use a soft
    champagne highlight so the dark label stays legible. */
 html:not(.dark) .bg-ink-700\/80 { background-color: rgba(217, 196, 143, 0.38); }

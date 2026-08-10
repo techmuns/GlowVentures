@@ -1,0 +1,23 @@
+{
+ "id": "hang-seng",
+ "label": "Hang Seng",
+ "category": "indices",
+ "group": "Asia",
+ "unit": "index",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "^HSI",
+  "url": "https://finance.yahoo.com/quote/%5EHSI",
+  "exchange": "HKSE",
+  "upstreamCurrency": "HKD"
+ },
+ "note": null,
+ "first": "1986-12-31",
+ "last": "2026-08-07",
+ "count": 9772,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

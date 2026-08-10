@@ -1,0 +1,23 @@
+{
+ "id": "natural-gas",
+ "label": "Natural Gas",
+ "category": "commodities",
+ "group": "Energy",
+ "unit": "USD/MMBtu",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "NG=F",
+  "url": "https://finance.yahoo.com/quote/NG%3DF",
+  "exchange": "NY Mercantile",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "2000-08-30",
+ "last": "2026-08-07",
+ "count": 6514,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

@@ -1,0 +1,23 @@
+{
+ "id": "eur-usd",
+ "label": "EUR / USD",
+ "category": "currencies",
+ "group": "Majors",
+ "unit": "USD per EUR",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "EURUSD=X",
+  "url": "https://finance.yahoo.com/quote/EURUSD%3DX",
+  "exchange": "CCY",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "2003-12-01",
+ "last": "2026-08-06",
+ "count": 5886,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

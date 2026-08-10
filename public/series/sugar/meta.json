@@ -1,0 +1,23 @@
+{
+ "id": "sugar",
+ "label": "Sugar",
+ "category": "commodities",
+ "group": "Agriculture",
+ "unit": "USc/lb",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "SB=F",
+  "url": "https://finance.yahoo.com/quote/SB%3DF",
+  "exchange": "ICE Futures",
+  "upstreamCurrency": "USX"
+ },
+ "note": null,
+ "first": "2000-03-01",
+ "last": "2026-08-07",
+ "count": 6631,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

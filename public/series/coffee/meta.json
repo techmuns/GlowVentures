@@ -1,0 +1,23 @@
+{
+ "id": "coffee",
+ "label": "Coffee",
+ "category": "commodities",
+ "group": "Agriculture",
+ "unit": "USc/lb",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "KC=F",
+  "url": "https://finance.yahoo.com/quote/KC%3DF",
+  "exchange": "ICE Futures",
+  "upstreamCurrency": "USX"
+ },
+ "note": null,
+ "first": "2000-01-03",
+ "last": "2026-08-07",
+ "count": 6668,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

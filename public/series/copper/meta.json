@@ -1,0 +1,23 @@
+{
+ "id": "copper",
+ "label": "Copper",
+ "category": "commodities",
+ "group": "Industrial Metals",
+ "unit": "USD/lb",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "HG=F",
+  "url": "https://finance.yahoo.com/quote/HG%3DF",
+  "exchange": "COMEX",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "2000-08-30",
+ "last": "2026-08-07",
+ "count": 6513,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

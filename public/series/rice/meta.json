@@ -1,0 +1,23 @@
+{
+ "id": "rice",
+ "label": "Rice",
+ "category": "commodities",
+ "group": "Agriculture",
+ "unit": "USD/cwt",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "ZR=F",
+  "url": "https://finance.yahoo.com/quote/ZR%3DF",
+  "exchange": "CBOT",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "1999-09-14",
+ "last": "2026-08-07",
+ "count": 6742,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

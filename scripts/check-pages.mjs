@@ -130,6 +130,14 @@ const INVARIANTS = {
   exposure: [
     ["sector GAP is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
   ],
+  // Phase 0: Macro Research renders from the committed series store, not a live
+  // API — so it is live in this headless run with no token and no network. If
+  // the store fails to load the page says so, and these catch that.
+  macro: [
+    ["series store loaded — the returns table is live, not preview", (t) => /\d+ live/.test(t) && !/series store did not respond/i.test(t)],
+    ["observation count is stated, so the table is backed by a real series", (t) => /observations/i.test(t)],
+    ["a max-available CAGR resolved (a stored series, not a four-row preview)", (t) => /Max/.test(t) && /[+-]\d+\.\d%/.test(t)],
+  ],
 };
 
 /**

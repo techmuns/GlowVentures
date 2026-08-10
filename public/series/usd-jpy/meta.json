@@ -1,0 +1,23 @@
+{
+ "id": "usd-jpy",
+ "label": "USD / JPY",
+ "category": "currencies",
+ "group": "Majors",
+ "unit": "JPY per USD",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "JPY=X",
+  "url": "https://finance.yahoo.com/quote/JPY%3DX",
+  "exchange": "CCY",
+  "upstreamCurrency": "JPY"
+ },
+ "note": null,
+ "first": "1996-10-30",
+ "last": "2026-08-06",
+ "count": 7720,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

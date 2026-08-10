@@ -1,0 +1,76 @@
+name: Harvest series
+
+# Nightly harvest of the macro series store (scripts/harvest → public/series).
+#
+# 02:00 UTC is after the US close has settled, so the last stored point is a
+# COMPLETED session everywhere. The harvester only stores settled sessions
+# anyway, but running before the close would simply mean a day's lag.
+#
+# THE COMMIT ONLY HAPPENS WHEN A FIGURE MOVED. `npm run harvest` is idempotent:
+# it rewrites a file only when its bytes change, and it holds `retrievedAt` and
+# the manifest's `generatedAt` steady when nothing new arrived. So a quiet day
+# produces no commit at all rather than a daily no-op churning the history.
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Comma-separated series ids to harvest (blank = all)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: harvest
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Harvest
+        run: |
+          if [ -n "${{ inputs.only }}" ]; then
+            npm run harvest -- --only "${{ inputs.only }}"
+          else
+            npm run harvest
+          fi
+
+      # A harvest that produced nothing usable must not be committed as an
+      # improvement. The store keeps its last good data on a failed fetch, so an
+      # empty diff here means "nothing moved", which is a normal outcome.
+      - name: Commit if anything moved
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          if git diff --quiet -- public/series docs/SERIES-REPORT.md; then
+            echo "No series changed — nothing to commit."
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only -- public/series | wc -l | tr -d ' ')
+          git add public/series docs/SERIES-REPORT.md
+          git commit -m "Harvest: ${CHANGED} series file(s) updated
+
+          Automated nightly run of \`npm run harvest\`. Sources, units and
+          retrieval times are recorded per series in public/series/<id>/meta.json;
+          docs/SERIES-REPORT.md carries the validation findings for this run."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done
+
+      # The store is what the dashboard renders. A harvest that leaves the app
+      # unable to build is worse than a stale figure, so the build runs here too.
+      - name: Verify the app still builds against the new store
+        run: npm run build

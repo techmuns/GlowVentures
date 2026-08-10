@@ -1,0 +1,23 @@
+{
+ "id": "russell-2000",
+ "label": "Russell 2000",
+ "category": "indices",
+ "group": "United States",
+ "unit": "index",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "^RUT",
+  "url": "https://finance.yahoo.com/quote/%5ERUT",
+  "exchange": "Chicago Options",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "1987-09-10",
+ "last": "2026-08-07",
+ "count": 9801,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

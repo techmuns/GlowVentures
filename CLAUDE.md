@@ -1014,10 +1014,15 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   discussions, fund pitches, conference notes, books and podcasts, queryable in
   natural language. Needs a note store, a tagging model and an AI index. The
   catalogue's `document_search` searches muns' own corpus, not the family's.
-- **All of macro research.** Commodities, global indices, currencies, GDP, CPI,
-  policy rates, credit growth, housing, household savings, vehicle sales, capital
-  market flows. There is no macro or commodity endpoint in the catalogue at all —
-  not a partial one, none.
+- ~~**All of macro research.**~~ **SOLVED for prices, from a different direction —
+  see Stage 9.** It remains true that the muns catalogue has no macro or commodity
+  endpoint at all. What changed is that the answer was never going to come from a
+  request-time API: the spec wants 10-year CAGRs and interactive charts, and those
+  are functions of a STORED SERIES. `npm run harvest` now commits one. Commodities,
+  global indices, currencies and the US 10-year are live off it; the India macro
+  aggregates (GDP, CPI, policy rates, credit growth, housing, household savings,
+  vehicle sales, capital-market flows) still are not, and are declared absent with
+  their intended source rather than drawn.
 - **Industry research.** Industry size, capacity, utilisation, order books, raw
   material prices. No industry endpoint.
 - **Layer 3 — IPS buckets and GAP analysis.** Growth / Liquidity / Tactical /
@@ -1112,9 +1117,87 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
+## Stage 9 — the macro series store (`npm run harvest`)
+
+```
+scripts/harvest/catalogue.mjs   what the FOOS spec asks for, and where it comes from
+   |  npm run harvest           fetch -> validate -> merge -> write
+   v
+public/series/index.json        manifest: metadata + PRECOMPUTED returns per series
+public/series/<id>/meta.json    unit, provenance, source, coverage, staleSince
+public/series/<id>/<year>.json  daily observations, ONE FILE PER CALENDAR YEAR
+docs/SERIES-REPORT.md           what harvested, what failed, what is declared absent
+```
+
+**Why a store and not a proxy.** The spec repeats one requirement under every
+research module: daily/weekly/monthly/quarterly/year-end history, max available,
+a returns table with 3/5/10-year and max CAGR, 52-week high/low, interactive
+charts, overlay-and-compare, export. Every one of those is a function of a stored
+series. `market_data` returns a FOUR-ROW PREVIEW of any window (see the note atop
+`functions/api/history.js`), so no amount of request-time proxying can answer
+them. The store can, and it needs no token: 37 series, ~296,000 daily closes, the
+S&P's running to 1970.
+
+**Year chunks, because git stores whole blobs.** A 26-year daily series rewritten
+nightly would add megabytes of objects a day, forever. Chunked by year a run
+touches only the current year (a few KB) and closed years are written once. It
+also makes a range-limited chart cheap: a 1-year window fetches one file, not a
+14,000-point history.
+
+**It is idempotent, and that is load-bearing.** Two runs with no new data leave
+the tree clean — `retrievedAt` and the manifest's `generatedAt` only move when a
+figure moved — so the nightly Action commits on a real change and never on a
+timestamp. Same guarantee `build-book` gives.
+
+**Merge accumulates, never truncates.** Stored points the incoming batch does not
+mention survive. Phase 0's Yahoo adapter hands over full history so the merge is
+a no-op, but the sources coming next (RBI's weekly supplement, AMFI's monthly
+flows, a scraped spot price) publish only a CURRENT value — against those the
+store builds the history itself, and a source going dark cannot shorten it.
+
+**Three rules keep a harvested figure honest**, and each is a bug that was live
+before it was written:
+
+- **Only settled sessions are stored.** Yahoo appends an in-progress bar whose
+  "close" is the last trade and moves all day. Storing it put an intraday
+  snapshot into a series of CLOSES, so a stored date's value changed on every
+  run and a 1-day return was measured against a price that was never a close.
+- **A yield is not a price.** The US 10-year going 0.52% → 4.28% is +376bp, not
+  +723%. Series with `unit: "%"` carry `kind: "yield"` and report ABSOLUTE
+  percentage-point change, never a CAGR.
+- **Every horizon is independent and a horizon the series cannot reach is null.**
+  Nifty's history starts in 2007; falling back to the earliest point would label
+  a 5-year return as a 10-year one.
+
+**The gate** (`lib/validate.mjs`) blocks a point that is non-finite, future-dated
+or outside the series' declared band — a band trips when the SOURCE changed a
+unit or a scale, not when the market moved — and warns on large moves, revisions
+and staleness. A blocked point never reaches disk, so the series keeps its last
+good value and the page shows it with an honest `as of` date. `large-move` on a
+`=F` series is usually a futures CONTRACT ROLL rather than an error, and the
+report says so.
+
+**Units are declared, never inferred.** Yahoo quotes the grains, cotton, sugar
+and coffee in US CENTS (`USX`). Reading 639.75 as $639/bushel instead of ¢639 is
+a 100x error that looks like an ordinary price on a chart, so the unit travels
+with the series from the catalogue to the axis, and a mismatch against what the
+upstream reports is a finding.
+
+**A series the spec asks for and nothing serves is DECLARED ABSENT**, with the
+reason and the phase that will fill it, and rendered as such — thermal coal, iron
+ore, the LME metals, palm oil, rubber, the CRB, the Baltic Dry, India's 10-year.
+The Bloomberg Commodity Index is carried in place of the CRB **under its own
+name**, because it is a different index and presenting it as CRB would be a
+fabrication with a badge on it.
+
+Adding a source: write `adapters/<name>.mjs` exporting `fetchSeries(spec)`,
+register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
+
 ## Build
 
 - `npm run build` runs `tsc -b && vite build` — keep it green before landing changes.
+- `npm run harvest` refreshes `public/series/` and `docs/SERIES-REPORT.md`.
+  Idempotent; `--only <ids>` limits it. Runs nightly via `.github/workflows/harvest.yml`.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.

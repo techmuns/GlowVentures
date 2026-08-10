@@ -1,0 +1,23 @@
+{
+ "id": "usd-inr",
+ "label": "USD / INR",
+ "category": "currencies",
+ "group": "India",
+ "unit": "INR per USD",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "INR=X",
+  "url": "https://finance.yahoo.com/quote/INR%3DX",
+  "exchange": "CCY",
+  "upstreamCurrency": "INR"
+ },
+ "note": null,
+ "first": "2003-12-01",
+ "last": "2026-08-06",
+ "count": 5883,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

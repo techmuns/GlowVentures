@@ -1,0 +1,23 @@
+{
+ "id": "steel-hrc",
+ "label": "Steel (HRC)",
+ "category": "commodities",
+ "group": "Industrial Metals",
+ "unit": "USD/short ton",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "HRC=F",
+  "url": "https://finance.yahoo.com/quote/HRC%3DF",
+  "exchange": "COMEX",
+  "upstreamCurrency": "USD"
+ },
+ "note": null,
+ "first": "2008-10-20",
+ "last": "2026-08-07",
+ "count": 4438,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}

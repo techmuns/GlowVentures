@@ -1,0 +1,23 @@
+{
+ "id": "nifty-50",
+ "label": "Nifty 50",
+ "category": "indices",
+ "group": "India",
+ "unit": "index",
+ "kind": "price",
+ "frequency": "daily",
+ "provenance": "official-api",
+ "source": {
+  "name": "Yahoo Finance",
+  "symbol": "^NSEI",
+  "url": "https://finance.yahoo.com/quote/%5ENSEI",
+  "exchange": "NSE",
+  "upstreamCurrency": "INR"
+ },
+ "note": null,
+ "first": "2007-09-17",
+ "last": "2026-08-07",
+ "count": 4634,
+ "retrievedAt": "2026-08-10T09:10:30.527Z",
+ "staleSince": null
+}
