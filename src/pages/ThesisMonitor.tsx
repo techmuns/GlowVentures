@@ -1,179 +1,229 @@
-import { useMemo } from "react";
-import { Eye, ShieldAlert, Sparkles, Crosshair } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Crosshair, ChevronDown, ChevronRight, CalendarClock } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { BasisPill } from "@/components/BasisPill";
+import { SearchInput } from "@/components/SearchInput";
 import { StockLink } from "@/components/StockLink";
-import { PreviewBadge, PreviewPill } from "@/components/Preview";
 import { AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySecurity } from "@/lib/analytics";
+import { dedupedPositions, sumOrNull } from "@/lib/analytics";
+import {
+  emptyThesis, readFamilyInputs, writeFamilyInputs,
+  type FamilyInputs, type ThesisRecord,
+} from "@/lib/familyInputs";
 import { fmtPct, changeColor } from "@/lib/format";
 
-// LAYER 4 — MONITOR & DECISION MAKING (FOOS spec). For every position: why
-// invested, expected return, risk, exit triggers, who proposed, date, meeting
-// notes, review schedule, FM change, style drift — plus a stop-loss monitor and
-// an AI thesis-drift watcher.
+// LAYER 4 — MONITOR & DECISION MAKING (FOOS spec).
 //
-// MIXED. The position, its live value and its return come from the book. The
-// thesis fields, stop levels, review dates and drift flags need a thesis store
-// and an AI model that do not exist yet, so those columns are PREVIEW. (A single
-// security's "why we own it" note can already be recorded on its company page —
-// this is the cross-book monitoring view of all of them.)
-
-// WHY THERE IS NO SAMPLE THESIS TEXT HERE.
+//   "Why invested? Expected return? Risk? Exit triggers? Who proposed? Date?
+//    Meeting notes? Review schedule?"
 //
-// This table's first three columns are REAL — the family's own securities, their
-// market value and their return, straight from the book. The remaining six were
-// filled from a rotating list of invented theses, and the effect was to publish
-// statements about identifiable holdings and identifiable managers: an expected
-// "15–18% IRR" against a name nobody underwrote, an exit trigger nobody set, a
-// "Near stop-loss" flag on whichever row landed on index 4, and a "Proposed by"
-// naming Aristos, Carnelian and V.E.C Assago — three managers who really do run
-// this family's money and really did not propose those positions.
+// EVERY ONE OF THOSE IS A FAMILY RECORD, NOT A FEED. No statement in `source/`
+// carries why a position was bought or what would make the family sell it, and no
+// API ever could — which is why this page was a preview until the family-input
+// store existed. It is now an editor over the book's own holdings: the position
+// figures on the left are live and measured, and the thesis fields beside them
+// are the family's.
 //
-// A greyed number reads as illustrative. A sentence does not: "governance red
-// flag" beside a company the family owns ₹4 Cr of is a claim, and a badge in the
-// card header does not unmake it. The standing rule already covers this —
-// nothing on screen may be hardcoded that isn't derived from the book, entity
-// names and dates included.
+// THE ONE PLACE THIS PAGE COULD FABRICATE, AND DOES NOT: an EXPECTED return sits
+// in the same row as a REALISED one. They are labelled distinctly and the
+// expected figure renders only when someone typed it — never defaulted, never
+// inferred from the actual, because "expected 18%" appearing beside "actual
+// +23%" would read as a judgement the family made and did not.
 //
-// So every thesis column renders through `AbsentCell` with the reason. The
-// layout is unchanged, the client sees exactly which fields a thesis store would
-// populate, and the page asserts nothing about anyone. `InvestmentTools` on a
-// company page already records a real per-name note, and when that store grows
-// a cross-book view these cells fill from it.
-const THESIS_ABSENT = "no thesis recorded — needs a thesis store; record one per name on its company page";
+// The review schedule feeds the `review-overdue` rule on Alerts, which is why a
+// cadence with no last-reviewed date is left absent rather than assumed to be the
+// purchase date: it would silently make every unreviewed position look current.
 
 export function ThesisMonitor() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, fmtFromBase } = usePortfolio();
+  const [inputs, setInputs] = useState<FamilyInputs>(() => readFamilyInputs());
+  const save = (next: FamilyInputs) => setInputs(writeFamilyInputs(next));
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState<string | null>(null);
+
+  /** One row per SECURITY — a thesis is about a company, not about a lot. */
   const rows = useMemo(() => {
-    const nameByKey = new Map<string, string>();
-    const priceByKey = new Map<string, number | null>();
-    for (const p of consolidated) {
-      if (!nameByKey.has(p.securityKey)) nameByKey.set(p.securityKey, p.security);
-      if (!priceByKey.has(p.securityKey)) priceByKey.set(p.securityKey, p.currentPrice ?? null);
+    if (!portfolio) return [];
+    const m = new Map<string, { key: string; name: string; mv: number; cost: number | null; pnl: number | null }>();
+    for (const p of dedupedPositions(portfolio.positions)) {
+      const e = m.get(p.securityKey) ?? { key: p.securityKey, name: p.security, mv: 0, cost: null, pnl: null };
+      e.mv += p.marketValue;
+      e.cost = sumOrNull([e.cost, p.costBasis]);
+      e.pnl = sumOrNull([e.pnl, p.unrealizedPnL]);
+      m.set(p.securityKey, e);
     }
-    return bySecurity(consolidated).slice(0, 12).map((b) => ({
-      key: b.key, name: nameByKey.get(b.key) ?? b.key, mv: b.mv, ret: b.returnPct,
-      price: priceByKey.get(b.key) ?? null,
-    }));
-  }, [consolidated]);
+    return [...m.values()].sort((a, b) => b.mv - a.mv);
+  }, [portfolio]);
+
+  const filtered = rows.filter((r) => !q.trim() || r.name.toLowerCase().includes(q.toLowerCase().trim()));
+  const recorded = rows.filter((r) => inputs.theses[r.key]?.why).length;
+
+  /** Months since a thesis was last reviewed — null when never recorded. */
+  const monthsSince = (iso: string): number | null => {
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t)) return null;
+    return (Date.now() - t) / (365.25 / 12 * 86400000);
+  };
+
+  const patch = (key: string, p: Partial<ThesisRecord>) => {
+    const base = inputs.theses[key] ?? emptyThesis(key);
+    save({
+      ...inputs,
+      theses: { ...inputs.theses, [key]: { ...base, ...p, securityKey: key, updatedAt: new Date().toISOString() } },
+    });
+  };
 
   if (!portfolio) return null;
-  const money = (n: number) => fmtFromBase(n, { compact: true });
-  const price = (n: number | null) => (n == null ? "—" : fmtFromBase(n));
+  const money = (n: number | null) => fmtFromBase(n, { compact: true });
+
+  const field = (label: string, value: string, onChange: (v: string) => void, placeholder: string, rows_ = 2) => (
+    <label className="block">
+      <span className="label-xs">{label}</span>
+      <textarea value={value} rows={rows_} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 text-[12px] leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+    </label>
+  );
 
   return (
     <div>
       <PageHeader
         eyebrow="Monitor · Layer 4"
-        title="Thesis & Triggers"
-        subtitle="Why we own each position, the expected return, the exit triggers and the review schedule — monitored across the book, with a stop-loss watcher."
-        right={<BasisPill liveText="Positions marked live" hint="The position, value and return are live from the book; the thesis, stop levels, review dates and drift flags are illustrative until a thesis store exists." />}
-      />
+        title="Thesis &amp; Triggers"
+        subtitle="Why each position is owned, what would make the family sell it, and when the thesis is next due for review — the family's own record, held against the book's live figures."
+        right={<div className="flex items-center gap-2">
+          <Pill tone={recorded ? "gain" : "default"}>{recorded} of {rows.length} recorded</Pill>
+        </div>} />
 
-      <Card className="mb-5" title={<span className="flex items-center gap-2"><Eye className="h-4 w-4 text-champagne-400" /> Thesis monitor</span>}
-        subtitle="Position · value · return are live; the thesis fields are placeholders (record a per-name thesis on its company page today)"
-        right={<Pill tone="info">live + preview</Pill>} pad={false}>
+      <div className="mb-4 max-w-sm"><SearchInput value={q} onChange={setQ} placeholder="Find a holding…" /></div>
+
+      <Card pad={false}>
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-[12.5px]">
             <thead className="border-b border-ink-700">
               <tr>
                 <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
                 <th className="label-xs px-3 py-2 text-right font-medium">Value</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Return</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Why we own it</th>
-                <th className="label-xs px-3 py-2 text-left font-medium">Expected</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Exit trigger</th>
-                <th className="label-xs px-3 py-2 text-left font-medium">Proposed by</th>
+                <th className="label-xs px-3 py-2 text-right font-medium">Return (actual)</th>
+                <th className="label-xs px-3 py-2 text-right font-medium" title="The family's own expectation, recorded below. Never inferred from the actual.">Expected</th>
+                <th className="label-xs px-3 py-2 text-left font-medium">Thesis</th>
                 <th className="label-xs px-3 py-2 text-left font-medium">Review</th>
-                <th className="label-xs px-3 py-2 text-left font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
-              {rows.map((r) => (
-                <tr key={r.key} className="hover:bg-ink-700/30">
-                  <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={r.key} name={r.name} /></td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-200">{money(r.mv)}</td>
-                  <td className={`px-3 py-2.5 text-right mono ${changeColor(r.ret)}`}>{fmtPct(r.ret, { sign: true })}</td>
-                  {/* Six thesis fields, none of which any statement or store
-                      carries. Absent with a reason — never an invented sample
-                      against a real holding. */}
-                  <td className="px-4 py-2.5"><AbsentCell reason={THESIS_ABSENT} /></td>
-                  <td className="px-3 py-2.5"><AbsentCell reason="no expected return underwritten for this position" /></td>
-                  <td className="px-4 py-2.5"><AbsentCell reason="no exit trigger set for this position" /></td>
-                  <td className="px-3 py-2.5"><AbsentCell reason="the statements do not record who proposed a position" /></td>
-                  <td className="px-3 py-2.5"><AbsentCell reason="no review schedule recorded" /></td>
-                  <td className="px-3 py-2.5"><AbsentCell reason="status needs a thesis to drift from" /></td>
-                </tr>
-              ))}
+              {filtered.slice(0, 60).map((r) => {
+                const t = inputs.theses[r.key];
+                const isOpen = open === r.key;
+                const ret = t && r.cost != null && r.cost > 0 && r.pnl != null ? (r.pnl / r.cost) * 100 : null;
+                const actualRet = r.cost != null && r.cost > 0 && r.pnl != null ? (r.pnl / r.cost) * 100 : null;
+                const since = t?.lastReviewed ? monthsSince(t.lastReviewed) : null;
+                const overdue = t?.reviewEveryMonths != null && since != null && since > t.reviewEveryMonths;
+                return (
+                  <>
+                    <tr key={r.key} className="cursor-pointer hover:bg-ink-700/30" onClick={() => setOpen(isOpen ? null : r.key)}>
+                      <td className="px-4 py-2">
+                        <span className="flex items-center gap-1.5">
+                          {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-slate-500" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-500" />}
+                          <StockLink securityKey={r.key} name={r.name} />
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right mono text-slate-300">{money(r.mv)}</td>
+                      <td className={`px-3 py-2 text-right mono ${changeColor(actualRet)}`}>{fmtPct(actualRet, { sign: true })}</td>
+                      <td className="px-3 py-2 text-right mono text-slate-400">
+                        {t?.expectedReturnPct == null
+                          ? <AbsentCell reason="No expected return recorded for this position. It is the family's own judgement and is never inferred from the actual return beside it." />
+                          : `${t.expectedReturnPct.toFixed(1)}%`}
+                      </td>
+                      <td className="px-3 py-2 max-w-[280px] truncate text-slate-400">
+                        {t?.why || <span className="text-slate-600">not recorded</span>}
+                      </td>
+                      <td className="px-3 py-2">
+                        {t?.reviewEveryMonths == null
+                          ? <span className="text-[11px] text-slate-600">no schedule</span>
+                          : since == null
+                            ? <span className="text-[11px] text-amber-400" title="A cadence is set but no review has been logged, so nothing can be called current.">never reviewed</span>
+                            : <span className={`text-[11px] ${overdue ? "text-loss" : "text-gain"}`}>
+                                {overdue ? "overdue" : "current"} · every {t.reviewEveryMonths}m
+                              </span>}
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr key={r.key + "-edit"} className="bg-ink-900/50">
+                        <td colSpan={6} className="px-4 pb-4 pt-2">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {field("Why invested?", t?.why ?? "", (v) => patch(r.key, { why: v }), "The case for owning this — the spec's first question.")}
+                            {field("Risk", t?.risk ?? "", (v) => patch(r.key, { risk: v }), "What could go wrong, and what the family is accepting.")}
+                            {field("Exit triggers", t?.exitTriggers ?? "", (v) => patch(r.key, { exitTriggers: v }), "What would make the family sell — the condition, not a price alone.")}
+                            <div className="grid grid-cols-2 gap-3">
+                              <label className="block">
+                                <span className="label-xs">Expected return (% p.a.)</span>
+                                <input inputMode="decimal" value={t?.expectedReturnPct ?? ""} placeholder="—"
+                                  onChange={(e) => {
+                                    const n = Number(e.target.value.replace(/[%\s,]/g, ""));
+                                    patch(r.key, { expectedReturnPct: e.target.value === "" || !Number.isFinite(n) ? null : n });
+                                  }}
+                                  className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 mono text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+                              </label>
+                              <label className="block">
+                                <span className="label-xs">Proposed by</span>
+                                <input value={t?.proposedBy ?? ""} placeholder="who"
+                                  onChange={(e) => patch(r.key, { proposedBy: e.target.value })}
+                                  className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+                              </label>
+                              <label className="block">
+                                <span className="label-xs">Decided on</span>
+                                <input type="date" value={t?.decidedOn ?? ""}
+                                  onChange={(e) => patch(r.key, { decidedOn: e.target.value })}
+                                  className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 text-[12px] text-slate-200 focus:border-champagne-500/40 focus:outline-none" />
+                              </label>
+                              <label className="block">
+                                <span className="label-xs">Last reviewed</span>
+                                <input type="date" value={t?.lastReviewed ?? ""}
+                                  onChange={(e) => patch(r.key, { lastReviewed: e.target.value })}
+                                  className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 text-[12px] text-slate-200 focus:border-champagne-500/40 focus:outline-none" />
+                              </label>
+                              <label className="col-span-2 block">
+                                <span className="label-xs">Review every (months)</span>
+                                <input inputMode="numeric" value={t?.reviewEveryMonths ?? ""} placeholder="e.g. 6"
+                                  onChange={(e) => {
+                                    const n = Number(e.target.value);
+                                    patch(r.key, { reviewEveryMonths: Number.isFinite(n) && n > 0 ? n : null });
+                                  }}
+                                  className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 mono text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+                              </label>
+                            </div>
+                          </div>
+                          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                            Saved to this browser as you type. Back it up with{" "}
+                            <span className="font-medium text-slate-400">Export</span> on Exposure &amp; IPS — the whole
+                            family record, including these theses, round-trips through one JSON file.
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
+        {filtered.length > 60 && (
+          <p className="border-t border-ink-700/70 px-4 py-2 text-[11px] text-slate-500">
+            Showing the 60 largest of {filtered.length} — search to reach the rest.
+          </p>
+        )}
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-3 items-start">
-        {/* Stop-loss monitor */}
-        {/* A stop level is a family decision, and the distance to it is arithmetic
-            on that decision. Neither exists, so neither is drawn: the six sample
-            distances here were a fixed list indexed by row, printed against real
-            securities at their real prices. */}
-        <Card className="lg:col-span-2 preview-hatch" title={<span className="flex items-center gap-2"><Crosshair className="h-4 w-4 text-champagne-400" /> Stop-loss monitor</span>}
-          subtitle="The current price is live; a stop level is the family's own decision and none is recorded" right={<PreviewBadge label="Not wired" />} pad={false}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-[12.5px]">
-              <thead className="border-b border-ink-700"><tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Current</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Stop level</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Distance</th>
-              </tr></thead>
-              <tbody className="divide-y divide-ink-700/60">
-                {rows.slice(0, 6).map((r) => (
-                  <tr key={r.key} className="hover:bg-ink-700/30">
-                    <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={r.key} name={r.name} /></td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-300">{price(r.price)}</td>
-                    <td className="px-3 py-2.5 text-right"><AbsentCell reason="no stop level set — record one as an exit price on this name's company page" /></td>
-                    <td className="px-3 py-2.5 text-right"><AbsentCell reason="distance is measured to a stop level, and none is set" /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* AI thesis-drift */}
-        {/* WHAT IT WOULD WATCH FOR, not what it found. These four read as fired
-            findings — "Aristos: style drift toward large-cap detected",
-            "Carnelian: FM change flagged in filing" — about two managers who run
-            ₹78 Cr of this book between them. Nothing detected or flagged
-            anything; there is no monitor. A description of the rule is true
-            whether or not it ever fires. */}
-        <Card className="preview-hatch" title={<span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-champagne-400" /> AI thesis-drift watch</span>} right={<PreviewBadge label="Not wired" />}>
-          <ul className="space-y-2.5">
-            {[
-              { t: "A mandate's holdings drift outside its stated style or market cap", tag: "Style" },
-              { t: "A mandate's AUM grows past the capacity it published", tag: "Manager" },
-              { t: "A manager discloses a key-personnel change in a filing", tag: "FM change" },
-              { t: "A holding's own guidance moves against the thesis recorded for it", tag: "Thesis" },
-            ].map((a) => (
-              <li key={a.t} className="flex items-start gap-2 rounded-md border border-ink-700 bg-ink-800/60 p-2.5">
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
-                <div>
-                  <div className="text-[12px] leading-snug text-slate-400">{a.t}</div>
-                  <PreviewPill>{a.tag}</PreviewPill>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-slate-500">
-            These are the conditions such a watch would evaluate. Nothing evaluates them yet — it needs the thesis
-            store plus a monitoring model — so no drift has been detected for any manager or holding.
-          </p>
-        </Card>
-      </div>
+      <Card className="mt-5" title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-champagne-400" /> What still needs a source</span>}
+        subtitle="Named rather than shown as an empty feature">
+        <ul className="space-y-2 text-[11.5px] leading-relaxed text-slate-500">
+          <li><span className="font-medium text-slate-400">Meeting notes.</span> The spec's Layer 1 note store — tagged notes from manager meetings and IC discussions, queryable in natural language. It needs a note store and an index; the theses above are the decision record, not the meeting record.</li>
+          <li><span className="font-medium text-slate-400">Fund-manager change and style drift.</span> These would let a thesis break automatically rather than at the next scheduled review. Both need a manager-monitoring feed — AMC and SEBI disclosures — that nothing in this book reads.</li>
+          <li><span className="font-medium text-slate-400">"AI prompt — if any of the above changes significantly, highlight it."</span> Buildable once the notes and the manager feed exist: the thesis text above is exactly the input such a monitor would compare against.</li>
+        </ul>
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
-  Scale, Target, Globe2, Layers, Clock, ScrollText, TrendingUp, TrendingDown, CalendarRange, Receipt,
+  Scale, Target, Globe2, Layers, Clock, ScrollText, TrendingUp, TrendingDown, CalendarRange, Receipt, Download, Upload,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -10,7 +10,12 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge, PreviewNum, PreviewChart } from "@/components/Preview";
 import { AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass } from "@/lib/analytics";
+import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, byAssetClass } from "@/lib/analytics";
+import {
+  IPS_BUCKETS, readFamilyInputs, writeFamilyInputs, ipsTargetTotal, pct,
+  exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
+} from "@/lib/familyInputs";
+import { bucketActuals, bucketWeightPct } from "@/lib/alertEngine";
 import { fmtPct, changeColor } from "@/lib/format";
 
 // LAYER 3 — PORTFOLIO & EXPOSURE (FOOS spec). Family charter & IPS buckets, GAP
@@ -43,7 +48,18 @@ import { fmtPct, changeColor } from "@/lib/format";
 export function ExposureIPS() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
+  const [inputs, setInputs] = useState<FamilyInputs>(() => readFamilyInputs());
+  const save = (next: FamilyInputs) => setInputs(writeFamilyInputs(next));
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const totalMV = useMemo(() => consolidatedMarketValue(consolidated), [consolidated]);
+  /** Asset classes actually in the book — what the family maps to IPS buckets. */
+  const classes = useMemo(() => byAssetClass(consolidated), [consolidated]);
+  const actuals = useMemo(
+    () => (portfolio ? bucketActuals(portfolio, inputs) : null),
+    [portfolio, inputs],
+  );
+  const targetTotal = ipsTargetTotal(inputs);
   // Sector GAP is a LISTED-equity view. An AIF/private holding is a fund wrapper
   // with no equity sector, so folding it in put 62% of the book under a single
   // "Unclassified" slice. The private book is named as excluded below.
@@ -73,32 +89,123 @@ export function ExposureIPS() {
         right={<BasisPill liveText="Exposure marked live" hint="Actual exposure, top-10 lists and attribution are live. Desired weights, the charter, and the monthwise projections are illustrative." />}
       />
 
-      {/* Family charter — preview */}
-      <Card className="preview-hatch" title={<span className="flex items-center gap-2"><ScrollText className="h-4 w-4 text-champagne-400" /> Family charter & decision framework</span>}
-        subtitle="The one-page IPS the whole book is measured against" right={<PreviewBadge />}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { b: "Growth", d: "Compounders held for the long term", w: "60%" },
-            { b: "Liquidity", d: "Cash & liquid funds for calls and opportunities", w: "18%" },
-            { b: "Tactical", d: "Shorter-horizon, higher-conviction positions", w: "12%" },
-            { b: "Hedge", d: "Downside protection & uncorrelated assets", w: "6%" },
-            { b: "Charity", d: "Ring-fenced philanthropic pool", w: "4%" },
-          ].map((x) => (
-            <div key={x.b} className="rounded-lg border border-ink-700 bg-ink-800/60 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-slate-200">{x.b}</span>
-                <PreviewNum>{x.w}</PreviewNum>
-              </div>
-              <p className="mt-1 text-[11px] leading-snug text-slate-500">{x.d}</p>
-            </div>
-          ))}
+      {/* ── Family charter & IPS — the family's own decisions ─────────── */}
+      <Card title={<span className="flex items-center gap-2"><ScrollText className="h-4 w-4 text-champagne-400" /> Family charter &amp; IPS buckets</span>}
+        subtitle="The one-page IPS the whole book is measured against — recorded by the family, not read from a statement"
+        right={
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => exportFamilyInputs(inputs)}
+              className="flex items-center gap-1 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[11px] text-slate-300 hover:bg-ink-700/60">
+              <Download className="h-3 w-3" /> Export
+            </button>
+            <button onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-1 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[11px] text-slate-300 hover:bg-ink-700/60">
+              <Upload className="h-3 w-3" /> Import
+            </button>
+            <input ref={fileRef} type="file" accept="application/json" className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f) { try { setInputs(await importFamilyInputs(f)); } catch { /* malformed file */ } }
+                e.target.value = "";
+              }} />
+          </div>
+        }>
+        <textarea
+          value={inputs.charter}
+          onChange={(e) => save({ ...inputs, charter: e.target.value })}
+          rows={3}
+          placeholder="Write the family's investment charter here — the principles every decision below is measured against."
+          className="w-full rounded-lg border border-ink-700 bg-ink-800/60 px-3 py-2 text-[12.5px] leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+
+        {/* Asset class -> bucket. Without this mapping no actual can be measured. */}
+        <div className="mt-4">
+          <div className="label-xs mb-1.5">Which IPS bucket does each asset class belong to?</div>
+          <div className="flex flex-wrap gap-2">
+            {classes.map((c) => (
+              <label key={c.key} className="flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800/60 px-2.5 py-1.5">
+                <span className="text-[12px] text-slate-300">{c.key}</span>
+                <span className="text-[10px] text-slate-600">{money(c.mv)}</span>
+                <select
+                  value={inputs.bucketByAssetClass[c.key] ?? ""}
+                  onChange={(e) => save({
+                    ...inputs,
+                    bucketByAssetClass: { ...inputs.bucketByAssetClass, [c.key]: (e.target.value || null) as IpsBucketKey | null },
+                  })}
+                  className="rounded border border-ink-600 bg-ink-900 px-1.5 py-0.5 text-[11px] text-slate-200 focus:outline-none">
+                  <option value="">not mapped</option>
+                  {IPS_BUCKETS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
         </div>
-        <p className="mt-3 text-[11px] text-slate-500">Target weights and the charter text are the family's IPS decisions — placeholders until recorded.</p>
+
+        {/* The GAP itself — actual from the book, target from the family. */}
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-[12.5px]">
+            <thead className="border-b border-ink-700">
+              <tr>
+                <th className="label-xs px-2 py-2 text-left font-medium">Bucket</th>
+                <th className="label-xs px-2 py-2 text-right font-medium">Actual %</th>
+                <th className="label-xs px-2 py-2 text-right font-medium">Target %</th>
+                <th className="label-xs px-2 py-2 text-right font-medium">Gap (pp)</th>
+                <th className="label-xs px-2 py-2 text-left font-medium">What it is for</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {IPS_BUCKETS.map((b) => {
+                const actual = actuals ? bucketWeightPct(actuals, b.key) : null;
+                const target = inputs.ipsTargets[b.key] ?? null;
+                {/* THE GAP EXISTS ONLY WHEN BOTH SIDES DO. Either half missing and
+                    this is a dash: a gap against a defaulted target is a
+                    fabricated instruction to buy or sell. */}
+                const gap = actual != null && target != null ? actual - target : null;
+                return (
+                  <tr key={b.key} className="hover:bg-ink-700/30">
+                    <td className="px-2 py-2 font-medium text-slate-200">{b.label}</td>
+                    <td className="px-2 py-2 text-right mono text-slate-300">
+                      {actual == null
+                        ? <AbsentCell reason={`No asset class is mapped to ${b.label}, so the book's actual weight in it cannot be measured.`} />
+                        : `${actual.toFixed(1)}%`}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      <input
+                        inputMode="decimal"
+                        value={target ?? ""}
+                        placeholder="—"
+                        onChange={(e) => save({ ...inputs, ipsTargets: { ...inputs.ipsTargets, [b.key]: pct(e.target.value) } })}
+                        className="w-16 rounded border border-ink-600 bg-ink-900 px-1.5 py-0.5 text-right mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+                    </td>
+                    <td className={`px-2 py-2 text-right mono ${gap == null ? "" : changeColor(gap)}`}>
+                      {gap == null
+                        ? <AbsentCell reason={target == null ? "No target weight recorded for this bucket — the gap is actual minus target, and half of it is missing." : `Nothing is mapped to ${b.label}, so there is no actual to compare.`} />
+                        : `${gap >= 0 ? "+" : ""}${gap.toFixed(1)}`}
+                    </td>
+                    <td className="px-2 py-2 text-[11px] text-slate-500">{b.hint}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-3 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
+          {targetTotal == null
+            ? <>No target weights recorded yet. Every gap stays absent until one is — a gap measured against a defaulted zero would read as an instruction to sell.</>
+            : Math.abs(targetTotal - 100) > 0.5
+              ? <><span className="font-medium text-amber-400">Targets sum to {targetTotal.toFixed(1)}%, not 100%.</span> Each gap is still that bucket&rsquo;s own actual minus its own target — they do not assume the rest.</>
+              : <>Targets sum to 100%.</>}
+          {actuals && actuals.unmappedValue > 0 && (
+            <> {money(actuals.unmappedValue)} ({((actuals.unmappedValue / actuals.total) * 100).toFixed(0)}% of the book) sits in{" "}
+              <span className="font-medium text-slate-400">{actuals.unmappedClasses.join(", ")}</span>, mapped to no bucket — so the actual column is a partial view until it is.</>
+          )}
+          {" "}These are the family&rsquo;s own entries and live in this browser only. <span className="font-medium text-slate-400">Export</span> writes them to a JSON file you can back up, share and re-import; a shared always-on view would need a server-side store.
+        </p>
       </Card>
 
       {/* GAP analysis by sector — actual real, desired preview */}
       <Card className="mt-5" title={<span className="flex items-center gap-2"><Target className="h-4 w-4 text-champagne-400" /> GAP analysis — by sector</span>}
-        subtitle="Actual weight is live from the book; the desired weight is a family IPS decision, and none has been recorded" right={<Pill tone="info">actual live · desired not set</Pill>} pad={false}>
+        subtitle="Actual weight is live from the book; the desired weight is a family IPS decision, and none has been recorded" right={<Pill tone="info">actual live · desired yours</Pill>} pad={false}>
         <div className="overflow-x-auto">
           <table className="min-w-full text-[13px]">
             <thead className="border-b border-ink-700">
@@ -116,8 +223,20 @@ export function ExposureIPS() {
                   <td className="px-4 py-2.5 font-medium text-slate-200">{s.key}</td>
                   <td className="px-4 py-2.5 text-right mono text-slate-300">{money(s.mv)}</td>
                   <td className="px-4 py-2.5 text-right mono text-slate-200">{(s.weight * 100).toFixed(1)}%</td>
-                  <td className="px-4 py-2.5 text-right"><AbsentCell reason="no IPS target weight recorded for this sector — a family decision, not a statement figure" /></td>
-                  <td className="px-4 py-2.5 text-right"><AbsentCell reason="the gap is actual minus desired, and no desired weight is set" /></td>
+                  <td className="px-4 py-2.5 text-right">
+                    <input inputMode="decimal" value={inputs.sectorTargets[s.key] ?? ""} placeholder="—"
+                      onChange={(e) => save({ ...inputs, sectorTargets: { ...inputs.sectorTargets, [s.key]: pct(e.target.value) } })}
+                      className="w-16 rounded border border-ink-600 bg-ink-900 px-1.5 py-0.5 text-right mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none" />
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono">
+                    {(() => {
+                      const t = inputs.sectorTargets[s.key] ?? null;
+                      const gap = t == null ? null : s.weight * 100 - t;
+                      return gap == null
+                        ? <AbsentCell reason="the gap is actual minus desired, and no desired weight is recorded for this sector" />
+                        : <span className={changeColor(gap)}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}</span>;
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>

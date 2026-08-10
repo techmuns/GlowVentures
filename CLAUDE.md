@@ -1117,6 +1117,50 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
+## Stage 10 — the family-input layer (`src/lib/familyInputs.ts`)
+
+Layers 3, 4 and 5 of the spec were never blocked on a vendor. They were blocked
+on the FAMILY: an IPS target weight, why a position is owned, what would make
+them sell it, what should raise an alarm. No API has ever known any of that, so
+those three screens sat as previews waiting for a feed that could not exist.
+
+`familyInputs.ts` is the store that unblocks them, and it extends the rule
+`watchlist.ts` set: **nothing here may ever reach `glowData.ts`**, which is
+generated from `source/` and must regenerate byte-identically.
+
+**AN UNSET FIGURE IS `null`, NEVER 0**, and here it matters more than anywhere.
+A target weight of zero is a real instruction ("hold none of this"); a target
+nobody entered is the absence of one. The GAP — actual minus target — is the only
+number on that page anyone acts on, so a gap computed against a defaulted zero is
+a fabricated instruction to sell. Both halves must exist or the cell is `—`.
+
+**THE BUCKET MAPPING IS THE FAMILY'S TOO.** Growth / Liquidity / Tactical / Hedge
+/ Charity are not properties of a security; nothing in the archive says the AIF
+book is "Growth" rather than "Tactical". The family maps ASSET CLASS → bucket —
+four or five decisions instead of one per holding — and an unmapped class
+contributes to no bucket and is NAMED, so a partial mapping yields a partial
+actual rather than a wrong one.
+
+**EXPORT / IMPORT, because `localStorage` alone is not good enough here.** The
+watchlist states its per-browser limitation and leaves it. An IPS and a set of
+theses are the family's own record, and a cleared browser would lose them with no
+way back — so the whole store round-trips through one JSON file. Everything
+re-enters through `coerce`, so a hand-edited file cannot put a malformed number
+into the GAP analysis.
+
+### The alert engine — silence is read as all-clear
+
+`alertEngine.ts` evaluates the family's rules against the book. Its governing
+rule: **a rule whose inputs are incomplete does not fire, and does not pass
+either** — it reports UNMEASURABLE with the reason, counted apart from the clear.
+A price rule on a security with no live quote must never look like one that was
+checked and held; a month-old statement mark cannot answer whether a level was
+crossed today. That is the absent-vs-zero rule applied to a boolean.
+
+Alerts the spec asks for that need a SOURCE rather than a threshold — manager
+resignation and style drift, liquidity coverage, capital-call dates — are named
+on the page rather than shipped as rules that would sit permanently silent.
+
 ## Stage 9c — Industry Research, composed from the store
 
 The spec splits an industry dashboard in two, and only one half is sourceable.
