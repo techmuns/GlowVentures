@@ -94,7 +94,12 @@ export function ExposureIPS() {
         subtitle="The one-page IPS the whole book is measured against — recorded by the family, not read from a statement"
         right={
           <div className="flex items-center gap-1.5">
+            {/* ONE FILE CARRIES THE WHOLE FAMILY-INPUT STORE, not just this
+                page's fields — the charter and IPS, the theses, the alert rules,
+                the private deal register and the household balance sheet. A
+                partial export would look like a backup and lose the rest. */}
             <button onClick={() => exportFamilyInputs(inputs)}
+              title="Writes every family-entered record — charter, IPS targets, bucket mapping, theses, alert rules, the private deal register and the household balance sheet — to one JSON file."
               className="flex items-center gap-1 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[11px] text-slate-300 hover:bg-ink-700/60">
               <Download className="h-3 w-3" /> Export
             </button>
@@ -199,7 +204,10 @@ export function ExposureIPS() {
             <> {money(actuals.unmappedValue)} ({((actuals.unmappedValue / actuals.total) * 100).toFixed(0)}% of the book) sits in{" "}
               <span className="font-medium text-slate-400">{actuals.unmappedClasses.join(", ")}</span>, mapped to no bucket — so the actual column is a partial view until it is.</>
           )}
-          {" "}These are the family&rsquo;s own entries and live in this browser only. <span className="font-medium text-slate-400">Export</span> writes them to a JSON file you can back up, share and re-import; a shared always-on view would need a server-side store.
+          {" "}These are the family&rsquo;s own entries and live in this browser only. <span className="font-medium text-slate-400">Export</span> writes
+          the whole family-input store — this charter and its targets, the bucket mapping, the theses on Thesis &amp; Triggers, the
+          alert rules, the private deal register and the household balance sheet — to one JSON file you can back up, share and
+          re-import; a shared always-on view would need a server-side store.
         </p>
       </Card>
 

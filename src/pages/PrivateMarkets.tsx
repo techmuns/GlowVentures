@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LayoutGrid, TrendingUp, Rocket, Building2, Briefcase, Banknote } from "lucide-react";
+import { LayoutGrid, TrendingUp, Rocket, Building2, Briefcase, Banknote, NotebookPen } from "lucide-react";
 import type { ComponentType } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Pill } from "@/components/Pill";
@@ -13,6 +13,8 @@ import { Startups } from "./private/Startups";
 import { FundClass } from "./private/FundClass";
 import { Alternatives } from "./private/Alternatives";
 import { PrivateTrackerPreview } from "./private/PrivateTrackerPreview";
+import { DealRegister } from "./private/DealRegister";
+import { readFamilyInputs } from "@/lib/familyInputs";
 import type { SegmentProps } from "./private/segment";
 
 // Private Markets — one page, one tab per segment.
@@ -27,7 +29,7 @@ import type { SegmentProps } from "./private/segment";
 //
 // The active view lives in `?view=` — see components/ViewToggle.
 
-type ViewKey = "overview" | PrivateClassKey;
+type ViewKey = "overview" | PrivateClassKey | "register";
 
 const CLASS_ICONS: Record<PrivateClassKey, ComponentType<{ className?: string }>> = {
   startups: Rocket,
@@ -52,6 +54,9 @@ export function PrivateMarkets() {
   // shaped rather than fund-of-funds shaped, so the fund model above never sees
   // them. Surfaced as an Alternatives segment; see private/Alternatives.
   const altCount = useMemo(() => new Set(consolidated.filter(isPrivateClass).map((p) => p.securityKey)).size, [consolidated]);
+  // Read once per mount — only decides whether the illustrative preview shows
+  // beneath the register on an empty book, so it need not track edits live.
+  const hasDeals = useMemo(() => readFamilyInputs().deals.length > 0, []);
 
   // Tabs are generated from the classification, so adding or emptying a segment
   // in the book changes the segment table and the tabs together.
@@ -61,6 +66,12 @@ export function PrivateMarkets() {
       key: c.key, label: c.label, icon: CLASS_ICONS[c.key],
       title: `${c.label} — ${c.count} ${c.key === "startups" ? "names" : c.key === "unlisted" ? "companies" : "funds"}`,
     })),
+    // ALWAYS PRESENT, unlike every tab above it. The others are generated from
+    // the book's classification and disappear when a segment empties; the deal
+    // register is the family's own paperwork about companies no statement names,
+    // so it exists whether or not the book carries a private holding.
+    { key: "register" as const, label: "Deal register", icon: NotebookPen,
+      title: "Direct private deals — commitments, drawdowns, cap table, rounds and documents, entered by the family" },
   ], [model]);
 
   const [view, setView] = useViewParam(views, VIEW_ALIASES);
@@ -98,11 +109,16 @@ export function PrivateMarkets() {
           </p>
         </AbsentSection>
 
-        {/* Below the honest empty state: an ILLUSTRATIVE preview of the FOOS
-            private tracker, so the client can see the shape it will take once a
-            private-markets reader exists. Entirely sample data — it touches the
-            book nowhere (see Preview.tsx doctrine) and is unmistakably marked. */}
-        <PrivateTrackerPreview />
+        {/* The family's own deal register — real, whatever the book carries. */}
+        <DealRegister />
+
+        {/* Below it, the ILLUSTRATIVE preview of the FOOS private tracker, shown
+            ONLY while the register is empty. Once the family has entered a deal
+            the real table above answers the same question, and leaving a sample
+            beneath it would put invented figures under a heading a reader has
+            just learnt to trust. Sample data throughout — it touches the book
+            nowhere (see Preview.tsx doctrine) and is unmistakably marked. */}
+        {!hasDeals && <PrivateTrackerPreview />}
       </div>
     );
   }
@@ -125,6 +141,7 @@ export function PrivateMarkets() {
         </>}
         {view === "startups" && <Startups {...segmentProps} />}
         {activeClass && activeClass.key !== "startups" && <FundClass cls={activeClass} money={money} />}
+        {view === "register" && <DealRegister />}
       </div>
     </div>
   );

@@ -35,6 +35,32 @@ export type WatchEntry = {
   /** Alert when the live price crosses above / below these. Null = no alert. */
   alertAbove: number | null;
   alertBelow: number | null;
+  /**
+   * The family's intended weight for this name, as a PERCENT of the book.
+   *
+   * ZERO IS A REAL INSTRUCTION HERE and null is not, which is the opposite of
+   * every price field above. "Hold none of this" is a decision somebody made;
+   * "nobody has set a target weight" is the absence of one. They must not
+   * collapse, because the figure a reader acts on — pending to invest — is the
+   * GAP, and a gap measured against a defaulted zero is an instruction to sell
+   * the whole position that nobody gave.
+   */
+  targetWeightPct: number | null;
+  /**
+   * The period the fair value is struck for — "FY28E", "CY2027", "Mar-29".
+   * The family's own label, stored verbatim. Empty means not recorded: a fair
+   * value with no year attached is a number without a horizon, and guessing
+   * the current year for it would date somebody else's estimate.
+   */
+  fairValueRefYear: string;
+  /**
+   * How the fair value was arrived at — DCF, EV/EBITDA, SOTP, NAV…
+   *
+   * Recorded per name by a human, never derived. A previous build filled this
+   * column from `VAL_METHODS[i % 5]`, which assigned "DCF" to real companies by
+   * ROW ORDER — sorting the table changed which company was valued by DCF.
+   */
+  valuationMethod: string;
   /** Free text — why this is on the list. The spec's "Why do we own it?". */
   note: string;
   /** ISO timestamp of the last edit, so the page can say how stale a view is. */
@@ -52,6 +78,9 @@ export const EMPTY_ENTRY = (securityKey: string): WatchEntry => ({
   exitPrice: null,
   alertAbove: null,
   alertBelow: null,
+  targetWeightPct: null,
+  fairValueRefYear: "",
+  valuationMethod: "",
   note: "",
   updatedAt: "",
 });
@@ -59,6 +88,24 @@ export const EMPTY_ENTRY = (securityKey: string): WatchEntry => ({
 /** A stored number is only accepted if it is a finite POSITIVE price. */
 const price = (v: unknown): number | null =>
   typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null;
+
+/**
+ * A target weight, in percent. **Zero is accepted** and negative is not.
+ *
+ * This is deliberately NOT `price()`. A 0% target means "hold none of this",
+ * which is an instruction; rejecting it as `price()` does would silently turn a
+ * decision into an absence and make the gap column go blank on the one name the
+ * family had most definitely decided about.
+ *
+ * The upper bound is 100: a single name cannot be more than the whole book, and
+ * a typed 1000 is a slipped decimal rather than a conviction.
+ */
+const weightPct = (v: unknown): number | null =>
+  typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 100 ? v : null;
+
+/** A short free-text label from the family. Trimmed, bounded, never defaulted. */
+const label = (v: unknown, max: number): string =>
+  typeof v === "string" ? v.trim().slice(0, max) : "";
 
 function coerce(raw: unknown, securityKey: string): WatchEntry {
   const o = (raw ?? {}) as Partial<WatchEntry>;
@@ -71,10 +118,39 @@ function coerce(raw: unknown, securityKey: string): WatchEntry {
     exitPrice: price(o.exitPrice),
     alertAbove: price(o.alertAbove),
     alertBelow: price(o.alertBelow),
+    targetWeightPct: weightPct(o.targetWeightPct),
+    fairValueRefYear: label(o.fairValueRefYear, 16),
+    valuationMethod: label(o.valuationMethod, 40),
     note: typeof o.note === "string" ? o.note.slice(0, 2000) : "",
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : "",
   };
 }
+
+/**
+ * Parse a typed target weight. Blank is NOT SET; `0` is zero.
+ *
+ * Exported because the editor and any importer must agree on what counts — two
+ * parsers is how "0" ends up meaning two different things on two screens.
+ */
+export function parseWeightPct(s: string): number | null {
+  const t = s.trim().replace(/%$/, "").trim();
+  if (!t) return null;
+  const n = Number(t.replace(/[,\s]/g, ""));
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+}
+
+/**
+ * Valuation methods offered as suggestions in the editor.
+ *
+ * A SUGGESTION LIST, NOT A CLOSED SET — the input stays free text so a family
+ * that values something on replacement cost can say so. It exists only to keep
+ * the same method spelled the same way across names, which is what makes the
+ * column groupable.
+ */
+export const VALUATION_METHODS = [
+  "DCF", "P/E", "EV/EBITDA", "P/B", "SOTP", "NAV", "Replacement cost",
+  "Dividend discount", "Transaction comparable", "Manager mark",
+];
 
 export function readWatchlist(): Watchlist {
   try {
@@ -109,7 +185,11 @@ export function writeEntry(entry: WatchEntry): Watchlist {
   const empty = !next.watching && !next.note.trim()
     && next.targetPrice === null && next.fairValue === null
     && next.entryPrice === null && next.exitPrice === null
-    && next.alertAbove === null && next.alertBelow === null;
+    && next.alertAbove === null && next.alertBelow === null
+    // `=== null`, not falsy: a recorded 0% target weight is a decision and the
+    // entry that carries it must survive. `!next.targetWeightPct` would delete it.
+    && next.targetWeightPct === null
+    && !next.fairValueRefYear && !next.valuationMethod;
   if (empty) delete w[entry.securityKey];
   else w[entry.securityKey] = next;
   writeWatchlist(w);
@@ -149,6 +229,29 @@ export const ALERT_WORDING: Record<AlertKind, string> = {
   target: "price has reached the target",
   exit: "price has reached the exit level",
 };
+
+/**
+ * What is still to be put into a name to reach its target weight — the spec's
+ * "pending to invest", and the only figure on that table anybody acts on.
+ *
+ * `target% x book total − what is held now`. Positive is still to buy, negative
+ * is overweight and to trim.
+ *
+ * BOTH HALVES MUST EXIST OR THIS IS NULL. A gap computed against a target
+ * nobody set is a fabricated instruction, and a gap computed against an empty
+ * book is the whole target masquerading as a shortfall. The caller must also
+ * say WHICH total it passed: measured against a filtered subset the same target
+ * weight yields a different rupee figure, and the reader cannot see the
+ * denominator from the cell.
+ */
+export function pendingToInvest(
+  targetWeightPct: number | null,
+  bookTotal: number,
+  marketValue: number,
+): number | null {
+  if (targetWeightPct === null || !(bookTotal > 0)) return null;
+  return (targetWeightPct / 100) * bookTotal - marketValue;
+}
 
 /** Upside to a target, as a percentage. Null when either side is missing. */
 export const upsidePct = (price: number | null, target: number | null): number | null =>

@@ -28,8 +28,15 @@
 // the family can save, share and re-import. That is not a substitute for a
 // server-side store, and the page says so, but it makes the data survivable.
 
+import { coerceDeal, type PrivateDeal } from "./deals";
+import { coerceHousehold, EMPTY_HOUSEHOLD, type Household } from "./household";
+
 const KEY = "glow:familyInputs/v1";
-export const SCHEMA_VERSION = 1;
+// v2 added the private deal register; v3 the household balance sheet, the
+// adviser register, the decisions queue and the benchmark choice. An older file
+// imports cleanly — `coerce` defaults each new field to empty, which is the
+// truth about a file written before the field existed.
+export const SCHEMA_VERSION = 3;
 
 // ── IPS buckets ─────────────────────────────────────────────────────────────
 // The spec names these five. They are fixed because they are the spec's, but
@@ -109,6 +116,19 @@ export type FamilyInputs = {
   /** Keyed by securityKey. */
   theses: Record<string, ThesisRecord>;
   alertRules: AlertRule[];
+  /**
+   * The private deal register — one entry per company the family invested in
+   * directly. See `deals.ts`: no statement issuer holds a cap table, so this
+   * could never have come from an ingest.
+   */
+  deals: PrivateDeal[];
+  /**
+   * The household balance sheet, the adviser register, the decisions queue and
+   * the family's chosen benchmark — see `household.ts`. These fill the four
+   * Family Dashboard tiles that were absent for want of a family fact, not for
+   * want of a feed.
+   */
+  household: Household;
   updatedAt: string;
 };
 
@@ -120,6 +140,8 @@ export const EMPTY: FamilyInputs = {
   bucketByAssetClass: {},
   theses: {},
   alertRules: [],
+  deals: [],
+  household: EMPTY_HOUSEHOLD,
   updatedAt: "",
 };
 
@@ -210,10 +232,17 @@ export function coerce(raw: unknown): FamilyInputs {
     });
   }
 
+  // A deal that coerces to null — no company name — is DROPPED, not repaired.
+  // Figures attached to no company cannot be checked against anything.
+  const deals = (Array.isArray(o.deals) ? o.deals : [])
+    .map(coerceDeal)
+    .filter((d): d is PrivateDeal => d !== null);
+
   return {
     version: SCHEMA_VERSION,
     charter: str(o.charter),
-    ipsTargets, sectorTargets, bucketByAssetClass, theses, alertRules,
+    ipsTargets, sectorTargets, bucketByAssetClass, theses, alertRules, deals,
+    household: coerceHousehold(o.household),
     updatedAt: str(o.updatedAt),
   };
 }
@@ -240,7 +269,14 @@ export const hasAnyInput = (f: FamilyInputs): boolean =>
   || Object.values(f.sectorTargets).some((v) => v != null)
   || Object.values(f.bucketByAssetClass).some((v) => v != null)
   || Object.keys(f.theses).length > 0
-  || f.alertRules.length > 0;
+  || f.alertRules.length > 0
+  || f.deals.length > 0
+  || f.household.assets.length > 0
+  || f.household.liabilities.length > 0
+  || f.household.outflows.length > 0
+  || f.household.advisors.length > 0
+  || f.household.decisions.length > 0
+  || !!f.household.benchmarkSeriesId;
 
 /** Do the IPS targets add to 100? Null when none is set — not "0% allocated". */
 export function ipsTargetTotal(f: FamilyInputs): number | null {

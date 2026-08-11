@@ -17,7 +17,7 @@ import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { PreviewBadge, PreviewNum, PreviewPill } from "@/components/Preview";
-import { readWatchlist, type Watchlist } from "@/lib/watchlist";
+import { readWatchlist, pendingToInvest, type Watchlist } from "@/lib/watchlist";
 
 type EntityPart = {
   // Per-unit figures are nullable for the same reason they are on Position:
@@ -497,7 +497,7 @@ export function PortfolioMonitor() {
       ) : view === "transactions" ? (
         <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />
       ) : (
-        <PublicDashboardView rows={rows} />
+        <PublicDashboardView rows={rows} totMV={totMV} filtered={entity !== "All" || sector !== "All" || assetClass !== "All" || selected.size > 0} />
       )}
     </div>
   );
@@ -756,7 +756,21 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
 // So the columns stay, because the spec asks for them and the reader should see
 // where the family's judgement will live. They render `—` with a reason until
 // the family records one on that name's company page.
-function PublicDashboardView({ rows }: { rows: Row[] }) {
+//
+// PENDING TO INVEST IS AN ARITHMETIC ON THE FAMILY'S OWN MONEY, and it is here
+// legitimately for one reason: every input is measured. `target% x book total −
+// held now`, where the target is a figure a human typed and the total is this
+// table's own denominator. That is the same computation the weight column
+// already shows, expressed in rupees. What made the old version a fabrication
+// was not the arithmetic but the operand — `x 0.18` was a coefficient nobody
+// chose, and no amount of greying makes an invented coefficient measured.
+//
+// THE DENOMINATOR TRAVELS WITH IT. A target weight is a share OF SOMETHING, and
+// the same 5% is a different rupee figure against the whole book than against
+// one owner's slice. The table's weight column is already computed against the
+// filtered total, so pending uses the same one and the footnote names it — the
+// reader cannot see a denominator from inside a cell.
+function PublicDashboardView({ rows, totMV, filtered }: { rows: Row[]; totMV: number; filtered: boolean }) {
   const { fmtFromBase } = usePortfolio();
   // localStorage is read once per open — edits made on /watchlist this session
   // won't reflect until the view remounts, which is acceptable for a preview.
@@ -768,7 +782,7 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
         <PreviewBadge label="Judgement columns" />
         <span><span className="text-slate-200">Live from the book:</span> CMP, buy price, invested, current value, gain, return, quantity, weight.</span>
-        <span><span className="text-champagne-400">Target &amp; fair value</span> are the family's own — shown where recorded on a name's company page, <span className="text-slate-500">—</span> where not.</span>
+        <span><span className="text-champagne-400">Target, weight, fair value, its year and the method</span> are the family's own — shown where recorded on a name's company page, <span className="text-slate-500">—</span> where not.</span>
         <span>Per-security XIRR is <span className="text-slate-500">not available</span> — transaction statements cover the current period only.</span>
       </div>
       <Card pad={false} className="flex min-h-0 flex-1 flex-col">
@@ -803,6 +817,11 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
                 // target × the quantity actually held.
                 const hasTarget = !!e && e.targetPrice !== null;
                 const hasFair = !!e && e.fairValue !== null;
+                // `!== null` and never a truthiness test: a recorded 0% target
+                // weight is the family saying "hold none of this", which is the
+                // most actionable value this column can carry.
+                const tw = e?.targetWeightPct ?? null;
+                const pending = pendingToInvest(tw, totMV, r.marketValue);
                 return (
                   <tr key={r.key} className="hover:bg-ink-700/40">
                     <td className="px-2 py-2.5">
@@ -834,15 +853,30 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
                     <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasTarget
                       ? <span className="text-champagne-400">{fmtFromBase(e!.targetPrice! * r.quantity, { compact: true })}</span>
                       : <AbsentCell reason="no target price set for this name — record one on its company page" />}</td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="a target weight is an IPS decision, and the family has supplied none" /></td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="pending to invest is the gap to a target weight, and no target weight is set" /></td>
+                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{tw !== null
+                      ? <span className="text-champagne-400">{tw.toFixed(1)}%</span>
+                      : <AbsentCell reason="no target weight set for this name — record one on its company page" />}</td>
+                    {/* Positive = still to buy, negative = overweight. Coloured
+                        neutrally: neither direction is good or bad, they are
+                        instructions in opposite directions. */}
+                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{pending !== null
+                      ? <span className="text-champagne-400" title={`${tw!.toFixed(1)}% of ${fmtFromBase(totMV, { compact: true })} less the ${fmtFromBase(r.marketValue, { compact: true })} held`}>
+                          {fmtFromBase(pending, { compact: true, sign: true })}
+                        </span>
+                      : <AbsentCell reason={tw === null
+                          ? "pending to invest is the gap to a target weight, and no target weight is set"
+                          : "the visible book has no market value to take a percentage of"} />}</td>
                     <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasFair
                       ? <span className="text-champagne-400">{fmtFromBase(e!.fairValue!)}</span>
                       : <AbsentCell reason="no fair value recorded for this name — record one on its company page" />}</td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap">{hasFair
-                      ? <AbsentCell reason="the watchlist records a fair value but not the year it is struck for" />
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap">{e?.fairValueRefYear
+                      ? <span className="text-champagne-400">{e.fairValueRefYear}</span>
+                      : hasFair
+                      ? <AbsentCell reason="a fair value is recorded but not the year it is struck for" />
                       : <AbsentCell reason="no fair value recorded, so it has no reference year" />}</td>
-                    <td className="px-2 py-2.5 text-left whitespace-nowrap"><AbsentCell reason="no valuation method recorded for this name" /></td>
+                    <td className="px-2 py-2.5 text-left whitespace-nowrap">{e?.valuationMethod
+                      ? <span className="text-champagne-400">{e.valuationMethod}</span>
+                      : <AbsentCell reason="no valuation method recorded for this name" />}</td>
                   </tr>
                 );
               })}
@@ -850,6 +884,17 @@ function PublicDashboardView({ rows }: { rows: Row[] }) {
             </tbody>
           </table>
         </div>
+        {/* THE DENOMINATOR, NAMED. Target weight and pending to invest are both
+            shares of a total, and which total is not visible from the cell. */}
+        <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+          <span className="text-slate-400">Pending to invest</span> is the target weight applied to{" "}
+          {fmtFromBase(totMV, { compact: true })} — {filtered
+            ? "the total of the rows currently filtered in, not the whole book, so the same target weight reads differently here than on an unfiltered view"
+            : "the consolidated book, counting a dually-reported holding once"}
+          {" "}— less what is held now. Positive is still to buy, negative is overweight.
+          A name with no target weight recorded shows <span className="text-slate-400">—</span> rather than its whole
+          position as a shortfall.
+        </p>
       </Card>
     </>
   );

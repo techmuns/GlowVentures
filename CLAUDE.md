@@ -1146,7 +1146,74 @@ watchlist states its per-browser limitation and leaves it. An IPS and a set of
 theses are the family's own record, and a cleared browser would lose them with no
 way back — so the whole store round-trips through one JSON file. Everything
 re-enters through `coerce`, so a hand-edited file cannot put a malformed number
-into the GAP analysis.
+into the GAP analysis. **One file carries the WHOLE store** — charter, IPS
+targets, bucket mapping, theses, alert rules, the deal register and the household
+balance sheet. A partial export looks like a backup and loses the rest.
+
+### Stage 10b — what else was waiting on the family, not on a vendor
+
+Four more screens carried an absence whose stated cause was a missing feed, and
+in each case the real cause was that nobody had asked the family. **An absence
+recorded against the wrong cause is worse than a gap: it tells a reader to stop
+looking for something they could supply in ten minutes.** The same discovery the
+IPS made, applied to what was left.
+
+**`src/lib/deals.ts` — the private deal register.** The AIF and drawdown
+statements report a FUND's capital account; they say nothing about the companies
+underneath — what was committed to which company, at what pre-money, for what
+fully-diluted stake, and whether the last round diluted it. That is a
+shareholders' agreement and a cap table, which no statement issuer holds and no
+reader can extract. **Everything derivable is derived**: amount invested is the
+SUM of the tranches entered, pending to invest is the commitment less that sum,
+stake value is the post-raise stake times that round's post-money. None can be
+typed, so none can disagree with its own inputs. A deal with no tranches recorded
+shows `—` for invested, **not ₹0**, and therefore `—` for pending rather than
+reporting the whole commitment as cash to find. Attachments are REGISTERED, not
+stored: what a document is, its date and where it lives — a browser is the wrong
+home for signed PDFs, and the page says so. The illustrative tracker preview
+still renders on an empty book and **disappears the moment a real deal exists**,
+because a sample beneath a table a reader has just learnt to trust is worse than
+one standing alone.
+
+**`src/lib/household.ts` — the balance sheet, the advisers, the decisions.** Net
+worth, cash available, liquidity coverage and the charity pool were the four
+Family Dashboard tiles whose reasons read "no bank statement in this drop", "no
+outflow schedule has been supplied". Net worth = the measured portfolio + entered
+assets − liabilities, and **the caption says how many register lines it spans** —
+a net worth over one bank balance reads exactly like a complete one. Liquidity
+coverage needs BOTH halves: cash with no schedule is not unlimited coverage and a
+schedule with no cash is not zero months. A recurring outflow counts once per
+occurrence inside the window, not once in total. **An amount of ZERO is accepted
+and stored here**, unlike every price field in the codebase: a bank account at nil
+is the measurement that turns coverage from unknown into a hard zero.
+Tangible/intangible follows from the KIND, never a per-row judgement.
+
+**The benchmark stays unchosen until the family chooses.** The harvest store
+carries twelve indices, so the tile's old reason ("no index history endpoint") is
+no longer true — but defaulting to the Nifty would put a comparison on screen
+nobody agreed to, and this book is 62% private by value. The picker offers only
+series the store actually carries, so a chosen benchmark always has a measurable
+return.
+
+**The decisions queue is real and still contains only what somebody typed.**
+Nothing generates an item. Its predecessor was a preview that named two of this
+book's own managers and asserted a pending approval — a reader who sees an item
+on a decisions queue either acts or worries. An empty queue now says nothing has
+been ENTERED, which is not the claim that nothing is outstanding.
+
+**`Bucket.weight` on the Family Dashboard reads the mapping.** That card drew
+invented weights summing to 100%, was corrected to show every bucket absent, and
+then stayed absent whatever the family entered — wrong in both directions for the
+same reason: it was not reading the one place the answer lives. It calls
+`bucketActuals` now, like Exposure & IPS.
+
+**Two suites check this, and they check different things.**
+`npm run test:family` asserts the arithmetic (43 cases in
+`src/lib/__tests__/familyMath.test.ts`); `npm run check:family` seeds a register
+into a real browser and reads the rendered figures back. Both are needed:
+`dedupedPositions` sat in `analytics.ts` correct and called by nothing for as long
+as no drop contained a duplicate, and **a helper that returns the right number
+into no caller looks exactly like a working feature.**
 
 ### The alert engine — silence is read as all-clear
 
@@ -1455,6 +1522,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
+- `npm run test:family` checks the family-input arithmetic — the deal register's
+  derivations, the household totals, the plan columns' gap. Bundled through
+  esbuild; no test framework added for it.
+- `npm run check:family` seeds a family register into a real browser and reads
+  the rendered figures back, so a correct helper wired into nothing fails. Needs
+  a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and

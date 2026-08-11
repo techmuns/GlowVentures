@@ -36,8 +36,16 @@
 // a search box labelled "AI" that greps would be a claim the page does not
 // honour.
 
+import { IPS_BUCKETS, type IpsBucketKey } from "./familyInputs";
+
 const KEY = "glow:knowledge/v1";
-export const SCHEMA_VERSION = 1;
+// v2 added the note-level IPS bucket and review date. A v1 export imports
+// cleanly — both default to unset, which is what a file written before the
+// fields existed actually says.
+export const SCHEMA_VERSION = 2;
+
+/** The bucket keys, as a plain array for `oneOf` to validate against. */
+const IPS_BUCKET_KEYS = IPS_BUCKETS.map((b) => b.key);
 
 // ── The tagging model ───────────────────────────────────────────────────────
 // These vocabularies are the SPEC's, not a house view. The one dimension left
@@ -106,6 +114,22 @@ export type KnowledgeNote = {
   securityKeys: string[];
   /** The spec's "open questions" — something left unresolved and worth chasing. */
   openQuestion: boolean;
+  /**
+   * Which IPS bucket the note bears on — the spec asks that knowledge be
+   * filed against the allocation it informs, not only against a security.
+   * Null = not filed against a bucket, which is most notes.
+   */
+  bucket: IpsBucketKey | null;
+  /**
+   * When this note is next due to be revisited.
+   *
+   * A DATE, NOT A CADENCE, and never derived from `occurredOn`. A note about a
+   * lock-in expiring in March is due in March whenever it was written, and
+   * inferring "six months after it was taken" would put a review date on every
+   * note in the store that nobody chose. Empty = no review scheduled, which is
+   * not the same as reviewed.
+   */
+  reviewOn: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -134,7 +158,7 @@ export const emptyNote = (): KnowledgeNote => ({
   participants: "", manager: "",
   assetClasses: [], geographies: [], themes: [],
   risk: null, decisionStatus: null, securityKeys: [],
-  openQuestion: false,
+  openQuestion: false, bucket: null, reviewOn: "",
   createdAt: "", updatedAt: "",
 });
 
@@ -198,6 +222,8 @@ export function coerceNote(raw: unknown): KnowledgeNote | null {
     decisionStatus: oneOf(o.decisionStatus, DECISION_STATUSES),
     securityKeys: tags(o.securityKeys),
     openQuestion: o.openQuestion === true,
+    bucket: oneOf(o.bucket, IPS_BUCKET_KEYS),
+    reviewOn: isoDate(o.reviewOn),
     createdAt: str(o.createdAt),
     updatedAt: str(o.updatedAt),
   };

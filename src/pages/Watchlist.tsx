@@ -129,7 +129,10 @@ export function Watchlist() {
                   <th className="label-xs border-r border-ink-700/70 px-4 py-2 text-right font-medium">Value</th>
                   <th className="label-xs px-4 py-2 text-right font-medium" title="Our own view — not a market figure">Target</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Upside</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium whitespace-nowrap" title="Our intended share of the book. 0% is a decision — hold none.">Target wt</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Fair value</th>
+                  <th className="label-xs px-4 py-2 text-right font-medium whitespace-nowrap" title="The period the fair value is struck for">FV year</th>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Method</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Entry</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Exit</th>
                   <th className="label-xs px-4 py-2 text-left font-medium">Updated</th>
@@ -165,8 +168,22 @@ export function Watchlist() {
                       <td className={`px-4 py-2.5 text-right mono ${up === null ? "" : changeColor(up)}`}>
                         {up === null ? <AbsentCell reason="needs both a target and a price" /> : fmtPct(up, { sign: true, decimals: 1 })}
                       </td>
+                      {/* `!== null`: a recorded 0% is "hold none of this", and a
+                          truthiness test would hide the most emphatic instruction
+                          this column can carry behind a "not set". */}
+                      <td className="px-4 py-2.5 text-right mono text-slate-200">
+                        {r.entry.targetWeightPct === null
+                          ? <AbsentCell reason="no target weight set" />
+                          : `${r.entry.targetWeightPct.toFixed(1)}%`}
+                      </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">
                         {r.entry.fairValue === null ? <AbsentCell reason="no fair value set" /> : fmtFromBase(r.entry.fairValue)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-slate-400">
+                        {r.entry.fairValueRefYear || <AbsentCell reason={r.entry.fairValue === null ? "no fair value, so no reference year" : "a fair value is set but not the year it is struck for"} />}
+                      </td>
+                      <td className="px-4 py-2.5 text-left text-slate-400">
+                        {r.entry.valuationMethod || <AbsentCell reason="no valuation method recorded" />}
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">
                         {r.entry.entryPrice === null ? <AbsentCell reason="no entry level set" /> : fmtFromBase(r.entry.entryPrice)}

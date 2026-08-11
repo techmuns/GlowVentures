@@ -5,8 +5,8 @@ import { AbsentCell } from "@/components/Absent";
 import { fmtPct, changeColor } from "@/lib/format";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
-  readEntry, writeEntry, firedAlerts, upsidePct, ALERT_WORDING,
-  type WatchEntry,
+  readEntry, writeEntry, firedAlerts, upsidePct, parseWeightPct, VALUATION_METHODS,
+  ALERT_WORDING, type WatchEntry,
 } from "@/lib/watchlist";
 
 // INVESTMENT TOOLS — the client spec's watchlist, target price, fair value,
@@ -39,6 +39,30 @@ const parsePrice = (s: string): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+/**
+ * The three fields that make the public-dashboard plan table complete, and the
+ * reason they live here rather than being derived anywhere.
+ *
+ * TARGET WEIGHT IS THE ONE FIELD ON THIS PANEL WHERE ZERO IS REAL. Every price
+ * above is null-or-positive, because a target of ₹0 is meaningless. A target
+ * weight of 0% is not: it says hold none of this. So it has its own parser, and
+ * the emptiness rule that deletes an untouched entry tests `=== null` rather
+ * than falsiness — otherwise the one name the family had firmly decided to exit
+ * would be the one the store threw away.
+ */
+const PLAN_FIELDS: {
+  key: "targetWeightPct" | "fairValueRefYear" | "valuationMethod";
+  label: string; hint: string; placeholder: string; suggest?: readonly string[];
+}[] = [
+  { key: "targetWeightPct", label: "Target weight %", placeholder: "not set",
+    hint: "Our intended share of the book for this name. 0 is a real instruction — hold none. Blank means nobody has decided." },
+  { key: "fairValueRefYear", label: "FV reference year", placeholder: "e.g. FY28E",
+    hint: "The period the fair value above is struck for. A fair value with no horizon is not comparable to another name's." },
+  { key: "valuationMethod", label: "Valuation method", placeholder: "e.g. DCF",
+    hint: "How that fair value was arrived at. Free text; the list is only there to keep the spelling consistent across names.",
+    suggest: VALUATION_METHODS },
+];
+
 export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
   securityKey: string;
   name: string;
@@ -64,12 +88,20 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
   const fieldValue = (k: keyof WatchEntry) => {
     if (k in draft) return draft[k as string];
     const v = entry[k];
-    return typeof v === "number" ? String(v) : "";
+    if (typeof v === "number") return String(v);
+    return typeof v === "string" ? v : "";
   };
 
   const commit = (k: keyof WatchEntry, raw: string) => {
     setDraft((d) => { const { [k as string]: _drop, ...rest } = d; return rest; });
     save({ ...entry, [k]: parsePrice(raw) } as WatchEntry);
+  };
+
+  /** The plan fields parse differently — see PLAN_FIELDS on why zero survives. */
+  const commitPlan = (k: (typeof PLAN_FIELDS)[number]["key"], raw: string) => {
+    setDraft((d) => { const { [k as string]: _drop, ...rest } = d; return rest; });
+    const value = k === "targetWeightPct" ? parseWeightPct(raw) : raw.trim();
+    save({ ...entry, [k]: value } as WatchEntry);
   };
 
   const upside = upsidePct(price, entry.targetPrice);
@@ -126,6 +158,46 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
             />
           </label>
         ))}
+      </div>
+
+      {/* THE PLAN FIELDS. Separated by a rule and their own caption because they
+          are read by a different screen — Portfolio Monitor's plan view — and a
+          reader typing here should know where the figure surfaces. */}
+      <div className="mt-4 border-t border-ink-700/70 pt-3">
+        <p className="label-xs mb-2 text-slate-500">
+          Plan — these fill the <span className="text-slate-400">Target weight</span>,{" "}
+          <span className="text-slate-400">Pending to invest</span>,{" "}
+          <span className="text-slate-400">FV ref year</span> and{" "}
+          <span className="text-slate-400">Valuation method</span> columns on Portfolio Monitor's plan view.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {PLAN_FIELDS.map((f) => (
+            <label key={f.key} className="block">
+              <span className="label-xs block text-slate-400" title={f.hint}>{f.label}</span>
+              <input
+                type="text"
+                inputMode={f.key === "targetWeightPct" ? "decimal" : "text"}
+                list={f.suggest ? `${f.key}-options` : undefined}
+                placeholder={f.placeholder}
+                value={fieldValue(f.key)}
+                onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                onBlur={(e) => commitPlan(f.key, e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                className={`mt-1 w-full rounded-md border border-ink-600/70 bg-ink-800/40 px-2.5 py-1.5 text-[13px] text-slate-200 placeholder:text-slate-600 focus:border-champagne-400/50 focus:outline-none ${f.key === "targetWeightPct" ? "mono" : ""}`}
+              />
+              {f.suggest && (
+                <datalist id={`${f.key}-options`}>
+                  {f.suggest.map((s) => <option key={s} value={s} />)}
+                </datalist>
+              )}
+            </label>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+          A target weight of <span className="mono text-slate-400">0</span> is recorded as a decision — hold none of this.
+          Leaving it blank records nothing, and the pending-to-invest column stays <span className="text-slate-400">—</span>:
+          a gap measured against a target nobody set would be an instruction to sell that nobody gave.
+        </p>
       </div>
 
       <label className="mt-3 block">

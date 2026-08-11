@@ -16,6 +16,7 @@ import {
   type DecisionStatus, type Geography, type KnowledgeNote, type KnowledgeStore,
   type NoteAssetClass, type NoteFilter, type NoteSource, type RiskLevel,
 } from "@/lib/knowledge";
+import { IPS_BUCKETS, type IpsBucketKey } from "@/lib/familyInputs";
 
 // LAYER 1 — KNOWLEDGE & MEMORY, no longer a preview.
 //
@@ -157,6 +158,22 @@ function NoteEditor({ note, managers, securities, onSave, onCancel }: {
         </Field>
       </div>
 
+      {/* The IPS bucket a note bears on, and when to come back to it. Both
+          optional and both unset by default: a review date inferred from the
+          note's own date would schedule every note in the store on a cadence
+          nobody chose. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="IPS bucket" hint="Which part of the allocation this note informs. Most notes name none, and that is fine.">
+          <select className={inputCls} value={d.bucket ?? ""} onChange={(e) => set("bucket", (e.target.value || null) as IpsBucketKey | null)}>
+            <option value="">Not filed against a bucket</option>
+            {IPS_BUCKETS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Review on" hint="A date, never derived from when the note was taken. Blank means no review is scheduled — which is not the same as reviewed.">
+          <input type="date" className={inputCls} value={d.reviewOn} onChange={(e) => set("reviewOn", e.target.value)} />
+        </Field>
+      </div>
+
       {securities.length > 0 && (
         <Field label="Linked holdings" hint="Ties this note to positions in the book, so a company page can show what was said about it.">
           <select className={inputCls} value=""
@@ -209,6 +226,14 @@ function NoteRow({ n, securities, onEdit, onDelete }: {
             {n.decisionStatus && <Pill tone="info">{n.decisionStatus}</Pill>}
             {n.risk && <Pill tone={RISK_TONE[n.risk]}>{n.risk} risk</Pill>}
             {n.openQuestion && <Pill tone="warn"><HelpCircle className="mr-1 inline h-3 w-3" />Open</Pill>}
+            {n.bucket && <Pill>{IPS_BUCKETS.find((b) => b.key === n.bucket)?.label ?? n.bucket}</Pill>}
+            {/* Overdue is measured against the review date alone. A note with
+                none is not overdue and not current — it is unscheduled. */}
+            {n.reviewOn && (
+              <Pill tone={Date.parse(`${n.reviewOn}T00:00:00Z`) < Date.now() ? "warn" : "info"}>
+                review {fmtDate(n.reviewOn)}
+              </Pill>
+            )}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
             {n.occurredOn
@@ -290,6 +315,8 @@ export function Knowledge() {
     });
 
   const openQuestions = notes.filter((n) => n.openQuestion).length;
+  const scheduled = notes.filter((n) => n.reviewOn).length;
+  const reviewsDue = notes.filter((n) => n.reviewOn && Date.parse(`${n.reviewOn}T00:00:00Z`) < Date.now()).length;
   const empty = notes.length === 0;
 
   return (
@@ -325,7 +352,7 @@ export function Knowledge() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatTile label="Notes captured" icon={<BookOpen className="h-4 w-4" />}
           {...(empty
             ? absentTile("no note has been captured yet", "Nothing is seeded — every note here is one the family wrote")
@@ -344,6 +371,14 @@ export function Knowledge() {
             // A COMPUTED zero, and it stays: notes exist and none is flagged. The
             // reason sits in the tile rather than a tooltip.
             : { value: String(openQuestions), sub: <span>{openQuestions === 0 ? "no note is flagged unresolved" : "flagged unresolved"}</span> })} />
+        {/* REVIEWS DUE counts only notes that CARRY a review date. A note with
+            none is unscheduled, not current, and folding it in either direction
+            would answer a question nobody asked of it — the count therefore says
+            how many notes it is measured over. */}
+        <StatTile label="Reviews due" icon={<CalendarDays className="h-4 w-4" />}
+          {...(scheduled === 0
+            ? absentTile(empty ? "no note has been captured yet" : "no note carries a review date", "Set one on a note to have it counted here")
+            : { value: String(reviewsDue), sub: <span>{reviewsDue === 0 ? `none of the ${scheduled} scheduled is past due` : `of ${scheduled} scheduled, past due`}</span> })} />
       </div>
 
       {editing && (
