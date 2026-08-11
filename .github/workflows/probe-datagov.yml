@@ -33,3 +33,17 @@ jobs:
         env:
           DATA_GOV_IN_KEY: ${{ secrets.DATA_GOV_IN_KEY }}
         run: node scripts/harvest/probe-datagov.mjs
+
+  # Separate job: which upstreams can the harvester actually reach from HERE?
+  # Several series are declared absent because FRED was unreachable — but that
+  # was measured in a dev container, and the nightly harvest runs on this
+  # runner, on a different network entirely.
+  reach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Probe upstream reachability
+        run: node scripts/harvest/probe-reach.mjs
