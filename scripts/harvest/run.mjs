@@ -32,8 +32,9 @@ import * as rbi from "./adapters/rbi.mjs";
 import * as iex from "./adapters/iex.mjs";
 import * as fred from "./adapters/fred.mjs";
 import * as dataGovIn from "./adapters/dataGovIn.mjs";
+import * as cea from "./adapters/cea.mjs";
 
-const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex, fred, dataGovIn };
+const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex, fred, dataGovIn, cea };
 const CONCURRENCY = 4;          // polite against a free upstream
 const only = process.argv.includes("--only")
   ? process.argv[process.argv.indexOf("--only") + 1]?.split(",")

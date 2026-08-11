@@ -56,7 +56,7 @@ type IndustryDef = {
 
 const CAPACITY_ABSENT = {
   what: "Capacity, capacity utilisation and production",
-  why: "India publishes these through CEA (power), the Ministry of Coal and the Joint Plant Committee (steel) as monthly PDF and XLS reports behind dynamic selectors rather than a data endpoint. Each needs its own reader, in the way each statement provider in source/ needed one.",
+  why: "Each of these is a separate ministry report with its own layout, and only one has turned out to be both free and machine-readable: CEA's monthly installed-capacity workbook, which the Electricity industry below now reads. The Ministry of Coal and the Joint Plant Committee publish theirs as PDF, and SIAM's vehicle statistics sit behind a member subscription — that last one is a commercial licence rather than a reader.",
 };
 const ORDERBOOK_ABSENT = {
   what: "Order book and order inflows",
@@ -146,10 +146,23 @@ const INDUSTRIES: IndustryDef[] = [
       { id: "electricity-india", role: "Spot price (IEX day-ahead)" },
       { id: "thermal-coal", role: "Fuel" },
       { id: "natural-gas", role: "Fuel (gas-based)" },
+      // CAPACITY IS NOW SOURCED — CEA's monthly workbook, discovered from its
+      // landing page rather than a hardcoded path. This is the spec's industry
+      // STRUCTURE data, and electricity is the one industry of the seven where
+      // it turned out to be both free and machine-readable.
+      { id: "india-power-capacity", role: "Installed capacity (CEA)" },
+      { id: "india-power-coal", role: "Capacity — coal" },
+      { id: "india-power-solar", role: "Capacity — solar" },
+      { id: "india-power-wind", role: "Capacity — wind" },
+      { id: "india-power-nonfossil", role: "Capacity — non-fossil" },
     ],
     sectors: ["Utilities"],
     absent: [
-      { what: "Installed capacity, generation and PLF", why: "CEA publishes all three monthly, but through report pages driven by dynamic region and month selectors rather than a stable file URL. PLF is the spec's 'capacity utilisation' for this industry and is the single most valuable addition here." },
+      // Capacity came off this list; generation and PLF did not. CEA publishes
+      // both, but in the monthly GENERATION report, which is a different
+      // document with a different layout — claiming them here because the
+      // capacity workbook parsed would be asserting a source nobody read.
+      { what: "Generation and PLF (plant load factor)", why: "CEA publishes both monthly, but in the generation report rather than the installed-capacity workbook this page now reads. PLF is the spec's 'capacity utilisation' for this industry and needs that second report's own reader." },
     ],
   },
   {

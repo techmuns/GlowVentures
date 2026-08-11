@@ -6,32 +6,25 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 2 series, 270 points
+- **Harvested:** 7 series, 7 points
 - **Failed:** 0
-- **Declared absent:** 7 (the spec asks for them; no source we have serves them)
+- **Declared absent:** 9 (the spec asks for them; no source we have serves them)
 
 ## Harvested
 
 | Series | Group | Points | From | To | Unit | Source | Provenance |
 | --- | --- | ---: | --- | --- | --- | --- | --- |
-| India Wholesale Price Index | Inflation | 139 | 2012-04-01 | 2023-10-01 | index | data.gov.in (Open Government Data, India) `All Commodities` | official-api |
-| India Index of Industrial Production | Economic growth | 131 | 2012-04-01 | 2023-02-01 | index | data.gov.in (Open Government Data, India) `General` | official-api |
+| India installed power capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Total Installed Capacity` | official-file |
+| India coal capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Coal` | official-file |
+| India solar capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Solar` | official-file |
+| India wind capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Wind` | official-file |
+| India hydro capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Hydro (including PSPs)` | official-file |
+| India nuclear capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Nuclear` | official-file |
+| India non-fossil capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Total Non-Fossil Fuel` | official-file |
 
 ## Validation
 
-`blocked` points never reached disk; the series kept its last good value.
-`warn` points were stored and are named here.
-
-**`large-move` on a futures series is usually a CONTRACT ROLL, not an error.**
-Yahoo's `=F` symbols are continuous front-month series: when the front
-contract expires the series steps to the next one, and that step is a price
-difference between two contracts rather than a move in the market. It is
-reported and kept — the level on each date is what that contract traded at —
-but a one-day return spanning a roll is measuring the roll.
-
-| Series | Severity | Rule | Detail |
-| --- | --- | --- | --- |
-| India Index of Industrial Production | warn | large-move | 2 consecutive move(s) over 25%; largest 67.0% on 2020-05-01 (54 → 90.2) |
+No findings — every point passed the gate.
 
 ## Declared absent
 
@@ -48,3 +41,5 @@ illustrative number.
 | Rail Freight | Others | Indian Railways freight volumes come from the Ministry of Railways monthly release — Phase 2 India harvest. |
 | Mutual Fund AAUM | Capital markets | AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency. |
 | SIP Contributions | Capital markets | Same AMFI monthly workbooks, same BIFF blocker. |
+| India petroleum products consumption | Consumption | PPAC publishes consumption monthly and CURRENT — its July 2026 flash report was on the site when this was checked — but as PDF only, with no spreadsheet or API alongside. It needs a reader for that report's layout, not a URL. |
+| India vehicle sales | Consumption | SIAM puts its production and sales statistics behind a member subscription — the public pages carry login and subscription prompts and no data. This one is a commercial licence, not a reader. |

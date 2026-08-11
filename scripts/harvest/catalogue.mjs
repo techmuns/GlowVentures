@@ -104,6 +104,23 @@ const dataGov = (resource, rowField, rowValue) => ({
   provenance: "official-api",
 });
 
+/**
+ * CEA monthly installed capacity, in MW, matched by the sheet's own fuel label.
+ *
+ * ACCUMULATING: each monthly workbook is a snapshot of capacity at that month,
+ * not a history, so the store builds the series one run at a time. Same pattern
+ * as the RBI rates and IEX spot power.
+ */
+const cea = (row) => ({
+  adapter: "cea",
+  row,
+  symbol: row,
+  name: "Central Electricity Authority",
+  url: "https://cea.nic.in/installed-capacity-report/?lang=en",
+  provenance: "official-file",
+  accumulating: true,
+});
+
 /** IEX day-ahead spot power. ACCUMULATING, same reason. */
 const iex = () => ({
   adapter: "iex",
@@ -284,6 +301,28 @@ export const SERIES = [
     source: dataGov("31d53713-46c6-48bd-951a-4d986272fd96", "description", "General"),
     note: "Base 2011-12 = 100, MoSPI all-India IIP. DISCONTINUED: last month carried is February 2023, verified against the resource's declared schema. Carried as history, never as a current reading. The 'General' row is the ministry's own aggregate computed with the official weights; the other rows are NIC industry divisions and are not summed here. The +67% move at 2020-05 is the COVID collapse and rebound — a real move, which the gate warns on rather than blocks.",
   },
+
+  // ── India's power CAPACITY — the spec's industry-structure data ────────────
+  // CEA's monthly Installed Capacity report, the one structure source of the
+  // three the spec asks for that is both free and machine-readable: PPAC
+  // publishes petroleum consumption as PDF only, and SIAM puts vehicle sales
+  // behind a member subscription. Both are declared absent below with that
+  // reason rather than left to look merely unbuilt.
+  //
+  // ACCUMULATING — one observation per monthly report, so every horizon stays
+  // absent until the store has held the series long enough to answer one.
+  { id: "india-power-capacity", label: "India installed power capacity", category: "economy", group: "Power", unit: "MW", band: [100000, 2000000], frequency: "monthly", source: cea("Total Installed Capacity") },
+  { id: "india-power-coal", label: "India coal capacity", category: "economy", group: "Power", unit: "MW", band: [50000, 1000000], frequency: "monthly", source: cea("Coal") },
+  { id: "india-power-solar", label: "India solar capacity", category: "economy", group: "Power", unit: "MW", band: [100, 1000000], frequency: "monthly", source: cea("Solar") },
+  { id: "india-power-wind", label: "India wind capacity", category: "economy", group: "Power", unit: "MW", band: [100, 1000000], frequency: "monthly", source: cea("Wind") },
+  { id: "india-power-hydro", label: "India hydro capacity", category: "economy", group: "Power", unit: "MW", band: [1000, 500000], frequency: "monthly", source: cea("Hydro (including PSPs)") },
+  { id: "india-power-nuclear", label: "India nuclear capacity", category: "economy", group: "Power", unit: "MW", band: [100, 200000], frequency: "monthly", source: cea("Nuclear") },
+  { id: "india-power-nonfossil", label: "India non-fossil capacity", category: "economy", group: "Power", unit: "MW", band: [10000, 2000000], frequency: "monthly", source: cea("Total Non-Fossil Fuel") },
+
+  { id: "india-petroleum-consumption", label: "India petroleum products consumption", category: "economy", group: "Consumption", unit: "'000 MT", band: null, source: null,
+    absent: "PPAC publishes consumption monthly and CURRENT — its July 2026 flash report was on the site when this was checked — but as PDF only, with no spreadsheet or API alongside. It needs a reader for that report's layout, not a URL." },
+  { id: "india-vehicle-sales", label: "India vehicle sales", category: "economy", group: "Consumption", unit: "units", band: null, source: null,
+    absent: "SIAM puts its production and sales statistics behind a member subscription — the public pages carry login and subscription prompts and no data. This one is a commercial licence, not a reader." },
 
   { id: "india-gdp-growth", label: "India GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("IN", "NY.GDP.MKTP.KD.ZG") },
   { id: "india-cpi", label: "India CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("IN", "FP.CPI.TOTL.ZG") },
