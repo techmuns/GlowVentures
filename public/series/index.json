@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-11T03:43:20.884Z",
+ "generatedAt": "2026-08-11T04:21:22.200Z",
  "categories": [
   {
    "key": "commodities",
@@ -5417,6 +5417,168 @@
    },
    "high52": null,
    "low52": null
+  },
+  {
+   "id": "india-wpi",
+   "label": "India Wholesale Price Index",
+   "category": "economy",
+   "group": "Inflation",
+   "unit": "index",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-api",
+   "source": {
+    "name": "data.gov.in (Open Government Data, India)",
+    "symbol": "All Commodities",
+    "url": "https://www.data.gov.in/resource/239ac3d0-f08d-40d0-b03c-9b7a426a62d5",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": "Base 2011-12 = 100, from the Office of the Economic Adviser's 'till last month' resource, which the ministry appends to monthly. The headline 'All Commodities' row is read as published — the table's other 868 rows are individual commodities and averaging them here would produce an index nobody published and that no reader could tie back to the source.",
+   "accumulating": false,
+   "first": "2012-04-01",
+   "last": "2023-10-01",
+   "count": 139,
+   "retrievedAt": "2026-08-11T04:21:22.200Z",
+   "staleSince": "2023-10-01",
+   "last_value": 152.5,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 0.46113306982871194,
+    "m3": 0.2629848783694877,
+    "m6": 0.9265387160820593,
+    "qtd": null,
+    "ytd": 1.3289036544850585,
+    "y1": -0.2616088947024253,
+    "y3": 7.260040832366355,
+    "y5": 4.564594165030922,
+    "y10": 2.8987790071610897,
+    "max": 3.3244928078784763
+   },
+   "spans": {
+    "m1": [
+     "2023-09-01",
+     "2023-10-01"
+    ],
+    "m3": [
+     "2023-07-01",
+     "2023-10-01"
+    ],
+    "m6": [
+     "2023-04-01",
+     "2023-10-01"
+    ],
+    "ytd": [
+     "2022-12-01",
+     "2023-10-01"
+    ],
+    "y1": [
+     "2022-10-01",
+     "2023-10-01"
+    ],
+    "y3": [
+     "2020-10-01",
+     "2023-10-01"
+    ],
+    "y5": [
+     "2018-10-01",
+     "2023-10-01"
+    ],
+    "y10": [
+     "2013-10-01",
+     "2023-10-01"
+    ],
+    "max": [
+     "2012-04-01",
+     "2023-10-01"
+    ]
+   },
+   "high52": 152.9,
+   "low52": 148.9
+  },
+  {
+   "id": "india-iip",
+   "label": "India Index of Industrial Production",
+   "category": "economy",
+   "group": "Economic growth",
+   "unit": "index",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-api",
+   "source": {
+    "name": "data.gov.in (Open Government Data, India)",
+    "symbol": "General",
+    "url": "https://www.data.gov.in/resource/31d53713-46c6-48bd-951a-4d986272fd96",
+    "exchange": null,
+    "upstreamCurrency": null
+   },
+   "note": "Base 2011-12 = 100, MoSPI's monthly all-India IIP. The 'General' row is the ministry's own aggregate, computed with the official weights; the table's other rows are NIC industry divisions and are not summed here.",
+   "accumulating": false,
+   "first": "2012-04-01",
+   "last": "2023-02-01",
+   "count": 131,
+   "retrievedAt": "2026-08-11T04:21:22.200Z",
+   "staleSince": "2023-02-01",
+   "last_value": 138.7,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -5.5820285908781635,
+    "m3": 0.726216412490932,
+    "m6": 5.475285171102651,
+    "qtd": -4.542326221610471,
+    "ytd": -4.542326221610471,
+    "y1": 5.555555555555536,
+    "y3": 1.1052155255739216,
+    "y5": 1.7143942898165898,
+    "y10": 3.182420878849501,
+    "max": 3.131788755496956
+   },
+   "spans": {
+    "m1": [
+     "2023-01-01",
+     "2023-02-01"
+    ],
+    "m3": [
+     "2022-11-01",
+     "2023-02-01"
+    ],
+    "m6": [
+     "2022-08-01",
+     "2023-02-01"
+    ],
+    "qtd": [
+     "2022-12-01",
+     "2023-02-01"
+    ],
+    "ytd": [
+     "2022-12-01",
+     "2023-02-01"
+    ],
+    "y1": [
+     "2022-02-01",
+     "2023-02-01"
+    ],
+    "y3": [
+     "2020-02-01",
+     "2023-02-01"
+    ],
+    "y5": [
+     "2018-02-01",
+     "2023-02-01"
+    ],
+    "y10": [
+     "2013-02-01",
+     "2023-02-01"
+    ],
+    "max": [
+     "2012-04-01",
+     "2023-02-01"
+    ]
+   },
+   "high52": 148.8,
+   "low52": 129.5
   },
   {
    "id": "india-gdp-growth",
