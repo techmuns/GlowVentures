@@ -175,6 +175,38 @@ async function inspect(id) {
   // Recency of the RECORD is not recency of the DATA — a 2026 upload of a
   // 2011-12 survey is a fresh record of a stale figure — so the title is
   // printed beside the date and the judgement stays with the reader.
+  // ROLLING RESOURCES — the ones that are actually a live series.
+  //
+  // Nearly everything in this catalogue is a SNAPSHOT: a parliamentary answer,
+  // a survey round, a table "up to December 2022" that will never gain another
+  // row. A handful are different — they carry a rolling window in the title
+  // ("till last month") and the ministry appends to them. Those are the only
+  // entries that can back a series, and they do not necessarily sort to the top
+  // by record date, so they need finding by name rather than by recency.
+  const ROLLING = /till last month|latest month|last month|upto date|up to date|monthly|month-wise|month wise/i;
+  const rolling = found.filter((f) => ROLLING.test(f.title));
+  console.log(`\n\n========== ROLLING CANDIDATES (${rolling.length}) ==========`);
+  console.log("these carry a moving window in the title, so the ministry appends to them.\n");
+  rolling.sort((a, b) => Number(b.updated || 0) - Number(a.updated || 0));
+  for (const r of rolling.slice(0, 25)) {
+    const when = Number(r.updated) ? new Date(Number(r.updated) * 1000).toISOString().slice(0, 10) : "unknown";
+    console.log(`  [${r.group}] ${when}  id=${r.id}`);
+    console.log(`      ${r.title.slice(0, 160)}`);
+  }
+  // Inspect the freshest few properly: a rolling title is a claim, and the
+  // newest row in the data is what settles it.
+  for (const r of rolling.slice(0, 6)) {
+    try {
+      const info = await inspect(r.id);
+      console.log(`\n    -- inspect ${r.id} (${r.title.slice(0, 90)})`);
+      console.log(`       rows=${info.total}`);
+      console.log(`       fields=${info.fields.join(", ").slice(0, 900)}`);
+      console.log(`       sample=${JSON.stringify(info.sample).slice(0, 900)}`);
+    } catch (e) {
+      console.log(`\n    -- inspect ${r.id} FAILED: ${redact(e.message).slice(0, 200)}`);
+    }
+  }
+
   console.log("\n\n========== VERDICT ==========");
   console.log("freshest catalogue entry per indicator. NOTE: the update date is when the RECORD");
   console.log("was touched, NOT the period the data covers — read the title for that.\n");
@@ -184,7 +216,7 @@ async function inspect(id) {
     rows.sort((a, b) => Number(b.updated || 0) - Number(a.updated || 0));
     const top = rows[0];
     const when = Number(top.updated) ? new Date(Number(top.updated) * 1000).toISOString().slice(0, 10) : "unknown";
-    console.log(`${g.label.padEnd(34)} : ${String(rows.length).padStart(4)} candidates · newest record ${when}`);
+    console.log(`${g.label.padEnd(34)} : ${String(rows.length).padStart(4)} candidates · newest record ${when} · id=${top.id}`);
     console.log(`${" ".repeat(37)}${top.title.slice(0, 150)}`);
   }
   console.log("\n=== probe complete ===");
