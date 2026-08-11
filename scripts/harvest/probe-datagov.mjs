@@ -165,6 +165,28 @@ async function inspect(id) {
       }
     }
   }
+  // THE VERDICT, LAST, IN ONE BLOCK.
+  //
+  // A reader of this log has to answer one question per indicator: is there a
+  // resource here that is CURRENT and is a TIME SERIES? The detail above is
+  // hundreds of lines and the answer scrolls off the top. So each group ends
+  // with its freshest candidate and how recently the catalogue touched it.
+  //
+  // Recency of the RECORD is not recency of the DATA — a 2026 upload of a
+  // 2011-12 survey is a fresh record of a stale figure — so the title is
+  // printed beside the date and the judgement stays with the reader.
+  console.log("\n\n========== VERDICT ==========");
+  console.log("freshest catalogue entry per indicator. NOTE: the update date is when the RECORD");
+  console.log("was touched, NOT the period the data covers — read the title for that.\n");
+  for (const g of WANTED) {
+    const rows = found.filter((f) => f.group === g.key);
+    if (!rows.length) { console.log(`${g.label.padEnd(34)} : NONE in catalogue`); continue; }
+    rows.sort((a, b) => Number(b.updated || 0) - Number(a.updated || 0));
+    const top = rows[0];
+    const when = Number(top.updated) ? new Date(Number(top.updated) * 1000).toISOString().slice(0, 10) : "unknown";
+    console.log(`${g.label.padEnd(34)} : ${String(rows.length).padStart(4)} candidates · newest record ${when}`);
+    console.log(`${" ".repeat(37)}${top.title.slice(0, 150)}`);
+  }
   console.log("\n=== probe complete ===");
 })().catch((e) => {
   console.error("PROBE FAILED:", redact(e?.stack || e?.message || e));

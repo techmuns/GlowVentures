@@ -24,7 +24,7 @@ const NAV = [
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/news", label: "News & Announcements", icon: Newspaper, group: "Daily" },
-  { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge", preview: true },
+  { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
   { to: "/household", label: "Family Dashboard", icon: LayoutDashboard, group: "Allocation", preview: true },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },

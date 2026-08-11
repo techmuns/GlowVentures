@@ -168,6 +168,17 @@ const INVARIANTS = {
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
   ],
+  // Layer 1: Knowledge & Memory is a real note store, not a mock. In this
+  // headless run nothing has been captured, so the page must show the ABSENT
+  // state with what would fill it — never "0 notes", and never the old sample
+  // counts. It must also not call its keyword search an AI query engine.
+  knowledge: [
+    ["an empty store renders the absent state, not zeros",
+      (t) => /No note has been captured yet/i.test(t) && !/\b0 notes\b/i.test(t)],
+    ["the search says what it is rather than claiming to be an AI index",
+      (t) => /not a language model reading an index/i.test(t) && !/AI query engine/i.test(t)],
+    ["the retired sample counts are gone", (t) => !/636/.test(t)],
+  ],
   // Phase 0: Macro Research renders from the committed series store, not a live
   // API — so it is live in this headless run with no token and no network. If
   // the store fails to load the page says so, and these catch that.
