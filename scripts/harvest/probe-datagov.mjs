@@ -131,7 +131,49 @@ async function inspect(id) {
   return { total, count: d?.count ?? null, fields, sample, updated: d?.updated_date || d?.updated || null };
 }
 
+/**
+ * THE WIRED RESOURCES, CHECKED FOR EXTENT.
+ *
+ * Both wired series stop in 2023 even though their catalogue records were
+ * touched today. That is either the ministry having quietly stopped appending —
+ * the exact "record touched, data frozen" trap this probe exists to catch — or
+ * this reader seeing only part of the record. The two are indistinguishable
+ * from the series alone and lead to opposite actions, so they are separated
+ * here: this prints the FULL field count and the last few month columns the API
+ * returns, with and without an explicit `fields` request.
+ */
+const WIRED = [
+  { id: "india-wpi", resource: "239ac3d0-f08d-40d0-b03c-9b7a426a62d5", rowField: "COMM_NAME", rowValue: "All Commodities" },
+  { id: "india-iip", resource: "31d53713-46c6-48bd-951a-4d986272fd96", rowField: "description", rowValue: "General" },
+];
+
+async function extent() {
+  console.log("\n\n========== EXTENT OF THE WIRED RESOURCES ==========");
+  for (const w of WIRED) {
+    try {
+      const d = await getJson(`${BASE}/resource/${w.resource}?api-key=${KEY}&format=json&limit=5`);
+      const declared = (d?.field || []).map((f) => f.id);
+      const rec = (d?.records || [])[0] || {};
+      const onRecord = Object.keys(rec);
+      console.log(`\n  ${w.id} (${w.resource})`);
+      console.log(`    total=${d?.total}  declared fields=${declared.length}  fields on a record=${onRecord.length}`);
+      console.log(`    LAST 6 declared : ${declared.slice(-6).join(", ")}`);
+      console.log(`    LAST 6 on record: ${onRecord.slice(-6).join(", ")}`);
+      // If the declared schema runs further than the returned record, the read
+      // is being truncated and the fix is here, not a stale-source note.
+      if (declared.length > onRecord.length) {
+        console.log(`    !! RECORD IS SHORTER THAN THE SCHEMA by ${declared.length - onRecord.length} fields — the read is truncated, not the source`);
+      } else {
+        console.log(`    -> record carries every declared field: the SOURCE stops here, not the reader`);
+      }
+    } catch (e) {
+      console.log(`  ${w.id}: FAILED ${redact(e.message).slice(0, 200)}`);
+    }
+  }
+}
+
 (async () => {
+  if (process.argv.includes("--extent")) { await extent(); return; }
   console.log("=== data.gov.in catalogue probe ===\n");
   console.log("Does the API support a server-side title search?");
   await probeSearchParams();

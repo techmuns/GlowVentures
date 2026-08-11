@@ -15,6 +15,11 @@ name: Probe data.gov.in catalogue
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "extent = check only the wired resources; blank = full catalogue scan"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -32,7 +37,7 @@ jobs:
       - name: Probe the catalogue
         env:
           DATA_GOV_IN_KEY: ${{ secrets.DATA_GOV_IN_KEY }}
-        run: node scripts/harvest/probe-datagov.mjs
+        run: node scripts/harvest/probe-datagov.mjs ${{ inputs.mode == 'extent' && '--extent' || '' }}
 
   # Separate job: which upstreams can the harvester actually reach from HERE?
   # Several series are declared absent because FRED was unreachable — but that
