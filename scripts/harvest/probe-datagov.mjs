@@ -60,15 +60,45 @@ const matchGroup = (title) => {
   return null;
 };
 
-async function listCatalogue({ pageSize = 500, maxPages = 40 } = {}) {
+/**
+ * Does the catalogue support a server-side title search? If it does, the whole
+ * brute-force scan below is unnecessary and — more importantly — a truncated
+ * scan can no longer be mistaken for a complete one.
+ */
+async function probeSearchParams() {
+  const forms = [
+    ["filters[title]", `${BASE}/lists?format=json&api-key=${KEY}&limit=5&filters[title]=Consumer Price Index`],
+    ["q", `${BASE}/lists?format=json&api-key=${KEY}&limit=5&q=Consumer Price Index`],
+    ["title", `${BASE}/lists?format=json&api-key=${KEY}&limit=5&title=Consumer Price Index`],
+  ];
+  for (const [name, url] of forms) {
+    try {
+      const d = await getJson(encodeURI(url));
+      const recs = d?.records || [];
+      const hits = recs.filter((r) => String(r?.title || "").toLowerCase().includes("consumer price")).length;
+      console.log(`  search form "${name}": ${recs.length} returned, ${hits} actually match the title — ${hits > 0 && hits === recs.length ? "WORKS" : "ignored by the API"}`);
+    } catch (e) {
+      console.log(`  search form "${name}": ${redact(e.message).slice(0, 160)}`);
+    }
+  }
+}
+
+async function listCatalogue({ pageSize = 500, maxPages = 400 } = {}) {
   const found = [];
   let offset = 0;
+  let declaredTotal = null;
+  let exhausted = false;
   for (let page = 0; page < maxPages; page++) {
     const url = `${BASE}/lists?format=json&api-key=${KEY}&offset=${offset}&limit=${pageSize}&filters[active]=1`;
     const d = await getJson(url);
+    if (declaredTotal == null) {
+      declaredTotal = d?.total ?? null;
+      console.log(`  catalogue declares total=${declaredTotal}`);
+    }
     const records = d?.records || d?.data || [];
     if (!Array.isArray(records) || records.length === 0) {
       console.log(`  catalogue exhausted at offset ${offset} (page ${page + 1})`);
+      exhausted = true;
       break;
     }
     for (const rec of records) {
@@ -78,11 +108,15 @@ async function listCatalogue({ pageSize = 500, maxPages = 40 } = {}) {
     offset += records.length;
     if (records.length < pageSize) {
       console.log(`  catalogue exhausted at offset ${offset} (short page)`);
+      exhausted = true;
       break;
     }
-    if (page % 5 === 4) console.log(`  …scanned ${offset} resources, ${found.length} candidates so far`);
+    if (page % 20 === 19) console.log(`  …scanned ${offset} resources, ${found.length} candidates so far`);
   }
-  return found;
+  // A TRUNCATED SCAN IS NOT A COMPLETE ONE, and the difference decides whether
+  // "data.gov.in carries nothing current for this" is a finding or a guess.
+  if (!exhausted) console.log(`  !! SCAN TRUNCATED at ${offset} of ${declaredTotal ?? "unknown"} — raise maxPages before drawing any conclusion`);
+  return { found, scanned: offset, declaredTotal, exhausted };
 }
 
 // A resource is only useful if its NEWEST row is recent. This reads a few rows
@@ -99,19 +133,24 @@ async function inspect(id) {
 
 (async () => {
   console.log("=== data.gov.in catalogue probe ===\n");
-  console.log("Scanning the active catalogue for Economy-page candidates…");
-  const found = await listCatalogue();
-  console.log(`\nTotal candidates: ${found.length}\n`);
+  console.log("Does the API support a server-side title search?");
+  await probeSearchParams();
+  console.log("\nScanning the active catalogue for Economy-page candidates…");
+  const { found, scanned, declaredTotal, exhausted } = await listCatalogue();
+  console.log(`\nScanned ${scanned} of ${declaredTotal ?? "unknown"} (${exhausted ? "COMPLETE" : "TRUNCATED"}) — ${found.length} candidates\n`);
 
   for (const g of WANTED) {
     const rows = found.filter((f) => f.group === g.key);
     console.log(`\n===== ${g.label} — ${rows.length} candidate(s) =====`);
     if (!rows.length) { console.log("  (none in the catalogue under these words)"); continue; }
-    // Newest-updated first: a live ministry feed sorts to the top.
-    rows.sort((a, b) => String(b.updated || "").localeCompare(String(a.updated || "")));
+    // Newest-updated first: a live ministry feed sorts to the top. `updated` is
+    // a unix timestamp in seconds, so it is compared as a NUMBER — sorted as a
+    // string, a shorter timestamp would outrank a later one.
+    rows.sort((a, b) => Number(b.updated || 0) - Number(a.updated || 0));
     for (const r of rows.slice(0, 12)) {
+      const when = Number(r.updated) ? new Date(Number(r.updated) * 1000).toISOString().slice(0, 10) : "unknown";
       console.log(`  • ${r.title}`);
-      console.log(`      id=${r.id}  org=${r.org}  updated=${r.updated}`);
+      console.log(`      id=${r.id}  org=${r.org}  updated=${when}`);
     }
     // Inspect the three most recently updated — enough to see the shape and the
     // real coverage without hammering the API.
