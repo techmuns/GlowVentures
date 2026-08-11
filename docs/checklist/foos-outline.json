@@ -1,0 +1,7719 @@
+[
+ {
+  "kind": "p",
+  "text": "A Family Office Operating System (FOOS)",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "It is meant to compound knowledge, decisions and capital over decades. The system should answer 5 questions instantly:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "What do we own?",
+  "style": "",
+  "ilvl": 0,
+  "numId": "1",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Why do we own it?",
+  "style": "",
+  "ilvl": 0,
+  "numId": "1",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "What has changed?",
+  "style": "",
+  "ilvl": 0,
+  "numId": "1",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "What opportunities exist?",
+  "style": "",
+  "ilvl": 0,
+  "numId": "1",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "What should we do next?",
+  "style": "",
+  "ilvl": 0,
+  "numId": "1",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 1 — KNOWLEDGE & MEMORY",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Most important layer. Everything gets captured",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "SOURCES",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "textbox",
+  "text": "Manager meetings",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Fund pitches",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Product presentations",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Investment committee meetings",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "External  interactions",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Tax discussions",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Deal discussions",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Macro calls",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Conference notes",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Books",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Podcasts",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "textbox",
+  "text": "Research reports",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "2",
+  "bold": false
+ },
+ {
+  "kind": "table",
+  "rows": [
+   [
+    "User Query",
+    "AI Output"
+   ],
+   [
+    "Show me every discussion we've had on small-cap valuations since 2024",
+    "Consolidated notes from manager meetings, IC discussions, reports and conferences"
+   ],
+   [
+    "What have our managers said about manufacturing since 2023?",
+    "Aggregated manager views with chronology"
+   ],
+   [
+    "Which direct investments have highest exposure to AI theme?",
+    "Direct investment mapping"
+   ]
+  ]
+ },
+ {
+  "kind": "p",
+  "text": "Every Note needs to be tagged.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Asset Class, Geography, Theme , Source, Manager, Risk, Decision status -  Watchlist, Approved, Invested, Exited. Research",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Example : XYZ PMSTheme – SMID, Bucket – Groth, Liquidity – Moderate, Asset Class – Equity,  Review Date",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 2 - RESEARCH & INTELLIGENCE",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Macro Intelligence",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Interest Rates  , Inflation , Fiscal Deficit, Liquidity, Credit Growth, Money Supply, USD Index, Oil, Gold, Copper, Silver , etc",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Micro intelligence",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Stock prices, Corporate Actions, RSI , 200 DMA , ratios,  Shareholding patterns",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Needs to be discussed in detail as this can be never ending.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "P&L History for last 10 yrs,",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Block deals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "The following functionality should be available across all research modules:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Visualisation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Interactive price charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical time-series charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple chart types (line, bar, area, scatter)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Overlay multiple datasets on a single chart",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to compare multiple securities or indicators",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Adjustable time periods",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical Data",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Wherever applicable, data should be available on:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Daily",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weekly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Monthly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Year-end",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Maximum available history",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns Table",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Wherever applicable, provide:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Daily Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weekly Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Monthly Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarter-to-Date",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Year-to-Date",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "5 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "10 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Maximum Available CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week High",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week Low",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Comparison",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Users should be able to compare:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple commodities",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple indices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple currencies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple companies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple sectors",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple macro indicators",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "on a single screen.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Release Calendar",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each macro data series should contain:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Release calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Previous value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consensus estimate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Actual release",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Surprise vs Consensus",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical releases",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI-generated 2–3 line commentary explaining the latest release and its significance",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Export Functionality",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Users should be able to export:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "into Excel, PDF and PowerPoint.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "A. MACRO RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1. Commodities",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "The system should provide historical prices, production statistics and trends for major commodities.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Energy",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Brent Crude",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "WTI Crude",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Natural Gas",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LNG",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coking Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Thermal Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Electricity Prices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Precious Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Gold",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Silver",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Platinum",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Palladium",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industrial Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Copper",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Aluminium",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Zinc",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nickel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Lead",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Steel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Iron Ore",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Agriculture",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Wheat",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rice",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corn",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Soybean",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cotton",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sugar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coffee",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Palm Oil",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rubber",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Others",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CRB Commodity Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Baltic Dry Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rail Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ocean Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Container Freight Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "2. Global Equity Indices",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data and composition for major indices.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "S&P 500",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nasdaq",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dow Jones",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Russell 2000",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FTSE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "DAX",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CAC",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nikkei",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Hang Seng",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shanghai Composite",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nifty 50",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sensex",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each index should include:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical chart",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Constituents",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weightages",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sector allocation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical valuation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Capitalisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3. Currencies",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical exchange rates and comparison.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDINR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EURUSD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GBPUSD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDJPY",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDCNY",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dollar Index (DXY)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "B. MACRO ECONOMIC INDICATORS",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data, charts and AI commentary for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Economic Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GDP Components",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industrial Production",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PMI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Inflation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Core CPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "WPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rural Inflation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Urban Inflation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Labour Market",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Unemployment Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Youth Unemployment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Labour Participation Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Non-Farm Payrolls",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Wage Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fiscal Deficit",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Debt / GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tax Collections",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GST Collections",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "E-way Bills",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumption",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fuel Consumption",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Airline Traffic",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rail Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Port Traffic",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Power Consumption",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "C. FIXED INCOME & CREDIT",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Bonds",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "India 10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "US 10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Yield Curve",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Debt",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Bond Issuances",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Paper",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Certificates of Deposit",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Securitisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Markets",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Spreads",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bond Ratings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Yield Curves",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "D. BANKING & FINANCIAL SYSTEM",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Policy Rates",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Repo Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reverse Repo",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bank Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CRR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "SLR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to analyse credit growth by:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Banks",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "NBFCs",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PSBs",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Private Banks",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Further classification into",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Retail",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "MSME",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Agriculture",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Housing",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Services",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PSL",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "E. HOUSING",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "House Price Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Housing Affordability",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Registrations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Rentals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Residential Rentals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Inventory Levels",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to drill down to:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "City",
+  "style": "",
+  "ilvl": 0,
+  "numId": "33",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Micro Market",
+  "style": "",
+  "ilvl": 0,
+  "numId": "33",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "F. HOUSEHOLD",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Debt / GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Financial Savings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Physical Savings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Asset Mix",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "G. CONSUMPTION",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Vehicle Sales",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Passenger Vehicles",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Two Wheelers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Vehicles",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tractors",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumer",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumer Durables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FMCG Volumes",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Retail Spending",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "H. CAPITAL MARKETS",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Mutual Fund Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "SIP Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Folios",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ETF Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Demat Accounts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Active Trading Accounts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Exchange Volumes",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "F&O Turnover",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "INDUSTRY RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each industry should have a dedicated dashboard containing:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Structure",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Size",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Growth Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Order Book",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Order Inflows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Economics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Raw Material Prices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Input Cost Trends",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Realisations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Pricing Power",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Additions",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cement (Region-wise)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Steel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PVC Resin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fertilisers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Electricity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Crude Derivatives",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Intelligence",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry News",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Policies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI-generated Industry Summary",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "COMPANY RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each listed company should have a dedicated research page.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Documents",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Repository of",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Annual Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Investor Presentations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Earnings Call Transcripts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Rating Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Broker Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Announcements",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each document should include:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Summary",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Key Takeaways",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Searchable Content",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Source Link",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Statements",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical financials (maximum available history)",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly P&L",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Annual P&L",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Balance Sheet",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cash Flow Statement",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consensus estimates for next 2–3 years.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Business Segments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Revenue by Segment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBIT by Segment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Geography-wise Revenue",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Product-wise Revenue",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Metrics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sector-specific KPIs",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Volume",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ARPU",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Subscribers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Branches",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Store Count",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Data",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Current",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Share Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Capitalisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Enterprise Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shares Outstanding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fully Diluted Shares",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Book Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Face Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Day",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Week",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Month",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "6 Month",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "YTD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "5 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Max Available",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week High/Low",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Ratios",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Minimum 10-year history.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PB",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PS",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EV/EBITDA",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dividend Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FCF Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Buyback Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical valuation on any selected date.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Revenue Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBITDA Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EPS Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CAGR Analysis",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Margins",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Gross Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBITDA Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Net Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Including:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reported",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Adjusted (excluding exceptional items)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Working Capital",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Inventory Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Receivable Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Payable Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cash Conversion Cycle",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Working Capital Cycle",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ROE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ROCE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ROA",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "DuPont Analysis",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Other Metrics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Effective Tax Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Related Party Transactions",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Promoter Holding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shareholding Pattern (10+ years)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bulk Deals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Block Deals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to search shareholders holding more than a specified percentage.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Value Chain",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Display:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Major Customers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Major Suppliers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Revenue Concentration",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Raw Material Mix",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Compare up to four companies across:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financials",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ratios",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Metrics",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shareholding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capital Allocation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Query Engine",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Natural language queries such as:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Compare branch expansion of HDFC Bank and ICICI Bank over the last 10 years.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "58",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Show companies with improving ROCE and declining leverage.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "58",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Compare steel companies on capacity utilisation.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "58",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "List companies with promoter buying over the last five years.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "58",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Investment Tools",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Personal Watchlist",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Target Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fair Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Entry Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Exit Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Price Alerts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Earnings Calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Meeting Calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Management Meeting History",
+  "style": "",
+  "ilvl": 0,
+  "numId": "59",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Export",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Allow export of:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Data",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison Tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Summaries",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Excel Models",
+  "style": "",
+  "ilvl": 0,
+  "numId": "60",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "The following functionality should be available across all research modules:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Visualisation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Interactive price charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical time-series charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple chart types (line, bar, area, scatter)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Overlay multiple datasets on a single chart",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to compare multiple securities or indicators",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Adjustable time periods",
+  "style": "",
+  "ilvl": 0,
+  "numId": "4",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical Data",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Wherever applicable, data should be available on:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Daily",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weekly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Monthly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Year-end",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Maximum available history",
+  "style": "",
+  "ilvl": 0,
+  "numId": "5",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns Table",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Wherever applicable, provide:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Daily Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weekly Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Monthly Return",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarter-to-Date",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Year-to-Date",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "5 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "10 Year CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Maximum Available CAGR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week High",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week Low",
+  "style": "",
+  "ilvl": 0,
+  "numId": "6",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Comparison",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Users should be able to compare:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple commodities",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple indices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple currencies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple companies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple sectors",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Multiple macro indicators",
+  "style": "",
+  "ilvl": 0,
+  "numId": "7",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "on a single screen.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data Release Calendar",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Each macro data series should contain:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Release calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Previous value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consensus estimate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Actual release",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Surprise vs Consensus",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical releases",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI-generated 2–3 line commentary explaining the latest release and its significance",
+  "style": "",
+  "ilvl": 0,
+  "numId": "8",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Export Functionality",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Users should be able to export:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Data tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "9",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "into Excel, PDF and PowerPoint.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "A. MACRO RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "1. Commodities",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "The system should provide historical prices, production statistics and trends for major commodities.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Energy",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Brent Crude",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "WTI Crude",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Natural Gas",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LNG",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coking Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Thermal Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Electricity Prices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "10",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Precious Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Gold",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Silver",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Platinum",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Palladium",
+  "style": "",
+  "ilvl": 0,
+  "numId": "11",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industrial Metals",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Copper",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Aluminium",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Zinc",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nickel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Lead",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Steel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Iron Ore",
+  "style": "",
+  "ilvl": 0,
+  "numId": "12",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Agriculture",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Wheat",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rice",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corn",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Soybean",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cotton",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sugar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coffee",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Palm Oil",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rubber",
+  "style": "",
+  "ilvl": 0,
+  "numId": "13",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Others",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "CRB Commodity Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Baltic Dry Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rail Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ocean Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Container Freight Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "14",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "2. Global Equity Indices",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data and composition for major indices.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "S&P 500",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nasdaq",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dow Jones",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Russell 2000",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FTSE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "DAX",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CAC",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nikkei",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Hang Seng",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shanghai Composite",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Nifty 50",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sensex",
+  "style": "",
+  "ilvl": 0,
+  "numId": "15",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each index should include:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical chart",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Constituents",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Weightages",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Sector allocation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical valuation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Capitalisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "16",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3. Currencies",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical exchange rates and comparison.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDINR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EURUSD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GBPUSD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDJPY",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "USDCNY",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dollar Index (DXY)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "17",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "B. MACRO ECONOMIC INDICATORS",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data, charts and AI commentary for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Economic Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GDP Components",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industrial Production",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PMI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "18",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Inflation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "CPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Core CPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "WPI",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rural Inflation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Urban Inflation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "19",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Labour Market",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Unemployment Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Youth Unemployment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Labour Participation Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Non-Farm Payrolls",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Wage Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "20",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Fiscal Deficit",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Debt / GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tax Collections",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "GST Collections",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "E-way Bills",
+  "style": "",
+  "ilvl": 0,
+  "numId": "21",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumption",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Fuel Consumption",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Airline Traffic",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Rail Freight",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Port Traffic",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Power Consumption",
+  "style": "",
+  "ilvl": 0,
+  "numId": "22",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "C. FIXED INCOME & CREDIT",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Bonds",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "India 10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "US 10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Yield Curve",
+  "style": "",
+  "ilvl": 0,
+  "numId": "23",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Debt",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Bond Issuances",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Paper",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Certificates of Deposit",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Securitisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "24",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Markets",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Spreads",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bond Ratings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Yield Curves",
+  "style": "",
+  "ilvl": 0,
+  "numId": "25",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "D. BANKING & FINANCIAL SYSTEM",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Policy Rates",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Repo Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reverse Repo",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bank Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CRR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "SLR",
+  "style": "",
+  "ilvl": 0,
+  "numId": "26",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to analyse credit growth by:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Banks",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "NBFCs",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PSBs",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Private Banks",
+  "style": "",
+  "ilvl": 0,
+  "numId": "27",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Further classification into",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Retail",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "MSME",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Agriculture",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Housing",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Services",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PSL",
+  "style": "",
+  "ilvl": 0,
+  "numId": "28",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "E. HOUSING",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "House Price Index",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Housing Affordability",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Registrations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Rentals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Residential Rentals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Inventory Levels",
+  "style": "",
+  "ilvl": 0,
+  "numId": "29",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to drill down to:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "City",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Micro Market",
+  "style": "",
+  "ilvl": 0,
+  "numId": "30",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "F. HOUSEHOLD",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Debt / GDP",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Financial Savings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Household Physical Savings",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Asset Mix",
+  "style": "",
+  "ilvl": 0,
+  "numId": "31",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "G. CONSUMPTION",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Vehicle Sales",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Passenger Vehicles",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Two Wheelers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Commercial Vehicles",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Tractors",
+  "style": "",
+  "ilvl": 0,
+  "numId": "32",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumer",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consumer Durables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "33",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FMCG Volumes",
+  "style": "",
+  "ilvl": 0,
+  "numId": "33",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Retail Spending",
+  "style": "",
+  "ilvl": 0,
+  "numId": "33",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "H. CAPITAL MARKETS",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical data for",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Mutual Fund Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "SIP Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Folios",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ETF Flows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Demat Accounts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Active Trading Accounts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Exchange Volumes",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "F&O Turnover",
+  "style": "",
+  "ilvl": 0,
+  "numId": "34",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "INDUSTRY RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Each industry should have a dedicated dashboard containing:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Structure",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Industry Size",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Growth Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Order Book",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Order Inflows",
+  "style": "",
+  "ilvl": 0,
+  "numId": "35",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Economics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Raw Material Prices",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Input Cost Trends",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Realisations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Pricing Power",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity Additions",
+  "style": "",
+  "ilvl": 0,
+  "numId": "36",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cement (Region-wise)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Steel",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PVC Resin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fertilisers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Coal",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Electricity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Crude Derivatives",
+  "style": "",
+  "ilvl": 0,
+  "numId": "37",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Intelligence",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Industry News",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Government Policies",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Industry Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI-generated Industry Summary",
+  "style": "",
+  "ilvl": 0,
+  "numId": "38",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "COMPANY RESEARCH",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Each listed company should have a dedicated research page.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Documents",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Repository of",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Annual Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Investor Presentations",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Earnings Call Transcripts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Credit Rating Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Broker Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Corporate Announcements",
+  "style": "",
+  "ilvl": 0,
+  "numId": "39",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Each document should include:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Summary",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Key Takeaways",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Searchable Content",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Source Link",
+  "style": "",
+  "ilvl": 0,
+  "numId": "40",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Statements",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Historical financials (maximum available history)",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Quarterly P&L",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Annual P&L",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Balance Sheet",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cash Flow Statement",
+  "style": "",
+  "ilvl": 0,
+  "numId": "41",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Consensus estimates for next 2–3 years.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Business Segments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Revenue by Segment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBIT by Segment",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Geography-wise Revenue",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Product-wise Revenue",
+  "style": "",
+  "ilvl": 0,
+  "numId": "42",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Metrics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Sector-specific KPIs",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Examples",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Volume",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capacity",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Utilisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ARPU",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Subscribers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Branches",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Store Count",
+  "style": "",
+  "ilvl": 0,
+  "numId": "43",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Data",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Current",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Share Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Market Capitalisation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Enterprise Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shares Outstanding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fully Diluted Shares",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Book Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Face Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "44",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "1 Day",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Week",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Month",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "6 Month",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "YTD",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "1 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "3 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "5 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "10 Year",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Max Available",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "52 Week High/Low",
+  "style": "",
+  "ilvl": 0,
+  "numId": "45",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Ratios",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Minimum 10-year history.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "PE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PB",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "PS",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EV/EBITDA",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dividend Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "FCF Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Buyback Yield",
+  "style": "",
+  "ilvl": 0,
+  "numId": "46",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Historical valuation on any selected date.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Growth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Revenue Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBITDA Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EPS Growth",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "CAGR Analysis",
+  "style": "",
+  "ilvl": 0,
+  "numId": "47",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Margins",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Gross Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "EBITDA Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Net Margin",
+  "style": "",
+  "ilvl": 0,
+  "numId": "48",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Including:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reported",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Adjusted (excluding exceptional items)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "49",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Working Capital",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Inventory Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Receivable Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Payable Days",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cash Conversion Cycle",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Working Capital Cycle",
+  "style": "",
+  "ilvl": 0,
+  "numId": "50",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "ROE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ROCE",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "ROA",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "DuPont Analysis",
+  "style": "",
+  "ilvl": 0,
+  "numId": "51",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Other Metrics",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Effective Tax Rate",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Related Party Transactions",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Promoter Holding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shareholding Pattern (10+ years)",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Bulk Deals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Block Deals",
+  "style": "",
+  "ilvl": 0,
+  "numId": "52",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ability to search shareholders holding more than a specified percentage.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Value Chain",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Display:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Major Customers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Major Suppliers",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Revenue Concentration",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Raw Material Mix",
+  "style": "",
+  "ilvl": 0,
+  "numId": "53",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Compare up to four companies across:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financials",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Ratios",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Returns",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Operating Metrics",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Shareholding",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Capital Allocation",
+  "style": "",
+  "ilvl": 0,
+  "numId": "54",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Query Engine",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Natural language queries such as:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Compare branch expansion of HDFC Bank and ICICI Bank over the last 10 years.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Show companies with improving ROCE and declining leverage.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Compare steel companies on capacity utilisation.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "List companies with promoter buying over the last five years.",
+  "style": "",
+  "ilvl": 0,
+  "numId": "55",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Investment Tools",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Personal Watchlist",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Target Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Fair Value",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Entry Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Exit Price",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Price Alerts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Earnings Calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Meeting Calendar",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Management Meeting History",
+  "style": "",
+  "ilvl": 0,
+  "numId": "56",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Export",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Allow export of:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financial Data",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Charts",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Comparison Tables",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Reports",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI Summaries",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Excel Models",
+  "style": "",
+  "ilvl": 0,
+  "numId": "57",
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dashboard for tracking public investments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "For private investments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Need dashboard for tracking investments in the below format",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Amount invested - Investment by tranches and date when you click on amount invested",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Documents - List of documents and attachments when you double click on documents",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Valuation - Valuation at which the last investment was made by us",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Stake acquired - Stake % acquired in the company on fully diluted basis at the time of investment",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Subsequent rounds - If answer is Yes, double click should have Valuation, Investors, amount invested, cab table for each subsequent round and dates of each primary and secondary transactions",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Financials - Double click should show quarterly / annual financials / operating KPIs",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "MIS - To be saved as attachments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Dashboard for tracking public investments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Company",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "name",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "SectorCMPBuy priceCurrent",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "absolute",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "% return",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "on buy",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "price",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Amount",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "invested",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Current",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "value",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Absolute",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "gain",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "XIRRQuantity",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "bought",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Weight",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "in",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "portfolio",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Target",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "absolute",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "amount",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Target",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "weight in",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "portfolio",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Pending",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "amount to",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "be",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "invested",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Fair valueFair value",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "reference",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "year",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "methodol",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "ogy",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "For private investments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Need dashboard for tracking investments in the below format",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Company",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Name",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Amount",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Committed",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Date Committed",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Amount Invested",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Investment date",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Pending amount to be invested by us",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Documents",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Valuation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Stake",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Aquired",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Cap Table at Entry",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Subsequent Rounds",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Value of our stake post last fund raise",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Our stake % in the company post latest fund raise",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Financials",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "MIS Latest",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "MIS received from company - date",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Amount invested - Investment by tranches and date when you click on amount invested",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Documents - List of documents and attachments when you double click on documents",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Valuation - Valuation at which the last investment was made by us",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Stake acquired - Stake % acquired in the company on fully diluted basis at the time of investment",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Subsequent rounds - If answer is Yes, double click should have Valuation, Investors, amount invested, cab table for each",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "subsequent round and dates of each primary and secondary transactions",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Financials - Double click should show quarterly / annual financials / operating KPIs",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "MIS - To be saved as attachments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 3 -  PORTFOLIO & EXPOSURE LAYER",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "One page on family charter , the decision making framework.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "As per IPS buckets:",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Growth - LiquidityTacticalHedgeCharity",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Followed by GAP Analysis",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Exposure  – assets – actual vs desired",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Geography",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Marketcap",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Duration",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Tangible vs Intangible",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Sector",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Stocks / Securities",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Entity wise",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Advisor allocation (if any) – advisor performance",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Transactions tab (with actual docs as link)",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Top 10 holdings, Top 10 sectors",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Data in INR crores or Dollars",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "How portfolio value moved MOM, QOQ, YOY",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Attribution – Laggards, Contributors",
+  "style": "ListParagraph",
+  "ilvl": 0,
+  "numId": "3",
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Chart for monthwise :",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Calls on funds expected (Fund invested)",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Tax liability expected",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 4 – MONITOR & DECISION MAKING LAYER",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Why invested?  Expected return?  Risk?  Exit triggers?  Who proposed?  Date?   Meeting notes?  Review schedule? FM change? Style changes?",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Stop loss for stocks atleast monitor.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "AI prompt – If any of the above thesis change significantly. It should monitor and highlight.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 5 – ALERT SYSTEM",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "Examples",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "IPS Alert - Growth bucket exceeds max allocation",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Liquidity Alert - 7-day liquidity falls below threshold",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Manager Alert - FM resigned, Style drift, AUM exploded",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Macro Alert - India liquidity cycle deteriorating",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Private Investment Alert - Capital call due, Board meeting pending",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "New Investment Proposed Alert – Fresh commitments to go through approval process, to be monitored basis our liquidity situation.",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "LAYER 6  - FAMILY DASHBOARD",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": true
+ },
+ {
+  "kind": "p",
+  "text": "For per family member and as an entire family as well",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Net Worth",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Portfolio Value",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Cash Available",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Liquidity Coverage",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Annual Return",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Benchmark Return",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Charity Pool",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Upcoming Capital Calls",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Upcoming Commitments",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Buckets -  Growth / Liquidity / Tactical / HedgePublic / PrivateTop 10 Exposures",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ },
+ {
+  "kind": "p",
+  "text": "Decisions Required",
+  "style": "",
+  "ilvl": null,
+  "numId": null,
+  "bold": false
+ }
+]
