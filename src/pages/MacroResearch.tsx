@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Globe, Fuel, LineChart as LineIcon, DollarSign, CalendarClock, Download, Percent, BarChart3, AreaChart as AreaIcon, ScatterChart as ScatterIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Globe, Fuel, LineChart as LineIcon, DollarSign, CalendarClock, Download, Percent, BarChart3, AreaChart as AreaIcon, ScatterChart as ScatterIcon, Image as ImageIcon } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -8,6 +8,7 @@ import { PreviewBadge, PreviewNum } from "@/components/Preview";
 import { AbsentSection } from "@/components/Absent";
 import { SeriesChart, type ChartType, type ChartSeries } from "@/components/SeriesChart";
 import { YieldCurve } from "@/components/YieldCurve";
+import { exportChartPng, exportCsv } from "@/lib/exportChart";
 import {
   fetchSeriesIndex, fetchSeriesPoints, sliceRange, yearForRange, groupBy,
   resample, availableFrequencies, FREQ_LABEL, type Frequency,
@@ -58,6 +59,7 @@ export function MacroResearch() {
   // The spec's "daily / weekly / monthly / quarterly / year-end" view. Stored
   // series keep their native frequency; this only ever coarsens.
   const [freq, setFreq] = useState<Frequency>("daily");
+  const chartRef = useRef<HTMLDivElement>(null);
   const [points, setPoints] = useState<Record<string, Point[]>>({});
   const [busy, setBusy] = useState(false);
 
@@ -139,6 +141,35 @@ export function MacroResearch() {
       prev.includes(id) ? (prev.length === 1 ? prev : prev.filter((x) => x !== id))
         : prev.length >= MAX_COMPARE ? [...prev.slice(1), id] : [...prev, id]);
 
+  // PNG of the chart as drawn, with its own caption band — see exportChart.ts
+  // for why an exported chart has to carry its title, unit, source and date.
+  async function onExportPng() {
+    if (!chartSeries.length) return;
+    const one = chosen.length === 1 ? chosen[0] : null;
+    await exportChartPng(chartRef.current, {
+      title: one ? one.label : `${chosen.length} series compared`,
+      subtitle: one
+        ? `${one.unit} · ${one.source.name} (${one.source.symbol})`
+        : chosen.map((c) => c.label).join(" · "),
+      footer: `${FREQ_LABEL[freq]} · ${range} window · from the committed series store · exported ${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
+
+  // CSV of exactly what the chart is drawing, at the frequency on screen.
+  function onExportCsv() {
+    if (!chartSeries.length) return;
+    const dates = [...new Set(chartSeries.flatMap((s) => s.points.map((p) => p.t)))].sort();
+    const byId = chartSeries.map((s) => [s.meta.id, new Map(s.points.map((p) => [p.t, p.v]))] as const);
+    exportCsv(
+      `glow_series_${freq}_${range}_${new Date().toISOString().slice(0, 10)}.csv`,
+      ["date", ...chartSeries.map((s) => `${s.meta.label} (${s.meta.unit})`)],
+      // A date a series has no observation for stays EMPTY, never 0 — these
+      // series settle on different calendars and a zero would be read as a
+      // measurement of nothing.
+      dates.map((d) => [d, ...byId.map(([, m]) => m.get(d) ?? null)]),
+    );
+  }
+
   async function onExport() {
     if (!index) return;
     const pointsById: Record<string, Point[]> = {};
@@ -201,10 +232,20 @@ export function MacroResearch() {
       <ViewToggle
         views={VIEWS} active={view} onChange={setView}
         right={
-          <button onClick={onExport}
-            className="flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-[11px] text-slate-300 transition-colors hover:bg-ink-700/60">
-            <Download className="h-3.5 w-3.5" /> Export Excel
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={onExportPng} title="Download the chart as a PNG, with its title, unit, source and window drawn into the image"
+              className="flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-[11px] text-slate-300 transition-colors hover:bg-ink-700/60">
+              <ImageIcon className="h-3.5 w-3.5" /> Chart PNG
+            </button>
+            <button onClick={onExportCsv} title="Download exactly what the chart is drawing, at the frequency on screen"
+              className="flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-[11px] text-slate-300 transition-colors hover:bg-ink-700/60">
+              <Download className="h-3.5 w-3.5" /> CSV
+            </button>
+            <button onClick={onExport}
+              className="flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-[11px] text-slate-300 transition-colors hover:bg-ink-700/60">
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </button>
+          </div>
         } />
 
       {/* ── Chart ──────────────────────────────────────────────────────────── */}
@@ -254,7 +295,9 @@ export function MacroResearch() {
           </div>
         ) : (
           <>
-            <SeriesChart series={chartSeries} type={chartType} height={320} />
+            <div ref={chartRef}>
+              <SeriesChart series={chartSeries} type={chartType} height={320} />
+            </div>
             {freq !== "daily" && (
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 {FREQ_LABEL[freq]} view — each point is the <span className="text-slate-400">last observation</span> in
