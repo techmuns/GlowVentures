@@ -81,6 +81,11 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
       { name: "India 10Y", value: "6.98%", chg: "-4bp", seriesId: "india-10y" },
       { name: "US 10Y", value: "4.28%", chg: "+6bp", seriesId: "us-10y" },
       { name: "AAA Credit Spread", value: "62bp", chg: "+3bp" },
+      // The CURVE ITSELF is now drawn on Macro Research from the four stored
+      // Treasury tenors. This row stays unwired because it asks for 10Y–2Y
+      // specifically and no series here carries the 2-year; the curve page
+      // shows 10Y–3M and says so rather than interpolating a 2-year off its
+      // neighbours, which would put a yield nobody quoted beside quoted ones.
       { name: "Yield Curve (10Y–2Y)", value: "+18bp", chg: "+2bp" },
     ],
   },

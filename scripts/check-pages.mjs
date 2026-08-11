@@ -186,6 +186,11 @@ const INVARIANTS = {
     ["series store loaded — the returns table is live, not preview", (t) => /\d+ live/.test(t) && !/series store did not respond/i.test(t)],
     ["observation count is stated, so the table is backed by a real series", (t) => /observations/i.test(t)],
     ["a max-available CAGR resolved (a stored series, not a four-row preview)", (t) => /Max/.test(t) && /[+-]\d+\.\d%/.test(t)],
+    // Phase A1: the spec's weekly / quarterly / year-end views. The control is
+    // rendered only when the chosen series can honestly be coarsened, which the
+    // default (a daily commodity) can.
+    ["a frequency toggle offers the coarser views the spec asks for",
+      (t) => /Quarterly/.test(t) && /Year-end/.test(t)],
   ],
 };
 

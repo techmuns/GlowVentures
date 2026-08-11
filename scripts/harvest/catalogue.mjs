@@ -227,6 +227,14 @@ export const SERIES = [
     id: "us-10y", label: "US 10 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TNX"),
     note: "CBOE's 10-year Treasury yield index — the yield itself, in percent, not a price.",
   },
+  // THE SHORT END, RESTORED. This was removed as "not asked for" when the
+  // dashboard was trimmed to the specification, which was an inconsistency in
+  // that audit rather than a decision: the spec asks for a YIELD CURVE twice,
+  // 5Y/10Y/30Y were kept as its inputs, and the 13-week bill is the short end
+  // those three cannot supply. A curve that starts at five years is not the
+  // curve anyone reads.
+  { id: "us-3m", label: "US 13 Week T-Bill", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^IRX"),
+    note: "The short end of the US curve. `tenorYears` on the curve view places it at 0.25." },
   { id: "us-5y", label: "US 5 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^FVX") },
   { id: "us-30y", label: "US 30 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TYX") },
   {

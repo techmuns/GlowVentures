@@ -7,6 +7,7 @@ import { ViewToggle, type ViewDef } from "@/components/ViewToggle";
 import { PreviewBadge, PreviewNum } from "@/components/Preview";
 import { AbsentSection } from "@/components/Absent";
 import { SeriesChart, type ChartType, type ChartSeries } from "@/components/SeriesChart";
+import { YieldCurve } from "@/components/YieldCurve";
 import {
   fetchSeriesIndex, fetchSeriesPoints, sliceRange, yearForRange, groupBy,
   resample, availableFrequencies, FREQ_LABEL, type Frequency,
@@ -278,6 +279,18 @@ export function MacroResearch() {
           </div>
         )}
       </Card>
+
+      {/* ── Yield curve ────────────────────────────────────────────────────
+          Only on Rates & Bonds: it plots MANY instruments at ONE moment with
+          maturity on the x-axis, which is a different question from every other
+          chart on this page and belongs where the tenors are. */}
+      {view === "rates" && index && (
+        <Card className="mt-5"
+          title={<span className="flex items-center gap-2"><Percent className="h-4 w-4 text-champagne-400" /> US Treasury yield curve</span>}
+          subtitle="Maturity on the x-axis, today against a year earlier — the spec's 'yield curve', drawn only from tenors the store holds">
+          <YieldCurve index={index.series} />
+        </Card>
+      )}
 
       {/* ── Returns table ──────────────────────────────────────────────────── */}
       <Card className="mt-5"

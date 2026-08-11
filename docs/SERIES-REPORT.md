@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 1 series, 5,884 points
+- **Harvested:** 1 series, 14,170 points
 - **Failed:** 0
 - **Declared absent:** 9 (the spec asks for them; no source we have serves them)
 
@@ -14,11 +14,23 @@ not have.
 
 | Series | Group | Points | From | To | Unit | Source | Provenance |
 | --- | --- | ---: | --- | --- | --- | --- | --- |
-| USD / INR | India | 5,884 | 2003-12-01 | 2026-08-09 | INR per USD | Yahoo Finance `INR=X` | official-api |
+| US 13 Week T-Bill | Government Bonds | 14,170 | 1970-01-02 | 2026-08-10 | % | Yahoo Finance `^IRX` | official-api |
 
 ## Validation
 
-No findings — every point passed the gate.
+`blocked` points never reached disk; the series kept its last good value.
+`warn` points were stored and are named here.
+
+**`large-move` on a futures series is usually a CONTRACT ROLL, not an error.**
+Yahoo's `=F` symbols are continuous front-month series: when the front
+contract expires the series steps to the next one, and that step is a price
+difference between two contracts rather than a move in the market. It is
+reported and kept — the level on each date is what that contract traded at —
+but a one-day return spanning a roll is measuring the roll.
+
+| Series | Severity | Rule | Detail |
+| --- | --- | --- | --- |
+| US 13 Week T-Bill | warn | large-move | 497 consecutive move(s) over 25%; largest 1214.3% on 2008-09-19 (0.07000000029802322 → 0.9200000166893005) |
 
 ## Declared absent
 
