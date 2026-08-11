@@ -72,7 +72,6 @@ const INDUSTRIES: IndustryDef[] = [
     key: "cement", label: "Cement",
     inputs: [
       { id: "thermal-coal", role: "Kiln fuel" },
-      { id: "coal-south-africa", role: "Kiln fuel (alt. origin)" },
       { id: "electricity-india", role: "Grinding power" },
       { id: "brent-crude", role: "Freight & fuel" },
     ],
@@ -104,7 +103,6 @@ const INDUSTRIES: IndustryDef[] = [
       { id: "brent-crude", role: "Feedstock" },
       { id: "wti-crude", role: "Feedstock" },
       { id: "natural-gas", role: "Feedstock & energy" },
-      { id: "natural-gas-europe", role: "Feedstock (Europe)" },
     ],
     sectors: ["Materials"],
     absent: [
@@ -131,7 +129,9 @@ const INDUSTRIES: IndustryDef[] = [
     key: "coal", label: "Coal",
     inputs: [
       { id: "thermal-coal", role: "Benchmark (Newcastle)" },
-      { id: "coal-south-africa", role: "Benchmark (Richards Bay)" },
+      // Only the Newcastle benchmark is carried. Richards Bay was a second
+      // seaborne origin the spec never asked for; one thermal-coal benchmark
+      // answers the requirement.
       { id: "electricity-india", role: "Demand-side price" },
     ],
     sectors: ["Energy", "Utilities", "Materials"],

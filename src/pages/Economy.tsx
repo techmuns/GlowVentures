@@ -102,7 +102,11 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Household", icon: PiggyBank, rows: [
-      { name: "Gross savings / GDP", value: "40.1%", chg: "+0.5pp", seriesId: "india-gross-savings" },
+      // The spec asks for HOUSEHOLD debt and savings, not the national gross
+      // savings rate. That series was carried, wired to this row, and is neither
+      // of the two — so it is gone and the row now names what the spec actually
+      // asks for, unwired because no free source publishes it.
+      { name: "Household Debt / GDP", value: "38.9%", chg: "+0.6pp" },
       { name: "Financial Savings", value: "5.3% GDP", chg: "-0.2pp" },
       { name: "Physical Savings", value: "12.1% GDP", chg: "+0.3pp" },
       { name: "Equity in Asset Mix", value: "6.4%", chg: "+0.4pp" },

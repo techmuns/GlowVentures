@@ -143,9 +143,7 @@ export const SERIES = [
     note: "WTI settled NEGATIVE on 20 April 2020 (−$37.63). The band allows it because it happened; a floor at zero would reject a real print." },
   { id: "natural-gas", label: "Natural Gas", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.1, 100], source: yahoo("NG=F") },
   { id: "lng", label: "LNG (Japan)", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.5, 100], frequency: "monthly", source: pink("Liquefied natural gas, Japan") },
-  { id: "natural-gas-europe", label: "Natural Gas (Europe)", category: "commodities", group: "Energy", unit: "USD/MMBtu", band: [0.1, 200], frequency: "monthly", source: pink("Natural gas, Europe") },
   { id: "thermal-coal", label: "Thermal Coal (Australian)", category: "commodities", group: "Energy", unit: "USD/t", band: [5, 1500], frequency: "monthly", source: pink("Coal, Australian") },
-  { id: "coal-south-africa", label: "Thermal Coal (South African)", category: "commodities", group: "Energy", unit: "USD/t", band: [5, 1500], frequency: "monthly", source: pink("Coal, South African") },
   { id: "coking-coal", label: "Coking Coal", category: "commodities", group: "Energy", unit: "USD/t", band: null, source: null,
     absent: "Neither a free daily feed nor the World Bank Pink Sheet carries coking (metallurgical) coal — the Pink Sheet publishes thermal coal only. It needs a commercial source such as Platts or Argus." },
   { id: "electricity-india", label: "Electricity (IEX day-ahead)", category: "commodities", group: "Energy", unit: "INR/MWh", band: [100, 25000], source: iex(),
@@ -229,7 +227,6 @@ export const SERIES = [
     id: "us-10y", label: "US 10 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TNX"),
     note: "CBOE's 10-year Treasury yield index — the yield itself, in percent, not a price.",
   },
-  { id: "us-3m", label: "US 13 Week T-Bill", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^IRX") },
   { id: "us-5y", label: "US 5 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^FVX") },
   { id: "us-30y", label: "US 30 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TYX") },
   {
@@ -328,11 +325,6 @@ export const SERIES = [
   { id: "india-cpi", label: "India CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("IN", "FP.CPI.TOTL.ZG") },
   { id: "india-unemployment", label: "India unemployment rate", category: "economy", group: "Labour market", unit: "%", band: [0, 60], frequency: "annual", source: wb("IN", "SL.UEM.TOTL.ZS") },
   { id: "india-govt-debt-gdp", label: "India government debt / GDP", category: "economy", group: "Government", unit: "%", band: [0, 300], frequency: "annual", source: wb("IN", "GC.DOD.TOTL.GD.ZS") },
-  { id: "india-gross-savings", label: "India gross savings / GDP", category: "economy", group: "Household", unit: "%", band: [0, 100], frequency: "annual", source: wb("IN", "NY.GNS.ICTR.ZS") },
-  { id: "india-exports-gdp", label: "India exports / GDP", category: "economy", group: "Trade", unit: "%", band: [0, 300], frequency: "annual", source: wb("IN", "NE.EXP.GNFS.ZS") },
-  { id: "us-gdp-growth", label: "US GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("US", "NY.GDP.MKTP.KD.ZG") },
-  { id: "us-cpi", label: "US CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("US", "FP.CPI.TOTL.ZG") },
-  { id: "us-unemployment", label: "US unemployment rate", category: "economy", group: "Labour market", unit: "%", band: [0, 60], frequency: "annual", source: wb("US", "SL.UEM.TOTL.ZS") },
 ];
 
 export const BY_ID = new Map(SERIES.map((s) => [s.id, s]));

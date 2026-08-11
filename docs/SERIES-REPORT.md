@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 7 series, 7 points
+- **Harvested:** 1 series, 5,884 points
 - **Failed:** 0
 - **Declared absent:** 9 (the spec asks for them; no source we have serves them)
 
@@ -14,13 +14,7 @@ not have.
 
 | Series | Group | Points | From | To | Unit | Source | Provenance |
 | --- | --- | ---: | --- | --- | --- | --- | --- |
-| India installed power capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Total Installed Capacity` | official-file |
-| India coal capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Coal` | official-file |
-| India solar capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Solar` | official-file |
-| India wind capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Wind` | official-file |
-| India hydro capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Hydro (including PSPs)` | official-file |
-| India nuclear capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Nuclear` | official-file |
-| India non-fossil capacity | Power | 1 | 2026-06-01 | 2026-06-01 | MW | Central Electricity Authority `Total Non-Fossil Fuel` | official-file |
+| USD / INR | India | 5,884 | 2003-12-01 | 2026-08-09 | INR per USD | Yahoo Finance `INR=X` | official-api |
 
 ## Validation
 
