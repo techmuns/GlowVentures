@@ -25,7 +25,7 @@ export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
   // else, so an ISIN route would leave most holdings unreachable.
   const { securityKey = "" } = useParams();
-  const { portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
   const [led, setLed] = useState<StockLedger | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -115,8 +115,30 @@ export function StockInfo() {
         {!exited && (
           <div className="text-right">
             <div className="mono text-2xl font-semibold text-slate-100">{price(cmp)}</div>
+            {/* WHY THIS IS THREE STATES AND NOT TWO.
+                It read `live ? "live" : "no live quote for this security"`, so
+                every not-live case asserted the same thing — including the one
+                where the fetch had simply not come back yet. On a page still
+                loading, the top bar said "Fetching prices…" while this line said
+                the security has no live quote: two contradictory claims on one
+                screen, and the wrong one is the specific one a reader believes.
+                That is the "your session expired" failure again — a message must
+                diagnose the ACTUAL failure.
+
+                The states are genuinely different facts, and `PortfolioContext`
+                already separates them: a name with no NSE symbol can NEVER go
+                live and no token would change it, while a symbol whose quote did
+                not arrive is a feed shortfall that may resolve on a refresh. */}
             <div className="mt-0.5 text-[10.5px] text-slate-500">
-              {live ? `CMP \u00b7 live${sym ? ` \u00b7 ${sym}` : ""}` : `CMP \u00b7 statement mark${rows[0] ? `, ${accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf}` : ""} — no live quote for this security`}
+              {live
+                ? `CMP \u00b7 live${sym ? ` \u00b7 ${sym}` : ""}`
+                : (() => {
+                    const mark = `CMP \u00b7 statement mark${rows[0] ? `, ${accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf}` : ""}`;
+                    if (quotesStatus === "loading") return `${mark} — fetching the live price\u2026`;
+                    if (!sym) return `${mark} — no NSE symbol resolves for this name, so it cannot be priced live`;
+                    if (quotesStatus === "unavailable") return `${mark} — the price feed did not respond`;
+                    return `${mark} — the price feed returned no quote for ${sym}`;
+                  })()}
             </div>
           </div>
         )}

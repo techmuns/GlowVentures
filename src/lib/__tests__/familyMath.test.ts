@@ -19,6 +19,8 @@
 import { deriveDeal, summarise, emptyDeal, coerceDeal } from "@/lib/deals";
 import { viewHousehold, outflowsWithin, liquidityMonths, coerceHousehold, emptyAsset } from "@/lib/household";
 import { pendingToInvest, parseWeightPct } from "@/lib/watchlist";
+import { bandOf, bandWeightPct, mcapExposure } from "@/lib/marketCap";
+import type { Position } from "@/lib/types";
 
 let fails = 0;
 const eq = (name: string, got: unknown, want: unknown) => {
@@ -122,6 +124,49 @@ eq("parse '0' -> 0, not null", parseWeightPct("0"), 0);
 eq("parse '' -> null", parseWeightPct(""), null);
 eq("parse '7.5%' -> 7.5", parseWeightPct("7.5%"), 7.5);
 eq("parse '150' rejected", parseWeightPct("150"), null);
+
+// ── market-cap bands ────────────────────────────────────────────────────────
+// The unit is RUPEES, verified against screener.in on the deployed API:
+// ABCAPITAL read Rs 1,11,403 Cr from the quote feed against Rs 1,11,347 Cr on
+// screener — 0.05% apart. Every threshold below is written in rupees for that
+// reason, and a band boundary is inclusive at its floor.
+const CR = 1e7;
+eq("Rs 18 lakh Cr is large cap", bandOf(18_00_000 * CR), "large");
+eq("exactly Rs 1,00,000 Cr is large (floor inclusive)", bandOf(100_000 * CR), "large");
+eq("a rupee under the floor is mid", bandOf(100_000 * CR - 1), "mid");
+eq("Rs 25,000 Cr is mid (floor inclusive)", bandOf(25_000 * CR), "mid");
+eq("Rs 24,999 Cr is small", bandOf(24_999 * CR), "small");
+// NOT ZERO AND NOT SMALL: a missing market cap is a missing measurement, and
+// banding it as small would classify a company by a feed's silence.
+eq("no market cap -> no band", bandOf(null), null);
+eq("zero market cap -> no band", bandOf(0), null);
+eq("NaN -> no band", bandOf(Number.NaN), null);
+
+const pos = (security: string, marketValue: number, marketCap: number | null): Position =>
+  ({ security, securityKey: security, marketValue, marketCap } as unknown as Position);
+
+const ex = mcapExposure([
+  pos("BigCo", 40, 500_000 * CR),
+  pos("MidCo", 30, 50_000 * CR),
+  pos("SmallCo", 20, 5_000 * CR),
+  pos("NoQuote", 10, null),
+]);
+eq("measured excludes the unpriced name", ex.measured, 90);
+eq("unmeasured is carried, not folded in", [ex.unmeasured, ex.unmeasuredNames], [10, ["NoQuote"]]);
+eq("total spans every listed row", ex.total, 100);
+// The weights are of the MEASURED book (90), not the total (100) — otherwise
+// they would sum to 90% and the missing tenth would read as an unallocated band.
+eq("large weight is of the measured book", Number(bandWeightPct(ex, "large").toFixed(4)), Number((40 / 90 * 100).toFixed(4)));
+eq("bands sum to 100% of what was measured",
+   Number((["large", "mid", "small"]).reduce((a, b) => a + bandWeightPct(ex, b), 0).toFixed(6)), 100);
+
+// A band nobody holds is a MEASURED zero and stays 0 — the feed priced every
+// name and none landed there, which is a finding, not an absence.
+const noSmall = mcapExposure([pos("BigCo", 10, 500_000 * CR)]);
+eq("an empty band with a priced book is 0, not null", bandWeightPct(noSmall, "small"), 0);
+// With nothing priced at all there is no denominator, so every band is absent.
+const nothing = mcapExposure([pos("NoQuote", 10, null)]);
+eq("nothing priced -> weight is null, not 0", bandWeightPct(nothing, "large"), null);
 
 console.log(fails ? `\n${fails} FAILED` : "\nall checks passed");
 process.exit(fails ? 1 : 0);

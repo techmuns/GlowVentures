@@ -16,7 +16,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
-import { PreviewBadge, PreviewNum, PreviewPill } from "@/components/Preview";
+import { PreviewBadge } from "@/components/Preview";
 import { readWatchlist, pendingToInvest, type Watchlist } from "@/lib/watchlist";
 
 type EntityPart = {

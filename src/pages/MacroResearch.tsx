@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { ViewToggle, type ViewDef } from "@/components/ViewToggle";
-import { PreviewBadge, PreviewNum } from "@/components/Preview";
+import { PreviewBadge } from "@/components/Preview";
 import { AbsentSection } from "@/components/Absent";
 import { SeriesChart, type ChartType, type ChartSeries } from "@/components/SeriesChart";
 import { YieldCurve } from "@/components/YieldCurve";
@@ -398,31 +398,27 @@ export function MacroResearch() {
         </Card>
       )}
 
-      {/* ── Release calendar — still the one genuinely unsourceable piece ──── */}
-      <Card className="mt-5 preview-hatch"
-        title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-champagne-400" /> Data release calendar</span>}
-        subtitle="Previous · consensus · actual · surprise, with AI commentary" right={<PreviewBadge />}>
-        <ul className="grid gap-2.5 sm:grid-cols-3">
-          {[
-            { s: "US CPI (MoM)", prev: "0.3%", cons: "0.2%", act: "0.1%" },
-            { s: "India IIP (YoY)", prev: "5.0%", cons: "4.6%", act: "5.2%" },
-            { s: "China GDP (YoY)", prev: "5.3%", cons: "5.1%", act: "4.7%" },
-          ].map((r) => (
-            <li key={r.s} className="rounded-lg border border-ink-700 bg-ink-800/60 p-2.5">
-              <div className="text-[12.5px] font-medium text-slate-300">{r.s}</div>
-              <div className="mt-1 flex items-center gap-3 text-[11px]">
-                <span className="text-slate-500">Prev <PreviewNum>{r.prev}</PreviewNum></span>
-                <span className="text-slate-500">Cons <PreviewNum>{r.cons}</PreviewNum></span>
-                <span className="text-slate-500">Actual <PreviewNum>{r.act}</PreviewNum></span>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {/* ── Release calendar — the one genuinely unsourceable piece ────────
+          This listed "US CPI (MoM) prev 0.3% cons 0.2% actual 0.1%", "India IIP
+          (YoY) actual 5.2%" and "China GDP (YoY) actual 4.7%" as sample figures.
+          Its own caption was already correct about why a consensus cannot be
+          shown — and it printed three consensus figures anyway, alongside three
+          ACTUALS, which are not licensed at all but simply were not measured.
+          Cropped out of a screenshot, "China GDP (YoY) actual 4.7%" is a false
+          economic fact a reader can act on. */}
+      <Card className="mt-5"
+        title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-500" /> Data release calendar</span>}
+        subtitle="Previous · consensus · actual · surprise">
+        <AbsentSection
+          what="No release calendar is available"
+          needs="A calendar needs a publication SCHEDULE and a CONSENSUS. Consensus and the surprise measured against it
+            are licensed products sold by paid vendors; the schedule is published per agency and is not in the
+            catalogue. Previous and actual come from each agency's own release — where the harvest store carries the
+            series, its latest reading and release date are already in the tables above." />
         <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-          <span className="font-medium text-slate-400">Consensus is licensed data.</span> Previous and actual come from
-          each statistical agency's own release and arrive with the Phase 2 India harvest; the consensus estimate and the
-          surprise against it are published by paid vendors only. Rather than invent a forecast, the calendar will show
-          the release and its history and leave consensus absent until a vendor is chosen.
+          Rather than invent a forecast, this shows the releases the store actually holds and leaves consensus absent
+          until a vendor is chosen. Sample prints here would be indistinguishable from real ones once a screenshot is
+          cropped, which is why none is drawn.
         </p>
       </Card>
     </div>

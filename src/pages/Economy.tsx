@@ -5,7 +5,8 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { PreviewBadge, PreviewNum } from "@/components/Preview";
+import { PreviewBadge } from "@/components/Preview";
+import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { SeriesChart } from "@/components/SeriesChart";
 import {
   fetchSeriesIndex, fetchSeriesPoints, fmtReturn, returnTone,
@@ -27,49 +28,61 @@ import {
 // "percentage return" on an inflation rate is the same category error as one on
 // a bond yield.
 
-// `seriesId` maps a row to a harvested series; rows without one stay preview.
-type Row = { name: string; value: string; chg: string; seriesId?: string };
+// `seriesId` maps a row to a harvested series. A row WITHOUT one renders absent.
+//
+// THE `value` AND `chg` FIELDS ARE GONE FROM THIS TYPE ON PURPOSE. Every row
+// used to carry a hardcoded pair — "Manufacturing PMI 58.1 +1.2", "Capacity
+// Utilisation 76.4% +0.8pp", "Household Debt / GDP 38.9%" — and a row whose
+// series resolved in the store overwrote them while a row without one printed
+// them greyed. Those are real Indian macro statistics with real published
+// values, and the ones here were invented.
+//
+// Deleting the render would have left the numbers one line away from being
+// shown again. Deleting the FIELD makes it a type error to reintroduce one, so
+// a future row can only be a name plus a series that exists — the same reason
+// `custodianOf()` was removed rather than corrected.
+type Row = { name: string; seriesId?: string };
 
 const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Economic growth", icon: TrendingUp, rows: [
-      { name: "GDP growth (YoY)", value: "6.7%", chg: "+0.3pp", seriesId: "india-gdp-growth" },
+      { name: "GDP growth (YoY)", seriesId: "india-gdp-growth" },
       // NOT wired to `india-iip`, deliberately. That series is real published
       // history (2012-04 → 2023-02) but MoSPI stopped appending to the
       // data.gov.in resource in February 2023 while its record metadata keeps
       // being touched. A three-year-old reading in a row a reader takes as
       // current is a wrong figure no badge repairs, so this row states the
       // absence and the history lives on the series page with its own dates.
-      { name: "Industrial Production", value: "5.2%", chg: "+0.6pp" },
-      { name: "Manufacturing PMI", value: "58.1", chg: "+1.2" },
-      { name: "Capacity Utilisation", value: "76.4%", chg: "+0.8pp" },
+      { name: "Industrial Production", },
+      { name: "Manufacturing PMI", },
+      { name: "Capacity Utilisation", },
     ],
   },
   {
     title: "Inflation", icon: Percent, rows: [
-      { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp", seriesId: "india-cpi" },
-      { name: "Core CPI", value: "3.9%", chg: "-0.1pp" },
+      { name: "CPI (YoY)", seriesId: "india-cpi" },
+      { name: "Core CPI", },
       // Same as Industrial Production above: `india-wpi` carries 2012-04 →
       // 2023-10 and the source has not appended since. History, not a current
       // reading, so this row stays unwired.
-      { name: "WPI", value: "2.6%", chg: "+0.4pp" },
-      { name: "Rural / Urban CPI", value: "5.1 / 4.5%", chg: "-0.1pp" },
+      { name: "WPI", },
+      { name: "Rural / Urban CPI", },
     ],
   },
   {
     title: "Labour market", icon: Users, rows: [
-      { name: "Unemployment Rate", value: "7.1%", chg: "-0.3pp", seriesId: "india-unemployment" },
-      { name: "Labour Participation", value: "42.4%", chg: "+0.2pp" },
-      { name: "US Non-Farm Payrolls", value: "206k", chg: "-38k" },
-      { name: "Wage Growth", value: "4.1%", chg: "+0.2pp" },
+      { name: "Unemployment Rate", seriesId: "india-unemployment" },
+      { name: "Labour Participation", },
+      { name: "US Non-Farm Payrolls", },
+      { name: "Wage Growth", },
     ],
   },
   {
     title: "Government", icon: Landmark, rows: [
-      { name: "Fiscal Deficit (% GDP)", value: "5.1%", chg: "-0.2pp" },
-      { name: "Govt Debt / GDP", value: "81.2%", chg: "+0.4pp", seriesId: "india-govt-debt-gdp" },
-      { name: "GST Collections", value: "₹1.82 L Cr", chg: "+8.4%" },
-      { name: "E-way Bills", value: "103.2 mn", chg: "+6.1%" },
+      { name: "Fiscal Deficit (% GDP)", },
+      { name: "Govt Debt / GDP", seriesId: "india-govt-debt-gdp" },
+      { name: "GST Collections", },
+      { name: "E-way Bills", },
     ],
   },
   {
@@ -78,31 +91,31 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
       // yield. The daily RBI benchmark still needs a reader; this is the figure
       // that exists, and the series carries its own frequency so no 1-day move
       // is ever computed from it.
-      { name: "India 10Y", value: "6.98%", chg: "-4bp", seriesId: "india-10y" },
-      { name: "US 10Y", value: "4.28%", chg: "+6bp", seriesId: "us-10y" },
-      { name: "AAA Credit Spread", value: "62bp", chg: "+3bp" },
+      { name: "India 10Y", seriesId: "india-10y" },
+      { name: "US 10Y", seriesId: "us-10y" },
+      { name: "AAA Credit Spread", },
       // The CURVE ITSELF is now drawn on Macro Research from the four stored
       // Treasury tenors. This row stays unwired because it asks for 10Y–2Y
       // specifically and no series here carries the 2-year; the curve page
       // shows 10Y–3M and says so rather than interpolating a 2-year off its
       // neighbours, which would put a yield nobody quoted beside quoted ones.
-      { name: "Yield Curve (10Y–2Y)", value: "+18bp", chg: "+2bp" },
+      { name: "Yield Curve (10Y–2Y)", },
     ],
   },
   {
     title: "Banking & policy", icon: Building, rows: [
-      { name: "Repo Rate", value: "6.50%", chg: "0bp", seriesId: "india-repo-rate" },
-      { name: "Cash Reserve Ratio", value: "4.5%", chg: "0bp", seriesId: "india-crr" },
-      { name: "Statutory Liquidity Ratio", value: "18.0%", chg: "0bp", seriesId: "india-slr" },
-      { name: "Bank Rate", value: "6.75%", chg: "0bp", seriesId: "india-bank-rate" },
+      { name: "Repo Rate", seriesId: "india-repo-rate" },
+      { name: "Cash Reserve Ratio", seriesId: "india-crr" },
+      { name: "Statutory Liquidity Ratio", seriesId: "india-slr" },
+      { name: "Bank Rate", seriesId: "india-bank-rate" },
     ],
   },
   {
     title: "Housing", icon: Home, rows: [
-      { name: "House Price Index", value: "+6.2%", chg: "+0.3pp" },
-      { name: "Affordability Index", value: "3.4x", chg: "-0.1x" },
-      { name: "Registrations (MoM)", value: "+4.8%", chg: "+1.1pp" },
-      { name: "Inventory (months)", value: "22.6", chg: "-0.9" },
+      { name: "House Price Index", },
+      { name: "Affordability Index", },
+      { name: "Registrations (MoM)", },
+      { name: "Inventory (months)", },
     ],
   },
   {
@@ -111,36 +124,51 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
       // savings rate. That series was carried, wired to this row, and is neither
       // of the two — so it is gone and the row now names what the spec actually
       // asks for, unwired because no free source publishes it.
-      { name: "Household Debt / GDP", value: "38.9%", chg: "+0.6pp" },
-      { name: "Financial Savings", value: "5.3% GDP", chg: "-0.2pp" },
-      { name: "Physical Savings", value: "12.1% GDP", chg: "+0.3pp" },
-      { name: "Equity in Asset Mix", value: "6.4%", chg: "+0.4pp" },
+      { name: "Household Debt / GDP", },
+      { name: "Financial Savings", },
+      { name: "Physical Savings", },
+      { name: "Equity in Asset Mix", },
     ],
   },
   {
     title: "Consumption", icon: ShoppingCart, rows: [
-      { name: "Passenger Vehicles", value: "+3.9%", chg: "-1.2pp" },
-      { name: "Two Wheelers", value: "+11.4%", chg: "+2.1pp" },
-      { name: "Tractors", value: "-2.6%", chg: "-3.0pp" },
-      { name: "FMCG Volumes", value: "+5.8%", chg: "+0.7pp" },
+      { name: "Passenger Vehicles", },
+      { name: "Two Wheelers", },
+      { name: "Tractors", },
+      { name: "FMCG Volumes", },
     ],
   },
   {
     title: "Capital markets", icon: BarChart3, rows: [
-      { name: "Equity MF Flows", value: "₹34,700 Cr", chg: "+12.4%" },
-      { name: "SIP Flows", value: "₹21,260 Cr", chg: "+3.1%" },
-      { name: "Demat Accounts", value: "161.2 mn", chg: "+2.4 mn" },
-      { name: "F&O Turnover", value: "₹412 L Cr", chg: "-6.8%" },
+      { name: "Equity MF Flows", },
+      { name: "SIP Flows", },
+      { name: "Demat Accounts", },
+      { name: "F&O Turnover", },
     ],
   },
 ];
 
-const RELEASES = [
-  { s: "India CPI (YoY)", date: "12 Aug", prev: "5.08%", cons: "4.90%", act: "4.83%", note: "Cooler than expected on food; keeps a rate cut on the table for Q4." },
-  { s: "US Non-Farm Payrolls", date: "02 Aug", prev: "218k", cons: "185k", act: "206k", note: "Labour market resilient; wage growth steady, no dovish tilt yet." },
-  { s: "RBI Policy Rate", date: "08 Aug", prev: "6.50%", cons: "6.50%", act: "6.50%", note: "Held as expected; stance stays 'withdrawal of accommodation'." },
-  { s: "China GDP (YoY)", date: "15 Jul", prev: "5.3%", cons: "5.1%", act: "4.7%", note: "Miss on weak property and consumption; stimulus expectations rising." },
-];
+// THERE IS NO RELEASE TABLE HERE ANY MORE, AND THERE MUST NOT BE ONE.
+//
+// This file carried four rows of invented macro prints — "India CPI (YoY), 12
+// Aug, prev 5.08%, cons 4.90%, actual 4.83%", "RBI Policy Rate, 08 Aug, held as
+// expected; stance stays 'withdrawal of accommodation'", "China GDP (YoY) …
+// actual 4.7%, miss on weak property" — each with a two-line AI-styled note.
+//
+// A greyed number reads as illustrative. A SENTENCE DOES NOT. "Held as
+// expected" is a statement about a real central bank decision on a real date,
+// and a reader who takes away an inflation print or a policy stance has learnt
+// something false; no badge unlearns it. This is the same failure the book
+// already fixed when alerts asserted that a real fund manager had resigned.
+//
+// The irony that settles it: the RBI policy rate is IN the harvest store —
+// `adapters/rbi.mjs` collects repo, SDF, MSF, bank rate, reverse repo, CRR and
+// SLR — so this table was printing a fabricated policy rate on a page that
+// carries the real one a few rows above.
+//
+// What a release calendar actually needs is a SCHEDULE (when the next print is
+// due) and a CONSENSUS (what the street expects). Neither is in any source
+// wired here, and consensus is licensed data. The card below states that.
 
 export function Economy() {
   const [index, setIndex] = useState<SeriesIndex | null | undefined>(undefined);
@@ -199,35 +227,24 @@ export function Economy() {
         )}
       </div>
 
-      {/* Release calendar — the spec's signature macro feature */}
-      <Card className="preview-hatch" title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-champagne-400" /> Data release calendar</span>}
-        subtitle="Previous · consensus · actual · surprise vs consensus, each with an AI-generated 2–3 line note" right={<PreviewBadge />} pad={false}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-[12.5px]">
-            <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Series</th>
-                <th className="label-xs px-3 py-2 text-left font-medium">Date</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Previous</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Consensus</th>
-                <th className="label-xs px-3 py-2 text-right font-medium">Actual</th>
-                <th className="label-xs px-4 py-2 text-left font-medium"><span className="flex items-center gap-1"><Sparkles className="h-3 w-3" /> AI commentary</span></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/60">
-              {RELEASES.map((r) => (
-                <tr key={r.s} className="hover:bg-ink-700/30">
-                  <td className="px-4 py-2.5 font-medium text-slate-300">{r.s}</td>
-                  <td className="px-3 py-2.5 text-slate-500">{r.date}</td>
-                  <td className="px-3 py-2.5 text-right"><PreviewNum>{r.prev}</PreviewNum></td>
-                  <td className="px-3 py-2.5 text-right"><PreviewNum>{r.cons}</PreviewNum></td>
-                  <td className="px-3 py-2.5 text-right"><PreviewNum>{r.act}</PreviewNum></td>
-                  <td className="px-4 py-2.5 max-w-md text-[11.5px] text-slate-500" title="Placeholder — not live data">{r.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Release calendar — the spec's signature macro feature, and the one
+          piece of it nothing here can serve. See the note at the top of this
+          file for what used to sit in this card. */}
+      <Card title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-500" /> Data release calendar</span>}
+        subtitle="Previous · consensus · actual · surprise vs consensus">
+        <AbsentSection
+          what="No release calendar can be built from the sources wired here"
+          needs="It needs two things this dashboard has neither of: a SCHEDULE of when each statistic is next
+            published, and a CONSENSUS of what the street expects. Consensus and the surprise measured against it are
+            licensed products sold by paid vendors. The PREVIOUS and ACTUAL columns are the easier half — those are
+            each agency's own release, and where the harvest store already carries the series its latest reading is
+            in the table above, with the date it was measured.">
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">
+            Until a consensus vendor is chosen, a calendar here would be a forecast this dashboard invented. The
+            series it does carry are shown with their own release dates instead, which answers "what was the last
+            print" without pretending to answer "what did the street expect".
+          </p>
+        </AbsentSection>
       </Card>
 
       {/* Chart — opens when a live indicator row is clicked. A rate series is a
@@ -292,13 +309,14 @@ export function Economy() {
                     </li>
                   );
                 }
+                // NOT WIRED — and now shown as absent rather than as a greyed
+                // sample. The reason is specific per row where the store knows
+                // one, because "no data" tells a reader nothing about whether
+                // the figure is coming or can never come.
                 return (
                   <li key={r.name} className="flex items-center justify-between gap-2 px-1 text-[12px]">
                     <span className="text-slate-400">{r.name}</span>
-                    <span className="flex items-center gap-1.5 shrink-0">
-                      <PreviewNum>{r.value}</PreviewNum>
-                      <span className="text-[10px] text-slate-600" title="Placeholder — not live data">{r.chg}</span>
-                    </span>
+                    <AbsentCell reason={`no series in the harvest store answers ${r.name} — the FOOS spec asks for it and no free source wired here publishes it`} />
                   </li>
                 );
               })}

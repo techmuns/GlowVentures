@@ -7,8 +7,8 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { BasisPill } from "@/components/BasisPill";
 import { StockLink } from "@/components/StockLink";
-import { PreviewBadge, PreviewNum, PreviewChart } from "@/components/Preview";
-import { AbsentCell } from "@/components/Absent";
+import { PreviewBadge } from "@/components/Preview";
+import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, byAssetClass } from "@/lib/analytics";
 import {
@@ -16,6 +16,7 @@ import {
   exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
 } from "@/lib/familyInputs";
 import { bucketActuals, bucketWeightPct } from "@/lib/alertEngine";
+import { MCAP_BANDS, bandWeightPct, mcapExposure } from "@/lib/marketCap";
 import { fmtPct, changeColor } from "@/lib/format";
 
 // LAYER 3 — PORTFOLIO & EXPOSURE (FOOS spec). Family charter & IPS buckets, GAP
@@ -46,7 +47,7 @@ import { fmtPct, changeColor } from "@/lib/format";
 // with the reason. When the family records an IPS, one map here fills both.
 
 export function ExposureIPS() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, quotesStatus } = usePortfolio();
 
   const [inputs, setInputs] = useState<FamilyInputs>(() => readFamilyInputs());
   const save = (next: FamilyInputs) => setInputs(writeFamilyInputs(next));
@@ -66,6 +67,10 @@ export function ExposureIPS() {
   const listed = useMemo(() => consolidated.filter((x) => !isPrivateClass(x)), [consolidated]);
   const listedMV = useMemo(() => consolidatedMarketValue(listed), [listed]);
   const sectors = useMemo(() => bySector(listed), [listed]);
+  // Market-cap exposure over the LISTED book only. An AIF unit is a fund wrapper
+  // with no market cap of its own, so including it would report a permanent
+  // shortfall against a figure that can never exist.
+  const mcap = useMemo(() => mcapExposure(listed), [listed]);
   const nameByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of consolidated) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
@@ -76,6 +81,14 @@ export function ExposureIPS() {
   // a missing figure sorts as 0 (neutral) rather than distorting the ranking.
   const contributors = useMemo(() => [...consolidated].sort((a, b) => (b.unrealizedPnL ?? 0) - (a.unrealizedPnL ?? 0)).slice(0, 5), [consolidated]);
   const laggards = useMemo(() => [...consolidated].sort((a, b) => (a.unrealizedPnL ?? 0) - (b.unrealizedPnL ?? 0)).slice(0, 5), [consolidated]);
+
+  // Undrawn capital across the book, so the call-schedule card can name the real
+  // amount it cannot place in time. `sumOrNull` semantics by hand: no commitment
+  // at all is null, not zero.
+  const undrawnTotal = useMemo(() => {
+    const set = (portfolio?.commitments ?? []).map((c) => c.undrawn).filter((v): v is number => v != null);
+    return set.length ? set.reduce((a, b) => a + b, 0) : null;
+  }, [portfolio]);
 
   if (!portfolio) return null;
   const money = (n: number | null, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -259,24 +272,94 @@ export function ExposureIPS() {
         </p>
       </Card>
 
-      {/* Other GAP dimensions — preview */}
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[
-          { t: "By geography", icon: Globe2, rows: [["India", "88%", "80%"], ["US", "7%", "12%"], ["Other", "5%", "8%"]] },
-          { t: "By market cap", icon: Layers, rows: [["Large", "54%", "50%"], ["Mid", "28%", "30%"], ["Small", "18%", "20%"]] },
-          { t: "By duration / liquidity", icon: Clock, rows: [["Liquid", "82%", "75%"], ["Semi-liquid", "12%", "15%"], ["Illiquid", "6%", "10%"]] },
-        ].map((g) => (
-          <Card key={g.t} className="preview-hatch" title={<span className="flex items-center gap-2 text-[13px]"><g.icon className="h-4 w-4 text-slate-500" />{g.t}</span>} right={<PreviewBadge />}>
-            <table className="w-full text-[12px]">
-              <thead><tr className="text-slate-500"><th className="py-1 text-left font-medium">Segment</th><th className="py-1 text-right font-medium">Actual</th><th className="py-1 text-right font-medium">Desired</th></tr></thead>
-              <tbody>
-                {g.rows.map((r) => (
-                  <tr key={r[0]}><td className="py-1 text-slate-400">{r[0]}</td><td className="py-1 text-right"><PreviewNum>{r[1]}</PreviewNum></td><td className="py-1 text-right"><PreviewNum>{r[2]}</PreviewNum></td></tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        ))}
+      {/* ── THE OTHER GAP DIMENSIONS ────────────────────────────────────────
+          These three cards printed an ACTUAL and a DESIRED column each — "India
+          88% / 80%", "Large 54% / 50%", "Liquid 82% / 75%" — and both sides were
+          typed into this file. The desired side was already known to be a
+          fabrication; the ACTUAL side is worse, because it claims to have
+          measured this family's real book. A reader comparing 88% against 80%
+          is reading an instruction assembled from two invented numbers.
+
+          MARKET CAP IS NOW REAL. The quote feed's `marketCap` was checked against
+          screener.in on 2026-08-11 and is in rupees to 0.05% — see
+          `src/lib/marketCap.ts`, which also explains why the bands are a stated
+          convention rather than SEBI's rank-based classification.
+
+          GEOGRAPHY AND DURATION STAY ABSENT, and not for want of effort: no
+          statement in this book carries a country of listing or a liquidity
+          horizon, so an actual for either would be a classification nobody
+          made — the same failure as assigning "DCF" to a company by row order. */}
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        <Card title={<span className="flex items-center gap-2 text-[13px]"><Layers className="h-4 w-4 text-champagne-400" />By market cap</span>}
+          right={<Pill tone="info">live</Pill>}>
+          {/* A PARTIAL FEED SILENTLY RE-BASES THIS SPLIT, so it is not shown
+              until the feed settles. Measured mid-load at 14s the bands read
+              Large 23.0 / Mid 29.5 / Small 47.4 over ₹78.7 Cr; at 45s, with the
+              same book and the same code, Large 16.0 / Mid 25.7 / Small 58.3
+              over ₹122.1 Cr. Neither is wrong on its own terms and the caption
+              states the coverage either way — but a reader glancing early takes
+              away a large-cap weight seven points off the settled one, and
+              percentages that move while nothing about the book changed are the
+              "two bases mixed together" failure in motion. */}
+          {quotesStatus === "loading" ? (
+            <AbsentSection
+              what="Still measuring"
+              needs="The bands are weights of the priced book, so a partial feed would re-base them as quotes arrive.
+                They appear once the quote feed settles." />
+          ) : mcap.measured > 0 ? (
+            <>
+              <table className="w-full text-[12px]">
+                <thead><tr className="text-slate-500">
+                  <th className="py-1 text-left font-medium">Band</th>
+                  <th className="py-1 text-right font-medium">Actual</th>
+                  <th className="py-1 text-right font-medium">Desired</th>
+                </tr></thead>
+                <tbody>
+                  {MCAP_BANDS.map((band) => {
+                    const w = bandWeightPct(mcap, band.key);
+                    return (
+                      <tr key={band.key}>
+                        <td className="py-1 text-slate-400" title={band.note}>{band.label}</td>
+                        <td className="py-1 text-right mono text-slate-200">{w === null ? <AbsentCell reason="nothing measured" /> : `${w.toFixed(1)}%`}</td>
+                        {/* The desired side is the family's, and no dimension
+                            beyond the IPS buckets is captured yet. */}
+                        <td className="py-1 text-right"><AbsentCell reason="no market-cap target recorded — the IPS above captures buckets, not bands" /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500">
+                Of the listed book, {money(mcap.measured)} carries a market cap from the quote feed
+                {mcap.unmeasured > 0 && <> and {money(mcap.unmeasured)} does not ({mcap.unmeasuredNames.length} name{mcap.unmeasuredNames.length === 1 ? "" : "s"} with no live quote), which is excluded from the weights rather than banded as small</>}.
+                Bands are this dashboard's stated convention — <span className="text-slate-400">≥₹1,00,000 Cr</span>,{" "}
+                <span className="text-slate-400">₹25,000 Cr–₹1,00,000 Cr</span>, below that — not SEBI's rank-based
+                classification, which AMFI publishes over the whole listed universe.
+              </p>
+            </>
+          ) : (
+            <AbsentSection
+              what="No listed holding carries a market cap"
+              needs="The figure comes from the live quote feed. With no quote resolved for any name there is nothing to
+                band, and banding on statement marks alone is not possible — a mark is a price, not a company's size." />
+          )}
+        </Card>
+
+        <Card title={<span className="flex items-center gap-2 text-[13px]"><Globe2 className="h-4 w-4 text-slate-500" />By geography</span>}>
+          <AbsentSection
+            what="The book carries no country of listing"
+            needs="Every holding here is priced in rupees off Indian statements, but nothing in the model records where a
+              company is listed or where it earns. Splitting the book by geography needs either a country field at
+              ingest or a look-through into each fund's own holdings." />
+        </Card>
+
+        <Card title={<span className="flex items-center gap-2 text-[13px]"><Clock className="h-4 w-4 text-slate-500" />By duration / liquidity</span>}>
+          <AbsentSection
+            what="No liquidity horizon is recorded against any holding"
+            needs="Liquid, semi-liquid and illiquid are judgements about how fast a position could be realised. An AIF
+              unit's lock-in is in its scheme document and a listed share's is a matter of volume — neither is in this
+              book, and a split assigned by asset class would be a classification nobody made." />
+        </Card>
       </div>
 
       {/* Top holdings & sectors — real */}
@@ -349,20 +432,38 @@ export function ExposureIPS() {
         </Card>
       </div>
 
-      {/* Movement + monthwise projections — preview */}
+      {/* ── PORTFOLIO MOVEMENT AND THE CALL/TAX SCHEDULE ──────────────────
+          This card printed "Month on month +2.1% · Quarter on quarter +6.4% ·
+          Year on year +18.7%" under the heading Portfolio movement, directly
+          beneath this family's real top-ten holdings and their real weights.
+          Its own caption already said the book cannot measure it — "needs a
+          dated valuation series, the book carries two dates per account" — and
+          it printed the numbers anyway.
+
+          That is the sharpest form of the failure this cockpit exists to
+          prevent: a RETURN figure about a real ₹335 Cr book, on the family's own
+          allocation page, with the absence named in small text beside it. A
+          reader who takes away "+18.7% year on year" has been told something
+          nobody measured, and the caption does not unsay it.
+
+          The condition is stated instead, and it stays true whether or not the
+          series ever arrives. */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
-        <Card className="preview-hatch" title={<span className="flex items-center gap-2"><CalendarRange className="h-4 w-4 text-champagne-400" /> Portfolio movement</span>}
-          subtitle="MoM · QoQ · YoY" right={<PreviewBadge />}>
-          {[["Month on month", "+2.1%"], ["Quarter on quarter", "+6.4%"], ["Year on year", "+18.7%"]].map((r) => (
-            <div key={r[0]} className="flex items-center justify-between border-b border-ink-700/60 py-2.5 text-[12.5px] last:border-0">
-              <span className="text-slate-400">{r[0]}</span><PreviewNum>{r[1]}</PreviewNum>
-            </div>
-          ))}
-          <p className="mt-2 text-[11px] text-slate-500">Needs a dated valuation series — the book carries two dates per account, not a monthly track.</p>
+        <Card title={<span className="flex items-center gap-2"><CalendarRange className="h-4 w-4 text-slate-500" /> Portfolio movement</span>}
+          subtitle="MoM · QoQ · YoY">
+          <AbsentSection
+            what="This book cannot measure a movement over time"
+            needs="Each account's statements carry an opening and a closing value for one window — two dated points, not
+              a series. A month-on-month figure needs a monthly or quarterly valuation statement per account; until one
+              is ingested, every horizon here is absent rather than estimated from the two dates that do exist." />
         </Card>
-        <Card className="lg:col-span-2 preview-hatch" title={<span className="flex items-center gap-2"><Receipt className="h-4 w-4 text-champagne-400" /> Monthwise: capital calls & tax liability</span>}
-          subtitle="Expected fund calls and estimated tax by month" right={<PreviewBadge />}>
-          <div className="h-48"><PreviewChart kind="bars" height={190} /></div>
+        <Card className="lg:col-span-2" title={<span className="flex items-center gap-2"><Receipt className="h-4 w-4 text-slate-500" /> Monthwise: capital calls & tax liability</span>}
+          subtitle="Expected fund calls and estimated tax by month">
+          <AbsentSection
+            what="No month-by-month schedule can be drawn"
+            needs={`A capital account states the UNDRAWN BALANCE, not when the fund will call it${undrawnTotal === null ? "" : ` — ${money(undrawnTotal)} is
+              committed across this book`} and no statement says in which month. The tax half needs the family's own
+              expected realisations. A bar chart here would put a shape on both, and the shape is the claim.`} />
         </Card>
       </div>
     </div>

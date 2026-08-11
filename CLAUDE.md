@@ -55,6 +55,39 @@ fired. Index-cycled categorical attributions are the same failure in miniature:
 `VAL_METHODS[i % 5]` assigned "DCF" to real companies by ROW ORDER, so sorting
 the table changed which company was valued by DCF.
 
+**A third round of the same failure, found by finally measuring production.**
+The client's URL arrived only after these screens shipped, and `MUNS_TOKEN`
+lives in the Cloudflare environment and nowhere else — so several endpoints
+carried an explicit UNVERIFIED AGAINST THE LIVE API comment, and every
+preview built around them had never been checked against what the upstream
+really returns. Probed on 2026-08-11 (`scripts/dev/live-api-proxy.mjs` serves
+the LOCAL build with `/api/*` forwarded to the deployment), all of them answer.
+That measurement removed the excuse for five more fabrications, each of which
+had been sitting on the client's live dashboard:
+
+- **Company page** — `Business segments 58/27/15`, `Geography India 72 / US 18 /
+  RoW 10`, `Capacity 11.0 mn units · Utilisation 76%`, `Customer A / Supplier X
+  · Top-5 concentration 38%`, and a calendar asserting `Next earnings 24 Oct
+  2026` — all under a real company's name. The live `financials` response was
+  then checked for every one of them and carries none: its sections are Pros &
+  Cons, About, Stock details, Shareholding, Balance Sheet, P&L, Quarterly
+  Results, Peer Comparison. Absent, each naming its source.
+- **Exposure & IPS** — `Portfolio movement: MoM +2.1% · QoQ +6.4% · YoY +18.7%`
+  about this family's real ₹335 Cr book, with its own caption already saying the
+  book cannot measure it. And three GAP dimensions whose **ACTUAL** columns were
+  typed in — the desired side was a known fabrication, the actual side claims a
+  measurement.
+- **Economy / Macro Research** — release calendars asserting real prints in
+  SENTENCES: `India CPI actual 4.83%`, `RBI Policy Rate — held as expected;
+  stance stays 'withdrawal of accommodation'`, `China GDP actual 4.7% — miss on
+  weak property`. The RBI policy rate is IN the harvest store, so the page was
+  printing a fabricated policy rate while carrying the real one.
+- **Every Economy row's `value` and `chg`** — `Manufacturing PMI 58.1`,
+  `Capacity Utilisation 76.4%`, `Household Debt / GDP 38.9%`. **The FIELDS were
+  deleted from the `Row` type, not just the render**, so reintroducing one is a
+  type error. Deleting a render leaves the numbers one line from returning; the
+  same reasoning that removed `custodianOf()` rather than fixing it.
+
 The test to apply: **would this still be honest if the badge were cropped out of
 a screenshot?** Sample macro series on a page with no family data pass it.
 Anything sharing a row, a tile or a sentence with the book does not.
@@ -1214,6 +1247,68 @@ into a real browser and reads the rendered figures back. Both are needed:
 `dedupedPositions` sat in `analytics.ts` correct and called by nothing for as long
 as no drop contained a duplicate, and **a helper that returns the right number
 into no caller looks exactly like a working feature.**
+
+### Stage 10c — measuring against the deployed site
+
+`MUNS_TOKEN` exists only in the Cloudflare Pages environment, so locally every
+`/api/*` call 404s — indistinguishable from an upstream that answers with
+nothing. Four endpoints therefore shipped saying UNVERIFIED AGAINST THE LIVE
+API. **A local `vite preview` cannot settle that, and this repo has already paid
+once for measuring on the wrong network** (FRED, declared unreachable from a dev
+container, answers fine from the runner that actually runs the harvest).
+
+`scripts/dev/live-api-proxy.mjs` serves the LOCAL build and forwards only
+`/api/*` to the deployment, signing in with the gate password itself:
+
+```
+npm run build && npx vite preview --port 4173 &
+GLOW_PASSWORD='…' node scripts/dev/live-api-proxy.mjs     # → :4174
+```
+
+It deliberately does not cache — a stale success would hide a live outage, which
+is the confusion it exists to remove. Two things it found immediately:
+
+- **The gate returns the LOGIN PAGE for `/api/*`, HTTP 200, `text/html`.** Right
+  for a browser, a trap for a script: a naive probe reads 200, fails to parse
+  HTML as JSON and reports a working endpoint as broken. Check the content type,
+  never the status alone.
+- **`ratio_source` does not return ratios.** It returns a moneycontrol URL and
+  the instruction "Use WebReader Tool". That is a source POINTER, and the page
+  passing its words through verbatim is the only honest rendering of it.
+
+**Chromium cannot use this session's egress proxy** — every https navigation
+returns `ERR_CONNECTION_RESET`, `example.com` included, so it is not the site.
+Node's fetch can, with `NODE_USE_ENV_PROXY=1`, which is why the bridge exists at
+all rather than pointing a browser straight at the deployment.
+
+**The quote feed's `marketCap` is in RUPEES**, which unblocked a real feature.
+`CompanyResearchPreview` had withheld a rupee market cap because the unit was
+unverified and "a value here could be wrong by a factor of a crore" — correct to
+withhold, and this is the check: ABCAPITAL reads ₹1,11,403 Cr against
+screener.in's ₹1,11,347 Cr, 0.05% apart on two snapshots minutes apart.
+`src/lib/marketCap.ts` bands the listed book on it.
+
+**A PARTIAL FEED SILENTLY RE-BASES A WEIGHT, and that is a new failure mode this
+book had not met.** Market-cap bands are weights of the PRICED book, so they move
+as quotes arrive: measured mid-load the split read Large 23.0 / Mid 29.5 / Small
+47.4 over ₹78.7 Cr, and once settled, Large 16.0 / Mid 25.7 / Small 58.3 over
+₹122.1 Cr — same book, same code, seven points apart on large cap. Neither is
+wrong on its own terms, which is exactly why the card renders "still measuring"
+until `quotesStatus` settles rather than showing a split that will move.
+
+**The bands are a DECLARED CONVENTION, not SEBI's classification.** SEBI ranks
+the whole listed universe — top 100, next 150, the rest — recalculated half-yearly
+by AMFI. A rank over the 140 names this dashboard prices would put this book's
+100th-largest holding in the large-cap band. So they are round thresholds
+(₹1,00,000 Cr / ₹25,000 Cr), stated on screen beside the numbers they produce: a
+cutoff written as ₹1,00,637 Cr would read as the authoritative figure it is not.
+
+**A failure message must name WHICH failure, and the company page named the
+wrong one.** It read `live ? "live" : "no live quote for this security"`, so a
+page still fetching asserted the security has no live quote — while the top bar
+on the same screen said "Fetching prices…". Three states now: fetching, no NSE
+symbol resolves (can never go live), and the feed returned no quote for a symbol
+that does resolve.
 
 ### The alert engine — silence is read as all-clear
 

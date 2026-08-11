@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Building2, BarChart3, Network, CalendarClock, Sparkles, Boxes, Search, ArrowUpRight, ArrowDownRight, FileText,
+  Building2, BarChart3, Network, CalendarClock, Boxes, ArrowUpRight, ArrowDownRight, FileText,
 } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { AbsentCell } from "@/components/Absent";
-import { PreviewBadge, PreviewNum, PreviewPill, PreviewCard } from "@/components/Preview";
+import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtDate } from "@/lib/format";
 import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
@@ -17,21 +16,17 @@ import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
 //     estimates, documents and concalls the spec asks for are ALREADY live in the
 //     Research panel above this, straight from screener.in / the filings feed, so
 //     they are pointed to rather than duplicated here.
-//   • PREVIEW — business segments, operating KPIs, value chain, the earnings /
-//     meeting calendars and the AI query engine. No endpoint in the catalogue
-//     serves these as structured data, so they stay clearly-marked placeholders.
+//   • ABSENT — business segments, operating KPIs, value chain and the forward
+//     calendar. No endpoint in the catalogue serves any of them, VERIFIED
+//     against the live API rather than assumed, so each renders its reason.
+//     They were sample figures until 2026-08-11; see the note above that block
+//     for why a badge did not make them safe.
 //
 // What is NOT shown: a rupee market cap / EV / book value / face value. The quote
 // feed returns a market-cap figure of unverified unit and no share count, so a
 // value here could be wrong by a factor of a crore — and this book's rule is that
 // an unverifiable figure is absent, not guessed. Book value and the rest are in
 // the live Financials tables above.
-
-const SEGMENTS = [
-  { name: "Core products", rev: "58%", ebit: "63%" },
-  { name: "Services", rev: "27%", ebit: "24%" },
-  { name: "New businesses", rev: "15%", ebit: "13%" },
-];
 
 export function CompanyResearchPreview({ name, ticker, price, live, low52, high52 }: {
   name: string;
@@ -42,7 +37,6 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
   high52: number | null;
 }) {
   const { fmtFromBase } = usePortfolio();
-  const [query, setQuery] = useState("");
   const [insider, setInsider] = useState<InsiderResponse | undefined>(undefined);
 
   useEffect(() => {
@@ -147,74 +141,73 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
         </div>
       </div>
 
-      {/* Preview — genuinely no endpoint serves these as structured data */}
-      <div className="mt-5">
-        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-          <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Illustrative — awaiting a structured source
-        </div>
-        <div className="grid gap-5 lg:grid-cols-3 items-start">
-          <PreviewCard className="lg:col-span-2" title={<span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-champagne-400" /> Business segments</span>}
-            subtitle="Revenue & EBIT by segment, geography and product">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-[13px]">
-                <thead><tr className="border-b border-ink-700">
-                  <th className="label-xs py-2 pr-3 text-left font-medium">Segment</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Revenue</th>
-                  <th className="label-xs py-2 pl-3 text-right font-medium">EBIT</th>
-                </tr></thead>
-                <tbody className="divide-y divide-ink-700/60">
-                  {SEGMENTS.map((s) => (
-                    <tr key={s.name}>
-                      <td className="py-2 pr-3 text-slate-300">{s.name}</td>
-                      <td className="px-3 py-2 text-right"><PreviewNum>{s.rev}</PreviewNum></td>
-                      <td className="py-2 pl-3 text-right"><PreviewNum>{s.ebit}</PreviewNum></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-              Geography: <PreviewPill>India 72%</PreviewPill><PreviewPill>US 18%</PreviewPill><PreviewPill>RoW 10%</PreviewPill>
-            </div>
-          </PreviewCard>
+      {/* ── WHAT THIS PAGE CANNOT ANSWER, AND WHY IT NO LONGER GUESSES ─────
+          Until now this block printed four cards of invented figures under the
+          real company's name: segment revenue 58/27/15, geography India 72 / US
+          18 / RoW 10, "Capacity 11.0 mn units · Utilisation 76%", "Customer A /
+          Supplier X · Top-5 concentration 38%", and a calendar asserting "Next
+          earnings 24 Oct 2026".
 
-          <PreviewCard title={<span className="flex items-center gap-2"><Boxes className="h-4 w-4 text-champagne-400" /> Operating metrics</span>} subtitle="Sector-specific KPIs">
-            <ul className="space-y-2 text-[12.5px]">
-              {[["Volume", "8.4 mn units"], ["Capacity", "11.0 mn units"], ["Utilisation", "76%"], ["Realisation / unit", "₹18,400"]].map((r) => (
-                <li key={r[0]} className="flex items-center justify-between"><span className="text-slate-400">{r[0]}</span><PreviewNum>{r[1]}</PreviewNum></li>
-              ))}
-            </ul>
-          </PreviewCard>
-        </div>
+          Every one of them fails this book's own test — WOULD IT STILL BE HONEST
+          IF THE BADGE WERE CROPPED OUT OF A SCREENSHOT? "Utilisation 76%" under
+          the heading Aditya Birla Capital is a claim about Aditya Birla Capital,
+          and greying it marks it not-live without stopping it being a number
+          ABOUT THIS COMPANY. The dated ones are worse: a reader who takes away
+          an earnings date has learnt something false and will act on it. This is
+          the same failure the book already fixed twice — the ×1.25 target values
+          on the public dashboard, and the "fund manager resigned" alerts naming
+          real managers.
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
-          <PreviewCard title={<span className="flex items-center gap-2"><Network className="h-4 w-4 text-champagne-400" /> Value chain</span>} subtitle="Customers, suppliers & inputs">
-            <div className="space-y-2.5 text-[12.5px]">
-              <div><span className="text-slate-400">Major customers: </span><span className="inline-flex flex-wrap gap-1.5 align-middle"><PreviewPill>Customer A</PreviewPill><PreviewPill>Customer B</PreviewPill></span></div>
-              <div><span className="text-slate-400">Major suppliers: </span><span className="inline-flex flex-wrap gap-1.5 align-middle"><PreviewPill>Supplier X</PreviewPill><PreviewPill>Supplier Y</PreviewPill></span></div>
-              <div className="flex items-center justify-between"><span className="text-slate-400">Top-5 concentration</span><PreviewNum>38%</PreviewNum></div>
-            </div>
-          </PreviewCard>
+          MEASURED, NOT ASSUMED: the live `financials` response was checked for
+          each of these on 2026-08-11 and carries none of them. Its sections are
+          Pros & Cons, About, Stock details, Shareholding Pattern, Balance Sheet,
+          Profit & Loss, Quarterly Results and Peer Comparison — no segment
+          split, no capacity, no customer list, no calendar. So these are absent
+          for want of a source, and each says which source would fill it. */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
+        <Card title={<span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-slate-500" /> Business segments</span>}
+          subtitle="Revenue & EBIT by segment, geography and product">
+          <AbsentSection
+            what={`No segment split is published for ${name} by any source wired here`}
+            needs="Segment revenue and EBIT are in the notes to the annual report and in the quarterly segment
+              disclosure — PDFs listed under Documents above, not a structured field. Reading them needs a filing
+              parser per company, which is a different kind of source from the tables on this page." />
+        </Card>
 
-          <PreviewCard title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-champagne-400" /> Calendars</span>} subtitle="Earnings, meetings & history">
-            <ul className="space-y-2 text-[12.5px]">
-              <li className="flex items-center justify-between"><span className="text-slate-400">Next earnings</span><PreviewNum>24 Oct 2026</PreviewNum></li>
-              <li className="flex items-center justify-between"><span className="text-slate-400">AGM</span><PreviewNum>14 Aug 2026</PreviewNum></li>
-              <li className="flex items-center justify-between"><span className="text-slate-400">Analyst meet</span><PreviewNum>05 Sep 2026</PreviewNum></li>
-            </ul>
-          </PreviewCard>
+        <Card title={<span className="flex items-center gap-2"><Boxes className="h-4 w-4 text-slate-500" /> Operating metrics</span>}
+          subtitle="Volume, capacity, utilisation, realisation">
+          <AbsentSection
+            what="No operating KPIs are carried for this company"
+            needs="Volume, capacity and utilisation are sector-specific and appear in the investor presentation, not in
+              any financial statement. They differ by industry — tonnes for a cement maker, disbursements for a lender —
+              so there is no single field to read even once a source exists." />
+        </Card>
 
-          <PreviewCard title={<span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-champagne-400" /> AI query</span>} subtitle={`Ask about ${name}`}>
-            <div className="flex items-center gap-2 rounded-lg border border-ink-600/70 bg-ink-800/40 px-3 py-2">
-              <Search className="h-4 w-4 text-slate-500" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. ROCE trend over 10 years?"
-                className="w-full bg-transparent text-[13px] text-slate-300 placeholder:text-slate-600 focus:outline-none" />
-              <PreviewBadge />
-            </div>
-            <p className="mt-2 text-[11px] text-slate-500">Needs an AI layer over the financials & filings above.</p>
-          </PreviewCard>
-        </div>
+        <Card title={<span className="flex items-center gap-2"><Network className="h-4 w-4 text-slate-500" /> Value chain</span>}
+          subtitle="Customers, suppliers & concentration">
+          <AbsentSection
+            what="No customer or supplier list is published"
+            needs="Customer concentration appears in the annual report's risk section as prose, and named customers
+              usually do not appear at all. Nothing in the catalogue returns it as data." />
+        </Card>
+
+        {/* THE CALENDAR IS THE ONE WITH A PARTIAL ANSWER, AND IT SAYS SO. Past
+            dated events ARE available — the Documents and Concalls tabs above
+            list filings with their dates, straight from the exchange feed. What
+            is absent is the FUTURE: no source here publishes a scheduled
+            earnings date, and inferring one from last year's timing would put a
+            date on screen that the company never announced. */}
+        <Card title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-500" /> Calendar</span>}
+          subtitle="Earnings, board meetings & investor events">
+          <AbsentSection
+            what="No FORTHCOMING dates are published by any source wired here"
+            needs="A scheduled earnings date comes from the company's own board-meeting intimation. Those are filed as
+              announcements and appear once issued, so the calendar can only ever look backwards here — the dated
+              filings and concalls above are that record. A future date inferred from last year's timing would be one
+              the company never announced." />
+        </Card>
       </div>
+
     </div>
   );
 }
