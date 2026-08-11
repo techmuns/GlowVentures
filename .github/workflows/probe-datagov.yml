@@ -1,0 +1,35 @@
+name: Probe data.gov.in catalogue
+
+# DISCOVERY ONLY — this workflow writes nothing and commits nothing. It reads
+# the data.gov.in catalogue with the repository's API key and prints which
+# resources could back the Economy page, together with each one's newest
+# observation date.
+#
+# It exists because the key lives in repository secrets and the catalogue's
+# freshness cannot be judged from the documentation: a ministry that stopped
+# publishing in 2019 still serves HTTP 200. The probe reads the data and the
+# dates so the adapter is written against resources that are actually current.
+#
+# The key is never printed: the script redacts it from every URL and error it
+# logs, and Actions masks the secret in the log besides.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Probe the catalogue
+        env:
+          DATA_GOV_IN_KEY: ${{ secrets.DATA_GOV_IN_KEY }}
+        run: node scripts/harvest/probe-datagov.mjs
