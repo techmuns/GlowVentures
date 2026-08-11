@@ -41,6 +41,13 @@ jobs:
       - run: npm ci
 
       - name: Harvest
+        env:
+          # The two data.gov.in series need this; every other adapter is
+          # keyless. If it is unset those two FAIL and keep their stored data —
+          # the harvester never empties a series it could not fetch — so a
+          # missing key degrades to a stale figure with an honest date, not to
+          # a blank chart.
+          DATA_GOV_IN_KEY: ${{ secrets.DATA_GOV_IN_KEY }}
         run: |
           if [ -n "${{ inputs.only }}" ]; then
             npm run harvest -- --only "${{ inputs.only }}"

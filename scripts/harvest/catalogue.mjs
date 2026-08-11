@@ -86,6 +86,24 @@ const fred = (seriesId) => ({
   provenance: "official-api",
 });
 
+/**
+ * data.gov.in — a resource that is a CROSSTAB (one row per commodity or
+ * industry, one column per month), read down the named headline row.
+ *
+ * `rowValue` names the ministry's OWN aggregate row. It is never re-derived
+ * from the other rows: both these tables carry an official weighted aggregate,
+ * and averaging 869 commodity rows here would produce an index nobody
+ * published. Needs `DATA_GOV_IN_KEY` in the environment.
+ */
+const dataGov = (resource, rowField, rowValue) => ({
+  adapter: "dataGovIn",
+  resource, rowField, rowValue,
+  symbol: rowValue,
+  name: "data.gov.in (Open Government Data, India)",
+  url: `https://www.data.gov.in/resource/${encodeURIComponent(resource)}`,
+  provenance: "official-api",
+});
+
 /** IEX day-ahead spot power. ACCUMULATING, same reason. */
 const iex = () => ({
   adapter: "iex",
@@ -226,6 +244,32 @@ export const SERIES = [
     absent: "Same AMFI monthly workbooks, same BIFF blocker." },
 
   // ── Economy — annual, and lagged by a year or more. Charted as history ────
+  // ── The two data.gov.in resources that are actually LIVE SERIES ───────────
+  // A complete scan of the catalogue found these two and no others: they carry
+  // a moving window in the title ("till last month") and the ministry appends
+  // to them monthly. Everything else the Economy page asks for is a snapshot —
+  // a parliamentary answer or a survey round — and is declared absent below
+  // with the period its source actually stops at.
+  //
+  // These are INDEX LEVELS, not rates. A WPI of 154.3 is a level on a
+  // 2011-12 = 100 base, so a percentage change between two levels is the right
+  // measurement and `kind: "price"` (the default for a non-% unit) is correct.
+  // The YoY inflation rate a reader usually quotes is a DERIVED figure and the
+  // page computes it from these levels rather than ingesting a second series
+  // that could disagree with them.
+  {
+    id: "india-wpi", label: "India Wholesale Price Index", category: "economy", group: "Inflation",
+    unit: "index", band: [20, 500], frequency: "monthly",
+    source: dataGov("239ac3d0-f08d-40d0-b03c-9b7a426a62d5", "COMM_NAME", "All Commodities"),
+    note: "Base 2011-12 = 100, from the Office of the Economic Adviser's 'till last month' resource, which the ministry appends to monthly. The headline 'All Commodities' row is read as published — the table's other 868 rows are individual commodities and averaging them here would produce an index nobody published and that no reader could tie back to the source.",
+  },
+  {
+    id: "india-iip", label: "India Index of Industrial Production", category: "economy", group: "Economic growth",
+    unit: "index", band: [20, 500], frequency: "monthly",
+    source: dataGov("31d53713-46c6-48bd-951a-4d986272fd96", "description", "General"),
+    note: "Base 2011-12 = 100, MoSPI's monthly all-India IIP. The 'General' row is the ministry's own aggregate, computed with the official weights; the table's other rows are NIC industry divisions and are not summed here.",
+  },
+
   { id: "india-gdp-growth", label: "India GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("IN", "NY.GDP.MKTP.KD.ZG") },
   { id: "india-cpi", label: "India CPI inflation", category: "economy", group: "Inflation", unit: "%", band: [-10, 60], frequency: "annual", source: wb("IN", "FP.CPI.TOTL.ZG") },
   { id: "india-unemployment", label: "India unemployment rate", category: "economy", group: "Labour market", unit: "%", band: [0, 60], frequency: "annual", source: wb("IN", "SL.UEM.TOTL.ZS") },
