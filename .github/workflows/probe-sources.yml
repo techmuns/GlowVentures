@@ -1,0 +1,36 @@
+name: Probe remaining data sources
+
+# DISCOVERY ONLY — writes nothing, commits nothing.
+#
+# Runs the source sweep from the GitHub Actions runner, which is the network
+# the nightly harvest actually uses. This distinction is not academic: FRED was
+# declared permanently unreachable on a measurement taken in a development
+# container and answers in under a second from here, and most Indian government
+# sites are unreachable from that container while being perfectly available to
+# a normal client.
+#
+# A source is only written off after failing HERE.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      # The browser pass needs a real Chromium: five of these sources build
+      # their page with script and a fetch sees an empty shell.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Probe
+        run: node scripts/harvest/probe-sources.mjs
