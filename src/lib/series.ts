@@ -161,6 +161,108 @@ export function sliceRange(points: Point[], meta: SeriesMeta, range: RangeKey): 
   return points.filter((p) => Date.parse(p.t + "T00:00:00Z") >= cutoff);
 }
 
+// ── Frequency resampling ────────────────────────────────────────────────────
+//
+// The spec asks for every series "daily, weekly, monthly, quarterly, year-end
+// and maximum available history". The store keeps each series at its NATIVE
+// frequency — whatever its source publishes — and this converts a stored series
+// down to a coarser view.
+//
+// DOWN ONLY, AND THE UI MUST NOT OFFER OTHERWISE. A daily series has a weekly
+// view: take the last close in each week. A MONTHLY series does not — there is
+// no observation inside the month to take, and the only ways to produce one are
+// to interpolate or to repeat the month's value across its weeks. Both invent
+// readings that were never published, which is the failure this whole book is
+// built to avoid. `availableFrequencies` returns only the legitimate options so
+// the coarser-than-native ones are never rendered as a choice a reader can make
+// and then quietly get a fabricated answer to.
+//
+// PERIOD END, NOT PERIOD AVERAGE. Each bucket takes its LAST observation, which
+// is what "year-end" means and what every one of these publishers quotes. An
+// average would be a different measurement wearing the same label.
+
+export type Frequency = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
+
+/** Coarseness order. A series can be resampled to its own frequency or coarser. */
+const FREQ_ORDER: Frequency[] = ["daily", "weekly", "monthly", "quarterly", "annual"];
+
+export const FREQ_LABEL: Record<Frequency, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  annual: "Year-end",
+};
+
+/**
+ * The frequencies this series can honestly be shown at: its own, and every
+ * coarser one. Never a finer one — see the note above.
+ */
+export function availableFrequencies(native: string | undefined): Frequency[] {
+  const i = FREQ_ORDER.indexOf((native ?? "daily") as Frequency);
+  return FREQ_ORDER.slice(i < 0 ? 0 : i);
+}
+
+/** The bucket a date falls in, as a sortable key. */
+function bucketKey(t: string, to: Frequency): string {
+  const [y, m, d] = t.split("-");
+  switch (to) {
+    case "annual": return y;
+    case "quarterly": return `${y}-Q${Math.floor((Number(m) - 1) / 3) + 1}`;
+    case "monthly": return `${y}-${m}`;
+    case "weekly": {
+      // ISO week, so a week that straddles a month or a year stays one bucket.
+      const dt = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+      const day = dt.getUTCDay() || 7;              // Monday = 1 … Sunday = 7
+      dt.setUTCDate(dt.getUTCDate() + 4 - day);     // Thursday decides the year
+      const yearStart = Date.UTC(dt.getUTCFullYear(), 0, 1);
+      const week = Math.ceil(((dt.getTime() - yearStart) / 86400000 + 1) / 7);
+      return `${dt.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+    }
+    default: return t;
+  }
+}
+
+export type Resampled = {
+  points: Point[];
+  /**
+   * True when the final bucket has not closed yet — the current month is not
+   * over, the year is still running. The point is still the latest thing the
+   * source published, so it is kept, but a caller that labels the view
+   * "year-end" has to say that the last one is not a year end.
+   */
+  lastBucketOpen: boolean;
+};
+
+/**
+ * Resample to a coarser frequency, taking the LAST observation in each bucket.
+ *
+ * A request to resample to the series' own frequency, or to a finer one, returns
+ * the points untouched rather than throwing: the UI should not offer a finer
+ * option at all, and if one reaches here the honest fallback is the real data.
+ */
+export function resample(points: Point[], native: string | undefined, to: Frequency): Resampled {
+  const from = (native ?? "daily") as Frequency;
+  if (!points.length) return { points, lastBucketOpen: false };
+  if (FREQ_ORDER.indexOf(to) <= FREQ_ORDER.indexOf(from)) return { points, lastBucketOpen: false };
+
+  const last = new Map<string, Point>();
+  for (const p of points) last.set(bucketKey(p.t, to), p);   // insertion order = chronological
+  const out = [...last.values()];
+
+  // Has the last bucket closed? Compared against the series' own newest
+  // observation rather than today's date, because a series is often days or
+  // weeks behind and "today" would call every final bucket open.
+  const newest = points[points.length - 1].t;
+  const [y, m, d] = newest.split("-").map(Number);
+  const endsBucket =
+    to === "annual" ? m === 12 && d >= 28
+    : to === "quarterly" ? m % 3 === 0 && d >= 28
+    : to === "monthly" ? d >= 28
+    : new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 5;      // Friday
+  return { points: out, lastBucketOpen: !endsBucket };
+}
+
 // ── Formatting ──────────────────────────────────────────────────────────────
 
 /**

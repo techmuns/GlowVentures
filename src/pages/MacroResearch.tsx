@@ -9,6 +9,7 @@ import { AbsentSection } from "@/components/Absent";
 import { SeriesChart, type ChartType, type ChartSeries } from "@/components/SeriesChart";
 import {
   fetchSeriesIndex, fetchSeriesPoints, sliceRange, yearForRange, groupBy,
+  resample, availableFrequencies, FREQ_LABEL, type Frequency,
   fmtLevel, fmtReturn, returnTone, HORIZON_COLS, RANGES,
   type SeriesIndex, type SeriesEntry, type Point, type RangeKey,
 } from "@/lib/series";
@@ -53,6 +54,9 @@ export function MacroResearch() {
   const [selected, setSelected] = useState<string[]>([]);
   const [range, setRange] = useState<RangeKey>("5Y");
   const [chartType, setChartType] = useState<ChartType>("line");
+  // The spec's "daily / weekly / monthly / quarterly / year-end" view. Stored
+  // series keep their native frequency; this only ever coarsens.
+  const [freq, setFreq] = useState<Frequency>("daily");
   const [points, setPoints] = useState<Record<string, Point[]>>({});
   const [busy, setBusy] = useState(false);
 
@@ -101,9 +105,33 @@ export function MacroResearch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chosen, range]);
 
-  const chartSeries: ChartSeries[] = chosen
-    .map((s) => ({ meta: s, points: points[`${s.id}@${range}`] ?? [] }))
+  // FREQUENCIES OFFERED ARE THE INTERSECTION ACROSS THE OVERLAY. Comparing a
+  // daily index against a monthly commodity, the finest HONEST shared view is
+  // monthly: showing the pair "weekly" would have to invent weekly readings for
+  // the monthly one. So the toggle offers only what every chosen series can
+  // actually be resampled to.
+  const freqOptions: Frequency[] = useMemo(() => {
+    if (!chosen.length) return ["daily"];
+    const sets = chosen.map((s) => new Set(availableFrequencies(s.frequency)));
+    return (["daily", "weekly", "monthly", "quarterly", "annual"] as Frequency[])
+      .filter((f) => sets.every((set) => set.has(f)));
+  }, [chosen]);
+
+  // Keep the selection legal when the overlay changes under it.
+  useEffect(() => {
+    if (freqOptions.length && !freqOptions.includes(freq)) setFreq(freqOptions[0]);
+  }, [freqOptions, freq]);
+
+  const resampled = chosen
+    .map((s) => {
+      const raw = points[`${s.id}@${range}`] ?? [];
+      const r = resample(raw, s.frequency, freq);
+      return { meta: s, points: r.points, lastBucketOpen: r.lastBucketOpen };
+    })
     .filter((s) => s.points.length > 0);
+
+  const chartSeries: ChartSeries[] = resampled.map(({ meta, points: pts }) => ({ meta, points: pts }));
+  const anyOpenBucket = resampled.some((s) => s.lastBucketOpen);
 
   const toggle = (id: string) =>
     setSelected((prev) =>
@@ -196,6 +224,19 @@ export function MacroResearch() {
               </button>
             ))}
             <span className="mx-1 h-4 w-px bg-ink-700" />
+            {/* Frequency. Only the options every chosen series can honestly be
+                resampled to — never a finer one, which would mean inventing
+                readings the source never published. */}
+            {freqOptions.length > 1 && (
+              <>
+                <select value={freq} onChange={(e) => setFreq(e.target.value as Frequency)}
+                  title="Show the series at this frequency. Only frequencies coarser than or equal to the source's own are offered."
+                  className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[11px] font-medium text-slate-300 ring-focus">
+                  {freqOptions.map((f) => <option key={f} value={f}>{FREQ_LABEL[f]}</option>)}
+                </select>
+                <span className="mx-1 h-4 w-px bg-ink-700" />
+              </>
+            )}
             {RANGES.map((r) => (
               <button key={r.key} onClick={() => setRange(r.key)}
                 className={`rounded-md border px-2 py-1 text-[11px] font-medium transition-colors ${range === r.key
@@ -211,7 +252,20 @@ export function MacroResearch() {
             {busy ? "Loading observations…" : "No observations in this window."}
           </div>
         ) : (
-          <SeriesChart series={chartSeries} type={chartType} height={320} />
+          <>
+            <SeriesChart series={chartSeries} type={chartType} height={320} />
+            {freq !== "daily" && (
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                {FREQ_LABEL[freq]} view — each point is the <span className="text-slate-400">last observation</span> in
+                its period, which is what a period-end figure means. An average over the period would be a different
+                measurement under the same label.
+                {anyOpenBucket && (
+                  <> The final point sits in a period that <span className="text-slate-400">has not closed yet</span>,
+                  so it is the latest reading rather than a period end.</>
+                )}
+              </p>
+            )}
+          </>
         )}
         {chosen.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
