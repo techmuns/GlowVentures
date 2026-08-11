@@ -244,12 +244,27 @@ export const SERIES = [
     absent: "Same AMFI monthly workbooks, same BIFF blocker." },
 
   // ── Economy — annual, and lagged by a year or more. Charted as history ────
-  // ── The two data.gov.in resources that are actually LIVE SERIES ───────────
-  // A complete scan of the catalogue found these two and no others: they carry
-  // a moving window in the title ("till last month") and the ministry appends
-  // to them monthly. Everything else the Economy page asks for is a snapshot —
-  // a parliamentary answer or a survey round — and is declared absent below
-  // with the period its source actually stops at.
+  // ── The two data.gov.in resources that carry a real monthly SERIES ────────
+  //
+  // THEY ARE DISCONTINUED, AND THAT WAS NOT VISIBLE FROM THE CATALOGUE.
+  // Both are titled "till last month" and both have their catalogue record
+  // touched daily — WPI's read `updated 2026-08-11` on the day this was wired.
+  // Neither has gained a month since 2023: WPI's last column is INDX102023 and
+  // IIP's is _2023_feb, and `probe-datagov.mjs --extent` confirmed the returned
+  // record carries every field the resource DECLARES, so the source stops there
+  // rather than the reader being truncated.
+  //
+  // That is the precise failure this probe exists to catch — "the ministry
+  // stopped publishing but the endpoint still answers 200" — and ranking by
+  // record date walked straight into it. RECORD FRESHNESS IS NOT DATA
+  // FRESHNESS, and on this platform the two are years apart.
+  //
+  // They are still carried, because 2012–2023 of official WPI and IIP is real
+  // published history and useful as such. What they must never do is answer a
+  // "current reading" question: the Economy page's WPI and IIP rows stay
+  // unwired and named as absent, because a value from October 2023 presented as
+  // the WPI is a wrong figure no badge repairs. `staleSince` is set from the
+  // last observation, so every surface that shows these says how old they are.
   //
   // These are INDEX LEVELS, not rates. A WPI of 154.3 is a level on a
   // 2011-12 = 100 base, so a percentage change between two levels is the right
@@ -261,13 +276,13 @@ export const SERIES = [
     id: "india-wpi", label: "India Wholesale Price Index", category: "economy", group: "Inflation",
     unit: "index", band: [20, 500], frequency: "monthly",
     source: dataGov("239ac3d0-f08d-40d0-b03c-9b7a426a62d5", "COMM_NAME", "All Commodities"),
-    note: "Base 2011-12 = 100, from the Office of the Economic Adviser's 'till last month' resource, which the ministry appends to monthly. The headline 'All Commodities' row is read as published — the table's other 868 rows are individual commodities and averaging them here would produce an index nobody published and that no reader could tie back to the source.",
+    note: "Base 2011-12 = 100, Office of the Economic Adviser. DISCONTINUED: the resource is titled 'till last month' and its catalogue record is touched daily, but the last month it carries is October 2023 — verified against the resource's own declared schema, so the source stops there rather than the read being truncated. Carried as history, never as a current reading. The headline 'All Commodities' row is read as published; the other 868 rows are individual commodities and averaging them would produce an index nobody published.",
   },
   {
     id: "india-iip", label: "India Index of Industrial Production", category: "economy", group: "Economic growth",
     unit: "index", band: [20, 500], frequency: "monthly",
     source: dataGov("31d53713-46c6-48bd-951a-4d986272fd96", "description", "General"),
-    note: "Base 2011-12 = 100, MoSPI's monthly all-India IIP. The 'General' row is the ministry's own aggregate, computed with the official weights; the table's other rows are NIC industry divisions and are not summed here.",
+    note: "Base 2011-12 = 100, MoSPI all-India IIP. DISCONTINUED: last month carried is February 2023, verified against the resource's declared schema. Carried as history, never as a current reading. The 'General' row is the ministry's own aggregate computed with the official weights; the other rows are NIC industry divisions and are not summed here. The +67% move at 2020-05 is the COVID collapse and rebound — a real move, which the gate warns on rather than blocks.",
   },
 
   { id: "india-gdp-growth", label: "India GDP growth", category: "economy", group: "Economic growth", unit: "%", band: [-30, 30], frequency: "annual", source: wb("IN", "NY.GDP.MKTP.KD.ZG") },

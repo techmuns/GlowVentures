@@ -34,6 +34,12 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   {
     title: "Economic growth", icon: TrendingUp, rows: [
       { name: "GDP growth (YoY)", value: "6.7%", chg: "+0.3pp", seriesId: "india-gdp-growth" },
+      // NOT wired to `india-iip`, deliberately. That series is real published
+      // history (2012-04 → 2023-02) but MoSPI stopped appending to the
+      // data.gov.in resource in February 2023 while its record metadata keeps
+      // being touched. A three-year-old reading in a row a reader takes as
+      // current is a wrong figure no badge repairs, so this row states the
+      // absence and the history lives on the series page with its own dates.
       { name: "Industrial Production", value: "5.2%", chg: "+0.6pp" },
       { name: "Manufacturing PMI", value: "58.1", chg: "+1.2" },
       { name: "Capacity Utilisation", value: "76.4%", chg: "+0.8pp" },
@@ -43,6 +49,9 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
     title: "Inflation", icon: Percent, rows: [
       { name: "CPI (YoY)", value: "4.8%", chg: "-0.2pp", seriesId: "india-cpi" },
       { name: "Core CPI", value: "3.9%", chg: "-0.1pp" },
+      // Same as Industrial Production above: `india-wpi` carries 2012-04 →
+      // 2023-10 and the source has not appended since. History, not a current
+      // reading, so this row stays unwired.
       { name: "WPI", value: "2.6%", chg: "+0.4pp" },
       { name: "Rural / Urban CPI", value: "5.1 / 4.5%", chg: "-0.1pp" },
     ],

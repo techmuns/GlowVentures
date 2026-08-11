@@ -1379,9 +1379,10 @@ upstream reports is a finding.
 **A series the spec asks for and nothing serves is DECLARED ABSENT**, with the
 reason and the phase that will fill it, and rendered as such — thermal coal, iron
 ore, the LME metals, palm oil, rubber, the CRB, the Baltic Dry, India's 10-year.
-As of Phase 2 nine remain: coking coal (the Pink Sheet publishes thermal only),
-the CRB, the Baltic Dry, container and rail freight, India's 10-year G-Sec,
-corporate credit spreads, and AMFI's mutual-fund and SIP flows. AMFI is the
+As of Phase 2 seven remain: coking coal (the Pink Sheet publishes thermal only),
+the CRB, the Baltic Dry, container and rail freight, and AMFI's mutual-fund and
+SIP flows. India's 10-year G-Sec and corporate credit spreads came OFF this list
+when FRED turned out to be reachable — see above. AMFI is the
 interesting one: it publishes ~100 monthly reports back to 2018 — real history,
 not a latest value — but they are legacy BIFF `.xls` workbooks, which neither
 ExcelJS nor this repo's own `sheet.mjs` (built for OOXML and for the HTML tables
@@ -1389,6 +1390,59 @@ brokers misname `.xls`) can open. It needs a BIFF reader added as a dependency.
 The Bloomberg Commodity Index is carried in place of the CRB **under its own
 name**, because it is a different index and presenting it as CRB would be a
 fabrication with a badge on it.
+
+### data.gov.in — and why RECORD freshness is not DATA freshness
+
+`adapters/dataGovIn.mjs` reads the Government of India's open-data platform,
+which needed a full catalogue scan (`probe-datagov.mjs`) before a line of it
+could be written. Three things that scan established, each of which had already
+produced a wrong answer once:
+
+**Nearly everything in the catalogue is a SNAPSHOT.** A parliamentary answer, a
+survey round, a table "up to December 2022" that will never gain another row.
+Of ~20,000 active resources, exactly two carry a monthly series the Economy page
+asks for.
+
+**Ranking by record date answers the wrong question.** It surfaces whichever
+parliamentary answer was uploaded most recently, not which resource is alive. A
+truncated scan sorted that way concluded WPI was frozen at the 2004-05 base in
+March 2016, while the live resource sat further down the list being touched
+daily. The live ones announce themselves in the TITLE — "till last month".
+
+**AND THE TITLE IS A CLAIM, NOT A FACT.** Both surviving resources have their
+catalogue record touched every day — WPI's read `updated 2026-08-11` on the day
+it was wired — and neither has gained a month since **2023**. WPI's last column
+is `INDX102023`, IIP's is `_2023_feb`. `probe-datagov.mjs --extent` settled it by
+comparing the resource's DECLARED schema against the fields present on a
+returned record: they match exactly, so the source stops there and the reader is
+not being truncated. **A ministry that stopped publishing still serves HTTP 200,
+a full envelope, and a fresh `updated` timestamp.**
+
+So both are carried as HISTORY — 2012–2023 of official WPI and IIP is real and
+useful — and neither answers a "current reading" question. The Economy page's
+WPI and IIP rows stay unwired for exactly that reason: a value from October 2023
+in a row a reader takes as current is a wrong figure, and no badge repairs it.
+`staleSince` is set from the last observation so every surface says how old they
+are.
+
+Two rules the adapter itself enforces:
+
+- **Month columns are parsed from the field NAME by shape, never by position.**
+  These tables are crosstabs — one row per commodity, one column per month — so
+  a new month arrives as a new FIELD. A positional read would keep working while
+  returning a different month the first time a column is inserted, the same
+  failure `lib/table.mjs` avoids on the statement PDFs. The patterns are
+  anchored: `_2004_05___rural` and `gst_collection_in_rs_crore___2019_20` are
+  both in this catalogue and both correctly parse as not-a-month.
+- **The headline row is NAMED, never summed.** WPI's table has 869 commodity
+  rows and IIP's 27 industry divisions, and both carry the ministry's own
+  weighted aggregate. Re-deriving it would produce an index nobody published. A
+  missing named row FAILS with the labels it did find, so a rename is a one-line
+  diagnosis rather than a silent switch to a different series.
+
+`DATA_GOV_IN_KEY` lives in the repository secrets and reaches the nightly run
+through the workflow env. Unset, both series fail and keep their stored data —
+the harvester never empties a series it could not fetch.
 
 Adding a source: write `adapters/<name>.mjs` exporting `fetchSeries(spec)`,
 register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.

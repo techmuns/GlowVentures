@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Globe } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Globe, Presentation } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -49,7 +49,7 @@ type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "wei
 const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from the ledger; this figure is worked out from them, so it has no workbook cell to trace to.";
 
 export function PortfolioMonitor() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
   const [view, setView] = useState<"holdings" | "transactions" | "plan">("holdings");
   const [consolidate, setConsolidate] = useState(true);
   // These three filters are global — they drive both the Holdings table and the
@@ -66,6 +66,7 @@ export function PortfolioMonitor() {
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
+  const [deckBusy, setDeckBusy] = useState(false);
   // Realised P&L per security (by securityKey) from the archive's sales —
   // undefined = loading, null = the archive didn't respond. A VALUE of null in
   // the map is a third thing again: the name was sold, but no capital gain
@@ -207,6 +208,30 @@ export function PortfolioMonitor() {
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
   // styled workbook. exceljs is code-split so it only loads on demand.
+  // The review deck. `pptxgenjs` is code-split the same way exceljs is, so a
+  // megabyte of deck writer never reaches the main bundle.
+  //
+  // It is handed the DEDUPED set and the current basis, and it prints the basis
+  // on every slide: a deck built on live prices and one built on statement
+  // marks are different documents, and the reader has to be able to tell them
+  // apart weeks later with only the file in front of them.
+  const handleDeck = async () => {
+    if (deckBusy) return;
+    setDeckBusy(true);
+    try {
+      const { exportReviewDeck } = await import("@/lib/exportDeck");
+      await exportReviewDeck({
+        portfolio, consolidated, basis,
+        fmt: (inr: number) => fmtFromBase(inr, { compact: false }),
+        currency: displayCurrency,
+      });
+    } catch (e) {
+      console.error("Deck export failed", e);
+    } finally {
+      setDeckBusy(false);
+    }
+  };
+
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
@@ -243,11 +268,18 @@ export function PortfolioMonitor() {
         <select value={assetClass} onChange={(e) => setAssetClass(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
           {assetClasses.map((s) => <option key={s} value={s}>{s === "All" ? "All asset classes" : s}</option>)}
         </select>
-        <button onClick={handleExport} disabled={exporting}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
-          title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
-          <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={handleExport} disabled={exporting}
+            className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+            title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
+            <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
+          </button>
+          <button onClick={handleDeck} disabled={deckBusy}
+            className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-ink-500 disabled:opacity-60"
+            title="Download a PowerPoint review deck. Every slide carries the basis and the as-of date, because a slide travels without its deck.">
+            <Presentation className="h-4 w-4" /> {deckBusy ? "Building…" : "Review deck"}
+          </button>
+        </div>
       </div>
 
       {/* View toggle (+ Holdings' by-security / by-entity switch) */}

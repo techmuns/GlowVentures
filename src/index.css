@@ -237,3 +237,86 @@ html:not(.dark) .preview-hatch {
     rgba(184, 146, 60, 0.055) 0, rgba(184, 146, 60, 0.055) 1px,
     transparent 1px, transparent 7px);
 }
+
+/* ── PRINT / PDF ──────────────────────────────────────────────────────────────
+   The spec asks for PDF export under every module. A browser's own "Save as
+   PDF" is the whole feature, provided the page prints as a document rather than
+   as a screenshot of an app — so this is a stylesheet, not a dependency.
+
+   THE PART THAT IS NOT COSMETIC. A printed page loses every hover, tooltip and
+   audit link this dashboard uses to keep a figure checkable, and it is the copy
+   that gets emailed on. So printing must not quietly drop the things that say
+   what a figure IS:
+
+     - The basis pill and the as-of banner PRINT. They are the only remaining
+       statement of whether a total is on live prices or statement marks.
+     - The preview hatch PRINTS, redrawn as a visible border and label. A greyed
+       sample that prints as an ordinary table would be a fabricated figure on
+       a document with no badge left on it — the exact "would this still be
+       honest if the badge were cropped" failure.
+     - Absent cells keep their em dash; nothing collapses a "—" to blank.
+
+   Only the app chrome goes: the nav, the resize handle, buttons nobody can
+   click on paper, and the scroll containers that would otherwise clip a wide
+   table to whatever happened to be in view. */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+
+  html, body {
+    background: #fff !important;
+    color: #1a1830 !important;
+  }
+
+  /* App chrome that cannot mean anything on paper. */
+  aside,
+  [role="separator"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* A table clipped to the viewport prints as a truncated table with no sign
+     that anything was cut. Let every scroller print at full width. */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Cards are the document's sections; keep one from splitting across a page
+     break mid-figure. */
+  .card,
+  table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  thead { display: table-header-group; }
+
+  /* Dark-mode surfaces would print as slabs of ink. Force the light palette
+     regardless of the theme the reader happens to be in. */
+  .bg-ink-900, .bg-ink-800, .bg-ink-950, .bg-ink-700,
+  .bg-ink-800\/40, .bg-ink-800\/60, .bg-ink-900\/40, .bg-ink-700\/60 {
+    background: #fff !important;
+  }
+  .text-slate-100, .text-slate-200, .text-slate-300 { color: #1a1830 !important; }
+  .text-slate-400, .text-slate-500, .text-slate-600 { color: #4a4860 !important; }
+
+  /* THE PREVIEW MARK SURVIVES THE PRINTER. The hatch is a background image and
+     browsers drop those by default, so it is restated as a border and a printed
+     label — a sample must never reach paper looking like a measurement. */
+  .preview-hatch {
+    border: 1.5px dashed #b8923c !important;
+    background-image: none !important;
+  }
+  .preview-hatch::before {
+    content: "ILLUSTRATIVE PREVIEW — not live data";
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a6d24;
+    margin-bottom: 4px;
+  }
+
+  a[href] { text-decoration: none !important; color: inherit !important; }
+}
