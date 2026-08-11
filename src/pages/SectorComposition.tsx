@@ -13,12 +13,16 @@ import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART
 import { BasisPill } from "@/components/BasisPill";
 import { Auditable } from "@/components/Auditable";
 import { holdingHref, auditHref, LEDGER, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { AbsentCell } from "@/components/Absent";
 
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
 
 export function SectorComposition() {
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  // The spec's "compare multiple sectors on a single screen". Empty until the
+  // reader picks; there is no default selection to argue about.
+  const [compare, setCompare] = useState<string[]>([]);
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   /**
@@ -76,6 +80,14 @@ export function SectorComposition() {
     for (const s of sectors) m[s.key] = holdingsBySector[s.key]?.[0]?.security ?? "—";
     return m;
   }, [sectors, holdingsBySector]);
+  const toggleCompare = (key: string) =>
+    setCompare((prev) => (prev.includes(key)
+      ? prev.filter((k) => k !== key)
+      : prev.length >= 4 ? [...prev.slice(1), key] : [...prev, key]));
+  const comparedSectors = compare
+    .map((k) => sectors.find((s2) => s2.key === k))
+    .filter((s2): s2 is NonNullable<typeof s2> => !!s2);
+
   const toggle = (key: string) => setExpanded((prev) => {
     const next = new Set(prev);
     next.has(key) ? next.delete(key) : next.add(key);
@@ -122,6 +134,119 @@ export function SectorComposition() {
           </ul>
         </div>
       </Card>
+      {/* ── Compare sectors ────────────────────────────────────────────────
+          The spec asks to compare "multiple sectors" on a single screen. Every
+          figure here is one the book already carries; nothing is derived that
+          the sector rollup does not already compute.
+
+          COST, P&L AND RETURN CAN BE ABSENT and are shown as such. `bySector`
+          sums them with `sumOrNull`, so a sector whose holdings report no cost
+          has a null cost rather than a zero — and `withoutCost` names how many
+          positions were skipped when only some reported one. Rendering either
+          as 0 would report the whole market value as profit. */}
+      <Card className="mt-5" title="Compare sectors"
+        subtitle={compare.length
+          ? `${compare.length} of 4 selected — click a chip to add or remove`
+          : "Pick up to four sectors to put side by side"}
+        right={compare.length > 0
+          ? <button onClick={() => setCompare([])}
+              className="rounded-md border border-ink-700 px-2.5 py-1 text-[11px] text-slate-400 hover:text-slate-200">Clear</button>
+          : undefined}>
+        <div className="flex flex-wrap gap-1.5">
+          {sectors.map((sc) => {
+            const on = compare.includes(sc.key);
+            return (
+              <button key={sc.key} onClick={() => toggleCompare(sc.key)}
+                className={`rounded-md border px-2.5 py-1 text-[11.5px] transition-colors ${on
+                  ? "border-champagne-500/50 bg-champagne-500/15 text-champagne-300"
+                  : "border-ink-600/70 bg-ink-800/40 text-slate-400 hover:border-ink-500 hover:text-slate-200"}`}>
+                {sc.key} <span className="text-slate-500">{(sc.weight * 100).toFixed(1)}%</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {comparedSectors.length > 0 && (
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full whitespace-nowrap text-[12.5px]">
+              <thead>
+                <tr className="border-b border-ink-700">
+                  <th className="label-xs px-3 py-2 text-left font-medium">Metric</th>
+                  {comparedSectors.map((sc) => (
+                    <th key={sc.key} className="label-xs px-3 py-2 text-right font-medium text-slate-300">{sc.key}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/60">
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Market value</td>
+                  {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{money(sc.mv)}</td>)}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Weight of listed book</td>
+                  {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{(sc.weight * 100).toFixed(1)}%</td>)}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Cost basis</td>
+                  {comparedSectors.map((sc) => (
+                    <td key={sc.key} className="px-3 py-2 text-right mono">
+                      {sc.cost == null
+                        ? <AbsentCell reason="No holding in this sector reports a cost — a depository statement carries a value and no basis" />
+                        : money(sc.cost)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Unrealised P&amp;L</td>
+                  {comparedSectors.map((sc) => (
+                    <td key={sc.key} className={`px-3 py-2 text-right mono ${sc.pnl == null ? "" : changeColor(sc.pnl)}`}>
+                      {sc.pnl == null
+                        ? <AbsentCell reason="Needs a cost basis, which no holding in this sector reports" />
+                        : money(sc.pnl, true)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Return on cost</td>
+                  {comparedSectors.map((sc) => (
+                    <td key={sc.key} className={`px-3 py-2 text-right mono ${sc.returnPct == null ? "" : changeColor(sc.returnPct)}`}>
+                      {sc.returnPct == null
+                        ? <AbsentCell reason="Needs a cost basis" />
+                        : fmtPct(sc.returnPct, { sign: true })}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Holdings</td>
+                  {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{sc.count}</td>)}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Of which report no cost</td>
+                  {comparedSectors.map((sc) => (
+                    <td key={sc.key} className="px-3 py-2 text-right mono text-slate-400">
+                      {sc.withoutCost === 0 ? "none" : `${sc.withoutCost} of ${sc.count}`}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-slate-400">Largest holding</td>
+                  {comparedSectors.map((sc) => (
+                    <td key={sc.key} className="px-3 py-2 text-right text-slate-300">{topHolding[sc.key]}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              Weights are of the <span className="text-slate-400">listed book</span>, the same denominator the rest of
+              this page uses — the private book is excluded rather than folded in, so the column sums to 100 across all
+              sectors. A sector whose holdings report no cost shows <span className="text-slate-400">—</span> for cost,
+              P&amp;L and return rather than a zero, which would report its whole market value as profit; where only
+              some holdings lack a cost the row above names how many.
+            </p>
+          </div>
+        )}
+      </Card>
+
       <Card className="mt-5" title="Sector breakdown" subtitle="Click a sector to expand its holdings" pad={false}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
