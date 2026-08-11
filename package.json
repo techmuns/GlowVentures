@@ -15,7 +15,8 @@
     "build-book": "node scripts/build-book.mjs",
     "check:pages": "node scripts/check-pages.mjs",
     "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs",
-    "harvest": "node scripts/harvest/run.mjs"
+    "harvest": "node scripts/harvest/run.mjs",
+    "probe:sources": "node scripts/harvest/probe-sources.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
