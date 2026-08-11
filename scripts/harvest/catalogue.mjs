@@ -69,6 +69,23 @@ const rbi = (label) => ({
   accumulating: true,
 });
 
+/**
+ * FRED — the St. Louis Fed's keyless `fredgraph.csv`, full history per series.
+ *
+ * Reachable from the GitHub Actions runner the harvest actually uses; the two
+ * series wired to it were previously declared absent on a measurement taken in
+ * a development container, which is a different network. See the note atop
+ * `adapters/fred.mjs` and `scripts/harvest/probe-reach.mjs`.
+ */
+const fred = (seriesId) => ({
+  adapter: "fred",
+  seriesId,
+  symbol: seriesId,
+  name: "FRED (Federal Reserve Bank of St. Louis)",
+  url: `https://fred.stlouisfed.org/series/${encodeURIComponent(seriesId)}`,
+  provenance: "official-api",
+});
+
 /** IEX day-ahead spot power. ACCUMULATING, same reason. */
 const iex = () => ({
   adapter: "iex",
@@ -180,10 +197,16 @@ export const SERIES = [
   { id: "us-3m", label: "US 13 Week T-Bill", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^IRX") },
   { id: "us-5y", label: "US 5 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^FVX") },
   { id: "us-30y", label: "US 30 Year Treasury", category: "rates", group: "Government Bonds", unit: "%", band: [-2, 25], source: yahoo("^TYX") },
-  { id: "india-10y", label: "India 10 Year G-Sec", category: "rates", group: "Government Bonds", unit: "%", band: null, source: null,
-    absent: "No free daily feed carries the Indian benchmark G-Sec yield, and FRED — which publishes it monthly — is not reachable from the harvest environment. RBI publishes it daily on its own site; that is the Phase 2 India harvest." },
-  { id: "credit-spreads", label: "Corporate Credit Spreads", category: "rates", group: "Credit Markets", unit: "%", band: null, source: null,
-    absent: "ICE BofA option-adjusted spreads are published through FRED, which is unreachable from the harvest environment. Needs either FRED access from the runner or a commercial source." },
+  {
+    id: "india-10y", label: "India 10 Year G-Sec", category: "rates", group: "Government Bonds",
+    unit: "%", band: [0.5, 25], frequency: "monthly", source: fred("INDIRLTLT01STM"),
+    note: "MONTHLY, not daily — the OECD long-term government bond yield for India (10-year benchmark) as republished by FRED. The daily benchmark yield is on the RBI's own site and still needs a reader; this is the monthly figure, and the frequency travels with the series so no 1-day or 1-week return is ever computed from it.",
+  },
+  {
+    id: "credit-spreads", label: "US Corporate Credit Spread (ICE BofA OAS)", category: "rates", group: "Credit Markets",
+    unit: "%", band: [0.1, 30], source: fred("BAMLC0A0CM"),
+    note: "ICE BofA US Corporate Index option-adjusted spread — a US spread, and the label says so. India has no free equivalent, and carrying this one under an unqualified 'Corporate Credit Spreads' would let a reader take a US number for their own market, which is the same substitution the industry page refuses when a global benchmark stands in for a domestic price. HISTORY IS SHORT AND THAT IS THE SOURCE'S DOING: the ICE BofA family is licensed, so FRED redistributes only a rolling ~3-year window (DGS10 from the same endpoint returns 1962 onwards, so this is not a request the harvester is getting wrong). The store accumulates from here, and any horizon longer than what is held stays absent rather than being answered from a shorter window.",
+  },
 
   // ── Policy rates — RBI, the spec's Layer 2D "Policy Rates" block ─────────
   // Accumulating: one observation per run. Every horizon is absent until the

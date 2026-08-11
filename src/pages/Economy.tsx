@@ -65,7 +65,11 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
   },
   {
     title: "Fixed income & credit", icon: BarChart3, rows: [
-      { name: "India 10Y", value: "6.98%", chg: "-4bp" },
+      // MONTHLY, via FRED's republication of the OECD long-term government bond
+      // yield. The daily RBI benchmark still needs a reader; this is the figure
+      // that exists, and the series carries its own frequency so no 1-day move
+      // is ever computed from it.
+      { name: "India 10Y", value: "6.98%", chg: "-4bp", seriesId: "india-10y" },
       { name: "US 10Y", value: "4.28%", chg: "+6bp", seriesId: "us-10y" },
       { name: "AAA Credit Spread", value: "62bp", chg: "+3bp" },
       { name: "Yield Curve (10Y–2Y)", value: "+18bp", chg: "+2bp" },

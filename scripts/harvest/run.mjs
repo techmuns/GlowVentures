@@ -30,8 +30,9 @@ import * as worldbankPink from "./adapters/worldbankPink.mjs";
 import * as worldbankApi from "./adapters/worldbankApi.mjs";
 import * as rbi from "./adapters/rbi.mjs";
 import * as iex from "./adapters/iex.mjs";
+import * as fred from "./adapters/fred.mjs";
 
-const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex };
+const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex, fred };
 const CONCURRENCY = 4;          // polite against a free upstream
 const only = process.argv.includes("--only")
   ? process.argv[process.argv.indexOf("--only") + 1]?.split(",")
@@ -170,7 +171,7 @@ async function main() {
   // One fetch on the client powers the whole returns table. The chart loads the
   // year chunks it needs and nothing more.
   const ok = results.filter((r) => r.status === "ok");
-  const entries = ok.map((r) => ({
+  const harvested = ok.map((r) => ({
     ...r.meta,
     last_value: r.stats.last,
     returns: r.stats.returns,
@@ -178,6 +179,33 @@ async function main() {
     high52: r.stats.high52,
     low52: r.stats.low52,
   }));
+
+  // A `--only` RUN MUST NOT EMPTY THE MANIFEST.
+  //
+  // `--only` limits which series are FETCHED; it does not mean the others
+  // stopped existing. Rebuilding the manifest from this run alone deleted the
+  // other 72 entries from `index.json` while leaving every one of their data
+  // files on disk — so the store was intact and the whole dashboard read as
+  // having two series. The next full run would have repaired it, which is
+  // exactly what made it dangerous: a local `--only` run followed by a commit
+  // ships a manifest that says the store is nearly empty.
+  //
+  // So a limited run MERGES into what was there. Entries are carried forward
+  // only if the catalogue still declares them harvestable — a series genuinely
+  // removed from the catalogue must not be resurrected by a run that never
+  // looked at it.
+  const previous = readIndex();
+  const entries = [...harvested];
+  if (only) {
+    const live = new Set(harvestable().map((s) => s.id));
+    const fresh = new Set(harvested.map((e) => e.id));
+    for (const e of previous?.series ?? []) {
+      if (!fresh.has(e.id) && live.has(e.id)) entries.push(e);
+    }
+    // Catalogue order, so a limited run and a full run produce the same file.
+    const order = new Map(harvestable().map((s, i) => [s.id, i]));
+    entries.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  }
   // Series the spec asks for that nothing can serve yet travel in the manifest
   // too, carrying their reason — the page names them instead of quietly
   // dropping them, so the gap stays visible.
@@ -185,12 +213,23 @@ async function main() {
     id: s.id, label: s.label, category: s.category, group: s.group,
     unit: s.unit, absent: s.absent,
   }));
-  const failed = results.filter((r) => r.status === "failed")
+  const failedNow = results.filter((r) => r.status === "failed")
     .map((r) => ({ id: r.spec.id, label: r.spec.label, category: r.spec.category, group: r.spec.group, error: r.error, kept: r.kept ?? 0 }));
+  // Failures carry forward on a limited run for the same reason entries do: a
+  // series this run never attempted has not thereby recovered, and clearing it
+  // would report a green store that nobody re-measured.
+  const failed = [...failedNow];
+  if (only) {
+    const touched = new Set(results.map((r) => r.spec.id));
+    const live = new Set(harvestable().map((s) => s.id));
+    for (const f of previous?.failed ?? []) {
+      if (!touched.has(f.id) && live.has(f.id)) failed.push(f);
+    }
+  }
 
   // Same idempotence rule as `retrievedAt`: the manifest's own timestamp only
   // moves when something in it moved, or every run rewrites it for nothing.
-  const prevIndex = readIndex();
+  const prevIndex = previous;
   const anyChanged = ok.some((r) => (r.changed ?? []).length > 0);
   const manifestChanged = writeIndex({
     generatedAt: anyChanged || !prevIndex?.generatedAt ? nowIso : prevIndex.generatedAt,

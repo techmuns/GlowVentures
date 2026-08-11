@@ -1288,10 +1288,43 @@ frequency and leaves those cells absent — the same rule as "a horizon the seri
 cannot reach is null", applied at the other end of the scale. Annual series
 likewise carry no 1D, 1W, 1M or QTD.
 
-**FRED is unreachable from the harvest environment** (connection refused, not a
-proxy fix), which is why the US 10-year comes from CBOE's `^TNX` via Yahoo rather
-than `DGS10`, and why ICE BofA credit spreads are declared absent rather than
-wired. If the runner ever gains FRED access, both are a catalogue entry away.
+**FRED WAS DECLARED UNREACHABLE AGAINST THE WRONG NETWORK, and is now wired.**
+The note here used to read "unreachable from the harvest environment (connection
+refused, not a proxy fix)", and `india-10y` and `credit-spreads` were declared
+absent on that basis. The measurement was taken in a development container. The
+harvest does not run there — it runs on a GitHub Actions runner — and measured
+from the runner all three FRED endpoints answer in under a second with valid
+CSV. **An absence recorded against the wrong network is worse than a gap: it
+tells a reader to stop looking for something that is available.**
+`scripts/harvest/probe-reach.mjs` is what settled it and carries two known-good
+CONTROLS, so a degraded runner can never be mistaken for a dead source.
+
+`adapters/fred.mjs` reads the keyless `fredgraph.csv` (no registration, nothing
+near the secret store) and both series are live. Two things it gets right and
+one it does not have to:
+
+- **A "." is FRED's no-observation marker**, not a zero. Skipped, because a 0%
+  yield in the middle of a bond series drags every average through it.
+- **The short series is the SOURCE's doing, not a truncated request.**
+  `BAMLC0A0CM` returns exactly three years, which is the shape of the silent
+  truncation this repo has hit before — but `DGS10` from the same endpoint
+  returns 16,855 rows back to 1962 and no `cosd`/`coed` changes either. The ICE
+  BofA family is LICENSED and FRED redistributes only a rolling window. So it is
+  carried with that stated, `merge` extends it from here, and every horizon
+  longer than what is stored stays null rather than being answered from a
+  shorter window — which is why `y3`/`y5`/`y10` are absent on it today.
+- **It is a US spread and the label says so** (`US Corporate Credit Spread (ICE
+  BofA OAS)`). India has no free equivalent, and carrying it as an unqualified
+  "Corporate Credit Spreads" would let a reader take a US number for their own
+  market — the same substitution the industry page refuses when a global
+  benchmark stands in for a domestic price. The Economy page's **India AAA**
+  spread row is therefore still absent; this series does not answer it.
+
+`india-10y` is MONTHLY (OECD's India long-term government bond yield via FRED),
+which the frequency rule already handles: no 1D or 1W return is computed from
+it. The daily RBI benchmark still needs a reader. The US 10-year continues to
+come from CBOE's `^TNX` rather than `DGS10` — both work, and changing a live
+series' source for no gain would rewrite history for nothing.
 
 **A band exists to catch the SOURCE changing, not to second-guess history.** The
 first zinc band started at $200/t and blocked eighteen real observations from the
