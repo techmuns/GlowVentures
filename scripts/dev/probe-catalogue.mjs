@@ -14,9 +14,14 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const BASE = process.env.GLOW_URL ?? "https://glowventures-1xw.pages.dev";
 const PASSWORD = process.env.GLOW_PASSWORD ?? "";
-if (!PASSWORD) { console.error("GLOW_PASSWORD is unset."); process.exit(2); }
+// GLOW_COOKIE lets a caller supply an already-issued `glow_auth=…` instead of
+// the password — useful in an environment that has a browser session but not
+// the plaintext. One or the other is required; neither is stored here.
+const COOKIE_IN = process.env.GLOW_COOKIE ?? "";
+if (!PASSWORD && !COOKIE_IN) { console.error("Set GLOW_PASSWORD or GLOW_COOKIE."); process.exit(2); }
 
 async function signIn() {
+  if (COOKIE_IN) return COOKIE_IN.startsWith("glow_auth=") ? COOKIE_IN : `glow_auth=${COOKIE_IN}`;
   const r = await fetch(`${BASE}/__auth/login?next=%2F`, {
     method: "POST", redirect: "manual",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
