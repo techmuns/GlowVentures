@@ -177,7 +177,7 @@ footer {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #E3DED2; fo
 </div>
 """
 
-FOOT = f"""<footer>Checked against the dashboard at commit <b>78d3d71</b> · {total} requirements ·
+FOOT = f"""<footer>Checked against the dashboard at commit <b>def3813</b> · {total} requirements ·
 {counts[D]} built, {counts[P]} partial, {counts[N]} not built. Every &ldquo;not built&rdquo; item renders on
 screen as a named absence with its reason; none is shown as zero.</footer></body></html>"""
 

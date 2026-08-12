@@ -27,7 +27,7 @@ STATUS = {
 
     # ── LAYER 2 · framing lines ──────────────────────────────────────────
     28: (P, "Rates, inflation, USD index, oil, gold, copper and silver are live. Fiscal deficit, liquidity, credit growth and money supply are not"),
-    30: (P, "Stock prices and corporate actions are live; ratios and shareholding come back as prose. RSI and 200-DMA are not computed"),
+    30: (P, "Stock prices and corporate actions are live, and ratios are now a seven-year TABLE rather than prose. Shareholding is current-only, and RSI and 200-DMA are not computed"),
     32: (D, "Parsed from the reported table — twelve year-ends for ABCAPITAL — and charted rather than passed through as text"),
     33: (N, "No free source publishes block deals"),
 
@@ -195,12 +195,12 @@ STATUS = {
     **{i: (D, "") for i in range(345, 356)},
 
     # ── Company research · ratios ────────────────────────────────────────
-    357: (N, "The ratio endpoint returns current values as prose, not a ten-year series"),
+    357: (P, "Seven year-ends, not the ten the spec asks for — that is what the source publishes"),
     359: (P, "Current value in the prose block"), 360: (P, "Current value in the prose block"),
     361: (P, "Current value in the prose block"), 362: (P, "Current value in the prose block"),
     363: (P, "Current value in the prose block"),
     364: (N, ""), 365: (N, ""),
-    366: (N, "Needs the ten-year ratio series first"),
+    366: (P, "Valuation ratios now carry seven YEAR-ENDS; the spec asks for any selected date, which needs a daily series"),
     368: (D, "Year-on-year and compound, from the reported P&L"), 369: (P, "Computed where the company reports an operating-profit line. A lender reports Financing Profit and no EBITDA, and no house schema maps one onto the other"),
     370: (D, "Year-on-year and compound, from the reported P&L"), 371: (D, "Full-span and 5-year CAGR per metric, null wherever the arithmetic would lie — one point, a span under a year, or a start at or below zero"),
     373: (P, "In the prose block"), 374: (P, "In the prose block"),
@@ -210,7 +210,7 @@ STATUS = {
     381: (P, "In the prose block"), 382: (P, "In the prose block"),
     383: (P, "In the prose block"), 384: (P, "In the prose block"), 385: (P, "In the prose block"),
     387: (P, "In the prose block"), 388: (P, "In the prose block"), 389: (P, "In the prose block"),
-    390: (N, "Needs the components as structured data"),
+    390: (N, "Two of the three components are now series — net margin and asset turnover — but the equity multiplier is not reported, and DuPont with a component missing is not DuPont"),
     392: (P, "In the prose block"),
     393: (N, ""),
     394: (P, "Current holding only"),
@@ -222,7 +222,7 @@ STATUS = {
     # ── Company research · comparison ────────────────────────────────────
     406: (D, "Up to four companies on one screen"),
     407: (N, "Needs structured financials"),
-    408: (N, "Needs structured ratios"),
+    408: (N, "The per-company ratio table exists now; a four-way comparison across companies is not built"),
     409: (N, "Needs structured ratios"),
     410: (D, "All horizons compared"),
     411: (N, ""), 412: (N, ""), 413: (N, ""),
@@ -294,6 +294,39 @@ STATUS = {
     960: (D, "₹75 L per trust, from the drawdown fund statements"),
     961: (D, "Buckets, public/private split and top exposures"),
     962: (D, "A real queue with category, owner, due date and state. Nothing generates an item — an empty queue says nothing has been ENTERED, which is not the claim that nothing is outstanding"),
+
+    # ── Phase F — the catalogue probe's results ─────────────────────────
+    #
+    # These come LAST ON PURPOSE. Several of the indexes below already appear
+    # above inside a `**{i: ... for i in range(...)}` spread, written that way
+    # when a run of rows shared one note. Phase F split those runs — the source
+    # prints Price/BV but no PE, Return on Networth but no dividend yield — so
+    # each one that changed is restated here and the later key wins. Editing
+    # the ranges in place would have meant unrolling them and losing the reason
+    # they were grouped.
+    318: (D, "From /financials/<TICKER>.NS — five years, read by row label. That source prints RUPEES WITH A DOLLAR SIGN on every numeric cell including share counts, so the unit is reconciled at runtime against the screener statements for the same company (EPS fixes the currency, revenue at 1e7 fixes the scale) and nothing monetary renders until both checks pass"),
+    427: (D, "Earnings date and ex-dividend date from the same response, each labelled upcoming or already passed — a past date under a heading that says next is a wrong figure. This is the exact item that was deleted from the company page as a fabrication"),
+    360: (D, "Price/BV, seven year-ends"),
+    361: (D, "Price/Net Operating Revenue, seven year-ends"),
+    362: (D, "EV/EBITDA, seven year-ends"),
+    374: (P, "The source prints PBDIT Margin over seven year-ends. Shown under its own label rather than relabelled EBITDA"),
+    375: (P, "The source prints PBIT Margin over seven year-ends, shown under its own label"),
+    376: (D, "Net Profit Margin, seven year-ends"),
+    381: (P, "Inventory Turnover Ratio as a seven-year series. DAYS would be 365/turnover — a derivation the source did not publish"),
+    387: (D, "Return on Networth / Equity, seven year-ends"),
+    388: (D, "Return on Capital Employed, seven year-ends"),
+    389: (D, "Return on Assets, seven year-ends"),
+    220: (N, "RBI publishes this in the Weekly Statistical Supplement. Measured from the harvest runner it answers in about a second, so it is NOT geo-blocked — but every WSS link is a __VIEWSTATE postback with no address, a plain postback replay returns no figures, and the linked XLSX serves HTML. It needs a stateful scraper, not a fetch"),
+    221: (N, "RBI publishes this in the Weekly Statistical Supplement. Measured from the harvest runner it answers in about a second, so it is NOT geo-blocked — but every WSS link is a __VIEWSTATE postback with no address, a plain postback replay returns no figures, and the linked XLSX serves HTML. It needs a stateful scraper, not a fetch"),
+    222: (N, "RBI publishes this in the Weekly Statistical Supplement. Measured from the harvest runner it answers in about a second, so it is NOT geo-blocked — but every WSS link is a __VIEWSTATE postback with no address, a plain postback replay returns no figures, and the linked XLSX serves HTML. It needs a stateful scraper, not a fetch"),
+    223: (N, "RBI publishes this in the Weekly Statistical Supplement. Measured from the harvest runner it answers in about a second, so it is NOT geo-blocked — but every WSS link is a __VIEWSTATE postback with no address, a plain postback replay returns no figures, and the linked XLSX serves HTML. It needs a stateful scraper, not a fetch"),
+    225: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    226: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    227: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    228: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    229: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    230: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
+    231: (N, "Same source, same blocker: reachable from the runner, but the current issue has no URL"),
 }
 
 # The two dashboard tables, which Word split one word per line (blocks 853–886
