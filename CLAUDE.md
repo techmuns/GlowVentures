@@ -1310,6 +1310,70 @@ on the same screen said "Fetching prices…". Three states now: fetching, no NSE
 symbol resolves (can never go live), and the feed returned no quote for a symbol
 that does resolve.
 
+### Stage 10d — the research tables are TABLES, and the outage rule
+
+**`ratio_source` returns prose and stays prose. `financial_tables` does not.**
+The rule that nothing is computed from the research endpoints was written for
+the former — probed live it answers with a moneycontrol URL and "Use WebReader
+Tool", and nothing in it says which number is which company's PE.
+
+The financials document is a different shape. Measured 2026-08-11, five of its
+eight sections are MARKDOWN PIPE TABLES labelled on both axes — Shareholding
+Pattern, Balance Sheet, Profit & Loss, Quarterly Results, Peer Comparison, with
+twelve year-ends of history. Reading a table whose columns say which period and
+whose rows say which line item is not inventing a mapping; it is the same
+discipline `lib/table.mjs` applies to the statement PDFs, and
+`src/lib/financialTables.ts` follows it: **match on header text, never on column
+index.**
+
+Four things that fixture found, none of which a hand-written sample would have:
+
+- **screener separates its expand marker with a NON-BREAKING space** —
+  `Revenue\u00a0+`, `Promoters\u00a0-`. Left in, every label comparison fails
+  against a string a human would type. Folded to an ordinary space once, in
+  `cellsOf`, so no consumer has to know.
+- **The label column is not always column 0.** Peer Comparison puts a serial
+  number there and the company NAME in column 1, so every row carries its full
+  `text[]` and a consumer reads the column it needs.
+- **A blank cell is not zero.** Gross NPA % is empty on every column for a
+  non-lender, and reading it as 0 would put a measured-looking zero in a chart.
+- **TTM is not a year end.** It is carried as a flagged column and excluded from
+  any CAGR, because letting it in silently shortens the window.
+
+**No house schema across companies.** ABCAPITAL is a lender printing Revenue /
+Interest / Financing Profit; a manufacturer prints Sales / Operating Profit /
+OPM %. Each metric names the labels it accepts IN ORDER and a company reporting
+none of them renders absent with its own name in the reason — mapping both onto
+an invented "EBITDA" is the fabricated-classification failure again.
+
+**A CAGR is null wherever the arithmetic would lie**: one point, a span under a
+year, or a start at or below zero. The last is not theoretical — a company that
+swung from a loss to a profit has no compound rate and the formula returns a
+confident number for it.
+
+### The upstream goes down, and stale beats nothing
+
+Measured: every research kind and the quote endpoint answered normally at
+2026-08-11 14:25 UTC and every one of them timed out at 02:39 UTC the next day,
+RELIANCE and ABCAPITAL included. **A whole-API outage, not a slow company** — so
+a longer timeout would have fixed nothing.
+
+`research.js` HELD an entry for 24 hours but only SERVED one for 12, so a request
+landing in that gap discarded a good copy the moment the upstream failed and
+rendered an empty panel. It now falls back to the held copy and reports the
+upstream failure alongside it, so "serving yesterday's tables BECAUSE the feed is
+down" is distinguishable from "serving a cached copy".
+
+A 10-year P&L does not move intraday, so yesterday's copy is the same document.
+What makes that honest is the age: `stale` and `ageS` ride in the response and
+the panel renders them in a band ABOVE the tables, never a tooltip. Same rule the
+harvester already follows for a blocked observation — keep the last good value,
+show it with an honest as-of. Verified in production during the outage:
+`ok:true, stale:true, ageS:44188` with 11,296 bytes of real tables.
+
+Quotes needed no change: it already carries a per-symbol `ageS` with fresh/stale
+counts, which is the stronger treatment a PRICE requires.
+
 ### The alert engine — silence is read as all-clear
 
 `alertEngine.ts` evaluates the family's rules against the book. Its governing
@@ -1617,9 +1681,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
-- `npm run test:family` checks the family-input arithmetic — the deal register's
-  derivations, the household totals, the plan columns' gap. Bundled through
-  esbuild; no test framework added for it.
+- `npm run test:family` runs the two derived-figure suites — the family-input
+  arithmetic (deal register, household totals, plan columns, market-cap bands)
+  and the financial-table parser, the latter against a REAL saved API response
+  rather than an invented fixture. Bundled through esbuild; no test framework.
 - `npm run check:family` seeds a family register into a real browser and reads
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.

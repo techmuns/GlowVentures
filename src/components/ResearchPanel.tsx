@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Markdown } from "@/components/Markdown";
+import { FinancialSummary } from "@/components/FinancialSummary";
 import { Pill } from "@/components/Pill";
 import {
   fetchResearch, isResearchError, researchReason, stalenessNote,
@@ -110,6 +111,15 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
             {state.raw && <pre className="mt-3 max-h-40 overflow-auto rounded border border-ink-700 bg-ink-900 p-2.5 text-[11px] text-slate-500">{state.raw}</pre>}
           </div>
         )
+      )}
+
+      {/* DERIVED FIRST, THEN THE SOURCE AS WRITTEN. The growth table is computed
+          from the P&L below it, so the reader sees the figure and then the
+          document it came out of — which is what makes it checkable. Only the
+          financials document carries those tables; estimates are genuinely
+          prose and get no summary. */}
+      {state && !isResearchError(state) && state.format === "markdown" && tab === "financials" && (
+        <FinancialSummary markdown={state.text} ticker={ticker} />
       )}
 
       {state && !isResearchError(state) && state.format !== "documents" && (

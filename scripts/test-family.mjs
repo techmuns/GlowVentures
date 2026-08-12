@@ -13,20 +13,36 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const ENTRY = path.join(ROOT, "src/lib/__tests__/familyMath.test.ts");
-const OUT = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "glow-test-")), "familyMath.mjs");
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), "glow-test-"));
 
-const build = spawnSync(
-  path.join(ROOT, "node_modules/.bin/esbuild"),
-  [ENTRY, "--bundle", "--platform=node", "--format=esm", `--outfile=${OUT}`,
-   `--alias:@=${path.join(ROOT, "src")}`, "--log-level=error"],
-  { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] },
-);
-if (build.status !== 0) {
-  console.error("family tests: bundling failed");
-  process.exit(1);
+const SUITES = [
+  ["family arithmetic", "src/lib/__tests__/familyMath.test.ts"],
+  ["financial tables", "src/lib/__tests__/financialTables.test.ts"],
+];
+
+let failed = 0;
+for (const [name, rel] of SUITES) {
+  const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));
+  const build = spawnSync(
+    path.join(ROOT, "node_modules/.bin/esbuild"),
+    [path.join(ROOT, rel), "--bundle", "--platform=node", "--format=esm", `--outfile=${out}`,
+     // The financial-table suite reads its fixture off disk at run time, so the
+     // bundle must not try to inline `node:fs` and friends.
+     "--packages=external",
+     `--alias:@=${path.join(ROOT, "src")}`, "--log-level=error"],
+    { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] },
+  );
+  if (build.status !== 0) { console.error(`${name}: bundling failed`); failed++; continue; }
+  console.log(`\n──── ${name}`);
+  // The bundle runs from a temp dir, so a suite cannot find its fixtures from
+  // `import.meta.url` — that resolves next to the BUNDLE, not the source. The
+  // repo path is passed in instead.
+  const run = spawnSync(process.execPath, [out], {
+    stdio: "inherit",
+    env: { ...process.env, GLOW_FIXTURES: path.join(ROOT, "src/lib/__tests__/fixtures") },
+  });
+  if (run.status !== 0) failed++;
 }
 
-const run = spawnSync(process.execPath, [OUT], { stdio: "inherit" });
-fs.rmSync(path.dirname(OUT), { recursive: true, force: true });
-process.exit(run.status ?? 1);
+fs.rmSync(DIR, { recursive: true, force: true });
+process.exit(failed ? 1 : 0);
