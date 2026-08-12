@@ -52,3 +52,18 @@ jobs:
           node-version: 20
       - name: Probe upstream reachability
         run: node scripts/harvest/probe-reach.mjs
+
+  # Is the RBI Weekly Statistical Supplement ADDRESSABLE from here? Reachability
+  # is settled — this runner gets HTTP 200 from rbi.org.in in about a second,
+  # so the "geo-blocked" reason on thirteen declared-absent series was measured
+  # against the wrong network. Whether a nightly job can find THIS WEEK's issue
+  # is the separate question, and it decides whether an adapter is worth writing.
+  rbi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Probe RBI WSS addressability
+        run: node scripts/harvest/probe-rbi.mjs
