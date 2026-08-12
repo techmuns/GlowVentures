@@ -128,6 +128,23 @@ function normNameToken(tok: string): string {
   if (NAME_LOWER_WORDS.has(up)) return up.toLowerCase();
   if (alpha.length === 1) return tok; // single initial: J, K, L
   if (NAME_ACRONYMS.has(up)) return tok; // keep acronyms upper-case
+  /**
+   * A ROMAN NUMERAL IS NOT A WORD, and fund names are full of them.
+   *
+   * Title-casing every all-caps token turned "Category III" into "Category
+   * Iii" and "Series II" into "Series Ii" the moment the August 2026 drop
+   * brought funds that use them — Buoyant's Category III, Motilal Oswal
+   * Founders Fund Series II, India SME Investments Fund II. A single "I"
+   * already survived by the length-1 rule above, which is why "Fund I" always
+   * looked right and nobody had reason to look further.
+   *
+   * The pattern is the STRICT one, so it matches numerals and not any string
+   * of those letters. It admits a handful of real words spelled entirely in
+   * numeral characters — MIX is M + IX — and the cost of that is a security
+   * named MIX keeping the casing its statement printed, which is the safe
+   * direction to fail in.
+   */
+  if (alpha.length > 1 && /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/.test(up)) return tok;
   // Title-case each alphabetic run (handles HI-TECH → Hi-Tech, (INDIA) → (India)).
   return tok.replace(/[A-Za-z]+/g, (w) => w[0] + w.slice(1).toLowerCase());
 }

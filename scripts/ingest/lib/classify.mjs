@@ -360,6 +360,26 @@ function genericReportType(text) {
  * classification.
  */
 const ISSUER_PROVIDER_RULES = [
+  /**
+   * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
+   *
+   * These six come FIRST because four of them print `Motilal Oswal` on the
+   * letterhead — as the DISTRIBUTOR, the depository participant or the RTA —
+   * and one arrives through CAMS and three more through their investors' banks.
+   * Matched on the house instead of the fund, Buoyant's Category III AIF and
+   * Motilal Oswal's own Founders Fund landed in one account under one manager,
+   * which is two different people's money in one row.
+   *
+   * The same reasoning as the WhiteOak disclosure that matched `360 ONE`
+   * because the scheme HELD ₹10.16 Cr of the listed company: a name on a
+   * document is not a claim about who issued it.
+   */
+  [/Buoyant\s+Opportunities\s+Strategy/i, "Buoyant Capital"],
+  [/HELIOS\s+MUTUAL\s+FUND|Helios\s+Flexi\s+Cap/i, "Helios Mutual Fund"],
+  [/Motilal\s+Oswal\s+Founders\s+Fund/i, "Motilal Oswal Founders Fund"],
+  [/Active\s+Momentum\s+Fund/i, "Motilal Oswal Active Momentum Fund"],
+  [/3P\s+India\s+Equity\s+Fund/i, "3P Investment Managers"],
+  [/India\s+SME\s+Investments\s+Fund/i, "India SME Investments"],
   // The ALTERNATES arm comes first and must: it signs its letters "360 ONE
   // ALTERNATES ASSET MANAGEMENT LIMITED", which the broader `360 ONE` rule below
   // also matches. Two arms of one group, two document families, two readers.

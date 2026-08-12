@@ -33,6 +33,7 @@ import * as investorReport from "./providers/pmsInvestorReport.mjs";
 import * as transitionVenture from "./providers/transitionVenture.mjs";
 import * as lkp from "./providers/lkpSecurities.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
+import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
@@ -73,6 +74,11 @@ const EXTRACTORS = Object.fromEntries([
   // 360 ONE's ALTERNATES arm — a different issuer from its wealth arm, and the
   // only source in this drop for AIF income split by tax head.
   [aifDistribution.PROVIDER, aifDistribution],
+  // SIX single-scheme account statements the August 2026 drop introduced —
+  // Buoyant, Helios, Motilal Oswal's Founders and Active Momentum funds, 3P and
+  // India SME. One reader, six declared layouts, keyed on each FUND rather than
+  // the distributor whose stationery it arrives on.
+  ...altFunds.PROVIDER.map((name) => [name, altFunds]),
   // Read in full and kept OUT of the family book: the holder is a trust with
   // its own PAN. One entry in shared/owners.mjs would change that, and it is a
   // decision about the family rather than a parsing rule.

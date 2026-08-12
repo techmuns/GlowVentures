@@ -152,7 +152,7 @@ spreadsheet. Four things follow, and they are load-bearing:
 **What is actually in `source/` today.** TWO DROPS, and both stay: the original
 set at the top of `source/`, and the client's `august-2026/` folder. Eighteen
 issuers, 22 accounts in the book, six holders, 41 files expanding to 180 — of
-which **182 documents** are extracted and 163 read fully, 9 partially and **10
+which **182 documents** are extracted and 162 read fully, 18 partially and **2
 not at all**. What does not read is named below; nothing is silently dropped.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
@@ -190,7 +190,7 @@ every ZIP already at the top level.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹337.46 Cr**: listed ₹128.34 Cr, private ₹209.12 Cr. The split is
+**Consolidated ₹461.00 Cr**: listed ₹180.76 Cr, private ₹280.24 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -234,6 +234,7 @@ its own file because the layouts share nothing:
 
 | Reader | Documents | What it reads |
 | --- | ---: | --- |
+| `providers/altFundStatements.mjs` | 8 | six single-scheme fund statements — Buoyant, Helios, Motilal Oswal's Founders and Active Momentum funds, 3P and India SME. One reader, six declared layouts, each keyed on the FUND rather than the distributor whose stationery it arrives on |
 | `providers/pmsStatements.mjs` | 76 | the house statement sets — six managers, one reporting system |
 | `providers/pmsInvestorReport.mjs` | 5 | the SEBI PMS INVESTOR REPORT, keyed on the REPORT TYPE rather than the house: SVAN issues it monthly and Green Lantern quarterly, and it is one prescribed layout |
 | `providers/threeSixtyOne.mjs` | 4 | 360 ONE Private Wealth's client-level PORTFOLIO ANALYSIS REPORT |
@@ -306,13 +307,44 @@ both Green Lanterns to 27 Jul — and the consolidated total moves ₹335.43 Cr 
 
 **TEN DOCUMENTS DO NOT READ, and they are two different problems.**
 
-*Six investments with no reader.* `reports.zip` and three loose PDFs carry
-managers this pipeline has never seen: **3P**, **Buoyant** and **Motilal Oswal
-Founders Fund** (Ajay), **Active Momentum Fund** (Ankita), **Helios** via CAMS
-(Ajay), and **INDIA SME** via HDFC and Kotak (all three members). Eight
-documents, classified but with `no-extractor`, so they contribute nothing and
-the coverage table names each one. These are real holdings the book does not
-yet count — the extraction report is the only place that says so, and it does.
+*Six investments that had no reader, and now do.* `reports.zip` and three loose
+PDFs carry managers this pipeline had never seen. They are read by
+`providers/altFundStatements.mjs` — ONE reader, SIX DECLARED LAYOUTS — and they
+brought **₹123.54 Cr** into the consolidated total:
+
+| Fund | Holder | As of | In the book |
+| --- | --- | --- | ---: |
+| Buoyant Opportunities Strategy — Category III — Class A4 | Ajay | 2026-07-31 | ₹49.30 Cr |
+| Helios Flexi Cap Fund — Direct Growth | Ajay | 2026-08-07 | ₹31.00 Cr |
+| Motilal Oswal Founders Fund Series II — Class G1 | Ajay | 2026-07-31 | ₹21.83 Cr |
+| Motilal Oswal Active Momentum Fund — Direct Growth | Ankita | 2026-08-06 | ₹21.42 Cr |
+| 3P India Equity Fund 1 — Classes B1/B2/B3 | Ajay | 2026-07-31 | ₹0 — measured |
+| India SME Investments Fund II — Class A2 | Ajay, Ankita, Bharat | 2026-06-30 | — no NAV |
+
+**THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.** Four of these print
+`Motilal Oswal` on the letterhead — as the DISTRIBUTOR, the depository
+participant or the RTA — one arrives through CAMS and three through their
+investors' banks, which is why the classifier had filed them under those houses.
+Matched on the house, Buoyant's Category III AIF and Motilal Oswal's own
+Founders Fund land in one account under one manager. The issuer rules now match
+each FUND, ahead of the distributor rules, for the same reason `360 ONE` cannot
+be matched against a whole document that merely HOLDS ₹10.16 Cr of the listed
+company.
+
+**A HOLDING ITS FUND HAS NOT VALUED DOES NOT BECOME A POSITION.** India SME's
+three folios print a commitment, the capital drawn against it and the units it
+bought — and no NAV and no valuation anywhere. `Position.marketValue` is
+`number`, and the three wrong answers were all available: carry the drawn
+capital as if it were the value, carry zero, or widen the type for 300-odd
+positions to accommodate three. The account is kept and carries the REASON, by
+the same mechanism 360 ONE Alternates already uses for an income-only folio.
+₹13.5 Cr of contributions are in the archive and out of the total.
+
+**AND A PROVIDER THE PIPELINE CAN READ MUST BE IN `precedence.mjs`.** All eight
+documents read correctly, landed with the right owner and the right figures —
+and contributed nothing, because `authoritative()` returns null for a provider
+with no precedence block. Eight accounts at 0 positions and ₹0, holding
+₹123.54 Cr between them. Nothing failed and nothing said so.
 
 *Two documents this run could not decrypt.* Bharat's 360 ONE Alternates
 distribution notice and statement of earnings are encrypted with a password

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-12T14:33:02.345Z",
+  "generatedAt": "2026-08-12T15:32:25.495Z",
   "summary": {
     "documents": 182,
     "parsed": 162,
-    "partial": 10,
-    "failed": 10,
-    "rowSumChecks": 169,
+    "partial": 18,
+    "failed": 2,
+    "rowSumChecks": 184,
     "totalMismatches": 80,
     "totalsMaterial": 0,
     "totalsExplained": 32,
-    "totalsRounding": 79,
+    "totalsRounding": 83,
     "derivedVsPrintedDeltas": 511,
     "derivedMaterial": 0,
     "derivedExplained": 228,
@@ -19,7 +19,7 @@
     "datedExplained": 125,
     "datedRounding": 47,
     "crossReportDeltas": 9,
-    "suspectedDuplicates": 5,
+    "suspectedDuplicates": 6,
     "securitiesWithoutSymbol": 10,
     "ownerNamesUnmatched": 3,
     "stitchesApplied": 22
@@ -44,8 +44,8 @@
       }
     ],
     "parsed": 162,
-    "partial": 10,
-    "failed": 10,
+    "partial": 18,
+    "failed": 2,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -290,16 +290,25 @@
           "failed": 0
         }
       },
-      "Motilal Oswal": {
-        "unknown": {
+      "3P Investment Managers": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 3
-        },
-        "transaction-statement": {
+          "partial": 1,
+          "failed": 0
+        }
+      },
+      "Buoyant Capital": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 1
+          "partial": 1,
+          "failed": 0
+        }
+      },
+      "Motilal Oswal Founders Fund": {
+        "holdings": {
+          "ok": 0,
+          "partial": 1,
+          "failed": 0
         }
       },
       "SVAN Investment Managers LLP": {
@@ -407,25 +416,25 @@
           "failed": 1
         }
       },
-      "CAMS": {
-        "unknown": {
+      "Motilal Oswal Active Momentum Fund": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 1
+          "partial": 1,
+          "failed": 0
         }
       },
-      "HDFC": {
-        "unknown": {
+      "Helios Mutual Fund": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 2
+          "partial": 1,
+          "failed": 0
         }
       },
-      "Kotak": {
-        "unknown": {
+      "India SME Investments": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 1
+          "partial": 3,
+          "failed": 0
         }
       },
       "Molecule Ventures LLP": {
@@ -472,33 +481,6 @@
     },
     "failures": [
       {
-        "docKey": "motilal-oswal-3000048-2026-07-31-unknown",
-        "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
-        "provider": "Motilal Oswal",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-103473-2026-07-31-unknown",
-        "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
-        "provider": "Motilal Oswal",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-90410016104-2026-07-31-unknown",
-        "sourcePath": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
-        "provider": "Motilal Oswal",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal\" / reportType unknown"
-        ]
-      },
-      {
         "docKey": "unknown-unknown-unknown-unknown",
         "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
         "provider": "(unidentified)",
@@ -515,51 +497,6 @@
         "reasons": [
           "pdf-read-failed: Incorrect Password"
         ]
-      },
-      {
-        "docKey": "motilal-oswal-904168868444-2026-08-06-transaction-statement",
-        "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
-        "provider": "Motilal Oswal",
-        "reportType": "transaction-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal\" / reportType transaction-statement"
-        ]
-      },
-      {
-        "docKey": "cams-10355977-2026-08-07-unknown",
-        "sourcePath": "source/august-2026/Helios - Ajay.pdf",
-        "provider": "CAMS",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"CAMS\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "hdfc-175962-2026-06-30-unknown",
-        "sourcePath": "source/august-2026/INDIA SME - AJAY.pdf",
-        "provider": "HDFC",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"HDFC\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "kotak-177302-2026-06-30-unknown",
-        "sourcePath": "source/august-2026/INDIA SME - ANKITA.pdf",
-        "provider": "Kotak",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Kotak\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "hdfc-175964-2026-06-30-unknown",
-        "sourcePath": "source/august-2026/INDIA SME - BHARAT.pdf",
-        "provider": "HDFC",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"HDFC\" / reportType unknown"
-        ]
       }
     ],
     "partials": [
@@ -570,6 +507,25 @@
           "columns-not-matched: marketPrice, benchmark",
           "section-reported-empty: transaction: the report states \"No data available to generate …\"",
           "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
+        ]
+      },
+      {
+        "docKey": "3p-investment-managers-3000048-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
+        "reasons": [
+          "statement-basis: every class on this statement stands at zero units: the fund reclassified them out on 31-03-2026 and prints the zero. Where the units went is not on this document"
+        ]
+      },
+      {
+        "docKey": "buoyant-capital-103473-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
+        "reasons": []
+      },
+      {
+        "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
+        "reasons": [
+          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV"
         ]
       },
       {
@@ -645,12 +601,46 @@
           "columns-not-matched: marketPrice, benchmark",
           "section-reported-empty: transaction: the report states \"No data available to generate …\""
         ]
+      },
+      {
+        "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
+        "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
+        "reasons": []
+      },
+      {
+        "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
+        "sourcePath": "source/august-2026/Helios - Ajay.pdf",
+        "reasons": []
+      },
+      {
+        "docKey": "india-sme-investments-175962-2026-06-30-holdings",
+        "sourcePath": "source/august-2026/INDIA SME - AJAY.pdf",
+        "reasons": [
+          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
+          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
+        ]
+      },
+      {
+        "docKey": "india-sme-investments-177302-2026-06-30-holdings",
+        "sourcePath": "source/august-2026/INDIA SME - ANKITA.pdf",
+        "reasons": [
+          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
+          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
+        ]
+      },
+      {
+        "docKey": "india-sme-investments-175964-2026-06-30-holdings",
+        "sourcePath": "source/august-2026/INDIA SME - BHARAT.pdf",
+        "reasons": [
+          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
+          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
+        ]
       }
     ]
   },
   "consolidated": {
-    "naive": 4797597250.63,
-    "deduped": 4737053928.05,
+    "naive": 6033003897.87,
+    "deduped": 5972460575.29,
     "doubleCounted": 60543322.58
   },
   "rowSumChecks": [
@@ -1610,6 +1600,108 @@
       "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
       "provider": "360 ONE Private Wealth",
       "accountNo": "37702",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "buoyant-capital-103473-2026-07-31-holdings",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 492981982.01,
+      "printedTotal": 492981982.01,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "buoyant-capital-103473-2026-07-31-holdings",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 475353990.9,
+      "printedTotal": 475353990.9,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "buoyant-capital-103473-2026-07-31-holdings",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
+      "provider": "Motilal Oswal Founders Fund",
+      "accountNo": "90410016104",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 218250873.93,
+      "printedTotal": 218250873.93,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
+      "provider": "Motilal Oswal Founders Fund",
+      "accountNo": "90410016104",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 200000000,
+      "printedTotal": 200000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
+      "provider": "Motilal Oswal Founders Fund",
+      "accountNo": "90410016104",
       "asOf": "2026-07-31",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
@@ -2912,6 +3004,159 @@
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
+      "provider": "Motilal Oswal Active Momentum Fund",
+      "accountNo": "904168868444",
+      "asOf": "2026-08-06",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 214189290.53,
+      "printedTotal": 214189290.53,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
+      "provider": "Motilal Oswal Active Momentum Fund",
+      "accountNo": "904168868444",
+      "asOf": "2026-08-06",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 214200000,
+      "printedTotal": 214200000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
+      "provider": "Motilal Oswal Active Momentum Fund",
+      "accountNo": "904168868444",
+      "asOf": "2026-08-06",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-08-07",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 309984500.77,
+      "printedTotal": 309984500.77,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-08-07",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 310000000,
+      "printedTotal": 310000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-08-07",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "india-sme-investments-175962-2026-06-30-holdings",
+      "provider": "India SME Investments",
+      "accountNo": "175962",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 81000000,
+      "printedTotal": 81000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "india-sme-investments-177302-2026-06-30-holdings",
+      "provider": "India SME Investments",
+      "accountNo": "177302",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 27000000,
+      "printedTotal": 27000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "india-sme-investments-175964-2026-06-30-holdings",
+      "provider": "India SME Investments",
+      "accountNo": "175964",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 27000000,
+      "printedTotal": 27000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
       "cause": null,
       "accruedIncome": null
     },
@@ -37398,6 +37643,38 @@
       ],
       "doubleCountRisk": 0,
       "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+    },
+    {
+      "dedupeGroup": "dg-india-sme-investments-fund-ii-class-a2-2",
+      "security": "India SME Investments Fund II — Class A2",
+      "securityKey": "india-sme-investments-fund-ii-class-a2",
+      "quantity": 27000,
+      "totalCost": 27000000,
+      "marketValue": null,
+      "owners": [
+        "ankita-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "occurrences": [
+        {
+          "docKey": "india-sme-investments-177302-2026-06-30-holdings",
+          "owner": "Ankita Jaisinghani",
+          "ownerId": "ankita-jaisinghani",
+          "accountNo": "177302",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "india-sme-investments-175964-2026-06-30-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "175964",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        }
+      ],
+      "doubleCountRisk": null,
+      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
     }
   ],
   "unresolved": {
@@ -37534,51 +37811,7 @@
         ]
       }
     ],
-    "reportTypesWithoutExtractor": [
-      {
-        "provider": "Motilal Oswal",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-3000048-2026-07-31-unknown",
-          "motilal-oswal-103473-2026-07-31-unknown",
-          "motilal-oswal-90410016104-2026-07-31-unknown"
-        ]
-      },
-      {
-        "provider": "Motilal Oswal",
-        "reportType": "transaction-statement",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-904168868444-2026-08-06-transaction-statement"
-        ]
-      },
-      {
-        "provider": "CAMS",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "cams-10355977-2026-08-07-unknown"
-        ]
-      },
-      {
-        "provider": "HDFC",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "hdfc-175962-2026-06-30-unknown",
-          "hdfc-175964-2026-06-30-unknown"
-        ]
-      },
-      {
-        "provider": "Kotak",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "kotak-177302-2026-06-30-unknown"
-        ]
-      }
-    ],
+    "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
@@ -37621,7 +37854,13 @@
       "HDFC Mutual Fund",
       "Mutual fund folio",
       "360 ONE Alternates Asset Management",
-      "360 ONE Private Wealth"
+      "360 ONE Private Wealth",
+      "Buoyant Capital",
+      "Helios Mutual Fund",
+      "Motilal Oswal Founders Fund",
+      "Motilal Oswal Active Momentum Fund",
+      "3P Investment Managers",
+      "India SME Investments"
     ]
   },
   "stitches": [

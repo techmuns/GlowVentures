@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 3,37,46,23,638.12 |
-| Positions | 302 |
-| Accounts | 22 |
+| Consolidated market value | 4,61,00,30,285.36 |
+| Positions | 309 |
+| Accounts | 30 |
 | Owners | 6 |
 | Newest as-of | 2026-08-11 |
 
@@ -20,14 +20,22 @@ Generated — **do not edit by hand**.
 | 1000632 | 360 ONE Alternates Asset Management | Ajay Jaisinghani | 360 ONE Special Opportunities Fund - Series 8 | 2026-05-18 | 0 | 0 |
 | 37702 | 360 ONE Private Wealth | Ajay Jaisinghani | — | 2026-07-31 | 1 | 1,46,68,362.66 |
 | 60117 | 360 ONE Private Wealth | Bharat Jaisinghani | — | 2026-06-30 | 1 | 1,45,80,412.51 |
+| 3000048 | 3P Investment Managers | Ajay Jaisinghani | — | 2026-07-31 | 3 | 0 |
+| 103473 | Buoyant Capital | Ajay Jaisinghani | — | 2026-07-31 | 1 | 49,29,81,982.01 |
 | 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-08-10 | 12 | 39,53,37,616.86 |
 | 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 8,01,95,236.76 |
 | 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 18,79,95,881.19 |
 | 510854 | Green Lantern Capital LLP | Ankita Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 5,79,66,679.22 |
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
+| 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
+| 175962 | India SME Investments | Ajay Jaisinghani | — | 2026-06-30 | 0 | 0 |
+| 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 0 | 0 |
+| 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 98245 | LKP Securities | Bharat Jaisinghani | — | 2026-03-31 | 10 | 98,76,174.92 |
 | 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-06-30 | 11 | 1,12,48,248.66 |
+| 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
+| 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 21,82,50,873.93 |
 | 9039671821 | Sanshi Fund | Aarti Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 97,68,26,519.91 |
 | 9039671854 | Sanshi Fund | Bharat Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 19,56,88,390.51 |
 | 9039671912 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 29,35,23,824.82 |
@@ -44,9 +52,9 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 10 | 156 | 1,55,88,05,463.75 |
-| Ankita Jaisinghani | 4 | 84 | 49,78,86,842.49 |
-| Bharat Jaisinghani | 5 | 59 | 32,39,58,849.72 |
+| Ajay Jaisinghani | 15 | 162 | 2,58,00,22,820.46 |
+| Ankita Jaisinghani | 6 | 85 | 71,20,76,133.02 |
+| Bharat Jaisinghani | 6 | 59 | 32,39,58,849.72 |
 | Aarti Jaisinghani | 1 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 1 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 1 | 1 | 1,71,45,962.25 |
@@ -73,18 +81,18 @@ Together they carry **32,86,904.6** across 4 account(s). That figure is stated s
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 2,46,99,08,900.04 | 73.19% |
-| Financials | 24,59,20,220.3 | 7.29% |
-| Health Care | 18,84,64,913.4 | 5.58% |
-| Consumer Discretionary | 14,95,66,899.11 | 4.43% |
-| Industrials | 12,95,61,200.92 | 3.84% |
-| Information Technology | 7,15,96,197.78 | 2.12% |
-| Cash | 6,75,79,275.27 | 2.00% |
-| Communication Services | 1,98,43,470 | 0.59% |
-| Materials | 1,88,10,993.93 | 0.56% |
-| Consumer Staples | 1,47,32,221.9 | 0.44% |
-| Utilities | 1,00,47,707.72 | 0.30% |
-| Real Estate | 57,37,600 | 0.17% |
+| Unclassified | 3,70,53,15,547.28 | 80.38% |
+| Financials | 24,59,20,220.3 | 5.33% |
+| Health Care | 18,84,64,913.4 | 4.09% |
+| Consumer Discretionary | 14,95,66,899.11 | 3.24% |
+| Industrials | 12,95,61,200.92 | 2.81% |
+| Information Technology | 7,15,96,197.78 | 1.55% |
+| Cash | 6,75,79,275.27 | 1.47% |
+| Communication Services | 1,98,43,470 | 0.43% |
+| Materials | 1,88,10,993.93 | 0.41% |
+| Consumer Staples | 1,47,32,221.9 | 0.32% |
+| Utilities | 1,00,47,707.72 | 0.22% |
+| Real Estate | 57,37,600 | 0.12% |
 
 ## Unclassified sectors
 
@@ -117,10 +125,16 @@ never guessed into the nearest plausible bucket.
 - account 60117: no time-weighted return series in any statement
 - account 60117: no flow block in any statement, so no value bridge
 - account 60117: no external capital movements found, so no money-weighted return series
+- account 3000048: no time-weighted return series in any statement
+- account 3000048: no flow block in any statement, so no value bridge
+- account 3000048: no external capital movements found, so no money-weighted return series
 - account Aditya Birla Sun Life Mutual Fund::1019265797: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings`; its dated rows are still counted
 - account 1019265797 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,70,028.13.
 - account Aditya Birla Sun Life Mutual Fund::1038104611: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings`; its dated rows are still counted
 - account 1038104611 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,98,563.95.
+- account 103473: no time-weighted return series in any statement
+- account 103473: no flow block in any statement, so no value bridge
+- account 103473: no external capital movements found, so no money-weighted return series
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary-2`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: capital-gain 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain`; its dated rows are still counted
@@ -177,6 +191,21 @@ never guessed into the nearest plausible bucket.
 - account 16180583: no time-weighted return series in any statement
 - account 16180583: no flow block in any statement, so no value bridge
 - account 16180583: no external capital movements found, so no money-weighted return series
+- account 10355977: no time-weighted return series in any statement
+- account 10355977: no flow block in any statement, so no value bridge
+- account 10355977: no external capital movements found, so no money-weighted return series
+- account 175962 (India SME Investments) contributes no market value: its statement of 2026-06-30 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 175962: no time-weighted return series in any statement
+- account 175962: no flow block in any statement, so no value bridge
+- account 175962: no external capital movements found, so no money-weighted return series
+- account 175964 (India SME Investments) contributes no market value: its statement of 2026-06-30 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 175964: no time-weighted return series in any statement
+- account 175964: no flow block in any statement, so no value bridge
+- account 175964: no external capital movements found, so no money-weighted return series
+- account 177302 (India SME Investments) contributes no market value: its statement of 2026-06-30 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 177302: no time-weighted return series in any statement
+- account 177302: no flow block in any statement, so no value bridge
+- account 177302: no external capital movements found, so no money-weighted return series
 - account Kotak Mahindra Mutual Fund::4295974: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings`; its dated rows are still counted
 - account 4295974 (Kotak Mahindra Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,77,205.81.
 - account LKP Securities::98245: capital-gain 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `lkp-securities-98245-2026-06-30-capital-gain`; its dated rows are still counted
@@ -188,6 +217,12 @@ never guessed into the nearest plausible bucket.
 - account Mirae Asset Mutual Fund::70413280453: holdings 2026-07-02 superseded for SNAPSHOT facts by 2026-08-06 — `mirae-asset-mutual-fund-70413280453-2026-07-02-holdings`; its dated rows are still counted
 - account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,41,106.71.
 - account 7810404: no external capital movements found, so no money-weighted return series
+- account 904168868444: no time-weighted return series in any statement
+- account 904168868444: no flow block in any statement, so no value bridge
+- account 904168868444: no external capital movements found, so no money-weighted return series
+- account 90410016104: no time-weighted return series in any statement
+- account 90410016104: no flow block in any statement, so no value bridge
+- account 90410016104: no external capital movements found, so no money-weighted return series
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: 14 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
@@ -213,6 +248,6 @@ never guessed into the nearest plausible bucket.
 - account TVC263: no external capital movements found, so no money-weighted return series
 - 4 holding(s) reported under more than one member: both rows are carried, and 1,71,45,962.25 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 302 position(s), across 1 of 22 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 309 position(s), across 1 of 30 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

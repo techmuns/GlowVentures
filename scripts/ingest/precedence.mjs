@@ -326,6 +326,36 @@ export const PRECEDENCE = {
 };
 
 /**
+ * THE SINGLE-SCHEME FUND STATEMENTS — Buoyant, Helios, Motilal Oswal's Founders
+ * and Active Momentum funds, 3P and India SME.
+ *
+ * ONE DOCUMENT EACH, so there is nothing to choose between — and that is
+ * exactly why the entry has to exist. `authoritative()` returns null for a
+ * provider with no precedence block, so these eight documents were read
+ * correctly, landed in the archive with the right owner and the right figures,
+ * and contributed NOTHING to the book: eight accounts at 0 positions and ₹0,
+ * holding ₹123.55 Cr between them. Nothing failed and nothing said so.
+ *
+ * A provider whose statements this pipeline can read must appear here.
+ */
+for (const provider of [
+  "Buoyant Capital",
+  "Helios Mutual Fund",
+  "Motilal Oswal Founders Fund",
+  "Motilal Oswal Active Momentum Fund",
+  "3P Investment Managers",
+  "India SME Investments",
+]) {
+  PRECEDENCE[provider] = {
+    holdings: { reportType: "holdings", note: "the fund's own account statement — the only document this issuer sends." },
+    // No transaction tape, no capital gain statement, no dividend statement:
+    // these issuers send one document and it carries a position, not a ledger.
+    // Left ABSENT rather than pointed at the holdings document, so the book
+    // reports no realised gain for them instead of a wrong one.
+  };
+}
+
+/**
  * Which document should supply `fact` for `provider`?
  * @returns {{ reportTypes: string[], section: string|null, note: string|null } | null}
  */

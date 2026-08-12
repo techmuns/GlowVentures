@@ -537,7 +537,34 @@ function build(docs) {
       }
     }
 
-    for (const h of holdingsDoc?.holdings ?? []) {
+    /**
+     * A HOLDING ITS FUND HAS NOT VALUED DOES NOT BECOME A POSITION.
+     *
+     * `Position.marketValue` is `number`, not `number | null`, and that is the
+     * model saying every position in this book is worth something measurable.
+     * India SME Investments Fund II sends three folios — one per member — that
+     * print a commitment, the capital drawn against it and the units it bought,
+     * and NO NAV and NO valuation anywhere on the page.
+     *
+     * The three wrong answers were all available: carry the drawn capital as if
+     * it were the value (publishing a valuation the fund never struck), carry
+     * zero (a fabricated figure, and the worse one because it is plausible), or
+     * widen the type for all 300-odd positions to accommodate three.
+     *
+     * The account is kept, its units and cost are kept in the archive, and the
+     * account carries the REASON — the same mechanism 360 ONE Alternates
+     * already uses for a folio whose documents report income and no valuation.
+     * The commitment goes to the commitment register, which is where a drawdown
+     * fund's called and uncalled capital belongs.
+     */
+    const unvalued = (holdingsDoc?.holdings ?? []).filter((h) => !isNum(h.marketValue));
+    if (unvalued.length && unvalued.length === (holdingsDoc?.holdings ?? []).length) {
+      notes.push(`account ${accountNo} (${provider}) contributes no market value: its statement of ${holdingsDoc.asOf} `
+        + `carries ${unvalued.length} holding(s) with units and cost and NO NAV, so there is nothing to value them at. `
+        + `Units and cost are in the archive; the consolidated total does not include them.`);
+    }
+
+    for (const h of (holdingsDoc?.holdings ?? []).filter((x) => isNum(x.marketValue))) {
       const providerSector = sectorByKey.get(h.securityKey) ?? h.providerSector ?? null;
       const { sector, matchedBy } = resolveSector(providerSector);
       if (providerSector && matchedBy === null) {
@@ -737,7 +764,10 @@ function build(docs) {
       const mine = positions.filter((x) => x.accountId === accountId);
       const acct = accounts[accounts.length - 1];
       if (acct && acct.accountId === accountId && !mine.length) {
-        acct.noPositionsReason = holdingsDoc
+        const unvaluedHere = (holdingsDoc?.holdings ?? []).filter((x) => !isNum(x.marketValue));
+        acct.noPositionsReason = unvaluedHere.length
+          ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
+          : holdingsDoc
           ? `every holding on this account's ${holdingsDoc.reportType} statement of ${holdingsDoc.asOf} has been redeemed — the balance is nil, and that is a measurement`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
       }

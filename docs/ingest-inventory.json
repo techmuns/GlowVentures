@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-12T14:22:11.837Z",
+  "generatedAt": "2026-08-12T15:24:59.136Z",
   "sourceDir": "source",
   "counts": {
     "files": 180,
@@ -1995,7 +1995,7 @@
       "fromArchive": true,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal",
+      "provider": "3P Investment Managers",
       "ownerName": null,
       "accountNo": "3000048",
       "asOfDate": "2026-07-31",
@@ -2015,7 +2015,7 @@
       "fromArchive": true,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal",
+      "provider": "Buoyant Capital",
       "ownerName": null,
       "accountNo": "103473",
       "asOfDate": "2026-07-31",
@@ -2035,7 +2035,7 @@
       "fromArchive": true,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal",
+      "provider": "Motilal Oswal Founders Fund",
       "ownerName": null,
       "accountNo": "00841000060394",
       "asOfDate": "2026-07-31",
@@ -3751,7 +3751,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal",
+      "provider": "Motilal Oswal Active Momentum Fund",
       "ownerName": null,
       "accountNo": "Transaction",
       "asOfDate": "2026-08-06",
@@ -3773,7 +3773,7 @@
       "fromArchive": false,
       "encrypted": true,
       "readError": null,
-      "provider": "CAMS",
+      "provider": "Helios Mutual Fund",
       "ownerName": null,
       "accountNo": "10355977",
       "asOfDate": "2026-08-07",
@@ -3793,7 +3793,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC",
+      "provider": "India SME Investments",
       "ownerName": null,
       "accountNo": "175962",
       "asOfDate": "2026-06-30",
@@ -3813,7 +3813,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Kotak",
+      "provider": "India SME Investments",
       "ownerName": null,
       "accountNo": "177302",
       "asOfDate": "2026-06-30",
@@ -3833,7 +3833,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC",
+      "provider": "India SME Investments",
       "ownerName": null,
       "accountNo": "175964",
       "asOfDate": "2026-06-30",
@@ -5697,7 +5697,33 @@
       },
       "fileCount": 5
     },
-    "Motilal Oswal": {
+    "3P Investment Managers": {
+      "accounts": {
+        "3000048": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
+                    "pages": 4,
+                    "size": "343.5 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Buoyant Capital": {
       "accounts": {
         "103473": {
           "owner": null,
@@ -5719,28 +5745,12 @@
             }
           },
           "fileCount": 1
-        },
-        "3000048": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "unknown": [
-                  {
-                    "path": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
-                    "pages": 4,
-                    "size": "343.5 KB",
-                    "confidence": "high",
-                    "sections": []
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        },
+        }
+      },
+      "fileCount": 1
+    },
+    "Motilal Oswal Founders Fund": {
+      "accounts": {
         "00841000060394": {
           "owner": null,
           "strategy": null,
@@ -5761,32 +5771,9 @@
             }
           },
           "fileCount": 1
-        },
-        "Transaction": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-08-06": {
-              "reportTypes": {
-                "transaction-statement": [
-                  {
-                    "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
-                    "pages": 2,
-                    "size": "171.8 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "transaction-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
         }
       },
-      "fileCount": 4
+      "fileCount": 1
     },
     "SVAN Investment Managers LLP": {
       "accounts": {
@@ -6364,7 +6351,35 @@
       },
       "fileCount": 2
     },
-    "CAMS": {
+    "Motilal Oswal Active Momentum Fund": {
+      "accounts": {
+        "Transaction": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-08-06": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
+                    "pages": 2,
+                    "size": "171.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Helios Mutual Fund": {
       "accounts": {
         "10355977": {
           "owner": null,
@@ -6390,7 +6405,7 @@
       },
       "fileCount": 1
     },
-    "HDFC": {
+    "India SME Investments": {
       "accounts": {
         "175962": {
           "owner": null,
@@ -6433,12 +6448,7 @@
             }
           },
           "fileCount": 1
-        }
-      },
-      "fileCount": 2
-    },
-    "Kotak": {
-      "accounts": {
+        },
         "177302": {
           "owner": null,
           "strategy": null,
@@ -6461,7 +6471,7 @@
           "fileCount": 1
         }
       },
-      "fileCount": 1
+      "fileCount": 3
     },
     "Molecule Ventures LLP": {
       "accounts": {
