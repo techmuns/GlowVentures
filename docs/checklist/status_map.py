@@ -28,7 +28,7 @@ STATUS = {
     # ── LAYER 2 · framing lines ──────────────────────────────────────────
     28: (P, "Rates, inflation, USD index, oil, gold, copper and silver are live. Fiscal deficit, liquidity, credit growth and money supply are not"),
     30: (P, "Stock prices and corporate actions are live; ratios and shareholding come back as prose. RSI and 200-DMA are not computed"),
-    32: (P, "Returned as prose from the upstream, not as a ten-year series"),
+    32: (D, "Parsed from the reported table — twelve year-ends for ABCAPITAL — and charted rather than passed through as text"),
     33: (N, "No free source publishes block deals"),
 
     # ── Cross-cutting · data visualisation ───────────────────────────────
@@ -181,9 +181,9 @@ STATUS = {
     312: (D, ""),
 
     # ── Company research · financials ────────────────────────────────────
-    314: (P, "Returned as prose and passed through unparsed — nothing is computed from it, because nothing in the response says which number is which"),
-    315: (P, "In the prose block"), 316: (P, "In the prose block"),
-    317: (P, "In the prose block"), 318: (P, "In the prose block"),
+    314: (D, "Read by row label from the reported tables; the source's own label is shown beside each metric so a figure traces back"),
+    315: (D, "Quarterly Results parsed as a table"), 316: (D, "Profit & Loss parsed as a table, twelve year-ends deep"),
+    317: (D, "Parsed as a table"), 318: (N, "The financials response carries NO cash-flow section — checked against the live API on 2026-08-11, not assumed"),
     319: (P, "Returned as prose, same caveat"),
     321: (N, ""), 322: (N, ""), 323: (N, ""), 324: (N, ""),
     326: (N, "No source carries sector-specific KPIs"),
@@ -201,8 +201,8 @@ STATUS = {
     363: (P, "Current value in the prose block"),
     364: (N, ""), 365: (N, ""),
     366: (N, "Needs the ten-year ratio series first"),
-    368: (P, "In the prose block"), 369: (P, "In the prose block"),
-    370: (P, "In the prose block"), 371: (N, "Not computed"),
+    368: (D, "Year-on-year and compound, from the reported P&L"), 369: (P, "Computed where the company reports an operating-profit line. A lender reports Financing Profit and no EBITDA, and no house schema maps one onto the other"),
+    370: (D, "Year-on-year and compound, from the reported P&L"), 371: (D, "Full-span and 5-year CAGR per metric, null wherever the arithmetic would lie — one point, a span under a year, or a start at or below zero"),
     373: (P, "In the prose block"), 374: (P, "In the prose block"),
     375: (P, "In the prose block"), 376: (P, "In the prose block"),
     378: (P, "Reported figures only"),
