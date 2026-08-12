@@ -15,15 +15,20 @@ import { parseRatioTable, checkIdentity, shareCountBreaks } from "@/lib/ratioTab
 //
 // ── THE IDENTITY CHECK IS THE POINT OF THIS COMPONENT ───────────────────────
 //
-// The resolver was measured getting the company WRONG. Asked for ABCAPITAL it
-// answered with Tata Capital's page, while five other tickers resolved
-// correctly. A screen of real ratios under the wrong company's name is the
+// The resolver is wrong about a QUARTER OF THE TIME. Measured across the first
+// fifteen holdings in this book that carry an NSE symbol, four came back as an
+// entirely different company: Aditya Birla Capital -> Tata Capital, Bajaj Auto
+// -> Bajaj Finance, Alivus Life Sciences -> Altius Telecom, BLS International
+// -> Sona BLW. A screen of real ratios under the wrong company's name is the
 // worst kind of fabrication available here — every figure true, every one
 // somebody else's, and nothing on screen a reader could use to tell.
 //
-// So the page's own H1 is compared against this holding's name through the
-// book's own `securityKeyOf`, and A MISMATCH RENDERS NOTHING. Not a warning
-// above the table: no table.
+// So the page's own H1 AND the company name inside its URL are both compared
+// against this holding through the book's own `securityKeyOf`, and A MISMATCH
+// RENDERS NOTHING. Not a warning above the table: no table. Two identifiers
+// rather than one because moneycontrol abbreviates its H1 ("BHEL", "AFL")
+// where the URL spells the name out — checking only the title refused two
+// pages that were about the right company, and a wrong page is wrong on both.
 
 /** The check's reason reads mid-sentence in one place and sentence-initial in another. */
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -72,7 +77,10 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
   }, [ticker]);
 
   const doc = useMemo(() => (state?.ok ? parseRatioTable(state.text) : null), [state]);
-  const identity = useMemo(() => (doc ? checkIdentity(doc, name) : null), [doc, name]);
+  const identity = useMemo(
+    () => (doc && state?.ok ? checkIdentity(doc, name, state.sourceUrl) : null),
+    [doc, name, state],
+  );
   const breaks = useMemo(() => (doc && identity?.matches ? shareCountBreaks(doc) : []), [doc, identity]);
 
   if (!ticker) return null;
@@ -99,8 +107,9 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
           what="The ratio source resolved to a different company"
           needs={`${sentence(identity.reason)}. The page carries a full ratio table and every figure on it is real — which is
             exactly why it is not shown: rendered under this holding's name it would be a screen of another
-            company's ratios with nothing on it to say so. The resolver is right for most tickers and wrong for
-            some, so this is checked per company rather than trusted.`}>
+            company's ratios with nothing on it to say so. Measured across the first fifteen holdings that carry an
+            NSE symbol, four resolved to an entirely different company — so this is checked per page rather than
+            trusted, and a page that cannot be attributed is refused rather than shown.`}>
           <a href={state.sourceUrl} target="_blank" rel="noopener noreferrer"
             className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-champagne-400">
             See the page it resolved to <ExternalLink className="h-3 w-3" />
@@ -121,8 +130,9 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
         <div className="mb-3 flex items-start gap-2 rounded-lg border border-emerald-500/35 bg-emerald-500/[0.07] px-3.5 py-2.5 text-[12px] text-emerald-200">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            Attribution checked: {identity.reason}. The ratio source resolves by name and was measured returning a
-            different company for one ticker in six, so this is verified per company rather than assumed.
+            Attribution checked — {identity.reason}. The ratio source resolves by name and was measured returning a
+            DIFFERENT company for four of the first fifteen holdings tried, so every page is verified against this
+            holding before a figure from it is shown.
           </span>
         </div>
 

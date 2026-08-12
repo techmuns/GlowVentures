@@ -65,9 +65,29 @@ eq("no row starts with the chart column", doc.rows.filter((r) => !r.heading).eve
 // ── the identity check, which is why this is renderable at all ──────────────
 eq("the holding's own name matches", checkIdentity(doc, "Reliance Industries Ltd").matches, true);
 eq("a short page name matches a long holding name", checkIdentity(doc, "Reliance Industries Limited").matches, true);
+// THE H1 ALONE IS NOT ENOUGH. moneycontrol abbreviates it — "BHEL", "AFL" —
+// while the URL spells the company out. Checking only the title refused two
+// pages that were about the right company; both are recovered by the slug.
+const url = (slug: string) => `https://www.moneycontrol.com/financials/${slug}/ratiosVI/XX`;
+const wrongCoDoc = () => parseRatioTable(MD.replace("# Reliance Key Financial Ratios", "# Tata Capital Key Financial Ratios"));
+const wrongCo = wrongCoDoc();
+
+const abbrev = parseRatioTable(MD.replace("# Reliance Key Financial Ratios", "# BHEL Key Financial Ratios"));
+eq("an abbreviated H1 alone does not match", checkIdentity(abbrev, "Bharat Heavy Electricals Ltd").matches, false);
+eq("… but the URL slug recovers it",
+   checkIdentity(abbrev, "Bharat Heavy Electricals Ltd", url("bharatheavyelectricals")).matchedOn, "source URL");
+eq("… and the same for AFL / arvindfashionslimited",
+   checkIdentity(parseRatioTable(MD.replace("# Reliance Key Financial Ratios", "# AFL Key Financial Ratios")),
+     "Arvind Fashions Ltd", url("arvindfashionslimited")).matches, true);
+// A WRONG PAGE IS WRONG ON BOTH IDENTIFIERS, so the second one buys no risk.
+eq("a wrong page fails on the slug too",
+   checkIdentity(wrongCoDoc(), "Aditya Birla Capital Ltd", url("tatacapital")).matches, false);
+// Six characters minimum, or a shared house name starts matching strangers.
+eq("a three-letter overlap is not a match",
+   checkIdentity(parseRatioTable(MD.replace("# Reliance Key Financial Ratios", "# BLS Key Financial Ratios")),
+     "BLS International Services Ltd", url("sonablwprecisionforgings")).matches, false);
 // THE MEASURED FAILURE: asked for ABCAPITAL the resolver returned Tata
 // Capital's page. Real figures, wrong company — the one thing this must refuse.
-const wrongCo = parseRatioTable(MD.replace("# Reliance Key Financial Ratios", "# Tata Capital Key Financial Ratios"));
 eq("another company's page is refused", checkIdentity(wrongCo, "Aditya Birla Capital Ltd").matches, false);
 eq("… and the reason names both", /Tata Capital.*different company.*Aditya Birla Capital/.test(checkIdentity(wrongCo, "Aditya Birla Capital Ltd").reason), true);
 // A page with no H1 cannot be attributed, so it is refused too — an unrun

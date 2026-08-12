@@ -149,48 +149,93 @@ export function parseRatioTable(markdown: string): RatioDoc {
 // ── Is this the company we asked about? ─────────────────────────────────────
 
 export type IdentityCheck = {
-  /** What the page calls itself. */
+  /** What the page calls itself, in its H1. */
   sourceCompany: string | null;
+  /** The company name inside the source URL, which is the fuller of the two. */
+  sourceSlug: string | null;
   /** What this dashboard calls the holding. */
   ours: string;
   matches: boolean;
+  /** Which identifier carried the match — useful when only one of the two did. */
+  matchedOn: "page title" | "source URL" | null;
   reason: string;
 };
+
+/** Comparable form: the book's own normaliser, then separators dropped. */
+const ident = (s: string) => securityKeyOf(s).replace(/[^a-z0-9]/g, "");
+
+/**
+ * Same company?
+ *
+ * Exact, or one is a PREFIX of the other with at least six characters in
+ * common. Both directions occur and neither is sloppiness:
+ *   • moneycontrol CLIPS its H1 to a width — "Aurobindo Pharm" for Aurobindo
+ *     Pharma Ltd — so theirs is a prefix of ours.
+ *   • it also drops the legal suffix the book carries, so ours is a prefix of
+ *     theirs where the slug spells the name out in full.
+ * Six characters, because a shorter prefix starts matching unrelated companies
+ * that share a house name.
+ */
+function sameCompany(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length >= 6 && long.startsWith(short);
+}
 
 /**
  * Whether the page the resolver pointed at is about the company we asked about.
  *
- * THIS IS NOT DEFENSIVE PROGRAMMING — the resolver was measured getting it
- * wrong. Asked for ABCAPITAL it returned
- * `moneycontrol.com/financials/tatacapital/ratiosVI/TCL06`, a different
- * company, while five other tickers resolved correctly. Rendering that under
- * Aditya Birla Capital's name would put a screen of real figures belonging to
- * somebody else beside this family's holding — a fabricated attribution that
- * no badge repairs, and one a reader has no way to detect.
+ * THIS IS NOT DEFENSIVE PROGRAMMING — the resolver is wrong about a QUARTER OF
+ * THE TIME. Measured across the first fifteen holdings in this book that carry
+ * an NSE symbol, four resolved to an entirely different company:
  *
- * The comparison is `securityKeyOf`, the book's own name normaliser, on both
- * sides: it folds case, punctuation and trailing legal suffixes ("Ltd",
- * "Limited") and nothing else. Deliberately not fuzzy — merging two companies
- * is the failure being guarded against, so a near miss must fail.
+ *     ABCAPITAL   (Aditya Birla Capital)  -> tatacapital
+ *     BAJAJ-AUTO  (Bajaj Auto)            -> bajajfinance
+ *     ALIVUS      (Alivus Life Sciences)  -> altiustelecominfrastructure
+ *     BLS         (BLS International)     -> sonablwprecisionforgings
+ *
+ * Every one of those pages carries a complete, correct ratio table for the
+ * company it is actually about. Rendered under this family's holding it would
+ * be a screen of true figures belonging to somebody else, with nothing on it a
+ * reader could catch it by. At one in four, checking is not a precaution; it
+ * is the only thing making this feature renderable at all.
+ *
+ * The comparison is `securityKeyOf`, the book's own name normaliser — case,
+ * punctuation and trailing legal suffixes and nothing else. Deliberately not
+ * fuzzy: merging two companies is the failure being guarded against, and the
+ * upstream resolver is presumably fuzzy, which is how it produced that list.
+ *
+ * IT REFUSES A CORRECT PAGE RATHER THAN ACCEPT A WRONG ONE, and that asymmetry
+ * is deliberate — a refused table costs a reader a screen, an accepted wrong
+ * one costs them a decision.
  */
-export function checkIdentity(doc: RatioDoc, ourName: string): IdentityCheck {
+export function checkIdentity(doc: RatioDoc, ourName: string, sourceUrl?: string | null): IdentityCheck {
   const theirs = doc.sourceCompany;
-  if (!theirs) {
+  // The URL carries the company name too, and it is the FULLER of the two —
+  // measured across fifteen holdings, moneycontrol's H1 reads "BHEL" and "AFL"
+  // where the URL reads `bharatheavyelectricals` and `arvindfashionslimited`.
+  // Checking only the H1 refused two pages that were about the right company.
+  const slug = (sourceUrl ?? "").match(/\/financials\/([^/]+)\//)?.[1] ?? null;
+  const ours = ident(ourName);
+
+  if (!theirs && !slug) {
     return {
-      sourceCompany: null, ours: ourName, matches: false,
+      sourceCompany: null, sourceSlug: null, ours: ourName, matches: false, matchedOn: null,
       reason: "the page does not name the company it is about, so there is nothing to check the attribution against",
     };
   }
-  const a = securityKeyOf(theirs);
-  const b = securityKeyOf(ourName);
-  // A containment test either way, because moneycontrol shortens ("Reliance"
-  // for Reliance Industries Ltd) as often as it lengthens.
-  const matches = a === b || a.startsWith(b) || b.startsWith(a);
+
+  const byTitle = theirs ? sameCompany(ident(theirs), ours) : false;
+  const bySlug = slug ? sameCompany(ident(slug), ours) : false;
+  const matches = byTitle || bySlug;
+  const matchedOn = byTitle ? "page title" : bySlug ? "source URL" : null;
+
   return {
-    sourceCompany: theirs, ours: ourName, matches,
+    sourceCompany: theirs, sourceSlug: slug, ours: ourName, matches, matchedOn,
     reason: matches
-      ? `the page identifies itself as ${theirs}, which is this holding`
-      : `the ratio source resolved to ${theirs}, which is a different company from ${ourName}`,
+      ? `the ${matchedOn} identifies this as ${(byTitle ? theirs : slug) ?? ""}, which is this holding`
+      : `the ratio source resolved to ${theirs ?? slug}, which is a different company from ${ourName}`,
   };
 }
 
