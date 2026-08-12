@@ -236,10 +236,52 @@ export async function onRequest(context) {
     : diag.status !== 200 ? "UPSTREAM_ERROR"
     : "EMPTY_RESPONSE";
 
+  // ── STALE BEATS NOTHING, AND THE AGE TRAVELS WITH IT ───────────────────────
+  //
+  // The cache HOLDS an entry for 24 hours but only SERVED one for 12, so a
+  // request landing in that gap threw away a perfectly good copy the moment the
+  // upstream failed and rendered an empty panel instead.
+  //
+  // That gap is not hypothetical. Measured 2026-08-11: every research kind and
+  // the quote endpoint answered normally at 14:25 UTC and every one of them
+  // timed out at 02:39 UTC the next day — a whole-API outage, not a slow
+  // company. During it this endpoint had yesterday's tables in hand and showed
+  // a reader nothing.
+  //
+  // A 10-year P&L does not move intraday. Yesterday's copy is the same document,
+  // and the honest rendering is to show it WITH ITS AGE — which is the rule the
+  // harvester already follows for a blocked observation: the series keeps its
+  // last good value and the page shows it with an honest as-of date.
+  //
+  // `stale` and `ageS` are not optional extras. A stale figure presented as
+  // current is the failure this whole cockpit exists to prevent, so both ride in
+  // the response and the panel states them.
+  const held = bundle[ticker];
+  if (!value && held && held.v) {
+    return json({
+      ok: true,
+      kind, ticker, label: KINDS[kind].label,
+      cached: true,
+      stale: true,
+      ageS: Math.round(ageS(bundle, ticker, now)),
+      servedAt: new Date(held.at).toISOString(),
+      // The upstream's failure is reported even though the response succeeds:
+      // "we are serving yesterday's copy BECAUSE the feed is down" is a
+      // different fact from "we are serving a cached copy".
+      upstreamFailure: failureCode,
+      upstreamStatus: diag.status,
+      ...held.v,
+      totalDurationMs: Date.now() - started,
+      cacheStats: cache.stats,
+      diagnostics: [diag],
+      ...meta,
+    });
+  }
+
   return json({
     ok: !!value,
     failureCode,
-    kind, ticker, label: KINDS[kind].label, cached: false,
+    kind, ticker, label: KINDS[kind].label, cached: false, stale: false,
     ...(value || {}),
     upstreamStatus: diag.status,
     totalDurationMs: Date.now() - started,

@@ -10,9 +10,28 @@ export type ResearchKind = "estimates" | "financials" | "concalls" | "documents"
 
 export type ResearchDoc = { url: string; title: string; date: string | null };
 
-export type Research =
+/**
+ * Set when the upstream failed and the edge served its last good copy instead.
+ *
+ * BOTH FIELDS ARE REQUIRED TOGETHER, and the panel must render them. Serving
+ * yesterday's tables is right — a 10-year P&L does not move intraday, and a
+ * blank panel during an upstream outage helps nobody. Serving them WITHOUT
+ * saying how old they are is the failure this book exists to prevent, so the
+ * age is not an optional decoration on the response.
+ */
+export type Staleness = {
+  stale?: boolean;
+  /** Seconds since the copy was fetched. */
+  ageS?: number;
+  servedAt?: string;
+  /** Why the live fetch failed, even though this response succeeded. */
+  upstreamFailure?: string | null;
+};
+
+export type Research = Staleness & (
   | { kind: ResearchKind; label: string; format: "text" | "markdown"; text: string; cached: boolean }
-  | { kind: ResearchKind; label: string; format: "documents"; documents: ResearchDoc[]; raw: string | null; cached: boolean };
+  | { kind: ResearchKind; label: string; format: "documents"; documents: ResearchDoc[]; raw: string | null; cached: boolean }
+);
 
 export type ResearchError = { failureCode: string; upstreamStatus: number | null; detail: string | null };
 
@@ -41,6 +60,20 @@ export async function fetchResearch(kind: ResearchKind, ticker: string): Promise
 
 export const isResearchError = (r: Research | ResearchError): r is ResearchError =>
   typeof (r as ResearchError).failureCode === "string";
+
+/**
+ * How old a served-stale copy is, in the reader's words. Null when the response
+ * is live, so a caller cannot accidentally label a fresh panel.
+ */
+export function stalenessNote(r: Research): string | null {
+  if (!r.stale) return null;
+  const s = typeof r.ageS === "number" ? r.ageS : null;
+  if (s === null) return "Served from the last saved copy; its age is not recorded.";
+  const h = Math.floor(s / 3600);
+  const m = Math.round((s % 3600) / 60);
+  const age = h >= 1 ? `${h}h${m ? ` ${m}m` : ""}` : `${Math.max(1, m)}m`;
+  return `The data service did not respond, so this is the last saved copy — fetched ${age} ago.`;
+}
 
 /** Human wording for the reasons a panel can come back empty. */
 export function researchReason(e: ResearchError): string {

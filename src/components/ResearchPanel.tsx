@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Markdown } from "@/components/Markdown";
 import { Pill } from "@/components/Pill";
 import {
-  fetchResearch, isResearchError, researchReason,
+  fetchResearch, isResearchError, researchReason, stalenessNote,
   type Research, type ResearchKind,
 } from "@/lib/research";
 
@@ -65,6 +65,19 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
       </div>
 
       {state === undefined && <div className="grid h-32 place-items-center text-sm text-slate-500">Loading {TAB_LABEL[tab].toLowerCase()}…</div>}
+
+      {/* SERVED-STALE, SAID OUT LOUD. When the data service is down the edge
+          serves its last good copy rather than an empty panel — a 10-year P&L
+          does not move intraday, and a blank screen during an outage helps
+          nobody. But a stale figure presented as current is exactly what this
+          book forbids, so the age is rendered here, above the tables, not
+          tucked into a tooltip. */}
+      {state && !isResearchError(state) && stalenessNote(state) && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-300">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>{stalenessNote(state)}</span>
+        </div>
+      )}
 
       {state && isResearchError(state) && (
         <div className="rounded-lg border border-dashed border-ink-600 bg-ink-900/60 px-4 py-5 text-center">

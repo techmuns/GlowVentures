@@ -19,7 +19,7 @@
 import { deriveDeal, summarise, emptyDeal, coerceDeal } from "@/lib/deals";
 import { viewHousehold, outflowsWithin, liquidityMonths, coerceHousehold, emptyAsset } from "@/lib/household";
 import { pendingToInvest, parseWeightPct } from "@/lib/watchlist";
-import { bandOf, bandWeightPct, mcapExposure } from "@/lib/marketCap";
+import { bandOf, bandWeightPct, mcapExposure, type McapBandKey } from "@/lib/marketCap";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -156,9 +156,12 @@ eq("unmeasured is carried, not folded in", [ex.unmeasured, ex.unmeasuredNames], 
 eq("total spans every listed row", ex.total, 100);
 // The weights are of the MEASURED book (90), not the total (100) — otherwise
 // they would sum to 90% and the missing tenth would read as an unallocated band.
-eq("large weight is of the measured book", Number(bandWeightPct(ex, "large").toFixed(4)), Number((40 / 90 * 100).toFixed(4)));
+// `bandWeightPct` is `number | null` by design — null means nothing was priced,
+// which is not 0% — so these assert through a non-null check rather than `!`.
+const w = (b: McapBandKey) => { const v = bandWeightPct(ex, b); return v === null ? Number.NaN : v; };
+eq("large weight is of the measured book", Number(w("large").toFixed(4)), Number((40 / 90 * 100).toFixed(4)));
 eq("bands sum to 100% of what was measured",
-   Number((["large", "mid", "small"]).reduce((a, b) => a + bandWeightPct(ex, b), 0).toFixed(6)), 100);
+   Number((["large", "mid", "small"] as McapBandKey[]).reduce((a, b) => a + w(b), 0).toFixed(6)), 100);
 
 // A band nobody holds is a MEASURED zero and stays 0 — the feed priced every
 // name and none landed there, which is a finding, not an absence.
