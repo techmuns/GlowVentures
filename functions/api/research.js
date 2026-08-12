@@ -47,6 +47,37 @@ const KINDS = {
     accept: "text/plain",
     format: "markdown",
   },
+  // ── THE ONLY SOURCE HERE FOR A CASH FLOW STATEMENT OR AN EARNINGS DATE ────
+  //
+  // `financials` above is screener's document: Pros & Cons, About, Stock
+  // details, Shareholding, Balance Sheet, P&L, Quarterly Results, Peer
+  // Comparison. No cash flow, no calendar. `combined_financials` was probed on
+  // 2026-08-12 in case it differed and returns the SAME eight sections, so
+  // there is nothing to gain by wiring it.
+  //
+  // This one is yfinance-backed and returns Income Statement, Balance Sheet,
+  // Cash Flow Statement and Calendar Information.
+  //
+  // THE `.NS` SUFFIX IS THE WHOLE TRICK. `/financials/RELIANCE` answers 200
+  // with "No data available" under every heading — which reads as "India is
+  // unsupported" and is not. `/financials/RELIANCE.NS` returns 22,940 bytes.
+  // The suffix is appended here rather than asked of the caller because every
+  // symbol in this book comes from `nseSymbols.json` and is by construction an
+  // NSE listing; a caller that already passes one keeps it.
+  //
+  // Its figures are RUPEES PRINTED WITH A DOLLAR SIGN and are pre-rounded to
+  // three significant figures. Neither is repaired here — the reader
+  // (`src/lib/yfinStatements.ts`) establishes the unit by reconciling against
+  // the screener document and renders nothing monetary until that check
+  // passes. Repairing it at the edge would hide the defect from the check.
+  statements: {
+    label: "Cash flow & calendar",
+    url: (t) => `https://fastapi.muns.io/financials/${encodeURIComponent(/\.[A-Z]{2}$/.test(t) ? t : `${t}.NS`)}`,
+    method: "POST",
+    accept: "text/plain",
+    body: () => JSON.stringify({ period: "annual" }),
+    format: "markdown",
+  },
   concalls: {
     label: "Concalls & filings",
     url: () => "https://devde.muns.io/filings/domestic",

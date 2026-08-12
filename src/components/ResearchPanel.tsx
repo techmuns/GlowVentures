@@ -3,6 +3,7 @@ import { ExternalLink, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Markdown } from "@/components/Markdown";
 import { FinancialSummary } from "@/components/FinancialSummary";
+import { CashFlowPanel } from "@/components/CashFlowPanel";
 import { Pill } from "@/components/Pill";
 import {
   fetchResearch, isResearchError, researchReason, stalenessNote,
@@ -18,6 +19,9 @@ import {
 
 const TAB_LABEL: Record<ResearchKind, string> = {
   financials: "Financials",
+  // The cash flow statement and the earnings calendar, from a DIFFERENT upstream
+  // to the Financials tab beside it — screener's document carries neither.
+  statements: "Cash flow",
   estimates: "Street estimates",
   // The client spec's DOCUMENT REPOSITORY: annual reports, quarterly reports,
   // investor presentations, earnings-call transcripts and corporate
@@ -31,12 +35,37 @@ const TAB_LABEL: Record<ResearchKind, string> = {
 export function ResearchPanel({ ticker, name }: { ticker: string | null; name: string }) {
   const [tab, setTab] = useState<ResearchKind>("financials");
   const [state, setState] = useState<Research | { failureCode: string; upstreamStatus: number | null; detail: string | null } | null | undefined>(undefined);
+  /**
+   * The screener document, held for the CASH FLOW tab's unit check.
+   *
+   * That tab reads a second upstream whose figures are rupees printed with a
+   * dollar sign, and the reader establishes the real unit by reconciling two
+   * lines against screener's statements for the same company. So the check
+   * needs BOTH documents, and it is fetched here rather than inside the panel
+   * so it survives a tab switch and hits the edge cache once.
+   */
+  const [screener, setScreener] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ticker) return;
     let alive = true;
     setState(undefined);
     fetchResearch(tab, ticker).then((r) => { if (alive) setState(r); });
+    return () => { alive = false; };
+  }, [ticker, tab]);
+
+  useEffect(() => {
+    setScreener(null);
+    if (!ticker || tab !== "statements") return;
+    let alive = true;
+    fetchResearch("financials", ticker).then((r) => {
+      if (!alive) return;
+      // A failure here is not an error to show: the panel renders "the unit
+      // could not be established" from the absence itself, which is the more
+      // useful sentence than a second error box about a document the reader
+      // did not ask for.
+      if (!isResearchError(r) && r.format === "markdown") setScreener(r.text);
+    });
     return () => { alive = false; };
   }, [ticker, tab]);
 
@@ -122,7 +151,14 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
         <FinancialSummary markdown={state.text} ticker={ticker} />
       )}
 
-      {state && !isResearchError(state) && state.format !== "documents" && (
+      {/* The cash flow tab renders its own tables, so the raw markdown below is
+          suppressed for it — the source document is a wall of ninety yfinance
+          line items and printing it under the panel would bury the statement. */}
+      {state && !isResearchError(state) && state.format === "markdown" && tab === "statements" && (
+        <CashFlowPanel statementsMarkdown={state.text} screenerMarkdown={screener} ticker={ticker} />
+      )}
+
+      {state && !isResearchError(state) && state.format !== "documents" && tab !== "statements" && (
         <div className="max-h-[560px] overflow-auto pr-1">
           {/* Estimates arrive as a pandas pipe-table rather than prose, so both
               formats go through the same renderer; only the financials need

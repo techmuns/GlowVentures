@@ -108,6 +108,12 @@ export function parsePeriod(raw: string): Period {
   }
   const y = /^(\d{4})$/.exec(label);
   if (y) return { label, year: Number(y[1]), month: null, ttm: false };
+  // The yfinance-backed statements head their columns with the period END DATE
+  // ("2026-03-31") rather than a month name. Same period, different printing —
+  // and both must resolve to the same year so a figure from one document can be
+  // reconciled against the same year in the other.
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(label);
+  if (iso) return { label, year: Number(iso[1]), month: Number(iso[2]), ttm: false };
   return { label, year: null, month: null, ttm: false };
 }
 
