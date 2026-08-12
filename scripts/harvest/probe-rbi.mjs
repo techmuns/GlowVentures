@@ -95,3 +95,68 @@ const looksZip = head.startsWith("PK");
 const looksOle = /^�?ÐÏà/.test(head) || head.charCodeAt(0) === 0xd0;
 console.log(`   first bytes: ${JSON.stringify(head)}`);
 console.log(`   verdict: ${looksZip ? "a real OOXML workbook" : looksOle ? "a legacy BIFF workbook" : "NOT a workbook — HTTP 200 serving something else"}`);
+
+// ── CAN THE FORM BE DRIVEN? ─────────────────────────────────────────────────
+//
+// Every WSS link on every one of those pages is
+// `javascript:WebForm_DoPostBackWithOptions(...)`, so there is no href to
+// follow and the index is genuinely behind `__VIEWSTATE`. That is not
+// automatically a dead end: an ASP.NET postback is an ordinary form POST, and
+// whether replaying one returns the supplement is a fact, not a judgement.
+//
+// It is asked here rather than assumed in either direction. "Behind a form"
+// has been the stated reason for declaring a source absent three times in this
+// repo (CEA, Coal, the JPC) and has never once been tested.
+console.log("\n── driving the postback");
+const landing = await get("https://rbi.org.in/Scripts/BS_ViewWSSExtract.aspx");
+if (!landing.ok) {
+  console.log("   the page did not load, so nothing can be concluded");
+} else {
+  const field = (name) => {
+    const m = new RegExp(`id="${name}"[^>]*value="([^"]*)"`).exec(landing.body)
+      ?? new RegExp(`name="${name}"[^>]*value="([^"]*)"`).exec(landing.body);
+    return m ? m[1] : null;
+  };
+  const viewState = field("__VIEWSTATE");
+  const validation = field("__EVENTVALIDATION");
+  const generator = field("__VIEWSTATEGENERATOR");
+  console.log(`   __VIEWSTATE ${viewState ? `${viewState.length} chars` : "MISSING"} · __EVENTVALIDATION ${validation ? "present" : "MISSING"}`);
+
+  // The target name is taken from the page's own postback call rather than
+  // guessed, so a renamed control fails loudly instead of silently posting to
+  // nothing.
+  const target = /WebForm_PostBackOptions\(&quot;([^&]+)&quot;/.exec(landing.body)?.[1] ?? null;
+  console.log(`   __EVENTTARGET from the page: ${target ?? "NOT FOUND"}`);
+
+  if (viewState && target) {
+    const body = new URLSearchParams({
+      __EVENTTARGET: target, __EVENTARGUMENT: "",
+      __VIEWSTATE: viewState,
+      ...(generator ? { __VIEWSTATEGENERATOR: generator } : {}),
+      ...(validation ? { __EVENTVALIDATION: validation } : {}),
+    });
+    const started = Date.now();
+    try {
+      const r = await fetch("https://rbi.org.in/Scripts/BS_ViewWSSExtract.aspx", {
+        method: "POST",
+        headers: {
+          "User-Agent": UA,
+          "Content-Type": "application/x-www-form-urlencoded",
+          Referer: "https://rbi.org.in/Scripts/BS_ViewWSSExtract.aspx",
+        },
+        body,
+      });
+      const html = await r.text();
+      // A supplement is recognisable by its own vocabulary plus a grid of
+      // figures — not by the page merely returning 200, which it does either
+      // way.
+      const rows = (html.match(/<tr[\s>]/gi) ?? []).length;
+      const numbers = (html.match(/>\s*[\d,]{6,}\s*</g) ?? []).length;
+      const named = /Reserve Money|Foreign Exchange Reserves|Money Stock|Scheduled Commercial Banks/i.test(html);
+      console.log(`   POST ${r.status}  ${Date.now() - started}ms  ${html.length} bytes  ${rows} table rows  ${numbers} large numbers  named WSS tables: ${named}`);
+      console.log(`   verdict: ${named && numbers > 20 ? "THE FORM IS DRIVABLE — a POST returns the supplement" : "the POST returned no supplement"}`);
+    } catch (e) {
+      console.log(`   POST failed: ${String(e?.message ?? e)}`);
+    }
+  }
+}
