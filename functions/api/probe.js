@@ -60,9 +60,17 @@ const json = (body, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
   });
 
-/** What a body looks like, without dumping megabytes into the response. */
-function describe(text, contentType) {
-  const out = { contentType, bytes: text.length, preview: text.slice(0, 1200) };
+/**
+ * What a body looks like, without dumping megabytes into the response.
+ *
+ * `full` (capped) exists because the interesting part of a document is rarely
+ * in its first 1200 bytes: `/financials/RELIANCE.NS` puts Cash Flow and the
+ * earnings Calendar at the END, after two other statements, and a head-only
+ * preview says nothing about whether either carries real figures. Judging that
+ * by eye is the whole point of a probe.
+ */
+function describe(text, contentType, full = 0) {
+  const out = { contentType, bytes: text.length, preview: text.slice(0, full ? Math.min(full, 60000) : 1200) };
   const t = text.trim();
   if (t.startsWith("{") || t.startsWith("[")) {
     try {
@@ -82,7 +90,7 @@ function describe(text, contentType) {
   return out;
 }
 
-async function call(url, { method = "GET", token, body }) {
+async function call(url, { method = "GET", token, body, full = 0 }) {
   const started = Date.now();
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort("timeout"), 45000);
@@ -98,7 +106,7 @@ async function call(url, { method = "GET", token, body }) {
       signal: ctl.signal,
     });
     const text = await r.text();
-    return { ok: r.ok, status: r.status, durationMs: Date.now() - started, upstream: url, ...describe(text, r.headers.get("content-type")) };
+    return { ok: r.ok, status: r.status, durationMs: Date.now() - started, upstream: url, ...describe(text, r.headers.get("content-type"), full) };
   } catch (e) {
     return { ok: false, status: null, durationMs: Date.now() - started, upstream: url, error: String(e?.message ?? e) };
   } finally {
@@ -167,6 +175,7 @@ export async function onRequest(context) {
   const spec = CALLS[name]();
   if (spec.error) return json({ ok: false, call: name, ...spec, ...meta }, 400);
 
-  const result = await call(spec.url, { method: spec.method, token, body: spec.body });
+  const full = Number(u.searchParams.get("full") ?? 0) || 0;
+  const result = await call(spec.url, { method: spec.method, token, body: spec.body, full });
   return json({ call: name, ...result, ...meta });
 }
