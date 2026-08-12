@@ -39,6 +39,44 @@ const TARGETS = [
     unblocks: "moving FX from a spot call to stored history",
     url: "https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?lastNObservations=5&format=csvdata",
   },
+  // ── THE INDIAN STATISTICAL HOSTS ────────────────────────────────────────
+  //
+  // Declared unreachable, and never measured from HERE. `docs/API-PROBE.md`
+  // established that muns' web_reader reaches rbi.org.in and cea.nic.in from
+  // wherever it runs, and returns the WSS as a labelled table with its XLSX
+  // agreeing figure for figure — but THE HARVESTER CANNOT USE THAT ROUTE.
+  // `MUNS_TOKEN` lives in the Cloudflare Pages environment and is not in this
+  // workflow's secrets, so a nightly job has no access to web_reader at all.
+  //
+  // Which leaves exactly one question, and it is the FRED question again: can
+  // this runner reach RBI directly? The claim that it cannot was measured in a
+  // development container. If it can, the whole WSS block is buildable with no
+  // vendor in the path.
+  {
+    name: "RBI — WSS issue page (WSSView.aspx)",
+    unblocks: "the 13 Weekly Statistical Supplement series, all declared absent as geo-blocked",
+    url: "https://rbi.org.in/Scripts/WSSView.aspx?Id=25253",
+  },
+  {
+    name: "RBI — a WSS table as XLSX (rbidocs)",
+    unblocks: "the same 13, by the cleaner route: the workbook rather than the page",
+    url: "https://rbidocs.rbi.org.in/rdocs/Wss/DOCs/6T_15042022581B32E54D0F45659D16814A71480E61.XLSX",
+  },
+  {
+    name: "CEA — daily generation landing page",
+    unblocks: "renewable and thermal generation, declared absent",
+    url: "https://cea.nic.in/",
+  },
+  {
+    name: "MoSPI — landing page",
+    unblocks: "IIP and CPI at source, rather than data.gov.in's copy frozen at 2023",
+    url: "https://mospi.gov.in/",
+  },
+  {
+    name: "NSDL — FPI fortnightly data",
+    unblocks: "the 2 foreign-flow series, declared absent",
+    url: "https://www.fpi.nsdl.co.in/web/Reports/ReportItem.aspx?ReportId=31",
+  },
   {
     name: "World Bank Pink Sheet landing page (already used)",
     unblocks: "nothing; the control — this one is known to work",
