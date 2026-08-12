@@ -25,9 +25,12 @@ import { parseRatioTable, checkIdentity, shareCountBreaks } from "@/lib/ratioTab
 // book's own `securityKeyOf`, and A MISMATCH RENDERS NOTHING. Not a warning
 // above the table: no table.
 
+/** The check's reason reads mid-sentence in one place and sentence-initial in another. */
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 type Fetched =
   | { ok: true; text: string; sourceUrl: string; stale?: boolean; ageS?: number }
-  | { ok: false; failureCode: string; pointer: string | null };
+  | { ok: false; failureCode: string; pointer: string | null; upstreamStatus: number | null };
 
 async function fetchRatioTable(ticker: string): Promise<Fetched> {
   try {
@@ -38,11 +41,11 @@ async function fetchRatioTable(ticker: string): Promise<Fetched> {
     });
     const d = await r.json().catch(() => null);
     if (!d || !d.ok || typeof d.text !== "string") {
-      return { ok: false, failureCode: d?.failureCode ?? `HTTP_${r.status}`, pointer: d?.pointer ?? null };
+      return { ok: false, failureCode: d?.failureCode ?? `HTTP_${r.status}`, pointer: d?.pointer ?? null, upstreamStatus: d?.upstreamStatus ?? null };
     }
     return { ok: true, text: d.text, sourceUrl: d.sourceUrl, stale: d.stale, ageS: d.ageS };
   } catch (e) {
-    return { ok: false, failureCode: "NETWORK", pointer: e instanceof Error ? e.message : null };
+    return { ok: false, failureCode: "NETWORK", pointer: e instanceof Error ? e.message : null, upstreamStatus: null };
   }
 }
 
@@ -51,7 +54,8 @@ const REASONS: Record<string, string> = {
   SOURCE_URL_NOT_ALLOWED: "The ratio resolver pointed at a host this dashboard will not fetch with its data token.",
   READER_EMPTY: "The reader reached the source page but could not extract readable text from it.",
   READER_ERROR: "The reader could not fetch the source page.",
-  UPSTREAM_NO_RESPONSE: "The data service didn't respond in time.",
+  UPSTREAM_NO_RESPONSE: "The data service didn't respond in time. It has been intermittently unavailable, so this is very likely an outage rather than a company with no ratios — the request is already retried once before giving up.",
+  UPSTREAM_ERROR: "The data service returned a gateway error. That is the service being down, not an answer about this company — the request is already retried once before giving up.",
   NOT_CONFIGURED: "The data token isn't set on this deployment.",
   NETWORK: "Couldn't reach the server.",
 };
@@ -81,7 +85,9 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
       return (
         <AbsentSection
           what="No ratio table for this company"
-          needs={`${REASONS[state.failureCode] ?? "The data service returned an error."} ${state.pointer ? `It pointed at ${state.pointer}.` : ""}`} />
+          needs={`${REASONS[state.failureCode] ?? "The data service returned an error."}${
+            state.upstreamStatus ? ` (upstream ${state.upstreamStatus})` : ""}${
+            state.pointer ? ` It pointed at ${state.pointer}.` : ""}`} />
       );
     }
     if (!doc || !identity) return null;
@@ -91,7 +97,7 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
       return (
         <AbsentSection
           what="The ratio source resolved to a different company"
-          needs={`${identity.reason}. The page carries a full ratio table and every figure on it is real — which is
+          needs={`${sentence(identity.reason)}. The page carries a full ratio table and every figure on it is real — which is
             exactly why it is not shown: rendered under this holding's name it would be a screen of another
             company's ratios with nothing on it to say so. The resolver is right for most tickers and wrong for
             some, so this is checked per company rather than trusted.`}>

@@ -125,9 +125,22 @@ async function fetchText(url, token, label) {
  */
 async function fetchRatioTable(ticker, token, diagnostics) {
   const srcUrl = `${RATIO_SOURCE}?q=${encodeURIComponent("Key Financial Ratios")}&tickers=${encodeURIComponent(ticker)}&countries=${COUNTRY}`;
-  const src = await fetchText(srcUrl, token, "ratio_source");
+
+  // ONE RETRY, BECAUSE THE MEASURED FAILURE IS A FLAP AND NOT A VERDICT.
+  // This upstream answers 502 in under a second and then answers properly
+  // moments later — observed repeatedly on 2026-08-12, on tickers that work.
+  // A single attempt therefore reports "no ratios for this company" about a
+  // company whose ratios are there, which is an absence recorded against the
+  // wrong cause. Bounded at one: a retry loop against a genuinely dead service
+  // is just a slower failure.
+  let src = await fetchText(srcUrl, token, "ratio_source");
   diagnostics.push(src.diag);
-  if (!src.text) return { value: null, failure: src.diag.status == null ? "UPSTREAM_NO_RESPONSE" : "UPSTREAM_ERROR" };
+  if (!src.text && (src.diag.status === 502 || src.diag.status === 503 || src.diag.status == null)) {
+    await new Promise((r) => setTimeout(r, 1200));
+    src = await fetchText(srcUrl, token, "ratio_source (retry)");
+    diagnostics.push(src.diag);
+  }
+  if (!src.text) return { value: null, failure: src.diag.status == null ? "UPSTREAM_NO_RESPONSE" : "UPSTREAM_ERROR", upstreamStatus: src.diag.status };
 
   const url = (src.text.match(/https?:\/\/\S+/) ?? [null])[0];
   if (!url) return { value: null, failure: "NO_SOURCE_URL", pointer: src.text.slice(0, 400) };
@@ -226,7 +239,7 @@ export async function onRequest(context) {
       return json({ ok: true, cached: true, ticker, ...bundle[ticker].v, totalDurationMs: Date.now() - started, ...meta });
     }
     const diagnostics = [];
-    const { value, failure, pointer } = await fetchRatioTable(ticker, token, diagnostics);
+    const { value, failure, pointer, upstreamStatus } = await fetchRatioTable(ticker, token, diagnostics);
     if (value) {
       bundle[ticker] = { v: value, at: now };
       await cache.write(bundle);
@@ -245,7 +258,7 @@ export async function onRequest(context) {
         totalDurationMs: Date.now() - started, diagnostics, ...meta,
       });
     }
-    return json({ ok: false, failureCode: failure, ticker, pointer: pointer ?? null, diagnostics, totalDurationMs: Date.now() - started, ...meta });
+    return json({ ok: false, failureCode: failure, ticker, pointer: pointer ?? null, upstreamStatus: upstreamStatus ?? null, diagnostics, totalDurationMs: Date.now() - started, ...meta });
   }
 
   const tickers = [...new Set((Array.isArray(body.tickers) ? body.tickers : [])
