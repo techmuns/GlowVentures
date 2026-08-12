@@ -1468,6 +1468,7 @@ the S&P's daily closes running to 1970 and the Pink Sheet's commodity prices to
 | `worldbankApi.mjs` | 9 | annual | India and US growth, inflation, unemployment, government debt, gross savings — the Economy page's live rows |
 | `rbi.mjs` | 7 | accumulating | RBI's current policy rates — repo, SDF, MSF, bank rate, reverse repo, CRR, SLR |
 | `iex.mjs` | 1 | accumulating | Indian day-ahead spot power, the day's average clearing price |
+| `amfi.mjs` | 7 | monthly | mutual-fund AUM, net flows, equity/debt flows, Gold and other ETF flows, folio count — 88 months each, backfilled from AMFI's own archive |
 
 **AN ACCUMULATING SOURCE PUBLISHES ONLY TODAY, AND THE STORE BUILDS THE REST.**
 The RBI states the rate in effect now and offers no downloadable history; IEX
@@ -1616,6 +1617,49 @@ brokers misname `.xls`) can open. It needs a BIFF reader added as a dependency.
 The Bloomberg Commodity Index is carried in place of the CRB **under its own
 name**, because it is a different index and presenting it as CRB would be a
 fabrication with a badge on it.
+
+### AMFI — a BIFF reader, and four layout changes it had to survive
+
+`adapters/amfi.mjs` reads AMFI's monthly mutual-fund report: AUM, net flows,
+equity and debt flows, Gold and other ETF flows, and the folio count — **88
+months each, back to April 2019.** It BACKFILLS rather than accumulating,
+because AMFI keeps ~100 past workbooks online; that is the difference between a
+series a reader can chart and one that says "building · 2".
+
+The workbooks are legacy BIFF (`d0cf11e0a1b11ae1`, an OLE2 compound document),
+which neither ExcelJS nor this repo's `sheet.mjs` opens. `xlsx` (SheetJS) is
+added for exactly that and nothing else.
+
+**FOUR THINGS CHANGE BETWEEN ISSUES, and each one silently cost months before it
+was measured.** None of them throws — every one just returns fewer observations,
+which is why the adapter reports how many workbooks contributed nothing:
+
+- **The sheet name.** `MCR`, `MCR Monthly Report`, `MCR_MonthlyReport`,
+  `MCR_Report`, `AMFI MONTHLY`, and in the older files simply the month
+  (`Dec 19 `). Matched by pattern, first sheet as the last resort.
+- **The title format.** "Monthly Report for the month of July 2026", "Monthly
+  Report for April 2026", "Monthly Report for March-2026", "Monthly Data for
+  February 2020". A pattern requiring "month of" dropped three months in six.
+- **The total's label.** "Grand Total" today, "Grand Total (A + B + C)" in
+  2019-20. An exact-equality test cost eleven months on three series.
+- **The AUM column's label.** "Net Assets Under Management as on 31-Jul-2026"
+  today, plain "AUM as on 29-Feb-2020" then. Cost eleven more on that series.
+
+**The month comes from INSIDE the file**, never the filename — the mistake the
+ingest already made when a fact sheet named `G100023_…` printed `Account:
+100022`. **Headline rows are NAMED, never summed**, the same rule as WPI's
+weighted aggregate: re-deriving the Grand Total from 80 scheme rows would
+publish a figure AMFI never did.
+
+**SIP is not in this workbook and is not derived from it.** The monthly-report
+page links no SIP file — checked, not assumed — so that row stays declared
+absent with its own reason rather than being approximated from equity flows.
+
+**The report describes the STORE, not the run.** `docs/SERIES-REPORT.md` was
+built from the current run's results, so `npm run harvest -- --only india-mf-aum`
+regenerated a committed document saying the store held one series. It now reads
+the merged manifest, which is the same fix the manifest itself needed for the
+same reason, one artefact over.
 
 ### data.gov.in — and why RECORD freshness is not DATA freshness
 

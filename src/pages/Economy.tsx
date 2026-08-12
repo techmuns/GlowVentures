@@ -139,8 +139,19 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
     ],
   },
   {
+    // AMFI's monthly report, read from the workbook it publishes — see
+    // `scripts/harvest/adapters/amfi.mjs`. SIP stays unwired because that
+    // workbook does not carry it and the monthly-report page links no SIP file:
+    // checked, not assumed. Demat accounts and F&O turnover need NSDL and the
+    // exchanges, neither of which answered.
     title: "Capital markets", icon: BarChart3, rows: [
-      { name: "Equity MF Flows", },
+      { name: "Mutual Fund AUM", seriesId: "india-mf-aum" },
+      { name: "Mutual Fund Net Flows", seriesId: "india-mf-net-flows" },
+      { name: "Equity MF Flows", seriesId: "india-mf-equity-flows" },
+      { name: "Debt MF Flows", seriesId: "india-mf-debt-flows" },
+      { name: "Gold ETF Flows", seriesId: "india-etf-gold-flows" },
+      { name: "Other ETF Flows", seriesId: "india-etf-other-flows" },
+      { name: "Mutual Fund Folios", seriesId: "india-mf-folios" },
       { name: "SIP Flows", },
       { name: "Demat Accounts", },
       { name: "F&O Turnover", },
@@ -169,6 +180,26 @@ const CATEGORIES: { title: string; icon: typeof TrendingUp; rows: Row[] }[] = [
 // What a release calendar actually needs is a SCHEDULE (when the next print is
 // due) and a CONSENSUS (what the street expects). Neither is in any source
 // wired here, and consensus is licensed data. The card below states that.
+
+/**
+ * A series value in its own unit.
+ *
+ * `toFixed(1)` alone was fine while every live row was a percentage. It is not
+ * once a row carries rupees or a headcount: AMFI's mutual-fund AUM printed as
+ * "8575656.5" and its folio count as "280865000.0", which a reader has to
+ * count digits to interpret.
+ *
+ * INDIAN GROUPING, AND THE SOURCE'S OWN SCALE. AMFI publishes in crore and this
+ * keeps it there rather than rescaling to lakh-crore — a unit the reader can
+ * check against the source document beats one that reads more naturally, and
+ * rescaling is where a factor of a hundred gets introduced.
+ */
+function fmtByUnit(v: number, unit: string): string {
+  if (unit === "%") return `${v.toFixed(1)}%`;
+  if (unit === "INR Cr") return `${Math.round(v).toLocaleString("en-IN")} Cr`;
+  if (unit === "count") return Math.round(v).toLocaleString("en-IN");
+  return v.toFixed(1);
+}
 
 export function Economy() {
   const [index, setIndex] = useState<SeriesIndex | null | undefined>(undefined);
@@ -296,7 +327,7 @@ export function Economy() {
                           <span className="h-1.5 w-1.5 rounded-full bg-gain"
                             title={`Live · ${e.source.name} · ${e.frequency} · observation dated ${e.last}`} />
                           <span className="tabular-nums font-medium text-slate-200">
-                            {e.last_value.toFixed(1)}{e.unit === "%" ? "%" : ""}
+                            {fmtByUnit(e.last_value, e.unit)}
                           </span>
                           <span className={`text-[10px] ${returnTone(yoy)}`} title={`Change over one year, to ${e.last}`}>
                             {fmtReturn(yoy, e.kind)}

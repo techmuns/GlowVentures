@@ -121,6 +121,23 @@ const cea = (row) => ({
   accumulating: true,
 });
 
+/**
+ * AMFI's monthly mutual-fund report.
+ *
+ * NOT accumulating, unlike CEA and RBI: AMFI keeps ~100 past workbooks online,
+ * so the adapter backfills the archive and the merge keeps it. `row` and
+ * `column` are keys into the labels AMFI itself prints — see adapters/amfi.mjs.
+ */
+const amfi = (row, column) => ({
+  adapter: "amfi",
+  row,
+  column,
+  symbol: `${row}/${column}`,
+  name: "AMFI (Association of Mutual Funds in India)",
+  url: "https://www.amfiindia.com/research-information/amfi-monthly",
+  provenance: "official-file",
+});
+
 /** IEX day-ahead spot power. ACCUMULATING, same reason. */
 const iex = () => ({
   adapter: "iex",
@@ -259,11 +276,33 @@ export const SERIES = [
   { id: "india-crr", label: "Cash Reserve Ratio (CRR)", category: "rates", group: "Policy Rates", unit: "%", band: [0, 25], source: rbi("CRR") },
   { id: "india-slr", label: "Statutory Liquidity Ratio (SLR)", category: "rates", group: "Policy Rates", unit: "%", band: [0, 60], source: rbi("SLR") },
 
-  // ── Capital markets — declared, and why it is not yet wired ──────────────
-  { id: "india-mf-aum", label: "Mutual Fund AAUM", category: "economy", group: "Capital markets", unit: "INR Cr", band: null, source: null,
-    absent: "AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency." },
+  // ── Capital markets — AMFI's monthly report, read straight from the BIFF ──
+  //
+  // Bands are wide on purpose. A band exists to catch the SOURCE changing a unit
+  // or a scale, not to second-guess a month: net flows go NEGATIVE in a
+  // redemption month (Gold ETF was -725 Cr in May 2026, measured), and a band
+  // that excluded that would block a real observation — the mistake the first
+  // zinc band made against the 1960s.
+  { id: "india-mf-aum", label: "Mutual Fund AUM", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [100000, 100000000], frequency: "monthly", source: amfi("grand-total", "aum") },
+  { id: "india-mf-net-flows", label: "Mutual Fund Net Flows", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [-2000000, 2000000], frequency: "monthly", source: amfi("grand-total", "net") },
+  { id: "india-mf-equity-flows", label: "Equity MF Net Flows", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [-500000, 500000], frequency: "monthly", source: amfi("equity", "net") },
+  { id: "india-mf-debt-flows", label: "Debt MF Net Flows", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [-1000000, 1000000], frequency: "monthly", source: amfi("debt", "net") },
+  { id: "india-mf-folios", label: "Mutual Fund Folios", category: "economy", group: "Capital markets",
+    unit: "count", band: [10000000, 2000000000], frequency: "monthly", source: amfi("grand-total", "folios") },
+  { id: "india-etf-gold-flows", label: "Gold ETF Net Flows", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [-100000, 100000], frequency: "monthly", source: amfi("gold-etf", "net") },
+  { id: "india-etf-other-flows", label: "Other ETF Net Flows", category: "economy", group: "Capital markets",
+    unit: "INR Cr", band: [-500000, 500000], frequency: "monthly", source: amfi("other-etf", "net") },
+  // SIP IS NOT IN THIS WORKBOOK, and is not derivable from it. AMFI publishes
+  // SIP contributions in a separate release, and the monthly report page
+  // carries no link to it — checked, not assumed. Summing the equity flows as a
+  // proxy would report a figure AMFI never published.
   { id: "india-sip-flows", label: "SIP Contributions", category: "economy", group: "Capital markets", unit: "INR Cr", band: null, source: null,
-    absent: "Same AMFI monthly workbooks, same BIFF blocker." },
+    absent: "The AMFI monthly workbook now read for MF flows, folios and AUM does not carry SIP contributions, and the monthly-report page links no SIP file. It is published separately and needs its own source located." },
 
   // ── Economy — annual, and lagged by a year or more. Charted as history ────
   // ── The two data.gov.in resources that carry a real monthly SERIES ────────

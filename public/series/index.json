@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-11T10:21:12.602Z",
+ "generatedAt": "2026-08-12T03:29:14.453Z",
  "categories": [
   {
    "key": "commodities",
@@ -5261,6 +5261,559 @@
    "low52": null
   },
   {
+   "id": "india-mf-aum",
+   "label": "Mutual Fund AUM",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "grand-total/aum",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:29:14.453Z",
+   "staleSince": null,
+   "last_value": 8575656.52,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 4.295254938679061,
+    "m3": 4.678353179840777,
+    "m6": 6.883353393730185,
+    "qtd": 4.295254938679061,
+    "ytd": 6.883353393730185,
+    "y1": 13.796309515365568,
+    "y3": 22.73605706059374,
+    "y5": 19.41627097710903,
+    "y10": null,
+    "max": 18.66513201614859
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 8575656.52,
+   "low52": 7373376.98
+  },
+  {
+   "id": "india-mf-net-flows",
+   "label": "Mutual Fund Net Flows",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "grand-total/net",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:28:15.827Z",
+   "staleSince": null,
+   "last_value": 235902.39,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": -26.829959822331663,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": 31.94065851424468,
+    "y3": 42.18593122904033,
+    "y5": 15.605872212786132,
+    "y10": null,
+    "max": 12.49118720080833
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 322402.98,
+   "low52": -239910
+  },
+  {
+   "id": "india-mf-equity-flows",
+   "label": "Equity MF Net Flows",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "equity/net",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:26:30.066Z",
+   "staleSince": null,
+   "last_value": 24697.39,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -14.758428503928256,
+    "m3": -35.751140732878596,
+    "m6": -11.965006134584444,
+    "qtd": -14.758428503928256,
+    "ytd": -11.965006134584444,
+    "y1": -42.163862176203416,
+    "y3": 47.93810152044169,
+    "y5": 1.805900358128243,
+    "y10": null,
+    "max": 26.04499883113722
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 42702.35,
+   "low52": 22907.77
+  },
+  {
+   "id": "india-mf-debt-flows",
+   "label": "Debt MF Net Flows",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "debt/net",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:26:30.066Z",
+   "staleSince": null,
+   "last_value": 187511.32,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": null,
+    "m3": -24.234798468447394,
+    "m6": null,
+    "qtd": null,
+    "ytd": null,
+    "y1": 75.57037498538173,
+    "y3": 45.04020177430923,
+    "y5": 20.539706916033463,
+    "y10": null,
+    "max": 6.235682413292842
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 247490.03,
+   "low52": -294987.18
+  },
+  {
+   "id": "india-mf-folios",
+   "label": "Mutual Fund Folios",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "count",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "grand-total/folios",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:28:15.827Z",
+   "staleSince": null,
+   "last_value": 280865000,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": 0.8132895379427296,
+    "m3": 2.017221519664125,
+    "m6": 7.506555425276118,
+    "qtd": 0.8132895379427296,
+    "ytd": 7.506555425276118,
+    "y1": 14.300846689834824,
+    "y3": 22.861697702164264,
+    "y5": 21.63609185949358,
+    "y10": null,
+    "max": 18.355396488791165
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 280865000,
+   "low52": 245724339
+  },
+  {
+   "id": "india-etf-gold-flows",
+   "label": "Gold ETF Net Flows",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "gold-etf/net",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:26:30.066Z",
+   "staleSince": null,
+   "last_value": 1558.746,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -54.73014888337468,
+    "m3": -48.73075609953445,
+    "m6": -86.61646091524324,
+    "qtd": -54.73014888337468,
+    "ytd": -86.61646091524324,
+    "y1": 24.09469355000502,
+    "y3": 50.60777002875909,
+    "y5": null,
+    "y10": null,
+    "max": null
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 24039.96,
+   "low52": -725.039
+  },
+  {
+   "id": "india-etf-other-flows",
+   "label": "Other ETF Net Flows",
+   "category": "economy",
+   "group": "Capital markets",
+   "unit": "INR Cr",
+   "kind": "price",
+   "frequency": "monthly",
+   "provenance": "official-file",
+   "source": {
+    "name": "AMFI (Association of Mutual Funds in India)",
+    "symbol": "other-etf/net",
+    "url": "https://www.amfiindia.com/research-information/amfi-monthly",
+    "exchange": null,
+    "upstreamCurrency": "INR"
+   },
+   "note": null,
+   "accumulating": false,
+   "first": "2019-04-30",
+   "last": "2026-07-31",
+   "count": 88,
+   "retrievedAt": "2026-08-12T03:26:30.066Z",
+   "staleSince": null,
+   "last_value": 9512.048,
+   "returns": {
+    "d1": null,
+    "w1": null,
+    "m1": -28.144580351962865,
+    "m3": -11.555817555970037,
+    "m6": -27.935973041280537,
+    "qtd": -28.144580351962865,
+    "ytd": -27.935973041280537,
+    "y1": 112.46895181321412,
+    "y3": null,
+    "y5": 7.7663175943250895,
+    "y10": null,
+    "max": null
+   },
+   "spans": {
+    "m1": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "m3": [
+     "2026-04-30",
+     "2026-07-31"
+    ],
+    "m6": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "qtd": [
+     "2026-06-30",
+     "2026-07-31"
+    ],
+    "ytd": [
+     "2025-12-31",
+     "2026-07-31"
+    ],
+    "y1": [
+     "2025-07-31",
+     "2026-07-31"
+    ],
+    "y3": [
+     "2023-07-31",
+     "2026-07-31"
+    ],
+    "y5": [
+     "2021-07-31",
+     "2026-07-31"
+    ],
+    "max": [
+     "2019-04-30",
+     "2026-07-31"
+    ]
+   },
+   "high52": 19802.41,
+   "low52": -620.222
+  },
+  {
    "id": "india-wpi",
    "label": "India Wholesale Price Index",
    "category": "economy",
@@ -6027,20 +6580,12 @@
    "absent": "Indian Railways freight volumes come from the Ministry of Railways monthly release — Phase 2 India harvest."
   },
   {
-   "id": "india-mf-aum",
-   "label": "Mutual Fund AAUM",
-   "category": "economy",
-   "group": "Capital markets",
-   "unit": "INR Cr",
-   "absent": "AMFI publishes ~100 monthly reports back to 2018 — real history, not just a latest value — but they are legacy BIFF .xls workbooks, which neither ExcelJS nor this repo's own sheet reader (built for OOXML and HTML-tables-named-.xls) can open. It needs a BIFF reader added as a dependency."
-  },
-  {
    "id": "india-sip-flows",
    "label": "SIP Contributions",
    "category": "economy",
    "group": "Capital markets",
    "unit": "INR Cr",
-   "absent": "Same AMFI monthly workbooks, same BIFF blocker."
+   "absent": "The AMFI monthly workbook now read for MF flows, folios and AUM does not carry SIP contributions, and the monthly-report page links no SIP file. It is published separately and needs its own source located."
   },
   {
    "id": "india-petroleum-consumption",

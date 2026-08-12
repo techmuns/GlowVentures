@@ -33,8 +33,9 @@ import * as iex from "./adapters/iex.mjs";
 import * as fred from "./adapters/fred.mjs";
 import * as dataGovIn from "./adapters/dataGovIn.mjs";
 import * as cea from "./adapters/cea.mjs";
+import * as amfi from "./adapters/amfi.mjs";
 
-const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex, fred, dataGovIn, cea };
+const ADAPTERS = { yahoo, worldbankPink, worldbankApi, rbi, iex, fred, dataGovIn, cea, amfi };
 const CONCURRENCY = 4;          // polite against a free upstream
 const only = process.argv.includes("--only")
   ? process.argv[process.argv.indexOf("--only") + 1]?.split(",")
@@ -251,7 +252,14 @@ async function main() {
   L.push("carried forward: a day the source did not publish is a day the series does");
   L.push("not have.");
   L.push("");
-  L.push(`- **Harvested:** ${ok.length} series, ${ok.reduce((s, r) => s + r.meta.count, 0).toLocaleString()} points`);
+  // THE REPORT DESCRIBES THE STORE, NOT THE RUN. `entries` is the merged
+  // manifest — this run's results plus everything a limited run did not touch —
+  // and the report is built from it for the same reason the manifest is: a
+  // committed document regenerated from `--only india-mf-aum` would tell a
+  // reader the store holds one series when it holds seventy-five. That is the
+  // bug the manifest already had, one artefact over.
+  const totalPoints = entries.reduce((n, e) => n + (e.count ?? 0), 0);
+  L.push(`- **Harvested:** ${entries.length} series, ${totalPoints.toLocaleString()} points`);
   L.push(`- **Failed:** ${failed.length}`);
   L.push(`- **Declared absent:** ${absent.length} (the spec asks for them; no source we have serves them)`);
   L.push("");
@@ -259,8 +267,8 @@ async function main() {
   L.push("");
   L.push("| Series | Group | Points | From | To | Unit | Source | Provenance |");
   L.push("| --- | --- | ---: | --- | --- | --- | --- | --- |");
-  for (const r of ok) {
-    L.push(`| ${r.meta.label} | ${r.meta.group} | ${r.meta.count.toLocaleString()} | ${r.meta.first} | ${r.meta.last} | ${r.meta.unit} | ${r.meta.source.name} \`${r.meta.source.symbol}\` | ${r.meta.provenance} |`);
+  for (const e of entries) {
+    L.push(`| ${e.label} | ${e.group} | ${(e.count ?? 0).toLocaleString()} | ${e.first} | ${e.last} | ${e.unit} | ${e.source?.name ?? ""} \`${e.source?.symbol ?? ""}\` | ${e.provenance} |`);
   }
 
   const withFindings = results.filter((r) => r.findings?.length);
