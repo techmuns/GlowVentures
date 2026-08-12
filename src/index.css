@@ -182,6 +182,11 @@ html:not(.dark) .text-loss { color: #b91c1c; }
 html:not(.dark) .text-amber-400 { color: #a1610a; }
 html:not(.dark) .text-amber-300 { color: #a1610a; }
 html:not(.dark) .text-amber-300\/90 { color: #a1610a; }
+/* The -200 tints are the PALEST of each ramp and are for a dark surface only:
+   on the light card they render as near-white text on near-white. Both are used
+   by the cash flow panel's unit-check band, whose whole job is to be read. */
+html:not(.dark) .text-amber-200 { color: #92560a; }
+html:not(.dark) .text-emerald-200 { color: #05614a; }
 
 html:not(.dark) .card {
   background-color: #ffffff;

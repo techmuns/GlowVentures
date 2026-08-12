@@ -30,6 +30,9 @@ import {
 // shown "EPS 14.41 here against 14.75 there" can see what was verified and go
 // and disagree with it.
 
+/** The check's reason reads mid-sentence in one place and sentence-initial in another. */
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /** Sig-fig-aware money: this source rounds to three, so it is never printed wider. */
 function useMoney() {
   const { fmtFromBase } = usePortfolio();
@@ -77,7 +80,7 @@ export function CashFlowPanel({
             </div>
             <p className="mt-1 text-[11.5px] opacity-90">
               This source prints every number with a dollar sign, including share counts, so the symbol says nothing
-              about the currency. {units.reason}.
+              about the currency. {sentence(units.reason)}.
             </p>
             {units.checks.some((c) => c.ratio !== null) && (
               <ul className="mt-2 space-y-0.5 text-[11px] opacity-90">
@@ -102,7 +105,7 @@ export function CashFlowPanel({
       ) : !confirmed ? (
         <AbsentSection
           what="The cash flow statement is withheld until its unit is established"
-          needs={`${units.reason}. The figures are in the response and are not shown, because a cash flow
+          needs={`${sentence(units.reason)}. The figures are in the response and are not shown, because a cash flow
             statement rendered in the wrong currency is worse than none: every line on it would be wrong by
             roughly a factor of ninety, and each would look like an ordinary number.`} />
       ) : (

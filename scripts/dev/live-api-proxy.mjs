@@ -36,9 +36,12 @@ const PORT = Number(process.env.PORT ?? 4174);
 const APP = process.env.APP_ORIGIN ?? "http://localhost:4173";
 const LIVE = process.env.GLOW_URL ?? "https://glowventures-1xw.pages.dev";
 const PASSWORD = process.env.GLOW_PASSWORD ?? "";
+// GLOW_COOKIE accepts an already-issued `glow_auth=…` for an environment that
+// has a session but not the plaintext. Neither is written anywhere.
+const COOKIE_IN = process.env.GLOW_COOKIE ?? "";
 
-if (!PASSWORD) {
-  console.error("GLOW_PASSWORD is unset — the deployed site is password-gated and /api/* would return the login page.");
+if (!PASSWORD && !COOKIE_IN) {
+  console.error("Set GLOW_PASSWORD or GLOW_COOKIE — the deployed site is password-gated and /api/* would return the login page.");
   process.exit(2);
 }
 
@@ -52,6 +55,7 @@ if (!PASSWORD) {
  * content type rather than the status code alone.
  */
 async function signIn() {
+  if (COOKIE_IN) return COOKIE_IN.startsWith("glow_auth=") ? COOKIE_IN : `glow_auth=${COOKIE_IN}`;
   const body = new URLSearchParams({ password: PASSWORD });
   const res = await fetch(`${LIVE}/__auth/login?next=%2F`, {
     method: "POST", body, redirect: "manual",
