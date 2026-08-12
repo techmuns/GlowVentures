@@ -41,9 +41,8 @@ the wrong cause, telling a reader to stop looking for something available.
 ## 1. `web_reader` reaches the Indian statistical hosts this repo cannot
 
 **This is the finding that moves the most work.** MoSPI, RBI, CEA and the rest
-refuse connections from both this container and a GitHub runner, both outside
-India, and that geo-block is the stated cause of a large block of not-built
-items. Measured:
+refuse connections from this container, and that geo-block is the stated cause
+of a large block of not-built items. Measured through `web_reader`:
 
 | Target | Result |
 | --- | --- |
@@ -53,6 +52,19 @@ items. Measured:
 
 So the block is lifted for RBI and CEA. MoSPI is reachable but did not render —
 that is a different problem from a refused connection, and not yet diagnosed.
+
+**AND THE HARVESTER CANNOT USE ANY OF IT.** `MUNS_TOKEN` lives in the
+Cloudflare Pages environment; `.github/workflows/harvest.yml` carries only
+`DATA_GOV_IN_KEY`. So a nightly job has no access to `web_reader` at all, and
+this route serves the browser-facing pages only.
+
+Which leaves the question that was never actually asked: **can the RUNNER reach
+RBI directly?** The geo-block was measured in a development container, and the
+harvest does not run there — the identical mistake to FRED, which was declared
+unreachable on that same reasoning and turned out to answer in under a second
+from the runner. `scripts/harvest/probe-reach.mjs` now carries RBI, CEA, MoSPI
+and NSDL targets alongside its existing controls, so the answer will come from
+the network that matters rather than from this one.
 
 ### The RBI Weekly Statistical Supplement comes back as a labelled table
 
@@ -100,7 +112,31 @@ own response stays prose because nothing in it says which number is which
 company's PE. **This document is not that** — it says so on both axes, and is
 readable by the same header-matching discipline as everything else here.
 
-Two things a reader of it must handle:
+### The resolver is wrong about a quarter of the time
+
+Measured across the first fifteen holdings in this book that carry an NSE
+symbol, `ratio_source` returned a page for an entirely different company four
+times:
+
+| Asked for | Resolved to |
+| --- | --- |
+| `ABCAPITAL` (Aditya Birla Capital) | `tatacapital` |
+| `BAJAJ-AUTO` (Bajaj Auto) | `bajajfinance` |
+| `ALIVUS` (Alivus Life Sciences) | `altiustelecominfrastructure` |
+| `BLS` (BLS International) | `sonablwprecisionforgings` |
+
+Every one of those pages carries a complete, correct table for the company it
+is actually about. At better than one in four, this is not an edge case to
+guard against — it decides whether the feature can exist at all. The page's own
+H1 and the company name inside its URL are both compared against the holding
+before anything is rendered, and a mismatch renders NO TABLE.
+
+Two identifiers rather than one because the H1 abbreviates — `BHEL`, `AFL` —
+where the URL spells the name out as `bharatheavyelectricals` and
+`arvindfashionslimited`. Checking only the title refused two pages that were
+about the right company. It buys no risk: a wrong page is wrong on both.
+
+Two more things a reader of it must handle:
 
 - **The `Trend` column is a chart, not a figure.** Every cell reads "Created
   with Highcharts 11.4.8". Matching periods by header text skips it naturally;
