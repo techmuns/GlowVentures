@@ -142,9 +142,9 @@ STATUS = {
     256: (N, ""), 257: (N, ""), 258: (N, ""),
 
     # ── H · capital markets ──────────────────────────────────────────────
-    261: (N, "AMFI publishes ~100 monthly reports back to 2018 in legacy .xls — wiring these from your other dashboard is the plan"),
-    262: (N, "Same AMFI source"),
-    263: (N, "Same AMFI source"), 264: (N, ""), 265: (N, ""), 266: (N, ""),
+    261: (D, "AMFI's monthly report, read from the BIFF workbook it publishes: total, equity and debt net flows, 88 months back to April 2019"),
+    262: (N, "The AMFI monthly workbook now read for flows, folios and AUM does not carry SIP contributions, and the monthly-report page links no SIP file — checked, not assumed. It is published separately and needs its own source located"),
+    263: (D, "Grand Total folio count, 88 months — the row AMFI itself prints, never re-derived from the 80 scheme rows"), 264: (D, "Gold ETF and other ETF net flows as separate series, since AMFI reports them separately"), 265: (N, "NSDL's investor-statistics page did not respond when probed. It publishes spreadsheets, so this is a reachability question rather than a reader-writing one"), 266: (N, "Same NSDL source, same reachability question"),
     267: (N, "NSE and BSE publish daily but under terms of use that need checking"),
     268: (N, "Same"),
 
