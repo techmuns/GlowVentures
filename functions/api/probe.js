@@ -45,6 +45,12 @@ const READER_PREFIXES = [
   "https://mospi.gov.in/",
   "https://www.mospi.gov.in/",
   "https://rbi.org.in/",
+  "https://www.rbi.org.in/",
+  "https://m.rbi.org.in/",
+  // The WSS lives on its own host, and `BS_ViewWSS.aspx` is a FORM: read by
+  // URL it returns the subsection dropdown and no figures. `WSSView.aspx?Id=`
+  // is the per-issue page, which is the thing a reader can actually address.
+  "https://wss.rbi.org.in/",
   "https://website.rbi.org.in/",
   "https://rbidocs.rbi.org.in/",
   "https://cea.nic.in/",
