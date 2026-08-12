@@ -19,6 +19,7 @@ const SUITES = [
   ["family arithmetic", "src/lib/__tests__/familyMath.test.ts"],
   ["financial tables", "src/lib/__tests__/financialTables.test.ts"],
   ["cash flow & calendar", "src/lib/__tests__/yfinStatements.test.ts"],
+  ["ratio table", "src/lib/__tests__/ratioTable.test.ts"],
 ];
 
 let failed = 0;

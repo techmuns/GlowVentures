@@ -27,9 +27,20 @@
 // upstream response for eyeballing on the deployed site.
 import { bundleCache, ageS } from "../../shared/edgeBundleCache.js";
 
-const VERSION = "ratios-fn/1";
+const VERSION = "ratios-fn/2";
 const RATIO_SOURCE = "https://fastapi.muns.io/data/ratio_source";
 const FETCH_FORMULA = "https://fastapi.muns.io/data/fetch_formula";
+const WEB_READER = "https://fastapi.muns.io/tools/web-reader";
+/**
+ * `ratio_source` hands back a moneycontrol URL, and only moneycontrol.
+ *
+ * The prefix is checked before the URL is fetched, for the same reason
+ * `functions/api/probe.js` allowlists its reader targets: this call carries the
+ * house token, and following an arbitrary URL out of an upstream response with
+ * an Authorization header attached is a token-exfiltration surface — one where
+ * the untrusted party is the upstream itself.
+ */
+const READER_ALLOWED = ["https://www.moneycontrol.com/", "https://moneycontrol.com/"];
 const UPSTREAM_TIMEOUT_MS = 20000;
 const CACHE_TTL_S = 86400;      // a day — none of this moves intraday
 const FRESH_S = 43200;          // 12h
@@ -86,6 +97,91 @@ async function fetchText(url, token, label) {
   }
 }
 
+/**
+ * The OTHER HALF of `ratio_source`'s answer.
+ *
+ * It does not return ratios. It returns a moneycontrol URL and the literal
+ * instruction "Use WebReader Tool", which is why this endpoint's prose is
+ * passed through verbatim and nothing is computed from it. Probed on
+ * 2026-08-12, following that instruction returns ~32 KB in which the ratio
+ * table IS present and labelled on both axes — seven year-ends of per-share
+ * ratios, margins, returns and liquidity. So the chain completes, and a table
+ * with an "Indicators" row axis and "Mar 26 … Mar 20" columns is a table, not
+ * a sentence to be mined.
+ *
+ * ── AND THE RESOLVER GETS THE COMPANY WRONG ─────────────────────────────────
+ *
+ * Measured across six tickers, five resolved correctly and ABCAPITAL resolved
+ * to `moneycontrol.com/financials/TATACAPITAL/ratiosVI/TCL06` — a different
+ * company. Rendering that under Aditya Birla Capital's name would be a
+ * fabricated attribution of the worst kind: every figure real, every one
+ * belonging to somebody else.
+ *
+ * So the page's own H1 ("# Reliance Key Financial Ratios") is extracted and
+ * returned as `sourceCompany`, and the CALLER — which knows what company it
+ * asked about — refuses the table when it does not match. The check is not
+ * made here because this function does not know the holding's name; it reports
+ * what the page says it is, which is the fact it can establish.
+ */
+async function fetchRatioTable(ticker, token, diagnostics) {
+  const srcUrl = `${RATIO_SOURCE}?q=${encodeURIComponent("Key Financial Ratios")}&tickers=${encodeURIComponent(ticker)}&countries=${COUNTRY}`;
+  const src = await fetchText(srcUrl, token, "ratio_source");
+  diagnostics.push(src.diag);
+  if (!src.text) return { value: null, failure: src.diag.status == null ? "UPSTREAM_NO_RESPONSE" : "UPSTREAM_ERROR" };
+
+  const url = (src.text.match(/https?:\/\/\S+/) ?? [null])[0];
+  if (!url) return { value: null, failure: "NO_SOURCE_URL", pointer: src.text.slice(0, 400) };
+  if (!READER_ALLOWED.some((p) => url.startsWith(p))) {
+    return { value: null, failure: "SOURCE_URL_NOT_ALLOWED", pointer: url };
+  }
+
+  const d = { label: "web-reader", url: url.slice(0, 200), status: null, durationMs: null, bytes: 0 };
+  const startedAt = Date.now();
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort("timeout"), UPSTREAM_TIMEOUT_MS);
+  try {
+    const r = await fetch(WEB_READER, {
+      method: "POST",
+      headers: { accept: "application/json", authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ urls: [url] }),
+      signal: ctl.signal,
+    });
+    d.status = r.status;
+    const text = await r.text();
+    d.durationMs = Date.now() - startedAt;
+    d.bytes = text.length;
+    diagnostics.push(d);
+    if (!r.ok) { d.bodyPreview = text.slice(0, BODY_PREVIEW); return { value: null, failure: "READER_ERROR", pointer: url }; }
+
+    let payload = null;
+    try { payload = JSON.parse(text); } catch { /* handled below */ }
+    const content = payload && Array.isArray(payload.results) ? String(payload.results[0]?.content ?? "") : "";
+    if (!content || /failed to extract readable text/i.test(content)) {
+      d.note = "reader returned no readable text";
+      return { value: null, failure: "READER_EMPTY", pointer: url };
+    }
+    // "# Reliance Key Financial Ratios" — the page's own claim about whose
+    // ratios these are. Reported, never trusted silently.
+    const h1 = /^#\s+(.+?)\s+Key Financial Ratios\s*$/m.exec(content);
+    return {
+      value: {
+        format: "ratio-table",
+        sourceUrl: url,
+        sourceCompany: h1 ? h1[1].trim() : null,
+        text: content.slice(0, 120000),
+      },
+      failure: null,
+    };
+  } catch (e) {
+    d.durationMs = Date.now() - startedAt;
+    Object.assign(d, errInfo(e), { aborted: ctl.signal.aborted });
+    diagnostics.push(d);
+    return { value: null, failure: "UPSTREAM_NO_RESPONSE", pointer: url };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const started = Date.now();
@@ -117,6 +213,40 @@ export async function onRequest(context) {
 
   let body = {};
   try { body = await request.json(); } catch { /* defaults below */ }
+
+  // POST { table: true, ticker } — the ratio_source → web_reader chain, one
+  // company at a time, cached on the ticker.
+  if (body.table) {
+    const ticker = cleanTicker(String(body.ticker ?? ""));
+    if (!ticker) return json({ ok: false, failureCode: "NO_TICKERS", ...meta }, 400);
+    const cache = bundleCache("ratio-table", { ttlS: CACHE_TTL_S, version: "v1", request });
+    const bundle = await cache.read();
+    const now = Date.now();
+    if (ageS(bundle, ticker, now) < FRESH_S && bundle[ticker] && bundle[ticker].v) {
+      return json({ ok: true, cached: true, ticker, ...bundle[ticker].v, totalDurationMs: Date.now() - started, ...meta });
+    }
+    const diagnostics = [];
+    const { value, failure, pointer } = await fetchRatioTable(ticker, token, diagnostics);
+    if (value) {
+      bundle[ticker] = { v: value, at: now };
+      await cache.write(bundle);
+      return json({ ok: true, cached: false, ticker, ...value, totalDurationMs: Date.now() - started, diagnostics, ...meta });
+    }
+    // STALE BEATS NOTHING, and the age travels with it — the same rule the
+    // research endpoint follows, and for the same reason: a ratio table does
+    // not move intraday, and this upstream was measured down twice in nineteen
+    // hours.
+    const held = bundle[ticker];
+    if (held && held.v) {
+      return json({
+        ok: true, cached: true, stale: true, ticker,
+        ageS: Math.round(ageS(bundle, ticker, now)), servedAt: new Date(held.at).toISOString(),
+        upstreamFailure: failure, ...held.v,
+        totalDurationMs: Date.now() - started, diagnostics, ...meta,
+      });
+    }
+    return json({ ok: false, failureCode: failure, ticker, pointer: pointer ?? null, diagnostics, totalDurationMs: Date.now() - started, ...meta });
+  }
 
   const tickers = [...new Set((Array.isArray(body.tickers) ? body.tickers : [])
     .map((t) => cleanTicker(String(t ?? "")))

@@ -15,6 +15,7 @@ import { symbolFor } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
 import { ReturnsTable } from "@/components/ReturnsTable";
+import { RatioTable } from "@/components/RatioTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
 
@@ -310,6 +311,8 @@ export function StockInfo() {
         price={rows[0]?.currentPrice ?? null}
         priceIsLive={live}
       />
+
+      <RatioTable ticker={sym} name={name} />
 
       <ResearchPanel ticker={sym} name={name} />
 
