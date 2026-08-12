@@ -85,8 +85,18 @@ export function parseRatioCell(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Split one pipe row into cells.
+ *
+ * The reader hands back MARKDOWN, so it escapes what markdown would otherwise
+ * read as syntax: the label arrives as `Book Value \[ExclRevalReserve\]/Share
+ * (Rs.)`. Those backslashes are the serialisation, not part of the line item,
+ * and printing them puts characters on screen the source never had.
+ * Non-breaking spaces are folded here too, in one place, so no consumer has to
+ * know either detail.
+ */
 const cells = (line: string) =>
-  line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.replace(/ /g, " ").trim());
+  line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.replace(/ /g, " ").replace(/\\([[\]()*_`~\\])/g, "$1").trim());
 
 const isSeparator = (l: string) => /^\|?[\s:|-]+\|?$/.test(l.trim()) && l.includes("-");
 

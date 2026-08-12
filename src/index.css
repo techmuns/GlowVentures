@@ -76,6 +76,10 @@ html:not(.dark) .bg-ink-800 { background-color: #ffffff; }
 html:not(.dark) .bg-ink-800\/85 { background-color: rgba(255, 255, 255, 0.92); }
 html:not(.dark) .bg-ink-800\/60 { background-color: rgba(255, 255, 255, 0.7); }
 html:not(.dark) .bg-ink-800\/30 { background-color: rgba(255, 255, 255, 0.4); }
+/* Section-heading rows inside a table (the ratio table's "Per Share Ratios").
+   Unremapped this inherits the DARK ink surface and renders as a heavy grey
+   bar across a white card; it wants a faint tint, not a block. */
+html:not(.dark) .bg-ink-800\/50 { background-color: #f4f1e8; }
 html:not(.dark) .bg-ink-700 { background-color: #faf8f1; }
 html:not(.dark) .bg-ink-700\/60 { background-color: rgba(250, 248, 241, 0.85); }
 html:not(.dark) .bg-ink-700\/40 { background-color: rgba(250, 248, 241, 0.7); }

@@ -51,6 +51,13 @@ eq("ROE reads across", row("Return on Networth / Equity (%)")!.values.slice(0, 3
 eq("… flagged as a percent", row("Return on Networth / Equity (%)")!.percent, true);
 eq("… and is NOT a per-share line", row("Return on Networth / Equity (%)")!.perShare, false);
 eq("current ratio", row("Current Ratio (%)")!.values[0], 1.10);
+// The reader escapes markdown syntax in the label; the backslashes are the
+// serialisation, not part of the line item.
+eq("markdown escapes are unescaped in labels",
+   doc.rows.some((r) => r.label.includes("\\[")), false);
+eq("… and the label reads as printed",
+   doc.rows.find((r) => r.label.startsWith("Book Value [Excl"))?.label,
+   "Book Value [ExclRevalReserve]/Share (Rs.)");
 
 // A SECTION HEADING IS NOT A RATIO OF NULLS.
 eq("headings are marked as such", row("Per Share Ratios")!.heading, true);
