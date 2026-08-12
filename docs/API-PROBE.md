@@ -82,18 +82,35 @@ reader still has to discover the live `Id` — the dynamic-selector problem
 `CLAUDE.md` already names for CEA, Coal and the JPC. Reachability is solved;
 addressing is not.
 
-### moneycontrol — the transport works; the CONTENT is not yet verified
+### moneycontrol — the `ratio_source` chain completes, and returns a real table
 
 `ratio_source` answers with a moneycontrol URL and the literal instruction "Use
-WebReader Tool". Pointed at that URL, `web_reader` returns HTTP 200 and 33,037
-characters in 5.6 s, so the chain completes at the transport level.
+WebReader Tool". Pointed at that URL, `web_reader` returns HTTP 200 and ~32 KB,
+and the ratio table is in it, labelled on both axes over seven year-ends:
 
-**Whether the ratio table is inside those 33 KB has not been established.** The
-first 250 characters are page chrome — language switcher, a loan advert, the
-search box — and every attempt to re-read it for a closer look has landed
-during the flapping described above. Recorded as unverified, not as working:
-the useful claim is "the ratios are readable", and nothing here demonstrates
-that yet.
+```
+| Indicators | Trend | Mar 26 | Mar 25 | Mar 24 | Mar 23 | Mar 22 | Mar 21 | Mar 20 |
+| Basic EPS (Rs.)                | … | 59.69 | 51.47 | 102.90 | 98.59 | 92.00 | …
+| Return on Networth / Equity (%)| … |  8.93 |  8.25 |   8.77 |  9.31 |  7.78 | …
+| Current Ratio (%)              | … |  1.10 |  1.10 |   1.18 |  1.07 |  1.12 | …
+```
+
+That is the missing half of the rule this repo already wrote: `ratio_source`'s
+own response stays prose because nothing in it says which number is which
+company's PE. **This document is not that** — it says so on both axes, and is
+readable by the same header-matching discipline as everything else here.
+
+Two things a reader of it must handle:
+
+- **The `Trend` column is a chart, not a figure.** Every cell reads "Created
+  with Highcharts 11.4.8". Matching periods by header text skips it naturally;
+  a positional read would take it as the first data column.
+- **The per-share lines are NOT adjusted for share-count events.** Between
+  Mar 24 and Mar 25 every per-share row halves together — EPS 102.90 → 51.47,
+  book value 1,172.75 → 623.12, revenue/share 1,331.75 → 712.90 — while the
+  margin and return rows do not move. Whole-table halving of exactly the
+  per-share lines is a share count doubling, not a collapse in earnings.
+  Charting that series unadjusted would show a 50% fall that never happened.
 
 ## 2. `market_data` returns a four-row preview even with `csv=true`
 
@@ -188,6 +205,7 @@ these tickers.
 | `combined_financials` | untested | nothing to gain — same document |
 | `drhp_filings` | untested | empty on every ticker tried |
 | MoSPI | geo-blocked | reachable, does not render — undiagnosed |
+| Ratio analysis (per-share, margins, returns, liquidity, leverage) | in the prose block | **sourceable** — the moneycontrol table comes back labelled on both axes, 7 year-ends |
 
 Nothing here has been wired into a page. Each row above is a measurement of what
 a source can supply, and the standing rule applies unchanged: a figure reaches
