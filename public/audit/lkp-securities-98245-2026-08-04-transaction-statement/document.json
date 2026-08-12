@@ -1,0 +1,751 @@
+{
+ "docKey": "lkp-securities-98245-2026-08-04-transaction-statement",
+ "provider": "LKP Securities",
+ "accountNo": "98245",
+ "ownerSource": "same-account",
+ "accountNoSource": "sole-account",
+ "clientCode": null,
+ "owner": "BHARAT AJAY JAISINGHANI",
+ "ownerId": "bharat-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Execution",
+ "providerEngagement": "broker account — self-directed",
+ "members": [],
+ "asOf": "2026-08-04",
+ "inceptionDate": null,
+ "reportType": "transaction-statement",
+ "sourcePath": "source/_extracted/august-2026/LKP 2/666134643_10082026134652.xls",
+ "pages": 1,
+ "status": "ok",
+ "warnings": [
+  {
+   "code": "account-no-from-sole-account",
+   "detail": "this report prints no client identifier; LKP Securities has exactly one account in this drop (98245), so there is no other account it could belong to."
+  },
+  {
+   "code": "owner-from-account-number",
+   "detail": "this report does not print the client name where it can be read; taken from other statements for LKP Securities account 98245, which all name BHARAT AJAY JAISINGHANI"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [
+  {
+   "date": "2026-08-03",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Aequs Limited",
+   "securityKey": "aequs",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3700,
+   "unitPrice": 235.47,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 871239,
+   "brokerage": null,
+   "charges": null,
+   "net": 871239,
+   "printed": {
+    "settlementAmount": 871239
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-01",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Ather Energy Limited",
+   "securityKey": "ather-energy",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 1240,
+   "unitPrice": 1155.1509,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1432387.12,
+   "brokerage": null,
+   "charges": null,
+   "net": 1432387.12,
+   "printed": {
+    "settlementAmount": 1432387.06
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-08-04",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Ather Energy Limited",
+   "securityKey": "ather-energy",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 1200,
+   "unitPrice": 1394.6218,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1673546.16,
+   "brokerage": null,
+   "charges": null,
+   "net": 1673546.16,
+   "printed": {
+    "settlementAmount": 1673546.2
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-06-25",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "BELRISE INDUSTRIES LIMITED",
+   "securityKey": "belrise-industries",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 6000,
+   "unitPrice": 251.496,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1508976,
+   "brokerage": null,
+   "charges": null,
+   "net": 1508976,
+   "printed": {
+    "settlementAmount": 1508976
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-06-15",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "CAPRI GLOBAL CAPITAL LIMITED",
+   "securityKey": "capri-global-capital",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3500,
+   "unitPrice": 217.3123,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 760593.05,
+   "brokerage": null,
+   "charges": null,
+   "net": 760593.05,
+   "printed": {
+    "settlementAmount": 760592.97
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-06-19",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "CAPRI GLOBAL CAPITAL LIMITED",
+   "securityKey": "capri-global-capital",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3500,
+   "unitPrice": 224.55,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 785925,
+   "brokerage": null,
+   "charges": null,
+   "net": 785925,
+   "printed": {
+    "settlementAmount": 785925
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-02",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Electronics Mart India Limited",
+   "securityKey": "electronics-mart-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3500,
+   "unitPrice": 134.9329,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 472265.15,
+   "brokerage": null,
+   "charges": null,
+   "net": 472265.15,
+   "printed": {
+    "settlementAmount": 472265.18
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-03",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Electronics Mart India Limited",
+   "securityKey": "electronics-mart-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3500,
+   "unitPrice": 142.2938,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 498028.3,
+   "brokerage": null,
+   "charges": null,
+   "net": 498028.3,
+   "printed": {
+    "settlementAmount": 498028.37
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-09",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Electronics Mart India Limited",
+   "securityKey": "electronics-mart-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 3000,
+   "unitPrice": 131.8731,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 395619.3,
+   "brokerage": null,
+   "charges": null,
+   "net": 395619.3,
+   "printed": {
+    "settlementAmount": 395619.39
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-09",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "JINDAL SAW LTD.",
+   "securityKey": "jindal-saw",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 2800,
+   "unitPrice": 270.039,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 756109.2,
+   "brokerage": null,
+   "charges": null,
+   "net": 756109.2,
+   "printed": {
+    "settlementAmount": 756109.2
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-09",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "JYOTHY LABS LIMITED",
+   "securityKey": "jyothy-labs",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 4000,
+   "unitPrice": 195.2788,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 781115.2,
+   "brokerage": null,
+   "charges": null,
+   "net": 781115.2,
+   "printed": {
+    "settlementAmount": 781115.34
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-01",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Manorama Industries Limited",
+   "securityKey": "manorama-industries",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 1000,
+   "unitPrice": 1619.0316,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1619031.6,
+   "brokerage": null,
+   "charges": null,
+   "net": 1619031.6,
+   "printed": {
+    "settlementAmount": 1619031.6
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-02",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "NESTLE INDIA LTD.",
+   "securityKey": "nestle-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 315,
+   "unitPrice": 1455.405,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 458452.58,
+   "brokerage": null,
+   "charges": null,
+   "net": 458452.58,
+   "printed": {
+    "settlementAmount": 458452.58
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-03",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "NESTLE INDIA LTD.",
+   "securityKey": "nestle-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 5,
+   "unitPrice": 1459.8138,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 7299.07,
+   "brokerage": null,
+   "charges": null,
+   "net": 7299.07,
+   "printed": {
+    "settlementAmount": 7299.07
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-23",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "NESTLE INDIA LTD.",
+   "securityKey": "nestle-india",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 30,
+   "unitPrice": 1453.5012,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 43605.04,
+   "brokerage": null,
+   "charges": null,
+   "net": 43605.04,
+   "printed": {
+    "settlementAmount": 43605.04
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-24",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "NIPPON INDIA ETF LIQUID BEES",
+   "securityKey": "nippon-india-etf-liquid-bees",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 1,
+   "unitPrice": 1000,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1000,
+   "brokerage": null,
+   "charges": null,
+   "net": 1000,
+   "printed": {
+    "settlementAmount": 1000
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-07-09",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Pine Labs Limited",
+   "securityKey": "pine-labs",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 6000,
+   "unitPrice": 144.4643,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 866785.8,
+   "brokerage": null,
+   "charges": null,
+   "net": 866785.8,
+   "printed": {
+    "settlementAmount": 866785.54
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-05-05",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Pricol Limited",
+   "securityKey": "pricol",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 2225,
+   "unitPrice": 580.9495,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1292612.64,
+   "brokerage": null,
+   "charges": null,
+   "net": 1292612.64,
+   "printed": {
+    "settlementAmount": 1292612.67
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-08-03",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Pricol Limited",
+   "securityKey": "pricol",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 2875,
+   "unitPrice": 718.56,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 2065860,
+   "brokerage": null,
+   "charges": null,
+   "net": 2065860,
+   "printed": {
+    "settlementAmount": 2065860
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-08-03",
+   "settlementDate": null,
+   "side": "buy",
+   "security": "Tenneco Clean Air India Limite",
+   "securityKey": "tenneco-clean-air-india-limite",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 2000,
+   "unitPrice": 546.6236,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1093247.2,
+   "brokerage": null,
+   "charges": null,
+   "net": 1093247.2,
+   "printed": {
+    "settlementAmount": 1093247.13
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  },
+  {
+   "date": "2026-04-21",
+   "settlementDate": null,
+   "side": "sell",
+   "security": "Varun Beverages Limited",
+   "securityKey": "varun-beverages",
+   "isin": null,
+   "exchange": "BSE",
+   "assetClass": "Equity",
+   "quantity": 2700,
+   "unitPrice": 483.3813,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": 1305129.51,
+   "brokerage": null,
+   "charges": null,
+   "net": 1305129.51,
+   "printed": {
+    "settlementAmount": 1305129.51
+   },
+   "source": "lkp-securities-98245-2026-08-04-transaction-statement"
+  }
+ ],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": {
+  "asOf": "2026-08-04",
+  "positions": [
+   {
+    "security": "Aequs Limited",
+    "securityKey": "aequs",
+    "symbol": "544634",
+    "quantity": 3700,
+    "asOf": "2026-08-03",
+    "opening": null
+   },
+   {
+    "security": "Ather Energy Limited",
+    "securityKey": "ather-energy",
+    "symbol": "544397",
+    "quantity": 40,
+    "asOf": "2026-08-04",
+    "opening": null
+   },
+   {
+    "security": "BELRISE INDUSTRIES LIMITED",
+    "securityKey": "belrise-industries",
+    "symbol": "544405",
+    "quantity": 6500,
+    "asOf": "2026-06-25",
+    "opening": {
+     "date": "2025-09-10",
+     "quantity": 12500,
+     "unitCost": 141.89,
+     "totalCost": 1773625
+    }
+   },
+   {
+    "security": "CAPRI GLOBAL CAPITAL LIMITED",
+    "securityKey": "capri-global-capital",
+    "symbol": "531595",
+    "quantity": 0,
+    "asOf": "2026-06-19",
+    "opening": {
+     "date": "2025-07-10",
+     "quantity": 7000,
+     "unitCost": 177.6573,
+     "totalCost": 1243601.1
+    }
+   },
+   {
+    "security": "Crompton Greaves Consumer Elec",
+    "securityKey": "crompton-greaves-consumer-elec",
+    "symbol": "539876",
+    "quantity": 5000,
+    "asOf": "2025-11-12",
+    "opening": {
+     "date": "2025-11-12",
+     "quantity": 5000,
+     "unitCost": 309.4036,
+     "totalCost": 1547017.8
+    }
+   },
+   {
+    "security": "Electronics Mart India Limited",
+    "securityKey": "electronics-mart-india",
+    "symbol": "543626",
+    "quantity": 0,
+    "asOf": "2026-07-09",
+    "opening": {
+     "date": "2026-01-02",
+     "quantity": 10000,
+     "unitCost": 105.6112,
+     "totalCost": 1056112
+    }
+   },
+   {
+    "security": "JINDAL SAW LTD.",
+    "securityKey": "jindal-saw",
+    "symbol": "500378",
+    "quantity": 2800,
+    "asOf": "2026-07-09",
+    "opening": null
+   },
+   {
+    "security": "JYOTHY LABS LIMITED",
+    "securityKey": "jyothy-labs",
+    "symbol": "532926",
+    "quantity": 0,
+    "asOf": "2026-07-09",
+    "opening": {
+     "date": "2026-01-02",
+     "quantity": 4000,
+     "unitCost": 352.0537,
+     "totalCost": 1408214.6
+    }
+   },
+   {
+    "security": "Manorama Industries Limited",
+    "securityKey": "manorama-industries",
+    "symbol": "541974",
+    "quantity": 1000,
+    "asOf": "2026-07-01",
+    "opening": null
+   },
+   {
+    "security": "Mrs. Bectors Food Specialities",
+    "securityKey": "mrs-bectors-food-specialities",
+    "symbol": "543253",
+    "quantity": 6000,
+    "asOf": "2026-01-02",
+    "opening": {
+     "date": "2026-01-02",
+     "quantity": 6000,
+     "unitCost": 250.5825,
+     "totalCost": 1503495.2
+    }
+   },
+   {
+    "security": "NESTLE INDIA LTD.",
+    "securityKey": "nestle-india",
+    "symbol": "500790",
+    "quantity": 350,
+    "asOf": "2026-07-23",
+    "opening": null
+   },
+   {
+    "security": "NIPPON INDIA ETF LIQUID BEES",
+    "securityKey": "nippon-india-etf-liquid-bees",
+    "symbol": "590096",
+    "quantity": -1,
+    "asOf": "2026-07-24",
+    "opening": null
+   },
+   {
+    "security": "Pine Labs Limited",
+    "securityKey": "pine-labs",
+    "symbol": "544606",
+    "quantity": 6000,
+    "asOf": "2026-07-09",
+    "opening": null
+   },
+   {
+    "security": "Pricol Limited",
+    "securityKey": "pricol",
+    "symbol": "540293",
+    "quantity": 0,
+    "asOf": "2026-08-03",
+    "opening": {
+     "date": "2026-02-05",
+     "quantity": 650,
+     "unitCost": 582.6625,
+     "totalCost": 378730.63
+    }
+   },
+   {
+    "security": "Tenneco Clean Air India Limite",
+    "securityKey": "tenneco-clean-air-india-limite",
+    "symbol": "544612",
+    "quantity": 2000,
+    "asOf": "2026-08-03",
+    "opening": null
+   },
+   {
+    "security": "Transrail Lighting Limited",
+    "securityKey": "transrail-lighting",
+    "symbol": "544317",
+    "quantity": 2525,
+    "asOf": "2025-09-17",
+    "opening": {
+     "date": "2025-09-17",
+     "quantity": 2525,
+     "unitCost": 790.4262,
+     "totalCost": 1995826.25
+    }
+   },
+   {
+    "security": "Varun Beverages Limited",
+    "securityKey": "varun-beverages",
+    "symbol": "540180",
+    "quantity": 0,
+    "asOf": "2026-04-21",
+    "opening": {
+     "date": "2025-07-10",
+     "quantity": 2700,
+     "unitCost": 461.9193,
+     "totalCost": 1247182.11
+    }
+   }
+  ]
+ },
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

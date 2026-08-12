@@ -69,6 +69,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": null,
+  "declaredAum": null,
   "source": "sanshi-fund-9039671854-2026-06-30-unknown"
  },
  "returns": [],

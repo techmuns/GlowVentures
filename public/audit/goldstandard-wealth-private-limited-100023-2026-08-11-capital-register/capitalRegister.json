@@ -1,0 +1,139 @@
+{
+ "name": "capital-register",
+ "rows": [
+  [
+   "description",
+   "tranDate",
+   "setDate",
+   "credit",
+   "debit",
+   "balance",
+   "notes"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "05/06/2026",
+   "05/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "8,675.00",
+   "174,973,300.00",
+   "0.00",
+   "8,675.00",
+   "174,973,300.00"
+  ],
+  [
+   "- -8675"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "09/06/2026",
+   "09/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "800.00",
+   "174,972,500.00",
+   "0.00",
+   "800.00",
+   "174,972,500.00"
+  ],
+  [
+   "- -800"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "30/06/2026",
+   "30/06/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "13,500.00",
+   "174,959,000.00",
+   "0.00",
+   "13,500.00",
+   "174,959,000.00"
+  ],
+  [
+   "- -13500"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "24/07/2026",
+   "24/07/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "4,020.00",
+   "174,954,980.00",
+   "0.00",
+   "4,020.00",
+   "174,954,980.00"
+  ],
+  [
+   "- -4020"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "30/07/2026",
+   "30/07/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "16,400.00",
+   "174,938,580.00",
+   "0.00",
+   "16,400.00",
+   "174,938,580.00"
+  ],
+  [
+   "- -16400"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "04/08/2026",
+   "04/08/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "5,600.00",
+   "174,932,980.00",
+   "0.00",
+   "5,600.00",
+   "174,932,980.00"
+  ],
+  [
+   "- -5600"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "07/08/2026",
+   "07/08/2026",
+   "TDS Netting Generated",
+   "Tax Deducted at Source",
+   "0.00",
+   "20,615.00",
+   "174,912,365.00",
+   "0.00",
+   "20,615.00",
+   "174,912,365.00"
+  ],
+  [
+   "- -20615"
+  ],
+  [
+   "Total",
+   "Closing Balance",
+   "0.00",
+   "69,610.00",
+   "174,912,365.00",
+   "0.00",
+   "69,610.00",
+   "174,912,365.00"
+  ],
+  [
+   "Page 1"
+  ]
+ ]
+}

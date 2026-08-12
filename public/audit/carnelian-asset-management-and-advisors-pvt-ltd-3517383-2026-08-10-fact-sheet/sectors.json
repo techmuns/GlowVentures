@@ -1,0 +1,127 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Jammu Kashmir Bank Ltd",
+   "Banks",
+   "43,871,921",
+   "11.10%"
+  ],
+  [
+   "Other Apparels &",
+   "35,054,600",
+   "8.87%"
+  ],
+  [
+   "2",
+   "KALYAN JEWELLERS INDIA LIMITED"
+  ],
+  [
+   "Accessor"
+  ],
+  [
+   "Construction &",
+   "36,699,660",
+   "9.28%"
+  ],
+  [
+   "3",
+   "Kalpataru Projects International Ltd"
+  ],
+  [
+   "Engineer"
+  ],
+  [
+   "4",
+   "Biocon Ltd",
+   "Biotechnology",
+   "53,475,550",
+   "13.52%"
+  ],
+  [
+   "5",
+   "Caliber Mining and Logistics Limited",
+   "Coal",
+   "22,130,917",
+   "5.60%"
+  ],
+  [
+   "6",
+   "Aditya Birla Capital Ltd",
+   "Holding Companies",
+   "65,089,540",
+   "16.46%"
+  ],
+  [
+   "Star Health and Allied Insurance Company",
+   "40,141,284",
+   "10.15%"
+  ],
+  [
+   "7",
+   "General Insurance"
+  ],
+  [
+   "Limited"
+  ],
+  [
+   "8",
+   "GLAND PHARMA LIMITED",
+   "Pharmaceuticals",
+   "22,010,560",
+   "5.57%"
+  ],
+  [
+   "9",
+   "TATA TECHNOLOGIES LIMITED",
+   "IT Enabled Services",
+   "16,617,693",
+   "4.20%"
+  ],
+  [
+   "Film Production,",
+   "37,361,896",
+   "9.45%"
+  ],
+  [
+   "10",
+   "PVR Inox Ltd",
+   "Distribution &"
+  ],
+  [
+   "Exhibition"
+  ],
+  [
+   "11",
+   "Cash",
+   "Cash and Equivalent",
+   "22,883,996",
+   "5.79%"
+  ],
+  [
+   "Dividend / Interest",
+   "62,750",
+   "0.02%"
+  ],
+  [
+   "12",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "395,400,367",
+   "100%"
+  ]
+ ]
+}

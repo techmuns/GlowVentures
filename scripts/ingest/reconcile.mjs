@@ -201,6 +201,48 @@ function explainedByAccrual(h) {
 }
 
 /**
+ * Does this row's printed %AUM follow the statement's OWN declared denominator?
+ *
+ * A third basis, and the SEBI investor report declares it out loud. SVAN's
+ * 31 July 2026 report prints a summary block whose total reads
+ *
+ *     Shares  144,891,378.61   155,651,492.21   105.37%
+ *     Cash    9,110,226.43       9,110,226.43     6.17%
+ *     Total   154,001,605.04   164,761,718.64   111.54%
+ *
+ * — its own percentages sum to 111.54% of the market value printed beside
+ * them. The column is "Assets Under Management (%)", and AUM here is a
+ * SMALLER number than the portfolio's market value: 164,761,718.64 / 1.1154 =
+ * 147,715,365. The percentage is not market value over portfolio total at all,
+ * and reading it as one made every row on that report look wrong by about 11%
+ * — 46 material deltas from a document that is internally consistent on its
+ * own terms.
+ *
+ * TWO SOURCE PROPERTIES COMBINE HERE, which is why the naive check missed it:
+ *
+ *   1. the denominator is AUM, which the total row states;
+ *   2. on 11 of 46 rows the statement's own MARKET VALUE does not equal its own
+ *      quantity x price — Ceat prints 1,590 at 3,429.90 and a value of
+ *      5,509,191.00, which is 3,465.53 a share.
+ *
+ * So the printed percentage is reproduced from the printed MARKET VALUE, not
+ * from the derived one. On all 46 rows it lands within the printed 2dp. The
+ * book keeps the derived figure — price x quantity, per the primitives rule —
+ * and this names why the statement's own column differs.
+ *
+ * The AUM is taken from the document's own total row. If that block is absent
+ * the check does not run and the delta stays material: an AUM inferred by
+ * fitting it to the rows it is meant to explain would explain anything.
+ */
+function explainedByAumBasis(h, doc) {
+  const printedPct = h.printed?.pctAssets;
+  const printedMv = h.printed?.marketValue;
+  const aum = doc.totals?.declaredAum;
+  if (!isNum(printedPct) || !isNum(printedMv) || !isNum(aum) || !aum) return false;
+  return Math.abs(round2((printedMv / aum) * 100) - printedPct) <= ROUNDING_PCT;
+}
+
+/**
  * Compare every DERIVED figure against the one the statement printed.
  *
  * This is where a report's own internal inconsistency becomes visible instead of
@@ -220,15 +262,18 @@ function derivedVsPrinted(doc) {
       const delta = round2(derived - printed);
       if (delta === 0) continue;
       const pctBasis = field === "pctAssets" && explainedByIncomeBasis(h, doc.totals?.totalMarketValue);
+      const aumBasis = field === "pctAssets" && !pctBasis && explainedByAumBasis(h, doc);
       const mvBasis = field === "marketValue" && explainedByAccrual(h);
       out.push({
         docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
         asOf: doc.asOf, reportType: doc.reportType,
         security: h.security, securityKey: h.securityKey,
         field, derived, printed, delta,
-        severity: pctBasis || mvBasis ? "explained" : classifyDelta(field, delta),
+        severity: pctBasis || aumBasis || mvBasis ? "explained" : classifyDelta(field, delta),
         cause: pctBasis
           ? "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly."
+          : aumBasis
+            ? "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM."
           : mvBasis
             ? "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa."
             : null,

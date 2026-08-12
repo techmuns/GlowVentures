@@ -1,0 +1,32 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "security",
+   "side",
+   "quantity",
+   "grossRate",
+   "netRate",
+   "netValue"
+  ],
+  [
+   "2026-07-23",
+   "SG Mart Limited",
+   "sell",
+   2440,
+   675.09,
+   1.08,
+   1644589.77
+  ],
+  [
+   "2026-07-30",
+   "Viyash Scientific Limited",
+   "buy",
+   2300,
+   252.23,
+   0.41,
+   581066.42
+  ]
+ ]
+}

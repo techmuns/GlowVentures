@@ -1,0 +1,124 @@
+{
+ "name": "openLots",
+ "rows": [
+  [
+   "security",
+   "purchaseDate",
+   "quantity",
+   "unitCost",
+   "totalCost"
+  ],
+  [
+   "Ather Energy Limited",
+   "2026-07-01",
+   1240,
+   1155.15,
+   1432387.06
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "2025-09-10",
+   6500,
+   141.89,
+   922285
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "2025-03-04",
+   3000,
+   329.35,
+   988054.8
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "2025-11-12",
+   2000,
+   279.48,
+   558963
+  ],
+  [
+   "JINDAL SAW LTD.",
+   "2026-07-09",
+   2800,
+   270.04,
+   756109.2
+  ],
+  [
+   "Manorama Industries Limited",
+   "2026-07-01",
+   1000,
+   1619.03,
+   1619031.6
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "2025-11-12",
+   2500,
+   258.42,
+   646040
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "2026-01-02",
+   3500,
+   244.99,
+   857455.2
+  ],
+  [
+   "NESTLE INDIA LTD.",
+   "2026-07-02",
+   315,
+   1455.41,
+   458452.58
+  ],
+  [
+   "NESTLE INDIA LTD.",
+   "2026-07-03",
+   5,
+   1459.81,
+   7299.07
+  ],
+  [
+   "NESTLE INDIA LTD.",
+   "2026-07-23",
+   30,
+   1453.5,
+   43605.04
+  ],
+  [
+   "Pine Labs Limited",
+   "2026-07-09",
+   6000,
+   144.46,
+   866785.54
+  ],
+  [
+   "Pricol Limited",
+   "2026-02-05",
+   650,
+   582.66,
+   378730.63
+  ],
+  [
+   "Pricol Limited",
+   "2026-05-05",
+   2225,
+   580.95,
+   1292612.66
+  ],
+  [
+   "Transrail Lighting Limited",
+   "2025-09-10",
+   2500,
+   790.58,
+   1976450
+  ],
+  [
+   "Transrail Lighting Limited",
+   "2025-09-17",
+   25,
+   775.05,
+   19376.25
+  ]
+ ]
+}

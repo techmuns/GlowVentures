@@ -299,6 +299,18 @@ export function makeTotals(input = {}) {
     gainLoss: num(input.gainLoss),
     pctGainLoss: num(input.pctGainLoss),
     positionCount: num(input.positionCount),
+    /**
+     * ASSETS UNDER MANAGEMENT, where the report states it and it is NOT the
+     * market value printed beside it.
+     *
+     * SVAN's SEBI investor report heads its weight column "Assets Under
+     * Management (%)" and totals it at 111.54% of the market value on the same
+     * row — so its percentages are of a smaller denominator, which the total
+     * row is the only place that declares. Carried so the reconciler can
+     * reproduce the printed percentages instead of reporting every row on the
+     * document as a material break. Null when the report does not say.
+     */
+    declaredAum: num(input.declaredAum),
     source: input.source ?? null,
   };
 }

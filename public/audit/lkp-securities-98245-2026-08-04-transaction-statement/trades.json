@@ -1,0 +1,181 @@
+{
+ "name": "trades",
+ "rows": [
+  [
+   "date",
+   "security",
+   "side",
+   "quantity",
+   "rate",
+   "netAmount"
+  ],
+  [
+   "2026-08-03",
+   "Aequs Limited",
+   "buy",
+   3700,
+   235.47,
+   871239
+  ],
+  [
+   "2026-07-01",
+   "Ather Energy Limited",
+   "buy",
+   1240,
+   1155.1509,
+   1432387.06
+  ],
+  [
+   "2026-08-04",
+   "Ather Energy Limited",
+   "sell",
+   1200,
+   1394.6218,
+   1673546.2
+  ],
+  [
+   "2026-06-25",
+   "BELRISE INDUSTRIES LIMITED",
+   "sell",
+   6000,
+   251.496,
+   1508976
+  ],
+  [
+   "2026-06-15",
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "sell",
+   3500,
+   217.3123,
+   760592.97
+  ],
+  [
+   "2026-06-19",
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "sell",
+   3500,
+   224.55,
+   785925
+  ],
+  [
+   "2026-07-02",
+   "Electronics Mart India Limited",
+   "sell",
+   3500,
+   134.9329,
+   472265.18
+  ],
+  [
+   "2026-07-03",
+   "Electronics Mart India Limited",
+   "sell",
+   3500,
+   142.2938,
+   498028.37
+  ],
+  [
+   "2026-07-09",
+   "Electronics Mart India Limited",
+   "sell",
+   3000,
+   131.8731,
+   395619.39
+  ],
+  [
+   "2026-07-09",
+   "JINDAL SAW LTD.",
+   "buy",
+   2800,
+   270.039,
+   756109.2
+  ],
+  [
+   "2026-07-09",
+   "JYOTHY LABS LIMITED",
+   "sell",
+   4000,
+   195.2788,
+   781115.34
+  ],
+  [
+   "2026-07-01",
+   "Manorama Industries Limited",
+   "buy",
+   1000,
+   1619.0316,
+   1619031.6
+  ],
+  [
+   "2026-07-02",
+   "NESTLE INDIA LTD.",
+   "buy",
+   315,
+   1455.405,
+   458452.58
+  ],
+  [
+   "2026-07-03",
+   "NESTLE INDIA LTD.",
+   "buy",
+   5,
+   1459.8138,
+   7299.07
+  ],
+  [
+   "2026-07-23",
+   "NESTLE INDIA LTD.",
+   "buy",
+   30,
+   1453.5012,
+   43605.04
+  ],
+  [
+   "2026-07-24",
+   "NIPPON INDIA ETF LIQUID BEES",
+   "sell",
+   1,
+   1000,
+   1000
+  ],
+  [
+   "2026-07-09",
+   "Pine Labs Limited",
+   "buy",
+   6000,
+   144.4643,
+   866785.54
+  ],
+  [
+   "2026-05-05",
+   "Pricol Limited",
+   "buy",
+   2225,
+   580.9495,
+   1292612.67
+  ],
+  [
+   "2026-08-03",
+   "Pricol Limited",
+   "sell",
+   2875,
+   718.56,
+   2065860
+  ],
+  [
+   "2026-08-03",
+   "Tenneco Clean Air India Limite",
+   "buy",
+   2000,
+   546.6236,
+   1093247.13
+  ],
+  [
+   "2026-04-21",
+   "Varun Beverages Limited",
+   "sell",
+   2700,
+   483.3813,
+   1305129.51
+  ]
+ ]
+}

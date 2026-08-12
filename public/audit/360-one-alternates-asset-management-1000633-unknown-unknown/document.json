@@ -2,11 +2,11 @@
  "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
  "provider": "360 ONE Alternates Asset Management",
  "accountNo": "1000633",
- "ownerSource": "same-account",
+ "ownerSource": null,
  "accountNoSource": "printed",
  "clientCode": null,
- "owner": "Bharat Jaisinghani",
- "ownerId": "bharat-jaisinghani",
+ "owner": "Investor",
+ "ownerId": null,
  "familyGroup": null,
  "strategy": "360 ONE Special Opportunities Fund - Series 8",
  "engagement": "AIF",
@@ -26,10 +26,6 @@
   {
    "code": "owner-unresolved",
    "detail": "\"Investor\" matches no canonical owner — add an alias in shared/owners.mjs"
-  },
-  {
-   "code": "owner-from-account-number",
-   "detail": "this report does not print the client name where it can be read; taken from other statements for 360 ONE Alternates Asset Management account 1000633, which all name Bharat Jaisinghani"
   }
  ],
  "holdings": [],

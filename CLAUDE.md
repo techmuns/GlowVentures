@@ -149,37 +149,48 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** Fourteen issuers, 23 accounts in the
-book, six holders, 28 files expanding to 109 — of which **113 documents** are
-extracted (three PDFs are BUNDLES carrying several reports each) and every one of
-them reads: 105 ok, 8 partial, **0 failed**.
+**What is actually in `source/` today.** TWO DROPS, and both stay: the original
+set at the top of `source/`, and the client's `august-2026/` folder. Eighteen
+issuers, 22 accounts in the book, six holders, 41 files expanding to 180 — of
+which **182 documents** are extracted and 163 read fully, 9 partially and **10
+not at all**. What does not read is named below; nothing is silently dropped.
+
+**A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
+`LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
+arrive again in August. `lib/bundle.mjs`'s caller used to expand every archive
+into `source/_extracted/<basename>/`, so the later drop overwrote the earlier
+one in place — and that is not a cosmetic clash, because a SNAPSHOT supersedes
+but a DATED ROW does not. The capital gain lots and transaction tape carried
+only by the July issue would have gone with the folder. The extraction path now
+mirrors the archive's own path under `source/`, which is byte-identical for
+every ZIP already at the top level.
 
 | Provider | Accounts | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹976.8 Cr |
+| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | **2026-08-10** | ₹395.3 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹294.2 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹293.5 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹284.6 Cr |
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹195.7 Cr |
-| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-07-10 | ₹400.1 Cr |
-| Goldstandard Wealth | 100023 | Ajay Jaisinghani | 2026-07-10 | ₹181.2 Cr |
-| Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-07-10 | ₹77.5 Cr |
-| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-06-30 | ₹159.8 Cr |
+| Goldstandard Wealth | 100023 | Ajay Jaisinghani | **2026-08-11** | ₹188.0 Cr |
+| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | **2026-07-31** | ₹164.5 Cr |
+| Green Lantern Capital | 510861 | Ajay Jaisinghani | **2026-07-27** | ₹114.5 Cr |
 | SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-06-30 | ₹103.8 Cr |
-| Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-06-25 | ₹117.0 Cr |
-| Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-06-25 | ₹59.2 Cr |
 | V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-07-06 | ₹92.4 Cr |
+| Goldstandard Wealth | 100022 | Ankita Jaisinghani | **2026-08-11** | ₹80.2 Cr |
 | V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-07-06 | ₹65.5 Cr |
+| Green Lantern Capital | 510854 | Ankita Jaisinghani | **2026-07-27** | ₹58.0 Cr |
 | Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹17.1 Cr each |
-| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-06-30 | ₹14.6 Cr each* |
+| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-07-31 / 06-30 | ₹14.7 / ₹14.6 Cr* |
 | Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-06-30 | ₹11.2 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹9.9 Cr |
-| 360 ONE Alternates | 1000632 / 1000633 | Ajay / Bharat Jaisinghani | 2026-05-18 | — (income only) |
-| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-07-01 | ₹0 (redeemed) |
+| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only) |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (redeemed) |
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹335.43 Cr**: listed ₹127.78 Cr, private ₹207.65 Cr. The split is
+**Consolidated ₹337.46 Cr**: listed ₹128.34 Cr, private ₹209.12 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -285,6 +296,71 @@ like: her ₹976.8 Cr was already in the consolidated total, attributed to nobod
 **A PAN that is also a document password is NOT written into the registry.** The
 alias it justifies is listed instead and the evidence recorded in words. Anyone
 extending `shared/owners.mjs` follows the same rule.
+
+### The August 2026 drop — what came in, and what it could not tell us
+
+The client's `august-2026/` folder brings 13 files. Six accounts advance their
+as-of — Goldstandard to 11 Aug, Carnelian to 10 Aug, SVAN 8710067 to 31 Jul,
+both Green Lanterns to 27 Jul — and the consolidated total moves ₹335.43 Cr →
+**₹337.46 Cr**.
+
+**TEN DOCUMENTS DO NOT READ, and they are two different problems.**
+
+*Six investments with no reader.* `reports.zip` and three loose PDFs carry
+managers this pipeline has never seen: **3P**, **Buoyant** and **Motilal Oswal
+Founders Fund** (Ajay), **Active Momentum Fund** (Ankita), **Helios** via CAMS
+(Ajay), and **INDIA SME** via HDFC and Kotak (all three members). Eight
+documents, classified but with `no-extractor`, so they contribute nothing and
+the coverage table names each one. These are real holdings the book does not
+yet count — the extraction report is the only place that says so, and it does.
+
+*Two documents this run could not decrypt.* Bharat's 360 ONE Alternates
+distribution notice and statement of earnings are encrypted with a password
+that is NOT in the drop's own `pASSWORD.docx` — that file names the Kotak and
+ABSL ones only. They read in an earlier extraction, so the password exists
+somewhere; without it folio **1000633** has no readable statement naming its
+holder, and the one other document mentioning the folio prints the holder as
+the literal word "Investor".
+
+**AN ACCOUNT NOBODY CAN BE SHOWN TO OWN IS EXCLUDED, NOT CARRIED EMPTY.**
+`Account.owner` is `string`, not `string | null`, and that is the model saying
+every account in this book belongs to a named member. The two wrong fixes were
+both available — widen the type for all 22 accounts to accommodate one, or emit
+`owner: null` and let a page render an account attributed to nobody. Folio
+1000633 goes to `excludedAccounts` instead, by the same mechanism as the HOPE
+INDIA TRUST folios: not summed, reason printed, and back the moment the
+password lets its statements be read. Its market value is nil either way — it
+is an income-only folio — so the consolidated total is unaffected; what is
+missing is ₹7.38 L of AIF income split by tax head, and its attribution.
+
+### A THIRD %-BASIS, DECLARED BY THE STATEMENT AND WORTH 46 MATERIAL DELTAS
+
+SVAN's 31 July investor report put 46 material deltas in the reconciliation —
+every `pctAssets` on the document, each about 11% adrift, which blocks the
+golden test. It was not an extraction error. The report heads its weight column
+**"Assets Under Management (%)"** and totals that column at **111.54%** of the
+market value printed beside it:
+
+```
+Shares  144,891,378.61   155,651,492.21   105.37%
+Cash      9,110,226.43     9,110,226.43     6.17%
+Total   154,001,605.04   164,761,718.64   111.54%
+```
+
+So AUM is a SMALLER number than the portfolio's market value — 164,761,718.64
+/ 1.1154 = 147,715,365 — and the total row is the only place the document
+states it. Two source properties combine, which is why a naive check missed it:
+the denominator is AUM, and on **11 of 46 rows the statement's own market value
+does not equal its own quantity × price** (Ceat prints 1,590 at 3,429.90 and a
+value of 5,509,191.00, which is 3,465.53 a share).
+
+Reproduced from the printed value over the declared AUM, all 46 rows land
+within the printed 2dp, so they are `explained` with that cause named — the
+same treatment as the income-inclusive basis, and for the same reason: **the
+formula is reproduced per row, never a tolerance widened.** The AUM is taken
+from the document's own total row and nowhere else; an AUM fitted to the rows
+it is meant to explain would explain anything, so a report that does not
+declare one leaves its deltas material.
 
 ### Encrypted statements — `GLOW_PDF_PASSWORDS`
 

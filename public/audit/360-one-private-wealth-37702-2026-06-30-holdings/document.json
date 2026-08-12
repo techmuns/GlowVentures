@@ -97,6 +97,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": null,
+  "declaredAum": null,
   "source": "360-one-private-wealth-37702-2026-06-30-holdings"
  },
  "returns": [],

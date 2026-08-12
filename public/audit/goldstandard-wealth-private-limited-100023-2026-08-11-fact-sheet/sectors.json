@@ -1,0 +1,337 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "Auto Components",
+   "3,137,500",
+   "1.67%"
+  ],
+  [
+   "1",
+   "Banco Products India Ltd."
+  ],
+  [
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "2,867,100",
+   "1.52%"
+  ],
+  [
+   "2",
+   "Sharda Motor Industries Ltd",
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "7,938,750",
+   "4.22%"
+  ],
+  [
+   "3",
+   "Suprajit Engineering Ltd."
+  ],
+  [
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "5,544,500",
+   "2.94%"
+  ],
+  [
+   "4",
+   "Tenneco Clean Air India Ltd."
+  ],
+  [
+   "& Equipments"
+  ],
+  [
+   "5",
+   "Blue Jet Healthcare Ltd.",
+   "Pharmaceuticals",
+   "8,882,250",
+   "4.72%"
+  ],
+  [
+   "6",
+   "Caplin Point Laboratories Ltd.",
+   "Pharmaceuticals",
+   "5,247,600",
+   "2.79%"
+  ],
+  [
+   "7",
+   "Lupin Ltd",
+   "Pharmaceuticals",
+   "4,600,000",
+   "2.44%"
+  ],
+  [
+   "8",
+   "Zydus Lifesciences Ltd.",
+   "Pharmaceuticals",
+   "6,714,000",
+   "3.57%"
+  ],
+  [
+   "Residential",
+   "3,944,600",
+   "2.09%"
+  ],
+  [
+   "9",
+   "Oberoi Realty Ltd.",
+   "Commercial"
+  ],
+  [
+   "Projects"
+  ],
+  [
+   "Stockbroking &",
+   "4,410,000",
+   "2.34%"
+  ],
+  [
+   "10",
+   "Motilal Oswal Financial Services Ltd."
+  ],
+  [
+   "Allied"
+  ],
+  [
+   "Computers -",
+   "6,722,100",
+   "3.57%"
+  ],
+  [
+   "11",
+   "Sonata Software Ltd.",
+   "Software &"
+  ],
+  [
+   "Consulting"
+  ],
+  [
+   "12",
+   "EIH Ltd.",
+   "Hotels & Resorts",
+   "6,063,000",
+   "3.22%"
+  ],
+  [
+   "13",
+   "Waaree Energies Ltd.",
+   "Other Electrical",
+   "4,051,500",
+   "2.15%"
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "14",
+   "Indraprastha Medical Corp. Ltd.",
+   "Hospital",
+   "6,838,125",
+   "3.63%"
+  ],
+  [
+   "15",
+   "Kovai Medical Center & Hospital Ltd.",
+   "Hospital",
+   "7,394,400",
+   "3.93%"
+  ],
+  [
+   "16",
+   "Sagility Ltd.",
+   "IT Enabled Services",
+   "4,364,000",
+   "2.32%"
+  ],
+  [
+   "17",
+   "Deep Industries Ltd.",
+   "Oil Equipment &",
+   "6,479,500",
+   "3.44%"
+  ],
+  [
+   "Services"
+  ],
+  [
+   "Business Process",
+   "6,347,880",
+   "3.37%"
+  ],
+  [
+   "Outsourcing"
+  ],
+  [
+   "18",
+   "eClerx Services Ltd.",
+   "(BPO)/ Knowledge"
+  ],
+  [
+   "Process"
+  ],
+  [
+   "Outsourcing (KPO)"
+  ],
+  [
+   "Logistics Solution",
+   "7,970,450",
+   "4.23%"
+  ],
+  [
+   "19",
+   "Transport Corp. of India Ltd."
+  ],
+  [
+   "Provider"
+  ],
+  [
+   "Passenger Cars &",
+   "6,330,600",
+   "3.36%"
+  ],
+  [
+   "20",
+   "Mahindra & Mahindra Ltd."
+  ],
+  [
+   "Utility Vehicles"
+  ],
+  [
+   "21",
+   "State Bank of India",
+   "Public Sector Bank",
+   "5,355,000",
+   "2.84%"
+  ],
+  [
+   "Housing Finance",
+   "5,742,100",
+   "3.05%"
+  ],
+  [
+   "22",
+   "Can Fin Homes Ltd."
+  ],
+  [
+   "Company"
+  ],
+  [
+   "23",
+   "Great Eastern Shipping Co. Ltd.",
+   "Shipping",
+   "6,648,000",
+   "3.53%"
+  ],
+  [
+   "24",
+   "ICICI Bank Ltd.",
+   "Private Sector",
+   "7,159,000",
+   "3.80%"
+  ],
+  [
+   "25",
+   "Karur Vysya Bank Ltd.",
+   "Private Sector",
+   "6,624,000",
+   "3.52%"
+  ],
+  [
+   "Asset",
+   "6,400,000",
+   "3.40%"
+  ],
+  [
+   "26",
+   "HDFC Asset Management Co. Ltd.",
+   "Management"
+  ],
+  [
+   "Company"
+  ],
+  [
+   "Tour Travel",
+   "3,258,875",
+   "1.73%"
+  ],
+  [
+   "27",
+   "BLS International Services Ltd"
+  ],
+  [
+   "Related Services"
+  ],
+  [
+   "28",
+   "Jindal Stainless Ltd",
+   "Iron & Steel",
+   "5,129,250",
+   "2.72%"
+  ],
+  [
+   "29",
+   "MPS Ltd",
+   "E-Learning",
+   "9,452,520",
+   "5.02%"
+  ],
+  [
+   "30",
+   "Life Insurance Corp. of India",
+   "Life Insurance",
+   "6,445,200",
+   "3.42%"
+  ],
+  [
+   "Exchange and Data",
+   "3,789,000",
+   "2.01%"
+  ],
+  [
+   "31",
+   "Indian Energy Exchange Ltd."
+  ],
+  [
+   "Platform"
+  ],
+  [
+   "32",
+   "Cash",
+   "Cash",
+   "6,145,081",
+   "3.26%"
+  ],
+  [
+   "Dividend / Interest",
+   "325,150",
+   "0.17%"
+  ],
+  [
+   "33",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "188,321,031",
+   "100%"
+  ]
+ ]
+}

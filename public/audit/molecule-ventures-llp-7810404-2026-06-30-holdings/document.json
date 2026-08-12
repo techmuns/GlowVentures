@@ -464,6 +464,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": null,
+  "declaredAum": null,
   "source": "molecule-ventures-llp-7810404-2026-06-30-holdings"
  },
  "returns": [],

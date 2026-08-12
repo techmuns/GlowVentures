@@ -1278,6 +1278,7 @@
   "gainLoss": 5957554,
   "pctGainLoss": 3.47,
   "positionCount": null,
+  "declaredAum": null,
   "source": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal"
  },
  "returns": [],

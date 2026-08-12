@@ -74,6 +74,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": 1,
+  "declaredAum": null,
   "source": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
  },
  "returns": [],

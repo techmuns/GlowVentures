@@ -1824,6 +1824,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": 46,
+  "declaredAum": null,
   "source": "svan-investment-managers-llp-8710067-2026-05-31-investor-report"
  },
  "returns": [

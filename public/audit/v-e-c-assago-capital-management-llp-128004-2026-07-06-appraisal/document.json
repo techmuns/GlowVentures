@@ -693,6 +693,7 @@
   "gainLoss": 7927879,
   "pctGainLoss": 14.23,
   "positionCount": null,
+  "declaredAum": null,
   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal"
  },
  "returns": [],

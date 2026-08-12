@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF769K01CM1",
+   "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
+   316.19,
+   2976.3962,
+   "2026-07-31",
+   635724.81,
+   941106.71
+  ]
+ ]
+}

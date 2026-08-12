@@ -1,0 +1,332 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Punjab National Bank",
+   "Banks",
+   "467,576",
+   "0.81%"
+  ],
+  [
+   "2",
+   "State Bank Of India",
+   "Banks",
+   "2,633,148",
+   "4.54%"
+  ],
+  [
+   "2,862,628",
+   "4.93%"
+  ],
+  [
+   "3",
+   "Engineers India Ltd",
+   "Consulting Services"
+  ],
+  [
+   "4",
+   "Bajaj Auto Ltd",
+   "2/3 Wheelers",
+   "1,151,900",
+   "1.98%"
+  ],
+  [
+   "Auto Parts &",
+   "3,038,959",
+   "5.23%"
+  ],
+  [
+   "5",
+   "Exide Industries Ltd"
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "Auto Parts &",
+   "999,039",
+   "1.72%"
+  ],
+  [
+   "6",
+   "Jamna Auto Ind Ltd"
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "ZF Commercial Vehicle Control Systems",
+   "Auto Parts &",
+   "1,186,336",
+   "2.04%"
+  ],
+  [
+   "7"
+  ],
+  [
+   "India Ltd",
+   "Equipment"
+  ],
+  [
+   "8",
+   "Power Finance Corporation Ltd",
+   "Finance (including",
+   "1,753,918",
+   "3.02%"
+  ],
+  [
+   "NBFCs)"
+  ],
+  [
+   "Finance (including",
+   "799,254",
+   "1.38%"
+  ],
+  [
+   "9",
+   "Rural Electrification Corporation Ltd"
+  ],
+  [
+   "NBFCs)"
+  ],
+  [
+   "IT Consulting &",
+   "1,215,900",
+   "2.09%"
+  ],
+  [
+   "10",
+   "Tech Mahindra Ltd",
+   "Software"
+  ],
+  [
+   "IT Software",
+   "1,568,892",
+   "2.70%"
+  ],
+  [
+   "11",
+   "Intellect Design Arena Ltd"
+  ],
+  [
+   "Products"
+  ],
+  [
+   "12",
+   "Aarti Drugs Ltd",
+   "Pharmaceuticals",
+   "1,159,701",
+   "2.00%"
+  ],
+  [
+   "13",
+   "Aurobindo Pharma Ltd",
+   "Pharmaceuticals",
+   "2,565,806",
+   "4.42%"
+  ],
+  [
+   "14",
+   "Glenmark Pharmaceuticals Ltd",
+   "Pharmaceuticals",
+   "2,239,920",
+   "3.86%"
+  ],
+  [
+   "15",
+   "GMM Pfaudler Ltd",
+   "Industrial Machinery",
+   "965,332",
+   "1.66%"
+  ],
+  [
+   "16",
+   "Ingersollrand India Ltd",
+   "Industrial Machinery",
+   "954,600",
+   "1.64%"
+  ],
+  [
+   "17",
+   "Isgec Heavy Engineering Ltd",
+   "Industrial Machinery",
+   "2,247,798",
+   "3.87%"
+  ],
+  [
+   "18",
+   "KSB Ltd",
+   "Industrial Machinery",
+   "2,474,268",
+   "4.26%"
+  ],
+  [
+   "Other Agricultural",
+   "1,125,710",
+   "1.94%"
+  ],
+  [
+   "19",
+   "Gujarat Ambuja Exports Ltd"
+  ],
+  [
+   "Prod"
+  ],
+  [
+   "Other Agricultural",
+   "2,148,366",
+   "3.70%"
+  ],
+  [
+   "20",
+   "Kaveri Seed Company Ltd"
+  ],
+  [
+   "Prod"
+  ],
+  [
+   "Construction &",
+   "723,694",
+   "1.25%"
+  ],
+  [
+   "21",
+   "Ratnamani Metals & Tubes Ltd"
+  ],
+  [
+   "Engineer"
+  ],
+  [
+   "Heavy Electrical",
+   "1,265,078",
+   "2.18%"
+  ],
+  [
+   "22",
+   "Thermax Ltd"
+  ],
+  [
+   "Equipmen"
+  ],
+  [
+   "Heavy Electrical",
+   "1,365,869",
+   "2.35%"
+  ],
+  [
+   "23",
+   "Triveni Turbine Ltd"
+  ],
+  [
+   "Equipmen"
+  ],
+  [
+   "24",
+   "Vedanta Aluminium Metal Limited",
+   "Aluminium",
+   "1,897,231",
+   "3.27%"
+  ],
+  [
+   "25",
+   "Bharat Heavy Electricals Ltd",
+   "Heavy Electrical",
+   "3,197,824",
+   "5.51%"
+  ],
+  [
+   "Equip"
+  ],
+  [
+   "Other Industrial",
+   "1,139,758",
+   "1.96%"
+  ],
+  [
+   "26",
+   "Graphite India Ltd"
+  ],
+  [
+   "Goods"
+  ],
+  [
+   "27",
+   "Hindustan Aeronautics Ltd",
+   "Airlines",
+   "1,963,075",
+   "3.38%"
+  ],
+  [
+   "28",
+   "The Anup Engineering Ltd",
+   "Engineering",
+   "1,365,983",
+   "2.35%"
+  ],
+  [
+   "29",
+   "Alivus Life Sciences Ltd",
+   "Pharmaceuticals",
+   "2,423,550",
+   "4.17%"
+  ],
+  [
+   "30",
+   "Mishra Dhatu Nigam Ltd",
+   "Miscellaneous",
+   "1,504,612",
+   "2.59%"
+  ],
+  [
+   "31",
+   "Vedanta Ltd",
+   "Diversified Metals",
+   "1,148,581",
+   "1.98%"
+  ],
+  [
+   "32",
+   "Cash",
+   "Cash and Equivalent",
+   "6,405,507",
+   "11.03%"
+  ],
+  [
+   "Axis Liquid Fund - Direct Plan - Growth",
+   "6,867",
+   "0.01%"
+  ],
+  [
+   "33",
+   "Mutual Fund"
+  ],
+  [
+   "Option"
+  ],
+  [
+   "Dividend / Interest",
+   "95,851",
+   "0.17%"
+  ],
+  [
+   "34",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "58,062,530",
+   "100%"
+  ]
+ ]
+}

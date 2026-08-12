@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "",
+   "ABSL Liquid Fund -Direct-IDCW Daily",
+   7685.295,
+   100.195,
+   "2026-07-31",
+   770037.9,
+   770028.13
+  ]
+ ]
+}

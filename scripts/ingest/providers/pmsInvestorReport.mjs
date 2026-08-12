@@ -336,9 +336,31 @@ export function extract({ grid, meta }) {
       `the ${s.section} section prints its subtotal (${s.printedValue.toLocaleString("en-IN")}) and no per-security rows; those holdings are not in this document and must come from another report for this account`);
   }
 
+  /**
+   * THE WEIGHT COLUMN IS OF AUM, AND AUM IS NOT THE MARKET VALUE BESIDE IT.
+   *
+   * The column is headed "Assets Under Management (%)" and SVAN's 31 July 2026
+   * report totals it at 111.54% — its own percentages do not sum to 100 of the
+   * value it prints. The denominator is therefore stated only here, implicitly:
+   * total market value / the total row's own percentage.
+   *
+   * Derived ONLY when that percentage is meaningfully away from 100, so a
+   * report whose weights do behave normally carries null and the reconciler
+   * falls back to reporting an unexplained delta. Inferring an AUM on every
+   * report would explain away breaks that are real.
+   */
+  const declaredAum = allocTotal?.value && allocTotal?.pct && Math.abs(allocTotal.pct - 100) > 0.5
+    ? Math.round((allocTotal.value / (allocTotal.pct / 100)) * 100) / 100
+    : null;
+  if (declaredAum) {
+    warn(warnings, "weights-on-aum-basis",
+      `the weight column is of Assets Under Management, which this report totals at ${allocTotal.pct}% of the market value printed beside it; AUM is ${declaredAum.toLocaleString("en-IN")} against a market value of ${allocTotal.value.toLocaleString("en-IN")}. Derived %assets is on the market value and will not match the printed column.`);
+  }
+
   const totals = makeTotals({
     totalMarketValue: allocTotal?.value ?? null,
     totalCost: allocTotal?.cost ?? null,
+    declaredAum,
     equityMarketValue: nonCashValue,
     equityCost: allocShares || allocFunds
       ? Math.round(((allocShares?.cost ?? 0) + (allocFunds?.cost ?? 0)) * 100) / 100

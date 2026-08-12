@@ -1,0 +1,126 @@
+{
+ "name": "realisedLots",
+ "rows": [
+  [
+   "security",
+   "isin",
+   "purchaseDate",
+   "saleDate",
+   "quantity",
+   "purchaseAmount",
+   "shortTerm",
+   "longTerm",
+   "daysHeld"
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "INE894V01022",
+   "2025-09-10",
+   "2026-06-25",
+   6000,
+   851340,
+   657636,
+   0,
+   288
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "INE180C01042",
+   "2025-07-10",
+   "2026-06-15",
+   3500,
+   621800.55,
+   138792.42,
+   0,
+   340
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "INE180C01042",
+   "2025-07-10",
+   "2026-06-19",
+   3500,
+   621800.55,
+   164124.45,
+   0,
+   344
+  ],
+  [
+   "Electronics Mart India Limited",
+   "INE02YR01019",
+   "2026-01-02",
+   "2026-07-02",
+   3500,
+   369639.2,
+   102625.98,
+   0,
+   181
+  ],
+  [
+   "Electronics Mart India Limited",
+   "INE02YR01019",
+   "2026-01-02",
+   "2026-07-03",
+   3500,
+   369639.2,
+   128389.17,
+   0,
+   182
+  ],
+  [
+   "Electronics Mart India Limited",
+   "INE02YR01019",
+   "2026-01-02",
+   "2026-07-09",
+   3000,
+   316833.6,
+   78785.79,
+   0,
+   188
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "INE668F01031",
+   "2025-04-17",
+   "2026-07-09",
+   3000,
+   1125750,
+   0,
+   -539913.5,
+   448
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "INE668F01031",
+   "2026-01-02",
+   "2026-07-09",
+   1000,
+   282464.6,
+   -87185.77,
+   0,
+   188
+  ],
+  [
+   "NIPPON INDIA ETF LIQUID BEES",
+   "INF732E01037",
+   null,
+   "2026-07-24",
+   1,
+   0,
+   0,
+   0,
+   null
+  ],
+  [
+   "Varun Beverages Limited",
+   "INE200M01039",
+   "2025-07-10",
+   "2026-04-21",
+   2700,
+   1247182.11,
+   57947.4,
+   0,
+   285
+  ]
+ ]
+}

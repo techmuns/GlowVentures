@@ -425,6 +425,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": 10,
+  "declaredAum": null,
   "source": "lkp-securities-98245-2026-03-31-holdings"
  },
  "returns": [],

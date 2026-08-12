@@ -1,0 +1,113 @@
+{
+ "name": "positions",
+ "rows": [
+  [
+   "security",
+   "scripCode",
+   "netQuantity",
+   "asOf"
+  ],
+  [
+   "Aequs Limited",
+   "544634",
+   3700,
+   "2026-08-03"
+  ],
+  [
+   "Ather Energy Limited",
+   "544397",
+   40,
+   "2026-08-04"
+  ],
+  [
+   "BELRISE INDUSTRIES LIMITED",
+   "544405",
+   6500,
+   "2026-06-25"
+  ],
+  [
+   "CAPRI GLOBAL CAPITAL LIMITED",
+   "531595",
+   0,
+   "2026-06-19"
+  ],
+  [
+   "Crompton Greaves Consumer Elec",
+   "539876",
+   5000,
+   "2025-11-12"
+  ],
+  [
+   "Electronics Mart India Limited",
+   "543626",
+   0,
+   "2026-07-09"
+  ],
+  [
+   "JINDAL SAW LTD.",
+   "500378",
+   2800,
+   "2026-07-09"
+  ],
+  [
+   "JYOTHY LABS LIMITED",
+   "532926",
+   0,
+   "2026-07-09"
+  ],
+  [
+   "Manorama Industries Limited",
+   "541974",
+   1000,
+   "2026-07-01"
+  ],
+  [
+   "Mrs. Bectors Food Specialities",
+   "543253",
+   6000,
+   "2026-01-02"
+  ],
+  [
+   "NESTLE INDIA LTD.",
+   "500790",
+   350,
+   "2026-07-23"
+  ],
+  [
+   "NIPPON INDIA ETF LIQUID BEES",
+   "590096",
+   -1,
+   "2026-07-24"
+  ],
+  [
+   "Pine Labs Limited",
+   "544606",
+   6000,
+   "2026-07-09"
+  ],
+  [
+   "Pricol Limited",
+   "540293",
+   0,
+   "2026-08-03"
+  ],
+  [
+   "Tenneco Clean Air India Limite",
+   "544612",
+   2000,
+   "2026-08-03"
+  ],
+  [
+   "Transrail Lighting Limited",
+   "544317",
+   2525,
+   "2025-09-17"
+  ],
+  [
+   "Varun Beverages Limited",
+   "540180",
+   0,
+   "2026-04-21"
+  ]
+ ]
+}

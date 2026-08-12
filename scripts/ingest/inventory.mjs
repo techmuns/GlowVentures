@@ -82,13 +82,27 @@ function expandArchives() {
 
     for (const zip of zips) {
       done.add(zip);
-      // Extract to source/_extracted/<zipname>/, keeping nested archives under
-      // their own parent so two same-named ZIPs can't overwrite each other.
+      // Extract to source/_extracted/<the zip's own path under source/>, so a
+      // ZIP's destination is unique to WHERE IT SITS and not just what it is
+      // called. Nested archives already unpacked under their own parent.
+      //
+      // THE DROP FOLDER IS PART OF THE IDENTITY. A monthly drop reissues the
+      // same statements under the same names — `LKP 2.zip`, `GREEN LANTERN -
+      // ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all arrive again in
+      // August 2026 — and keying only on the basename put both months in one
+      // directory, where the later extraction silently overwrote the earlier.
+      // That is not a cosmetic clash: the supersede rule needs BOTH issues on
+      // disk. A snapshot supersedes, but a DATED ROW does not, and the capital
+      // gain statements and transaction tapes only present in the older issue
+      // would have vanished with the folder.
       const inExtracted = zip.startsWith(EXTRACT_DIR + path.sep);
       const base = path.basename(zip, path.extname(zip));
+      const relDir = path.relative(SOURCE_DIR, path.dirname(zip));
       const dest = inExtracted
         ? path.join(path.dirname(zip), base)
-        : path.join(EXTRACT_DIR, base);
+        // relDir is "" for a ZIP dropped at the top of source/, so this is
+        // byte-for-byte the old path for every archive already in the tree.
+        : path.join(EXTRACT_DIR, relDir, base);
       try {
         fs.mkdirSync(dest, { recursive: true });
         const r = extractZip(zip, dest);

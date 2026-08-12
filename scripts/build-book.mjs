@@ -341,7 +341,46 @@ function build(docs) {
         + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : ""));
       continue;
     }
-    if (!ownerId) notes.push(`account ${accountNo} (${provider}) resolved to no canonical owner`);
+    /**
+     * AN ACCOUNT NOBODY CAN BE SHOWN TO OWN DOES NOT ENTER THE BOOK.
+     *
+     * `Account.owner` is a string, not `string | null`, and that is the model
+     * saying every account in this book belongs to a named family member. An
+     * account that resolves to no canonical owner has to go somewhere, and the
+     * two wrong answers are both available: widen the type — which weakens it
+     * for all 23 accounts to accommodate one — or emit `owner: null` and let a
+     * page render an account attributed to nobody.
+     *
+     * It is excluded instead, by the same mechanism and for the same reason as
+     * the HOPE INDIA TRUST folios: the account is not summed, the reason is
+     * printed so a reader can see it exists and why it is not counted, and it
+     * returns the moment the identity can be read.
+     *
+     * THE CASE THAT PRODUCED THIS: 360 ONE Alternates folio 1000633 is named
+     * only on two ENCRYPTED statements. Extracted with the password they read
+     * and the folio is Bharat Jaisinghani's; extracted without it they fail,
+     * and the one other document mentioning the folio prints the holder as the
+     * literal word "Investor". So the owner is genuinely unreadable, and
+     * guessing it from a filename would be exactly the fabrication this book
+     * refuses everywhere else.
+     */
+    if (!ownerId) {
+      const failed = group.filter((d) => d.status === "failed");
+      const encrypted = failed.some((d) => (d.warnings ?? []).some((w) => String(w.code ?? "").includes("encrypt")));
+      const reason = failed.length
+        ? `no readable statement names its holder — ${failed.length} of its ${group.length} document(s) failed to extract`
+          + (encrypted ? ", being encrypted with a password this run was not given" : "")
+        : "no statement for it resolves to a canonical owner";
+      excludedAccounts.push({
+        accountId, provider, accountNo,
+        owner: group.map((d) => d.owner).find(Boolean) ?? null,
+        value: group.map((d) => d.totals?.totalMarketValue).find(isNum) ?? null,
+        reason,
+      });
+      notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${reason}. `
+        + "It is excluded rather than carried with an empty owner, because an account attributed to nobody is a worse figure than a named absence.");
+      continue;
+    }
 
     accounts.push({
       accountId,

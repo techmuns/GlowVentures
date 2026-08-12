@@ -156,6 +156,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": 3,
+  "declaredAum": null,
   "source": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings"
  },
  "returns": [],

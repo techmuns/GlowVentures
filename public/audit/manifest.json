@@ -800,6 +800,2353 @@
   ]
  },
  {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-capital-gain",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_CapitalGain90OT (4).pdf",
+  "pages": 5,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-capital-gain",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · capital-gain",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_CapitalGain90OT (4).pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 72,
+    "cols": 15
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-dividend-statement",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_DividendStatement_India177OT (3).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-dividend-statement",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · dividend-statement",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_DividendStatement_India177OT (3).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 9,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioAppraisal675OT (8).pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · appraisal",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioAppraisal675OT (8).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 25,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-fact-sheet",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortFolioFactSheet6020OT (8).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-fact-sheet",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · fact-sheet",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortFolioFactSheet6020OT (8).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 24,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-benchmark",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPerfBM196OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-benchmark",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · performance-benchmark",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPerfBM196OT (5).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-history",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_portfolioPerfHistory1155OT (6).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-history",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · performance-history",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_portfolioPerfHistory1155OT (6).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPerfSummary1528OT (8).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPerfSummary1528OT (8).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-holdings",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPositionMain4089OT (8).pdf",
+  "pages": 3,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-holdings",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · holdings",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_PortfolioPositionMain4089OT (8).pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 25,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-transaction-statement",
+  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+  "accountNo": "3517383",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+  "asOf": "2026-08-10",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_TransactionStatement_India94OT (8).pdf",
+  "pages": 3,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-transaction-statement",
+  "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · transaction-statement",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_TransactionStatement_India94OT (8).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 38,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-bank-book",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_BankBook178OT (3).pdf",
+  "pages": 6,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-bank-book",
+  "label": "Goldstandard Wealth Private Limited · 100023 · bank-book",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_BankBook178OT (3).pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 175,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 6,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-capital-register",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_CapitalRegister1173OT (4).pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-capital-register",
+  "label": "Goldstandard Wealth Private Limited · 100023 · capital-register",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_CapitalRegister1173OT (4).pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 17,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-holdings",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_CurrentPortfolio2086OT (5).pdf",
+  "pages": 3,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-holdings",
+  "label": "Goldstandard Wealth Private Limited · 100023 · holdings",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_CurrentPortfolio2086OT (5).pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 44,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-dividend-statement",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_DividendStatement_India177OT (4).pdf",
+  "pages": 4,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-dividend-statement",
+  "label": "Goldstandard Wealth Private Limited · 100023 · dividend-statement",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_DividendStatement_India177OT (4).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 73,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-expense-statement",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "expense-statement",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_Expensestmt546OT (1).pdf",
+  "pages": 3,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-expense-statement",
+  "label": "Goldstandard Wealth Private Limited · 100023 · expense-statement",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_Expensestmt546OT (1).pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 44,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (5).pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
+  "label": "Goldstandard Wealth Private Limited · 100023 · appraisal",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (5).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 47,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-fact-sheet",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortFolioFactSheet6020OT (6).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-fact-sheet",
+  "label": "Goldstandard Wealth Private Limited · 100023 · fact-sheet",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortFolioFactSheet6020OT (6).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 68,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-benchmark",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioPerfBM196OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-benchmark",
+  "label": "Goldstandard Wealth Private Limited · 100023 · performance-benchmark",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioPerfBM196OT (5).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-history",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_portfolioPerfHistory1155OT (4).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-history",
+  "label": "Goldstandard Wealth Private Limited · 100023 · performance-history",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_portfolioPerfHistory1155OT (4).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 5,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-summary",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioPerfSummary1528OT (6).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-summary",
+  "label": "Goldstandard Wealth Private Limited · 100023 · performance-summary",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioPerfSummary1528OT (6).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-transaction-statement",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100023",
+  "owner": "Ajay Thakurdas Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_TransactionStatement_India94OT (4).pdf",
+  "pages": 3,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100023-2026-08-11-transaction-statement",
+  "label": "Goldstandard Wealth Private Limited · 100023 · transaction-statement",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_TransactionStatement_India94OT (4).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 38,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-bank-book",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_BankBook178OT (3).pdf",
+  "pages": 6,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-bank-book",
+  "label": "Goldstandard Wealth Private Limited · 100022 · bank-book",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_BankBook178OT (3).pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 172,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 6,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-capital-register",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_CapitalRegister1173OT (3).pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-capital-register",
+  "label": "Goldstandard Wealth Private Limited · 100022 · capital-register",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_CapitalRegister1173OT (3).pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 15,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-holdings",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_CurrentPortfolio2086OT (4).pdf",
+  "pages": 3,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-holdings",
+  "label": "Goldstandard Wealth Private Limited · 100022 · holdings",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_CurrentPortfolio2086OT (4).pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 44,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-dividend-statement",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_DividendStatement_India177OT (3).pdf",
+  "pages": 4,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-dividend-statement",
+  "label": "Goldstandard Wealth Private Limited · 100022 · dividend-statement",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_DividendStatement_India177OT (3).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 73,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioAppraisal675OT (4).pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
+  "label": "Goldstandard Wealth Private Limited · 100022 · appraisal",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioAppraisal675OT (4).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 47,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortFolioFactSheet6020OT (4).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet",
+  "label": "Goldstandard Wealth Private Limited · 100022 · fact-sheet",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortFolioFactSheet6020OT (4).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 68,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet-2",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortFolioFactSheet6020OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet-2",
+  "label": "Goldstandard Wealth Private Limited · 100022 · fact-sheet",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortFolioFactSheet6020OT (5).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 68,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-benchmark",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfBM196OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-benchmark",
+  "label": "Goldstandard Wealth Private Limited · 100022 · performance-benchmark",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfBM196OT (5).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-history",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_portfolioPerfHistory1155OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-history",
+  "label": "Goldstandard Wealth Private Limited · 100022 · performance-history",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_portfolioPerfHistory1155OT (5).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 5,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (4).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary",
+  "label": "Goldstandard Wealth Private Limited · 100022 · performance-summary",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (4).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary-2",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-11",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary-2",
+  "label": "Goldstandard Wealth Private Limited · 100022 · performance-summary",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_PortfolioPerfSummary1528OT (5).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-transaction-statement",
+  "provider": "Goldstandard Wealth Private Limited",
+  "accountNo": "100022",
+  "owner": "Ankita Bharat Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "Aristos Equity Portfolio",
+  "asOf": "2026-08-11",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_TransactionStatement_India94OT (4).pdf",
+  "pages": 3,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "goldstandard-wealth-private-limited-100022-2026-08-11-transaction-statement",
+  "label": "Goldstandard Wealth Private Limited · 100022 · transaction-statement",
+  "fy": "2026-08-11",
+  "source": "source/_extracted/august-2026/GOLD STANDARD - ANKITA/G100023_100023_TransactionStatement_India94OT (4).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 37,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-capital-gain",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_CapitalGain90OT (6).pdf",
+  "pages": 8,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-capital-gain",
+  "label": "Green Lantern Capital LLP · 510861 · capital-gain",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_CapitalGain90OT (6).pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 143,
+    "cols": 15
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 8,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-capital-register",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_CapitalRegister1173OT (3).pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-capital-register",
+  "label": "Green Lantern Capital LLP · 510861 · capital-register",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_CapitalRegister1173OT (3).pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 16,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-dividend-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_DividendStatement_India177OT (4).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-dividend-statement",
+  "label": "Green Lantern Capital LLP · 510861 · dividend-statement",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_DividendStatement_India177OT (4).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 26,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioAppraisal675OT (9).pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+  "label": "Green Lantern Capital LLP · 510861 · appraisal",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioAppraisal675OT (9).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 53,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortFolioFactSheet6020OT (9).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet",
+  "label": "Green Lantern Capital LLP · 510861 · fact-sheet",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortFolioFactSheet6020OT (9).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 66,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-08-10-performance-benchmark",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-08-10",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfBM196OT (7).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-08-10-performance-benchmark",
+  "label": "Green Lantern Capital LLP · 510861 · performance-benchmark",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfBM196OT (7).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-08-10-performance-history",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-08-10",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_portfolioPerfHistory1155OT (7).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-08-10-performance-history",
+  "label": "Green Lantern Capital LLP · 510861 · performance-history",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_portfolioPerfHistory1155OT (7).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfSummary1528OT (10).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
+  "label": "Green Lantern Capital LLP · 510861 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfSummary1528OT (10).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-holdings",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPositionMain4089OT (10).pdf",
+  "pages": 4,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-holdings",
+  "label": "Green Lantern Capital LLP · 510861 · holdings",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPositionMain4089OT (10).pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 56,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-07-27-transaction-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_TransactionStatement_India94OT (10).pdf",
+  "pages": 7,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-07-27-transaction-statement",
+  "label": "Green Lantern Capital LLP · 510861 · transaction-statement",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - AJAY /GLC0780_40994_TransactionStatement_India94OT (10).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 137,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-capital-gain",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalGain90OT (8).pdf",
+  "pages": 9,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-capital-gain",
+  "label": "Green Lantern Capital LLP · 510854 · capital-gain",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalGain90OT (8).pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 148,
+    "cols": 15
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 9,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-capital-register",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalRegister1173OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-capital-register",
+  "label": "Green Lantern Capital LLP · 510854 · capital-register",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_CapitalRegister1173OT (5).pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 16,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-dividend-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_DividendStatement_India177OT (3).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-dividend-statement",
+  "label": "Green Lantern Capital LLP · 510854 · dividend-statement",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_DividendStatement_India177OT (3).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 26,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioAppraisal675OT (9).pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+  "label": "Green Lantern Capital LLP · 510854 · appraisal",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioAppraisal675OT (9).pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 53,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-fact-sheet",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (11).pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-fact-sheet",
+  "label": "Green Lantern Capital LLP · 510854 · fact-sheet",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortFolioFactSheet6020OT (11).pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 66,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-08-10-performance-benchmark",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-08-10",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfBM196OT (7).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-08-10-performance-benchmark",
+  "label": "Green Lantern Capital LLP · 510854 · performance-benchmark",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfBM196OT (7).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-08-10-performance-history",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-08-10",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (5).pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-08-10-performance-history",
+  "label": "Green Lantern Capital LLP · 510854 · performance-history",
+  "fy": "2026-08-10",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_portfolioPerfHistory1155OT (5).pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-04-01-performance-summary",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfSummary1528OT (10).pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-04-01-performance-summary",
+  "label": "Green Lantern Capital LLP · 510854 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPerfSummary1528OT (10).pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-holdings",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (11).pdf",
+  "pages": 4,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-holdings",
+  "label": "Green Lantern Capital LLP · 510854 · holdings",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_PortfolioPositionMain4089OT (11).pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 56,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-07-27-transaction-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-07-27",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_TransactionStatement_India94OT (8).pdf",
+  "pages": 7,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-07-27-transaction-statement",
+  "label": "Green Lantern Capital LLP · 510854 · transaction-statement",
+  "fy": "2026-07-27",
+  "source": "source/_extracted/august-2026/GREEN LANTERN - ANKITA/GLC0776_40752_TransactionStatement_India94OT (8).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 139,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
+  "provider": "Aditya Birla Sun Life Mutual Fund",
+  "accountNo": "1019265797",
+  "owner": "Hope India Trust",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-03",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
+  "fy": "2026-08-03",
+  "source": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
+  "provider": "Aditya Birla Sun Life Mutual Fund",
+  "accountNo": "1038104611",
+  "owner": "HOPE INDIA TRUST",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-03",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
+  "pages": 3,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
+  "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · holdings",
+  "fy": "2026-08-03",
+  "source": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-mutual-fund-16180583-2026-08-06-holdings",
+  "provider": "HDFC Mutual Fund",
+  "accountNo": "16180583",
+  "owner": "Bharat A Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-06",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/LKP 1/HDFC Acctstmt_H_16180583.pdf",
+  "pages": 3,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "hdfc-mutual-fund-16180583-2026-08-06-holdings",
+  "label": "HDFC Mutual Fund · 16180583 · holdings",
+  "fy": "2026-08-06",
+  "source": "source/_extracted/august-2026/LKP 1/HDFC Acctstmt_H_16180583.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 3,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "4295974",
+  "owner": "Hope India Trust",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-03",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
+  "pages": 3,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
+  "fy": "2026-08-03",
+  "source": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
+  "provider": "Mirae Asset Mutual Fund",
+  "accountNo": "70413280453",
+  "owner": "HOPE INDIA TRUST",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-06",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/LKP 1/Mirae 70413280453.pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
+  "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
+  "fy": "2026-08-06",
+  "source": "source/_extracted/august-2026/LKP 1/Mirae 70413280453.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "lkp-securities-98245-2026-07-31-capital-gain",
+  "provider": "LKP Securities",
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026/LKP 2/519_10082026134053.xls",
+  "pages": 1,
+  "sections": [
+   "realisedLots",
+   "openLots",
+   "charges",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "lkp-securities-98245-2026-07-31-capital-gain",
+  "label": "LKP Securities · 98245 · capital-gain",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/LKP 2/519_10082026134053.xls",
+  "sheets": [
+   {
+    "key": "realisedLots",
+    "name": "realisedLots",
+    "rows": 11,
+    "cols": 9
+   },
+   {
+    "key": "openLots",
+    "name": "openLots",
+    "rows": 17,
+    "cols": 5
+   },
+   {
+    "key": "charges",
+    "name": "charges",
+    "rows": 1,
+    "cols": 2
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "lkp-securities-98245-2026-08-04-transaction-statement",
+  "provider": "LKP Securities",
+  "accountNo": "98245",
+  "owner": "BHARAT AJAY JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-04",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026/LKP 2/666134643_10082026134652.xls",
+  "pages": 1,
+  "sections": [
+   "trades",
+   "positions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "lkp-securities-98245-2026-08-04-transaction-statement",
+  "label": "LKP Securities · 98245 · transaction-statement",
+  "fy": "2026-08-04",
+  "source": "source/_extracted/august-2026/LKP 2/666134643_10082026134652.xls",
+  "sheets": [
+   {
+    "key": "trades",
+    "name": "trades",
+    "rows": 22,
+    "cols": 6
+   },
+   {
+    "key": "positions",
+    "name": "positions",
+    "rows": 18,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "37702",
+  "owner": "Mr. AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026/reports/360 ONE WEALTH - AJAY.pdf",
+  "pages": 12,
+  "sections": [
+   "detailed-holding-statement",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-37702-2026-07-31-holdings",
+  "label": "360 ONE Private Wealth · 37702 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/reports/360 ONE WEALTH - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 12,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "motilal-oswal-3000048-2026-07-31-unknown",
+  "provider": "Motilal Oswal",
+  "accountNo": "3000048",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
+  "pages": 4,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "motilal-oswal-3000048-2026-07-31-unknown",
+  "label": "Motilal Oswal · 3000048 · unknown",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "motilal-oswal-103473-2026-07-31-unknown",
+  "provider": "Motilal Oswal",
+  "accountNo": "103473",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
+  "pages": 3,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "motilal-oswal-103473-2026-07-31-unknown",
+  "label": "Motilal Oswal · 103473 · unknown",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "motilal-oswal-90410016104-2026-07-31-unknown",
+  "provider": "Motilal Oswal",
+  "accountNo": "90410016104",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "motilal-oswal-90410016104-2026-07-31-unknown",
+  "label": "Motilal Oswal · 90410016104 · unknown",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-07-31",
+  "reportType": "investor-report",
+  "sourcePath": "source/_extracted/august-2026/reports/SVAN - AJAY.pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710067 · investor-report",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026/reports/SVAN - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 47,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 42,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-bank-book",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
@@ -1022,7 +3369,7 @@
   ]
  },
  {
-  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary",
+  "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary-2",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
   "owner": "AJAY T JAISINGHANI",
@@ -1037,8 +3384,8 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 0,
-  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary",
+  "warnings": 1,
+  "fileKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary-2",
   "label": "Carnelian Asset Management and Advisors Pvt Ltd · 3517383 · performance-summary",
   "fy": "2026-04-01",
   "source": "source/_extracted/CARNELIAN/CBP0142_40212_PortfolioPerfSummary1528OT (7).pdf",
@@ -1385,7 +3732,7 @@
   ]
  },
  {
-  "docKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
+  "docKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary-2",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",
   "owner": "AJAY T JAISINGHANI",
@@ -1400,8 +3747,8 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 0,
-  "fileKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary",
+  "warnings": 1,
+  "fileKey": "green-lantern-capital-llp-510861-2026-04-01-performance-summary-2",
   "label": "Green Lantern Capital LLP · 510861 · performance-summary",
   "fy": "2026-04-01",
   "source": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_PortfolioPerfSummary1528OT (9).pdf",
@@ -3347,8 +5694,8 @@
   "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
   "provider": "360 ONE Alternates Asset Management",
   "accountNo": "1000633",
-  "owner": "Bharat Jaisinghani",
-  "ownerId": "bharat-jaisinghani",
+  "owner": "Investor",
+  "ownerId": null,
   "familyGroup": null,
   "strategy": "360 ONE Special Opportunities Fund - Series 8",
   "asOf": null,
@@ -3359,7 +5706,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 3,
+  "warnings": 2,
   "fileKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
   "label": "360 ONE Alternates Asset Management · 1000633 · unknown",
   "fy": "",
@@ -3462,38 +5809,31 @@
   ]
  },
  {
-  "docKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
-  "provider": "360 ONE Alternates Asset Management",
-  "accountNo": "1000633",
-  "owner": "Bharat Jaisinghani",
-  "ownerId": "bharat-jaisinghani",
+  "docKey": "unknown-unknown-unknown-unknown",
+  "provider": "(unidentified)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
   "familyGroup": null,
-  "strategy": "360 ONE Special Opportunities Fund - Series 8",
-  "asOf": "2026-05-18",
-  "reportType": "distribution-notice",
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
   "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-  "pages": 3,
+  "pages": 0,
   "sections": [
-   "distribution",
    "pages"
   ],
-  "status": "ok",
+  "status": "failed",
   "warnings": 1,
-  "fileKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
-  "label": "360 ONE Alternates Asset Management · 1000633 · distribution-notice",
-  "fy": "2026-05-18",
+  "fileKey": "unknown-unknown-unknown-unknown",
+  "label": "(unidentified) · unknown",
+  "fy": "",
   "source": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "sheets": [
    {
-    "key": "distribution",
-    "name": "distribution",
-    "rows": 10,
-    "cols": 3
-   },
-   {
     "key": "pages",
     "name": "Raw page text",
-    "rows": 3,
+    "rows": 0,
     "cols": 2
    }
   ]
@@ -3536,38 +5876,31 @@
   ]
  },
  {
-  "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
-  "provider": "360 ONE Alternates Asset Management",
-  "accountNo": "1000633",
-  "owner": "Bharat Jaisinghani",
-  "ownerId": "bharat-jaisinghani",
+  "docKey": "unknown-unknown-unknown-statement-of-earnings",
+  "provider": "(unidentified)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
   "familyGroup": null,
-  "strategy": "360 ONE Special Opportunities Fund - Series 8",
-  "asOf": "2026-06-04",
+  "strategy": null,
+  "asOf": null,
   "reportType": "statement-of-earnings",
   "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-  "pages": 2,
+  "pages": 0,
   "sections": [
-   "incomeByTaxHead",
    "pages"
   ],
-  "status": "ok",
+  "status": "failed",
   "warnings": 1,
-  "fileKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
-  "label": "360 ONE Alternates Asset Management · 1000633 · statement-of-earnings",
-  "fy": "2026-06-04",
+  "fileKey": "unknown-unknown-unknown-statement-of-earnings",
+  "label": "(unidentified) · statement-of-earnings",
+  "fy": "",
   "source": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "sheets": [
    {
-    "key": "incomeByTaxHead",
-    "name": "incomeByTaxHead",
-    "rows": 8,
-    "cols": 2
-   },
-   {
     "key": "pages",
     "name": "Raw page text",
-    "rows": 2,
+    "rows": 0,
     "cols": 2
    }
   ]
@@ -3605,6 +5938,156 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "motilal-oswal-904168868444-2026-08-06-transaction-statement",
+  "provider": "Motilal Oswal",
+  "accountNo": "904168868444",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-06",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "motilal-oswal-904168868444-2026-08-06-transaction-statement",
+  "label": "Motilal Oswal · 904168868444 · transaction-statement",
+  "fy": "2026-08-06",
+  "source": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "cams-10355977-2026-08-07-unknown",
+  "provider": "CAMS",
+  "accountNo": "10355977",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-07",
+  "reportType": "unknown",
+  "sourcePath": "source/august-2026/Helios - Ajay.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "cams-10355977-2026-08-07-unknown",
+  "label": "CAMS · 10355977 · unknown",
+  "fy": "2026-08-07",
+  "source": "source/august-2026/Helios - Ajay.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-175962-2026-06-30-unknown",
+  "provider": "HDFC",
+  "accountNo": "175962",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/august-2026/INDIA SME - AJAY.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "hdfc-175962-2026-06-30-unknown",
+  "label": "HDFC · 175962 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/august-2026/INDIA SME - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-177302-2026-06-30-unknown",
+  "provider": "Kotak",
+  "accountNo": "177302",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/august-2026/INDIA SME - ANKITA.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "kotak-177302-2026-06-30-unknown",
+  "label": "Kotak · 177302 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/august-2026/INDIA SME - ANKITA.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-175964-2026-06-30-unknown",
+  "provider": "HDFC",
+  "accountNo": "175964",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "unknown",
+  "sourcePath": "source/august-2026/INDIA SME - BHARAT.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "hdfc-175964-2026-06-30-unknown",
+  "label": "HDFC · 175964 · unknown",
+  "fy": "2026-06-30",
+  "source": "source/august-2026/INDIA SME - BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
     "cols": 2
    }
   ]

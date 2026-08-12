@@ -1,0 +1,9 @@
+{
+ "name": "pages",
+ "pages": [
+  {
+   "page": 1,
+   "text": "CAPITAL REGISTER\nFrom 01/04/2026 to 11/08/2026\nAccount : 100023 Ajay Thakurdas Jaisinghani Aristos Equity Portfolio\n<---------- Capital at Cost ----------->  <---- Capital flow at market value ----->\nTransaction Description Tran Date Set Date Desc/Notes  Credit  Debit  Balance  Credit  Debit  Balance\nOpening Balance 01/04/2026 01/04/2026  0.00  0.00  174,981,975.00  0.00  0.00  174,981,975.00\nTDS Trf to Capital A/c 05/06/2026 05/06/2026 TDS Netting Generated Tax Deducted at Source  0.00  8,675.00  174,973,300.00  0.00  8,675.00  174,973,300.00\n- -8675\nTDS Trf to Capital A/c 09/06/2026 09/06/2026 TDS Netting Generated Tax Deducted at Source  0.00  800.00  174,972,500.00  0.00  800.00  174,972,500.00\n- -800\nTDS Trf to Capital A/c 30/06/2026 30/06/2026 TDS Netting Generated Tax Deducted at Source  0.00  13,500.00  174,959,000.00  0.00  13,500.00  174,959,000.00\n- -13500\nTDS Trf to Capital A/c 24/07/2026 24/07/2026 TDS Netting Generated Tax Deducted at Source  0.00  4,020.00  174,954,980.00  0.00  4,020.00  174,954,980.00\n- -4020\nTDS Trf to Capital A/c 30/07/2026 30/07/2026 TDS Netting Generated Tax Deducted at Source  0.00  16,400.00  174,938,580.00  0.00  16,400.00  174,938,580.00\n- -16400\nTDS Trf to Capital A/c 04/08/2026 04/08/2026 TDS Netting Generated Tax Deducted at Source  0.00  5,600.00  174,932,980.00  0.00  5,600.00  174,932,980.00\n- -5600\nTDS Trf to Capital A/c 07/08/2026 07/08/2026 TDS Netting Generated Tax Deducted at Source  0.00  20,615.00  174,912,365.00  0.00  20,615.00  174,912,365.00\n- -20615\nTotal Closing Balance  0.00  69,610.00  174,912,365.00  0.00  69,610.00  174,912,365.00\nPage 1"
+  }
+ ]
+}

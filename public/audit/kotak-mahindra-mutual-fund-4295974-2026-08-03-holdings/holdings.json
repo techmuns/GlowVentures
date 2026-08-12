@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF174K01NH1",
+   "Kotak Liquid Fund Direct Plan Daily - IDCW #",
+   null,
+   1222.81,
+   "2026-07-31",
+   null,
+   777205.81
+  ]
+ ]
+}

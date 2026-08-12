@@ -71,6 +71,7 @@
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": 1,
+  "declaredAum": null,
   "source": "transition-venture-capital-tvc263-2026-03-31-unknown"
  },
  "returns": [],

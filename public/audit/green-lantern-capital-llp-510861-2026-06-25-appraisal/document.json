@@ -1356,6 +1356,7 @@
   "gainLoss": 14066326,
   "pctGainLoss": 14.15,
   "positionCount": null,
+  "declaredAum": null,
   "source": "green-lantern-capital-llp-510861-2026-06-25-appraisal"
  },
  "returns": [],
