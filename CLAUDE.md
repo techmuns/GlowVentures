@@ -1002,6 +1002,8 @@ feature that is broken instead of one that was never possible.
 | Compare up to four companies | `/compare` | the book, the quote feed, `ratio_source` |
 | Document repository — annual reports, concalls, earnings, announcements | company page | `combined_filings_announcements`, `filings_domestic` |
 | Financial tables, ratios, shareholding | company page | `financial_tables_markdown` (screener.in) |
+| **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
+| **Ratio analysis, 7 year-ends** | company page | `ratio_source` → `web-reader` — see Stage 10e |
 | Consensus / street estimates | company page | `street_estimates` |
 | Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
 | Insider trades, corporate announcements, news | company page, `/news` | `insider_trades`, `corp_announcements`, `news_search` |
@@ -1374,6 +1376,88 @@ show it with an honest as-of. Verified in production during the outage:
 Quotes needed no change: it already carries a per-symbol `ageS` with fresh/stale
 counts, which is the stronger treatment a PRICE requires.
 
+## Stage 10e — what the catalogue probe unlocked, and the two checks it forced
+
+`docs/API-PROBE.md` records six unused endpoints exercised against the live API
+on 2026-08-12. Two of them turned out to carry things nothing here could serve,
+and BOTH arrive with a defect that has to be checked at runtime rather than
+reasoned about. That is the whole shape of this stage: the data is real, the
+labels on it are not, and each check is on screen because a reader cannot
+verify it any other way.
+
+**`/financials/<TICKER>.NS` — the cash flow statement and the earnings
+calendar.** screener's document (the Financials tab) carries neither, and
+`combined_financials` was measured to be the same eight sections, so there was
+no source before. The `.NS` suffix is the whole unlock: `/financials/RELIANCE`
+answers 200 with "No data available" under every heading, which reads as India
+being unsupported and is not.
+
+**ITS FIGURES ARE RUPEES PRINTED WITH A DOLLAR SIGN.** The document settles that
+itself — it prints `Basic Average Shares $2.61B`, and a share count is not
+dollars, so the symbol is a formatter artifact on every numeric cell. But
+knowing the symbol is meaningless is not knowing the figures are rupees, and
+"it must be, it is an NSE ticker" is a plausible default. So the unit is
+RECONCILED at runtime against the screener document for the same company, by
+two comparisons that establish different things: EPS carries no crore/million
+scaling so agreement fixes the CURRENCY, and revenue against screener's crore
+figure fixes the SCALE at 1e7. Nothing monetary renders until both pass, an
+UNMEASURABLE check is treated exactly like a failed one, and the comparison is
+printed above the table rather than reduced to a badge. The figures are also
+pre-rounded to three significant figures, so nothing is derived from them.
+
+**`ratio_source` → `web_reader` — the ratio table.** The standing rule that
+this endpoint's response stays prose is unchanged and was always about its OWN
+reply, which says nothing about which number is which company's PE. Following
+its literal instruction ("Use WebReader Tool") lands on a page carrying the
+table labelled on both axes, seven year-ends deep.
+
+**AND THE RESOLVER IS WRONG ABOUT A QUARTER OF THE TIME.** Measured across the
+first fifteen holdings carrying an NSE symbol, four resolved to an entirely
+different company — Aditya Birla Capital → Tata Capital, Bajaj Auto → Bajaj
+Finance, Alivus Life Sciences → Altius Telecom, BLS International → Sona BLW —
+each page carrying a complete correct table for the company it is really
+about. **A MISMATCH RENDERS NO TABLE**, not a warning above one: a screen of
+true figures belonging to somebody else is the worst fabrication available
+here, and there is nothing on it a reader could catch it by. The page's H1 AND
+the company name in its URL are both compared through `securityKeyOf`, because
+moneycontrol abbreviates the title (`BHEL`, `AFL`) where the URL spells the
+name out; a wrong page is wrong on both, so the second identifier buys no risk.
+
+Three things the real page forced, none of which a written sample would have:
+the second column is a Highcharts placeholder, so a positional read shifts
+every figure back a year; section headings arrive as rows with no figures; and
+the per-share rows are NOT share-count adjusted — on Reliance every one of them
+halves between Mar 24 and Mar 25 while the margins do not move, which
+`shareCountBreaks` detects by exactly that signature and the page names.
+Reported, never corrected: adjusting would invent a factor the source never
+published.
+
+**THE HARVESTER CANNOT USE ANY OF THIS.** `MUNS_TOKEN` is in the Cloudflare
+Pages environment; `harvest.yml` carries only `DATA_GOV_IN_KEY`. The web_reader
+route serves browser-facing pages only.
+
+### And the geo-block was measured against the wrong network, again
+
+The thirteen RBI Weekly Statistical Supplement series and the CEA generation
+series are declared absent as "geo-blocked". Measured from a GitHub Actions
+runner on 2026-08-12, with both of `probe-reach.mjs`'s controls passing:
+
+| Host | From the runner |
+| --- | --- |
+| `rbi.org.in` — WSS issue page | **OK 200, 1,226 ms** |
+| `rbidocs.rbi.org.in` | **OK 200, 1,159 ms** |
+| `cea.nic.in` | **OK 200, 2,493 ms** |
+| `mospi.gov.in` | fetch failed |
+| `www.fpi.nsdl.co.in` | fetch failed |
+
+The original measurement was taken in a development container, which is not
+where the harvest runs — **the identical mistake FRED cost this repo**, and the
+second time the same wrong network has hidden an available source. Reachability
+is not the whole question: `BS_ViewWSS.aspx` is an ASP.NET form and the only
+issue URL in hand is from April 2022, so `scripts/harvest/probe-rbi.mjs` asks
+whether THIS WEEK's supplement is addressable before an adapter is written. A
+harvester that cannot find the current issue can harvest nothing.
+
 ### The alert engine — silence is read as all-clear
 
 `alertEngine.ts` evaluates the family's rules against the book. Its governing
@@ -1725,10 +1809,14 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
-- `npm run test:family` runs the two derived-figure suites — the family-input
-  arithmetic (deal register, household totals, plan columns, market-cap bands)
-  and the financial-table parser, the latter against a REAL saved API response
-  rather than an invented fixture. Bundled through esbuild; no test framework.
+- `npm run test:family` runs the four derived-figure suites — the family-input
+  arithmetic (deal register, household totals, plan columns, market-cap bands),
+  the financial-table parser, the cash-flow/calendar reader and the ratio-table
+  reader. Every one of the last three runs against a REAL saved API response
+  rather than an invented fixture, and the cash-flow suite needs TWO responses
+  for one company because its unit check is a reconciliation between them: a
+  hand-written pair would prove only that two inventions agree with each other.
+  Bundled through esbuild; no test framework.
 - `npm run check:family` seeds a family register into a real browser and reads
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
