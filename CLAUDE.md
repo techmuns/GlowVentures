@@ -1452,11 +1452,29 @@ runner on 2026-08-12, with both of `probe-reach.mjs`'s controls passing:
 
 The original measurement was taken in a development container, which is not
 where the harvest runs — **the identical mistake FRED cost this repo**, and the
-second time the same wrong network has hidden an available source. Reachability
-is not the whole question: `BS_ViewWSS.aspx` is an ASP.NET form and the only
-issue URL in hand is from April 2022, so `scripts/harvest/probe-rbi.mjs` asks
-whether THIS WEEK's supplement is addressable before an adapter is written. A
-harvester that cannot find the current issue can harvest nothing.
+second time the same wrong network has hidden an available source.
+
+**Reachability was not the blocker, and neither is geography.** `probe-rbi.mjs`
+went on to ask the question that actually decides it, and the answer is that
+the current supplement HAS NO URL:
+
+- Every WSS link on every RBI page is a `WebForm_DoPostBackWithOptions` call.
+  There is no `href` to follow; the index sits behind `__VIEWSTATE`.
+- Replaying that postback — the page's own `__VIEWSTATE` and
+  `__EVENTVALIDATION`, with the `__EVENTTARGET` the page itself names — returns
+  200 and 67 KB carrying five table rows, **zero figures and none of the WSS
+  table names**. It likely needs a session cookie and the right control, which
+  is a scraper against a form rather than a fetch.
+- The `.XLSX` those pages link answers 200 with `text/html`, so the document
+  route is closed too. That one is worth noting on its own: **checked by status
+  it passes**, and it was recorded as reachable once before being checked by
+  content.
+
+So the 13 series stay absent — with the reason CORRECTED from "geo-blocked" to
+"the current issue has no address". That distinction is the whole point of
+keeping these declarations: one of them tells a reader to give up, and the
+other tells them exactly what to build. `scripts/harvest/probe-sources.mjs`
+carries the measurement beside the entry so it cannot go stale silently.
 
 ### The alert engine — silence is read as all-clear
 

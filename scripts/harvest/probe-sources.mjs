@@ -30,6 +30,28 @@ const SOURCES = [
     key: "rbi-wss", name: "RBI — Weekly Statistical Supplement", items: 13,
     unblocks: "Credit growth by bank type AND by sector (11), money supply, liquidity",
     url: "https://www.rbi.org.in/Scripts/BS_ViewWSS.aspx",
+    // MEASURED 2026-08-12 from a GitHub Actions runner, both controls passing —
+    // see `probe-rbi.mjs`, whose whole output is about this entry.
+    //
+    //   reachable          HTTP 200 in 1,087 ms. NOT geo-blocked from here.
+    //   addressable        NO. Every WSS link on every page is a
+    //                      WebForm_DoPostBackWithOptions call; there is no href
+    //                      to follow and the index sits behind __VIEWSTATE.
+    //   drivable by POST   NOT with a plain replay. Posting the page's own
+    //                      __VIEWSTATE + __EVENTVALIDATION with the target the
+    //                      page itself names (`lnk6`) returns 200, 67 KB, five
+    //                      table rows, ZERO figures and none of the WSS table
+    //                      names. It probably needs a session cookie and the
+    //                      right control, which is a scraper, not a fetch.
+    //   the document route the linked .XLSX on rbidocs answers 200 with
+    //                      `text/html`, so the workbook is not fetchable by URL
+    //                      either. Checked by CONTENT — by status alone it
+    //                      passes, which is how it got recorded as OK once.
+    //
+    // So the reason these 13 are absent is NOT geography, and recording it as
+    // geography told a reader to stop looking for something that is one
+    // stateful HTTP session away. The real blocker is that the current issue
+    // has no URL.
   },
   {
     key: "rbi-dbie", name: "RBI — Database on Indian Economy (DBIE)", items: 13,
@@ -65,6 +87,9 @@ const SOURCES = [
     url: "https://cea.nic.in/executive-summary-report/?lang=en",
   },
   {
+    // cea.nic.in answers HTTP 200 in 2,493 ms from the runner (2026-08-12), so
+    // this is not geo-blocked either. The open question is the report's own
+    // addressing, not the network.
     key: "cea-re", name: "CEA — monthly renewable generation report", items: 1,
     unblocks: "Renewable generation, and a second check on the capacity series already wired",
     url: "https://cea.nic.in/renewable-generation-report/?lang=en",
