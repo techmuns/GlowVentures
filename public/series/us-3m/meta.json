@@ -17,8 +17,8 @@
  "note": "The short end of the US curve. `tenorYears` on the curve view places it at 0.25.",
  "accumulating": false,
  "first": "1970-01-02",
- "last": "2026-08-10",
- "count": 14170,
- "retrievedAt": "2026-08-11T10:21:12.602Z",
+ "last": "2026-08-11",
+ "count": 14171,
+ "retrievedAt": "2026-08-12T04:07:41.612Z",
  "staleSince": null
 }

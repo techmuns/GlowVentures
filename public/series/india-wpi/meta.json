@@ -14,7 +14,7 @@
   "exchange": null,
   "upstreamCurrency": null
  },
- "note": "Base 2011-12 = 100, from the Office of the Economic Adviser's 'till last month' resource, which the ministry appends to monthly. The headline 'All Commodities' row is read as published — the table's other 868 rows are individual commodities and averaging them here would produce an index nobody published and that no reader could tie back to the source.",
+ "note": "Base 2011-12 = 100, Office of the Economic Adviser. DISCONTINUED: the resource is titled 'till last month' and its catalogue record is touched daily, but the last month it carries is October 2023 — verified against the resource's own declared schema, so the source stops there rather than the read being truncated. Carried as history, never as a current reading. The headline 'All Commodities' row is read as published; the other 868 rows are individual commodities and averaging them would produce an index nobody published.",
  "accumulating": false,
  "first": "2012-04-01",
  "last": "2023-10-01",

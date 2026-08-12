@@ -14,7 +14,7 @@
   "exchange": null,
   "upstreamCurrency": null
  },
- "note": "Base 2011-12 = 100, MoSPI's monthly all-India IIP. The 'General' row is the ministry's own aggregate, computed with the official weights; the table's other rows are NIC industry divisions and are not summed here.",
+ "note": "Base 2011-12 = 100, MoSPI all-India IIP. DISCONTINUED: last month carried is February 2023, verified against the resource's declared schema. Carried as history, never as a current reading. The 'General' row is the ministry's own aggregate computed with the official weights; the other rows are NIC industry divisions and are not summed here. The +67% move at 2020-05 is the COVID collapse and rebound — a real move, which the gate warns on rather than blocks.",
  "accumulating": false,
  "first": "2012-04-01",
  "last": "2023-02-01",
