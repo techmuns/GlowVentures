@@ -378,3 +378,37 @@ finding above is stated as measured rather than inferred.
 
 **It needs no token**, so it works while `fastapi.muns.io` and `devde.muns.io`
 are down — which they were on the day it was written.
+
+### Verified on the deployment, 2026-08-13 03:51 UTC
+
+Not on a local build — Pages Functions do not run under `vite preview`, so the
+route 404s locally and only the deployed one proves anything. Measured through
+the site's own gate (checking the CONTENT TYPE, never the status: the gate
+serves the login page as HTTP 200 `text/html`, and the first probe run caught
+exactly that while the build was still landing):
+
+| Call | Result |
+| --- | --- |
+| `?from=2026-08-09&to=2026-08-16&countries=IN,US` | `ok:true`, **82 events**, 1 slice, 0 failed, not truncated |
+| `?from=2026-08-13&to=2026-09-12&countries=IN` | `ok:true`, **35 events**, **5 slices merged**, 0 failed, not truncated |
+| `to` before `from` | **400** `BAD_RANGE` |
+| a 590-day span | **400** `RANGE_TOO_WIDE` |
+| the first call, repeated | served from the edge cache in **5 ms** (16 ms cold) |
+
+India in that window, each row naming its own publisher:
+
+```
+2026-08-11T08:10Z  M3 Money Supply YoY    a=14.7  c=—     p=12.5   %  Reserve Bank
+2026-08-12T10:30Z  Inflation Rate YoY     a=4.45  c=4.5   p=4.38   %  MOSPI
+2026-08-12T10:30Z  Inflation Rate MoM     a=0.88  c=—     p=1.03   %  MOSPI
+2026-08-14T06:30Z  WPI Inflation YoY      a=—     c=9.95  p=9.87   %  Office of the Economic Advisor
+2026-08-14T00:00Z  Passenger Vehicles YoY a=—     c=—     p=18.2      SIAM
+```
+
+Two things worth noting from that list. The 10:30 UTC stamp on India's CPI is
+16:00 IST, the real release hour — the timestamp needs no correction, which is
+the whole reason this source was preferred over Nasdaq's. And **WPI arrives here
+with a current reading** while the Economy page's own WPI row stays absent,
+because `data.gov.in`'s WPI resource has not gained a month since 2023: the
+calendar answers "what was the last print", which is a different question from
+the series history that row needs.
