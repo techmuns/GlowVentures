@@ -59,6 +59,71 @@ export function totalReturnFromXirr(annualPct: number | null, windowDays: number
   return ((1 + annualPct / 100) ** (windowDays / 365) - 1) * 100;
 }
 
+/**
+ * A RATE IS ONLY ANNUALISED OVER A WINDOW AT LEAST A YEAR LONG.
+ *
+ * ── THE FAILURE THIS EXISTS TO STOP ─────────────────────────────────────────
+ *
+ * The Morning CIO showed **+99.0% XIRR**. Nothing was miscalculated: ₹78.8 Cr
+ * of opening value and contributions became ₹99.4 Cr over the 132 days from
+ * 1 April to 11 August — +28.3% money-weighted — and compounding 0.36 of a year
+ * onto a full one gives +99.0%. Every step is right and the answer is still
+ * indefensible, because the book has not run for a year and 99% is a
+ * projection of four strong months, not a measurement.
+ *
+ * THE SOURCES SETTLE IT. These same managers publish their own ANNUALISED
+ * since-inception returns for these very accounts: Carnelian 19.83%, Green
+ * Lantern 11.45% and 10.6%, Molecule 7.31%. A 99% annual rate for the book
+ * they run contradicts every one of them. An annualised figure is a claim
+ * about a year, and a 132-day window cannot support one.
+ *
+ * ── WHY A RULE AND NOT A CAPTION ────────────────────────────────────────────
+ *
+ * This repo already knew this: `totalReturnFromXirr` above was written for it,
+ * and CLAUDE.md records that "an unlabelled +141% reads as a sustained yearly
+ * return". The figure came back anyway, the moment a tile asked for "XIRR" —
+ * because the knowledge lived in prose and in one page's local choice rather
+ * than in a function every caller must go through. So the threshold is here,
+ * once, and the return type makes the caller state which figure it has.
+ *
+ * A year from now this needs no revisiting: once the flows span 365 days the
+ * same call starts returning a genuine annual rate, with `annualised: true`.
+ */
+export const MIN_ANNUALISE_DAYS = 365;
+
+export type MoneyWeighted = {
+  /** The figure to PUT ON SCREEN, in percent. Null when there is no rate. */
+  pct: number | null;
+  /** True only when `pct` is a real annual rate — i.e. the window reached a year. */
+  annualised: boolean;
+  /** Days the flows actually span. Null when it could not be determined. */
+  windowDays: number | null;
+  /**
+   * The annualised rate REGARDLESS of window, for a popover that labels it an
+   * extrapolation. Never render this as a headline on a short window — that is
+   * the whole point of the type.
+   */
+  annualPct: number | null;
+};
+
+export function moneyWeightedReturn(annualPct: number | null, windowDays: number | null): MoneyWeighted {
+  if (annualPct == null) return { pct: null, annualised: false, windowDays, annualPct: null };
+  // No measurable window means there is nothing to de-annualise against; the
+  // solver's own output is all there is, and it is annual by construction.
+  if (windowDays == null || windowDays <= 0) {
+    return { pct: annualPct, annualised: true, windowDays: null, annualPct };
+  }
+  if (windowDays >= MIN_ANNUALISE_DAYS) {
+    return { pct: annualPct, annualised: true, windowDays, annualPct };
+  }
+  return {
+    pct: totalReturnFromXirr(annualPct, windowDays),
+    annualised: false,
+    windowDays,
+    annualPct,
+  };
+}
+
 export function xirrPct(flows: DatedFlow[]): number | null {
   const r = xirr(flows);
   return r == null ? null : r * 100;

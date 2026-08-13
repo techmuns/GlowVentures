@@ -11,7 +11,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
-import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { auditHref, LEDGER, type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
@@ -412,6 +412,10 @@ export function MorningCIO() {
       buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       xirrAccounts: listedParts.length,
+      // THE ONE PLACE THE TILE'S FIGURE IS DECIDED. `moneyWeightedReturn`
+      // refuses to annualise a window shorter than a year, so a strong quarter
+      // can no longer reach the screen as a yearly rate — see the note on it.
+      bookMW: moneyWeightedReturn(bookXirr, xirrWindowDays),
       distinctNames: byKey.size, crossHeld, top10Pct,
       largestName, largestKey: largest?.[0] ?? "", largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
@@ -520,41 +524,57 @@ export function MorningCIO() {
           </>}
           icon={<Wallet className="h-4 w-4" />} />
 
-        {/* XIRR — the money-weighted rate, in place of Embedded gain (whose
-            rupee figure is still on the Book performance card and is the
-            difference between this table's Invested and Current columns).
+        {/* MONEY-WEIGHTED RETURN — an XIRR, in place of Embedded gain (whose
+            rupee figure is the difference between this table's Invested and
+            Current columns, and is on the Book performance card).
 
-            IT IS ANNUALISED AND THE TILE SAYS SO ON ITS FACE. An XIRR over a
-            132-day window solves for a YEARLY rate, so a strong quarter reads
-            in the nineties; the word is in the caption, not in a popover,
-            because an unlabelled +95% is the single most misleading figure this
-            page could carry.
+            THIS TILE READ +99.0% AND THAT WAS INDEFENSIBLE. Nothing was
+            miscalculated — ₹78.8 Cr became ₹99.4 Cr over 132 days, +28.3%
+            money-weighted, and compounding 0.36 of a year onto a full one gives
+            +99.0%. It was wrong because an annualised figure is a claim about a
+            YEAR and this book has four months of dated flows. The managers'
+            own annualised since-inception returns for these accounts settle it:
+            Carnelian 19.83%, Green Lantern 11.45% and 10.6%, Molecule 7.31%.
 
-            AND IT NAMES ITS COVERAGE, for the same reason the money-weighted
-            return was not allowed to be called "consolidated": it can only be
-            struck where a statement carries an opening portfolio value, which
-            is 7 of 30 accounts and about a fifth of the book. That is on the
-            tile, not behind it.
+            `moneyWeightedReturn` now refuses to annualise a window under a
+            year, so the tile shows the return the book has ACTUALLY EARNED over
+            its window and says the window on its face. The annualised rate is
+            in the popover, named as an extrapolation. When the flows reach a
+            year the same call starts returning a genuine annual rate and the
+            caption changes itself.
+
+            IT ALSO NAMES ITS COVERAGE, for the same reason this figure is not
+            called "consolidated": it can only be struck where a statement
+            carries an opening portfolio value — 7 of 30 accounts, about a fifth
+            of the book. On the tile, not behind it.
 
             THE CALCULATION IS VERIFIED, not asserted. Five of the seven publish
             their own FYTD return on the same report date; ours reproduces every
-            one to within 0.47 pp, two of them to 0.05 pp. The comparison is a
-            test — `npm run test:family` — so a change to the solver, the flow
-            set or the terminal value fails rather than drifts. */}
-        <Kpi label="XIRR"
-          value={m.bookXirr == null
+            one to within 0.47 pp, two to 0.05 pp. That comparison is a test —
+            `npm run test:family` — so a change to the solver, the flow set or
+            the terminal value fails rather than drifts. */}
+        <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
+          value={m.bookMW.pct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.bookXirr)}><Auditable formula={{
-                title: "XIRR — money-weighted return, annualised",
-                excel: "= XIRR(each account's dated flows + its market value on its own report date)",
-                plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened — closed against each account's market value ON ITS OWN REPORT DATE. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value, so buying and selling changes this rate only through what it earned.\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.${m.xirrWindowDays ? ` Over a ${m.xirrWindowDays}-day window an annualised rate is a projection of the pace so far, not a year the book has run; the return actually earned to date is ${m.bookTotalReturn == null ? "—" : fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })}.` : ""}`,
-                worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a.${m.bookTotalReturn != null && m.xirrWindowDays ? ` = ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} over the ${m.xirrWindowDays} days measured` : ""}`,
+            : <span className={changeColor(m.bookMW.pct)}><Auditable formula={{
+                title: m.bookMW.annualised ? "XIRR — money-weighted, annualised" : "Money-weighted return over the measured window",
+                excel: m.bookMW.annualised
+                  ? "= XIRR(each account's dated flows + its market value on its own report date)"
+                  : "= (1 + XIRR)^(window ÷ 365) − 1",
+                plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened — closed against each account's market value ON ITS OWN REPORT DATE. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value.\n\n${
+                  m.bookMW.annualised
+                    ? `The flows span ${m.bookMW.windowDays ?? "—"} days, so this is a genuine annual rate.`
+                    : `THIS IS NOT ANNUALISED, AND THAT IS DELIBERATE. The flows span only ${m.bookMW.windowDays} days. Compounding that onto a full year gives ${m.bookMW.annualPct == null ? "—" : fmtPct(m.bookMW.annualPct, { sign: true, decimals: 1 })} p.a., which is a projection of ${m.bookMW.windowDays} strong days rather than a year the book has lived — and it would contradict the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. So the figure shown is what the book has actually earned over the window it has.`
+                }\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.`,
+                worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}`,
                 auditHref: auditHref(LEDGER),
-              }}>{fmtPct(m.bookXirr, { sign: true, decimals: 1 })}</Auditable></span>}
-          sub={m.bookXirr == null
+              }}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</Auditable></span>}
+          sub={m.bookMW.pct == null
             ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
             : <>
-                annualised{m.xirrWindowDays ? ` · ${m.xirrWindowDays}-day window` : ""}
+                {m.bookMW.annualised
+                  ? `annualised${m.bookMW.windowDays ? ` · ${m.bookMW.windowDays}-day window` : ""}`
+                  : `${m.bookMW.windowDays}-day window · not annualised`}
                 <span className="block text-slate-500" title={`Only an account whose statements carry an opening portfolio value can be measured this way. ${m.xirrExcluded.length ? `Excluded: ${m.xirrExcluded.join(", ")}.` : ""}`}>
                   {m.xirrAccounts} of {m.accountCount} accounts · {money(m.measuredMV)} of {money(m.totalValue)}
                 </span>
@@ -562,14 +582,13 @@ export function MorningCIO() {
           icon={<TrendingUp className="h-4 w-4" />} />
 
         {/* CONSOLIDATED RETURN — return on the capital actually invested, over
-            the WHOLE book. It replaces a tile labelled "Listed return" which
-            showed the money-weighted rate: honest on its own terms, but that
-            rate can only be struck on the accounts whose statements carry an
-            opening portfolio value, and relabelling a figure that covers a
-            fraction of the book as the book's own would be the missing-value-
-            blended-in failure one level up. The money-weighted figure keeps its
-            place — in this popover, in the allocation table's footer and on the
-            Book performance card — each stating what it covers. */}
+            the WHOLE book. It sits beside the money-weighted figure because
+            they answer different questions and cover different sets: this one
+            spans every account and every asset class, and is cumulative on
+            cost; the one before it is money-weighted, dated, and can only be
+            struck where a statement carries an opening portfolio value. Neither
+            is a substitute for the other, which is why both are on the strip
+            and each states its own scope. */}
         <Kpi label="Consolidated return"
           value={m.gainPct == null
             ? <AbsentValue />
@@ -579,15 +598,21 @@ export function MorningCIO() {
                 plain: `The return the whole book has produced to date on the capital in it — cumulative, not annualised, so a strong quarter reads as the quarter's gain rather than a yearly pace the book has not run for a year.${
                   m.noCostCount ? ` Struck over the ${m.p.length - m.noCostCount} positions carrying a cost; the other ${m.noCostCount} are in neither the numerator nor the denominator.` : ""
                 }${
-                  m.listedTotalReturn != null
-                    ? ` A money-weighted rate over the same book is available only where a statement carries an opening portfolio value: on that basis it is ${fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })} to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}, covering ${money(m.measuredMV)} of ${money(m.totalValue)}${m.xirrExcluded.length ? ` — ${m.xirrExcluded.length} account${m.xirrExcluded.length === 1 ? "" : "s"} (${m.xirrExcluded.join(", ")}) publish no opening value and sit outside it on both sides` : ""}.`
-                    : " No account in this book publishes an opening portfolio value, so there is no money-weighted rate to compare it against."
+                  m.bookMW.pct != null
+                    ? ` It covers the WHOLE book, where the money-weighted figure beside it covers ${money(m.measuredMV)} of ${money(m.totalValue)} — the accounts whose statements carry an opening portfolio value. Over that narrower set the money-weighted answer is ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}.`
+                    : ""
                 }`,
+                worked: `= ${money(m.embeddedGain, true)} ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}`,
                 auditHref: auditHref(LEDGER),
               }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable></span>}
           sub={m.gainPct == null
             ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
-            : <span title="Cumulative return on invested capital across every account — not annualised.">to date · on capital invested</span>}
+            : <>
+                on capital invested · whole book
+                <span className="block text-slate-500" title="Cumulative return on invested capital across every account — not annualised.">
+                  cumulative, not annualised
+                </span>
+              </>}
           icon={<Percent className="h-4 w-4" />} />
 
         {/* Dry powder and Distributions are COMMITMENT facts. With no commitment

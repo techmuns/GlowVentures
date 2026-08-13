@@ -1489,14 +1489,54 @@ of market movement. The suite counts them apart and fails if fewer than three
 accounts were actually compared — `golden.mjs`'s rule, that a suite passing over
 no input claims confidence nobody earned.
 
-**On screen the tile says `annualised` and its coverage on its FACE.** An XIRR
-over a 132-day window solves for a YEARLY rate, so a strong quarter reads in the
-nineties; and it can only be struck on the **7 of 30 accounts** — about a fifth
-of the book — whose statements carry an opening portfolio value. Both facts are
-in the caption, not the popover, and `check:pages` asserts both are rendered.
 **Trades are not flows**: a sale moves cash inside an account rather than out of
 it, and its proceeds are already inside the closing value — which is why the five
 comparisons above hold on accounts that traded actively over the window.
+
+### Stage 10g(ii) — THE TILE READ +99% AND THAT WAS THE REAL BUG
+
+Put on the strip as an annualised XIRR, it rendered **+99.0%**, and the family
+challenged it. **Nothing was miscalculated.** ₹78.8 Cr of opening value and
+contributions became ₹99.4 Cr over the 132 days from 1 April to 11 August —
+**+28.3% money-weighted, +26.1% simple** — and compounding 0.36 of a year onto a
+full one gives +99.0%. Every step reproduces.
+
+**IT WAS A LOGICAL ERROR, NOT AN ARITHMETIC ONE.** An annualised figure is a
+claim about a YEAR, and this book has four months of dated flows. The sources
+settle it: these same managers publish their own ANNUALISED since-inception
+returns for these very accounts — **Carnelian 19.83%, Green Lantern 11.45% and
+10.6%, Molecule 7.31%** — so a 99% annual rate for the book they run contradicts
+every one of them. A figure that no source supports is not made true by being
+correctly derived.
+
+**AND THE REPO ALREADY KNEW.** `totalReturnFromXirr` was written for exactly
+this, `/performance` and `/family` were already de-annualising, and this file
+already said "an unlabelled +141% reads as a sustained yearly return". It came
+back the moment a tile asked for "XIRR", because the knowledge lived in prose
+and in one page's local choice instead of in a function every caller must pass
+through.
+
+So the threshold is now **`moneyWeightedReturn` in `bucketXirr.ts`, once**:
+
+- A window of **at least a year** returns the annual rate, `annualised: true`.
+- Anything shorter returns the return earned **over that window**, and the
+  caller must say so — the tile reads `+28.3% · 132-day window · not annualised`.
+- The annualised rate is still on the object for the popover, where it is named
+  an extrapolation beside the managers' own 7–31% range.
+- When the flows eventually span a year the same call starts returning a genuine
+  annual rate and the caption changes itself. No revisit needed.
+
+`accountXirr.test.ts` asserts the guard is **load-bearing** — that annualising
+this book's window would more than double the figure — so a test cannot pass by
+accident on a book where the two happen to be close, and `check:pages` asserts
+the refusal reaches the SCREEN: the window and coverage are rendered, a sub-year
+window is never labelled annualised, and no triple-digit return appears anywhere
+in the KPI strip.
+
+**The strip carries BOTH returns, because they answer different questions over
+different sets.** Money-weighted is dated and covers the 7 of 30 accounts that
+publish an opening portfolio value (₹99.4 Cr); Consolidated return is cumulative
+on cost and covers the whole ₹461 Cr book. Each states its own scope on its face.
 
 ### Stage 10h — Sector Composition is DIRECT EQUITY, because nothing else has a sector
 

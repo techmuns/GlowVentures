@@ -110,16 +110,40 @@ const INVARIANTS = {
       const priv = Number(/Private\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
       return [nav, listed, priv].every(Number.isFinite) && Math.abs(listed + priv - nav) <= 0.6;
     }],
-    // THE XIRR TILE MUST SAY WHAT IT IS AND WHAT IT COVERS. An annualised rate
-    // over a 132-day window reads in the nineties, and an unlabelled +95% is
-    // the most misleading figure this page could carry — so "annualised" and
-    // the coverage fraction are asserted on the rendered page, not trusted to
-    // stay in the markup.
-    ["the XIRR tile is labelled annualised and names its coverage", (t) => {
-      const i = t.search(/\bXIRR\b/);
+    // THE +99% REGRESSION, GUARDED ON THE RENDERED PAGE.
+    //
+    // This tile shipped reading "+99.0% XIRR" — arithmetically correct (₹78.8 Cr
+    // to ₹99.4 Cr over 132 days is +28.3%, and compounding 0.36 of a year onto a
+    // full one gives 99%) and indefensible, because the managers' own annualised
+    // since-inception returns for these accounts run about 7% to 31%.
+    // `moneyWeightedReturn` refuses to annualise a sub-year window; these assert
+    // that the refusal reaches the SCREEN, which is the only place it matters.
+    // TILE LABELS ARE UPPERCASED BY CSS, so innerText returns "MONEY-WEIGHTED
+    // RETURN". Every pattern here is case-insensitive — a case-sensitive one
+    // fails on a page rendering perfectly, which is worse than no test. The
+    // same lesson is already recorded in check-family-inputs.mjs.
+    ["the money-weighted tile states its window and its coverage", (t) => {
+      const i = t.search(/money-weighted return|XIRR \(annualised\)/i);
       if (i < 0) return false;
-      const tile = t.slice(i, i + 220);
-      return /annualised/i.test(tile) && /\d+ of \d+ accounts/.test(tile);
+      const tile = t.slice(i, i + 240);
+      return /\d+-day window/.test(tile) && /\d+ of \d+ accounts/.test(tile);
+    }],
+    // A rate is only ever labelled "annualised" alongside a window of at least a
+    // year. Anything else is the extrapolation coming back.
+    ["no sub-year window is presented as an annualised rate", (t) => {
+      const i = t.search(/money-weighted return|XIRR \(annualised\)/i);
+      if (i < 0) return false;
+      const tile = t.slice(i, i + 240);
+      const days = Number(/(\d+)-day window/.exec(tile)?.[1] ?? NaN);
+      if (!Number.isFinite(days)) return false;
+      return days >= 365 ? /annualised/i.test(tile) : /not annualised/i.test(tile);
+    }],
+    // And the belt-and-braces version: no triple-digit return anywhere in the
+    // KPI strip. Every honest figure this book can produce today is well under
+    // it, so a hit here is an extrapolation by any route.
+    ["no triple-digit return in the KPI strip", (t) => {
+      const strip = t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
+      return !/[+-]\s?\d{3,}(\.\d+)?\s*%/.test(strip);
     }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,

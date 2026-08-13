@@ -43,12 +43,18 @@
 // rather than compared against the wrong date or quietly dropped. Same rule as
 // `golden.mjs`: a case with no valid input is never reported as a pass.
 import { xirr } from "@/lib/xirr";
-import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURNS, BOOK_POSITIONS } from "@/data/glowData";
+import { moneyWeightedReturn, MIN_ANNUALISE_DAYS } from "@/lib/bucketXirr";
+import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURNS, BOOK_POSITIONS, BOOK_AS_OF } from "@/data/glowData";
 
 let fails = 0;
-const ok = (name: string, pass: boolean, detail: string) => {
-  if (!pass) { fails++; console.log(`FAIL ${name}: ${detail}`); }
-  else console.log(`ok   ${name} — ${detail}`);
+const ok = (name: string, pass: boolean, detail = "") => {
+  if (!pass) { fails++; console.log(`FAIL ${name}${detail ? `: ${detail}` : ""}`); }
+  else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
+};
+const eq = (name: string, got: unknown, want: unknown) => {
+  const pass = JSON.stringify(got) === JSON.stringify(want);
+  if (!pass) { fails++; console.log(`FAIL ${name}: got ${JSON.stringify(got)} want ${JSON.stringify(want)}`); }
+  else console.log(`ok   ${name} = ${JSON.stringify(got)}`);
 };
 
 /** Market value of one account, from EVERY row it reports (never the deduped set). */
@@ -139,6 +145,61 @@ ok("the comparison actually ran against printed figures", checked >= 3,
   ok("dropping the opening portfolio value would not silently return the same rate",
     r == null || Math.abs(r * 100 - real) > 10,
     r == null ? "no rate at all without it" : `${(r * 100).toFixed(0)}% vs the real ${real.toFixed(0)}%`);
+}
+
+// ── THE +99% REGRESSION, GUARDED ───────────────────────────────────────────
+//
+// The Morning CIO shipped a tile reading "+99.0% XIRR". Nothing was
+// miscalculated: ₹78.8 Cr became ₹99.4 Cr over the 132 days from 1 April, which
+// is +28.3% money-weighted, and compounding 0.36 of a year onto a full one
+// gives +99.0%. It was wrong because an annualised figure is a claim about a
+// YEAR, and the managers' own annualised since-inception returns for these very
+// accounts run about 7% to 31%.
+//
+// The knowledge existed in prose before and came back anyway the moment a tile
+// asked for "XIRR". So it is a function with a threshold now, and these cases
+// are what stop it being quietly reverted.
+{
+  // The real book: a sub-year window must NOT be annualised.
+  const parts = measurable.map((a) => {
+    const fl = (BOOK_ACCOUNT_CASH_FLOWS[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount }));
+    return [...fl, { date: new Date(a.asOf), amount: accountMV(a.accountId) }];
+  }).flat();
+  const r = xirr(parts);
+  const start = parts.reduce((m, f) => (f.date < m ? f.date : m), parts[0].date);
+  const days = Math.round((Date.parse(BOOK_AS_OF) - start.getTime()) / 864e5);
+  const mw = moneyWeightedReturn(r == null ? null : r * 100, days);
+
+  ok("this book's flows really do span less than a year", days < MIN_ANNUALISE_DAYS, `${days} days`);
+  ok("so the figure on screen is NOT annualised", mw.annualised === false, `annualised=${mw.annualised}`);
+  ok("and it is the return earned over the window, not the yearly pace",
+    mw.pct != null && mw.annualPct != null && mw.pct < mw.annualPct,
+    `shown ${mw.pct?.toFixed(1)}% over ${days} days · annualised would be ${mw.annualPct?.toFixed(1)}%`);
+  // The guard has to be doing real work: if the two figures were close, this
+  // test would pass whether or not the threshold existed.
+  ok("the guard is load-bearing — annualising would more than double it",
+    mw.pct != null && mw.annualPct != null && mw.annualPct > mw.pct * 2,
+    `${mw.annualPct?.toFixed(1)}% vs ${mw.pct?.toFixed(1)}%`);
+  // The specific number the family objected to must not be reachable.
+  ok("the headline figure is not a triple-digit rate", mw.pct != null && Math.abs(mw.pct) < 100,
+    `${mw.pct?.toFixed(1)}%`);
+  // AND IT MUST NOT BE MORE THAN THE MANAGERS' OWN ANNUALISED FIGURES ALLOW.
+  // Their published annualised since-inception returns top out near 31%; a
+  // whole-book figure far above that is the extrapolation returning.
+  ok("and it is in the range the managers' own since-inception figures support",
+    mw.pct != null && mw.pct < 60, `${mw.pct?.toFixed(1)}% vs a manager high of 31.1% annualised`);
+}
+{
+  // A window that DOES reach a year annualises, so the rule is a threshold and
+  // not a blanket refusal — otherwise the tile would stay de-annualised forever.
+  const long = moneyWeightedReturn(18, 400);
+  eq("a window past a year returns the annual rate", [long.pct, long.annualised], [18, true]);
+  const short = moneyWeightedReturn(99, 132);
+  ok("a 132-day window is de-annualised to its own window",
+    short.annualised === false && Math.abs((short.pct ?? 0) - 28.3) < 0.5, `${short.pct?.toFixed(1)}%`);
+  eq("exactly one year annualises", moneyWeightedReturn(20, 365).annualised, true);
+  eq("one day short does not", moneyWeightedReturn(20, 364).annualised, false);
+  eq("no rate in, no rate out", moneyWeightedReturn(null, 132).pct, null);
 }
 
 process.exit(fails ? 1 : 0);
