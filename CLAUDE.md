@@ -1197,6 +1197,12 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   discussions, fund pitches, conference notes, books and podcasts, queryable in
   natural language. Needs a note store, a tagging model and an AI index. The
   catalogue's `document_search` searches muns' own corpus, not the family's.
+- ~~**The macro release calendar.**~~ **SOLVED — see Stage 9d.** The card here
+  read "consensus and the surprise measured against it are licensed products
+  sold by paid vendors", which was an absence recorded against an UNCHECKED
+  premise. Bloomberg does 403 and TradingEconomics' free tier is discontinued
+  (HTTP 410), but TradingView's calendar endpoint answers with previous,
+  consensus, actual, an impact rank and the publishing agency, keylessly.
 - ~~**All of macro research.**~~ **SOLVED for prices, from a different direction —
   see Stage 9.** It remains true that the muns catalogue has no macro or commodity
   endpoint at all. What changed is that the answer was never going to come from a
@@ -1746,6 +1752,74 @@ crossed today. That is the absent-vs-zero rule applied to a boolean.
 Alerts the spec asks for that need a SOURCE rather than a threshold — manager
 resignation and style drift, liquidity coverage, capital-call dates — are named
 on the page rather than shipped as rules that would sit permanently silent.
+
+## Stage 9d — the economic release calendar (`/api/econ-calendar`)
+
+The Economy page's calendar was declared impossible on the grounds that a
+schedule and a street consensus are licensed vendor products. **That was the
+third absence in this repo recorded against an unchecked premise**, after FRED
+and the RBI, and like both it told a reader to stop looking for something that
+was available. Five sources were measured (`docs/API-PROBE.md`): Bloomberg 403s,
+TradingEconomics' free API is discontinued (HTTP 410 — "subscribe to a plan"),
+moneycontrol and Sensibull expose no JSON, and **two answer freely** — Nasdaq's
+`calendar/economicevents` and **TradingView's `economic-calendar/events`, which
+is what is wired.**
+
+**IT WAS CHOSEN FOR THE FIELD THIS BOOK CARES MOST ABOUT: `source`.** Every row
+names the agency that published the figure — "Ministry of Statistics and
+Programme Implementation (MOSPI)", "Office of the Economic Advisor" — with its
+URL. It also carries an ISO-8601 UTC instant, an importance rank, the PERIOD the
+reading is for and the unit, none of which Nasdaq's has.
+
+**NASDAQ'S DATE PARAMETER IS OFF BY ONE, and its `gmt` field is not GMT.** Its
+rows for `date=D` are the events of `D − 1` — established on five independent
+anchors (Nonfarm Payrolls, a Friday release, arrived under a Saturday; jobless
+claims, a Thursday one, under a Friday; US CPI under the day after it released)
+and then confirmed by TradingView timestamping the same India CPI print a day
+earlier. Its times are US Eastern despite the field name: India CPI reads
+`06:30`, which is 16:00 IST. Both are recorded because Nasdaq remains the
+fallback if TradingView's endpoint closes, and a future session must not wire it
+naively. Where the two overlap they agree to the decimal, which is why the shift
+is stated as measured rather than inferred.
+
+**THE RESPONSE IS CAPPED AT 2000 ROWS AND THE CAP IS SILENT.** One request for a
+month returns exactly 2000; the same window as four sub-requests returns 2180
+distinct ids. The Function slices every window into ≤7 days, merges on the event
+id (the `datedRowsAcross` rule — a repeat across two requests is a duplicate,
+not data) and sets `truncated` where a slice still hits the cap, which the page
+renders in a band above the table. **No silent caps.**
+
+**`importance` IS −1 / 0 / 1 AND THE MAPPING WAS VERIFIED.** Across three weeks
+of US events `1` is Non Farm Payrolls, Unemployment Rate, Inflation Rate YoY,
+Core Inflation Rate and the ISM PMIs; `−1` is bill auctions and PMI finals.
+Guessing it the other way would print "High" against a 3-month bill auction —
+the fabricated-classification failure, again. An UNRANKED release is labelled
+unranked, never demoted to "low".
+
+Four presentation rules, each a plausible-looking wrong answer avoided:
+
+- **SURPRISE NEEDS BOTH HALVES.** Actual less consensus, and only where both are
+  published — 43 of 68 rows in the saved fixture have no actual yet and 15 have
+  an actual with no consensus. A surprise struck against a missing consensus is
+  the whole actual dressed up as a beat, which is the IPS-gap failure exactly.
+- **AND IT CARRIES NO VERDICT.** A CPI print above consensus is bad news, a GDP
+  print above consensus is good, an unemployment rate above consensus is bad
+  again — and nothing in the feed says which way round an indicator runs.
+  Colouring every beat green would assert a direction for hundreds of indicators
+  nobody classified. The sign is shown; the meaning is the reader's.
+- **NO FIGURE WITHOUT ITS UNIT.** 4.45 is a percent, 692.87 is billions. Same
+  rule as the harvest store's `USX` cents.
+- **A RELEASE WITH NO ANNOUNCED TIME MUST NOT MOVE A DAY.** The source stamps
+  those at midnight UTC; rendered in a zone behind UTC that lands on the previous
+  day. They are treated as day-only and grouped on the source's own date.
+
+`src/lib/__tests__/econCalendar.test.ts` asserts all of it against a REAL saved
+response, and its anchor case is India's CPI — the field the Economy page once
+printed as an invented `4.83%`, now measured at 4.45% actual against a 4.50%
+consensus, with MOSPI named as the publisher.
+
+**It needs no token**, so it kept working through the muns outage that was live
+the day it was written.
 
 ## Stage 9c — Industry Research, composed from the store
 

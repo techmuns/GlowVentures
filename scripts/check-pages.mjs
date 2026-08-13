@@ -72,7 +72,11 @@ const ROUTES = [
 // the web font CDN is unreachable, and /api/* are Cloudflare Pages Functions that
 // only exist on the deployed site. Neither is an application error, and folding
 // them in would bury the ones that are.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|prices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+// `ratios` and `econ-calendar` join the list for the same reason as the rest:
+// they are Pages Functions, `vite preview` does not run Functions, so they 404
+// locally on every run and would otherwise be reported as an application fault
+// on every sweep. They are exercised against the DEPLOYED site instead.
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 

@@ -304,3 +304,77 @@ that is eight dashed boxes reading as eight failures. `CompanyResearchPreview`
 now states, once, above that group, that those four are absent by decision and
 not by failure. A card that can never be filled must not look like one that is
 waiting.
+
+---
+
+## Addendum — 2026-08-13: the ECONOMIC RELEASE CALENDAR, and five sources measured
+
+The Economy page's calendar card read *"No release calendar can be built from
+the sources wired here … a SCHEDULE of when each statistic is next published,
+and a CONSENSUS of what the street expects [are] licensed products sold by paid
+vendors."* The first clause was true of the sources then wired. The second was
+an absence recorded against an **unchecked premise** — the third time in this
+repository, after FRED (declared unreachable from a dev container) and the RBI
+(declared geo-blocked from the same). Measured:
+
+| Source | Result |
+| --- | --- |
+| `bloomberg.com/markets/economic-calendar` | **403** — the page and its internal `markets2/api/economic-calendar` both |
+| `tradingeconomics.com/calendar` | page 200, but the free API is **gone**: `api.tradingeconomics.com/calendar?c=guest:guest` answers **HTTP 410**, *"the guest account has been discontinued, please subscribe to a plan"* |
+| `moneycontrol.com/economic-calendar` | page 200 (876 KB of server-rendered HTML); no JSON endpoint behind it — `api.moneycontrol.com/mcapi/v1/economic-calendar/*` 404s |
+| `web.sensibull.com/stock-market-calendar/economic-calendar` | a 7 KB JS shell; no public calendar endpoint (`api.sensibull.com`, `oxide.sensibull.com` both 404) |
+| `api.nasdaq.com/api/calendar/economicevents?date=` | **200 JSON, free, keyless** — previous / consensus / actual for 17 countries incl. India |
+| `economic-calendar.tradingview.com/events` | **200 JSON, free, keyless**, and richer on every axis — **wired** |
+
+### Why TradingView's, over Nasdaq's
+
+Both answer. TradingView's carries five things Nasdaq's does not, and each one
+removes a place where this dashboard would otherwise have had to guess:
+
+- **An ISO-8601 UTC instant per event.** Nasdaq's `date` parameter is **off by
+  one** — its rows for `date=D` are the events of `D − 1`. Established on five
+  independent anchors before TradingView was even probed: Nonfarm Payrolls (a
+  Friday release) came back under Sat 8 Aug; Initial Jobless Claims (a Thursday)
+  under Fri 14 Aug; US CPI under Thu 13 Aug when it released on the 12th; and
+  the quiet pair each week fell on Sun/Mon rather than Sat/Sun. TradingView then
+  confirmed it independently — it timestamps India's CPI `2026-08-12T10:30:00Z`
+  where Nasdaq files it under the 13th.
+- **Its `gmt` field is not GMT.** Nasdaq's times are US Eastern: India CPI reads
+  `06:30`, which is 16:00 IST — the real release hour — and 10:30 UTC. A client
+  taking the field name at its word puts every release four to five hours wrong.
+- **An importance rank.** Bloomberg and TradingEconomics both filter on impact;
+  Nasdaq has no such field, so that filter could not have been built from it at
+  all — and inventing one would be a fabricated classification.
+- **The PERIOD each reading is for** (`"Jul"`). Nasdaq returns "Business
+  Investment" twice on one day with different consensus figures and nothing to
+  tell the QoQ row from the YoY one.
+- **`source` and `source_url` — the agency that published each figure**
+  ("Ministry of Statistics and Programme Implementation (MOSPI)", "Office of the
+  Economic Advisor"). That is the reason it belongs in this codebase: every
+  figure traces to a source.
+
+Where the two overlap they **agree**: India CPI actual 4.45 / previous 4.38 /
+consensus 4.50 on both. Two independent sources agreeing is why the date-shift
+finding above is stated as measured rather than inferred.
+
+### Four measured properties the wiring had to handle
+
+- **`origin` and `referer` are mandatory** — the endpoint 403s without them.
+  That is why this is a server-side proxy and not a browser fetch.
+- **The response is capped at 2000 rows, silently.** One request for
+  2026-08-13 → 09-13 returns exactly 2000; the same window as four sub-requests
+  returns **2180 distinct ids**. So `functions/api/econ-calendar.js` slices every
+  window into ≤7-day requests, merges on the event id, and reports `truncated`
+  where a slice still comes back at the cap. A short answer is never presented
+  as a complete one.
+- **The forward horizon is about one month** (windows starting after ~2026-09-13
+  return zero) and **history runs back to at least 2015** with actuals. Both are
+  the upstream's limits, and the page states the first.
+- **`importance` is −1 / 0 / 1 and the mapping was verified, not assumed.**
+  Across three weeks of US events, `1` is Non Farm Payrolls, Unemployment Rate,
+  Inflation Rate YoY, Core Inflation Rate and the ISM PMIs; `−1` is bill auctions
+  and PMI finals. So −1 low, 0 medium, 1 high. The other way round would print
+  "High" against a 3-month bill auction.
+
+**It needs no token**, so it works while `fastapi.muns.io` and `devde.muns.io`
+are down — which they were on the day it was written.

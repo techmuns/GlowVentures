@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  TrendingUp, Percent, Users, Landmark, Building, Home, PiggyBank, ShoppingCart, BarChart3, CalendarClock, Sparkles,
+  TrendingUp, Percent, Users, Landmark, Building, Home, PiggyBank, ShoppingCart, BarChart3, Sparkles,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { PreviewBadge } from "@/components/Preview";
-import { AbsentCell, AbsentSection } from "@/components/Absent";
+import { AbsentCell } from "@/components/Absent";
 import { SeriesChart } from "@/components/SeriesChart";
+import { EconomicCalendar } from "@/components/EconomicCalendar";
 import {
   fetchSeriesIndex, fetchSeriesPoints, fmtReturn, returnTone,
   type SeriesIndex, type SeriesEntry, type Point,
@@ -258,25 +259,16 @@ export function Economy() {
         )}
       </div>
 
-      {/* Release calendar — the spec's signature macro feature, and the one
-          piece of it nothing here can serve. See the note at the top of this
-          file for what used to sit in this card. */}
-      <Card title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-500" /> Data release calendar</span>}
-        subtitle="Previous · consensus · actual · surprise vs consensus">
-        <AbsentSection
-          what="No release calendar can be built from the sources wired here"
-          needs="It needs two things this dashboard has neither of: a SCHEDULE of when each statistic is next
-            published, and a CONSENSUS of what the street expects. Consensus and the surprise measured against it are
-            licensed products sold by paid vendors. The PREVIOUS and ACTUAL columns are the easier half — those are
-            each agency's own release, and where the harvest store already carries the series its latest reading is
-            in the table above, with the date it was measured.">
-          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">
-            Until a consensus vendor is chosen, a calendar here would be a forecast this dashboard invented. The
-            series it does carry are shown with their own release dates instead, which answers "what was the last
-            print" without pretending to answer "what did the street expect".
-          </p>
-        </AbsentSection>
-      </Card>
+      {/* RELEASE CALENDAR — the spec's signature macro feature, and for a long
+          time the one piece of it nothing here could serve. That card said a
+          calendar needed "a SCHEDULE … and a CONSENSUS … licensed products sold
+          by paid vendors", which was an absence recorded against an UNCHECKED
+          premise — the third time in this repo, after FRED and the RBI. Probed
+          2026-08-13: TradingEconomics' free API is discontinued (HTTP 410) and
+          Bloomberg 403s, but TradingView's calendar endpoint answers with all
+          four columns, an impact rank and the publishing agency per row. See
+          `functions/api/econ-calendar.js`. */}
+      <EconomicCalendar />
 
       {/* Chart — opens when a live indicator row is clicked. A rate series is a
           BAR chart on purpose: consecutive annual rates are separate readings,

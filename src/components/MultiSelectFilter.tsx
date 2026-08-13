@@ -13,6 +13,7 @@ export function MultiSelectFilter({
   unit = "selected",
   placeholder = "Search…",
   className = "w-72",
+  render,
 }: {
   options: string[];
   selected: Set<string>;
@@ -21,6 +22,10 @@ export function MultiSelectFilter({
   unit?: string;            // e.g. "companies" → "3 companies"
   placeholder?: string;     // search box placeholder
   className?: string;
+  // How to DISPLAY an option, where the stored value is not the readable one.
+  // The economic calendar stores ISO country codes ("IN") and must show
+  // "India"; searching still runs over both, so typing either finds the row.
+  render?: (option: string) => string;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -35,10 +40,13 @@ export function MultiSelectFilter({
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
+  const show = useMemo(() => render ?? ((o: string) => o), [render]);
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? options.filter((o) => o.toLowerCase().includes(s)) : options;
-  }, [options, q]);
+    // Matched against BOTH the stored value and its label — a reader typing
+    // "India" and a reader typing "IN" must both find it.
+    return s ? options.filter((o) => o.toLowerCase().includes(s) || show(o).toLowerCase().includes(s)) : options;
+  }, [options, q, show]);
 
   const toggle = (name: string) => {
     const next = new Set(selected);
@@ -48,7 +56,7 @@ export function MultiSelectFilter({
   const clearAll = () => onChange(new Set());
 
   const count = selected.size;
-  const label = count === 0 ? allLabel : count === 1 ? [...selected][0] : `${count} ${unit}`;
+  const label = count === 0 ? allLabel : count === 1 ? show([...selected][0]) : `${count} ${unit}`;
 
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
@@ -113,7 +121,7 @@ export function MultiSelectFilter({
                   <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
                     <Check className="h-3 w-3" />
                   </span>
-                  <span className="truncate">{o}</span>
+                  <span className="truncate">{show(o)}</span>
                 </li>
               );
             })}
