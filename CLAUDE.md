@@ -53,6 +53,13 @@ reads and writes them. Only the table that showed them beside the book is gone.
 The lesson above stands on its own and is why this paragraph names the file
 rather than quietly dropping it.
 
+(The four cards on the company page that recorded a permanent absence —
+Business segments, Operating metrics, Value chain, Calendar — have since been
+REMOVED too, at the same request. Nothing wired here publishes any of them for
+any company; the absence is recorded in `docs/API-PROBE.md` rather than drawn as
+four dashed boxes that read, during an upstream outage, as four more failures.
+What must never come back is the INVENTED version they replaced.)
+
 **2. A preview must never assert a FACT about a real, named counterparty.**
 Alerts carried "Aristos: fund manager resigned" at high severity; Thesis &
 Triggers, "Carnelian: FM change flagged in filing"; Knowledge, a dated manager
@@ -1409,6 +1416,97 @@ into a real browser and reads the rendered figures back. Both are needed:
 `dedupedPositions` sat in `analytics.ts` correct and called by nothing for as long
 as no drop contained a duplicate, and **a helper that returns the right number
 into no caller looks exactly like a working feature.**
+
+### Stage 10f — THREE OF THESE SCREENS HAVE SINCE BEEN REMOVED
+
+The family asked for the **Family Dashboard** (`/household`), **Private Markets**
+(`/private`) and the **Data Bank** to go: this book holds no private-market DEALS
+to track, and every AIF folio it does carry is already in Portfolio Monitor's own
+AIF section — folio for folio, same invested, same current value, same gain,
+verified before the page was deleted. The only figures Private Markets showed
+that the Monitor does not are the per-fund MANAGER column (the fund names carry
+it) and the undrawn commitment, which is on Morning CIO's Dry powder tile and its
+Capital deployment card.
+
+**THE STORES STAY AND THE ARITHMETIC STAYS ASSERTED.** `deals.ts` and
+`household.ts` still exist, `familyInputs.ts` still round-trips both through the
+ONE export file on Exposure & IPS, and all 43 cases in `familyMath.test.ts` still
+run. What is gone is the rendering. A family that had entered a balance sheet or
+a deal register keeps it and can export it; deleting the model to match the UI
+would have thrown their data away for a layout decision.
+
+`check:family` lost the checks that read those pages, because it checks
+RENDERING and there is nothing left to render — but it gained the assertion that
+each removed route now REDIRECTS (`/household` → `/family`, `/private` and
+`/data-bank` → `/monitor`) rather than breaking a bookmark. **A removal is
+verified by asserting it happened, never by deleting the test alongside the
+feature.**
+
+### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
+
+The family asked for Embedded gain to be replaced by an XIRR. Two things had to
+be true first, and one of them was a latent bug:
+
+**A PER-ACCOUNT TERMINAL VALUE MUST READ `portfolio.positions`, NOT THE DEDUPED
+SET.** `measured()` closed each account against a market value taken from
+`consolidated`, so the account whose row lost the dedupe would have closed
+against less than its own statement prints. No account carrying a duplicate
+publishes an opening portfolio value in this drop, so nothing on screen was
+wrong — which is exactly why it had to be fixed BEFORE the rate went on a tile
+rather than after a drop where it bites. It is the §"consolidated counts once,
+per-account does not" rule, failing in the direction that is invisible.
+
+**AND THE RATE IS VERIFIED AGAINST THE MANAGERS' OWN PRINTED FIGURES.**
+`src/lib/__tests__/accountXirr.test.ts` reproduces each account's own
+financial-year-to-date return from our flows and our terminal value:
+
+```
+Carnelian 3517383     ours 26.49%   printed 26.98%   −0.49 pp
+Goldstandard 100022   ours 20.36%   printed 20.57%   −0.21 pp
+Goldstandard 100023   ours 20.87%   printed 21.08%   −0.21 pp
+V.E.C 128004          ours 52.28%   printed 52.27%   +0.01 pp
+V.E.C 128005          ours 49.59%   printed 49.59%   +0.00 pp
+```
+
+The gate is 1.0 pp because these are two different measurements of one window —
+the manager publishes a TIME-weighted return, this is MONEY-weighted, and they
+diverge only to the extent capital moved mid-window (here, TDS transfers of a few
+thousand rupees against crores). Wide enough that the basis difference cannot
+fail it; narrow enough that a wrong sign, a dropped opening value or a shared
+terminal date cannot pass — each of those moves a figure by tens of points, and
+the suite asserts that too.
+
+**Green Lantern's two accounts are NOT CHECKED and are named.** They are in the
+tile, but their FYTD is printed on a report drawn 2026-08-10 while their holdings
+close 2026-07-27; comparing them reports a −3.82 pp "failure" that is two weeks
+of market movement. The suite counts them apart and fails if fewer than three
+accounts were actually compared — `golden.mjs`'s rule, that a suite passing over
+no input claims confidence nobody earned.
+
+**On screen the tile says `annualised` and its coverage on its FACE.** An XIRR
+over a 132-day window solves for a YEARLY rate, so a strong quarter reads in the
+nineties; and it can only be struck on the **7 of 30 accounts** — about a fifth
+of the book — whose statements carry an opening portfolio value. Both facts are
+in the caption, not the popover, and `check:pages` asserts both are rendered.
+**Trades are not flows**: a sale moves cash inside an account rather than out of
+it, and its proceeds are already inside the closing value — which is why the five
+comparisons above hold on accounts that traded actively over the window.
+
+### Stage 10h — Sector Composition is DIRECT EQUITY, because nothing else has a sector
+
+A GICS sector is a property of a COMPANY. A fund — an AIF folio, a mutual fund
+scheme, an ETF, a liquid sweep — is a wrapper holding many, and no statement in
+this drop prints a sector for one. The page first excluded only the PRIVATE
+classes, which fixed the worst of it and left the rest: **Unclassified still read
+49.0%, ₹88.6 Cr, with "Helios Flexi Cap Fund" as its top holding** — a mutual
+fund standing at the head of a sector table and taking the largest slice of the
+chart while describing nothing.
+
+The denominator is `assetClass === "Equity"` now — shares in companies the family
+holds directly, through a manager's mandate or its own demat. Every excluded
+class is NAMED with its value rather than dropped, and the residual Unclassified
+is real: direct equity whose own statement printed no sector. `check:pages`
+asserts that no fund name can appear as a holding on that page.
 
 ### Stage 10c — measuring against the deployed site
 

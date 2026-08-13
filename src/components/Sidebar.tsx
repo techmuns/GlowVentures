@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Landmark, FolderOpen, Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Star, BookOpen, LayoutDashboard, Target, Globe, TrendingUp, Factory, Crosshair, BellRing,
+  Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
+  GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Factory, Crosshair, BellRing,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
@@ -25,7 +25,6 @@ const NAV = [
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/news", label: "News & Announcements", icon: Newspaper, group: "Daily" },
   { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
-  { to: "/household", label: "Family Dashboard", icon: LayoutDashboard, group: "Allocation", preview: true },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
@@ -37,8 +36,6 @@ const NAV = [
   { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor" },
   { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
-  { to: "/private", label: "Private Markets", icon: Landmark, group: "Private Markets" },
-  { to: "/data-bank", label: "Data Bank", icon: FolderOpen, group: "Private Markets" },
   { to: "/performance", label: "NAV & Performance", icon: Activity, group: "Analytics" },
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: "Analytics" },
   { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: "Analytics" },
@@ -113,11 +110,15 @@ export function Sidebar() {
             <ul className="space-y-0.5">
               {items.map((item) => {
                 const { to, label, icon: Icon } = item;
-                const isPreview = "preview" in item && item.preview;
+                // The PREVIEW badge went with the Family Dashboard, which was the
+                // only entry that carried `preview: true`. Left in place it typed
+                // `item.preview` as `unknown` — no member of the union declares
+                // the field any more — so it is removed rather than cast away.
+                // Reintroducing it means adding the flag back to NAV first.
                 const locked = !hasPortfolio && !ALWAYS_ACCESSIBLE.has(to);
                 return (
                   <li key={to}>
-                    <NavLink to={to} title={locked ? "Ingest statements first" : isPreview ? `${label} — illustrative preview` : label}
+                    <NavLink to={to} title={locked ? "Ingest statements first" : label}
                       className={({ isActive }) => [
                         "group flex items-center gap-2 rounded-md px-2.5 py-2 text-[12px] transition-colors",
                         isActive ? "bg-ink-700/80 text-slate-100"
@@ -126,9 +127,7 @@ export function Sidebar() {
                       ].join(" ")}>
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{label}</span>
-                      {locked
-                        ? <Lock className="ml-auto h-3 w-3 shrink-0 text-slate-700" />
-                        : isPreview && <span className="ml-auto shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-semibold uppercase tracking-wide text-amber-400" title="Illustrative preview">Preview</span>}
+                      {locked && <Lock className="ml-auto h-3 w-3 shrink-0 text-slate-700" />}
                     </NavLink>
                   </li>
                 );

@@ -7,8 +7,6 @@ import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
 import { FamilyEntities } from "@/pages/FamilyEntities";
 import { SectorComposition } from "@/pages/SectorComposition";
 import { CapitalGains } from "@/pages/CapitalGains";
-import { PrivateMarkets } from "@/pages/PrivateMarkets";
-import { DataBank } from "@/pages/DataBank";
 import { Performance } from "@/pages/Performance";
 import { ReturnAnalysis } from "@/pages/ReturnAnalysis";
 import { News } from "@/pages/News";
@@ -28,7 +26,6 @@ import { IndustryResearch } from "@/pages/IndustryResearch";
 import { ExposureIPS } from "@/pages/ExposureIPS";
 import { ThesisMonitor } from "@/pages/ThesisMonitor";
 import { Alerts } from "@/pages/Alerts";
-import { FamilyDashboard } from "@/pages/FamilyDashboard";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // A page only renders when there is something real to render. An empty book
@@ -63,7 +60,6 @@ export default function App() {
                 most of the holdings. */}
             <Route path="/stock/:securityKey" element={<Gate><StockInfo /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
-            <Route path="/household" element={<Gate><FamilyDashboard /></Gate>} />
             <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             <Route path="/compare" element={<Gate><CompareCompanies /></Gate>} />
@@ -77,12 +73,20 @@ export default function App() {
             <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
             <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
-            <Route path="/private" element={<Gate><PrivateMarkets /></Gate>} />
-            <Route path="/data-bank" element={<Gate><DataBank /></Gate>} />
-            {/* Private Markets absorbed these two pages — keep old links working. */}
+            {/* PRIVATE MARKETS, DATA BANK AND THE FAMILY DASHBOARD ARE REMOVED,
+                at the family's request — this book holds no private-market deals
+                to track, and every AIF folio the drop does carry is already in
+                Portfolio Monitor's own AIF section, folio for folio, with the
+                same invested, current value and gain. Their old addresses (and
+                the two that Private Markets had already absorbed) redirect
+                rather than 404, because links to them exist in this repo's own
+                docs and in whatever the family has bookmarked. */}
             <Route path="/look-through" element={<Navigate to="/monitor" replace />} />
-            <Route path="/funds" element={<Navigate to="/private?view=pe" replace />} />
-            <Route path="/value-creation" element={<Navigate to="/private?view=startups" replace />} />
+            <Route path="/funds" element={<Navigate to="/monitor" replace />} />
+            <Route path="/value-creation" element={<Navigate to="/monitor" replace />} />
+            <Route path="/private" element={<Navigate to="/monitor" replace />} />
+            <Route path="/data-bank" element={<Navigate to="/monitor" replace />} />
+            <Route path="/household" element={<Navigate to="/family" replace />} />
             <Route path="/performance" element={<Gate><Performance /></Gate>} />
             <Route path="/returns" element={<Gate><ReturnAnalysis /></Gate>} />
             <Route path="/ledger" element={<LedgerInsights />} />

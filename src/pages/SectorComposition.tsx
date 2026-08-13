@@ -45,16 +45,49 @@ export function SectorComposition() {
    * printed; that is Family & Entities, and it is right there for the same
    * reason it is wrong here.
    */
-  // SECTOR IS A LISTED-EQUITY VIEW. An AIF or other private holding is a fund
-  // wrapper with no equity sector, so every one of them lands in "Unclassified".
-  // At 62% of this book that swamped the chart — Unclassified read 70.6% with
-  // "Sanshi Fund-I" as its top holding — and buried the actual equity sectors
-  // this page exists to show. So the page is the LISTED book only; the private
-  // book is NAMED as excluded below rather than folded in as a false sector.
+  /**
+   * SECTOR IS A DIRECT-EQUITY VIEW. Nothing else on this book HAS a sector.
+   *
+   * A GICS sector is a property of a COMPANY. A fund — an AIF folio, a mutual
+   * fund scheme, an ETF, a liquid sweep — is a wrapper holding many companies,
+   * and no statement in this drop prints a sector for one; every one of them
+   * lands in "Unclassified". The page first excluded only the PRIVATE classes,
+   * which fixed the worst of it and left the rest: Unclassified still read
+   * **49.0%, ₹88.6 Cr, top holding "Helios Flexi Cap Fund"** — a mutual fund
+   * standing at the head of a sector table, in the largest slice of the chart,
+   * describing nothing.
+   *
+   * So the denominator is `assetClass === "Equity"` — shares in companies the
+   * family holds directly, whether through a PMS mandate or its own demat. That
+   * is what the family asked for and it is also the only set the question is
+   * answerable on. Everything else is NAMED below with its value, per class,
+   * rather than folded in as a false sector: a fund's look-through would need
+   * each scheme's own portfolio disclosure, which this book has for exactly one
+   * scheme and does not join to the folios the family holds.
+   *
+   * The residual Unclassified is now real — direct equity whose own statement
+   * printed no sector, listed in `docs/BOOK-REPORT.md` — and it is stated below
+   * as such rather than being the place funds went to hide.
+   */
   const accIdx = accountIndex(portfolio.accounts);
-  const p = consolidated.filter((x) => !isPrivateClass(x));
+  const isDirectEquity = (x: (typeof consolidated)[number]) => x.assetClass === "Equity";
+  const p = consolidated.filter(isDirectEquity);
   const totalMV = consolidatedMarketValue(p);
   const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
+  // Every class this page does NOT cover, largest first, so the note below can
+  // name them from the book rather than from a hardcoded list. `isPrivateClass`
+  // still drives the private-book sentence; this drives the rest.
+  const excludedClasses = (() => {
+    const m = new Map<string, { mv: number; count: number }>();
+    for (const x of consolidated) {
+      if (isDirectEquity(x)) continue;
+      const e = m.get(x.assetClass) ?? { mv: 0, count: 0 };
+      e.mv += x.marketValue; e.count += 1;
+      m.set(x.assetClass, e);
+    }
+    return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
+  })();
+  const excludedMV = sum(excludedClasses.map((c) => c.mv));
   const sectors = bySector(p);
   const unclassified = sectors.find((s) => s.key === "Unclassified") ?? null;
   // Every figure on this page is rebuilt from position market values, so once the
@@ -95,10 +128,10 @@ export function SectorComposition() {
   });
   return (
     <div>
-      <PageHeader eyebrow="Allocation" title="Sector Composition"
+      <PageHeader eyebrow="Allocation" title="Sector Composition" subtitle="Direct equity only — shares in companies the family holds, through a manager's mandate or its own demat"
         right={<div className="flex items-center gap-2">
           <BasisPill liveText={feedLive ? "Live prices" : "Workbook marks"}
-            hint="Sector values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy — each provider's own label is kept per position." />
+            hint="Direct equity only — a GICS sector is a property of a company, and no statement here prints one for a fund. Values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy — each provider's own label is kept per position." />
           <Pill tone="info">{sectors.length} sectors</Pill>
         </div>} />
       <Card className="mt-1">
@@ -116,7 +149,7 @@ export function SectorComposition() {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <div className="label-xs">Listed NAV</div>
+              <div className="label-xs">Direct equity</div>
               <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(totalMV, { compact: true })}</div>
             </div>
           </div>
@@ -183,7 +216,7 @@ export function SectorComposition() {
                   {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{money(sc.mv)}</td>)}
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-slate-400">Weight of listed book</td>
+                  <td className="px-3 py-2 text-slate-400">Weight of direct equity</td>
                   {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{(sc.weight * 100).toFixed(1)}%</td>)}
                 </tr>
                 <tr>
@@ -237,9 +270,9 @@ export function SectorComposition() {
               </tbody>
             </table>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              Weights are of the <span className="text-slate-400">listed book</span>, the same denominator the rest of
-              this page uses — the private book is excluded rather than folded in, so the column sums to 100 across all
-              sectors. A sector whose holdings report no cost shows <span className="text-slate-400">—</span> for cost,
+              Weights are of the <span className="text-slate-400">direct-equity book</span>, the same denominator the
+              rest of this page uses — every fund wrapper is excluded rather than folded in, so the column sums to 100
+              across all sectors. A sector whose holdings report no cost shows <span className="text-slate-400">—</span> for cost,
               P&amp;L and return rather than a zero, which would report its whole market value as profit; where only
               some holdings lack a cost the row above names how many.
             </p>
@@ -339,9 +372,19 @@ export function SectorComposition() {
           </div>
         </Card>
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        This is the <span className="font-medium text-slate-400">listed book</span> — {money(totalMV)} across {p.length} holdings, each counted once.
-        {privateMV > 0 && <> The <span className="font-medium text-slate-400">private book</span> ({money(privateMV)} of AIF units, {((privateMV / (totalMV + privateMV)) * 100).toFixed(0)}% of the whole book) is excluded here: a fund wrapper carries no equity sector, so folding it in would put the majority of the book under a single false “Unclassified” slice and hide the sectors this view exists to show. It is broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span>.</>}
-        {unclassified && <> Within the listed book, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
+        This is <span className="font-medium text-slate-400">direct equity only</span> — {money(totalMV)} across {p.length} holdings the family owns as shares in a company, each counted once,
+        whether held through a manager’s PMS mandate or the family’s own demat account.
+        {excludedClasses.length > 0 && <> {money(excludedMV)} of the book sits in wrappers and is excluded rather than folded in—{" "}
+          {excludedClasses.map((c, i) => (
+            <Fragment key={c.key}>
+              {i > 0 && (i === excludedClasses.length - 1 ? " and " : ", ")}
+              <span className="font-medium text-slate-400">{c.key}</span> {money(c.mv)}
+            </Fragment>
+          ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,
+          so every wrapper would land in a single false “Unclassified” slice and bury the sectors this view exists to show.
+          {privateMV > 0 && <> They are broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span> and folio by folio in <span className="font-medium text-slate-400">Portfolio Monitor</span>.</>}
+        </>}
+        {unclassified && <> Within direct equity, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its own statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
       </p>
     </div>
   );

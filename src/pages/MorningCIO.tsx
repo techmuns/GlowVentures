@@ -254,7 +254,16 @@ export function MorningCIO() {
       for (const a of portfolio.accounts) {
         if (sideOf(a) !== managed) continue;
         if (!hasOpening(a.accountId)) { excluded.push(a.accountNo); continue; }
-        const accountMv = sum(p.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
+        // A PER-ACCOUNT TERMINAL VALUE READS `portfolio.positions`, NOT THE
+        // DEDUPED SET. `p` counts each dedupeGroup once, which is right for
+        // every book-wide figure on this page and wrong here: the account whose
+        // row lost the coin-toss would close against a market value smaller
+        // than the one its own statement prints, and its XIRR would be
+        // understated by exactly that holding. No account carrying a duplicate
+        // publishes an opening portfolio value in this drop, so nothing on
+        // screen moves — which is precisely why it had to be fixed before the
+        // rate went on a tile, rather than after a drop where it bites.
+        const accountMv = sum(portfolio.positions.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
         parts.push({
           flows: (portfolio.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
           terminalValue: accountMv,
@@ -402,6 +411,7 @@ export function MorningCIO() {
       equityManagedMV, equitySelfMV, listedBook, privateBook,
       buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
+      xirrAccounts: listedParts.length,
       distinctNames: byKey.size, crossHeld, top10Pct,
       largestName, largestKey: largest?.[0] ?? "", largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
@@ -510,18 +520,46 @@ export function MorningCIO() {
           </>}
           icon={<Wallet className="h-4 w-4" />} />
 
-        <Kpi label="Embedded gain"
-          value={<span className={changeColor(m.embeddedGain)}><Auditable formula={{
-            title: "Embedded gain — consolidated",
-            excel: m.privateCount ? "= Σ unrealised P&L + Private markup" : "= Market value − Cost basis",
-            plain: `On-paper gain across the whole book — market value less what was paid, on every account and every asset class. Nothing here is realised.${
-              m.noCostCount ? ` It covers the ${m.p.length - m.noCostCount} positions whose cost is reported; the other ${m.noCostCount} are outside both sides of it.` : ""
-            }`,
-            worked: m.privateCount
-              ? `= ${money(m.bookPnL)} + ${money(m.privateGain)} = ${money(m.embeddedGain, true)}`
-              : `= ${money(m.bookMV)} − ${money(m.bookCost)} = ${money(m.embeddedGain, true)}`,
-          }}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</Auditable></span>}
-          sub="unrealised · whole book" icon={<TrendingUp className="h-4 w-4" />} />
+        {/* XIRR — the money-weighted rate, in place of Embedded gain (whose
+            rupee figure is still on the Book performance card and is the
+            difference between this table's Invested and Current columns).
+
+            IT IS ANNUALISED AND THE TILE SAYS SO ON ITS FACE. An XIRR over a
+            132-day window solves for a YEARLY rate, so a strong quarter reads
+            in the nineties; the word is in the caption, not in a popover,
+            because an unlabelled +95% is the single most misleading figure this
+            page could carry.
+
+            AND IT NAMES ITS COVERAGE, for the same reason the money-weighted
+            return was not allowed to be called "consolidated": it can only be
+            struck where a statement carries an opening portfolio value, which
+            is 7 of 30 accounts and about a fifth of the book. That is on the
+            tile, not behind it.
+
+            THE CALCULATION IS VERIFIED, not asserted. Five of the seven publish
+            their own FYTD return on the same report date; ours reproduces every
+            one to within 0.47 pp, two of them to 0.05 pp. The comparison is a
+            test — `npm run test:family` — so a change to the solver, the flow
+            set or the terminal value fails rather than drifts. */}
+        <Kpi label="XIRR"
+          value={m.bookXirr == null
+            ? <AbsentValue />
+            : <span className={changeColor(m.bookXirr)}><Auditable formula={{
+                title: "XIRR — money-weighted return, annualised",
+                excel: "= XIRR(each account's dated flows + its market value on its own report date)",
+                plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened — closed against each account's market value ON ITS OWN REPORT DATE. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value, so buying and selling changes this rate only through what it earned.\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.${m.xirrWindowDays ? ` Over a ${m.xirrWindowDays}-day window an annualised rate is a projection of the pace so far, not a year the book has run; the return actually earned to date is ${m.bookTotalReturn == null ? "—" : fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })}.` : ""}`,
+                worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a.${m.bookTotalReturn != null && m.xirrWindowDays ? ` = ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} over the ${m.xirrWindowDays} days measured` : ""}`,
+                auditHref: auditHref(LEDGER),
+              }}>{fmtPct(m.bookXirr, { sign: true, decimals: 1 })}</Auditable></span>}
+          sub={m.bookXirr == null
+            ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
+            : <>
+                annualised{m.xirrWindowDays ? ` · ${m.xirrWindowDays}-day window` : ""}
+                <span className="block text-slate-500" title={`Only an account whose statements carry an opening portfolio value can be measured this way. ${m.xirrExcluded.length ? `Excluded: ${m.xirrExcluded.join(", ")}.` : ""}`}>
+                  {m.xirrAccounts} of {m.accountCount} accounts · {money(m.measuredMV)} of {money(m.totalValue)}
+                </span>
+              </>}
+          icon={<TrendingUp className="h-4 w-4" />} />
 
         {/* CONSOLIDATED RETURN — return on the capital actually invested, over
             the WHOLE book. It replaces a tile labelled "Listed return" which

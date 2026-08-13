@@ -83,75 +83,53 @@ if (await pw.count()) {
 }
 await page.evaluate((f) => localStorage.setItem("glow:familyInputs/v1", JSON.stringify(f)), FAMILY);
 
-// ── Family Dashboard: the four tiles that were absent ───────────────────────
-await page.goto(`${BASE}/household`, { waitUntil: "networkidle" });
+// ── WHAT THIS SUITE STILL COVERS, AFTER THREE PAGES WERE REMOVED ───────────
+//
+// The Family Dashboard (/household), Private Markets (/private) and Data Bank
+// were removed at the family's request. This file used to drive all three, and
+// most of what it asserted — net worth from the register, liquidity coverage,
+// the deal register's derived invested/pending/stake value — no longer has a
+// screen to be read off.
+//
+// THE ARITHMETIC IS NOT LOST WITH THE SCREENS. Every one of those derivations
+// is still asserted in `src/lib/__tests__/familyMath.test.ts` (43 cases,
+// `npm run test:family`), and the STORE still round-trips all of it through the
+// export/import on Exposure & IPS — one file carries the whole thing, so a
+// family that entered a balance sheet or a deal register keeps it and can take
+// it elsewhere. What is gone is the rendering, and this suite covers rendering,
+// so those checks go with the pages.
+//
+// What remains here is the wiring that still has a surface: the bucket mapping
+// the family enters must reach Exposure & IPS, the whole-store export must
+// still be reachable, and the removed routes must REDIRECT rather than break a
+// bookmark. Asserting a removal is the point — deleting a test alongside the
+// feature it guards proves nothing.
+
+// ── Exposure & IPS reads the family's bucket mapping ───────────────────────
+await page.goto(`${BASE}/exposure`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 let text = await page.locator("body").innerText();
+// The seeded mapping is Equity → Growth and Cash → Liquidity, so both buckets
+// must show a MEASURED actual weight and the two unmapped classes must be named
+// with their value. `/not mapped/` cannot be the test — it is also the empty
+// option in every one of the five dropdowns on this page, so it matches on a
+// page that is working perfectly.
+const growth = /Growth\s+([\d.]+)%/.exec(text);
+const liquidity = /Liquidity\s+([\d.]+)%/.exec(text);
+check("Exposure & IPS reads the family's bucket mapping",
+  !!growth && !!liquidity && Number(growth[1]) > 0 && Number(liquidity[1]) > 0,
+  `Growth ${growth?.[1] ?? "—"}% · Liquidity ${liquidity?.[1] ?? "—"}%`);
+check("the classes mapped to no bucket are named with their value",
+  /mapped to no bucket/.test(text) && /(AIF|Mutual Fund)/.test(text),
+  /₹[\d.]+ Cr \(\d+% of the book\) sits in [^,.]+/.exec(text.replace(/\s+/g, " "))?.[0]);
+check("the whole store can still be exported from here", /export/i.test(text));
 
-// Tile labels are UPPERCASED BY CSS, so `innerText` returns "NET WORTH". Every
-// pattern here is therefore case-insensitive — a case-sensitive one fails on a
-// page that is rendering correctly, which is worse than no test at all.
-//
-// Off-book net = ₹38 Cr assets − ₹8 Cr liabilities = +₹30 Cr, ON TOP OF THE
-// BOOK'S OWN NAV — and the NAV is READ FROM THE PAGE, never written here as a
-// literal. It was ₹335.43 Cr when this check was written and this line said
-// "365.4"; the August drop moved the book to ₹461.00 Cr and the check failed
-// against a dashboard that was computing correctly. A test carrying a copy of
-// a figure the book generates is a second source for it, and this repo's whole
-// discipline is that there is one.
-//
-// The relation is what is under test: net worth = the measured portfolio plus
-// what the family entered. The tolerance absorbs compact rounding at 1dp on
-// both figures and a live price moving the portfolio between the two reads.
-const navChip = await page.locator('[title="Consolidated NAV"]').first().innerText().catch(() => "");
-const navCr = Number(/₹([\d.]+)\s*Cr/.exec(navChip)?.[1] ?? NaN);
-const netMatch = /net worth[\s\S]{0,80}?₹([\d.]+) Cr/i.exec(text);
-check("the consolidated NAV is on screen to measure against", Number.isFinite(navCr), navChip);
-check("net worth = the book's NAV + the entered register (+₹30 Cr)",
-  !!netMatch && Number.isFinite(navCr) && Math.abs(Number(netMatch[1]) - (navCr + 30)) < 3,
-  `${netMatch?.[0].replace(/\s+/g, " ")} vs NAV ${navChip} + ₹30 Cr`);
-check("cash available = the two liquid lines (₹8 Cr)", /cash available[\s\S]{0,80}?₹8 Cr/i.test(text));
-check("charity pool = the ring-fenced line (₹3 Cr)", /charity pool[\s\S]{0,60}?₹3 Cr/i.test(text));
-// 4 quarterly x ₹10 L + ₹50 L one-off = ₹90 L a year → ₹7.5 L a month.
-// ₹8 Cr / ₹7.5 L = 106.7 months.
-check("liquidity coverage in months, from both halves", /liquidity coverage[\s\S]{0,80}?106\.7 mo/i.test(text), /liquidity coverage[\s\S]{0,80}?[\d.]+ mo/i.exec(text)?.[0].replace(/\s+/g, " "));
-check("IPS buckets read the family's mapping", /% mapped/.test(text) && !/not mapped/.test(text));
-check("decisions queue shows the entered item", /Approve the next drawdown/.test(text));
-check("decisions queue is not the old sample", !/Aristos|GLC Growth Fund/.test(text));
-
-// ── The editor tabs render ─────────────────────────────────────────────────
-// THE EDITORS' VALUES LIVE IN `<input>`s, WHICH `innerText` DOES NOT RETURN.
-// Read through `inputValue()` instead — asserting on innerText here fails
-// against a form that is populated correctly.
-const values = async () => Promise.all(
-  (await page.locator("input[type=text]").all()).map((i) => i.inputValue()),
-);
-
-await page.getByRole("button", { name: "Balance sheet" }).click();
-await page.waitForTimeout(600);
-text = await page.locator("body").innerText();
-let vals = await values();
-check("balance sheet lists the entered assets", vals.includes("Current account") && vals.includes("Residence"), vals.filter(Boolean).slice(0, 4).join(" | "));
-check("tangible / intangible split is shown", /Tangible:/.test(text) && /Intangible:/.test(text));
-check("off-book totals name their coverage", /over 3 of 3 lines/.test(text), /over \d+ of \d+ lines?/.exec(text)?.[0]);
-
-await page.getByRole("button", { name: "Advisers & decisions" }).click();
-await page.waitForTimeout(600);
-text = await page.locator("body").innerText();
-vals = await values();
-check("adviser register lists the entered adviser", vals.includes("A. Auditor"), vals.filter(Boolean).slice(0, 4).join(" | "));
-check("benchmark picker offers the harvested series", /Benchmark series/i.test(text));
-
-// ── Private deal register ──────────────────────────────────────────────────
-await page.goto(`${BASE}/private?view=register`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
-text = await page.locator("body").innerText();
-check("deal register shows the entered deal", /Testco Pvt Ltd/.test(text));
-// invested = 5 Cr + 4 Cr = 9 Cr; pending = 12 − 9 = 3 Cr; stake value = 4.7% of 180 Cr = 8.46 Cr
-check("invested is derived from the tranches (₹9 Cr)", /₹9 Cr/.test(text));
-check("pending is committed less invested (₹3 Cr)", /₹3 Cr/.test(text));
-check("stake value = post-raise stake x last valuation (₹8.46 Cr)", /₹8\.4[56] Cr/.test(text));
-check("the illustrative sample is gone once a real deal exists", !/Helios Robotics|Meridian Payments/.test(text));
+// ── The removed routes redirect rather than 404 ────────────────────────────
+for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"]]) {
+  await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  check(`${from} redirects to ${to}`, new URL(page.url()).pathname === to, new URL(page.url()).pathname);
+}
 
 // ── Portfolio Monitor ──────────────────────────────────────────────────────
 //

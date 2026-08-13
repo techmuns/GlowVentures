@@ -51,7 +51,6 @@ const ROUTES = [
   // live source does not exist yet. Walked so their light-mode remaps, overflow
   // and any stray ₹0 are held to the same bar as every real page.
   ["knowledge", "/knowledge"],
-  ["household", "/household"],
   ["exposure", "/exposure"],
   ["macro", "/macro"],
   ["economy", "/economy"],
@@ -60,8 +59,6 @@ const ROUTES = [
   ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
   ["capital-gains", "/capital-gains"],
-  ["private", "/private"],
-  ["data-bank", "/data-bank"],
   ["performance", "/performance"],
   ["returns", "/returns"],
   ["ledger", "/ledger"],
@@ -109,6 +106,17 @@ const INVARIANTS = {
       const priv = Number(/Private\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
       return [nav, listed, priv].every(Number.isFinite) && Math.abs(listed + priv - nav) <= 0.6;
     }],
+    // THE XIRR TILE MUST SAY WHAT IT IS AND WHAT IT COVERS. An annualised rate
+    // over a 132-day window reads in the nineties, and an unlabelled +95% is
+    // the most misleading figure this page could carry — so "annualised" and
+    // the coverage fraction are asserted on the rendered page, not trusted to
+    // stay in the markup.
+    ["the XIRR tile is labelled annualised and names its coverage", (t) => {
+      const i = t.search(/\bXIRR\b/);
+      if (i < 0) return false;
+      const tile = t.slice(i, i + 220);
+      return /annualised/i.test(tile) && /\d+ of \d+ accounts/.test(tile);
+    }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
     // so Invested and Current printed one answer and the Total cell another.
@@ -120,14 +128,15 @@ const INVARIANTS = {
       return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
     }],
   ],
-  // "why are 70% holdings in unclassified" — the sector view must be the listed
-  // book only, with the AIF/private book named as excluded rather than folded in.
+  // "why are 70% holdings in unclassified" — and then, after the private book
+  // was excluded, why Unclassified was STILL 49% with a mutual fund at its head.
+  // A GICS sector is a property of a company; the page is direct equity only,
+  // and every excluded class must be NAMED with its value rather than dropped.
   sectors: [
-    ["sector view is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
-  ],
-  // "the private market tabs appears to be empty" — the AIF book must render.
-  private: [
-    ["private page surfaces the AIF book, not the empty state", (t) => /alternative holdings|Alternatives/i.test(t) && !/No private-market holdings in this book/.test(t)],
+    ["sector view is direct-equity only, the excluded classes named", (t) => /direct equity/i.test(t) && /excluded rather than folded in/i.test(t)],
+    // The failure this replaced: a fund standing at the head of a sector table.
+    // No wrapper may appear as a holding here at all.
+    ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
   // holdings must be sectioned by asset class; and the by-security total counts
@@ -159,9 +168,6 @@ const INVARIANTS = {
   // 4-digit percentage anywhere on these pages is the blow-up regressing.
   family: [
     ["no per-entity XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
-  ],
-  household: [
-    ["member return is de-annualised to-date, no XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
   ],
   // Exposure & IPS sector GAP is a listed-only view; the private book is named
   // as excluded rather than folded in as one giant "Unclassified" slice.
