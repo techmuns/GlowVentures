@@ -52,22 +52,28 @@ export function MorningCIO() {
 
   const model = useMemo(() => {
     if (!portfolio) return null;
-    // CONSOLIDATED throughout this page — every figure spans all nine accounts,
-    // so each dedupeGroup counts once. `portfolio.positions` still carries both
-    // rows for the per-account views elsewhere.
+    // CONSOLIDATED throughout this page — every figure spans every account in
+    // the book, so each dedupeGroup counts once. `portfolio.positions` still
+    // carries both rows for the per-account views elsewhere.
+    //
+    // NAMED `book*`, NOT `listed*`, AND THE TILES SAY SO. These sums have always
+    // run over `consolidated`, which is EVERY position — the AIF folios, the
+    // mutual funds and the cash sweeps included. They were called `listed*` from
+    // the days when every account in the drop was a listed-equity mandate, and
+    // the Capital invested tile went on printing "cost in · listed only" over a
+    // figure covering ₹461 Cr of which 62% is private by asset class. A caption
+    // that narrows a figure it does not narrow is the same failure as one that
+    // widens it: the reader believes a scope nothing measured.
     const p = consolidated;
-    const listedMV = sum(p.map((x) => x.marketValue));
+    const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the
-    // return on everything else.
-    const listedCost = sumOrNull(p.map((x) => x.costBasis));
-    const listedPnL = sumOrNull(p.map((x) => x.unrealizedPnL));
-    // Both sides must be present AND on the same basis. `sumOrNull` returns null
-    // when no position reported a cost, and a return struck against a missing
-    // denominator is not a small error — it is a different question.
-    const listedRet = listedCost !== null && listedPnL !== null && listedCost > 0
-      ? (listedPnL / listedCost) * 100
-      : null;
+    // return on everything else. The positions it SKIPS are counted, because a
+    // total that covers 303 of 309 positions has to say so on its own tile.
+    const bookCost = sumOrNull(p.map((x) => x.costBasis));
+    const bookPnL = sumOrNull(p.map((x) => x.unrealizedPnL));
+    const noCost = p.filter((x) => x.costBasis == null);
+    const noCostMV = sum(noCost.map((x) => x.marketValue));
 
     const pm = portfolio.privateMarkets;
     const peF = fundTotals(pm.peFunds);
@@ -130,13 +136,13 @@ export function MorningCIO() {
     const accrued = sumOrNull(p.map((x) => x.accruedIncome));
     const accruedCount = p.filter((x) => typeof x.accruedIncome === "number" && x.accruedIncome !== 0).length;
     // `p` (consolidated) holds EVERY position — the AIF units included — so
-    // listedMV / listedCost / listedPnL already carry the whole book. The
+    // bookMV / bookCost / bookPnL already carry the whole book. The
     // fund-of-funds model (privateMarkets) is the only thing SEPARATE from
     // positions, and it is empty here; its markup adds on top, but the AIF VALUE
-    // must never be added again, because listedPnL already holds the AIF's gain.
+    // must never be added again, because bookPnL already holds the AIF's gain.
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
     const privateCurrent = st.fairValue + peF.currentValue + preF.currentValue + unlF.currentValue + debtF.currentValue;
-    const totalInvested = sumOrNull([listedCost, privateCount ? privateInvested : null]);
+    const totalInvested = sumOrNull([bookCost, privateCount ? privateInvested : null]);
     const privateGain = privateCurrent - privateInvested;
     // Cash returned by holdings still in the book (startups distribute nothing).
     const privateDistributed = peF.distributed + preF.distributed + unlF.distributed + debtF.distributed;
@@ -146,7 +152,7 @@ export function MorningCIO() {
     // plus the fund model's markup where one exists. Adding `portfolio.privateValue
     // − 0` on top — the AIF value against a fund model that reports no cost — is
     // what put embedded gain at 99.8% of invested, almost the whole NAV.
-    const embeddedGain = sumOrNull([listedPnL, privateCount ? privateGain : null]);
+    const embeddedGain = sumOrNull([bookPnL, privateCount ? privateGain : null]);
     const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
       ? (embeddedGain / totalInvested) * 100
       : null;
@@ -369,10 +375,10 @@ export function MorningCIO() {
     }
     const crossHeld = [...ownersByKey.values()].filter((s) => s.size >= 2).length;
     const bySecurity = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
-    const top10Pct = listedMV > 0 ? (sum(bySecurity.slice(0, 10).map(([, v]) => v)) / listedMV) * 100 : null;
+    const top10Pct = bookMV > 0 ? (sum(bySecurity.slice(0, 10).map(([, v]) => v)) / bookMV) * 100 : null;
     const largest = bySecurity[0];
     const largestName = (largest && p.find((x) => x.securityKey === largest[0])?.security) || null;
-    const largestPct = largest && listedMV > 0 ? (largest[1] / listedMV) * 100 : null;
+    const largestPct = largest && bookMV > 0 ? (largest[1] / bookMV) * 100 : null;
     const priced = p.filter((x) => !x.costUnavailable);
     const winners = priced.filter((x) => (x.returnPct ?? 0) > 0).length;
     const losers = priced.filter((x) => (x.returnPct ?? 0) < 0).length;
@@ -385,7 +391,9 @@ export function MorningCIO() {
     const navGrowth = navFirst && navLast && navFirst.nav > 0 ? (navLast.nav / navFirst.nav - 1) * 100 : null;
 
     return {
-      p, listedMV, listedCost, listedPnL, listedRet,
+      p, bookMV, bookCost, bookPnL, noCostCount: noCost.length, noCostMV,
+      accountCount: portfolio.accounts.length,
+      ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
       pp, hasPrivateClass,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
@@ -454,13 +462,13 @@ export function MorningCIO() {
         <Kpi label="Consolidated NAV"
           value={<Auditable formula={{
             title: "Consolidated NAV",
-            excel: m.privateCount ? "= Listed value + Private value" : "= Σ market value of every holding",
-            plain: m.privateCount
-              ? "Your whole book — the listed portfolio plus the private-markets book, at latest marks."
-              : "Your whole book. Every holding in it is listed, so this is the listed portfolio's market value; there is no private book to add.",
+            excel: m.privateCount ? "= Σ market value of every holding + Private-markets value" : "= Σ market value of every holding",
+            plain: `The whole book across all ${m.accountCount} accounts and ${m.ownerCount} holders, at latest marks, with each holding reported twice counted once.${
+              m.hasPrivateClass ? ` It spans both halves by asset class — ${money(m.pp.listed)} listed and ${money(m.pp.private)} private (AIF, unlisted).` : ""
+            }`,
             worked: m.privateCount
-              ? `= ${money(m.listedMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
-              : `= ${money(m.listedMV)} across ${m.p.length} positions`,
+              ? `= ${money(m.bookMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
+              : `= ${money(m.bookMV)} across ${m.p.length} positions in ${m.accountCount} accounts`,
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
           sub={<>
             {m.hasPrivateClass
@@ -474,49 +482,74 @@ export function MorningCIO() {
           </>}
           icon={<Briefcase className="h-4 w-4" />} />
 
+        {/* CAPITAL INVESTED — the whole book, and its caption says which
+            positions it does NOT cover. This tile printed "cost in · listed
+            only" over a sum that has always run across every account, listed
+            and private alike; a scope stated narrower than the figure is as
+            misleading as one stated wider. `sumOrNull` skips a position whose
+            statement carries no cost rather than entering it as zero, so the
+            count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
           value={<Auditable formula={{
-            title: "Capital invested",
-            excel: m.privateCount ? "= Listed cost + Private drawn (current holdings)" : "= Σ cost basis of every holding",
-            plain: m.privateCount
-              ? "Money currently deployed — cost of listed holdings plus capital called into private assets still held."
-              : "Money currently deployed — the cost basis of every listed holding. No private capital has been called, because the book holds no private assets.",
+            title: "Capital invested — consolidated",
+            excel: m.privateCount ? "= Σ cost basis of every holding + Private drawn" : "= Σ cost basis of every holding",
+            plain: `Money currently deployed, across all ${m.accountCount} accounts — the cost basis of every holding the statements price, listed and private alike, each dedupeGroup counted once.${
+              m.noCostCount ? ` ${m.noCostCount} position${m.noCostCount === 1 ? "" : "s"} (${money(m.noCostMV)} of market value) sit${m.noCostCount === 1 ? "s" : ""} outside it: a depository statement reports what is held, not what it cost, and entering a missing cost as zero would report the whole of that market value as profit.` : ""
+            }`,
             worked: m.privateCount
-              ? `= ${money(m.listedCost)} + ${money(m.privateInvested)} = ${money(m.totalInvested)}`
-              : `= ${money(m.listedCost)}`,
+              ? `= ${money(m.bookCost)} + ${money(m.privateInvested)} = ${money(m.totalInvested)}`
+              : `= ${money(m.bookCost)} across ${m.p.length - m.noCostCount} of ${m.p.length} positions`,
           }}>{fmtFromBase(m.totalInvested, { compact: true })}</Auditable>}
-          sub={m.privateCount ? "cost in, across listed & private" : "cost in · listed only"}
+          sub={<>
+            cost in · whole book
+            {m.noCostCount > 0 && (
+              <span className="block text-slate-500" title={`These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
+                {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} carry no cost basis
+              </span>
+            )}
+          </>}
           icon={<Wallet className="h-4 w-4" />} />
 
         <Kpi label="Embedded gain"
           value={<span className={changeColor(m.embeddedGain)}><Auditable formula={{
-            title: "Embedded gain",
-            excel: m.privateCount ? "= Listed unrealised P&L + Private markup" : "= Market value − Cost basis",
-            plain: m.privateCount
-              ? "On-paper gain across the whole book — the listed book's unrealised P&L plus the private book's markup over invested cost."
-              : "On-paper gain across the book — market value less what was paid. Nothing here is realised.",
+            title: "Embedded gain — consolidated",
+            excel: m.privateCount ? "= Σ unrealised P&L + Private markup" : "= Market value − Cost basis",
+            plain: `On-paper gain across the whole book — market value less what was paid, on every account and every asset class. Nothing here is realised.${
+              m.noCostCount ? ` It covers the ${m.p.length - m.noCostCount} positions whose cost is reported; the other ${m.noCostCount} are outside both sides of it.` : ""
+            }`,
             worked: m.privateCount
-              ? `= ${money(m.listedPnL)} + ${money(m.privateGain)} = ${money(m.embeddedGain, true)}`
-              : `= ${money(m.listedMV)} − ${money(m.listedCost)} = ${money(m.embeddedGain, true)}`,
+              ? `= ${money(m.bookPnL)} + ${money(m.privateGain)} = ${money(m.embeddedGain, true)}`
+              : `= ${money(m.bookMV)} − ${money(m.bookCost)} = ${money(m.embeddedGain, true)}`,
           }}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</Auditable></span>}
-          delta={m.gainPct ?? undefined} sub="on invested" icon={<TrendingUp className="h-4 w-4" />} />
+          sub="unrealised · whole book" icon={<TrendingUp className="h-4 w-4" />} />
 
-        <Kpi label="Listed return"
-          value={m.listedTotalReturn == null
+        {/* CONSOLIDATED RETURN — return on the capital actually invested, over
+            the WHOLE book. It replaces a tile labelled "Listed return" which
+            showed the money-weighted rate: honest on its own terms, but that
+            rate can only be struck on the accounts whose statements carry an
+            opening portfolio value, and relabelling a figure that covers a
+            fraction of the book as the book's own would be the missing-value-
+            blended-in failure one level up. The money-weighted figure keeps its
+            place — in this popover, in the allocation table's footer and on the
+            Book performance card — each stating what it covers. */}
+        <Kpi label="Consolidated return"
+          value={m.gainPct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.listedTotalReturn)}><Auditable formula={{
-                title: "Listed return to date (money-weighted)",
-                excel: "= (1 + XIRR)^(window ÷ 365) − 1",
-                plain: `The money-weighted return the listed book has actually earned to date — Excel's XIRR() over each account's dated capital movements (capital register or bank book, with the window's opening portfolio value first), de-annualised to the window it covers so it reads as a return to date rather than a yearly pace. Trades are excluded because they move cash inside an account, not into or out of it.${
-                  m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on BOTH sides for want of an opening portfolio value, so this covers ${money(m.measuredMV)} of the book's ${money(m.listedMV)}.` : ""
-                }${m.xirrWindowDays && m.listedXirrPct != null ? ` Over a ${m.xirrWindowDays}-day window; that is ${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised.` : ""}`,
+            : <span className={changeColor(m.gainPct)}><Auditable formula={{
+                title: "Consolidated return to date",
+                excel: "= Embedded gain ÷ Capital invested",
+                plain: `The return the whole book has produced to date on the capital in it — cumulative, not annualised, so a strong quarter reads as the quarter's gain rather than a yearly pace the book has not run for a year.${
+                  m.noCostCount ? ` Struck over the ${m.p.length - m.noCostCount} positions carrying a cost; the other ${m.noCostCount} are in neither the numerator nor the denominator.` : ""
+                }${
+                  m.listedTotalReturn != null
+                    ? ` A money-weighted rate over the same book is available only where a statement carries an opening portfolio value: on that basis it is ${fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })} to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}, covering ${money(m.measuredMV)} of ${money(m.totalValue)}${m.xirrExcluded.length ? ` — ${m.xirrExcluded.length} account${m.xirrExcluded.length === 1 ? "" : "s"} (${m.xirrExcluded.join(", ")}) publish no opening value and sit outside it on both sides` : ""}.`
+                    : " No account in this book publishes an opening portfolio value, so there is no money-weighted rate to compare it against."
+                }`,
                 auditHref: auditHref(LEDGER),
-              }}>{fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}</Auditable></span>}
-          sub={m.listedTotalReturn == null
-            ? <span className="text-slate-500">no dated capital movements in these statements</span>
-            : m.xirrWindowDays
-              ? <span title="Money-weighted return to date, over the window these flows cover (opening on 1 April).">to date · {m.xirrWindowDays}-day window</span>
-              : "to date · money-weighted"}
+              }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable></span>}
+          sub={m.gainPct == null
+            ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
+            : <span title="Cumulative return on invested capital across every account — not annualised.">to date · on capital invested</span>}
           icon={<Percent className="h-4 w-4" />} />
 
         {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
@@ -543,8 +576,14 @@ export function MorningCIO() {
 
       {/* Allocation hero + right column */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
+        {/* The long explanatory block that used to sit under this table is gone
+            at the family's request. What it carried that a reader still needs —
+            that every return here is cumulative rather than annualised, and that
+            all of them close on the book's own report date — is in this subtitle
+            and in each figure's popover, which is where the coverage and the
+            excluded accounts have always been stated in full. */}
         <Card className="lg:col-span-2" title="Allocation by asset class"
-          subtitle="Invested, current value & total return to date per bucket — the CIO's first view"
+          subtitle={`Invested, current value & total return to date per bucket — cumulative, not annualised · every figure closes at ${portfolio.asOf}`}
           right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
@@ -595,18 +634,34 @@ export function MorningCIO() {
                     <td className="px-2 py-2.5 text-left text-slate-200">Total</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>
-                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.bookTotalReturn == null ? "text-slate-500" : changeColor(m.bookTotalReturn)}`}>
-                      {m.bookTotalReturn == null ? DASH : (
+                    {/* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
+                        This cell used to carry the MONEY-WEIGHTED whole-book
+                        return, which is a different measurement from every row
+                        in its own column and covers only the accounts that
+                        publish an opening portfolio value — so the footer read
+                        +28.3% beside its own Invested ₹394.1 Cr and Current
+                        ₹461.0 Cr, which is +17.0%. A reader who divides one
+                        printed cell by another and gets a third answer has
+                        found a contradiction, and the long paragraph that used
+                        to explain it away is gone. It now ties to its own two
+                        columns; the money-weighted figure keeps its place in
+                        the popover and on the Book performance card, each
+                        stating the fraction of the book it covers. */}
+                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.gainPct == null ? "text-slate-500" : changeColor(m.gainPct)}`}>
+                      {m.gainPct == null ? DASH : (
                         <Auditable formula={{
-                          title: "Whole-book return to date (money-weighted)",
-                          excel: "= (1 + XIRR)^(window ÷ 365) − 1",
-                          plain: `${m.privateCount
-                            ? "One money-weighted return across the entire book — the accounts' dated capital movements closed against their market value, pooled with the private book's capital calls and latest marks. Private distributions carry no date, so they are credited as if received today; that makes this figure a floor rather than a best case."
-                            : "One money-weighted return across the entire book. Every holding here is listed, so this is the same measurement as the listed return above — there is no private flow to pool with it."} This is the return actually earned over the ${m.xirrWindowDays ?? "measured"}-day window — the annualised XIRR is de-annualised to it, so it reads as a return to date rather than a yearly pace the book has not run for a year.${
-                            m.xirrExcluded.length ? ` ${m.xirrExcluded.length === 1 ? "Account" : "Accounts"} ${m.xirrExcluded.join(", ")} ${m.xirrExcluded.length === 1 ? "is" : "are"} excluded on both sides for want of an opening portfolio value.` : ""}`,
-                          worked: `${money(m.measuredMV)} of the book's ${money(m.totalValue)} is covered, closed at ${portfolio.asOf} = ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} to date${m.bookXirr != null ? ` (${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a. annualised)` : ""}`,
+                          title: "Whole-book return to date",
+                          excel: "= (Current − Invested) ÷ Invested",
+                          plain: `The cumulative return the whole book has produced on the capital in it, on the same basis as every row above — market value against cost, not annualised.${
+                            m.noCostCount ? ` The ${m.noCostCount} position${m.noCostCount === 1 ? "" : "s"} whose statement reports no cost are in neither column.` : ""
+                          }${
+                            m.bookTotalReturn != null
+                              ? ` A MONEY-WEIGHTED return — Excel's XIRR() over each account's dated capital movements, closed against its own report date and de-annualised to the window — answers a different question and can only be struck where a statement carries an opening portfolio value. On that basis the book is ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} to date over ${m.xirrWindowDays ?? "the measured"} days${m.bookXirr != null ? ` (${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a. annualised)` : ""}, covering ${money(m.measuredMV)} of ${money(m.totalValue)}${m.xirrExcluded.length ? `; accounts ${m.xirrExcluded.join(", ")} publish no opening value and sit outside it on both sides` : ""}.`
+                              : ""
+                          }`,
+                          worked: `= (${money(m.totalValue)} − ${money(m.totalInvested)}) ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}, closed at ${portfolio.asOf}`,
                           auditHref: auditHref(LEDGER),
-                        }}>{fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })}</Auditable>
+                        }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable>
                       )}
                     </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300">100%</td>
@@ -623,13 +678,6 @@ export function MorningCIO() {
               worth nothing are different facts.
             </p>
           )}
-          <p className="mt-3 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-            <span className="font-medium text-slate-400">Return (total)</span> on each row is the cumulative return to date on the capital in that bucket — market value against cost, not annualised — so a strong quarter reads as the quarter's gain, not a yearly pace the book has not run for a year. The <span className="font-medium text-slate-400">whole-book total</span> is money-weighted: Excel's <span className="mono">XIRR()</span> over every account's dated capital movements, closed against market value, then de-annualised to the window it covers. Each popover carries the money-multiple and, for the book total, the annualised p.a. figure behind it. <span className="font-medium text-slate-400">Equity</span> consolidates every listed holding into one asset class regardless of how it is run — {m.equitySelfMV > 0 ? <>{money(m.equityManagedMV)} through external PMS managers and {money(m.equitySelfMV)} self-directed (the family's own demat)</> : <>all of it through external PMS managers</>} — because an asset class is what a holding IS, not who manages it. <span className="font-medium text-slate-400">AIF</span>, <span className="font-medium text-slate-400">Mutual Fund</span> and <span className="font-medium text-slate-400">Cash</span> are each their own asset class.
-            {m.closedInvested > 0 && <> Invested is capital currently deployed; fully-exited funds ({money(m.closedInvested)} in → {money(m.closedDistributed)} back) are excluded from the rows but included in the whole-book return.</>}
-            {" "}<span className="font-medium text-slate-400">Every return here closes at {portfolio.asOf}</span>, the book's own report date — the same terminal date the per-account table on NAV &amp; Performance uses, so the two pages state one measurement rather than two.
-            {m.xirrExcluded.length > 0 && <> Account {m.xirrExcluded.join(", ")} sits outside the money-weighted whole-book figure, flows AND market value: its statements carry no opening portfolio value, and counting what it is worth without what it started from would overstate the return.</>}
-            {m.xirrWindowDays ? <> The measured window is {m.xirrWindowDays} days; the whole-book figure is the money-weighted return earned over it — the annualised p.a. rate sits in its popover, not on the tile, because an unlabelled +140% reads as a sustained yearly return.</> : null}
-          </p>
         </Card>
 
         <div className="grid gap-5 content-start lg:col-span-1">

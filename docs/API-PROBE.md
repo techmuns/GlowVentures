@@ -246,3 +246,61 @@ these tickers.
 Nothing here has been wired into a page. Each row above is a measurement of what
 a source can supply, and the standing rule applies unchanged: a figure reaches
 the screen only with its unit declared and its source named.
+
+---
+
+## Addendum — 2026-08-13: a PARTIAL outage, and what it taught the UI
+
+The client reported "so many errors" on the company drill-down page. Measured
+against the live deployment through the site's own gate, with the cache-bypassing
+control (`/api/quotes` with `probe: true`) failing alongside — so this is not a
+cache reading its own last-good copy:
+
+| Host | Serves | Result |
+| --- | --- | --- |
+| `fastapi.muns.io` | quotes, street estimates, `/financials/<T>.NS`, `ratio_source`, `web-reader`, `market_data` | **HTTP 522** on every path, ~20 s each |
+| `devde.muns.io` | `financial_tables/markdown`, `filings/domestic`, `combined_filings_announcements`, `drhp` | **HTTP 522** on every path, ~19 s each |
+| `birdnest.muns.io` | corporate announcements | ok |
+| `hostapi.muns.io` | news search | ok |
+| Yahoo (`/api/prices`), ECB (`/api/fx`) | price history, FX | ok — neither is muns |
+
+522 is Cloudflare's own status: it resolved the hostname and the server behind
+it never completed a connection. **So it is not an answer about the company that
+was asked for** — and four surfaces were reporting it as one. The ratio panel's
+headline read "No ratio table for this company"; the research panel's body read
+"The data service returned an error (522)". A reader takes the first as a fact
+about Reliance and can do nothing with the second.
+
+Three things this changed, all in `src/lib/upstreamStatus.ts` and its callers:
+
+- **The cause picks the headline.** A gateway status, a timeout or a dead socket
+  is a fact about the SERVICE; only an empty 200 (`EMPTY_RESPONSE`) is a fact
+  about the company. `isOutage()` is deliberately conservative — an unrecognised
+  failure code is not reported as an outage.
+- **The status is read out in words**, not printed as a number: 522/523 "its
+  server accepted no connection", 524/504 "accepted the request and never
+  finished answering", 521 "refused the connection". The number stays in the
+  sentence for whoever runs the API, but it is never the whole message.
+- **A partial outage is why each panel names its own cause.** News and
+  announcements were answering normally on the same page as five failing panels.
+  One page-level banner asserting "the feed is down" would have been wrong about
+  half the screen.
+
+The edge cache did its job where it had a copy: `/api/ratios` served a
+15-hour-old ratio table with `stale: true, ageS: 54090`, which the panel renders
+above the tables. Where no copy existed for that ticker the panel is empty, and
+that is the honest state.
+
+**Nothing in this repository can fix the outage** — the origins are the family's
+own in-house API. What the repository owed was an accurate account of it, and it
+was not giving one.
+
+### And the four permanent absences are not part of it
+
+The same screen carries Business segments, Operating metrics, Value chain and
+Calendar, each an `AbsentSection` because no wired source publishes them for any
+company (measured 2026-08-11, §"Company page" in `CLAUDE.md`). During an outage
+that is eight dashed boxes reading as eight failures. `CompanyResearchPreview`
+now states, once, above that group, that those four are absent by decision and
+not by failure. A card that can never be filled must not look like one that is
+waiting.

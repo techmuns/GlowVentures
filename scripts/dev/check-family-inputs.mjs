@@ -92,11 +92,24 @@ let text = await page.locator("body").innerText();
 // pattern here is therefore case-insensitive — a case-sensitive one fails on a
 // page that is rendering correctly, which is worse than no test at all.
 //
-// Off-book net = ₹38 Cr assets − ₹8 Cr liabilities = +₹30 Cr, on top of the
-// book's ₹335.43 Cr → ₹365.4 Cr. Asserted as a RANGE on the crore figure rather
-// than a literal, so a live price moving the portfolio does not fail the wiring.
+// Off-book net = ₹38 Cr assets − ₹8 Cr liabilities = +₹30 Cr, ON TOP OF THE
+// BOOK'S OWN NAV — and the NAV is READ FROM THE PAGE, never written here as a
+// literal. It was ₹335.43 Cr when this check was written and this line said
+// "365.4"; the August drop moved the book to ₹461.00 Cr and the check failed
+// against a dashboard that was computing correctly. A test carrying a copy of
+// a figure the book generates is a second source for it, and this repo's whole
+// discipline is that there is one.
+//
+// The relation is what is under test: net worth = the measured portfolio plus
+// what the family entered. The tolerance absorbs compact rounding at 1dp on
+// both figures and a live price moving the portfolio between the two reads.
+const navChip = await page.locator('[title="Consolidated NAV"]').first().innerText().catch(() => "");
+const navCr = Number(/₹([\d.]+)\s*Cr/.exec(navChip)?.[1] ?? NaN);
 const netMatch = /net worth[\s\S]{0,80}?₹([\d.]+) Cr/i.exec(text);
-check("net worth computes from the register", !!netMatch && Math.abs(Number(netMatch[1]) - 365.4) < 3, netMatch?.[0].replace(/\s+/g, " "));
+check("the consolidated NAV is on screen to measure against", Number.isFinite(navCr), navChip);
+check("net worth = the book's NAV + the entered register (+₹30 Cr)",
+  !!netMatch && Number.isFinite(navCr) && Math.abs(Number(netMatch[1]) - (navCr + 30)) < 3,
+  `${netMatch?.[0].replace(/\s+/g, " ")} vs NAV ${navChip} + ₹30 Cr`);
 check("cash available = the two liquid lines (₹8 Cr)", /cash available[\s\S]{0,80}?₹8 Cr/i.test(text));
 check("charity pool = the ring-fenced line (₹3 Cr)", /charity pool[\s\S]{0,60}?₹3 Cr/i.test(text));
 // 4 quarterly x ₹10 L + ₹50 L one-off = ₹90 L a year → ₹7.5 L a month.
@@ -140,30 +153,28 @@ check("pending is committed less invested (₹3 Cr)", /₹3 Cr/.test(text));
 check("stake value = post-raise stake x last valuation (₹8.46 Cr)", /₹8\.4[56] Cr/.test(text));
 check("the illustrative sample is gone once a real deal exists", !/Helios Robotics|Meridian Payments/.test(text));
 
-// ── Portfolio Monitor plan view ────────────────────────────────────────────
-await page.evaluate(() => localStorage.setItem("glow:watchlist/v1", JSON.stringify({
-  "aditya-birla-capital": { securityKey: "aditya-birla-capital", watching: true, targetPrice: null, fairValue: 120, entryPrice: null, exitPrice: null,
-          alertAbove: null, alertBelow: null, targetWeightPct: 0, fairValueRefYear: "FY28E", valuationMethod: "DCF",
-          note: "", updatedAt: "2026-08-01T00:00:00Z" },
-})));
-// PortfolioMonitor holds its view in component state, NOT in `?view=`, and the
-// tab is labelled "Public dashboard" rather than "Plan" — the button has to be
-// clicked by its own label. A URL-driven assertion here silently tested the
-// holdings table and passed on a coincidence.
+// ── Portfolio Monitor ──────────────────────────────────────────────────────
+//
+// The "Public dashboard" tab this block used to drive HAS BEEN REMOVED at the
+// family's request, and with it the four judgement columns (target weight,
+// fair value, its reference year, the valuation method) and the pending-to-
+// invest arithmetic that read them. Those fields still live in the watchlist
+// store and still render on a name's own company page; what is gone is the
+// table that showed them beside the book.
+//
+// The check that replaces it is the one thing the removal could break: the two
+// remaining tabs must still be reachable, and the holdings table must still be
+// the default. A removed feature is not verified by deleting its test — it is
+// verified by asserting it is gone.
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
-await page.getByRole("button", { name: /public dashboard/i }).click();
+text = await page.locator("body").innerText();
+check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
+check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));
+await page.getByRole("button", { name: /^transactions$/i }).click();
 await page.waitForTimeout(700);
 text = await page.locator("body").innerText();
-check("plan view shows a recorded FV reference year", /FY28E/.test(text));
-check("plan view shows a recorded valuation method", /\bDCF\b/.test(text));
-// The 0% target weight is asserted IN ITS OWN ROW, not anywhere on the page —
-// a bare /0\.0%/ passes on any table with a zero weight in it and proves
-// nothing about the field under test.
-const planRow = await page.locator("tr", { hasText: /Aditya Birla Capital/i }).first().innerText().catch(() => "");
-check("a 0% target weight renders as 0.0% in its row, not as absent", /\b0\.0%/.test(planRow), planRow.replace(/\s+/g, " ").slice(0, 160));
-check("pending to invest is the whole position, negatively signed", /−|-/.test(planRow));
-check("the denominator of pending to invest is named", /Pending to invest is the target weight applied to/i.test(text.replace(/\s+/g, " ")));
+check("the Transactions tab still renders", /transaction/i.test(text));
 
 await browser.close();
 

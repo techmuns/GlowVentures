@@ -42,6 +42,17 @@ because a default is "a fabricated figure produced by a default, which is the
 exact failure this book exists to prevent". `× 1.25` is worse than `0` — it is
 plausible. **These render `AbsentCell` with a reason.**
 
+*`PublicDashboardView` itself has since been REMOVED* — the family asked for the
+Portfolio Monitor's third tab to go, so the component, its route in
+`check-pages.mjs` and the block in `check-family-inputs.mjs` that drove it are
+all gone, and the remaining check asserts the tab is ABSENT rather than deleting
+the test with the feature. The judgement fields it displayed are untouched:
+`watchlist.ts` still stores target price, fair value, its reference year, the
+valuation method and the target weight, and a name's own company page still
+reads and writes them. Only the table that showed them beside the book is gone.
+The lesson above stands on its own and is why this paragraph names the file
+rather than quietly dropping it.
+
 **2. A preview must never assert a FACT about a real, named counterparty.**
 Alerts carried "Aristos: fund manager resigned" at high severity; Thesis &
 Triggers, "Carnelian: FM change flagged in filing"; Knowledge, a dated manager
@@ -119,6 +130,28 @@ Three corollaries that this book actually needed:
 - **A COMPUTED zero is legitimate and stays** — cash has no P&L, a net realised
   loss owes no tax — but the reason goes in the tile, not in a tooltip. A reader
   scanning `₹0` beside a −₹1.97 Cr loss must be able to see it is the arithmetic.
+- **A CAPTION THAT NARROWS A FIGURE IT DOES NOT NARROW is the same failure as one
+  that widens it.** Morning CIO's Capital invested tile printed "cost in · listed
+  only" over a sum that has always run across `consolidated` — every account,
+  every asset class — and the tile beside it was headed "Listed return". The
+  locals were named `listedMV` / `listedCost` / `listedPnL` from the days when
+  every account in the drop was a listed-equity mandate, and the labels followed
+  the names rather than the arithmetic. They are `bookMV` / `bookCost` /
+  `bookPnL` now, the captions say "whole book", and the tile names the **6 of
+  309 positions whose statement reports no cost** — `sumOrNull` skips them, so
+  the total's own caption is where that has to be said.
+- **AND A TOTAL MUST TIE TO ITS OWN COLUMNS.** That page's allocation table put
+  the MONEY-WEIGHTED whole-book return in the Total row of a column whose every
+  other cell is return-on-cost, so the footer read +28.3% beside its own Invested
+  ₹394.1 Cr and Current ₹461.0 Cr — which is +17.0%. Both figures were right on
+  their own terms and a long paragraph underneath explained the difference; the
+  family asked for the paragraph to go, and a reader who divides one printed cell
+  by another and gets a third answer has found a contradiction no popover
+  rescues. The footer is on its rows' basis now. The money-weighted figure keeps
+  its place — in that cell's popover, in the Consolidated return tile's popover
+  and on the Book performance card — each stating the fraction of the book it
+  covers, because it can only be struck on the accounts that publish an opening
+  portfolio value.
 
 `npm run check:pages` renders every route headlessly and reports console errors,
 failed requests, and any on-screen `₹0` / `0.00%` with its surrounding text. The
@@ -1239,7 +1272,26 @@ violate any of them.**
   both.
 - A failure message must diagnose the ACTUAL failure. "Your session expired" for
   an unreachable archive is worse than a blank panel, because the reader acts
-  on it.
+  on it. **The CAUSE picks the headline, and `src/lib/upstreamStatus.ts` is the
+  one place that decides which.** A gateway status is a fact about the SERVICE;
+  only an empty 200 is a fact about the company. The company page said "No ratio
+  table for this company" over an HTTP 522 — a status that means Cloudflare
+  reached the hostname and the server behind it never completed a connection —
+  so a reader learnt that Reliance publishes no ratios. Measured on the live
+  deployment 2026-08-13, with the site's own cache-bypassing control failing
+  alongside: `fastapi.muns.io` (quotes, street estimates, `/financials`,
+  `ratio_source`, `web-reader`, `market_data`) and `devde.muns.io`
+  (`financial_tables`, filings, DRHP) both 522; `birdnest.muns.io`
+  (announcements) and `hostapi.muns.io` (news) answering normally. **A partial
+  outage across four hosts is why every panel must name its own cause rather
+  than the page asserting one for all of them.**
+- **And a card that can NEVER be filled must not look like one that is waiting.**
+  The company page's Business segments, Operating metrics, Value chain and
+  Calendar cards are permanent, decided absences — no wired source publishes
+  them for any company — and they render the same dashed `AbsentSection` as a
+  panel whose feed is momentarily down. During the outage above that is eight
+  empty boxes reading as eight failures. `CompanyResearchPreview` states, once,
+  above that group, that those four are absent by decision and not by failure.
 
 ### Formatting and layout
 

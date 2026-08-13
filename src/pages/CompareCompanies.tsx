@@ -18,6 +18,7 @@ import { HORIZON_COLS, fmtReturn } from "@/lib/series";
 import { readWatchlist, upsidePct } from "@/lib/watchlist";
 import { accountIndex } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
+import { isOutage, outageHeadline, outageSentence } from "@/lib/upstreamStatus";
 
 // COMPARE UP TO FOUR COMPANIES — the client spec's comparison screen.
 //
@@ -356,8 +357,10 @@ export function CompareCompanies() {
           )}
           {tickers.length > 0 && ratios && isRatiosError(ratios) && (
             <AbsentSection
-              what="The ratio service didn’t answer"
-              needs={`Reported ${ratios.failureCode}${ratios.upstreamStatus ? ` (HTTP ${ratios.upstreamStatus})` : ""}. This panel stays empty rather than showing ratios from a response we didn’t get.`}
+              what={isOutage(ratios) ? outageHeadline : "The ratio service didn’t answer"}
+              needs={isOutage(ratios)
+                ? outageSentence(ratios, "the ratio comparison")
+                : `Reported ${ratios.failureCode}${ratios.upstreamStatus ? ` (HTTP ${ratios.upstreamStatus})` : ""}. This panel stays empty rather than showing ratios from a response we didn’t get.`}
             />
           )}
           {tickers.length > 0 && ratios && !isRatiosError(ratios) && (

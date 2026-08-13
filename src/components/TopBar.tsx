@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { lastQuoteFailure } from "@/lib/quotes";
+import { outageShort } from "@/lib/upstreamStatus";
 
 const THEME_KEY = "glow:theme";
 
@@ -65,8 +66,8 @@ function QuoteStatus() {
     // with no explanation is what made the last feed outage hard to diagnose.
     const f = lastQuoteFailure();
     const why = f
-      ? `Live prices unavailable (${f.failureCode}${f.upstreamStatus != null ? ` · upstream ${f.upstreamStatus}` : ""}). ${f.detail ?? ""} Every holding is showing its workbook mark. See the console for the full diagnostics.`
-      : "The live price feed is unavailable — every holding is showing its workbook mark.";
+      ? `${outageShort(f)} Every holding is showing its statement mark, and nothing has been substituted for a live price. (${f.failureCode}${f.upstreamStatus != null ? ` · upstream ${f.upstreamStatus}` : ""}${f.detail ? ` · ${f.detail}` : ""}; full diagnostics in the console.)`
+      : "The live price feed is unavailable — every holding is showing its statement mark.";
     return <>
       <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
       <span className="text-slate-400" title={why}>

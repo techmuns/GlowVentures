@@ -6,6 +6,8 @@
 // them, because turning an analyst's sentence into a headline figure is exactly
 // how a wrong number gets into a dashboard that promises every figure traces to a
 // source. If a metric belongs in a tile, it should come from a typed feed.
+import { isOutage, outageSentence } from "@/lib/upstreamStatus";
+
 export type ResearchKind = "estimates" | "financials" | "statements" | "concalls" | "documents";
 
 export type ResearchDoc = { url: string; title: string; date: string | null };
@@ -75,20 +77,27 @@ export function stalenessNote(r: Research): string | null {
   return `The data service did not respond, so this is the last saved copy — fetched ${age} ago.`;
 }
 
-/** Human wording for the reasons a panel can come back empty. */
-export function researchReason(e: ResearchError): string {
-  switch (e.failureCode) {
-    case "NOT_CONFIGURED":
-      return "The data token isn't set on this deployment, so research panels are off.";
-    case "UPSTREAM_UNAUTHORISED":
-      return "The data service rejected our token for this endpoint. It works for prices and news, so this is a permissions question for whoever issued it, not an outage.";
-    case "UPSTREAM_NO_RESPONSE":
-      return "The data service didn't respond in time.";
-    case "EMPTY_RESPONSE":
-      return "The data service returned nothing for this company.";
-    case "NETWORK":
-      return "Couldn't reach the server.";
-    default:
-      return `The data service returned an error${e.upstreamStatus ? ` (${e.upstreamStatus})` : ""}.`;
+/**
+ * Human wording for the reasons a panel can come back empty.
+ *
+ * `what` names the panel, so an outage sentence can say what is missing rather
+ * than only that something is. The outage branch runs FIRST: a gateway status
+ * is a fact about the service, and only `EMPTY_RESPONSE` — a 200 carrying
+ * nothing — is a fact about the company.
+ */
+export function researchReason(e: ResearchError, what = "this panel"): string {
+  if (e.failureCode === "UPSTREAM_UNAUTHORISED") {
+    return "The data service rejected our token for this endpoint. It works for prices and news, so this is a permissions question for whoever issued it, not an outage.";
   }
+  if (e.failureCode === "NOT_CONFIGURED") {
+    return "The data token isn't set on this deployment, so research panels are off.";
+  }
+  if (e.failureCode === "EMPTY_RESPONSE") {
+    return "The data service answered, and returned nothing for this company.";
+  }
+  if (isOutage(e)) return outageSentence(e, what);
+  return `The data service returned an error${e.upstreamStatus ? ` (${e.upstreamStatus})` : ""}.`;
 }
+
+/** True where the panel is empty because the SERVICE is down, not the company. */
+export const researchIsOutage = (e: ResearchError) => isOutage(e);

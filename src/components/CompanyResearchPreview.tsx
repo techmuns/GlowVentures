@@ -164,7 +164,23 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
           Profit & Loss, Quarterly Results and Peer Comparison — no segment
           split, no capacity, no customer list, no calendar. So these are absent
           for want of a source, and each says which source would fill it. */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
+      {/* AND THESE FOUR ARE NOT AN OUTAGE. They render the same dashed absent
+          card as a panel whose feed is momentarily down, and a reader looking at
+          a page during a data-service outage sees eight empty boxes and reads
+          all eight as broken. They are the opposite: PERMANENT, decided, and
+          each already carries the source that would fill it. Saying so once,
+          here, is what lets the reader tell "this will come back on its own"
+          from "this needs a source nobody has wired". */}
+      <div className="mt-5 flex items-start gap-3 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 px-4 py-3">
+        <Boxes className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+        <div className="text-[12.5px] leading-relaxed text-slate-400">
+          <span className="font-semibold text-slate-200">The four cards below are absent by decision, not by failure.</span>{" "}
+          Nothing wired to this dashboard publishes them for any company, so they stay empty whether or not the data
+          service is answering — this is not the panels above being down. Each names the source that would fill it.
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-2 items-start">
         <Card title={<span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-slate-500" /> Business segments</span>}
           subtitle="Revenue & EBIT by segment, geography and product">
           <AbsentSection

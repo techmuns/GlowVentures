@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Globe, Presentation } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Presentation } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -16,8 +16,6 @@ import { BasisPill } from "@/components/BasisPill";
 import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
-import { PreviewBadge } from "@/components/Preview";
-import { readWatchlist, pendingToInvest, type Watchlist } from "@/lib/watchlist";
 
 type EntityPart = {
   // Per-unit figures are nullable for the same reason they are on Position:
@@ -50,7 +48,7 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
-  const [view, setView] = useState<"holdings" | "transactions" | "plan">("holdings");
+  const [view, setView] = useState<"holdings" | "transactions">("holdings");
   const [consolidate, setConsolidate] = useState(true);
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
@@ -285,11 +283,11 @@ export function PortfolioMonitor() {
       {/* View toggle (+ Holdings' by-security / by-entity switch) */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-          {(["holdings", "transactions", "plan"] as const).map((m) => (
+          {(["holdings", "transactions"] as const).map((m) => (
             <button key={m} type="button" onClick={() => setView(m)}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${view === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-              {m === "holdings" ? <Layers className="h-4 w-4" /> : m === "transactions" ? <ArrowLeftRight className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-              {m === "holdings" ? "Holdings" : m === "transactions" ? "Transactions" : "Public dashboard"}
+              {m === "holdings" ? <Layers className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
+              {m === "holdings" ? "Holdings" : "Transactions"}
             </button>
           ))}
         </div>
@@ -494,10 +492,8 @@ export function PortfolioMonitor() {
             </p>
           )}
         </Card>
-      ) : view === "transactions" ? (
-        <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />
       ) : (
-        <PublicDashboardView rows={rows} totMV={totMV} filtered={entity !== "All" || sector !== "All" || assetClass !== "All" || selected.size > 0} />
+        <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />
       )}
     </div>
   );
@@ -709,192 +705,6 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             </tbody>
           </table>
         </div>
-      </Card>
-    </>
-  );
-}
-
-// PUBLIC-DASHBOARD view — the FOOS spec's "Dashboard for tracking public
-// investments". It sits beside Holdings and Transactions and reuses the SAME
-// consolidated-by-security `rows` (so weights already respect the dedupe group),
-// laying them out in the spec's own column order.
-//
-// Three kinds of column, kept visually distinct because they carry different
-// claims:
-//   • LIVE, from the book — CMP, buy price, invested, current value, gain,
-//     return, quantity, weight. Bright/mono, exactly as the Holdings table.
-//   • ABSENT — per-security XIRR. This book cannot measure it: the transaction
-//     statements cover the current period only, so a rate would be a real number
-//     for the wrong window. It renders through AbsentCell with that reason, NOT a
-//     preview sample, because the figure is genuinely unavailable rather than
-//     merely un-fed.
-//   • JUDGEMENT — target amount, target weight, pending to invest, fair value,
-//     its reference year and the valuation method. These are the family's own
-//     calls, not statement figures. Where the family HAS recorded one on the
-//     watchlist it is shown; where they have not, the cell is ABSENT with the
-//     reason.
-//
-// THE JUDGEMENT COLUMNS USED TO CARRY A SAMPLE, AND THE SAMPLE WAS ARITHMETIC ON
-// THE FAMILY'S OWN MONEY. Target value was `marketValue x 1.25`, pending to
-// invest `x 0.18`, target weight `weight x 1.3 + 0.4`, fair value
-// `(price ?? cost ?? 100) x 1.18` — note the literal 100, a per-share price
-// invented outright when a holding is marked at a total value. Each sat in the
-// same row as that holding's real market value, under a heading a reader has
-// every reason to read as the family's own target.
-//
-// Greying a figure marks it as not-live. It does not stop it being a NUMBER
-// ABOUT THIS HOLDING, and ₹15.5 Cr beside a real ₹12.4 Cr is a target somebody
-// could act on. The book's own rule for exactly this field says so: a price
-// nobody has set is null, never a default, "a fabricated figure produced by a
-// default, which is the exact failure this book exists to prevent". A default of
-// x1.25 is worse than a default of zero, because it is plausible.
-//
-// FV reference year and valuation method were worse still — `FV_YEARS[i % 4]`
-// and `VAL_METHODS[i % 5]` assigned "FY28E" and "DCF" to real companies by ROW
-// INDEX. Sorting the table changed which company was valued by DCF.
-//
-// So the columns stay, because the spec asks for them and the reader should see
-// where the family's judgement will live. They render `—` with a reason until
-// the family records one on that name's company page.
-//
-// PENDING TO INVEST IS AN ARITHMETIC ON THE FAMILY'S OWN MONEY, and it is here
-// legitimately for one reason: every input is measured. `target% x book total −
-// held now`, where the target is a figure a human typed and the total is this
-// table's own denominator. That is the same computation the weight column
-// already shows, expressed in rupees. What made the old version a fabrication
-// was not the arithmetic but the operand — `x 0.18` was a coefficient nobody
-// chose, and no amount of greying makes an invented coefficient measured.
-//
-// THE DENOMINATOR TRAVELS WITH IT. A target weight is a share OF SOMETHING, and
-// the same 5% is a different rupee figure against the whole book than against
-// one owner's slice. The table's weight column is already computed against the
-// filtered total, so pending uses the same one and the footnote names it — the
-// reader cannot see a denominator from inside a cell.
-function PublicDashboardView({ rows, totMV, filtered }: { rows: Row[]; totMV: number; filtered: boolean }) {
-  const { fmtFromBase } = usePortfolio();
-  // localStorage is read once per open — edits made on /watchlist this session
-  // won't reflect until the view remounts, which is acceptable for a preview.
-  const wl: Watchlist = useMemo(() => readWatchlist(), []);
-  return (
-    <>
-      {/* Legend — the reader must be able to tell, at a glance, which columns are
-          the book, which are the family's judgement, and which cannot be measured. */}
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
-        <PreviewBadge label="Judgement columns" />
-        <span><span className="text-slate-200">Live from the book:</span> CMP, buy price, invested, current value, gain, return, quantity, weight.</span>
-        <span><span className="text-champagne-400">Target, weight, fair value, its year and the method</span> are the family's own — shown where recorded on a name's company page, <span className="text-slate-500">—</span> where not.</span>
-        <span>Per-security XIRR is <span className="text-slate-500">not available</span> — transaction statements cover the current period only.</span>
-      </div>
-      <Card pad={false} className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="min-w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-ink-800">
-              <tr className="border-b border-ink-700">
-                <th className="label-xs px-2 py-2.5 text-left font-medium">Company</th>
-                <th className="label-xs px-2 py-2.5 text-left font-medium">Sector</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">Qty bought</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Buy price</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">CMP</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">Invested</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Current value</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Absolute gain</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">Return</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">Weight</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium">XIRR</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Target value</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Target weight</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Pending to invest</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Fair value</th>
-                <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">FV ref year</th>
-                <th className="label-xs px-2 py-2.5 text-left font-medium whitespace-nowrap">Valuation method</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/70">
-              {rows.map((r, i) => {
-                const e = wl[r.securityKey];
-                // Real judgement figures where the family has set them; a greyed
-                // sample where they have not. Target VALUE = the family's per-unit
-                // target × the quantity actually held.
-                const hasTarget = !!e && e.targetPrice !== null;
-                const hasFair = !!e && e.fairValue !== null;
-                // `!== null` and never a truthiness test: a recorded 0% target
-                // weight is the family saying "hold none of this", which is the
-                // most actionable value this column can carry.
-                const tw = e?.targetWeightPct ?? null;
-                const pending = pendingToInvest(tw, totMV, r.marketValue);
-                return (
-                  <tr key={r.key} className="hover:bg-ink-700/40">
-                    <td className="px-2 py-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
-                        {r.costNA && <Pill tone="warn">cost n/a</Pill>}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5 text-slate-400">{r.sector}</td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{fmtNum(r.quantity)}</td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? <AbsentCell reason="no per-unit cost reported for this holding" /> : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(r.avgCost)}</td>
-                    {/* A workbook mark is flagged so it can't read as a live price. */}
-                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
-                      {r.currentPrice === null
-                        ? <AbsentCell reason="marked at a total value, not a per-unit price" />
-                        : r.live
-                        ? fmtFromBase(r.currentPrice)
-                        : <>{fmtFromBase(r.currentPrice)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80" title="No live price — showing the statement mark.">{"◦"}</span></>}
-                    </td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? <AbsentCell reason="no cost basis reported for this holding" /> : fmtFromBase(r.costBasis, { compact: true })}</td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(r.marketValue, { compact: true })}</td>
-                    <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`}>{r.costNA ? <AbsentCell reason="no cost basis, so gain is not measurable" /> : fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</td>
-                    <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`}>{r.costNA ? <AbsentCell reason="no cost basis, so return is not measurable" /> : fmtPct(r.returnPct, { sign: true })}</td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{(r.weight * 100).toFixed(1)}%</td>
-                    {/* Genuinely absent — not a preview. */}
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap"><AbsentCell reason="no per-security XIRR — transaction statements cover the current period only" /></td>
-                    {/* Target VALUE = the family's per-unit target x the quantity
-                        actually held. Real where they set one; absent where not. */}
-                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasTarget
-                      ? <span className="text-champagne-400">{fmtFromBase(e!.targetPrice! * r.quantity, { compact: true })}</span>
-                      : <AbsentCell reason="no target price set for this name — record one on its company page" />}</td>
-                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{tw !== null
-                      ? <span className="text-champagne-400">{tw.toFixed(1)}%</span>
-                      : <AbsentCell reason="no target weight set for this name — record one on its company page" />}</td>
-                    {/* Positive = still to buy, negative = overweight. Coloured
-                        neutrally: neither direction is good or bad, they are
-                        instructions in opposite directions. */}
-                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{pending !== null
-                      ? <span className="text-champagne-400" title={`${tw!.toFixed(1)}% of ${fmtFromBase(totMV, { compact: true })} less the ${fmtFromBase(r.marketValue, { compact: true })} held`}>
-                          {fmtFromBase(pending, { compact: true, sign: true })}
-                        </span>
-                      : <AbsentCell reason={tw === null
-                          ? "pending to invest is the gap to a target weight, and no target weight is set"
-                          : "the visible book has no market value to take a percentage of"} />}</td>
-                    <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{hasFair
-                      ? <span className="text-champagne-400">{fmtFromBase(e!.fairValue!)}</span>
-                      : <AbsentCell reason="no fair value recorded for this name — record one on its company page" />}</td>
-                    <td className="px-2 py-2.5 text-right whitespace-nowrap">{e?.fairValueRefYear
-                      ? <span className="text-champagne-400">{e.fairValueRefYear}</span>
-                      : hasFair
-                      ? <AbsentCell reason="a fair value is recorded but not the year it is struck for" />
-                      : <AbsentCell reason="no fair value recorded, so it has no reference year" />}</td>
-                    <td className="px-2 py-2.5 text-left whitespace-nowrap">{e?.valuationMethod
-                      ? <span className="text-champagne-400">{e.valuationMethod}</span>
-                      : <AbsentCell reason="no valuation method recorded for this name" />}</td>
-                  </tr>
-                );
-              })}
-              {rows.length === 0 && <tr><td colSpan={17} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-        {/* THE DENOMINATOR, NAMED. Target weight and pending to invest are both
-            shares of a total, and which total is not visible from the cell. */}
-        <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-          <span className="text-slate-400">Pending to invest</span> is the target weight applied to{" "}
-          {fmtFromBase(totMV, { compact: true })} — {filtered
-            ? "the total of the rows currently filtered in, not the whole book, so the same target weight reads differently here than on an unfiltered view"
-            : "the consolidated book, counting a dually-reported holding once"}
-          {" "}— less what is held now. Positive is still to buy, negative is overweight.
-          A name with no target weight recorded shows <span className="text-slate-400">—</span> rather than its whole
-          position as a shortfall.
-        </p>
       </Card>
     </>
   );

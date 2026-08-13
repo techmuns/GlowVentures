@@ -4,6 +4,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { parseRatioTable, checkIdentity, shareCountBreaks } from "@/lib/ratioTable";
+import { isOutage, outageHeadline, outageSentence } from "@/lib/upstreamStatus";
 
 // RATIO ANALYSIS — the spec's per-share ratios, margins, returns, liquidity,
 // leverage and valuation, over seven year-ends.
@@ -58,11 +59,7 @@ const REASONS: Record<string, string> = {
   NO_SOURCE_URL: "The ratio resolver answered, but gave no source page to read.",
   SOURCE_URL_NOT_ALLOWED: "The ratio resolver pointed at a host this dashboard will not fetch with its data token.",
   READER_EMPTY: "The reader reached the source page but could not extract readable text from it.",
-  READER_ERROR: "The reader could not fetch the source page.",
-  UPSTREAM_NO_RESPONSE: "The data service didn't respond in time. It has been intermittently unavailable, so this is very likely an outage rather than a company with no ratios — the request is already retried once before giving up.",
-  UPSTREAM_ERROR: "The data service returned a gateway error. That is the service being down, not an answer about this company — the request is already retried once before giving up.",
   NOT_CONFIGURED: "The data token isn't set on this deployment.",
-  NETWORK: "Couldn't reach the server.",
 };
 
 export function RatioTable({ ticker, name }: { ticker: string | null; name: string }) {
@@ -90,12 +87,20 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
       return <div className="grid h-24 place-items-center text-sm text-slate-500">Loading ratio analysis…</div>;
     }
     if (!state.ok) {
+      // THE HEADLINE FOLLOWS THE CAUSE. A gateway status is a fact about the
+      // service; "No ratio table for this company" over a 522 tells a reader
+      // this company publishes no ratios, which is a wrong diagnosis they will
+      // act on. Only a genuine answer — a resolver that gave no page, a page
+      // with no readable table — may say anything about the company.
+      const outage = isOutage(state);
       return (
         <AbsentSection
-          what="No ratio table for this company"
-          needs={`${REASONS[state.failureCode] ?? "The data service returned an error."}${
-            state.upstreamStatus ? ` (upstream ${state.upstreamStatus})` : ""}${
-            state.pointer ? ` It pointed at ${state.pointer}.` : ""}`} />
+          what={outage ? outageHeadline : "No ratio table for this company"}
+          needs={outage
+            ? outageSentence(state, "the seven-year ratio table")
+            : `${REASONS[state.failureCode] ?? "The data service returned an error."}${
+              state.upstreamStatus ? ` (upstream ${state.upstreamStatus})` : ""}${
+              state.pointer ? ` It pointed at ${state.pointer}.` : ""}`} />
       );
     }
     if (!doc || !identity) return null;

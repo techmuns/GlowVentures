@@ -43,7 +43,6 @@ const ROUTES = [
   ["cio", "/cio"],
   ["monitor", "/monitor"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
-  ["monitor-plan", "/monitor"],          // same route, Public dashboard toggle clicked
   ["family", "/family"],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
@@ -92,11 +91,34 @@ const INVARIANTS = {
     // "are there no investments in direct equity?" — listed equity is one
     // consolidated Equity asset class, not the empty "Direct Equity" row it was.
     ["equity is a consolidated asset class, not an empty 'Direct Equity' row", (t) => /\bEquity\b/.test(t)],
-    // The AIF was double-counted into NAV on live basis (₹544 Cr vs a real
-    // ₹335 Cr). check:pages runs on STATEMENT basis, so the consolidated NAV is
-    // deterministically ₹335.43 Cr — guard the correct band and forbid the
-    // double-counted ₹5xx Cr.
-    ["consolidated NAV ties to ~₹335 Cr, not the double-counted ₹5xx Cr", (t) => /₹33[0-9](\.\d+)?\s*Cr/.test(t) && !/₹5\d\d(\.\d+)?\s*Cr/.test(t)],
+    // THE AIF WAS DOUBLE-COUNTED INTO NAV, and this is the guard against it
+    // returning. It used to read "ties to ~₹335 Cr … not ₹5xx Cr" — a copy of a
+    // figure the book GENERATES, written when the book was ₹335.43 Cr. The
+    // August drop moved it to ₹461.00 Cr and this line failed against a page
+    // computing correctly, which is the same stale-literal failure the household
+    // net-worth check had. A test carrying its own copy of a generated figure is
+    // a second source for it.
+    //
+    // So the RELATION is what is asserted, and it is the one the bug actually
+    // broke: the NAV tile's own caption splits the book by asset class, and
+    // double-counting the AIF puts value in the headline that is in neither
+    // half. Listed + Private must reconstruct the headline.
+    ["NAV = its own listed + private split (the AIF is not counted twice)", (t) => {
+      const nav = Number(/consolidated nav[\s\S]{0,60}?₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
+      const listed = Number(/Listed\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
+      const priv = Number(/Private\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
+      return [nav, listed, priv].every(Number.isFinite) && Math.abs(listed + priv - nav) <= 0.6;
+    }],
+    // And the allocation table's own footer must tie to its own two columns —
+    // it carried a money-weighted rate in a column of return-on-cost figures,
+    // so Invested and Current printed one answer and the Total cell another.
+    ["the allocation total ties to its own Invested and Current columns", (t) => {
+      const row = /Total\s+₹([\d.]+)\s*Cr\s+₹([\d.]+)\s*Cr\s+([+-])([\d.]+)%/.exec(t);
+      if (!row) return true;   // layout changed; the other invariants still bind
+      const [, inv, cur, sign, pct] = row;
+      const expect = ((Number(cur) - Number(inv)) / Number(inv)) * 100;
+      return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
+    }],
   ],
   // "why are 70% holdings in unclassified" — the sector view must be the listed
   // book only, with the AIF/private book named as excluded rather than folded in.
@@ -112,7 +134,23 @@ const INVARIANTS = {
   // each dedupeGroup once (₹335.43 Cr, never the double-counted ₹338.6 Cr).
   monitor: [
     ["holdings are sectioned by asset class", (t) => /\bequity\b/i.test(t) && /\d+\s+holdings/i.test(t)],
-    ["by-security total counts each dedupeGroup once, not ₹338.6 Cr", (t) => !/₹\s?338\.6\s*Cr/.test(t)],
+    // The by-security total must count each dedupeGroup once. Asserted against
+    // the CONSOLIDATED NAV IN THE HEADER, which is on every page and is the
+    // deduped figure by construction — not against a literal, and not against
+    // the specific wrong number one drop happened to produce.
+    // A NON-MATCH FAILS HERE, it does not pass. The first draft returned true
+    // when its regex found nothing, which is a check that reports confidence
+    // over no input — the same thing `golden.mjs` refuses to do with BLOCKED.
+    // The row is "Total · 164 rows  ₹394.1 Cr  —  ₹461 Cr  …", and the ₹461 Cr
+    // must be the header chip's consolidated NAV: that figure is deduped by
+    // construction, so a by-security table that double-counts a dually-reported
+    // holding cannot match it.
+    ["by-security total counts each dedupeGroup once", (t) => {
+      const nav = Number(/₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);   // header chip, first on the page
+      const total = Number(/Total\s*·\s*\d+\s*rows\s*₹[\d.]+\s*Cr\s*\S*\s*₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);
+      return Number.isFinite(nav) && Number.isFinite(total)
+        && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
+    }],
   ],
   // Audit: the per-entity money-weighted return must be measured over accounts
   // that carry an opening portfolio value only. Closing an owner's WHOLE market
@@ -351,10 +389,6 @@ for (const theme of THEMES) {
       await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
       if (name === "monitor-txns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
-      }
-      if (name === "monitor-plan") {
-        const t = page.getByRole("button", { name: /public dashboard/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
       await page.waitForTimeout(FAST ? 350 : 800);

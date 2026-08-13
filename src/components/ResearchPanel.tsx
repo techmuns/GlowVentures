@@ -6,9 +6,10 @@ import { FinancialSummary } from "@/components/FinancialSummary";
 import { CashFlowPanel } from "@/components/CashFlowPanel";
 import { Pill } from "@/components/Pill";
 import {
-  fetchResearch, isResearchError, researchReason, stalenessNote,
+  fetchResearch, isResearchError, researchReason, researchIsOutage, stalenessNote,
   type Research, type ResearchKind,
 } from "@/lib/research";
+import { outageHeadline } from "@/lib/upstreamStatus";
 
 // Research from the muns endpoints, shown as the upstream wrote it.
 //
@@ -109,10 +110,23 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
         </div>
       )}
 
+      {/* AN OUTAGE IS NAMED AS ONE. This box printed "The data service returned
+          an error (522)" — a status code shown to a family member, which says
+          nothing about what is missing or whether it is their dashboard or the
+          provider. The cause now picks the heading: the service being
+          unreachable is a fact about the service, and only an empty 200 is a
+          fact about the company. */}
       {state && isResearchError(state) && (
-        <div className="rounded-lg border border-dashed border-ink-600 bg-ink-900/60 px-4 py-5 text-center">
-          <div className="text-sm text-slate-400">{researchReason(state)}</div>
-          <div className="mt-1.5 text-[11px] text-slate-600">{state.failureCode}{state.upstreamStatus ? ` · upstream ${state.upstreamStatus}` : ""} · full detail in the browser console</div>
+        <div className="rounded-lg border border-dashed border-ink-600 bg-ink-900/60 px-4 py-5">
+          {researchIsOutage(state) && (
+            <div className="mb-1.5 flex items-center justify-center gap-2 text-sm font-medium text-amber-300">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{outageHeadline}
+            </div>
+          )}
+          <div className="mx-auto max-w-2xl text-center text-[12.5px] leading-relaxed text-slate-400">
+            {researchReason(state, `the ${TAB_LABEL[tab].toLowerCase()} for ${ticker}`)}
+          </div>
+          <div className="mt-2 text-center text-[11px] text-slate-600">{state.failureCode}{state.upstreamStatus ? ` · upstream ${state.upstreamStatus}` : ""} · full detail in the browser console</div>
         </div>
       )}
 
