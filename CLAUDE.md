@@ -1212,8 +1212,10 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   aggregates (GDP, CPI, policy rates, credit growth, housing, household savings,
   vehicle sales, capital-market flows) still are not, and are declared absent with
   their intended source rather than drawn.
-- **Industry research.** Industry size, capacity, utilisation, order books, raw
-  material prices. No industry endpoint.
+- **Industry research.** Industry size, capacity, utilisation, order books. No
+  industry endpoint, and the page that composed the raw-material half of it from
+  the harvest store has been REMOVED at the family's request — see Stage 9c. The
+  price series themselves are unaffected and remain on Macro Research.
 - **Layer 3 — IPS buckets and GAP analysis.** Growth / Liquidity / Tactical /
   Hedge / Charity, actual vs desired by geography, market cap, duration. The
   actuals are in the book; the DESIRED allocations are a family decision nobody
@@ -1853,6 +1855,14 @@ Four presentation rules, each a plausible-looking wrong answer avoided:
   those at midnight UTC; rendered in a zone behind UTC that lands on the previous
   day. They are treated as day-only and grouped on the source's own date.
 
+**IT LIVES ON ECONOMY & MACRO, AND NOWHERE ELSE.** Macro Research carried a
+SECOND "Data release calendar" card, declaring a calendar impossible for the
+same reasons — which stopped being true the moment this was wired, so a stale
+absence would have contradicted the working page one link away. It is removed,
+and `check:family` asserts both halves of that: the claim gone from Macro, the
+real calendar still rendering with its filters on Economy. A removal is verified
+by asserting it happened.
+
 `src/lib/__tests__/econCalendar.test.ts` asserts all of it against a REAL saved
 response, and its anchor case is India's CPI — the field the Economy page once
 printed as an invented `4.83%`, now measured at 4.45% actual against a 4.50%
@@ -1861,32 +1871,30 @@ consensus, with MOSPI named as the publisher.
 **It needs no token**, so it kept working through the muns outage that was live
 the day it was written.
 
-## Stage 9c — Industry Research, composed from the store
+## Stage 9c — Industry Research: REMOVED
 
-The spec splits an industry dashboard in two, and only one half is sourceable.
-**INDUSTRY ECONOMICS** — raw material prices, input cost trends — is entirely
-live, because Phases 0–2 harvested exactly those inputs: coal, iron ore, HRC,
-the base metals, crude, gas, spot power and the fertiliser complex. Each of the
-seven industries declares which store series ARE its input and output prices,
-with the role each one plays, and the page renders them with their own returns
-and a rebased basket chart.
+The page composed the harvested store into a per-industry dashboard — seven
+industries, each declaring which stored series ARE its input and output prices,
+with a rebased basket chart — and named its structural gaps (capacity,
+utilisation, order books) rather than drawing them. The family asked for it to
+go; `/industry` redirects to `/macro`, and `check:family` asserts the redirect.
 
-**INDUSTRY STRUCTURE** — size, capacity, utilisation, order books, realisations —
-is named as absent with its real reason per industry, not drawn. CEA, the
-Ministry of Coal and the JPC publish capacity and production monthly, but as PDF
-and XLS behind dynamic selectors: a reader per source, not a URL.
+**NOTHING IT DEPENDED ON WAS DELETED WITH IT.** Every series it read is still in
+the harvest store and still on Macro Research: coal, iron ore, HRC, the base
+metals, crude, gas, spot power and the fertiliser complex. What is gone is one
+arrangement of them.
 
-**THE BOOK CARRIES SECTORS, NOT INDUSTRIES.** `Position.sector` is GICS
-("Materials", "Utilities"); nothing in the archive says "Cement". So the exposure
-panel names the SECTORS it matched and says plainly that these are holdings in a
-related sector — never that those companies operate in the industry above.
-Asserting an industry no statement stated is a fabricated classification, the
-same failure class as an index-cycled valuation method.
-
-Where a series is a global benchmark rather than the Indian price — US Midwest
-HRC, seaborne coal, international urea — the row says so and the gap is listed
-in the absent card. A benchmark standing in silently for a domestic price is the
-kind of substitution a reader would never detect.
+The reasoning is worth keeping even though the screen is not, because it governs
+any future attempt: **THE BOOK CARRIES SECTORS, NOT INDUSTRIES.**
+`Position.sector` is GICS ("Materials", "Utilities"); nothing in the archive says
+"Cement". So that page's exposure panel named the SECTORS it matched and said
+plainly that these are holdings in a related sector — never that those companies
+operate in the industry above. Asserting an industry no statement stated is a
+fabricated classification, the same failure class as an index-cycled valuation
+method. And where a series was a global benchmark rather than the Indian price —
+US Midwest HRC, seaborne coal, international urea — the row said so, because a
+benchmark standing in silently for a domestic price is a substitution a reader
+would never detect.
 
 ## Stage 9b — company price history (`/api/prices`)
 

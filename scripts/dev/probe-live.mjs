@@ -35,7 +35,6 @@ const PAGES = [
   ["cio", "/cio"],
   ["macro", "/macro"],
   ["economy", "/economy"],
-  ["industry", "/industry"],
 ];
 
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });

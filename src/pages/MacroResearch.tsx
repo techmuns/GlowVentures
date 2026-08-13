@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Globe, Fuel, LineChart as LineIcon, DollarSign, CalendarClock, Download, Percent, BarChart3, AreaChart as AreaIcon, ScatterChart as ScatterIcon, Image as ImageIcon } from "lucide-react";
+import { Globe, Fuel, LineChart as LineIcon, DollarSign, Download, Percent, BarChart3, AreaChart as AreaIcon, ScatterChart as ScatterIcon, Image as ImageIcon } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -398,29 +398,20 @@ export function MacroResearch() {
         </Card>
       )}
 
-      {/* ── Release calendar — the one genuinely unsourceable piece ────────
-          This listed "US CPI (MoM) prev 0.3% cons 0.2% actual 0.1%", "India IIP
-          (YoY) actual 5.2%" and "China GDP (YoY) actual 4.7%" as sample figures.
-          Its own caption was already correct about why a consensus cannot be
-          shown — and it printed three consensus figures anyway, alongside three
-          ACTUALS, which are not licensed at all but simply were not measured.
-          Cropped out of a screenshot, "China GDP (YoY) actual 4.7%" is a false
-          economic fact a reader can act on. */}
-      <Card className="mt-5"
-        title={<span className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-500" /> Data release calendar</span>}
-        subtitle="Previous · consensus · actual · surprise">
-        <AbsentSection
-          what="No release calendar is available"
-          needs="A calendar needs a publication SCHEDULE and a CONSENSUS. Consensus and the surprise measured against it
-            are licensed products sold by paid vendors; the schedule is published per agency and is not in the
-            catalogue. Previous and actual come from each agency's own release — where the harvest store carries the
-            series, its latest reading and release date are already in the tables above." />
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-          Rather than invent a forecast, this shows the releases the store actually holds and leaves consensus absent
-          until a vendor is chosen. Sample prints here would be indistinguishable from real ones once a screenshot is
-          cropped, which is why none is drawn.
-        </p>
-      </Card>
+      {/* THE RELEASE-CALENDAR CARD THAT SAT HERE IS GONE, at the family's
+          request — and it was doubly out of date. It said a calendar "needs a
+          publication SCHEDULE and a CONSENSUS … licensed products sold by paid
+          vendors", which stopped being true the day `/api/econ-calendar` was
+          wired: TradingView publishes previous, consensus, actual and the
+          publishing agency, keylessly. So a REAL calendar now lives on Economy
+          & Macro, and a second card here declaring the same thing impossible
+          would have contradicted it on the next page along.
+
+          The lesson the old card recorded still stands and is why this comment
+          replaces it rather than nothing: it once printed "US CPI (MoM) prev
+          0.3% cons 0.2% actual 0.1%", "India IIP (YoY) actual 5.2%" and "China
+          GDP (YoY) actual 4.7%" as SAMPLES. Cropped out of a screenshot, an
+          invented economic actual is a false fact a reader acts on. */}
     </div>
   );
 }

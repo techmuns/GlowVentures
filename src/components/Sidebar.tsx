@@ -3,13 +3,13 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Factory, Crosshair, BellRing,
+  GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // Pure-preview pages carry no book dependency, so they stay reachable even before
 // statements are ingested (the same as the setup/admin routes).
-const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger", "/knowledge", "/macro", "/economy", "/industry"]);
+const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger", "/knowledge", "/macro", "/economy"]);
 
 // Drag-to-resize bounds for the left nav (px). Default 224 (14rem) keeps the
 // Portfolio Monitor holdings table off a horizontal scrollbar at common laptop
@@ -32,7 +32,6 @@ const NAV = [
   { to: "/watchlist", label: "Watchlist & Targets", icon: Star, group: "Research" },
   { to: "/macro", label: "Macro Research", icon: Globe, group: "Research" },
   { to: "/economy", label: "Economy & Macro", icon: TrendingUp, group: "Research" },
-  { to: "/industry", label: "Industry Research", icon: Factory, group: "Research" },
   { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor" },
   { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },

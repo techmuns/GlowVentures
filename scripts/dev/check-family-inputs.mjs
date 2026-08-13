@@ -125,11 +125,29 @@ check("the classes mapped to no bucket are named with their value",
 check("the whole store can still be exported from here", /export/i.test(text));
 
 // ── The removed routes redirect rather than 404 ────────────────────────────
-for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"]]) {
+for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"], ["/industry", "/macro"]]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   check(`${from} redirects to ${to}`, new URL(page.url()).pathname === to, new URL(page.url()).pathname);
 }
+
+// ── The release calendar lives on Economy, and nowhere else ────────────────
+//
+// Macro Research carried a second "Data release calendar" card that declared a
+// calendar impossible. That stopped being true the day `/api/econ-calendar` was
+// wired, so it was removed — and the check that replaces it has to prove the
+// RIGHT one went: the stale claim gone from Macro, the working calendar still
+// on Economy.
+await page.goto(`${BASE}/macro`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+text = await page.locator("body").innerText();
+check("Macro Research no longer claims a calendar is impossible",
+  !/release calendar is available|release calendar can be built/i.test(text));
+await page.goto(`${BASE}/economy`, { waitUntil: "networkidle" });
+await page.waitForTimeout(1500);
+text = await page.locator("body").innerText();
+check("the real calendar is still on Economy & Macro, with its filters",
+  /data release calendar/i.test(text) && /this week/i.test(text) && /unranked/i.test(text));
 
 // ── Portfolio Monitor ──────────────────────────────────────────────────────
 //

@@ -22,7 +22,6 @@ import { Watchlist } from "@/pages/Watchlist";
 import { Knowledge } from "@/pages/Knowledge";
 import { MacroResearch } from "@/pages/MacroResearch";
 import { Economy } from "@/pages/Economy";
-import { IndustryResearch } from "@/pages/IndustryResearch";
 import { ExposureIPS } from "@/pages/ExposureIPS";
 import { ThesisMonitor } from "@/pages/ThesisMonitor";
 import { Alerts } from "@/pages/Alerts";
@@ -69,7 +68,6 @@ export default function App() {
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/macro" element={<MacroResearch />} />
             <Route path="/economy" element={<Economy />} />
-            <Route path="/industry" element={<IndustryResearch />} />
             <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
             <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
@@ -84,6 +82,7 @@ export default function App() {
             <Route path="/look-through" element={<Navigate to="/monitor" replace />} />
             <Route path="/funds" element={<Navigate to="/monitor" replace />} />
             <Route path="/value-creation" element={<Navigate to="/monitor" replace />} />
+            <Route path="/industry" element={<Navigate to="/macro" replace />} />
             <Route path="/private" element={<Navigate to="/monitor" replace />} />
             <Route path="/data-bank" element={<Navigate to="/monitor" replace />} />
             <Route path="/household" element={<Navigate to="/family" replace />} />

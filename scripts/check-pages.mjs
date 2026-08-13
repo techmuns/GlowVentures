@@ -54,7 +54,6 @@ const ROUTES = [
   ["exposure", "/exposure"],
   ["macro", "/macro"],
   ["economy", "/economy"],
-  ["industry", "/industry"],
   ["thesis", "/thesis"],
   ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
@@ -222,15 +221,6 @@ const INVARIANTS = {
       (t) => /\d+ of \d+ recorded/i.test(t) && /Thesis/i.test(t) && /Review/i.test(t)],
     ["an expected return is never inferred from the actual beside it",
       (t) => /Expected/i.test(t) && /Return \(actual\)/i.test(t)],
-  ],
-  // Phase 4: Industry Research composes the harvested store into per-industry
-  // input-cost dashboards. The economics half must be LIVE (real series with
-  // sources), and the structure half must be NAMED as absent rather than shown
-  // as illustrative numbers — the state the page was in before.
-  industry: [
-    ["input costs are live from the series store", (t) => /live inputs/i.test(t) && /input & output prices/i.test(t)],
-    ["structure gaps are named, not drawn", (t) => /asked for, not yet sourced/i.test(t)],
-    ["sector match is not passed off as an industry classification", (t) => /GICS sector/i.test(t)],
   ],
   // Phase 3: the company page draws a real price chart and a returns table from
   // /api/prices. In this headless run the edge function does not exist, so the
