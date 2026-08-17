@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 83 series, 344,667 points
+- **Harvested:** 83 series, 344,675 points
 - **Failed:** 0
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
@@ -19,7 +19,7 @@ not have.
 | Natural Gas | Energy | 6,519 | 2000-08-30 | 2026-08-14 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 595 | 1977-01-01 | 2026-07-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 679 | 1970-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 7 | 2026-08-10 | 2026-08-16 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Electricity (IEX day-ahead) | Energy | 8 | 2026-08-10 | 2026-08-17 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,513 | 2000-08-30 | 2026-08-14 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,515 | 2000-08-30 | 2026-08-14 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,541 | 1997-10-29 | 2026-08-14 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -70,13 +70,13 @@ not have.
 | US 30 Year Treasury | Government Bonds | 12,400 | 1977-02-15 | 2026-08-14 | % | Yahoo Finance `^TYX` | official-api |
 | India 10 Year G-Sec | Government Bonds | 174 | 2011-12-01 | 2026-05-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
 | US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 788 | 2023-08-11 | 2026-08-13 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
-| RBI Repo Rate | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 7 | 2026-08-10 | 2026-08-16 | % | Reserve Bank of India `SLR` | scraped-official |
+| RBI Repo Rate | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 8 | 2026-08-10 | 2026-08-17 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
@@ -112,33 +112,20 @@ but a one-day return spanning a roll is measuring the roll.
 
 | Series | Severity | Rule | Detail |
 | --- | --- | --- | --- |
-| Brent Crude | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | WTI Crude | warn | large-move | 2 consecutive move(s) over 25%; largest 37.7% on 2020-04-22 (10.010000228881836 → 13.779999732971191) |
 | Natural Gas | warn | large-move | 10 consecutive move(s) over 25%; largest 47.5% on 2026-01-29 (7.460000038146973 → 3.9179999828338623) |
-| Natural Gas | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | LNG (Japan) | warn | large-move | 2 consecutive move(s) over 25%; largest 54.5% on 1980-01-01 (3.69 → 5.7) |
 | Thermal Coal (Australian) | warn | large-move | 10 consecutive move(s) over 25%; largest 58.6% on 1975-01-01 (16.9 → 26.8) |
-| Gold | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Silver | warn | large-move | 1 consecutive move(s) over 25%; largest 31.3% on 2026-01-30 (114.03700256347656 → 78.29000091552734) |
-| Silver | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Platinum | warn | large-move | 3 consecutive move(s) over 25%; largest 43.5% on 2000-04-26 (775 → 438.1000061035156) |
-| Platinum | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Palladium | warn | large-move | 2 consecutive move(s) over 25%; largest 60.3% on 2008-02-28 (365.04998779296875 → 585.25) |
-| Palladium | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| Copper | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| Aluminium | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Steel (HRC) | warn | large-move | 1 consecutive move(s) over 25%; largest 36.8% on 2022-03-30 (1122 → 1535) |
 | Steel (HRC) | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Zinc | warn | large-move | 3 consecutive move(s) over 25%; largest 39.7% on 1973-11-01 (1163 → 1625) |
 | Nickel | warn | large-move | 7 consecutive move(s) over 25%; largest 78.8% on 1988-03-01 (8667 → 15497) |
 | Lead | warn | large-move | 4 consecutive move(s) over 25%; largest 36.2% on 1990-03-01 (780 → 1062) |
 | Iron Ore (cfr spot) | warn | large-move | 8 consecutive move(s) over 25%; largest 71.5% on 2005-01-01 (37.9 → 65) |
-| Wheat | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Rice | warn | large-move | 1 consecutive move(s) over 25%; largest 25.9% on 2020-07-15 (16.18000030517578 → 11.989999771118164) |
-| Rice | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| Corn | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| Soybean | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| Cotton | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Sugar | warn | large-move | 1 consecutive move(s) over 25%; largest 26.6% on 2000-05-01 (5.159999847412109 → 6.53000020980835) |
 | Coffee | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Palm Oil | warn | large-move | 8 consecutive move(s) over 25%; largest 31.5% on 1983-08-01 (425 → 559) |
@@ -147,11 +134,7 @@ but a one-day return spanning a roll is measuring the roll.
 | DAP | warn | large-move | 11 consecutive move(s) over 25%; largest 62.3% on 1974-01-01 (132.5 → 215) |
 | Phosphate Rock | warn | large-move | 19 consecutive move(s) over 25%; largest 300.0% on 1977-01-01 (35 → 140) |
 | Potash (KCl) | warn | large-move | 14 consecutive move(s) over 25%; largest 70.8% on 2012-08-01 (279.5 → 477.5) |
-| Russell 2000 | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
 | Hang Seng | warn | large-move | 1 consecutive move(s) over 25%; largest 33.3% on 1987-10-26 (3362.39990234375 → 2241.699951171875) |
-| Dollar Index (DXY) | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-08-14 |
-| US 10 Year Treasury | warn | large-move | 4 consecutive move(s) over 25%; largest 49.9% on 2020-03-10 (0.49900001287460327 → 0.7480000257492065) |
-| US 5 Year Treasury | warn | large-move | 7 consecutive move(s) over 25%; largest 43.1% on 2020-03-10 (0.42899999022483826 → 0.6140000224113464) |
 | Mutual Fund Net Flows | warn | large-move | 24 consecutive move(s) over 25%; largest 1136.1% on 2020-07-31 (7265.677888289994 → 89812.78230985) |
 | Equity MF Net Flows | warn | large-move | 42 consecutive move(s) over 25%; largest 277.1% on 2021-07-31 (5988.171766310001 → 22583.51885735) |
 | Debt MF Net Flows | warn | large-move | 16 consecutive move(s) over 25%; largest 3093.6% on 2020-07-31 (2861.678968749995 → 91391.72797698001) |
