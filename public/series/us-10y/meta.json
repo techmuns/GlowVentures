@@ -17,8 +17,8 @@
  "note": "CBOE's 10-year Treasury yield index — the yield itself, in percent, not a price.",
  "accumulating": false,
  "first": "1970-01-02",
- "last": "2026-08-14",
- "count": 14174,
- "retrievedAt": "2026-08-15T02:51:07.332Z",
+ "last": "2026-08-17",
+ "count": 14175,
+ "retrievedAt": "2026-08-18T02:55:00.181Z",
  "staleSince": null
 }
