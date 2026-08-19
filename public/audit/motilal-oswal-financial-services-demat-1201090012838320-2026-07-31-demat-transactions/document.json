@@ -1,0 +1,231 @@
+{
+ "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
+ "provider": "Motilal Oswal Financial Services (demat)",
+ "accountNo": "1201090012838320",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Bharat Jaisinghani",
+ "ownerId": "bharat-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Direct",
+ "providerEngagement": "CDSL depository account — Individual-Resident",
+ "members": [],
+ "asOf": "2026-07-31",
+ "inceptionDate": null,
+ "reportType": "demat-transactions",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
+ "pages": 3,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "depository-movements-are-not-trades",
+   "detail": "1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [
+  {
+   "date": "2026-04-16",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "securityKey": "ask-alternate-investment-fund-ask-absolute-return-fund-class-a6-series-31-01-2025",
+   "isin": "INF0V6R22JL5",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 30998.45,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  }
+ ],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": [
+  {
+   "isin": "INF209K01VA3",
+   "security": "ADITYA BIRLA SUN LIFE AMC LTD#ABSL MF-ABSL LIQUID FUND DIRAN-GROWTH",
+   "opening": 0,
+   "quantity": 264720.521
+  },
+  {
+   "isin": "INF0V6R22JL5",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "opening": 30998.45,
+   "quantity": 0
+  },
+  {
+   "isin": "INF179K01WA6",
+   "security": "HDFC AMC LTD#HDFC MF-HDFC BALANCED ADVANTAGE FUND-DIRECT-GROWTH",
+   "opening": 27779.278,
+   "quantity": 1469.627
+  },
+  {
+   "isin": "INF179K01VC4",
+   "security": "HDFC AMC LTD#HDFC MF-HDFC VALUE FUND-DIRECT-GROWTH",
+   "opening": 11160.726,
+   "quantity": 0
+  },
+  {
+   "isin": "INF109KC1RE6",
+   "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-GROWTH",
+   "opening": 80771.405,
+   "quantity": 0
+  },
+  {
+   "isin": "INF109K012B0",
+   "security": "ICICI PRU AMC LTD#ICICIPRU MF-ICICI PRU BALANCE ADVANTAGE FUND-DIR PL-GROWTH",
+   "opening": 262503.988,
+   "quantity": 146856.943
+  },
+  {
+   "isin": "INE121E01018",
+   "security": "JSW ENERGY LIMITED - EQUITY SHARES",
+   "opening": 7500,
+   "quantity": 0
+  },
+  {
+   "isin": "INF732E01037",
+   "security": "NIPPON LIFE INDIA AM LTD#NIPPON INDIA MF-NIPPON INDIA ETF NIFTY 1D RATE LIQUID BEES",
+   "opening": 1.436,
+   "quantity": 3828.05
+  },
+  {
+   "isin": "INE013P01021",
+   "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
+   "opening": 60287,
+   "quantity": 48000
+  }
+ ],
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [
+  "ANKITA JAISINGHANI",
+  "Branch Code:MOSTINVEST Sub Broker Code:PCGWMMUMB"
+ ],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 356.6,
+   "parts": [
+    "1201090000000116 307534"
+   ],
+   "joined": "1201090000000116307534",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 272.6,
+   "parts": [
+    "1201090000000116 346897"
+   ],
+   "joined": "1201090000000116346897",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 188.6,
+   "parts": [
+    "1201090000000116 346358"
+   ],
+   "joined": "1201090000000116346358",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 104.6,
+   "parts": [
+    "1201090000000116 42979"
+   ],
+   "joined": "120109000000011642979",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 800,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 780,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 232,
+   "parts": [
+    "1201090000003024 1211232026098"
+   ],
+   "joined": "12010900000030241211232026098",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 212,
+   "parts": [
+    "1201090000003024 1211232026098"
+   ],
+   "joined": "12010900000030241211232026098",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 192,
+   "parts": [
+    "1201090000003024 1211232026098"
+   ],
+   "joined": "12010900000030241211232026098",
+   "page": 2
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

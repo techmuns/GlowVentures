@@ -1,0 +1,21 @@
+{
+ "name": "advice",
+ "rows": [
+  [
+   "account",
+   "date",
+   "amount",
+   "direction",
+   "description",
+   "folioClaimedByFileName"
+  ],
+  [
+   "XXXXXXXX1520",
+   "2026-08-04",
+   214290815.61,
+   "Debit",
+   "INF/NEFT/IN426216579690 10/KKBK0000651/Re",
+   null
+  ]
+ ]
+}

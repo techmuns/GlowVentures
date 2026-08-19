@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-08-19T12:08:00.832Z",
+  "generatedAt": "2026-08-19T14:51:50.892Z",
   "summary": {
     "documents": 259,
-    "parsed": 195,
-    "partial": 49,
-    "failed": 15,
-    "rowSumChecks": 251,
-    "totalMismatches": 98,
+    "parsed": 197,
+    "partial": 61,
+    "failed": 1,
+    "rowSumChecks": 259,
+    "totalMismatches": 99,
     "totalsMaterial": 0,
     "totalsExplained": 40,
-    "totalsRounding": 106,
-    "derivedVsPrintedDeltas": 641,
+    "totalsRounding": 110,
+    "derivedVsPrintedDeltas": 670,
     "derivedMaterial": 0,
-    "derivedExplained": 321,
+    "derivedExplained": 350,
     "derivedRounding": 320,
     "datedChecks": 1881,
     "datedMaterial": 2,
@@ -21,7 +21,7 @@
     "crossReportDeltas": 18,
     "suspectedDuplicates": 5,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 11,
+    "securitiesWithoutSymbol": 32,
     "ownerNamesUnmatched": 2,
     "stitchesApplied": 127
   },
@@ -49,9 +49,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 195,
-    "partial": 49,
-    "failed": 15,
+    "parsed": 197,
+    "partial": 61,
+    "failed": 1,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -185,10 +185,10 @@
         }
       },
       "ICICI Bank (payment advice)": {
-        "unknown": {
-          "ok": 0,
+        "payment-advice": {
+          "ok": 2,
           "partial": 0,
-          "failed": 2
+          "failed": 0
         }
       },
       "Motilal Oswal Founders Fund": {
@@ -259,15 +259,15 @@
         }
       },
       "Motilal Oswal Financial Services (demat)": {
-        "unknown": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 6
+          "partial": 6,
+          "failed": 0
         },
-        "demat-statement": {
+        "demat-transactions": {
           "ok": 0,
-          "partial": 0,
-          "failed": 6
+          "partial": 6,
+          "failed": 0
         }
       },
       "Neo Infra Income Opportunities Fund": {
@@ -573,143 +573,6 @@
     },
     "failures": [
       {
-        "docKey": "icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf",
-        "provider": "ICICI Bank (payment advice)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"ICICI Bank (payment advice)\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown-2",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000049.pdf",
-        "provider": "ICICI Bank (payment advice)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"ICICI Bank (payment advice)\" / reportType unknown",
-          "duplicate-doc-key: icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf; filed as icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-2",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding .pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf; filed as motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-3",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf; filed as motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-3. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191_Ankita Jaisinghani_Transation.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-4",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191-Ankita Jaisinghani_Holding.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf; filed as motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-5",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf; filed as motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-5. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-6",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Holding.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType unknown",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf; filed as motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-6. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-5",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-5. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-6",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement",
-          "duplicate-doc-key: motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-6. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
         "docKey": "consolidated-family-review-not-a-statement-unknown-unknown-unknown",
         "sourcePath": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
         "provider": "Consolidated family review (not a statement)",
@@ -940,6 +803,101 @@
         ]
       },
       {
+        "docKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
+        "reasons": [
+          "aif-units-carry-face-value-not-nav: 2 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (2053614.026 units at a face value of 100); Buoyant Opportunities Strategy — Class A4 (3416657.416 units at a face value of 100). Where the fund itself issues a statement in this book, that is where the valuation comes from.",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
+        "reasons": [
+          "depository-movements-are-not-trades: 1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding .pdf",
+        "reasons": [
+          "printed-value-not-quantity-times-rate: 8 of 14 row(s) print a value that is not their own quantity x rate — e.g. BIRLA CABLE LTD-EQ at 11900 x 170.6 = 2030140.00 against a printed 34120. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check.",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090037436848-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
+        "reasons": [
+          "account-holds-nothing: the statement prints `NO HOLDING IS AVAILABLE` — the account is open and empty, and that is a measurement",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191_Ankita Jaisinghani_Transation.pdf",
+        "reasons": [
+          "depository-movements-are-not-trades: 6 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191-Ankita Jaisinghani_Holding.pdf",
+        "reasons": [
+          "printed-value-not-quantity-times-rate: 15 of 41 row(s) print a value that is not their own quantity x rate — e.g. AXIS BANK EQ at 7300 x 1368.25 = 9988225.00 against a printed 2133101.75. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check.",
+          "aif-units-carry-face-value-not-nav: 13 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (1416918.692 units at a face value of 100); BAVF Series 20 — Class C6 (856.736 units at a face value of —); Buoyant Opportunities Strategy — Class A4 (1918953.2 units at a face value of 100); …. Where the fund itself issues a statement in this book, that is where the valuation comes from.",
+          "no-rate-published: the depository prints no rate for 5 holding(s) — ABSL BAL ADV-GROWTH (INF084M01AB8), CHEELIZZA IND-EQ1/- (INE0MSX01027), CLEAN MAX ENV-EQ 1/- (INE647U01026), MIRAE LCF D-GROW (INF769K01AX2), …. A rate of 0.000 is read as NOT PRICED, never as a price of zero, so these carry units and no market value.",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
+        "reasons": [
+          "pan-contradicts-name: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either.",
+          "printed-value-not-quantity-times-rate: 1 of 3 row(s) print a value that is not their own quantity x rate — e.g. ICICI LIQF D-GROWTH at 46654.378 x 394.625 = 18410983.92 against a printed 11909782.5. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check.",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
+        "reasons": [
+          "depository-movements-are-not-trades: 1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Holding.pdf",
+        "reasons": [
+          "printed-value-not-quantity-times-rate: 4 of 7 row(s) print a value that is not their own quantity x rate — e.g. DSP GOLD ETF at 1195000 x 141.24 = 168781800.00 against a printed 19562022.48. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check.",
+          "no-rate-published: the depository prints no rate for 1 holding(s) — ABSL BAL ADV-GROWTH (INF084M01AB8). A rate of 0.000 is read as NOT PRICED, never as a price of zero, so these carry units and no market value.",
+          "field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+        "reasons": [
+          "depository-movements-are-not-trades: 1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
+        "reasons": [
+          "depository-movements-are-not-trades: 5 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
+        "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
+        "reasons": [
+          "pan-contradicts-name: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either.",
+          "depository-movements-are-not-trades: 0 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+        ]
+      },
+      {
         "docKey": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings",
         "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
         "reasons": [
@@ -1097,8 +1055,8 @@
     ]
   },
   "consolidated": {
-    "naive": 8636138598.31,
-    "deduped": 8575595275.73,
+    "naive": 9740027120.75,
+    "deduped": 9679483798.17,
     "doubleCounted": 60543322.58
   },
   "rowSumChecks": [
@@ -2272,6 +2230,146 @@
       "delta": 0,
       "rowsSummed": 1,
       "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 328255048.02,
+      "printedTotal": 328255048.02125096,
+      "delta": 0,
+      "rowsSummed": 14,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100.02,
+      "printedTotal": 100,
+      "delta": 0.02,
+      "rowsSummed": 14,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 383837353.18,
+      "printedTotal": 383837353.17744404,
+      "delta": 0,
+      "rowsSummed": 23,
+      "rowsMissingField": 18,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.99,
+      "printedTotal": 100,
+      "delta": -0.01,
+      "rowsSummed": 23,
+      "rowsMissingField": 18,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090032387399",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 82270772.93,
+      "printedTotal": 82270772.93148999,
+      "delta": 0,
+      "rowsSummed": 3,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090032387399",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 3,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 309525348.31,
+      "printedTotal": 309525348.30882,
+      "delta": 0,
+      "rowsSummed": 6,
+      "rowsMissingField": 1,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.99,
+      "printedTotal": 100,
+      "delta": -0.01,
+      "rowsSummed": 6,
+      "rowsMissingField": 1,
       "matches": true,
       "severity": "rounding",
       "cause": null,
@@ -7962,6 +8060,470 @@
       "delta": 0.15,
       "severity": "rounding",
       "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ABSL BAL ADV-GROWTH",
+      "securityKey": "absl-bal-adv-growth",
+      "field": "marketValue",
+      "derived": 19937221.87,
+      "printed": 19937221.76,
+      "delta": 0.11,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "BIRLA CABLE LTD-EQ",
+      "securityKey": "birla-cable-ltd-eq",
+      "field": "marketValue",
+      "derived": 2030140,
+      "printed": 34120,
+      "delta": 1996020,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "HDFC BAF D-GROW",
+      "securityKey": "hdfc-baf-d-grow",
+      "field": "marketValue",
+      "derived": 837882.85,
+      "printed": 15000000.25,
+      "delta": -14162117.4,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "HELIOS FCF D-GROW",
+      "securityKey": "helios-fcf-d-grow",
+      "field": "marketValue",
+      "derived": 37901628.1,
+      "printed": 10071654.85,
+      "delta": 27829973.25,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI NFT NT 50 DP G",
+      "securityKey": "icici-nft-nt-50-dp-g",
+      "field": "marketValue",
+      "derived": 2.9,
+      "printed": 28985295.6,
+      "delta": -28985292.7,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI NFT NX 50 R GR",
+      "securityKey": "icici-nft-nx-50-r-gr",
+      "field": "marketValue",
+      "derived": 36.08,
+      "printed": 2413311.06,
+      "delta": -2413274.98,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI PRU BAF DP GRW",
+      "securityKey": "icici-pru-baf-dp-grw",
+      "field": "marketValue",
+      "derived": 12698719.86,
+      "printed": 9999999.98,
+      "delta": 2698719.88,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "NIP ETNF1D RTLIQBEES",
+      "securityKey": "nip-etnf1d-rtliqbees",
+      "field": "marketValue",
+      "derived": 3828011.72,
+      "printed": 2924.97,
+      "delta": 3825086.75,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ONESOURCE SPECIAL-EQ",
+      "securityKey": "onesource-special-eq",
+      "field": "marketValue",
+      "derived": 86056800,
+      "printed": 22028747.95,
+      "delta": 64028052.05,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "AXIS BANK EQ",
+      "securityKey": "axis-bank-eq",
+      "field": "marketValue",
+      "derived": 9988225,
+      "printed": 2133101.75,
+      "delta": 7855123.25,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "BHARAT PARENTERAL-EQ",
+      "securityKey": "bharat-parenteral-eq",
+      "field": "marketValue",
+      "derived": 967332.6,
+      "printed": 24063,
+      "delta": 943269.6,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "CITY UNION -EQ RE1/",
+      "securityKey": "city-union-eq-re1",
+      "field": "marketValue",
+      "derived": 7457175,
+      "printed": 6213231.75,
+      "delta": 1243943.25,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "DSP GOLD ETF",
+      "securityKey": "dsp-gold-etf",
+      "field": "marketValue",
+      "derived": 30975500,
+      "printed": 545319.9,
+      "delta": 30430180.1,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "DSP SILVER ETF",
+      "securityKey": "dsp-silver-etf",
+      "field": "marketValue",
+      "derived": 34048860,
+      "printed": 29619740,
+      "delta": 4429120,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "EVEREST FLEET-EQ1/",
+      "securityKey": "everest-fleet-eq1",
+      "field": "marketValue",
+      "derived": 580,
+      "printed": 60,
+      "delta": 520,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "FEDERAL BANK EQ 2/",
+      "securityKey": "federal-bank-eq-2",
+      "field": "marketValue",
+      "derived": 9939000,
+      "printed": 8084382.6,
+      "delta": 1854617.4,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "HDFC BAF R-GROW",
+      "securityKey": "hdfc-baf-r-grow",
+      "field": "marketValue",
+      "derived": 19521624.54,
+      "printed": 4347000.17,
+      "delta": 15174624.37,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "HELIOS FCF D-GROW",
+      "securityKey": "helios-fcf-d-grow",
+      "field": "marketValue",
+      "derived": 72331964.96,
+      "printed": 42397880.11,
+      "delta": 29934084.85,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI BANK-EQ",
+      "securityKey": "icici-bank-eq",
+      "field": "marketValue",
+      "derived": 19996950,
+      "printed": 7365773.1,
+      "delta": 12631176.9,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "INDIAN BANK - EQ",
+      "securityKey": "indian-bank-eq",
+      "field": "marketValue",
+      "derived": 7388550,
+      "printed": 550857.45,
+      "delta": 6837692.55,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "INDUSIND BANK EQUITY",
+      "securityKey": "indusind-bank-equity",
+      "field": "marketValue",
+      "derived": 4941037.5,
+      "printed": 4065768,
+      "delta": 875269.5,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "INFINIUM PHARMA-EQ",
+      "securityKey": "infinium-pharma-eq",
+      "field": "marketValue",
+      "derived": 1890000,
+      "printed": 236250,
+      "delta": 1653750,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "NIP ETNF1D RTLIQBEES",
+      "securityKey": "nip-etnf1d-rtliqbees",
+      "field": "marketValue",
+      "derived": 257408.43,
+      "printed": 197,
+      "delta": 257211.43,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "SBI - EQ",
+      "securityKey": "sbi-eq",
+      "field": "marketValue",
+      "derived": 28977937.5,
+      "printed": 2284819,
+      "delta": 26693118.5,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090032387399",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI LIQF D-GROWTH",
+      "securityKey": "icici-liqf-d-growth",
+      "field": "marketValue",
+      "derived": 18410983.92,
+      "printed": 11909782.5,
+      "delta": 6501201.42,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "DSP GOLD ETF",
+      "securityKey": "dsp-gold-etf",
+      "field": "marketValue",
+      "derived": 168781800,
+      "printed": 19562022.48,
+      "delta": 149219777.52,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ICICI LIQF D-GROWTH",
+      "securityKey": "icici-liqf-d-growth",
+      "field": "marketValue",
+      "derived": 8606290.15,
+      "printed": 12726630.76,
+      "delta": -4120340.61,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "NIP ETNF1D RTLIQBEES",
+      "securityKey": "nip-etnf1d-rtliqbees",
+      "field": "marketValue",
+      "derived": 7679418.21,
+      "printed": 5866.94,
+      "delta": 7673551.27,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "PG ELECTRO-EQ1/",
+      "securityKey": "pg-electro-eq1",
+      "field": "marketValue",
+      "derived": 90396000,
+      "printed": 2259900,
+      "delta": 88136100,
+      "severity": "explained",
+      "cause": "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said.",
       "fromPrinted": false
     },
     {
@@ -44578,17 +45140,25 @@
       "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
     },
     {
-      "dedupeGroup": "dg-india-sme-investments-fund-ii-class-a2-2",
+      "dedupeGroup": "dg-india-sme-investments-fund-ii-class-a2-3",
       "security": "India SME Investments Fund II — Class A2",
       "securityKey": "india-sme-investments-fund-ii-class-a2",
       "quantity": 27000,
-      "totalCost": 27000000,
+      "totalCost": null,
       "marketValue": null,
       "owners": [
         "ankita-jaisinghani",
         "bharat-jaisinghani"
       ],
       "occurrences": [
+        {
+          "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+          "owner": "Ankita Jaisinghani",
+          "ownerId": "ankita-jaisinghani",
+          "accountNo": "1201090012838316",
+          "asOf": "2026-07-31",
+          "reportType": "holdings"
+        },
         {
           "docKey": "india-sme-investments-177302-2026-06-30-holdings",
           "owner": "Ankita Jaisinghani",
@@ -44669,6 +45239,153 @@
         "docs": [
           "buoyant-capital-103472-2026-07-31-fact-sheet",
           "buoyant-capital-103473-2026-07-31-fact-sheet"
+        ]
+      },
+      {
+        "security": "BIRLA CABLE LTD-EQ",
+        "securityKey": "birla-cable-ltd-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "ONESOURCE SPECIAL-EQ",
+        "securityKey": "onesource-special-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "AXIS BANK EQ",
+        "securityKey": "axis-bank-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "BHARAT PARENTERAL-EQ",
+        "securityKey": "bharat-parenteral-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "CHEELIZZA IND-EQ1/",
+        "securityKey": "cheelizza-ind-eq1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "CITY UNION -EQ RE1/",
+        "securityKey": "city-union-eq-re1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "CLEAN MAX ENV-EQ 1/",
+        "securityKey": "clean-max-env-eq-1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "EFPL PREF 18042043",
+        "securityKey": "efpl-pref-18042043",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "EVEREST FLEET-EQ1/",
+        "securityKey": "everest-fleet-eq1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "FEDERAL BANK EQ 2/",
+        "securityKey": "federal-bank-eq-2",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "ICICI BANK-EQ",
+        "securityKey": "icici-bank-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "INDIAN BANK - EQ",
+        "securityKey": "indian-bank-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "INDUSIND BANK EQUITY",
+        "securityKey": "indusind-bank-equity",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "INFINIUM PHARMA-EQ",
+        "securityKey": "infinium-pharma-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "KAYNES TECHNOLOGY-EQ",
+        "securityKey": "kaynes-technology-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "NATIONAL STOCK EX-EQ",
+        "securityKey": "national-stock-ex-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "RBL BNK-EQ RE 10",
+        "securityKey": "rbl-bnk-eq-re-10",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "SBI - EQ",
+        "securityKey": "sbi-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "THE KARUR VYS-EQ",
+        "securityKey": "the-karur-vys-eq",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "ZAGGLE PREPAID-EQ1/",
+        "securityKey": "zaggle-prepaid-eq1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      },
+      {
+        "security": "PG ELECTRO-EQ1/",
+        "securityKey": "pg-electro-eq1",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings"
         ]
       },
       {
@@ -44790,41 +45507,6 @@
     ],
     "reportTypesWithoutExtractor": [
       {
-        "provider": "ICICI Bank (payment advice)",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown",
-          "icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown-2"
-        ]
-      },
-      {
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown",
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-2",
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-3",
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-4",
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-5",
-          "motilal-oswal-financial-services-demat-unknown-2026-07-31-unknown-6"
-        ]
-      },
-      {
-        "provider": "Motilal Oswal Financial Services (demat)",
-        "reportType": "demat-statement",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-5",
-          "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-6"
-        ]
-      },
-      {
         "provider": "Consolidated family review (not a statement)",
         "reportType": "unknown",
         "reason": "no-extractor",
@@ -44877,6 +45559,7 @@
       "Mutual fund folio",
       "360 ONE Alternates Asset Management",
       "360 ONE Private Wealth",
+      "Motilal Oswal Financial Services (demat)",
       "Helios Mutual Fund",
       "Motilal Oswal Founders Fund",
       "Motilal Oswal Active Momentum Fund",
@@ -44892,7 +45575,7 @@
   },
   "stitches": [
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 300.6,
@@ -44903,7 +45586,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 280.6,
@@ -44914,7 +45597,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 156.6,
@@ -44925,7 +45608,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 136.6,
@@ -44936,7 +45619,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 32.6,
@@ -44947,7 +45630,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 312,
@@ -44958,7 +45641,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 292,
@@ -44969,7 +45652,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 208,
@@ -44980,7 +45663,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 124,
@@ -44991,7 +45674,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 748,
@@ -45002,7 +45685,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 664,
@@ -45013,7 +45696,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 580,
@@ -45024,7 +45707,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 476,
@@ -45035,7 +45718,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 392,
@@ -45046,7 +45729,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 372,
@@ -45057,7 +45740,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 352,
@@ -45068,7 +45751,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 312,
@@ -45079,7 +45762,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 292,
@@ -45090,7 +45773,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 272,
@@ -45101,7 +45784,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 232,
@@ -45112,7 +45795,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 212,
@@ -45123,7 +45806,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 192,
@@ -45134,7 +45817,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 88,
@@ -45145,7 +45828,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 68,
@@ -45156,7 +45839,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 748,
@@ -45167,7 +45850,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 728,
@@ -45178,7 +45861,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 668,
@@ -45189,7 +45872,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 648,
@@ -45200,7 +45883,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 608,
@@ -45211,7 +45894,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 588,
@@ -45222,7 +45905,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 112,
@@ -45233,7 +45916,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 92,
@@ -45244,7 +45927,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 776,
@@ -45255,7 +45938,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 756,
@@ -45266,7 +45949,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 736,
@@ -45277,7 +45960,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 716,
@@ -45288,7 +45971,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 696,
@@ -45299,7 +45982,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 676,
@@ -45310,7 +45993,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 636,
@@ -45321,7 +46004,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 616,
@@ -45332,7 +46015,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 596,
@@ -45343,7 +46026,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 576,
@@ -45354,7 +46037,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 556,
@@ -45365,7 +46048,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 536,
@@ -45376,7 +46059,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 212,
@@ -45387,7 +46070,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 192,
@@ -45398,7 +46081,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 88,
@@ -45409,7 +46092,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 68,
@@ -45420,7 +46103,7 @@
       "page": 5
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 120,
@@ -45431,7 +46114,7 @@
       "page": 6
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 100,
@@ -45442,7 +46125,7 @@
       "page": 6
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 432,
@@ -45453,7 +46136,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 412,
@@ -45464,7 +46147,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 308,
@@ -45475,7 +46158,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 288,
@@ -45486,7 +46169,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 268,
@@ -45497,7 +46180,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 228,
@@ -45508,7 +46191,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 208,
@@ -45519,7 +46202,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 188,
@@ -45530,7 +46213,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 84,
@@ -45541,7 +46224,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 64,
@@ -45552,7 +46235,7 @@
       "page": 7
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 748,
@@ -45563,7 +46246,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 728,
@@ -45574,7 +46257,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 196,
@@ -45585,7 +46268,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 176,
@@ -45596,7 +46279,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 52,
@@ -45607,7 +46290,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 32,
@@ -45618,7 +46301,7 @@
       "page": 8
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 704,
@@ -45629,7 +46312,7 @@
       "page": 9
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 684,
@@ -45640,7 +46323,7 @@
       "page": 9
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 568,
@@ -45651,7 +46334,7 @@
       "page": 9
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 548,
@@ -45662,7 +46345,7 @@
       "page": 9
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 96.6,
@@ -45673,7 +46356,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 76.6,
@@ -45684,7 +46367,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 56.6,
@@ -45695,7 +46378,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 36.6,
@@ -45706,7 +46389,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 288,
@@ -45717,7 +46400,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 268,
@@ -45728,7 +46411,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 184,
@@ -45739,7 +46422,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 100,
@@ -45750,7 +46433,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 780,
@@ -45761,7 +46444,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 760,
@@ -45772,7 +46455,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 552,
@@ -45783,7 +46466,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 468,
@@ -45794,7 +46477,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 364,
@@ -45805,7 +46488,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 344,
@@ -45816,7 +46499,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 324,
@@ -45827,7 +46510,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 304,
@@ -45838,7 +46521,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 284,
@@ -45849,7 +46532,7 @@
       "page": 3
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 672,
@@ -45860,7 +46543,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-2",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 652,
@@ -45871,7 +46554,7 @@
       "page": 4
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 356.6,
@@ -45882,7 +46565,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 272.6,
@@ -45893,7 +46576,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 188.6,
@@ -45904,7 +46587,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 104.6,
@@ -45915,7 +46598,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 800,
@@ -45926,7 +46609,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 780,
@@ -45937,7 +46620,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 232,
@@ -45948,7 +46631,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 212,
@@ -45959,7 +46642,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-3",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 192,
@@ -45970,7 +46653,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 480.6,
@@ -45981,7 +46664,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 292.6,
@@ -45992,7 +46675,7 @@
       "page": 1
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 436,
@@ -46003,7 +46686,7 @@
       "page": 2
     },
     {
-      "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
+      "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
       "kind": "same-line",
       "column": 0,
       "y": 416,

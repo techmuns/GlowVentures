@@ -32,6 +32,8 @@ import * as sanshiFund from "./providers/sanshiFund.mjs";
 import * as investorReport from "./providers/pmsInvestorReport.mjs";
 import * as transitionVenture from "./providers/transitionVenture.mjs";
 import * as lkp from "./providers/lkpSecurities.mjs";
+import * as motilalDemat from "./providers/motilalDemat.mjs";
+import * as bankAdvice from "./providers/bankAdvice.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
@@ -68,6 +70,15 @@ const EXTRACTORS = Object.fromEntries([
   // drawdown capital account.
   [sanshiFund.PROVIDER, sanshiFund],
   [transitionVenture.PROVIDER, transitionVenture],
+  // The family's own CDSL demat accounts at Motilal Oswal — SEVEN of them across
+  // twelve documents, and the only source in this drop for their direct equity,
+  // their gold and silver ETFs and their arbitrage and hybrid funds. Keyed on
+  // the Client ID the page prints: three of the twelve file names name the
+  // wrong member.
+  [motilalDemat.PROVIDER, motilalDemat],
+  // Two ICICI payment receipts. Read in full and attributed to nothing —
+  // a receipt names no holder, no security and no folio.
+  [bankAdvice.PROVIDER, bankAdvice],
   // Four documents in three formats — two PDFs and two spreadsheets — for one
   // self-directed demat account. The only lot register in the drop.
   [lkp.PROVIDER, lkp],

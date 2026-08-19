@@ -194,10 +194,10 @@ the original set at the top of `source/`, the client's `august-2026/` folder, an
 `august-2026-b/`, `august-2026-c/` and `august-2026-d/` — statements that
 arrived after it. Thirty-one issuers, 42 accounts in the book, six holders and
 two family trusts, 48 files expanding to 229 — of which **259 documents** are
-extracted, 195 read fully, 49 partially and **15 not at all**. Every encrypted
-statement opens; the 15 that do not read are ATTRIBUTED to the institution that
-issued them and named in the coverage report — see the `august-2026-d` section
-below — and `source/README.md` carries the rule for adding the next delivery.
+extracted, 197 read fully, 61 partially and **exactly ONE not at all**: the
+adviser's consolidated review workbook, which is held out BY DECISION and is
+not a statement. Every encrypted statement opens, every issuer has a reader,
+and `source/README.md` carries the rule for adding the next delivery.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
 `LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
@@ -214,7 +214,10 @@ every ZIP already at the top level.
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
 | Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
+| Motilal Oswal demat | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
+| Motilal Oswal demat | 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | ₹32.83 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
+| Motilal Oswal demat | 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | ₹30.95 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
@@ -227,7 +230,7 @@ every ZIP already at the top level.
 | SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
 | Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
-| **Motilal Oswal Delphi Equity Fund** | **9049241536** | **Ajay Jaisinghani** | **2026-06-30** | **₹11.13 Cr** |
+| Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-07-31 | ₹10.99 Cr |
 | SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-07-31 | ₹10.70 Cr |
 | Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
@@ -241,14 +244,17 @@ every ZIP already at the top level.
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
 | Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
-| 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (reclassified to nil units) |
-| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (both schemes redeemed) |
-| Motilal Oswal Hedged Equity Multi Factor | 90410014574 | Ajay Jaisinghani | 2026-07-31 | — (both classes redeemed to a DASH) |
-| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only, no valuation) |
-| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income only, no valuation) |
+| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (no NAV published) |
+| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (no NAV published) |
+| 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
+| Motilal Oswal demat | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
+| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (both rows are AIF units their funds report) |
+| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (`NO HOLDING IS AVAILABLE`) |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (redeemed to nil) |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | — (no NAV published) |
@@ -266,7 +272,7 @@ is one row per account, all 42 of them, sorted by value.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹544.45 Cr**: listed ₹192.11 Cr, private ₹352.34 Cr. The split is
+**Consolidated ₹646.61 Cr**: listed ₹294.27 Cr, private ₹352.34 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -276,8 +282,9 @@ Six PMS mandates run on one reporting system (Goldstandard, Green Lantern,
 Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-III
 AIF folios; six are drawdown AIF capital accounts, four of them Sky Capital's
 angel-fund folios and two held by TRUSTS; two are 360 ONE Distribution
-engagements; one is a self-directed demat account; one is a joint mutual-fund
-folio. The rest are single-scheme fund accounts, each issuing one statement.
+engagements; SEVEN are the family's own CDSL demat accounts at Motilal Oswal
+and one more at LKP; one is a joint mutual-fund folio. The rest are
+single-scheme fund accounts, each issuing one statement.
 
 **TWO OF THE 42 HOLD NOTHING, AND THAT IS A MEASUREMENT.** HDFC 16180583's two
 schemes are redeemed to nil units, and both classes of Motilal Oswal's Hedged
@@ -328,10 +335,11 @@ which carry no tag, so the group reached the book with ONE member,
 `dedupedPositions` had nothing to collapse, and the same units were counted under
 both CRNs.
 
-Nothing failed and nothing said so — the consolidated total read ₹545.90 Cr
-against a true ₹544.45 Cr and the AIF section beneath it was over by the same
-amount. **A tag that collapses nothing looks exactly like a book with no
-duplicates in it.**
+Nothing failed and nothing said so — the consolidated total ran ₹1,45,80,412.51
+above the truth, and the AIF section beneath it was over by the same amount.
+**A tag that collapses nothing looks exactly like a book with no duplicates in
+it.** (The figure is stated as the DELTA rather than as two totals, because the
+totals move with every drop and the overstatement is the fact.)
 
 Two things changed, and the second is the one that speaks up next time:
 
@@ -366,6 +374,8 @@ its own file because the layouts share nothing:
 | `providers/transitionVenture.mjs` | 2 | drawdown AIF capital accounts — the only source of an undrawn COMMITMENT |
 | `providers/lkpSecurities.mjs` | 4 | a self-directed demat account, in three file formats — the only LOT REGISTER in the book |
 | `providers/mutualFundFolio.mjs` | 5 | folio statements, three different layouts behind one reader |
+| `providers/motilalDemat.mjs` | 12 | the family's own CDSL demat accounts — SEVEN of them, keyed on the `Client ID:` the page prints because three of the twelve FILE NAMES name the wrong member |
+| `providers/bankAdvice.mjs` | 2 | ICICI payment receipts — read in full, attributed to nothing, because a receipt names no holder and no security |
 | `providers/schemePortfolio.mjs` | 1 | a fund's own SEBI portfolio disclosure — archived for look-through, worth nothing to the book |
 
 **Three files are BUNDLES.** `lib/bundle.mjs` splits a PDF by the report title
@@ -539,8 +549,8 @@ Four files. **Two were byte-identical** to statements already in `august-2026/`
 `MOTILAL REPORTS.zip` and a 25-tab consolidated review workbook.
 
 **WHAT LANDED — ₹73.55 Cr, and the consolidated total ties to it exactly**
-(₹472.35 Cr → ₹545.90 Cr, of which ₹1.46 Cr was a double-count later found and
-removed — see the 360 ONE pair above; the book is ₹544.45 Cr now). The first two
+(₹472.35 Cr → ₹545.90 Cr, of which ₹1.46 Cr turned out to be a double-count,
+found and removed later — see the 360 ONE pair above). The first two
 needed no new code; the rest are five
 new layouts on `altFundStatements.mjs`, built ONE AT A TIME and each verified
 against the family's own consolidated review before the next was started:
@@ -588,15 +598,116 @@ INGEST rather than the UI**, and it is why the listed/private split is worth
 checking on every drop and not only the total: the consolidated figure was
 correct to the rupee the whole time it was wrong.
 
-**FIFTEEN DOCUMENTS HAVE NO READER, and each is attributed to the institution
-that wrote it.** This is the honest state, not a silent gap; every one is in the
-coverage report:
+**AND ALL FIFTEEN NOW READ — see "The demat statements" below.** They used to
+sit here as documents with no reader. Twelve are the family's own CDSL accounts
+at Motilal Oswal and brought **₹102.16 Cr** into the book; two are ICICI payment
+receipts, read in full and attributed to nothing because a receipt names no
+holder and no security; the last is the review workbook, held out by decision.
+
+### The demat statements — ₹102.16 Cr, and three columns that disagree
+
+Twelve documents, SEVEN accounts, and the only source in this drop for the
+family's direct equity, their gold and silver ETFs and their arbitrage and
+hybrid funds. `providers/motilalDemat.mjs`.
+
+**THE FILE NAME IS WRONG THREE TIMES OUT OF TWELVE.**
+`H46082_Aarti Ajay Jaisinghani_Transation 1.pdf` is AJAY's account 37359311;
+`H43383 -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf` is BHARAT's 12838320;
+`H46082_Aarti Ajay Jaisinghani_Transation.pdf` is the account the OTHER files
+call the family trust. Every one would have filed a statement under the wrong
+member. The account is the `Client ID:` the page prints — and not the UCC
+either, because Ajay's UCC H19119 covers two different demat accounts.
+
+**WHICH COLUMN TO BELIEVE HAD TO BE MEASURED.** The statement prints quantity,
+rate and value, and on 22 of 67 rows they do not agree:
+
+```
+Birla Cable   11,900.000 units   rate 170.600   printed value 34,120.00
+```
+
+— ₹2.87 a share for a stock the same row prices at ₹170.60. The row is four
+text items on one line; nothing is misread. **The printed VALUE column ties to
+the printed grand total to the rupee on all five statements**, so the
+depository stands behind it, and it is still the column that cannot be used.
+The family's own review is independent of both and settles it: PG Electroplast
+180,000 units × 502.200 = ₹9.04 Cr against the review's 180,000 units at
+₹10.04 Cr; Onesource and Birla Cable likewise land within ordinary drift.
+Quantity and rate are the primitives, market value is DERIVED, and the printed
+figure goes to `printed.marketValue` — rules 3 and 4, applied to a document
+whose own arithmetic is broken. Those 28 deltas are `explained` with that cause
+named, because leaving them `material` would bury the two real settlement
+residuals this book needs a reader to look at.
+
+**A RATE OF 0.000 IS NOT PRICED**, and a rate of 100.000 on an AIF unit is the
+FACE VALUE it was issued at, not a NAV. Read as a mark it puts ₹34.71 Cr on 3P's
+units against the ₹52.12 Cr the review carries them at, and ₹34.17 Cr on a
+Buoyant folio the fund itself values at ₹49.30 Cr. So an AIF row from a
+depository carries its UNITS and no price — the same rule as "a depository does
+not know what shares cost", one column over.
+
+**AND A DEPOSITORY ROW WHOSE FUND ALREADY REPORTS ITSELF IS DROPPED.**
+`AIF_UNITS` names which fund reports each ISIN, and `dropDepositoryDuplicates`
+CHECKS that table rather than trusting it: the depository's unit count is
+compared against the units the reporting account carries, and only an exact
+match is dropped. A mismatch keeps BOTH rows and says so, because a depository
+holding units the fund does not report is either a folio this drop is missing
+or a reclassification — and that is the 3P case exactly. The tolerance is half
+of the third decimal both sides print: matched to the bit, Buoyant's
+3,416,657.416 against the fund's 3,416,657.417 failed to dedupe and put
+₹34.17 Cr into the book twice.
+
+**ONE ACCOUNT IS EXCLUDED BECAUSE ITS THREE IDENTIFIERS GIVE THREE ANSWERS.**
+Account 32387399 prints `Client Name: AARTI AJAY JAISINGHANI` with
+`PAN No: AAXXX-XX-8H`; Aarti's PAN is AFIPJ4151N, and the file it arrived in is
+named for a family trust whose two PANs it does not match either. The masked PAN
+cannot IDENTIFY a holder — three characters of ten — but it can REFUSE one, and
+here it does. ₹8.23 Cr is excluded with the reason rather than attributed to a
+guess, by the mechanism the HOPE INDIA TRUST folios already use. Returning
+`owner: null` was not enough: `extract.mjs` falls back to the classifier's name,
+which is the same name the PAN contradicts, so `excludedFromBook` carries it.
+
+| Account | Owner | As of | In the book |
+| --- | --- | --- | ---: |
+| 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
+| 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | ₹32.83 Cr |
+| 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | ₹30.95 Cr |
+| 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | ₹0 — both rows are AIF units the funds report |
+| 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 — `NO HOLDING IS AVAILABLE`, a measured zero |
+| 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | ₹0 — **transaction statement only** |
+| 1201090032387399 | — | 2026-07-31 | excluded, ₹8.23 Cr, holder unresolved |
+
+**AND THE LARGEST REMAINING GAP IS A MISSING HOLDING STATEMENT.** Account
+12539150 is Ajay's main demat — the one his Delphi and Hedged Equity statements
+print as their depository account — and the drop carries its TRANSACTION
+statement and not its holdings. The tape's closing balances give 38 quantities
+at 31 July and no rates, so they are carried as `positionsAsOf` and valued at
+nothing, the same separation `lkpSecurities.mjs` makes. That single missing
+document is most of why Ajay's coverage against the review sits at 34.5% while
+Aarti's is at 97.8%.
+
+**A DEPOSITORY MOVEMENT IS NOT A TRADE.** The transaction statements carry units
+in and units out with no price, no consideration and no counterparty, so
+`precedence.mjs` names the demat for `holdings` and deliberately not for
+`transactions`. The tape stays in the archive, where Data Audit shows it for
+what it is.
+
+### The two ICICI payment advices — read, and attributed to nothing
+
+`3P_Folio 3000048.pdf` and `3000049.pdf` are single-page ICICI receipts:
+₹31,05,82,835.17 and ₹21,42,90,815.61, both debited 04/08/2026. They carry no
+holder, no security and no folio. The two sum to ₹52.49 Cr against the
+₹52.12 Cr the review carries 3P at, and the file names assert the two 3P folios
+— which is a compelling story and still only a file name plus an arithmetic
+coincidence. This book has been bitten four times by a document filed on a name
+it merely MENTIONS. So the amount is recorded, the folio is recorded AS THE FILE
+NAME'S CLAIM, and `excludedFromBook` keeps it out of every total. A payment
+receipt is also the wrong instrument to book a redemption from: it says money
+moved between two banks, not which units were sold, at what NAV, or how much of
+it was gain.
 
 | Issuer | Docs | What it is |
 | --- | ---: | --- |
-| Motilal Oswal Financial Services (demat) | 12 | DP holding and transaction statements — Ajay, Aarti, Bharat, Ankita and a `BHARAT JAISINGHANI FAMILY TRUST` with NO numeral |
-| ICICI Bank (payment advice) | 2 | `3P_Folio 3000048/49.pdf` are ICICI RECEIPTS for transfers, not 3P statements — the filename names the folio the money went to |
-| Consolidated family review | 1 | see below |
+| Consolidated family review | 1 | the only document in `source/` with no reader — see below |
 
 ### The two Motilal Oswal ACCOUNT SUMMARY funds — one layout, and a DASH
 
@@ -1250,7 +1361,7 @@ product:
 **As of this calibration exactly TWO material deltas stand**, both named and
 both quantified above: ₹1.27 on Carnelian's 2026-08-10 transaction statement and
 ₹1.77 on V.E.C 128005's 2026-08-13 one, each a settlement residual inside the
-precision of a four-decimal price. The run is 251 row-sum checks, 641
+precision of a four-decimal price. The run is 259 row-sum checks, 670
 derived-vs-printed, 1,881 dated-table row checks and 18 cross-report. Every
 other delta that is not `ok` is `explained` or `rounding`, and every `explained`
 one names a basis difference reproduced exactly — never a widened tolerance.

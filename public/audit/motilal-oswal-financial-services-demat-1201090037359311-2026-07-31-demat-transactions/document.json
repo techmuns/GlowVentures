@@ -1,0 +1,212 @@
+{
+ "docKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-demat-transactions",
+ "provider": "Motilal Oswal Financial Services (demat)",
+ "accountNo": "1201090037359311",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Ajay Jaisinghani",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Direct",
+ "providerEngagement": "CDSL depository account — Individual-Resident",
+ "members": [],
+ "asOf": "2026-07-31",
+ "inceptionDate": null,
+ "reportType": "demat-transactions",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
+ "pages": 2,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "depository-movements-are-not-trades",
+   "detail": "5 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [
+  {
+   "date": "2026-04-22",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B1",
+   "securityKey": "3p-india-equity-fund-3p-india-equity-fund-1-category-iii-aif-class-b1",
+   "isin": "INF0R4I22041",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 965892.766,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-04-22",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B2",
+   "securityKey": "3p-india-equity-fund-3p-india-equity-fund-1-category-iii-aif-class-b2",
+   "isin": "INF0R4I22058",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 282737.451,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-04-22",
+   "settlementDate": null,
+   "side": "receipt",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B3",
+   "securityKey": "3p-india-equity-fund-3p-india-equity-fund-1-category-iii-aif-class-b3",
+   "isin": "INF0R4I22066",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 993249.409,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-04-22",
+   "settlementDate": null,
+   "side": "receipt",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B3",
+   "securityKey": "3p-india-equity-fund-3p-india-equity-fund-1-category-iii-aif-class-b3",
+   "isin": "INF0R4I22066",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 292748.872,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-06-12",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A1",
+   "securityKey": "buoyant-capital-aif-buoyant-opportunities-strategy-class-a1",
+   "isin": "INF0RRI22016",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 1489474.102,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  }
+ ],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": [
+  {
+   "isin": "INF0R4I22041",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B1",
+   "opening": 965892.766,
+   "quantity": 0
+  },
+  {
+   "isin": "INF0R4I22058",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B2",
+   "opening": 282737.451,
+   "quantity": 0
+  },
+  {
+   "isin": "INF0R4I22066",
+   "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B3",
+   "opening": 767615.745,
+   "quantity": 2053614.026
+  },
+  {
+   "isin": "INF0RRI22016",
+   "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A1",
+   "opening": 772014.424,
+   "quantity": 0
+  },
+  {
+   "isin": "INF0RRI22040",
+   "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A4",
+   "opening": 0,
+   "quantity": 3416657.416
+  }
+ ],
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [
+  "NEAR SIDDHI VINAYAK MANDIR PRABHADEVI Mumbai Third Holder:",
+  "Maharashtra INDIA 400025"
+ ],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}
