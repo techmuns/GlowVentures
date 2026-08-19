@@ -1,0 +1,71 @@
+{
+ "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions",
+ "provider": "Motilal Oswal Financial Services (demat)",
+ "accountNo": "1201090032387399",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "AARTI AJAY JAISINGHANI",
+ "ownerId": "aarti-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Direct",
+ "providerEngagement": "CDSL depository account — NIN",
+ "members": [],
+ "asOf": "2026-07-31",
+ "inceptionDate": null,
+ "reportType": "demat-transactions",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
+ "pages": 1,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "pan-contradicts-name",
+   "detail": "the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either."
+  },
+  {
+   "code": "depository-movements-are-not-trades",
+   "detail": "0 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": [
+  {
+   "isin": "INF174K01LC6",
+   "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
+   "opening": 0,
+   "quantity": 613293.929
+  }
+ ],
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": "this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book.",
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [
+  "AJAY T JAISINGHANI",
+  "AARTI AJAY JAISINGHANI"
+ ],
+ "stitches": [],
+ "derivedPortfolioTotal": null
+}

@@ -156,6 +156,29 @@ export function MorningCIO() {
     const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
       ? (embeddedGain / totalInvested) * 100
       : null;
+    /**
+     * AND THE FOOTER CELL ONLY EXISTS WHERE ITS TWO COLUMNS COVER THE SAME BOOK.
+     *
+     * `gainPct` is return on cost over the positions that HAVE a cost, which is
+     * the right figure for the tile that names its own coverage. The allocation
+     * table's Total row is a different claim: it sits between a printed Invested
+     * and a printed Current, and a reader divides one by the other.
+     *
+     * Those two stopped covering the same set the moment the depository
+     * statements landed. A CDSL account reports what is held and never what it
+     * cost, so 43 positions worth ₹102 Cr are in Current and in no Invested —
+     * and the footer would have read one answer beside two cells that give
+     * another. That is the contradiction this table was already fixed for once.
+     *
+     * So the cell is struck only when the costed set accounts for the whole
+     * book, and otherwise renders absent WITH THE REASON. The return itself is
+     * not lost: it keeps the Consolidated return tile, which states the fraction
+     * of the book it covers on its face.
+     */
+    const costedMV = sum(p.filter((x) => x.costBasis != null).map((x) => x.marketValue))
+      + (privateCount ? privateCurrent : 0);
+    const costCoversBook = totalValue > 0 && Math.abs(costedMV - totalValue) <= totalValue * 0.005;
+    const footerPct = costCoversBook ? gainPct : null;
     // Asset-class listed/private split, the same rule the rest of the app uses:
     // the AIF book is private even though the fund-of-funds model is empty. Drives
     // the NAV caption and the concentration line so neither claims "no private".
@@ -419,6 +442,7 @@ export function MorningCIO() {
       accountCount: portfolio.accounts.length,
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
+      footerPct, costedMV, costCoversBook,
       pp, hasPrivateClass,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
@@ -725,8 +749,8 @@ export function MorningCIO() {
                         columns; the money-weighted figure keeps its place in
                         the popover and on the Book performance card, each
                         stating the fraction of the book it covers. */}
-                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.gainPct == null ? "text-slate-500" : changeColor(m.gainPct)}`}>
-                      {m.gainPct == null ? DASH : (
+                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
+                      {m.footerPct == null ? DASH : (
                         <Auditable formula={{
                           title: "Whole-book return to date",
                           excel: "= (Current − Invested) ÷ Invested",
@@ -737,9 +761,9 @@ export function MorningCIO() {
                               ? ` A MONEY-WEIGHTED return — Excel's XIRR() over each account's dated capital movements, closed against its own report date and de-annualised to the window — answers a different question and can only be struck where a statement carries an opening portfolio value. On that basis the book is ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} to date over ${m.xirrWindowDays ?? "the measured"} days${m.bookXirr != null ? ` (${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a. annualised)` : ""}, covering ${money(m.measuredMV)} of ${money(m.totalValue)}${m.xirrExcluded.length ? `; accounts ${m.xirrExcluded.join(", ")} publish no opening value and sit outside it on both sides` : ""}.`
                               : ""
                           }`,
-                          worked: `= (${money(m.totalValue)} − ${money(m.totalInvested)}) ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}, closed at ${portfolio.asOf}`,
+                          worked: `= (${money(m.totalValue)} − ${money(m.totalInvested)}) ÷ ${money(m.totalInvested)} = ${fmtPct(m.footerPct, { sign: true, decimals: 1 })}, closed at ${portfolio.asOf}`,
                           auditHref: auditHref(LEDGER),
-                        }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable>
+                        }}>{fmtPct(m.footerPct, { sign: true, decimals: 1 })}</Auditable>
                       )}
                     </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300">100%</td>
@@ -748,6 +772,16 @@ export function MorningCIO() {
               </table>
             </div>
           </div>
+          {m.footerPct == null && (
+            <p className="mt-3 rounded-lg border border-dashed border-ink-600/70 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="text-slate-300">No whole-book return in the Total row.</span>{" "}
+              Cost is reported for {m.p.length - m.noCostCount} of {m.p.length} positions, so Invested covers{" "}
+              {money(m.costedMV)} of the {money(m.totalValue)} standing in the Current column beside it — the{" "}
+              {m.noCostCount} held through a depository account, which records what is held and never what it cost.
+              A percentage struck across those two would divide one set of holdings by another. The measured return
+              is on the Consolidated return tile above, which states the fraction of the book it covers.
+            </p>
+          )}
           {m.emptyBuckets.length > 0 && (
             <p className="mt-3 rounded-lg border border-dashed border-ink-600/70 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
               <span className="font-medium text-slate-400">{DASH} Not held:</span>{" "}

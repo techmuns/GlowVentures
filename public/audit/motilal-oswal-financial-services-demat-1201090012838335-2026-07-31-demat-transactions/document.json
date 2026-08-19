@@ -1,0 +1,169 @@
+{
+ "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
+ "provider": "Motilal Oswal Financial Services (demat)",
+ "accountNo": "1201090012838335",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Aarti Jaisinghani",
+ "ownerId": "aarti-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "Direct",
+ "providerEngagement": "CDSL depository account — Individual-Resident",
+ "members": [],
+ "asOf": "2026-07-31",
+ "inceptionDate": null,
+ "reportType": "demat-transactions",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+ "pages": 2,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "depository-movements-are-not-trades",
+   "detail": "1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [
+  {
+   "date": "2026-04-16",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "securityKey": "ask-alternate-investment-fund-ask-absolute-return-fund-class-a6-series-31-01-2025",
+   "isin": "INF0V6R22JL5",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 40997.95,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  }
+ ],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": "2026-04-01",
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": [
+  {
+   "isin": "INF0V6R22JL5",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "opening": 40997.95,
+   "quantity": 0
+  },
+  {
+   "isin": "INF194K01I60",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN CASH FUND - DIRECT PL - GROWTH",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INF194K01V89",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
+   "opening": 0,
+   "quantity": 132634.709
+  },
+  {
+   "isin": "INF109K01Q49",
+   "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
+   "opening": 0,
+   "quantity": 21012.887
+  },
+  {
+   "isin": "INF174KA1HV3",
+   "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
+   "opening": 0,
+   "quantity": 612631.862
+  },
+  {
+   "isin": "INF732E01037",
+   "security": "NIPPON LIFE INDIA AM LTD#NIPPON INDIA MF-NIPPON INDIA ETF NIFTY 1D RATE LIQUID BEES",
+   "opening": 5.032,
+   "quantity": 7679.495
+  },
+  {
+   "isin": "INE488B01017",
+   "security": "TASTY BITE EATABLES LIMITED - EQUITY SHARES",
+   "opening": 617,
+   "quantity": 0
+  }
+ ],
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [
+  "MARATHE MARG, PRABHADEVI Mumbai Maharashtra Third Holder:",
+  "INDIA 400025"
+ ],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 480.6,
+   "parts": [
+    "1201090000000116 73113"
+   ],
+   "joined": "120109000000011673113",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 292.6,
+   "parts": [
+    "1201090000000116 73114"
+   ],
+   "joined": "120109000000011673114",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 436,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 416,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

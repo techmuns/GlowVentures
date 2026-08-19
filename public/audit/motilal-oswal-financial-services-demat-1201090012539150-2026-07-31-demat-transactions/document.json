@@ -1,27 +1,27 @@
 {
- "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement",
+ "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
  "provider": "Motilal Oswal Financial Services (demat)",
- "accountNo": null,
+ "accountNo": "1201090012539150",
  "ownerSource": "printed",
- "accountNoSource": null,
+ "accountNoSource": "printed",
  "clientCode": null,
- "owner": "AJAY JAISINGHANI",
+ "owner": "Ajay Jaisinghani",
  "ownerId": "ajay-jaisinghani",
  "familyGroup": null,
  "strategy": null,
- "engagement": null,
- "providerEngagement": null,
+ "engagement": "Direct",
+ "providerEngagement": "CDSL depository account — Individual-Resident",
  "members": [],
- "asOf": null,
+ "asOf": "2026-07-31",
  "inceptionDate": null,
- "reportType": "demat-statement",
+ "reportType": "demat-transactions",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
  "pages": 9,
- "status": "failed",
+ "status": "partial",
  "warnings": [
   {
-   "code": "no-extractor",
-   "detail": "no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement"
+   "code": "depository-movements-are-not-trades",
+   "detail": "1 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
   }
  ],
  "holdings": [],
@@ -29,11 +29,36 @@
  "returns": [],
  "flows": null,
  "cashFlows": [],
- "transactions": [],
+ "transactions": [
+  {
+   "date": "2026-04-16",
+   "settlementDate": null,
+   "side": "delivery",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "securityKey": "ask-alternate-investment-fund-ask-absolute-return-fund-class-a6-series-31-01-2025",
+   "isin": "INF0V6R22JL5",
+   "exchange": null,
+   "assetClass": null,
+   "quantity": 199990.001,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  }
+ ],
  "capitalGains": [],
  "income": [],
  "expenses": [],
- "periodFrom": null,
+ "periodFrom": "2026-04-01",
  "periodTo": null,
  "pan": null,
  "sourcePages": null,
@@ -45,13 +70,245 @@
  "postTaxNav": null,
  "unitsRedeemed": null,
  "openLots": [],
- "positionsAsOf": null,
+ "positionsAsOf": [
+  {
+   "isin": "INF0V6R22JL5",
+   "security": "ASK ALTERNATE INVESTMENT FUND#ASK ABSOLUTE RETURN FUND-CLASS A6 SERIES 31/01/2025",
+   "opening": 199990.001,
+   "quantity": 0
+  },
+  {
+   "isin": "INE050E01027",
+   "security": "BALAJI AMINES LIMITED- NEW EQUITY SHARES OF RS. 2/- AFTER SUB-DIVISION",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INF194K01Y60",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN ARBITRAGE FUND - DIRECT PL - GROWTH",
+   "opening": 0,
+   "quantity": 3371575.697
+  },
+  {
+   "isin": "INF194K01I60",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN CASH FUND - DIRECT PL - GROWTH",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INF194K01V89",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
+   "opening": 0,
+   "quantity": 1925285.808
+  },
+  {
+   "isin": "INF194KB1447",
+   "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN OVERNIGHT FUND-DIRECT-GROWTH",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INF179K01VC4",
+   "security": "HDFC AMC LTD#HDFC MF-HDFC VALUE FUND-DIRECT-GROWTH",
+   "opening": 45831.676,
+   "quantity": 0
+  },
+  {
+   "isin": "INF179K01426",
+   "security": "HDFC AMC LTD#HDFC MF-HDFC VALUE FUND-GROWTH",
+   "opening": 11116.795,
+   "quantity": 0
+  },
+  {
+   "isin": "INF179KB1HP9",
+   "security": "HDFC ASSET MGMNT CO LTD#HDFC MUTUAL FUND-HDFC LIQUID FUND-DIR PL-GROWTH",
+   "opening": 0,
+   "quantity": 2282.178
+  },
+  {
+   "isin": "INF109KC1RH9",
+   "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-DIRECT PLAN-GROWTH",
+   "opening": 5784067.378,
+   "quantity": 4850206.378
+  },
+  {
+   "isin": "INF109KC1RE6",
+   "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-GROWTH",
+   "opening": 284581.349,
+   "quantity": 0
+  },
+  {
+   "isin": "INF109KA11J9",
+   "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD EQUITY SAVINGS FUND DIRECT CUMULATIVE",
+   "opening": 11049240.617,
+   "quantity": 9320249.865
+  },
+  {
+   "isin": "INF109K01Q49",
+   "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INE559A01017",
+   "security": "IFB INDUSTRIES LIMITED EQUITY SHARES",
+   "opening": 30932,
+   "quantity": 15772
+  },
+  {
+   "isin": "INE0LGX01024",
+   "security": "INSOLATION ENERGY LIMITED#NEW EQUITY SHARES WITH FACE VALUE RE. 1/- AFTER SUB-DIVISION",
+   "opening": 120000,
+   "quantity": 110000
+  },
+  {
+   "isin": "INE918Z01012",
+   "security": "KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES",
+   "opening": 16300,
+   "quantity": 0
+  },
+  {
+   "isin": "INF174K01LC6",
+   "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
+   "opening": 0,
+   "quantity": 4165239.582
+  },
+  {
+   "isin": "INF174KA1HV3",
+   "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
+   "opening": 0,
+   "quantity": 4183009.836
+  },
+  {
+   "isin": "INF174K01LF9",
+   "security": "KOTAK MAHINDRA AMC LTD-KOTAK MAHINDRA MF-KOTAK LARGE & MIDCAP FUND-DIRECT PLAN-GROWTH OPTION",
+   "opening": 0,
+   "quantity": 34045.997
+  },
+  {
+   "isin": "INE001B01026",
+   "security": "KRBL LIMITED-NEW EQUITY SHARES OF RE. 1/- AFTER SUB-DIVISION",
+   "opening": 100000,
+   "quantity": 0
+  },
+  {
+   "isin": "INF247L01ED1",
+   "security": "MOTILAL OSWAL AMC LTD#MOMF-MOTILAL OSWAL ARBITRAGE FUND-DIRECT-GROWTH",
+   "opening": 39722993.436,
+   "quantity": 28067435.434
+  },
+  {
+   "isin": "INF247L01BK2",
+   "security": "MOTILAL OSWAL AMC LTD#MOTILAL OSWAL MF-MOTILAL OSWAL NIFTY 200 MOMENTUM 30 ETF",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INE338I01027",
+   "security": "MOTILAL OSWAL FINANCIAL SERVICES LIMITED - EQUITY SHARES OF RE. 1/- AFTER SPLIT",
+   "opening": 13400,
+   "quantity": 0
+  },
+  {
+   "isin": "INE943D01017",
+   "security": "MPS LIMITED-EQUITY SHARES",
+   "opening": 0,
+   "quantity": 4878
+  },
+  {
+   "isin": "INF0QS022178",
+   "security": "NEO CREDIT ALTERNATIVES INVESTMENT TRUST#NEO INFRA INCOME OPPORTUNITIES FUND-CAT II AIF-CLASS A5",
+   "opening": 335837.2,
+   "quantity": 485837.2
+  },
+  {
+   "isin": "INF732E01037",
+   "security": "NIPPON LIFE INDIA AM LTD#NIPPON INDIA MF-NIPPON INDIA ETF NIFTY 1D RATE LIQUID BEES",
+   "opening": 3.552,
+   "quantity": 49.071
+  },
+  {
+   "isin": "INE589A01014",
+   "security": "NLC INDIA LIMITED # EQTY SHARES",
+   "opening": 0,
+   "quantity": 32000
+  },
+  {
+   "isin": "INE531F01023",
+   "security": "NUVAMA WEALTH MANAGEMENT LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.2/- AFTER SUB-DIVISION",
+   "opening": 9500,
+   "quantity": 3695
+  },
+  {
+   "isin": "INE013P01021",
+   "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
+   "opening": 90430,
+   "quantity": 43000
+  },
+  {
+   "isin": "INE488B01017",
+   "security": "TASTY BITE EATABLES LIMITED - EQUITY SHARES",
+   "opening": 1121,
+   "quantity": 0
+  },
+  {
+   "isin": "INE168A01041",
+   "security": "THE JAMMU & KASHMIR BANK LTD#NEW EQUITY SHARE WITH FV RS.1/- AFTER SUB-DIVISION",
+   "opening": 200288,
+   "quantity": 0
+  },
+  {
+   "isin": "INE1CDF01017",
+   "security": "VEDANTA ALUMINIUM METAL LIMITED # EQUITY SHARES",
+   "opening": 0,
+   "quantity": 281000
+  },
+  {
+   "isin": "INE1CLE01013",
+   "security": "VEDANTA IRON AND STEEL LIMITED # EQUITY SHARES",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INE205A01025",
+   "security": "VEDANTA LIMITED#EQUITY SHARES OF RE 1/- AFTER SPLIT",
+   "opening": 72918,
+   "quantity": 0
+  },
+  {
+   "isin": "INE704J01044",
+   "security": "VEDANTA OIL AND GAS LIMITED#NEW EQ SHARES WITH FACE VALUE RE.1/- PURSUANT TO SCHEME OF ARRANGEMENT",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INE694L01019",
+   "security": "VEDANTA POWER LIMITED # EQUITY SHARES",
+   "opening": 0,
+   "quantity": 0
+  },
+  {
+   "isin": "INE143403066",
+   "security": "ZEPTO LIMITED#0.01%(DIV) CUM COMP CONV PREF SH SR II G-RD 14-11-2044",
+   "opening": 4716,
+   "quantity": 0
+  },
+  {
+   "isin": "INE143401029",
+   "security": "ZEPTO LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.5/- AFTER SUB-DIVISION",
+   "opening": 0,
+   "quantity": 3738119
+  }
+ ],
  "dematBalances": [],
  "securityNameSource": null,
  "excludedFromBook": null,
  "schemeHoldings": [],
  "aifEarnings": null,
- "jointHolders": [],
+ "jointHolders": [
+  "AARTI AJAY JAISINGHANI",
+  "INDIA 400025"
+ ],
  "stitches": [
   {
    "kind": "same-line",
@@ -753,5 +1010,6 @@
    "joined": "12010900000030241211232026138",
    "page": 9
   }
- ]
+ ],
+ "derivedPortfolioTotal": null
 }

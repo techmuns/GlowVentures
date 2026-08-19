@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
+import { AIF_UNITS, PROVIDER as DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
@@ -931,6 +932,8 @@ function build(docs) {
     entityCashFlows[k].sort((a, b) => a.date.localeCompare(b.date) || a.amount - b.amount);
   }
 
+  dropDepositoryDuplicates(positions, accounts, notes);
+
   positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
   accounts.sort((a, b) => a.accountId.localeCompare(b.accountId));
   capitalGains.sort((a, b) => a.accountId.localeCompare(b.accountId));
@@ -1286,3 +1289,73 @@ if (book.unclassified.length) {
 for (const n of book.notes) console.log(`  ! ${n}`);
 console.log("  src/data/glowData.ts");
 console.log("  docs/BOOK-REPORT.md");
+
+/**
+ * A DEPOSITORY ROW WHOSE FUND ALREADY REPORTS ITSELF IS NOT A SECOND HOLDING.
+ *
+ * The Motilal Oswal demat statements list every fund unit the family owns, and
+ * for eight of them this book already carries the position from the fund's own
+ * account statement — Buoyant, Sanshi, Carnelian's Amritkaal fund, Baring,
+ * India SME, Motilal Oswal's Founders Fund, Transition Venture and 3P. Carried
+ * from both sides the same money would be counted twice, and the depository's
+ * side would be marked at the FACE VALUE it prints (100.000 on most of them)
+ * rather than at a NAV.
+ *
+ * `AIF_UNITS` in the reader names which fund reports each ISIN. This is the
+ * CHECK on that table rather than a use of it: the depository's unit count is
+ * compared against the units the reporting account actually carries, and
+ *
+ *   - they agree  → the demat row is the same holding, and is dropped;
+ *   - they differ → BOTH are kept and the difference is reported, because a
+ *     depository holding more units than the fund reports is either a folio this
+ *     drop is missing or a reclassification, and dropping it would hide whichever
+ *     it is. That is exactly the 3P case: the fund's statement prints nil units
+ *     on the one folio it covers while the depository holds 20.5 lakh.
+ *
+ * Anything not in the table is untouched. A silent drop is not available here.
+ */
+function dropDepositoryDuplicates(positions, accounts, notes) {
+  const dematIds = new Set(accounts.filter((a) => a.provider === DEMAT_PROVIDER).map((a) => a.accountId));
+  if (!dematIds.size) return;
+  const idsOf = (provider) =>
+    new Set(accounts.filter((a) => a.provider === provider).map((a) => a.accountId));
+
+  const drop = new Set();
+  for (const p of positions) {
+    if (!dematIds.has(p.accountId)) continue;
+    const entry = p.isin ? AIF_UNITS[p.isin] : null;
+    if (!entry?.reportedBy) continue;
+    const ids = idsOf(entry.reportedBy);
+    const theirs = positions.filter((q) => ids.has(q.accountId));
+    /**
+     * TO THE PRINTED PRECISION, NOT TO THE BIT. Buoyant's own statement prints
+     * 3,416,657.417 units and the depository prints 3,416,657.416 — one unit in
+     * the third decimal, which is the last place either of them prints. Matched
+     * exactly, that row failed to dedupe and put ₹34.17 Cr of the same holding
+     * into the book twice at face value. Both print three decimals, so the
+     * tolerance is half of one.
+     */
+    const matched = theirs.find((q) => isNum(q.quantity) && isNum(p.quantity)
+      && Math.abs(q.quantity - p.quantity) <= 0.0005 + Math.abs(p.quantity) * 1e-9);
+    if (matched) { drop.add(p); continue; }
+    notes.push(`the depository reports ${p.quantity} unit(s) of ${p.security} on ${p.accountId}, while `
+      + `${entry.reportedBy} — which issues the statement for that fund — reports `
+      + `${theirs.length ? theirs.map((q) => q.quantity).join(" / ") : "no matching position"}. `
+      + "Both rows are kept and neither is deduped: the two do not describe the same units, so dropping "
+      + "either would hide a folio this drop does not cover, or a reclassification the fund has not restated.");
+  }
+
+  const byFund = new Map();
+  for (const p of drop) {
+    const k = AIF_UNITS[p.isin].reportedBy;
+    if (!byFund.has(k)) byFund.set(k, []);
+    byFund.get(k).push(p);
+  }
+  for (const [fund, rows] of [...byFund].sort((a, b) => a[0].localeCompare(b[0]))) {
+    notes.push(`${rows.length} depository row(s) for ${fund} are NOT carried: the unit count matches that `
+      + "fund's own statement exactly, so they are the same holding seen from custody. The depository marks "
+      + `them at the face value it prints (${rows.map((p) => p.currentPrice ?? "no rate").join(", ")}) rather `
+      + "than at a NAV, which is the other reason its copy is the one to drop.");
+  }
+  for (let i = positions.length - 1; i >= 0; i--) if (drop.has(positions[i])) positions.splice(i, 1);
+}

@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 5,45,90,40,783.01 |
-| Positions | 317 |
-| Accounts | 42 |
+| Consolidated market value | 6,48,06,58,532.52 |
+| Positions | 360 |
+| Accounts | 48 |
 | Owners | 6 |
 | Newest as-of | 2026-08-13 |
 
@@ -40,6 +40,12 @@ Generated — **do not edit by hand**.
 | 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-07-31 | 11 | 1,15,97,496.65 |
 | 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
 | 9049241536 | Motilal Oswal Delphi Equity Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 11,12,87,535.35 |
+| 1201090012539150 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 1201090012838316 | Motilal Oswal Financial Services (demat) | Ankita Jaisinghani | — | 2026-07-31 | 23 | 38,38,37,353.18 |
+| 1201090012838320 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 14 | 32,82,55,048.02 |
+| 1201090012838335 | Motilal Oswal Financial Services (demat) | Aarti Jaisinghani | — | 2026-07-31 | 6 | 30,95,25,348.31 |
+| 1201090037359311 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 1201090037436848 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 10,99,00,127.57 |
 | 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 21,82,50,873.93 |
 | 90410014574 | Motilal Oswal Hedged Equity Multi Factor Strategy | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
@@ -64,10 +70,10 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 19 | 166 | 2,85,75,94,163.4 |
-| Ankita Jaisinghani | 10 | 89 | 1,28,03,03,571.16 |
-| Bharat Jaisinghani | 8 | 59 | 32,71,70,566.29 |
-| Aarti Jaisinghani | 1 | 1 | 97,68,26,519.91 |
+| Ajay Jaisinghani | 21 | 166 | 2,85,75,94,163.4 |
+| Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
+| Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
+| Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
 | Bharat Jaisinghani Family Trust 2 | 2 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 2 | 1 | 1,71,45,962.25 |
 
@@ -85,25 +91,26 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 | 1038104611 | Aditya Birla Sun Life Mutual Fund | HOPE INDIA TRUST | 7,98,563.95 | holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,77,205.81 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
+| 1201090032387399 | Motilal Oswal Financial Services (demat) | AARTI AJAY JAISINGHANI | 8,22,70,772.93 | this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. |
 
-Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
+Together they carry **8,55,57,677.53** across 5 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
 
 ## Sector allocation
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 4,43,76,11,240.89 | 81.29% |
-| Financials | 25,85,86,623.95 | 4.74% |
-| Health Care | 19,08,15,090.8 | 3.50% |
-| Consumer Discretionary | 18,37,36,315.22 | 3.37% |
-| Industrials | 14,49,38,189.09 | 2.66% |
-| Cash | 11,57,87,076.72 | 2.12% |
-| Information Technology | 7,15,96,197.78 | 1.31% |
-| Materials | 2,35,59,866.25 | 0.43% |
-| Consumer Staples | 2,28,13,806.84 | 0.42% |
-| Communication Services | 1,10,42,228.2 | 0.20% |
-| Utilities | 99,62,509.52 | 0.18% |
-| Real Estate | 57,37,600 | 0.11% |
+| Unclassified | 5,45,92,28,990.4 | 84.24% |
+| Financials | 25,85,86,623.95 | 3.99% |
+| Health Care | 19,08,15,090.8 | 2.94% |
+| Consumer Discretionary | 18,37,36,315.22 | 2.84% |
+| Industrials | 14,49,38,189.09 | 2.24% |
+| Cash | 11,57,87,076.72 | 1.79% |
+| Information Technology | 7,15,96,197.78 | 1.10% |
+| Materials | 2,35,59,866.25 | 0.36% |
+| Consumer Staples | 2,28,13,806.84 | 0.35% |
+| Communication Services | 1,10,42,228.2 | 0.17% |
+| Utilities | 99,62,509.52 | 0.15% |
+| Real Estate | 57,37,600 | 0.09% |
 
 ## Unclassified sectors
 
@@ -247,6 +254,26 @@ never guessed into the nearest plausible bucket.
 - account 9049241536: no time-weighted return series in any statement
 - account 9049241536: no flow block in any statement, so no value bridge
 - account 9049241536: no external capital movements found, so no money-weighted return series
+- account 1201090012539150: no time-weighted return series in any statement
+- account 1201090012539150: no flow block in any statement, so no value bridge
+- account 1201090012539150: no external capital movements found, so no money-weighted return series
+- account 1201090012838316: no time-weighted return series in any statement
+- account 1201090012838316: no flow block in any statement, so no value bridge
+- account 1201090012838316: no external capital movements found, so no money-weighted return series
+- account 1201090012838320: no time-weighted return series in any statement
+- account 1201090012838320: no flow block in any statement, so no value bridge
+- account 1201090012838320: no external capital movements found, so no money-weighted return series
+- account 1201090012838335: no time-weighted return series in any statement
+- account 1201090012838335: no flow block in any statement, so no value bridge
+- account 1201090012838335: no external capital movements found, so no money-weighted return series
+- account 1201090032387399 (Motilal Oswal Financial Services (demat)) is NOT in the book: this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. Value on its own statement: 8,22,70,772.931.
+- account 1201090037359311 (Motilal Oswal Financial Services (demat)) contributes no market value: its statement of 2026-07-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 1201090037359311: no time-weighted return series in any statement
+- account 1201090037359311: no flow block in any statement, so no value bridge
+- account 1201090037359311: no external capital movements found, so no money-weighted return series
+- account 1201090037436848: no time-weighted return series in any statement
+- account 1201090037436848: no flow block in any statement, so no value bridge
+- account 1201090037436848: no external capital movements found, so no money-weighted return series
 - account 90410016093: no time-weighted return series in any statement
 - account 90410016093: no flow block in any statement, so no value bridge
 - account 90410016093: no external capital movements found, so no money-weighted return series
@@ -339,6 +366,6 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - 2 holding(s) reported under more than one member: both rows are carried, and 1,71,45,962.25 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 317 position(s), across 1 of 42 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 360 position(s), across 1 of 48 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

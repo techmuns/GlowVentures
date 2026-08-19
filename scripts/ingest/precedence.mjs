@@ -342,6 +342,26 @@ export const PRECEDENCE = {
 };
 
 /**
+ * THE FAMILY'S OWN CDSL DEMAT ACCOUNTS AT MOTILAL OSWAL.
+ *
+ * Holdings only. The depository's own transaction statement is deliberately NOT
+ * named for `transactions`: a demat credit or debit moves UNITS and carries no
+ * price, no consideration and no counterparty, so it is not a trade and must
+ * never reach a tape that computes settlement or realised gain. It stays in the
+ * archive, where Data Audit can show it for what it is.
+ *
+ * Nor is anything named for cost. A depository does not know what shares cost —
+ * the same reason `lkpSecurities.mjs` recovers LKP's cost from the broker's own
+ * opening ledger and leaves the tenth position without one.
+ */
+PRECEDENCE["Motilal Oswal Financial Services (demat)"] = {
+  holdings: { reportType: "holdings", note: "the DP holding statement — quantity and rate are the primitives; its printed VALUE column ties to its own total and to nothing else." },
+  quantity: { reportType: "holdings" },
+  marketPrice: { reportType: "holdings", note: "`Rs RATE`. A printed 0.000 means NOT PRICED and is read as null." },
+  marketValue: { reportType: "holdings", note: "DERIVED as price x quantity. The printed column implies ₹2.87 a share for a stock the same row prices at ₹170.60." },
+};
+
+/**
  * THE SINGLE-SCHEME FUND STATEMENTS — Buoyant, Helios, Motilal Oswal's Founders
  * and Active Momentum funds, 3P, India SME and Sky Capital.
  *
