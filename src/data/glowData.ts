@@ -19,12 +19,12 @@ export const BOOK_AS_OF = "2026-08-13";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-13",
   "listedValue": 1921083707.45,
-  "privateValue": 3426669540.21,
-  "totalValue": 5347753247.66,
-  "positionsCount": 316,
+  "privateValue": 3537957075.56,
+  "totalValue": 5459040783.01,
+  "positionsCount": 317,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 40
+  "accountsCount": 42
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -386,6 +386,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "provider": "Motilal Oswal Delphi Equity Fund",
+    "accountNo": "9049241536",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "AIF — the statement prints a commitment, a called/received split and a post-tax NAV per class",
+    "members": [],
+    "asOf": "2026-06-30",
+    "inceptionDate": null,
+    "custodian": "Motilal Oswal Delphi Equity Fund",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "motilal-oswal-founders-fund-90410016093",
     "provider": "Motilal Oswal Founders Fund",
     "accountNo": "90410016093",
@@ -414,6 +429,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
+  },
+  {
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+    "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
+    "accountNo": "90410014574",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "AIF — the statement prints a commitment, a called/received split and a post-tax NAV per class",
+    "members": [],
+    "asOf": "2026-07-31",
+    "inceptionDate": null,
+    "custodian": "Motilal Oswal Hedged Equity Multi Factor Strategy",
+    "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
   },
   {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
@@ -4865,6 +4895,29 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "motilal-oswal-wealth-delphi-equity-fund",
+    "security": "Motilal Oswal Wealth Delphi Equity Fund",
+    "symbol": null,
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "quantity": 99995,
+    "avgCost": null,
+    "currentPrice": 1112.931,
+    "costBasis": 100000000,
+    "marketValue": 111287535.35,
+    "unrealizedPnL": 11287535.35,
+    "returnPct": 11.29,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
     "security": "Motilal Oswal Founders Fund Series II — Class G1",
     "symbol": null,
@@ -8319,6 +8372,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ajay Jaisinghani · Motilal 9049241536",
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ankita Jaisinghani · Motilal 90410016093",
     "accountId": "motilal-oswal-founders-fund-90410016093",
     "ownerId": "ankita-jaisinghani",
@@ -8335,6 +8402,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
   {
     "entity": "Ajay Jaisinghani · Motilal 90410016104",
     "accountId": "motilal-oswal-founders-fund-90410016104",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · Motilal 90410014574",
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
     "ownerId": "ajay-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
@@ -11087,6 +11168,18 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "committed": 50000000,
     "drawn": 27000000,
     "undrawn": 23000000,
+    "distributed": null,
+    "arithmeticHolds": true
+  },
+  {
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "name": "Motilal Oswal Delphi Equity Fund",
+    "provider": "Motilal Oswal Delphi Equity Fund",
+    "ownerId": "ajay-jaisinghani",
+    "asOf": "2026-06-30",
+    "committed": 100000000,
+    "drawn": 100000000,
+    "undrawn": 0,
     "distributed": null,
     "arithmeticHolds": true
   },

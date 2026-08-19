@@ -63,6 +63,8 @@ export const PROVIDERS = {
   neoInfra: "Neo Infra Income Opportunities Fund",
   baringPe: "Baring Private Equity India Fund",
   amritkaal: "Carnelian Bharat Amritkaal Fund",
+  delphi: "Motilal Oswal Delphi Equity Fund",
+  hedgedEquity: "Motilal Oswal Hedged Equity Multi Factor Strategy",
 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -569,7 +571,134 @@ const LAYOUTS = [
     }),
     note: "the family's consolidated review files this fund under Equity / Thematic-Tactical — its EXPOSURE, where `assetClass` records its legal form as a Category III AIF. Its units stay whole either way; it is never spread across the sectors it invests in",
   },
+  motilalAccountSummary({
+    key: "delphi",
+    provider: PROVIDERS.delphi,
+    match: /Motilal\s+Oswal\s+Wealth\s+Delphi\s+Equity\s+Fund|Delphi\s+Emerging\s+Equity\s+Fund/i,
+    security: "Motilal Oswal Wealth Delphi Equity Fund",
+    note: "the family's consolidated review carries this holding under the name of what it OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — and files it under Equity / Multi Cap. Same units (99,995) and same NAV; its closing value differs by ₹100 only because the review rounds the NAV to two decimals. It is a FUND OF FUNDS, so the family holds V.E.C and Carnelian both directly and through this; nothing is looked through and nothing is counted twice",
+  }),
+  motilalAccountSummary({
+    key: "hedgedEquity",
+    provider: PROVIDERS.hedgedEquity,
+    match: /Motilal\s+Oswal\s+Hedged\s+Equity\s+Multi\s+Factor/i,
+    security: "Motilal Oswal Hedged Equity Multi Factor Strategy",
+    note: "both classes are REDEEMED TO NIL: Class B2's units were switched out on 31-07-2024 and Class F1's were paid out on 31-07-2025, and the Account Summary prints a dash for units and for valuation on each. The account is carried with no holding rather than a zero-valued one, and the family's consolidated review — struck 30 June 2026 — does not list this fund at all, which agrees",
+  }),
 ];
+
+/**
+ * MOTILAL OSWAL'S ACCOUNT SUMMARY — one table, two funds, and a DASH is not a
+ * zero.
+ *
+ * Both statements print the same block: one row per unit class, reading
+ * `Class | NAV Date | Post Tax NAV | Unit | Commitment | Contribution |
+ * Valuation`. Delphi's row is complete. The Hedged Equity strategy's is not —
+ * its Unit and Valuation columns are `-`, because both of its classes were
+ * redeemed to nil and the statement has nothing left to value.
+ *
+ * A dash is read as NULL, never as 0. The account is then carried with no
+ * holding and the reason printed, which is the India SME mechanism: a fund that
+ * publishes no valuation does not get one invented, and a redeemed position
+ * carried at its CONTRIBUTION with a zero value would book a ₹13 Cr unrealised
+ * loss against money the fund has already paid back.
+ */
+const MO_DASH = String.raw`(?:-|[\d,]+(?:\.\d+)?)`;
+const MO_SUMMARY_ROW = new RegExp(
+  String.raw`(?:^|\n)\s*(Class\s+[A-Z]\d?|CLASS\s+[A-Z]\d?)\s+` +   // 1 class
+  String.raw`(\d{2}-\d{2}-\d{4})\s+` +                                // 2 NAV date
+  String.raw`([\d,]+\.\d+)\s+` +                                      // 3 post-tax NAV
+  String.raw`(${MO_DASH})\s+` +                                         // 4 units, or "-"
+  String.raw`([\d,]+\.\d{2})\s+` +                                    // 5 commitment
+  String.raw`([\d,]+\.\d{2})\s+` +                                    // 6 contribution
+  String.raw`(${MO_DASH})`,                                             // 7 valuation, or "-"
+  "g",
+);
+const moDash = (v) => (v == null || String(v).trim() === "-" ? null : n(v));
+
+/** One `LAYOUTS` entry for a fund on Motilal Oswal's Account Summary layout. */
+function motilalAccountSummary({ key, provider, match, security, note }) {
+  const rows = (text) => [...text.matchAll(MO_SUMMARY_ROW)];
+  // A class with neither units nor a valuation is CLOSED and contributes
+  // nothing — not a holding, not a commitment. A dash is null, never zero.
+  const liveRows = (text) => rows(text).filter((m) => moDash(m[4]) != null || moDash(m[7]) != null);
+  return {
+    key, provider, match, security,
+    engagement: "AIF",
+    providerEngagement: "AIF — the statement prints a commitment, a called/received split and a post-tax NAV per class",
+    assetClass: "AIF",
+    /**
+     * `commitmentAmount`, NOT `commitment`. The driver treats a row-level
+     * `commitment` as the account's own and overwrites whatever
+     * `commitmentFrom` computed — which here would drop the undrawn figure this
+     * statement actually states.
+     */
+    rowsFrom: (text) => liveRows(text)
+      .map((m) => ({
+        unitClass: m[1].replace(/\s+/g, " ").trim(),
+        navDate: toIso(m[2]),
+        marketPrice: n(m[3]),
+        quantity: moDash(m[4]),
+        commitmentAmount: n(m[5]),
+        totalCost: n(m[6]),
+        printedValue: moDash(m[7]),
+      })),
+    read: (r) => r,
+    /**
+     * WHY THE ACCOUNT IS EMPTY, in the statement's own terms. Without this the
+     * driver reports `summary-row-not-matched` — "the columns did not line up" —
+     * for a document whose columns lined up perfectly and printed a dash in
+     * both of them. A wrong diagnosis sends the next reader to fix a regex.
+     */
+    emptyReason: (text) => {
+      const closed = rows(text).map((m) => m[1].trim());
+      return closed.length
+        ? `every class on this statement (${closed.join(", ")}) prints a dash for Unit and for Valuation — the account is redeemed to nil. It carries no holding rather than a zero-valued one: its contribution against a zero value would book the whole of it as an unrealised loss against money the fund has already paid back.`
+        : null;
+    },
+    folio: (text) => (/Account No\s*:\s*(\d{4,})/i.exec(text) ?? [])[1] ?? null,
+    holder: (text) => (/\bName\s*:\s*([A-Z][A-Za-z .]{2,60}?)\s*(?=Bank|Address|$)/m.exec(text) ?? [])[1]?.trim() ?? null,
+    /**
+     * AS-OF FOLLOWS THE FIGURE: the NAV date the valued row carries, not the
+     * "As on" in the header. Delphi is headed 1 Jul 2026 and its class is struck
+     * 30-06-2026, which is also the date the family's review works to.
+     */
+    asOf: (text) => {
+      const valued = rows(text).filter((m) => moDash(m[7]) != null).map((m) => toIso(m[2])).filter(Boolean).sort();
+      return valued[valued.length - 1]
+        ?? toIso((/As on\s*:\s*(\d{1,2}\s+[A-Za-z]{3,}\s+\d{4})/i.exec(text) ?? [])[1]);
+    },
+    /**
+     * ONLY THE CLASSES THAT STILL HOLD UNITS. Summing every row here would put
+     * ₹26.11 Cr of commitment on the Hedged Equity account for ₹13 Cr of real
+     * money: its Class F1 was SWITCHED IN from Class B2, so the same
+     * contribution is printed twice under two class names. A closed class can
+     * call nothing, so it commits nothing.
+     */
+    commitmentFrom: (text) => {
+      const rs = liveRows(text);
+      const sum = (i) => { const v = rs.map((m) => n(m[i])).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+      const committed = sum(5), drawn = sum(6);
+      return { committed, drawn, undrawn: committed != null && drawn != null ? Math.round((committed - drawn) * 100) / 100 : null };
+    },
+    verify: (text, holdings, warn) => {
+      const closed = rows(text).filter((m) => moDash(m[4]) == null && moDash(m[7]) == null);
+      if (closed.length) {
+        warn("class-redeemed-to-nil",
+          `${closed.map((m) => m[1].trim()).join(", ")} print no units and no valuation — the class holds nothing. Its contribution is NOT carried as a cost against a zero value, which would book the whole of it as a loss against money the fund has already returned.`);
+      }
+      for (const h of holdings) {
+        if (!isNumLocal(h.quantity) || !isNumLocal(h.marketPrice) || !isNumLocal(h.printed?.marketValue)) continue;
+        const derived = Math.round(h.quantity * h.marketPrice * 100) / 100;
+        if (Math.abs(derived - h.printed.marketValue) > Math.max(1, h.quantity * 0.00005)) {
+          warn("valuation-does-not-tie",
+            `${h.quantity} units at ${h.marketPrice} derive ${derived} against a printed valuation of ${h.printed.marketValue}`);
+        }
+      }
+    },
+    note,
+  };
+}
 
 /** Local numeric guard — `verify` runs before the document layer is involved. */
 const isNumLocal = (v) => typeof v === "number" && Number.isFinite(v);
@@ -699,9 +828,26 @@ export function extract({ grid, meta = {} }) {
     : [layout.row.exec(text)].filter(Boolean);
 
   if (!rows.length) {
-    warn(warnings, "summary-row-not-matched",
-      `this document is a ${layout.provider} statement but its summary row did not match the declared column order; nothing is read from it rather than reading the wrong columns`);
-    return { provider: layout.provider, owner, pan, holdings: [], totals: null, asOf: layout.asOf?.(text) ?? null, commitment: null, warnings };
+    // A layout that KNOWS why it has no rows says so. Everything else falls
+    // back to the column diagnosis, which is the only honest answer when the
+    // reason is genuinely unknown.
+    const reason = layout.emptyReason?.(text) ?? null;
+    if (reason) warn(warnings, "account-holds-nothing", reason);
+    else {
+      warn(warnings, "summary-row-not-matched",
+        `this document is a ${layout.provider} statement but its summary row did not match the declared column order; nothing is read from it rather than reading the wrong columns`);
+    }
+    if (layout.note) warn(warnings, "statement-basis", layout.note);
+    return {
+      provider: layout.provider, owner, pan,
+      accountNo: layout.account?.(text) ?? layout.folio?.(text) ?? null,
+      asOf: layout.asOf?.(text) ?? null,
+      reportType: "holdings",
+      engagement: layout.engagement ?? "unknown",
+      providerEngagement: layout.providerEngagement ?? undefined,
+      holdings: [], totals: null, commitment: null, warnings,
+      status: reason ? "ok" : undefined,
+    };
   }
 
   for (const m of rows) {

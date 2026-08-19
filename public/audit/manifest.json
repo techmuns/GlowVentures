@@ -2207,24 +2207,24 @@
   ]
  },
  {
-  "docKey": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-unknown",
+  "docKey": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-holdings",
   "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
   "accountNo": "90410014574",
-  "owner": null,
-  "ownerId": null,
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-31",
-  "reportType": "unknown",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
   "pages": 3,
   "sections": [
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-unknown",
-  "label": "Motilal Oswal Hedged Equity Multi Factor Strategy · 90410014574 · unknown",
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-holdings",
+  "label": "Motilal Oswal Hedged Equity Multi Factor Strategy · 90410014574 · holdings",
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
   "sheets": [
@@ -2720,25 +2720,25 @@
   ]
  },
  {
-  "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-07-01-unknown",
+  "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
   "provider": "Motilal Oswal Delphi Equity Fund",
   "accountNo": "9049241536",
-  "owner": null,
-  "ownerId": null,
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-07-01",
-  "reportType": "unknown",
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
   "pages": 2,
   "sections": [
    "pages"
   ],
-  "status": "failed",
+  "status": "partial",
   "warnings": 1,
-  "fileKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-07-01-unknown",
-  "label": "Motilal Oswal Delphi Equity Fund · 9049241536 · unknown",
-  "fy": "2026-07-01",
+  "fileKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+  "label": "Motilal Oswal Delphi Equity Fund · 9049241536 · holdings",
+  "fy": "2026-06-30",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
   "sheets": [
    {

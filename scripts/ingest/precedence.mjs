@@ -367,6 +367,12 @@ for (const provider of [
   "Neo Infra Income Opportunities Fund",
   "Baring Private Equity India Fund",
   "Carnelian Bharat Amritkaal Fund",
+  "Motilal Oswal Delphi Equity Fund",
+  // Redeemed to nil and carrying no holding — the entry is here anyway, because
+  // a provider with no precedence block contributes nothing SILENTLY, and an
+  // account that holds nothing and an account nobody wired look identical from
+  // the book. This one is a decision; that one is a defect.
+  "Motilal Oswal Hedged Equity Multi Factor Strategy",
 ]) {
   PRECEDENCE[provider] = {
     holdings: { reportType: "holdings", note: "the fund's own account statement — the only document this issuer sends." },

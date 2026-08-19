@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-19T11:59:17.128Z",
+  "generatedAt": "2026-08-19T12:08:00.832Z",
   "summary": {
     "documents": 259,
-    "parsed": 194,
-    "partial": 48,
-    "failed": 17,
-    "rowSumChecks": 248,
+    "parsed": 195,
+    "partial": 49,
+    "failed": 15,
+    "rowSumChecks": 251,
     "totalMismatches": 98,
     "totalsMaterial": 0,
     "totalsExplained": 40,
-    "totalsRounding": 105,
+    "totalsRounding": 106,
     "derivedVsPrintedDeltas": 641,
     "derivedMaterial": 0,
     "derivedExplained": 321,
@@ -49,9 +49,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 194,
-    "partial": 48,
-    "failed": 17,
+    "parsed": 195,
+    "partial": 49,
+    "failed": 15,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -199,10 +199,10 @@
         }
       },
       "Motilal Oswal Hedged Equity Multi Factor Strategy": {
-        "unknown": {
-          "ok": 0,
+        "holdings": {
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         }
       },
       "Baring Private Equity India Fund": {
@@ -252,10 +252,10 @@
         }
       },
       "Motilal Oswal Delphi Equity Fund": {
-        "unknown": {
+        "holdings": {
           "ok": 0,
-          "partial": 0,
-          "failed": 1
+          "partial": 1,
+          "failed": 0
         }
       },
       "Motilal Oswal Financial Services (demat)": {
@@ -589,24 +589,6 @@
         "reasons": [
           "no-extractor: no extractor for provider \"ICICI Bank (payment advice)\" / reportType unknown",
           "duplicate-doc-key: icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf; filed as icici-bank-payment-advice-xxxxxxxx1520-unknown-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-unknown",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
-        "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Hedged Equity Multi Factor Strategy\" / reportType unknown"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-07-01-unknown",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
-        "provider": "Motilal Oswal Delphi Equity Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "no-extractor: no extractor for provider \"Motilal Oswal Delphi Equity Fund\" / reportType unknown"
         ]
       },
       {
@@ -951,6 +933,13 @@
         ]
       },
       {
+        "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+        "reasons": [
+          "statement-basis: the family's consolidated review carries this holding under the name of what it OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — and files it under Equity / Multi Cap. Same units (99,995) and same NAV; its closing value differs by ₹100 only because the review rounds the NAV to two decimals. It is a FUND OF FUNDS, so the family holds V.E.C and Carnelian both directly and through this; nothing is looked through and nothing is counted twice"
+        ]
+      },
+      {
         "docKey": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings",
         "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
         "reasons": [
@@ -1108,8 +1097,8 @@
     ]
   },
   "consolidated": {
-    "naive": 8524851062.96,
-    "deduped": 8464307740.38,
+    "naive": 8636138598.31,
+    "deduped": 8575595275.73,
     "doubleCounted": 60543322.58
   },
   "rowSumChecks": [
@@ -2223,6 +2212,59 @@
       "provider": "Carnelian Bharat Amritkaal Fund",
       "accountNo": "4551",
       "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+      "provider": "Motilal Oswal Delphi Equity Fund",
+      "accountNo": "9049241536",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 111287535.35,
+      "printedTotal": 111287535.35,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+      "provider": "Motilal Oswal Delphi Equity Fund",
+      "accountNo": "9049241536",
+      "asOf": "2026-06-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 100000000,
+      "printedTotal": 100000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+      "provider": "Motilal Oswal Delphi Equity Fund",
+      "accountNo": "9049241536",
+      "asOf": "2026-06-30",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
@@ -44757,22 +44799,6 @@
         ]
       },
       {
-        "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-unknown"
-        ]
-      },
-      {
-        "provider": "Motilal Oswal Delphi Equity Fund",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "motilal-oswal-delphi-equity-fund-9049241536-2026-07-01-unknown"
-        ]
-      },
-      {
         "provider": "Motilal Oswal Financial Services (demat)",
         "reportType": "unknown",
         "reason": "no-extractor",
@@ -44859,7 +44885,9 @@
       "Sky Capital Rising Titans Fund",
       "Neo Infra Income Opportunities Fund",
       "Baring Private Equity India Fund",
-      "Carnelian Bharat Amritkaal Fund"
+      "Carnelian Bharat Amritkaal Fund",
+      "Motilal Oswal Delphi Equity Fund",
+      "Motilal Oswal Hedged Equity Multi Factor Strategy"
     ]
   },
   "stitches": [

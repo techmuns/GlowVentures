@@ -14,11 +14,10 @@
 // same shape as the ingest reconciliation: reproduce the manager's own figure
 // from our own inputs, per account, and classify what is left.
 //
-//     Carnelian 3517383     ours 26.51%   printed 26.98%   −0.47 pp
-//     Goldstandard 100022   ours 20.37%   printed 20.57%   −0.20 pp
-//     Goldstandard 100023   ours 20.89%   printed 21.08%   −0.19 pp
-//     V.E.C 128004          ours 52.32%   printed 52.27%   +0.05 pp
-//     V.E.C 128005          ours 49.63%   printed 49.59%   +0.04 pp
+//     Carnelian 3517383     ours 26.49%   printed 26.98%   −0.49 pp
+//     Goldstandard 100022   ours 20.36%   printed 20.57%   −0.21 pp
+//     Goldstandard 100023   ours 20.87%   printed 21.08%   −0.21 pp
+//     V.E.C 128004          ours 51.09%   printed 51.41%   −0.32 pp
 //
 // ── WHY A TOLERANCE AT ALL, AND WHY THIS ONE ────────────────────────────────
 //
@@ -32,6 +31,40 @@
 // narrow enough that a real defect cannot pass. Reading the flows in the wrong
 // sign, dropping the opening value, closing on the wrong date or pooling the
 // accounts on one terminal date each move a figure here by tens of points.
+//
+// ── AND WHY THAT PREMISE HAS TO BE MEASURED, NOT ASSUMED ────────────────────
+//
+// V.E.C 128005 broke it. The account took ₹11.24 Cr of new capital on 28 and 29
+// July and closes 13 August — **182% of its own opening value, sixteen days
+// before the terminal date**. Its money-weighted return came out 39.13% against
+// a printed 46.44%, and the suite reported a 7.31 pp FAILURE for an account
+// where nothing is wrong: the manager's rupee-left-alone figure cannot see that
+// deposit and ours must.
+//
+// NOTHING IS MISREAD, AND THE STATEMENT ITSELF SETTLES IT. Strip the deposits
+// out and the account's gain over its opening value is
+//
+//     (20,28,79,639.73 − 6,17,98,643.42 − 11,24,00,000 + 9,162) / 6,17,98,643.42
+//       = 46.43%   against the manager's printed 46.44%
+//
+// — 0.01 pp, on the same flows and the same terminal value the money-weighted
+// figure uses. So both of our inputs are right and only the BASIS differs, which
+// is the one thing a tolerance must never be widened to absorb: 1.0 pp is what
+// makes a dropped flow or a wrong sign fail, and 8 pp would let one through.
+//
+// The comparison is therefore GATED ON THE PREMISE IT NEEDS. Mid-window external
+// capital is measured against the opening value, and an account where it exceeds
+// 5% is not compared. The gate is struck on that ratio and never on an account
+// number: typing "128005" here would stop checking it forever, including in the
+// drop where its flows go quiet again and it becomes comparable. This book's
+// seven measurable accounts separate cleanly on it — six between 0.012% and
+// 0.045%, all of them TDS transfers of a few thousand rupees, and this one at
+// 181.9%. The threshold sits three orders of magnitude above the comparable set
+// and 36× below the excluded one.
+//
+// An excluded account is not dropped. It gets the reconciliation above as its
+// own case, which is what proves the exclusion is a basis difference rather than
+// somewhere to hide a defect.
 //
 // ── WHAT IS DELIBERATELY NOT CHECKED ────────────────────────────────────────
 //
@@ -91,8 +124,50 @@ function ourReturn(accountId: string, asOf: string) {
 }
 
 const TOLERANCE_PP = 1.0;
+
+/**
+ * MID-WINDOW EXTERNAL CAPITAL, AS A SHARE OF THE OPENING VALUE.
+ *
+ * The premise the comparison rests on: a time-weighted return and a
+ * money-weighted one measure the same window and differ only to the extent that
+ * capital moved inside it. This is that extent, measured — not assumed.
+ */
+function flowShareOfOpening(accountId: string): number | null {
+  const flows = BOOK_ACCOUNT_CASH_FLOWS[accountId] ?? [];
+  const opening = flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
+  if (!opening || !opening.amount) return null;
+  const moved = flows.filter((f) => f !== opening).reduce((t, f) => t + Math.abs(f.amount), 0);
+  return moved / Math.abs(opening.amount);
+}
+const MAX_FLOW_SHARE = 0.05;
+
+/**
+ * The other reading of the same statement, for an account the gate excludes:
+ * gain over the opening value, with external capital removed. It is what a
+ * time-weighted return collapses to when the new money arrived too late to earn
+ * anything, and on 128005 it reproduces the printed figure to 0.01 pp.
+ *
+ * IT IS NOT A SECOND FORMULA FOR THE TILE and is never rendered. Capital that
+ * landed in April would earn its share of the year and this identity would not
+ * hold, so it is checked LOOSELY — wide enough that the timing of a deposit
+ * cannot fail it, narrow enough that a dropped flow, a wrong sign or a terminal
+ * value read off the wrong statement still moves it by tens of points.
+ */
+const GAIN_ON_OPENING_TOLERANCE_PP = 5.0;
+function gainOverOpeningPct(accountId: string): number | null {
+  const flows = BOOK_ACCOUNT_CASH_FLOWS[accountId] ?? [];
+  const opening = flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
+  if (!opening || !opening.amount) return null;
+  const open = Math.abs(opening.amount);
+  // Flows are signed from the investor's side: money IN is negative. Removing
+  // them from the terminal value leaves what the opening stake alone became.
+  const net = flows.filter((f) => f !== opening).reduce((t, f) => t + f.amount, 0);
+  return ((accountMV(accountId) + net - open) / open) * 100;
+}
+
 const measurable = BOOK_ACCOUNTS.filter((a) => hasOpening(a.accountId));
 const notChecked: string[] = [];
+const flowGated: { label: string; accountId: string; asOf: string; share: number }[] = [];
 let checked = 0;
 
 ok("at least one account carries an opening portfolio value",
@@ -102,7 +177,14 @@ for (const a of measurable) {
   const ours = ourReturn(a.accountId, a.asOf);
   const printed = printedFytdSameDay(a.accountId, a.asOf);
   if (!ours) { fails++; console.log(`FAIL ${a.accountNo}: measurable but no rate came out of the solver`); continue; }
-  if (!printed) { notChecked.push(`${a.provider} ${a.accountNo}`); continue; }
+  if (!printed) { notChecked.push(`${a.provider} ${a.accountNo} — no FYTD printed on the same report date`); continue; }
+  // THE PREMISE, CHECKED BEFORE THE COMPARISON IT LICENSES.
+  const share = flowShareOfOpening(a.accountId);
+  if (share != null && share > MAX_FLOW_SHARE) {
+    flowGated.push({ label: `${a.provider} ${a.accountNo}`, accountId: a.accountId, asOf: a.asOf, share });
+    notChecked.push(`${a.provider} ${a.accountNo} — ${(share * 100).toFixed(1)}% of its opening value moved mid-window, so time-weighted and money-weighted cannot meet`);
+    continue;
+  }
   checked++;
   const delta = ours.toDatePct - printed.pct;
   ok(`${a.provider} ${a.accountNo} reproduces its own printed FYTD`,
@@ -114,7 +196,26 @@ for (const a of measurable) {
 // into "not checked" the loop above would print nothing and exit 0, which is a
 // green run over no input.
 ok("the comparison actually ran against printed figures", checked >= 3,
-  `${checked} account(s) compared, ${notChecked.length} not checked${notChecked.length ? ` (${notChecked.join(", ")} — no FYTD printed on the same report date)` : ""}`);
+  `${checked} account(s) compared, ${notChecked.length} not checked${notChecked.length ? ` (${notChecked.join("; ")})` : ""}`);
+
+// ── AN ACCOUNT THE FLOW GATE EXCLUDED IS STILL RECONCILED ──────────────────
+//
+// Otherwise the gate is somewhere to put a failure. On the basis that DOES
+// apply to it, our own flows and our own terminal value have to reproduce the
+// manager's printed figure — and on 128005 they do, to 0.01 pp.
+for (const g of flowGated) {
+  const printed = printedFytdSameDay(g.accountId, g.asOf);
+  const ours = gainOverOpeningPct(g.accountId);
+  if (!printed || ours == null) {
+    fails++;
+    console.log(`FAIL ${g.label}: excluded from the money-weighted comparison and nothing reconciles it on the other basis either`);
+    continue;
+  }
+  const delta = ours - printed.pct;
+  ok(`${g.label} reproduces its printed FYTD as gain over opening value, external capital removed`,
+    Math.abs(delta) <= GAIN_ON_OPENING_TOLERANCE_PP,
+    `ours ${ours.toFixed(2)}% vs printed ${printed.pct.toFixed(2)}% (${printed.reportType}, ${g.asOf}) = ${delta >= 0 ? "+" : ""}${delta.toFixed(2)} pp, with ${(g.share * 100).toFixed(1)}% of opening value moved mid-window`);
+}
 
 // ── The two failure modes that produce a plausible wrong number ─────────────
 //

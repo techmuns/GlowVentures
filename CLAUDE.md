@@ -192,10 +192,10 @@ spreadsheet. Four things follow, and they are load-bearing:
 **What is actually in `source/` today.** THREE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
 `august-2026-b/`, `august-2026-c/` and `august-2026-d/` — statements that
-arrived after it. Twenty-nine issuers, 37 accounts in the book, six holders and
-two family trusts, 48 files expanding to 255 — of which **259 documents** are
-extracted, 194 read fully, 45 partially and **20 not at all**. Every encrypted
-statement opens; the 20 that do not read are ATTRIBUTED to the institution that
+arrived after it. Thirty-one issuers, 42 accounts in the book, six holders and
+two family trusts, 48 files expanding to 229 — of which **259 documents** are
+extracted, 195 read fully, 49 partially and **15 not at all**. Every encrypted
+statement opens; the 15 that do not read are ATTRIBUTED to the institution that
 issued them and named in the coverage report — see the `august-2026-d` section
 below — and `source/README.md` carries the rule for adding the next delivery.
 
@@ -214,45 +214,59 @@ every ZIP already at the top level.
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
 | Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
-| Buoyant Capital | 103472 | Ankita Jaisinghani | **2026-07-31** | **₹27.69 Cr** |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
+| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-07-31 | ₹27.69 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-07-31 | ₹21.83 Cr |
-| Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | **2026-07-31** | **₹10.99 Cr** |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
+| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-08-13 | ₹20.29 Cr |
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
 | Goldstandard Wealth | 100023 | Ajay Jaisinghani | 2026-08-11 | ₹18.80 Cr |
 | SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
+| Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
 | Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
-| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | **2026-07-31** | **₹10.70 Cr** |
-| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | **2026-08-13** | **₹20.29 Cr** |
+| **Motilal Oswal Delphi Equity Fund** | **9049241536** | **Ajay Jaisinghani** | **2026-06-30** | **₹11.13 Cr** |
+| Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-07-31 | ₹10.99 Cr |
+| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-07-31 | ₹10.70 Cr |
 | Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
-| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | **2026-08-13** | **₹6.50 Cr** |
+| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-08-13 | ₹6.50 Cr |
 | Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
-| Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹1.71 Cr each* |
-| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-07-31 / 06-30 | ₹1.47 / ₹1.46 Cr |
-| Molecule Ventures | 7810404 | Ajay Jaisinghani | **2026-07-31** | **₹1.16 Cr** |
+| Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | ₹5.55 Cr |
+| Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
+| Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹1.71 Cr\* |
+| Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹1.71 Cr\* |
+| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.47 Cr |
+| 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
+| Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (reclassified to nil units) |
-| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only) |
-| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (redeemed) |
-| India SME Investments | 175962 / 175964 / 177302 | Ajay / Bharat / Ankita | 2026-06-30 | — (no NAV published) |
-| Sky Capital Rising Titans Fund | SKY003 / SKY022 / SKY023 / SKY024 | Bharat / Ajay / BJ Trust 2 / BJ Trust 3 | 2026-07-31 | — (no NAV published) |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (both schemes redeemed) |
+| **Motilal Oswal Hedged Equity Multi Factor** | **90410014574** | **Ajay Jaisinghani** | **2026-07-31** | **₹0 (both classes redeemed)** |
+| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only, no valuation) |
+| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income only, no valuation) |
+| India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
+| India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
+| India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
+| Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
+| Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
+| Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | — (no NAV published) |
+| Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-07-31 | — (no NAV published) |
 
 **THIS COLUMN WAS TEN TIMES THE BOOK.** Every row read ₹976.8 Cr, ₹103.8 Cr,
 ₹11.2 Cr — while the consolidated figure below it, which is generated, was
 right. The rows summed to ten times their own stated total, which is the
 contradiction the footer rule already names: a reader who adds up the printed
 cells and gets a different answer has found one, and no prose rescues it. The
-column is regenerated from `BOOK_POSITIONS` now, and eight accounts that had
-never been listed at all — Buoyant, Helios, both Motilal Oswal funds, 3P and the
-three India SME folios — are in it.
+column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
+TIME rather than patched: hand-merging rows to keep it short is what let eight
+accounts go unlisted, and a row added by hand is a figure copied into prose. It
+is one row per account, all 42 of them, sorted by value.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹511.03 Cr**: listed ₹192.11 Cr, private ₹318.92 Cr. The split is
+**Consolidated ₹545.90 Cr**: listed ₹192.11 Cr, private ₹353.80 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -263,7 +277,18 @@ Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-II
 AIF folios; six are drawdown AIF capital accounts, four of them Sky Capital's
 angel-fund folios and two held by TRUSTS; two are 360 ONE Distribution
 engagements; one is a self-directed demat account; one is a joint mutual-fund
-folio.
+folio. The rest are single-scheme fund accounts, each issuing one statement.
+
+**TWO OF THE 42 HOLD NOTHING, AND THAT IS A MEASUREMENT.** HDFC 16180583's two
+schemes are redeemed to nil units, and both classes of Motilal Oswal's Hedged
+Equity Multi Factor Strategy are redeemed — Class B2 switched out, Class F1 paid
+out ₹11.19 Cr on 31 July 2025 — with the Account Summary printing a DASH for
+units and for valuation on each. A dash is read as null, so the account carries
+no holding rather than a zero-valued one: its ₹13 Cr contribution set against a
+zero value would book the whole of it as an unrealised loss against money the
+fund has already paid back. The account is kept and states the reason, which is
+why the two look nothing alike from a page: an account nobody wired and an
+account that holds nothing are both empty, and only one of them is a defect.
 
 **Read completely, and deliberately NOT in the book.** Four mutual-fund folios
 (₹32,70,831.46) are held by `HOPE INDIA TRUST` — a separate taxpayer, filed by
@@ -297,7 +322,7 @@ its own file because the layouts share nothing:
 
 | Reader | Documents | What it reads |
 | --- | ---: | --- |
-| `providers/altFundStatements.mjs` | 24 | seven single-scheme fund statements — Buoyant, Helios, Motilal Oswal's Founders and Active Momentum funds, 3P, India SME and Sky Capital's angel fund. One reader, seven declared layouts, each keyed on the FUND rather than the distributor whose stationery it arrives on |
+| `providers/altFundStatements.mjs` | 33 | twelve single-scheme fund statements — Buoyant, Helios, Motilal Oswal's Founders, Active Momentum, Delphi and Hedged Equity funds, 3P, India SME, Sky Capital's angel fund, Neo Infra, Baring PE and Carnelian's Bharat Amritkaal. One reader, twelve declared layouts, each keyed on the FUND rather than the distributor whose stationery it arrives on |
 | `providers/pmsStatements.mjs` | 76 | the house statement sets — six managers, one reporting system |
 | `providers/pmsInvestorReport.mjs` | 5 | the SEBI PMS INVESTOR REPORT, keyed on the REPORT TYPE rather than the house: SVAN issues it monthly and Green Lantern quarterly, and it is one prescribed layout |
 | `providers/threeSixtyOne.mjs` | 4 | 360 ONE Private Wealth's client-level PORTFOLIO ANALYSIS REPORT |
@@ -478,13 +503,20 @@ Four files. **Two were byte-identical** to statements already in `august-2026/`
 (`reports.zip`, Ankita's Active Momentum Fund). The other two are a 68-file
 `MOTILAL REPORTS.zip` and a 25-tab consolidated review workbook.
 
-**WHAT LANDED — ₹38.68 Cr, and the consolidated total ties to it exactly**
-(₹472.35 Cr → ₹511.03 Cr):
+**WHAT LANDED — ₹73.55 Cr, and the consolidated total ties to it exactly**
+(₹472.35 Cr → ₹545.90 Cr). The first two needed no new code; the rest are five
+new layouts on `altFundStatements.mjs`, built ONE AT A TIME and each verified
+against the family's own consolidated review before the next was started:
 
 | Account | Owner | Value | How |
 | --- | --- | ---: | --- |
 | Buoyant Capital 103472 | Ankita | ₹27.69 Cr | new folio, existing reader |
 | Motilal Oswal Founders Fund 90410016093 | Ankita | ₹10.99 Cr | new folio, existing layout |
+| Carnelian Bharat Amritkaal Fund 4551 | Ankita | ₹16.31 Cr | new layout |
+| Motilal Oswal Delphi Equity Fund 9049241536 | Ajay | ₹11.13 Cr | new layout |
+| Neo Infra Income Opportunities Fund 9039920536 | Ajay | ₹5.55 Cr | new layout |
+| Baring Private Equity India Fund `AIFM_BPEPF6_0584` | Ankita | ₹1.88 Cr | new layout |
+| Motilal Oswal Hedged Equity Multi Factor 90410014574 | Ajay | ₹0 | new layout — redeemed to nil |
 
 **BUOYANT IS THE FIRST MANAGER WITH TWO DOCUMENT FAMILIES.** It sends its own
 Category III account statement (read by `altFundStatements.mjs`) AND issues from
@@ -519,20 +551,49 @@ INGEST rather than the UI**, and it is why the listed/private split is worth
 checking on every drop and not only the total: the consolidated figure was
 correct to the rupee the whole time it was wrong.
 
-**TWENTY DOCUMENTS HAVE NO READER, and each is attributed to the institution
+**FIFTEEN DOCUMENTS HAVE NO READER, and each is attributed to the institution
 that wrote it.** This is the honest state, not a silent gap; every one is in the
 coverage report:
 
 | Issuer | Docs | What it is |
 | --- | ---: | --- |
 | Motilal Oswal Financial Services (demat) | 12 | DP holding and transaction statements — Ajay, Aarti, Bharat, Ankita and a `BHARAT JAISINGHANI FAMILY TRUST` with NO numeral |
-| Neo Infra Income Opportunities Fund I | 1 | Ajay, 31 Jul 2026 — commitment ₹5 Cr fully drawn, **valuation ₹5.55 Cr**, NAV ₹114.24, 4,85,837 units |
-| Motilal Oswal Delphi Equity Fund | 1 | Ajay, account 9049241536, 1 Jul 2026 |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 1 | Ajay, account 90410014574, 31 Jul 2026 |
-| Baring Private Equity India Fund 6 | 1 | Ankita, folio `AIFM_BPEPF6_0584`, 31 Mar 2026 |
-| Carnelian Bharat Amritkaal Fund | 1 | Ankita, folio 4551 — a Category III AIF, a DIFFERENT vehicle from the Carnelian PMS mandate already in the book |
 | ICICI Bank (payment advice) | 2 | `3P_Folio 3000048/49.pdf` are ICICI RECEIPTS for transfers, not 3P statements — the filename names the folio the money went to |
 | Consolidated family review | 1 | see below |
+
+### The two Motilal Oswal ACCOUNT SUMMARY funds — one layout, and a DASH
+
+Delphi and the Hedged Equity strategy print the same block: one row per unit
+class reading `Class | NAV Date | Post Tax NAV | Unit | Commitment |
+Contribution | Valuation`. One reader factory serves both, and three of its
+decisions are the whole of it:
+
+**A DASH IS NULL, NEVER ZERO.** Hedged Equity's Unit and Valuation columns are
+`-` on both classes, because both are redeemed. Read as 0 the account books its
+₹13 Cr contribution as an unrealised loss against money the fund has already
+paid back; read as null it carries no holding and states why.
+
+**A CLOSED CLASS COMMITS NOTHING EITHER.** Summing the commitment column across
+both rows gives ₹26.11 Cr for ₹13 Cr of real money — Class F1 was SWITCHED IN
+from Class B2, so the same contribution is printed twice under two class names.
+Only classes that still hold units contribute a commitment, which is also why
+this account appears in no dry-powder figure.
+
+**AND THE DRIVER LEARNED TO SAY WHY IT IS EMPTY.** With no rows it reported
+`summary-row-not-matched` — "the columns did not line up" — about a document
+whose columns lined up perfectly and printed a dash in both. A layout that knows
+why it has no rows now says so through `emptyReason`; everything else keeps the
+column diagnosis, which is the honest answer when the reason is genuinely
+unknown. **A wrong diagnosis sends the next reader to fix a regex**, which is
+the same rule that governs an unreachable archive on screen.
+
+Delphi's one class ties exactly: 99,995 units × ₹1,112.9310 = **₹11,12,87,535.35**,
+the figure the statement prints. The family's review carries it under what it
+OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — at
+₹11,12,87,435.35, ₹100 lower **because the review rounds the NAV to two
+decimals**. Ours is derived from the printed NAV to four, so the ₹100 is theirs
+and not a discrepancy in the book. The review does not list Hedged Equity at
+all, which agrees with an account holding nothing.
 
 **THE UNNUMBERED TRUST IS A REAL HAZARD.** `H43383 - BHARAT JAISINGHANI FAMILY
 TRUST` carries no numeral, and this book has Trust 2 and Trust 3 as separate
@@ -1152,7 +1213,7 @@ product:
 **As of this calibration exactly TWO material deltas stand**, both named and
 both quantified above: ₹1.27 on Carnelian's 2026-08-10 transaction statement and
 ₹1.77 on V.E.C 128005's 2026-08-13 one, each a settlement residual inside the
-precision of a four-decimal price. The run is 240 row-sum checks, 641
+precision of a four-decimal price. The run is 251 row-sum checks, 641
 derived-vs-printed, 1,881 dated-table row checks and 18 cross-report. Every
 other delta that is not `ok` is `explained` or `rounding`, and every `explained`
 one names a basis difference reproduced exactly — never a widened tolerance.
@@ -1866,8 +1927,7 @@ financial-year-to-date return from our flows and our terminal value:
 Carnelian 3517383     ours 26.49%   printed 26.98%   −0.49 pp
 Goldstandard 100022   ours 20.36%   printed 20.57%   −0.21 pp
 Goldstandard 100023   ours 20.87%   printed 21.08%   −0.21 pp
-V.E.C 128004          ours 52.28%   printed 52.27%   +0.01 pp
-V.E.C 128005          ours 49.59%   printed 49.59%   +0.00 pp
+V.E.C 128004          ours 51.09%   printed 51.41%   −0.32 pp
 ```
 
 The gate is 1.0 pp because these are two different measurements of one window —
@@ -1878,15 +1938,41 @@ fail it; narrow enough that a wrong sign, a dropped opening value or a shared
 terminal date cannot pass — each of those moves a figure by tens of points, and
 the suite asserts that too.
 
+**AND THE PREMISE IN THAT PARENTHESIS IS NOW MEASURED, BECAUSE AN ACCOUNT BROKE
+IT.** V.E.C 128005 took ₹11.24 Cr of new capital on 28 and 29 July and closes 13
+August — **182% of its own opening value, sixteen days before the terminal
+date**. Its money-weighted return came out 39.13% against a printed 46.44% and
+the suite reported a 7.31 pp FAILURE for an account where nothing is wrong: a
+rupee-left-alone figure cannot see that deposit and ours must. Widening the
+tolerance to 8 pp would have "fixed" it and let a dropped flow through forever.
+
+Nothing is misread, and the statement settles it — strip the deposits out and
+the account's gain over its own opening value is **46.43% against the printed
+46.44%**, on the same flows and the same terminal value. So the comparison is
+GATED ON THE PREMISE IT NEEDS: mid-window external capital over opening value,
+and above 5% the money-weighted comparison is not struck. This book's seven
+measurable accounts separate cleanly on that ratio — six between 0.012% and
+0.045%, every one of them a TDS transfer of a few thousand rupees, and this one
+at 181.9%.
+
+**The gate is on the RATIO and never on an account number.** Typing `128005`
+into the suite would stop checking it forever, including in the drop where its
+flows go quiet again. And an excluded account is not dropped: it gets the
+gain-over-opening reconciliation above as its own case, checked at 5 pp — wide
+enough that WHEN a deposit landed cannot fail it, narrow enough that a sign
+error still reads +363.72 pp. Both were verified by reintroducing the bug.
+
 **Green Lantern's two accounts are NOT CHECKED and are named.** They are in the
 tile, but their FYTD is printed on a report drawn 2026-08-10 while their holdings
 close 2026-07-27; comparing them reports a −3.82 pp "failure" that is two weeks
-of market movement. The suite counts them apart and fails if fewer than three
-accounts were actually compared — `golden.mjs`'s rule, that a suite passing over
+of market movement. They are counted apart with their OWN reason printed rather
+than one blanket line for every skip — a date mismatch and a capital movement
+are different findings, and a reader who cannot tell them apart cannot act on
+either. The suite fails if fewer than three accounts were actually compared — `golden.mjs`'s rule, that a suite passing over
 no input claims confidence nobody earned.
 
 **Trades are not flows**: a sale moves cash inside an account rather than out of
-it, and its proceeds are already inside the closing value — which is why the five
+it, and its proceeds are already inside the closing value — which is why the four
 comparisons above hold on accounts that traded actively over the window.
 
 ### Stage 10g(ii) — THE TILE READ +99% AND THAT WAS THE REAL BUG
