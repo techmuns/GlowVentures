@@ -1,0 +1,110 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "CHEMFAB ALKALIS LIMITED",
+   "CHEMICALS",
+   "374,700",
+   "3.22%"
+  ],
+  [
+   "2",
+   "ARVIND FASHIONS LIMITED",
+   "OTHERS",
+   "1,800,000",
+   "15.49%"
+  ],
+  [
+   "3",
+   "SANSERA ENGINEERING LIMITED",
+   "OTHERS",
+   "2,677,520",
+   "23.04%"
+  ],
+  [
+   "SASKEN COMMUNICATION",
+   "INFORMATION",
+   "181,180",
+   "1.56%"
+  ],
+  [
+   "4"
+  ],
+  [
+   "TECHNOLOGIES LTD.",
+   "TECHNOLOGY"
+  ],
+  [
+   "5",
+   "DCW LIMITED",
+   "BASIC MATERIALS",
+   "138,570",
+   "1.19%"
+  ],
+  [
+   "6",
+   "INDIAN METALS AND FERRO ALLOYS LTD. BASIC MATERIALS",
+   "2,172,900",
+   "18.70%"
+  ],
+  [
+   "7",
+   "JAYASWAL NECO INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "1,978,690",
+   "17.03%"
+  ],
+  [
+   "8",
+   "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "1,411,254",
+   "12.15%"
+  ],
+  [
+   "9",
+   "MANALI PETROCHEMICAL LTD.",
+   "BASIC MATERIALS",
+   "648,900",
+   "5.58%"
+  ],
+  [
+   "Cash and",
+   "213,783",
+   "1.84%"
+  ],
+  [
+   "10",
+   "Cash"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "11",
+   "Dividend / Interest receivable",
+   "Dividend / Interest",
+   "21,451",
+   "0.18%"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "11,618,948",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: Nirav Parikh | email:"
+  ]
+ ]
+}

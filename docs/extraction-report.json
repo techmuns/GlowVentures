@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-08-12T15:32:25.495Z",
+  "generatedAt": "2026-08-19T09:52:34.352Z",
   "summary": {
-    "documents": 182,
-    "parsed": 162,
-    "partial": 18,
+    "documents": 187,
+    "parsed": 166,
+    "partial": 19,
     "failed": 2,
-    "rowSumChecks": 184,
-    "totalMismatches": 80,
+    "rowSumChecks": 194,
+    "totalMismatches": 89,
     "totalsMaterial": 0,
-    "totalsExplained": 32,
-    "totalsRounding": 83,
-    "derivedVsPrintedDeltas": 511,
+    "totalsExplained": 36,
+    "totalsRounding": 89,
+    "derivedVsPrintedDeltas": 579,
     "derivedMaterial": 0,
-    "derivedExplained": 228,
-    "derivedRounding": 283,
-    "datedChecks": 1690,
+    "derivedExplained": 295,
+    "derivedRounding": 284,
+    "datedChecks": 1692,
     "datedMaterial": 1,
-    "datedExplained": 125,
+    "datedExplained": 127,
     "datedRounding": 47,
     "crossReportDeltas": 9,
     "suspectedDuplicates": 6,
@@ -25,7 +25,7 @@
     "stitchesApplied": 22
   },
   "coverage": {
-    "pdfsFound": 175,
+    "pdfsFound": 177,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (6).pdf",
@@ -43,8 +43,8 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 162,
-    "partial": 18,
+    "parsed": 166,
+    "partial": 19,
     "failed": 2,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
@@ -314,7 +314,7 @@
       "SVAN Investment Managers LLP": {
         "investor-report": {
           "ok": 4,
-          "partial": 1,
+          "partial": 2,
           "failed": 0
         }
       },
@@ -416,6 +416,38 @@
           "failed": 1
         }
       },
+      "Molecule Ventures LLP": {
+        "fact-sheet": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "holdings": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "dividend-statement": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "expense-statement": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        },
+        "transaction-statement": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "capital-gain": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
+      },
       "Motilal Oswal Active Momentum Fund": {
         "holdings": {
           "ok": 0,
@@ -434,33 +466,6 @@
         "holdings": {
           "ok": 0,
           "partial": 3,
-          "failed": 0
-        }
-      },
-      "Molecule Ventures LLP": {
-        "fact-sheet": {
-          "ok": 1,
-          "partial": 0,
-          "failed": 0
-        },
-        "holdings": {
-          "ok": 1,
-          "partial": 0,
-          "failed": 0
-        },
-        "transaction-statement": {
-          "ok": 1,
-          "partial": 0,
-          "failed": 0
-        },
-        "capital-gain": {
-          "ok": 1,
-          "partial": 0,
-          "failed": 0
-        },
-        "expense-statement": {
-          "ok": 1,
-          "partial": 0,
           "failed": 0
         }
       },
@@ -603,6 +608,13 @@
         ]
       },
       {
+        "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+        "sourcePath": "source/august-2026-b/SVAN - BHARAT.pdf",
+        "reasons": [
+          "weights-on-aum-basis: the weight column is of Assets Under Management, which this report totals at 112.59% of the market value printed beside it; AUM is 9,51,86,955.19 against a market value of 10,71,70,992.85. Derived %assets is on the market value and will not match the printed column."
+        ]
+      },
+      {
         "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
         "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
         "reasons": []
@@ -639,8 +651,8 @@
     ]
   },
   "consolidated": {
-    "naive": 6033003897.87,
-    "deduped": 5972460575.29,
+    "naive": 6151626982.87,
+    "deduped": 6091083660.29,
     "doubleCounted": 60543322.58
   },
   "rowSumChecks": [
@@ -659,7 +671,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,79,600).",
-      "accruedIncome": 379600
+      "accruedIncome": 379600,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
@@ -676,7 +689,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 379600
+      "accruedIncome": 379600,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
@@ -693,7 +707,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,79,600).",
-      "accruedIncome": 379600
+      "accruedIncome": 379600,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
@@ -710,7 +725,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 379600
+      "accruedIncome": 379600,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
@@ -727,7 +743,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 379600
+      "accruedIncome": 379600,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-07-10-appraisal",
@@ -761,7 +778,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,57,200).",
-      "accruedIncome": 157200
+      "accruedIncome": 157200,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
@@ -778,7 +796,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 157200
+      "accruedIncome": 157200,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
@@ -795,7 +814,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,57,200).",
-      "accruedIncome": 157200
+      "accruedIncome": 157200,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
@@ -812,7 +832,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 157200
+      "accruedIncome": 157200,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
@@ -829,7 +850,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 157200
+      "accruedIncome": 157200,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-07-10-appraisal",
@@ -863,7 +885,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (62,750).",
-      "accruedIncome": 62750
+      "accruedIncome": 62750,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
@@ -880,7 +903,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 62750
+      "accruedIncome": 62750,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
@@ -897,7 +921,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (62,750).",
-      "accruedIncome": 62750
+      "accruedIncome": 62750,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
@@ -914,7 +939,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 62750
+      "accruedIncome": 62750,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
@@ -931,7 +957,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 62750
+      "accruedIncome": 62750,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal",
@@ -965,7 +992,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,25,150).",
-      "accruedIncome": 325150
+      "accruedIncome": 325150,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
@@ -982,7 +1010,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 325150
+      "accruedIncome": 325150,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
@@ -999,7 +1028,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,25,150).",
-      "accruedIncome": 325150
+      "accruedIncome": 325150,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
@@ -1016,7 +1046,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 325150
+      "accruedIncome": 325150,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
@@ -1033,7 +1064,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 325150
+      "accruedIncome": 325150,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
@@ -1067,7 +1099,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,41,700).",
-      "accruedIncome": 141700
+      "accruedIncome": 141700,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
@@ -1084,7 +1117,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 141700
+      "accruedIncome": 141700,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
@@ -1101,7 +1135,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,41,700).",
-      "accruedIncome": 141700
+      "accruedIncome": 141700,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
@@ -1118,7 +1153,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 141700
+      "accruedIncome": 141700,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
@@ -1135,7 +1171,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 141700
+      "accruedIncome": 141700,
+      "outstandingDividend": null
     },
     {
       "docKey": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
@@ -1169,7 +1206,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,90,811.2).",
-      "accruedIncome": 190811.2
+      "accruedIncome": 190811.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
@@ -1186,7 +1224,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 190811.2
+      "accruedIncome": 190811.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
@@ -1203,7 +1242,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,90,811.2).",
-      "accruedIncome": 190811.2
+      "accruedIncome": 190811.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
@@ -1220,7 +1260,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 190811.2
+      "accruedIncome": 190811.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
@@ -1237,7 +1278,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 190811.2
+      "accruedIncome": 190811.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
@@ -1271,7 +1313,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (95,851.2).",
-      "accruedIncome": 95851.2
+      "accruedIncome": 95851.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
@@ -1288,7 +1331,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 95851.2
+      "accruedIncome": 95851.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
@@ -1305,7 +1349,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (95,851.2).",
-      "accruedIncome": 95851.2
+      "accruedIncome": 95851.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
@@ -1322,7 +1367,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 95851.2
+      "accruedIncome": 95851.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
@@ -1339,7 +1385,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 95851.2
+      "accruedIncome": 95851.2,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
@@ -1373,7 +1420,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
@@ -1390,7 +1438,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
@@ -1424,7 +1473,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
@@ -1441,7 +1491,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
@@ -1475,7 +1526,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
@@ -1492,7 +1544,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
@@ -1526,7 +1579,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
@@ -1543,7 +1597,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
@@ -1577,7 +1632,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
@@ -1594,7 +1650,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
@@ -1628,7 +1685,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "buoyant-capital-103473-2026-07-31-holdings",
@@ -1645,7 +1703,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "buoyant-capital-103473-2026-07-31-holdings",
@@ -1679,7 +1738,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
@@ -1696,7 +1756,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
@@ -1730,7 +1791,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (2,20,779).",
-      "accruedIncome": 220779
+      "accruedIncome": 220779,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
@@ -1747,7 +1809,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 220779
+      "accruedIncome": 220779,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
@@ -1764,7 +1827,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (2,20,779).",
-      "accruedIncome": 220779
+      "accruedIncome": 220779,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
@@ -1781,7 +1845,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 220779
+      "accruedIncome": 220779,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
@@ -1815,7 +1880,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,69,650).",
-      "accruedIncome": 369650
+      "accruedIncome": 369650,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
@@ -1832,7 +1898,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 369650
+      "accruedIncome": 369650,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
@@ -1849,7 +1916,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (3,69,650).",
-      "accruedIncome": 369650
+      "accruedIncome": 369650,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
@@ -1866,7 +1934,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 369650
+      "accruedIncome": 369650,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
@@ -1883,7 +1952,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 369650
+      "accruedIncome": 369650,
+      "outstandingDividend": null
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
@@ -1917,7 +1987,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400).",
-      "accruedIncome": 35400
+      "accruedIncome": 35400,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
@@ -1934,7 +2005,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 35400
+      "accruedIncome": 35400,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
@@ -1951,7 +2023,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400).",
-      "accruedIncome": 35400
+      "accruedIncome": 35400,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
@@ -1968,7 +2041,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 35400
+      "accruedIncome": 35400,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
@@ -1985,7 +2059,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 35400
+      "accruedIncome": 35400,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-25-appraisal",
@@ -2019,7 +2094,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (17,850).",
-      "accruedIncome": 17850
+      "accruedIncome": 17850,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
@@ -2036,7 +2112,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 17850
+      "accruedIncome": 17850,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
@@ -2053,7 +2130,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (17,850).",
-      "accruedIncome": 17850
+      "accruedIncome": 17850,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
@@ -2070,7 +2148,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 17850
+      "accruedIncome": 17850,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
@@ -2087,7 +2166,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 17850
+      "accruedIncome": 17850,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510854-2026-06-25-appraisal",
@@ -2121,7 +2201,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
@@ -2138,7 +2219,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
@@ -2172,7 +2254,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
@@ -2189,7 +2272,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
@@ -2223,7 +2307,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
@@ -2240,7 +2325,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
@@ -2274,7 +2360,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
@@ -2291,7 +2378,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
@@ -2325,7 +2413,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "lkp-securities-98245-2026-03-31-holdings",
@@ -2359,7 +2448,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671821-2026-06-30-unknown",
@@ -2376,7 +2466,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671821-2026-06-30-unknown",
@@ -2410,7 +2501,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671854-2026-06-30-unknown",
@@ -2427,7 +2519,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671854-2026-06-30-unknown",
@@ -2461,7 +2554,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671912-2026-06-30-unknown",
@@ -2478,7 +2572,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9039671912-2026-06-30-unknown",
@@ -2512,7 +2607,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9069671554-2026-06-30-unknown",
@@ -2529,7 +2625,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9069671554-2026-06-30-unknown",
@@ -2563,7 +2660,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9069671634-2026-06-30-unknown",
@@ -2580,7 +2678,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "sanshi-fund-9069671634-2026-06-30-unknown",
@@ -2614,7 +2713,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
@@ -2631,7 +2731,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
@@ -2648,7 +2749,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
@@ -2665,7 +2767,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
@@ -2682,7 +2785,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
@@ -2716,7 +2820,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
@@ -2733,7 +2838,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
@@ -2750,7 +2856,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
@@ -2767,7 +2874,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
@@ -2784,7 +2892,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal",
@@ -2818,7 +2927,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
@@ -2835,7 +2945,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
@@ -2869,7 +2980,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
@@ -2886,7 +2998,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
@@ -2920,7 +3033,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
@@ -2937,7 +3051,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
@@ -2971,7 +3086,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
@@ -2988,7 +3104,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
@@ -3003,6 +3120,184 @@
       "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "equity market value",
+      "rowSum": 11383713.55,
+      "printedTotal": 11405165,
+      "delta": -21451.45,
+      "rowsSummed": 9,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed market value folds in the dividend gone ex but not yet received; the derived column is price x quantity. Delta equals the outstanding dividend on this account's own dividend statement (21,451).",
+      "accruedIncome": 97420,
+      "outstandingDividend": 21451
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "equity cost",
+      "rowSum": 10310431,
+      "printedTotal": 10310430,
+      "delta": 1,
+      "rowsSummed": 9,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 97420,
+      "outstandingDividend": 21451
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 11597496.65,
+      "printedTotal": 11618948,
+      "delta": -21451.35,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed market value folds in the dividend gone ex but not yet received; the derived column is price x quantity. Delta equals the outstanding dividend on this account's own dividend statement (21,451).",
+      "accruedIncome": 97420,
+      "outstandingDividend": 21451
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 10524214,
+      "printedTotal": 10524213,
+      "delta": 1,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 97420,
+      "outstandingDividend": 21451
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "equity market value",
+      "rowSum": 102122041.9,
+      "printedTotal": 102267446.4,
+      "delta": -145404.5,
+      "rowsSummed": 44,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,45,404.5).",
+      "accruedIncome": 145404.5,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "equity cost",
+      "rowSum": 96299156.46,
+      "printedTotal": 96299156.44,
+      "delta": 0.02,
+      "rowsSummed": 44,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 145404.5,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "total market value (incl. cash)",
+      "rowSum": 107025588.35,
+      "printedTotal": 107170992.85,
+      "delta": -145404.5,
+      "rowsSummed": 45,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "explained",
+      "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,45,404.5).",
+      "accruedIncome": 145404.5,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "total cost (incl. cash)",
+      "rowSum": 101202702.91,
+      "printedTotal": 101202702.89,
+      "delta": 0.02,
+      "rowsSummed": 45,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": 145404.5,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.98,
+      "printedTotal": 100,
+      "delta": -0.02,
+      "rowsSummed": 45,
+      "rowsMissingField": 0,
+      "matches": false,
       "severity": "rounding",
       "cause": null,
       "accruedIncome": null
@@ -3022,7 +3317,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
@@ -3039,7 +3335,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
@@ -3073,7 +3370,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
@@ -3090,7 +3388,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
@@ -3124,7 +3423,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "india-sme-investments-177302-2026-06-30-holdings",
@@ -3141,7 +3441,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "india-sme-investments-175964-2026-06-30-holdings",
@@ -3158,7 +3459,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -3175,7 +3477,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400.01).",
-      "accruedIncome": 35400.01
+      "accruedIncome": 35400.01,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -3192,7 +3495,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 35400.01
+      "accruedIncome": 35400.01,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -3209,7 +3513,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (35,400.01).",
-      "accruedIncome": 35400.01
+      "accruedIncome": 35400.01,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -3226,7 +3531,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 35400.01
+      "accruedIncome": 35400.01,
+      "outstandingDividend": null
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -3260,7 +3566,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 75970
+      "accruedIncome": 75970,
+      "outstandingDividend": null
     },
     {
       "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
@@ -3277,7 +3584,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 75970
+      "accruedIncome": 75970,
+      "outstandingDividend": null
     },
     {
       "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
@@ -3294,7 +3602,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 75970
+      "accruedIncome": 75970,
+      "outstandingDividend": null
     },
     {
       "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
@@ -3311,7 +3620,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 75970
+      "accruedIncome": 75970,
+      "outstandingDividend": null
     },
     {
       "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings",
@@ -3345,7 +3655,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,17,030).",
-      "accruedIncome": 117030
+      "accruedIncome": 117030,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
@@ -3362,7 +3673,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 117030
+      "accruedIncome": 117030,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
@@ -3379,7 +3691,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (1,17,030).",
-      "accruedIncome": 117030
+      "accruedIncome": 117030,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
@@ -3396,7 +3709,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 117030
+      "accruedIncome": 117030,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
@@ -3430,7 +3744,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (9,860).",
-      "accruedIncome": 9860
+      "accruedIncome": 9860,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
@@ -3447,7 +3762,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 9860
+      "accruedIncome": 9860,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
@@ -3464,7 +3780,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (9,860).",
-      "accruedIncome": 9860
+      "accruedIncome": 9860,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
@@ -3481,7 +3798,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 9860
+      "accruedIncome": 9860,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
@@ -3515,7 +3833,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (76,320.5).",
-      "accruedIncome": 76320.5
+      "accruedIncome": 76320.5,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -3532,7 +3851,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 76320.5
+      "accruedIncome": 76320.5,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -3549,7 +3869,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (76,320.5).",
-      "accruedIncome": 76320.5
+      "accruedIncome": 76320.5,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -3566,7 +3887,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 76320.5
+      "accruedIncome": 76320.5,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -3600,7 +3922,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (6,400).",
-      "accruedIncome": 6400
+      "accruedIncome": 6400,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
@@ -3617,7 +3940,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": 6400
+      "accruedIncome": 6400,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
@@ -3634,7 +3958,8 @@
       "matches": false,
       "severity": "explained",
       "cause": "printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (6,400).",
-      "accruedIncome": 6400
+      "accruedIncome": 6400,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
@@ -3651,7 +3976,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": 6400
+      "accruedIncome": 6400,
+      "outstandingDividend": null
     },
     {
       "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
@@ -3685,7 +4011,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
@@ -3702,7 +4029,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
@@ -3736,7 +4064,8 @@
       "matches": false,
       "severity": "rounding",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
@@ -3753,7 +4082,8 @@
       "matches": true,
       "severity": "ok",
       "cause": null,
-      "accruedIncome": null
+      "accruedIncome": null,
+      "outstandingDividend": null
     },
     {
       "docKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
@@ -11309,6 +11639,1094 @@
       "severity": "rounding",
       "cause": null,
       "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "ARVIND FASHIONS LIMITED",
+      "securityKey": "arvind-fashions",
+      "field": "pctAssets",
+      "derived": 15.52,
+      "printed": 15.49,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "CHEMFAB ALKALIS LIMITED",
+      "securityKey": "chemfab-alkalis",
+      "field": "pctAssets",
+      "derived": 3.23,
+      "printed": 3.22,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
+      "securityKey": "indian-metals-and-ferro-alloys",
+      "field": "marketValue",
+      "derived": 2172900,
+      "printed": 2184150,
+      "delta": -11250,
+      "severity": "explained",
+      "cause": "printed market value folds in this row's OUTSTANDING dividend — gone ex, not yet received — which its own dividend statement prints. Adding it back reproduces the printed figure to within the printed price's own last digit.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
+      "securityKey": "indian-metals-and-ferro-alloys",
+      "field": "pctAssets",
+      "derived": 18.74,
+      "printed": 18.8,
+      "delta": -0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "JAYASWAL NECO INDUSTRIES LTD.",
+      "securityKey": "jayaswal-neco-industries",
+      "field": "pctAssets",
+      "derived": 17.06,
+      "printed": 17.03,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+      "securityKey": "kirloskar-ferrous-industries",
+      "field": "marketValue",
+      "derived": 1411253.55,
+      "printed": 1420155,
+      "delta": -8901.45,
+      "severity": "explained",
+      "cause": "printed market value folds in this row's OUTSTANDING dividend — gone ex, not yet received — which its own dividend statement prints. Adding it back reproduces the printed figure to within the printed price's own last digit.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+      "securityKey": "kirloskar-ferrous-industries",
+      "field": "pctAssets",
+      "derived": 12.17,
+      "printed": 12.22,
+      "delta": -0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "MANALI PETROCHEMICAL LTD.",
+      "securityKey": "manali-petrochemical",
+      "field": "pctAssets",
+      "derived": 5.6,
+      "printed": 5.58,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "SANSERA ENGINEERING LIMITED",
+      "securityKey": "sansera-engineering",
+      "field": "pctAssets",
+      "derived": 23.09,
+      "printed": 23.04,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "SASKEN COMMUNICATION TECHNOLOGIES",
+      "securityKey": "sasken-communication-technologies",
+      "field": "marketValue",
+      "derived": 181180,
+      "printed": 182480,
+      "delta": -1300,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "SASKEN COMMUNICATION TECHNOLOGIES",
+      "securityKey": "sasken-communication-technologies",
+      "field": "pctAssets",
+      "derived": 1.56,
+      "printed": 1.57,
+      "delta": -0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "provider": "Molecule Ventures LLP",
+      "accountNo": "7810404",
+      "asOf": "2026-07-31",
+      "reportType": "holdings",
+      "security": "Cash",
+      "securityKey": "cash",
+      "field": "marketValue",
+      "derived": 213783.1,
+      "printed": 213783,
+      "delta": 0.1,
+      "severity": "rounding",
+      "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Arvind Fashions Ltd",
+      "securityKey": "arvind-fashions",
+      "field": "pctAssets",
+      "derived": 2.8,
+      "printed": 3.15,
+      "delta": -0.35,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "BOROSIL RENEWABLES LTD",
+      "securityKey": "borosil-renewables",
+      "field": "pctAssets",
+      "derived": 2.35,
+      "printed": 2.64,
+      "delta": -0.29,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Birlasoft Ltd",
+      "securityKey": "birlasoft",
+      "field": "pctAssets",
+      "derived": 1.85,
+      "printed": 2.08,
+      "delta": -0.23,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "CREATIVE NEWTECH LIMITED",
+      "securityKey": "creative-newtech",
+      "field": "pctAssets",
+      "derived": 2.32,
+      "printed": 2.61,
+      "delta": -0.29,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Caplin Point Laboratories Ltd",
+      "securityKey": "caplin-point-laboratories",
+      "field": "pctAssets",
+      "derived": 3.76,
+      "printed": 4.23,
+      "delta": -0.47,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Ceat Ltd",
+      "securityKey": "ceat",
+      "field": "marketValue",
+      "derived": 3567096,
+      "printed": 3603496,
+      "delta": -36400,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Ceat Ltd",
+      "securityKey": "ceat",
+      "field": "pctAssets",
+      "derived": 3.33,
+      "printed": 3.79,
+      "delta": -0.46,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Cosmo Films Ltd",
+      "securityKey": "cosmo-films",
+      "field": "marketValue",
+      "derived": 3007051,
+      "printed": 3020531,
+      "delta": -13480,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Cosmo Films Ltd",
+      "securityKey": "cosmo-films",
+      "field": "pctAssets",
+      "derived": 2.81,
+      "printed": 3.17,
+      "delta": -0.36,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Credit Access Grameen Limited",
+      "securityKey": "credit-access-grameen",
+      "field": "pctAssets",
+      "derived": 2.55,
+      "printed": 2.87,
+      "delta": -0.32,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Dilip Buildcon Ltd",
+      "securityKey": "dilip-buildcon",
+      "field": "pctAssets",
+      "derived": 1.69,
+      "printed": 1.9,
+      "delta": -0.21,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Edelweiss Financial Services Ltd",
+      "securityKey": "edelweiss-financial-services",
+      "field": "pctAssets",
+      "derived": 2.09,
+      "printed": 2.36,
+      "delta": -0.27,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Ester Industries Limited",
+      "securityKey": "ester-industries",
+      "field": "pctAssets",
+      "derived": 1.62,
+      "printed": 1.82,
+      "delta": -0.2,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Fusion Finance Limited",
+      "securityKey": "fusion-finance",
+      "field": "pctAssets",
+      "derived": 1.56,
+      "printed": 1.76,
+      "delta": -0.2,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "GHCL Ltd",
+      "securityKey": "ghcl",
+      "field": "pctAssets",
+      "derived": 1.63,
+      "printed": 1.83,
+      "delta": -0.2,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "GHCL Textiles Limited",
+      "securityKey": "ghcl-textiles",
+      "field": "pctAssets",
+      "derived": 1.38,
+      "printed": 1.55,
+      "delta": -0.17,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "GLAND PHARMA LIMITED",
+      "securityKey": "gland-pharma",
+      "field": "pctAssets",
+      "derived": 1.98,
+      "printed": 2.22,
+      "delta": -0.24,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "HEG Ltd",
+      "securityKey": "heg",
+      "field": "marketValue",
+      "derived": 3526146.25,
+      "printed": 3544387.25,
+      "delta": -18241,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "HEG Ltd",
+      "securityKey": "heg",
+      "field": "pctAssets",
+      "derived": 3.29,
+      "printed": 3.72,
+      "delta": -0.43,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "IFB Industries Ltd",
+      "securityKey": "ifb-industries",
+      "field": "pctAssets",
+      "derived": 1.83,
+      "printed": 2.06,
+      "delta": -0.23,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Indo Count Industries Ltd",
+      "securityKey": "indo-count-industries",
+      "field": "pctAssets",
+      "derived": 3.94,
+      "printed": 4.43,
+      "delta": -0.49,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "KRISHCA STRAPPING SOLUTIONS",
+      "securityKey": "krishca-strapping-solutions",
+      "field": "pctAssets",
+      "derived": 0.75,
+      "printed": 0.84,
+      "delta": -0.09,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Laxmi Organic Industries Limited",
+      "securityKey": "laxmi-organic-industries",
+      "field": "marketValue",
+      "derived": 2794996.8,
+      "printed": 2799694.8,
+      "delta": -4698,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Laxmi Organic Industries Limited",
+      "securityKey": "laxmi-organic-industries",
+      "field": "pctAssets",
+      "derived": 2.61,
+      "printed": 2.94,
+      "delta": -0.33,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Mastek Ltd",
+      "securityKey": "mastek",
+      "field": "pctAssets",
+      "derived": 2.29,
+      "printed": 2.58,
+      "delta": -0.29,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "NITIN SPINNERS LIMITED",
+      "securityKey": "nitin-spinners",
+      "field": "pctAssets",
+      "derived": 2.77,
+      "printed": 3.12,
+      "delta": -0.35,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Neuland Laboratories Ltd",
+      "securityKey": "neuland-laboratories",
+      "field": "marketValue",
+      "derived": 3713385,
+      "printed": 3720015,
+      "delta": -6630,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Neuland Laboratories Ltd",
+      "securityKey": "neuland-laboratories",
+      "field": "pctAssets",
+      "derived": 3.47,
+      "printed": 3.91,
+      "delta": -0.44,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "PUNJAB CHEM & CROP PROT L",
+      "securityKey": "punjab-chem-and-crop-prot-l",
+      "field": "marketValue",
+      "derived": 2373385,
+      "printed": 2379610,
+      "delta": -6225,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "PUNJAB CHEM & CROP PROT L",
+      "securityKey": "punjab-chem-and-crop-prot-l",
+      "field": "pctAssets",
+      "derived": 2.22,
+      "printed": 2.5,
+      "delta": -0.28,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Paras Defence and Space Technologies",
+      "securityKey": "paras-defence-and-space-technologies",
+      "field": "pctAssets",
+      "derived": 1.85,
+      "printed": 2.08,
+      "delta": -0.23,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Pokarna Ltd",
+      "securityKey": "pokarna",
+      "field": "marketValue",
+      "derived": 2705841.5,
+      "printed": 2707572.5,
+      "delta": -1731,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Pokarna Ltd",
+      "securityKey": "pokarna",
+      "field": "pctAssets",
+      "derived": 2.53,
+      "printed": 2.84,
+      "delta": -0.31,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Polyplex Corporation Ltd",
+      "securityKey": "polyplex",
+      "field": "pctAssets",
+      "derived": 1.69,
+      "printed": 1.9,
+      "delta": -0.21,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Puravankara Limited",
+      "securityKey": "puravankara",
+      "field": "pctAssets",
+      "derived": 2.24,
+      "printed": 2.52,
+      "delta": -0.28,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "SG Mart Limited",
+      "securityKey": "sg-mart",
+      "field": "pctAssets",
+      "derived": 2.05,
+      "printed": 2.3,
+      "delta": -0.25,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "SHARDA MOTOR INDUSTRIES",
+      "securityKey": "sharda-motor-industries",
+      "field": "pctAssets",
+      "derived": 1.95,
+      "printed": 2.19,
+      "delta": -0.24,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Shakti Pumps India Ltd",
+      "securityKey": "shakti-pumps-india",
+      "field": "marketValue",
+      "derived": 509992,
+      "printed": 510972,
+      "delta": -980,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Shakti Pumps India Ltd",
+      "securityKey": "shakti-pumps-india",
+      "field": "pctAssets",
+      "derived": 0.48,
+      "printed": 0.54,
+      "delta": -0.06,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Shankara Building Products Ltd",
+      "securityKey": "shankara-building-products",
+      "field": "pctAssets",
+      "derived": 0.27,
+      "printed": 0.3,
+      "delta": -0.03,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Shankara Buildpro Ltd",
+      "securityKey": "shankara-buildpro",
+      "field": "pctAssets",
+      "derived": 2.76,
+      "printed": 3.11,
+      "delta": -0.35,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Sharda Cropchem Ltd",
+      "securityKey": "sharda-cropchem",
+      "field": "pctAssets",
+      "derived": 0.95,
+      "printed": 1.07,
+      "delta": -0.12,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Stove Kraft Limited",
+      "securityKey": "stove-kraft",
+      "field": "pctAssets",
+      "derived": 1.87,
+      "printed": 2.1,
+      "delta": -0.23,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Syrma SGS Technology Limited",
+      "securityKey": "syrma-sgs-technology",
+      "field": "pctAssets",
+      "derived": 2.11,
+      "printed": 2.38,
+      "delta": -0.27,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Time Technoplast Ltd",
+      "securityKey": "time-technoplast",
+      "field": "pctAssets",
+      "derived": 1.51,
+      "printed": 1.7,
+      "delta": -0.19,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "V2 Retail Ltd",
+      "securityKey": "v2-retail",
+      "field": "pctAssets",
+      "derived": 4.21,
+      "printed": 4.74,
+      "delta": -0.53,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Vaibhav Global Ltd",
+      "securityKey": "vaibhav-global",
+      "field": "marketValue",
+      "derived": 1599491.8,
+      "printed": 1608499.3,
+      "delta": -9007.5,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Vaibhav Global Ltd",
+      "securityKey": "vaibhav-global",
+      "field": "pctAssets",
+      "derived": 1.49,
+      "printed": 1.69,
+      "delta": -0.2,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Varroc Engineering Limited",
+      "securityKey": "varroc-engineering",
+      "field": "pctAssets",
+      "derived": 2.74,
+      "printed": 3.08,
+      "delta": -0.34,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Viyash Scientific Limited",
+      "securityKey": "viyash-scientific",
+      "field": "pctAssets",
+      "derived": 2.98,
+      "printed": 3.35,
+      "delta": -0.37,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Wockhardt Ltd",
+      "securityKey": "wockhardt",
+      "field": "pctAssets",
+      "derived": 1.91,
+      "printed": 2.15,
+      "delta": -0.24,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Wpil Ltd",
+      "securityKey": "wpil",
+      "field": "marketValue",
+      "derived": 1434687,
+      "printed": 1440867,
+      "delta": -6180,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Wpil Ltd",
+      "securityKey": "wpil",
+      "field": "pctAssets",
+      "derived": 1.34,
+      "printed": 1.51,
+      "delta": -0.17,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Zensar Technologies Ltd",
+      "securityKey": "zensar-technologies",
+      "field": "marketValue",
+      "derived": 1686394,
+      "printed": 1728226,
+      "delta": -41832,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Zensar Technologies Ltd",
+      "securityKey": "zensar-technologies",
+      "field": "pctAssets",
+      "derived": 1.58,
+      "printed": 1.82,
+      "delta": -0.24,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "security": "Cash",
+      "securityKey": "cash",
+      "field": "pctAssets",
+      "derived": 4.58,
+      "printed": 5.15,
+      "delta": -0.57,
+      "severity": "explained",
+      "cause": "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM.",
+      "fromPrinted": true
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
@@ -35248,6 +36666,36 @@
       "cause": null
     },
     {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "transaction settlement",
+      "row": "2026-07-23 sell SG Mart Limited",
+      "derived": 1048085.55,
+      "printed": 1048088.59,
+      "delta": -3.04,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±7.78 on 1,555 units"
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-07-31",
+      "reportType": "investor-report",
+      "check": "transaction settlement",
+      "row": "2026-07-30 buy Viyash Scientific Limited",
+      "derived": 381486.4,
+      "printed": 381482.95,
+      "delta": 3.45,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±7.55 on 1,510 units"
+    },
+    {
       "docKey": "green-lantern-capital-llp-510861-2026-06-30-investor-report",
       "provider": "Green Lantern Capital LLP",
       "accountNo": "510861",
@@ -37693,7 +39141,8 @@
           "green-lantern-capital-llp-510854-2026-07-27-fact-sheet",
           "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
           "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet"
+          "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
+          "molecule-ventures-llp-7810404-2026-07-31-fact-sheet"
         ]
       },
       {
@@ -37715,6 +39164,7 @@
         "securityKey": "cosmo-films",
         "docs": [
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -37726,6 +39176,7 @@
         "securityKey": "credit-access-grameen",
         "docs": [
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -37737,6 +39188,7 @@
         "securityKey": "krishca-strapping-solutions",
         "docs": [
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -37748,6 +39200,7 @@
         "securityKey": "punjab-chem-and-crop-prot-l",
         "docs": [
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -37762,16 +39215,11 @@
         ]
       },
       {
-        "security": "ZF Commercial Vehicle Control",
-        "securityKey": "zf-commercial-vehicle-control",
-        "docs": [
-          "green-lantern-capital-llp-510861-2026-06-30-investor-report"
-        ]
-      },
-      {
         "security": "SASKEN COMMUNICATION TECHNOLOGIES LTD.",
         "securityKey": "sasken-communication-technologies",
         "docs": [
+          "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
+          "molecule-ventures-llp-7810404-2026-07-31-holdings",
           "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
           "molecule-ventures-llp-7810404-2026-06-30-holdings"
         ]
@@ -37780,8 +39228,17 @@
         "security": "MANALI PETROCHEMICAL LTD.",
         "securityKey": "manali-petrochemical",
         "docs": [
+          "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
+          "molecule-ventures-llp-7810404-2026-07-31-holdings",
           "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
           "molecule-ventures-llp-7810404-2026-06-30-holdings"
+        ]
+      },
+      {
+        "security": "ZF Commercial Vehicle Control",
+        "securityKey": "zf-commercial-vehicle-control",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-06-30-investor-report"
         ]
       }
     ],

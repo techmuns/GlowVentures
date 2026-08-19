@@ -25,6 +25,28 @@
  "flows": null,
  "cashFlows": [
   {
+   "date": "2026-04-01",
+   "description": "Opening Balance",
+   "security": null,
+   "securityKey": null,
+   "isin": null,
+   "kind": "capital-register",
+   "memberId": null,
+   "amount": 0,
+   "units": null,
+   "settlementDate": "2026-04-01",
+   "tranAccount": null,
+   "buySellAmount": null,
+   "income": null,
+   "expenses": null,
+   "depositWithdrawal": null,
+   "credit": 0,
+   "debit": 0,
+   "notes": null,
+   "balance": 174981975,
+   "source": "goldstandard-wealth-private-limited-100023-2026-08-11-capital-register"
+  },
+  {
    "date": "2026-06-05",
    "description": "TDS Trf to Capital A/c",
    "security": null,

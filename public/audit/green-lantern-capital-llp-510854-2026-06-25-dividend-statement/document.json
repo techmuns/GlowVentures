@@ -28,6 +28,22 @@
  "capitalGains": [],
  "income": [
   {
+   "security": "Bajaj Auto Ltd",
+   "securityKey": "bajaj-auto",
+   "isin": null,
+   "kind": "dividend",
+   "exDate": "2026-05-29",
+   "receivedDate": null,
+   "quantity": 119,
+   "ratePerUnit": 150,
+   "receivable": 17850,
+   "received": 0,
+   "tds": 0,
+   "netAmount": 17850,
+   "entitlement": null,
+   "source": "green-lantern-capital-llp-510854-2026-06-25-dividend-statement"
+  },
+  {
    "security": "KSB Ltd",
    "securityKey": "ksb",
    "isin": null,

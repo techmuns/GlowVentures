@@ -57,10 +57,24 @@ export const REPORT_TITLES = [
   [/CURRENT\s+PORTFOLIO/i, "holdings"],
   [/PORTFOLIO\s+APPRAISAL/i, "appraisal"],
   [/TRANSACTION\s+STATEMENT/i, "transaction-statement"],
+  // THIS REPORTING SYSTEM PRINTS BOTH WORD ORDERS, and only one of each pair
+  // was here. `STATEMENT OF CAPITAL GAIN` already needed its own entry above;
+  // `STATEMENT OF DIVIDEND` and `STATEMENT OF EXPENSES` are the same inversion
+  // and were missing, so a page carrying one announced no title and joined the
+  // report BEFORE it as a continuation page.
+  //
+  // Every such document in the drop until now arrived STANDALONE, where
+  // `classify.mjs` types the whole file and this table never runs — which is
+  // why it went unnoticed. The first bundle to carry one was Molecule's July
+  // statement: its two STATEMENT OF DIVIDEND pages were absorbed into CURRENT
+  // PORTFOLIO, so the account's dividend rows reached no reader and the
+  // holdings document was four pages of two different reports.
   [/DIVIDEND\s+STATEMENT/i, "dividend-statement"],
+  [/STATEMENT\s+OF\s+DIVIDEND/i, "dividend-statement"],
   [/CAPITAL\s+REGISTER/i, "capital-register"],
   [/CORPORATE\s+BENEFITS/i, "corporate-benefits"],
   [/EXPENSE\s+STATEMENT/i, "expense-statement"],
+  [/STATEMENT\s+OF\s+EXPENSES/i, "expense-statement"],
   [/BANK\s+BOOK/i, "bank-book"],
   // The fact sheet titles itself by its two tables rather than by a banner.
   [/Portfolio\s+Holdings/i, "fact-sheet"],

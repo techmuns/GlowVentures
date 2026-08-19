@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-12T15:24:59.136Z",
+  "generatedAt": "2026-08-19T09:30:20.410Z",
   "sourceDir": "source",
   "counts": {
-    "files": 180,
-    "pdfs": 178,
+    "files": 182,
+    "pdfs": 180,
     "nonPdf": 2,
-    "classified": 169,
+    "classified": 171,
     "unclassified": 11,
     "encrypted": 11,
     "fromArchives": 157,
     "archivesExpanded": 18,
-    "pages": 518
+    "pages": 529
   },
   "reportTypes": [
     "holdings",
@@ -3743,6 +3743,50 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/august-2026-b/MOLECULE - AJAY.pdf",
+      "fileName": "MOLECULE - AJAY.pdf",
+      "bytes": 190465,
+      "size": "186.0 KB",
+      "pages": 6,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "7810404",
+      "asOfDate": "2026-07-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard signature + content keywords"
+    },
+    {
+      "path": "source/august-2026-b/SVAN - BHARAT.pdf",
+      "fileName": "SVAN - BHARAT.pdf",
+      "bytes": 108436,
+      "size": "105.9 KB",
+      "pages": 5,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "SVAN Investment Managers LLP",
+      "ownerName": null,
+      "accountNo": "8710090",
+      "asOfDate": "2026-07-31",
+      "reportType": "investor-report",
+      "sections": [
+        "investor-report"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
       "fileName": "ANKITA JAISINGHANI - Active Momentum Fund.pdf",
       "bytes": 175910,
@@ -5836,6 +5880,22 @@
           "owner": null,
           "strategy": null,
           "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "investor-report": [
+                  {
+                    "path": "source/august-2026-b/SVAN - BHARAT.pdf",
+                    "pages": 5,
+                    "size": "105.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "investor-report"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
             "2026-06-30": {
               "reportTypes": {
                 "investor-report": [
@@ -5869,10 +5929,10 @@
               "fileCount": 1
             }
           },
-          "fileCount": 2
+          "fileCount": 3
         }
       },
-      "fileCount": 5
+      "fileCount": 6
     },
     "Sanshi Fund": {
       "accounts": {
@@ -6351,6 +6411,50 @@
       },
       "fileCount": 2
     },
+    "Molecule Ventures LLP": {
+      "accounts": {
+        "7810404": {
+          "owner": "AJAY JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/august-2026-b/MOLECULE - AJAY.pdf",
+                    "pages": 6,
+                    "size": "186.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/Molecule_June_2026_392.pdf",
+                    "pages": 8,
+                    "size": "221.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 2
+    },
     "Motilal Oswal Active Momentum Fund": {
       "accounts": {
         "Transaction": {
@@ -6472,34 +6576,6 @@
         }
       },
       "fileCount": 3
-    },
-    "Molecule Ventures LLP": {
-      "accounts": {
-        "7810404": {
-          "owner": "AJAY JAISINGHANI",
-          "strategy": null,
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "transaction-statement": [
-                  {
-                    "path": "source/Molecule_June_2026_392.pdf",
-                    "pages": 8,
-                    "size": "221.4 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "transaction-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 1
     },
     "Transition Venture Capital": {
       "accounts": {

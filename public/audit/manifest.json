@@ -62,7 +62,7 @@
    {
     "key": "capitalRegister",
     "name": "capital-register",
-    "rows": 9,
+    "rows": 10,
     "cols": 11
    },
    {
@@ -862,7 +862,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 9,
+    "rows": 10,
     "cols": 10
    },
    {
@@ -1188,7 +1188,7 @@
    {
     "key": "capitalRegister",
     "name": "capital-register",
-    "rows": 17,
+    "rows": 18,
     "cols": 11
    },
    {
@@ -1588,7 +1588,7 @@
    {
     "key": "capitalRegister",
     "name": "capital-register",
-    "rows": 15,
+    "rows": 16,
     "cols": 11
    },
    {
@@ -2055,7 +2055,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 26,
+    "rows": 27,
     "cols": 10
    },
    {
@@ -2418,7 +2418,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 26,
+    "rows": 27,
     "cols": 10
    },
    {
@@ -3246,7 +3246,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 9,
+    "rows": 10,
     "cols": 10
    },
    {
@@ -3609,7 +3609,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 10,
+    "rows": 11,
     "cols": 10
    },
    {
@@ -3972,7 +3972,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 10,
+    "rows": 11,
     "cols": 10
    },
    {
@@ -5353,7 +5353,7 @@
    {
     "key": "dividends",
     "name": "dividends",
-    "rows": 7,
+    "rows": 8,
     "cols": 10
    },
    {
@@ -5943,6 +5943,212 @@
   ]
  },
  {
+  "docKey": "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GROWTH",
+  "asOf": "2026-07-31",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
+  "label": "Molecule Ventures LLP · 7810404 · fact-sheet",
+  "fy": "2026-07-31",
+  "source": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 19,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "pages": 2,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+  "label": "Molecule Ventures LLP · 7810404 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 28,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-07-31-dividend-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-07-31-dividend-statement",
+  "label": "Molecule Ventures LLP · 7810404 · dividend-statement",
+  "fy": "2026-07-31",
+  "source": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 9,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-07-31-expense-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "expense-statement",
+  "sourcePath": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "pages": 1,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "molecule-ventures-llp-7810404-2026-07-31-expense-statement",
+  "label": "Molecule Ventures LLP · 7810404 · expense-statement",
+  "fy": "2026-07-31",
+  "source": "source/august-2026-b/MOLECULE - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expense-summary",
+    "rows": 4,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": "SVAN INVESTMENT MANAGERS LLP - VELOCITY",
+  "asOf": "2026-07-31",
+  "reportType": "investor-report",
+  "sourcePath": "source/august-2026-b/SVAN - BHARAT.pdf",
+  "pages": 5,
+  "sections": [
+   "holdings",
+   "transactions",
+   "capital",
+   "allocation",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 1,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+  "label": "SVAN Investment Managers LLP · 8710090 · investor-report",
+  "fy": "2026-07-31",
+  "source": "source/august-2026-b/SVAN - BHARAT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 46,
+    "cols": 9
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 7
+   },
+   {
+    "key": "capital",
+    "name": "capital",
+    "rows": 31,
+    "cols": 3
+   },
+   {
+    "key": "allocation",
+    "name": "allocation",
+    "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
   "provider": "Motilal Oswal Active Momentum Fund",
   "accountNo": "904168868444",
@@ -6435,7 +6641,7 @@
    {
     "key": "expenses",
     "name": "expense-summary",
-    "rows": 4,
+    "rows": 5,
     "cols": 4
    },
    {

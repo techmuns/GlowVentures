@@ -288,6 +288,16 @@ function headerScore(row, fieldAliases) {
  * @returns {{ headerIndex:number, endIndex:number, columns:Record<string,number>,
  *             missing:string[], headerText:string, grid:object, stitches:Array }|null}
  */
+/**
+ * Does this row carry FIGURES — i.e. is it data rather than a wrapped label?
+ *
+ * True when any cell parses as a number. See the note in `findTable`: this is
+ * what stops a header span from extending over the first data row.
+ */
+function isFiguresRow(row) {
+  return rowText(row).some((t) => parseNumInfo(t).value !== null);
+}
+
 export function findTable(pageGrid, fieldAliases, opts = {}) {
   const fields = Object.keys(fieldAliases);
   const minFields = opts.minFields ?? Math.min(3, fields.length);
@@ -366,6 +376,34 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
           mapped,
           headerIndex: i,
           headerRows,
+          // WHERE THE BODY STARTS, WHICH IS NOT ALWAYS AFTER THE HEADER SPAN.
+          //
+          // A span that reaches over the first DATA row scores BETTER than the
+          // right one: that row's cells sit squarely in their columns, so it
+          // sharpens the geometry `splitAtHeaderLabels` measures and one more
+          // label maps. Molecule's July dividend statement is where this first
+          // bit — headerRows grew to 3, ate the Indian Metals row, and the
+          // account's dividend read 10,201 against its own printed 21,451. It
+          // was silently costing rows on statements already in the book:
+          // Carnelian's Biocon dividend, 62,750, had never been read.
+          //
+          // Refusing the longer span is the wrong fix and was tried: it loses
+          // the column the extra row was helping to place (Carnelian's `rate`
+          // went unmapped, so every ratePerUnit on that statement went null).
+          // The span is a MEASUREMENT and the header is a set of LABELS, and
+          // only the second decides where data begins. So the geometry keeps
+          // the full span and the body starts at the first line carrying
+          // figures.
+          //
+          // "Carries figures" is exact rather than heuristic here: every real
+          // wrapped label in this corpus — "Amount", "(M)", "Quantity (S)",
+          // "Rate (P)", "Held", "Gain-LT" — parses as no number, and so does
+          // the capital gain header's `31-Jan-18`, a DATE inside the "Price on
+          // 31-Jan-18" label that a no-dates rule would have thrown away.
+          bodyFrom: (() => {
+            const k = headerSlice.findIndex(isFiguresRow);
+            return k < 0 ? headerRows : k;
+          })(),
           endIndex: end,
           columns,
           missing: fields.filter((f) => !(f in columns)),
@@ -396,7 +434,10 @@ export function readRows(pageGrid, table, opts = {}) {
   const rows = table.grid.rows;
 
   // Skip every header line, not just the first — a wrapped header occupies two.
-  for (let i = table.headerRows ?? 1; i < rows.length && out.length < maxRows; i++) {
+  // `bodyFrom` is where the DATA starts, which is earlier than the end of the
+  // header span whenever that span reached over a data row to measure columns.
+  // See the note on it in `findTable`.
+  for (let i = table.bodyFrom ?? table.headerRows ?? 1; i < rows.length && out.length < maxRows; i++) {
     const row = rows[i];
     const joined = rowText(row).join(" ");
     if (stopRe && stopRe.test(joined)) { terminator = joined; break; }

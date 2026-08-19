@@ -189,11 +189,13 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** TWO DROPS, and both stay: the original
-set at the top of `source/`, and the client's `august-2026/` folder. Eighteen
-issuers, 22 accounts in the book, six holders, 41 files expanding to 180 — of
-which **182 documents** are extracted and 162 read fully, 18 partially and **2
-not at all**. What does not read is named below; nothing is silently dropped.
+**What is actually in `source/` today.** THREE DELIVERIES, and every one stays:
+the original set at the top of `source/`, the client's `august-2026/` folder, and
+`august-2026-b/` — two statements that arrived after it. Twenty-one issuers, 30
+accounts in the book, six holders and two family trusts, 43 files expanding to
+182 — of which **187 documents** are extracted and 166 read fully, 19 partially
+and **2 not at all**. What does not read is named below; nothing is silently
+dropped, and `source/README.md` carries the rule for adding the next delivery.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
 `LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
@@ -205,32 +207,47 @@ only by the July issue would have gone with the folder. The extraction path now
 mirrors the archive's own path under `source/`, which is byte-identical for
 every ZIP already at the top level.
 
-| Provider | Accounts | Owner | As of | Market value |
+| Provider | Account | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
-| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹976.8 Cr |
-| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | **2026-08-10** | ₹395.3 Cr |
-| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹294.2 Cr |
-| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹293.5 Cr |
-| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹284.6 Cr |
-| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹195.7 Cr |
-| Goldstandard Wealth | 100023 | Ajay Jaisinghani | **2026-08-11** | ₹188.0 Cr |
-| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | **2026-07-31** | ₹164.5 Cr |
-| Green Lantern Capital | 510861 | Ajay Jaisinghani | **2026-07-27** | ₹114.5 Cr |
-| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-06-30 | ₹103.8 Cr |
-| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-07-06 | ₹92.4 Cr |
-| Goldstandard Wealth | 100022 | Ankita Jaisinghani | **2026-08-11** | ₹80.2 Cr |
-| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-07-06 | ₹65.5 Cr |
-| Green Lantern Capital | 510854 | Ankita Jaisinghani | **2026-07-27** | ₹58.0 Cr |
-| Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹17.1 Cr each |
-| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-07-31 / 06-30 | ₹14.7 / ₹14.6 Cr* |
-| Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-06-30 | ₹11.2 Cr |
-| LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹9.9 Cr |
+| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
+| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
+| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
+| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
+| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
+| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
+| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
+| Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-07-31 | ₹21.83 Cr |
+| Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
+| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
+| Goldstandard Wealth | 100023 | Ajay Jaisinghani | 2026-08-11 | ₹18.80 Cr |
+| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
+| Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
+| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | **2026-07-31** | **₹10.70 Cr** |
+| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-07-06 | ₹9.24 Cr |
+| Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
+| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-07-06 | ₹6.55 Cr |
+| Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
+| Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹1.71 Cr each* |
+| 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-07-31 / 06-30 | ₹1.47 / ₹1.46 Cr |
+| Molecule Ventures | 7810404 | Ajay Jaisinghani | **2026-07-31** | **₹1.16 Cr** |
+| LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
+| 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (reclassified to nil units) |
 | 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only) |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (redeemed) |
+| India SME Investments | 175962 / 175964 / 177302 | Ajay / Bharat / Ankita | 2026-06-30 | — (no NAV published) |
+
+**THIS COLUMN WAS TEN TIMES THE BOOK.** Every row read ₹976.8 Cr, ₹103.8 Cr,
+₹11.2 Cr — while the consolidated figure below it, which is generated, was
+right. The rows summed to ten times their own stated total, which is the
+contradiction the footer rule already names: a reader who adds up the printed
+cells and gets a different answer has found one, and no prose rescues it. The
+column is regenerated from `BOOK_POSITIONS` now, and eight accounts that had
+never been listed at all — Buoyant, Helios, both Motilal Oswal funds, 3P and the
+three India SME folios — are in it.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹461.00 Cr**: listed ₹180.76 Cr, private ₹280.24 Cr. The split is
+**Consolidated ₹461.36 Cr**: listed ₹181.12 Cr, private ₹280.24 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -404,6 +421,113 @@ INDIA TRUST folios: not summed, reason printed, and back the moment the
 password lets its statements be read. Its market value is nil either way — it
 is an income-only folio — so the consolidated total is unaffected; what is
 missing is ₹7.38 L of AIF income split by tax head, and its attribution.
+
+### The `august-2026-b` delivery — five files, two of them new
+
+Five files arrived after the August drop. **Three were byte-identical to
+statements already in `source/august-2026/`** — Goldstandard Ajay, LKP 2 and
+India SME Bharat, matched on md5 — and were not copied in a second time.
+`extract.mjs` does detect byte-identical duplicates and reads each once, so a
+copy would have been safe; it would just have been noise in a provenance record.
+The other two advance an account each:
+
+| File | Account | As of was | now | Value |
+| --- | --- | --- | --- | ---: |
+| `SVAN - BHARAT.pdf` | SVAN 8710090 | 2026-06-30 | 2026-07-31 | ₹10.38 → ₹10.70 Cr |
+| `MOLECULE - AJAY.pdf` | Molecule 7810404 | 2026-06-30 | 2026-07-31 | ₹1.12 → ₹1.16 Cr |
+
+Both accounts' earlier issues are superseded for SNAPSHOT facts and their DATED
+rows still counted — `BOOK_CAPITAL_GAINS`, `BOOK_CORPORATE_ACTIONS`,
+`BOOK_REALISED_BY_CLASS`, `BOOK_COMMITMENTS` and every cash-flow series are
+BYTE-IDENTICAL across the rebuild. That is the supersede rule working, verified
+rather than assumed.
+
+**A CONTROL RUN IS WHAT MAKES THAT VERIFIABLE.** Before the new files went in,
+the pipeline was run over the unchanged `source/` and `public/audit/`
+regenerated byte-identically — so every difference afterwards belongs to the two
+new statements and to nothing else. Without that the diff is 53 files and no way
+to tell a fix from a regression.
+
+### Two engine defects the Molecule statement exposed
+
+Neither is about Molecule. Both had been silently costing rows on statements
+already in the book, and a new bundle is simply what made them visible.
+
+**A REPORT TITLE PRINTS IN BOTH WORD ORDERS.** `lib/bundle.mjs` matched
+`DIVIDEND STATEMENT` and `EXPENSE STATEMENT`; this reporting system also prints
+**`STATEMENT OF DIVIDEND`** and **`STATEMENT OF EXPENSES`**, which is why
+`STATEMENT OF CAPITAL GAIN` already needed its own entry. A page whose title
+does not match announces nothing and joins the report BEFORE it, so Molecule's
+two dividend pages were absorbed into CURRENT PORTFOLIO: the holdings document
+was four pages of two different reports and the account's dividends reached no
+reader. Every earlier document carrying those titles arrived STANDALONE, where
+`classify.mjs` types the whole file and the splitter never runs — which is
+exactly why it went unnoticed until the first bundle carried one.
+
+**A HEADER SPAN WAS SWALLOWING THE FIRST DATA ROW.** `findTable` tries header
+spans of one, two and three lines and keeps whichever maps the most columns.
+A DATA row helps that score — its cells sit squarely in their columns, so the
+geometry sharpens and one more label maps — so the longer span wins and its data
+is read as header. Refusing the longer span is the wrong fix and was tried: it
+loses the column the extra row was helping to place (Carnelian's `rate` went
+unmapped and every `ratePerUnit` on that statement went null).
+
+The span is a MEASUREMENT; the header is a set of LABELS; only the second says
+where data begins. So the geometry keeps the full span and `bodyFrom` starts the
+body at the first line carrying FIGURES. "Carries figures" is exact rather than
+heuristic: every real wrapped label here — `Amount`, `(M)`, `Quantity (S)`,
+`Rate (P)`, `Held`, `Gain-LT` — parses as no number, **and so does the capital
+gain header's `31-Jan-18`**, a date inside the "Price on 31-Jan-18" label that a
+no-dates rule would have thrown away.
+
+It was worth **₹1,27,240.50 of dividend income the book had never carried** —
+one row per statement, always the first:
+
+| Account | Recovered | Row |
+| --- | ---: | --- |
+| Carnelian 3517383 | ₹62,750 | Biocon Ltd |
+| V.E.C Assago 128004 | ₹25,189.50 | Navneet Education Ltd |
+| Green Lantern 510854 | ₹17,850 | Bajaj Auto Ltd |
+| Molecule 7810404 | ₹21,451 | the new statement's three rows |
+
+plus three Goldstandard capital registers' `Opening Balance` rows and one
+Molecule expense row. **Every affected dividend statement now ties to its own
+printed grand total to the rupee**, which is the check that says the recovery is
+complete rather than merely larger.
+
+### A FOURTH BASIS: CURRENT PORTFOLIO FOLDS IN THE OUTSTANDING DIVIDEND
+
+The nine material deltas the new statement raised were not extraction errors.
+CURRENT PORTFOLIO's Market Value column folds in the dividend that has gone EX
+and has not yet been RECEIVED:
+
+```
+INDIAN METALS    1,500 x 1,448.60 = 2,172,900.00  + 11,250 = 2,184,150  printed 2,184,150
+KIRLOSKAR        2,967 x   475.65 = 1,411,253.55  +  8,901 = 1,420,154.55  printed 1,420,155
+SASKEN             100 x 1,811.80 =   181,180.00  +  1,300 =   182,480  printed   182,480
+```
+
+and the account's printed total sits exactly 21,451 above the sum of the derived
+rows — the figure its own DIVIDEND SUMMARY prints as "Outstanding Dividend".
+
+**IT IS NOT THE INCOME COLUMN.** That column is year-to-date (Indian Metals
+48,750 against 11,250 outstanding), which is why `explainedByAccrual` — the same
+shape, reading `accruedIncome` — explained the one row where the two coincide
+and left the rest material. `outstandingBySecurity` reads the SAME account's
+dividend statement instead, and only a report the splitter actually produced —
+which is why the title fix above had to land first.
+
+Kirloskar's 0.45 residual is the printed price's own last digit, so the bound is
+`quantity x 0.005`, the statement's printing precision reproduced — not a
+tolerance widened until it fits. The percentage column is explained the same
+way, by reproducing `printed market value / printed total` and requiring EXACT
+equality at the two places the statement prints. Both are scoped to
+`reportType === "holdings"`: the appraisal's market value is price x quantity
+exactly and must keep failing loudly if it ever stops being.
+
+Material deltas are back to the baseline's one — a pre-existing ₹1.27 settlement
+difference on Carnelian's August transaction statement, which this delivery
+neither caused nor fixed.
 
 ### A THIRD %-BASIS, DECLARED BY THE STATEMENT AND WORTH 46 MATERIAL DELTAS
 
@@ -765,10 +889,19 @@ product:
   named. Also does not block, because it is understood rather than merely small.
 - `material` — anything else. Reported per row, and it blocks the golden test.
 
-**As of this calibration there are zero material deltas anywhere**: 119 row-sum
-checks, 250 derived-vs-printed, 1,112 dated-table row checks, 5 cross-report.
-Every delta that is not `ok` is `explained` or `rounding`, and every `explained`
-one names a basis difference reproduced exactly — never a widened tolerance.
+**As of this calibration exactly ONE material delta stands**, and it is named:
+₹1.27 on a settlement row of Carnelian's 2026-08-10 transaction statement. The
+run is 194 row-sum checks, 579 derived-vs-printed, 1,692 dated-table row checks
+and 9 cross-report. Every other delta that is not `ok` is `explained` or
+`rounding`, and every `explained` one names a basis difference reproduced
+exactly — never a widened tolerance.
+
+This paragraph read "zero material deltas anywhere" with counts of 119 / 250 /
+1,112 / 5 for several drops after both had stopped being true. **A figure copied
+into prose does not regenerate**, which is the same reason `docs/BOOK-REPORT.md`
+counts the ST/LT split rather than asserting it: the numbers above come from
+`docs/extraction-report.json`'s own summary and should be re-read from it, not
+edited to taste.
 
 Check (c) exists for a real case, and this drop contains it: 360 ONE Special
 Opportunities Fund Series 8 Class A3 appears with byte-identical figures under

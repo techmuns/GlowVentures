@@ -1,5 +1,5 @@
 {
- "docKey": "molecule-ventures-llp-7810404-2026-06-30-expense-statement",
+ "docKey": "molecule-ventures-llp-7810404-2026-07-31-expense-statement",
  "provider": "Molecule Ventures LLP",
  "accountNo": "7810404",
  "ownerSource": "printed",
@@ -12,16 +12,16 @@
  "engagement": "PMS",
  "providerEngagement": "Portfolio Management Service",
  "members": [],
- "asOf": "2026-06-30",
+ "asOf": "2026-07-31",
  "inceptionDate": null,
  "reportType": "expense-statement",
- "sourcePath": "source/Molecule_June_2026_392.pdf",
+ "sourcePath": "source/august-2026-b/MOLECULE - AJAY.pdf",
  "pages": 1,
  "status": "ok",
  "warnings": [
   {
    "code": "from-bundle",
-   "detail": "pages 8–8 of 8 in Molecule_June_2026_392.pdf, which carries 5 reports"
+   "detail": "pages 6–6 of 6 in MOLECULE - AJAY.pdf, which carries 4 reports"
   }
  ],
  "holdings": [],
@@ -37,40 +37,30 @@
    "date": null,
    "settlementDate": null,
    "detail": "Custody Fees",
-   "notes": "2026-06-01 to 2026-06-30",
-   "amount": 358.37,
-   "paid": 358.37,
+   "notes": "2026-07-01 to 2026-07-31",
+   "amount": 347.71,
+   "paid": 347.71,
    "payable": 0,
-   "source": "molecule-ventures-llp-7810404-2026-06-30-expense-statement"
+   "source": "molecule-ventures-llp-7810404-2026-07-31-expense-statement"
   },
   {
    "date": null,
    "settlementDate": null,
    "detail": "Fund Accounting Fees",
-   "notes": "2026-06-01 to 2026-06-30",
-   "amount": 345.01,
-   "paid": 345.01,
+   "notes": "2026-07-01 to 2026-07-31",
+   "amount": 332.1,
+   "paid": 332.1,
    "payable": 0,
-   "source": "molecule-ventures-llp-7810404-2026-06-30-expense-statement"
-  },
-  {
-   "date": null,
-   "settlementDate": null,
-   "detail": "Sec. Tran. Tax",
-   "notes": "2026-06-01 to 2026-06-30",
-   "amount": 608.9,
-   "paid": 608.9,
-   "payable": 0,
-   "source": "molecule-ventures-llp-7810404-2026-06-30-expense-statement"
+   "source": "molecule-ventures-llp-7810404-2026-07-31-expense-statement"
   }
  ],
- "periodFrom": "2026-06-01",
- "periodTo": "2026-06-30",
+ "periodFrom": "2026-07-01",
+ "periodTo": "2026-07-31",
  "pan": null,
  "sourcePages": {
-  "from": 8,
-  "to": 8,
-  "of": 8
+  "from": 6,
+  "to": 6,
+  "of": 6
  },
  "accrual": null,
  "sectionsWithoutRows": [],

@@ -42,7 +42,55 @@ function sumField(holdings, field) {
 
 const isCash = (h) => h.assetClass === "Cash";
 
-function rowSumChecks(doc) {
+/**
+ * OUTSTANDING dividend per security for one account, from its OWN statement.
+ *
+ * A fourth basis, and the one CURRENT PORTFOLIO runs on. `deriveHolding`
+ * computes market value as price x quantity; this report's Market Value column
+ * folds in the dividend that has gone EX but has not yet been RECEIVED. On
+ * Molecule's 31 July statement that is three rows — Indian Metals 11,250,
+ * Kirloskar 8,901, Sasken 1,300 — and the account's printed total sits exactly
+ * 21,451 above the sum of the derived rows, which is the figure its own
+ * DIVIDEND SUMMARY prints as "Outstanding Dividend".
+ *
+ * It is NOT the Income column. That column carries the year to date (Indian
+ * Metals 48,750 against 11,250 outstanding), which is why `explainedByAccrual`
+ * — the same shape, reading `accruedIncome` — explains the one row where the
+ * two happen to coincide and leaves the rest material.
+ *
+ * Read from the SAME account's dividend statement, matched on provider, account
+ * and as-of, and only from a report the pipeline actually split out. The
+ * outstanding figure is `receivable - received` per row: a dividend already
+ * paid is in the bank, not in the mark.
+ */
+function outstandingBySecurity(doc, docs) {
+  const m = new Map();
+  for (const d of docs) {
+    if (d.reportType !== "dividend-statement") continue;
+    if (d.provider !== doc.provider || d.accountNo !== doc.accountNo || d.asOf !== doc.asOf) continue;
+    for (const e of d.income ?? []) {
+      if (!e.securityKey) continue;
+      const out = (isNum(e.receivable) ? e.receivable : 0) - (isNum(e.received) ? e.received : 0);
+      if (out === 0) continue;
+      m.set(e.securityKey, round2((m.get(e.securityKey) ?? 0) + out));
+    }
+  }
+  return m;
+}
+
+/**
+ * The precision of `price x quantity` when the price is printed to two places.
+ *
+ * Kirloskar's 2,967 shares at a printed 475.65 derive 1,411,253.55 against a
+ * printed 1,420,155 less 8,901 outstanding = 1,411,254 — a 0.45 residual that
+ * is the price's own last digit, not a second basis. Bounding by the share
+ * count rather than by a flat rupee keeps that honest: it is the statement's
+ * printing precision, reproduced, not a tolerance widened until it fits.
+ */
+const pricePrecision = (h) => Math.max(MONEY_TOLERANCE, Math.abs(isNum(h.quantity) ? h.quantity : 0) * 0.005);
+
+
+function rowSumChecks(doc, docs = []) {
   const out = [];
   if (!doc.totals || !doc.holdings.length) return out;
   const equity = doc.holdings.filter((h) => !isCash(h));
@@ -57,6 +105,16 @@ function rowSumChecks(doc) {
    * is more useful than flagging six identical unexplained mismatches.
    */
   const accrued = round2(all.reduce((t, h) => t + (isNum(h.accruedIncome) ? h.accruedIncome : 0), 0));
+  /**
+   * ...and CURRENT PORTFOLIO runs on a DIFFERENT one: the outstanding dividend,
+   * not the Income column. See `outstandingBySecurity`. Scoped to that report
+   * type because that is where the behaviour was measured; the appraisal's own
+   * market value is price x quantity exactly and must keep failing loudly if it
+   * ever stops being.
+   */
+  const outstanding = doc.reportType === "holdings"
+    ? round2([...outstandingBySecurity(doc, docs).values()].reduce((t, v) => t + v, 0))
+    : 0;
 
   /**
    * A SECTION THE REPORT SUBTOTALLED WITHOUT PRINTING ITS ROWS.
@@ -81,6 +139,7 @@ function rowSumChecks(doc) {
     const delta = round2(sum.value - printed);
     const explainedByIncome = incomeInclusive && accrued > 0 && Math.abs(delta + accrued) <= 1;
     const explainedByMissing = missingValue > 0 && Math.abs(delta + missingValue) <= 1;
+    const explainedByOutstanding = outstanding > 0 && Math.abs(delta + outstanding) <= 1;
     out.push({
       docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
       asOf: doc.asOf, reportType: doc.reportType,
@@ -89,14 +148,17 @@ function rowSumChecks(doc) {
       rowsSummed: sum.rows, rowsMissingField: sum.missing,
       matches: Math.abs(delta) <= tolerance,
       severity: Math.abs(delta) <= tolerance ? "ok"
-        : explainedByIncome || explainedByMissing ? "explained"
+        : explainedByIncome || explainedByMissing || explainedByOutstanding ? "explained"
         : Math.abs(delta) <= 1 ? "rounding" : "material",
       cause: explainedByIncome
         ? `printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (${accrued.toLocaleString("en-IN")}).`
+        : explainedByOutstanding
+        ? `printed market value folds in the dividend gone ex but not yet received; the derived column is price x quantity. Delta equals the outstanding dividend on this account's own dividend statement (${outstanding.toLocaleString("en-IN")}).`
         : explainedByMissing
           ? `this report subtotals ${missingNames} without printing the per-security rows. Delta equals the declared subtotal (${missingValue.toLocaleString("en-IN")}); those holdings come from another report for this account.`
           : null,
       accruedIncome: accrued || null,
+      outstandingDividend: outstanding || null,
     });
   };
 
@@ -201,6 +263,35 @@ function explainedByAccrual(h) {
 }
 
 /**
+ * Does this row's printed MARKET VALUE fold in its OUTSTANDING dividend?
+ *
+ * The CURRENT PORTFOLIO basis. Same shape as `explainedByAccrual` and a
+ * different figure: the accrual column is year-to-date, this is only what has
+ * gone ex and not been received. Bounded by the printed price's own precision
+ * (see `pricePrecision`) rather than a flat rupee, because the derived side is
+ * quantity x a two-decimal price.
+ */
+function explainedByOutstandingDividend(h, outstanding) {
+  if (!outstanding || !isNum(h.marketValue) || !isNum(h.printed?.marketValue)) return false;
+  return Math.abs(round2(h.marketValue + outstanding) - h.printed.marketValue) <= pricePrecision(h);
+}
+
+/**
+ * Does this row's printed %Assets equal its own printed value over its own
+ * printed total?
+ *
+ * When it does, the whole delta is our derived basis (price x quantity, over a
+ * derived denominator) meeting the statement's (printed over printed) — nothing
+ * else. Checked for EXACT equality at the two places the statement prints, so a
+ * row whose percentage does not follow its own arithmetic stays material.
+ */
+function explainedByPrintedBasis(h, printedTotal) {
+  if (!isNum(printedTotal) || printedTotal === 0) return false;
+  if (!isNum(h.printed?.marketValue) || !isNum(h.printed?.pctAssets)) return false;
+  return round2((h.printed.marketValue / printedTotal) * 100) === round2(h.printed.pctAssets);
+}
+
+/**
  * Does this row's printed %AUM follow the statement's OWN declared denominator?
  *
  * A third basis, and the SEBI investor report declares it out loud. SVAN's
@@ -252,8 +343,10 @@ function explainedByAumBasis(h, doc) {
  * derived value is what the book uses; the printed one is evidence, and the
  * delta is reported rather than resolved.
  */
-function derivedVsPrinted(doc) {
+function derivedVsPrinted(doc, docs = []) {
   const out = [];
+  // Empty for every report type but CURRENT PORTFOLIO — see `outstandingBySecurity`.
+  const outstanding = doc.reportType === "holdings" ? outstandingBySecurity(doc, docs) : new Map();
   for (const h of doc.holdings) {
     for (const field of DERIVED_FIELDS) {
       const derived = h[field];
@@ -264,18 +357,32 @@ function derivedVsPrinted(doc) {
       const pctBasis = field === "pctAssets" && explainedByIncomeBasis(h, doc.totals?.totalMarketValue);
       const aumBasis = field === "pctAssets" && !pctBasis && explainedByAumBasis(h, doc);
       const mvBasis = field === "marketValue" && explainedByAccrual(h);
+      // The CURRENT PORTFOLIO pair, both reproduced per row rather than
+      // tolerated: the market value folds in this row's OUTSTANDING dividend,
+      // and the percentage is the statement's own printed value over its own
+      // printed total. `pctPrinted` is checked for EXACT equality at the two
+      // places the statement prints, so it fires only where that arithmetic is
+      // internally consistent — never as a catch-all.
+      const divBasis = field === "marketValue" && !mvBasis
+        && explainedByOutstandingDividend(h, outstanding.get(h.securityKey) ?? 0);
+      const pctPrinted = field === "pctAssets" && !pctBasis && !aumBasis && outstanding.size > 0
+        && explainedByPrintedBasis(h, doc.totals?.totalMarketValue);
       out.push({
         docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
         asOf: doc.asOf, reportType: doc.reportType,
         security: h.security, securityKey: h.securityKey,
         field, derived, printed, delta,
-        severity: pctBasis || aumBasis || mvBasis ? "explained" : classifyDelta(field, delta),
+        severity: pctBasis || aumBasis || mvBasis || divBasis || pctPrinted ? "explained" : classifyDelta(field, delta),
         cause: pctBasis
           ? "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly."
           : aumBasis
             ? "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM."
           : mvBasis
             ? "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa."
+          : divBasis
+            ? "printed market value folds in this row's OUTSTANDING dividend — gone ex, not yet received — which its own dividend statement prints. Adding it back reproduces the printed figure to within the printed price's own last digit."
+          : pctPrinted
+            ? "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints."
             : null,
         // A value copied from the statement cannot disagree with itself; if this
         // is ever true alongside a delta, the copy path is broken.
@@ -709,8 +816,8 @@ function unresolved(docs, symbolMap) {
 
 export function reconcile(docs, opts = {}) {
   const symbolMap = opts.symbolMap ?? {};
-  const rowSums = docs.flatMap(rowSumChecks);
-  const derived = docs.flatMap(derivedVsPrinted);
+  const rowSums = docs.flatMap((d) => rowSumChecks(d, docs));
+  const derived = docs.flatMap((d) => derivedVsPrinted(d, docs));
   const deltas = crossReportDeltas(docs);
   const duplicates = duplicateHoldings(docs);
   // Tag the matching rows before any consolidated figure is computed.

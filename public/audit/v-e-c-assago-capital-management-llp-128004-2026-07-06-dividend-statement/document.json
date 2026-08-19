@@ -28,6 +28,22 @@
  "capitalGains": [],
  "income": [
   {
+   "security": "Navneet Education Ltd",
+   "securityKey": "navneet-education",
+   "isin": null,
+   "kind": "dividend",
+   "exDate": "2026-06-03",
+   "receivedDate": "2026-06-15",
+   "quantity": 16793,
+   "ratePerUnit": 1.5,
+   "receivable": 25189.5,
+   "received": 25189.5,
+   "tds": 0,
+   "netAmount": 25189.5,
+   "entitlement": null,
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-dividend-statement"
+  },
+  {
    "security": "Nuvama Wealth Management Ltd",
    "securityKey": "nuvama-wealth-management",
    "isin": null,

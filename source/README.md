@@ -21,3 +21,23 @@ Read the inventory's **"Could not classify"** and **"Overlapping reports"**
 sections before extracting anything. One account on one date often produces
 several reports that overlap and sometimes disagree; which one is authoritative
 is a decision, not a default.
+
+## Drop folders, and why filenames alone cannot separate two deliveries
+
+`source/` carries several deliveries at once and **every one of them stays**:
+the original set at the top level, the client's `august-2026/` folder, and a
+folder per delivery after it (`august-2026-b/`, …).
+
+A monthly drop REISSUES THE SAME FILENAMES — `LKP 2.zip`, `GREEN LANTERN -
+ANKITA.zip`, `MOLECULE - AJAY.pdf` have all arrived twice. A snapshot
+supersedes, so the later holding statement should win; a DATED ROW does not, so
+the earlier issue's trades, capital-gain lots and dividends must survive. Both
+of those need both files on disk, which is why a new delivery goes in its own
+folder rather than on top of the last one.
+
+Before adding a file, hash it against what is already here. Three of the five
+files in the delivery that created `august-2026-b/` were byte-identical to
+statements already in `august-2026/` and were NOT copied in: extracting them
+again would have cost a run and taught nobody anything. `extract.mjs` does
+detect byte-identical duplicates and reads each once, so a copy is safe — it is
+just noise, and noise in a provenance record is a cost of its own.

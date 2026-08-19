@@ -28,6 +28,22 @@
  "capitalGains": [],
  "income": [
   {
+   "security": "Biocon Ltd",
+   "securityKey": "biocon",
+   "isin": null,
+   "kind": "dividend",
+   "exDate": "2026-07-03",
+   "receivedDate": null,
+   "quantity": 125500,
+   "ratePerUnit": 0.5,
+   "receivable": 62750,
+   "received": 0,
+   "tds": 0,
+   "netAmount": 62750,
+   "entitlement": null,
+   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-dividend-statement"
+  },
+  {
    "security": "Glaxosmithkline Pharmaceuticals Ltd",
    "securityKey": "glaxosmithkline-pharmaceuticals",
    "isin": null,

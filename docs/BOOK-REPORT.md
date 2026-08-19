@@ -7,7 +7,7 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 4,61,00,30,285.36 |
+| Consolidated market value | 4,61,35,91,249.92 |
 | Positions | 309 |
 | Accounts | 30 |
 | Owners | 6 |
@@ -33,7 +33,7 @@ Generated — **do not edit by hand**.
 | 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 98245 | LKP Securities | Bharat Jaisinghani | — | 2026-03-31 | 10 | 98,76,174.92 |
-| 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-06-30 | 11 | 1,12,48,248.66 |
+| 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-07-31 | 11 | 1,15,97,496.65 |
 | 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
 | 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 21,82,50,873.93 |
 | 9039671821 | Sanshi Fund | Aarti Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 97,68,26,519.91 |
@@ -42,7 +42,7 @@ Generated — **do not edit by hand**.
 | 9069671554 | Sanshi Fund | Ankita Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 29,42,02,601.1 |
 | 9069671634 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 28,45,63,122.95 |
 | 8710067 | SVAN Investment Managers LLP | Ajay Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-07-31 | 46 | 16,45,40,939.64 |
-| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-06-30 | 45 | 10,38,13,871.78 |
+| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-07-31 | 45 | 10,70,25,588.35 |
 | TVC262 | Transition Venture Capital | Bharat Jaisinghani Family Trust 2 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 1,71,45,962.25 |
 | TVC263 | Transition Venture Capital | Bharat Jaisinghani Family Trust 3 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 1,71,45,962.25 |
 | 128004 | V.E.C Assago Capital Management LLP | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-07-06 | 17 | 6,55,22,325.41 |
@@ -52,9 +52,9 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 15 | 162 | 2,58,00,22,820.46 |
+| Ajay Jaisinghani | 15 | 162 | 2,58,03,72,068.45 |
 | Ankita Jaisinghani | 6 | 85 | 71,20,76,133.02 |
-| Bharat Jaisinghani | 6 | 59 | 32,39,58,849.72 |
+| Bharat Jaisinghani | 6 | 59 | 32,71,70,566.29 |
 | Aarti Jaisinghani | 1 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 1 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 1 | 1 | 1,71,45,962.25 |
@@ -81,13 +81,13 @@ Together they carry **32,86,904.6** across 4 account(s). That figure is stated s
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 3,70,53,15,547.28 | 80.38% |
+| Unclassified | 3,70,81,28,827.28 | 80.37% |
 | Financials | 24,59,20,220.3 | 5.33% |
-| Health Care | 18,84,64,913.4 | 4.09% |
+| Health Care | 18,84,64,913.4 | 4.08% |
 | Consumer Discretionary | 14,95,66,899.11 | 3.24% |
 | Industrials | 12,95,61,200.92 | 2.81% |
 | Information Technology | 7,15,96,197.78 | 1.55% |
-| Cash | 6,75,79,275.27 | 1.47% |
+| Cash | 6,83,26,959.83 | 1.48% |
 | Communication Services | 1,98,43,470 | 0.43% |
 | Materials | 1,88,10,993.93 | 0.41% |
 | Consumer Staples | 1,47,32,221.9 | 0.32% |
@@ -155,7 +155,7 @@ never guessed into the nearest plausible bucket.
 - account Goldstandard Wealth Private Limited::100022: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-08-11 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet-2`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: performance-summary 2026-08-11 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary-2`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account Goldstandard Wealth Private Limited::100022: 5 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account Goldstandard Wealth Private Limited::100023: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-appraisal`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-bank-book`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-capital-register`; its dated rows are still counted
@@ -216,6 +216,10 @@ never guessed into the nearest plausible bucket.
 - account 98245: no external capital movements found, so no money-weighted return series
 - account Mirae Asset Mutual Fund::70413280453: holdings 2026-07-02 superseded for SNAPSHOT facts by 2026-08-06 — `mirae-asset-mutual-fund-70413280453-2026-07-02-holdings`; its dated rows are still counted
 - account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,41,106.71.
+- account Molecule Ventures LLP::7810404: expense-statement 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-expense-statement`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: fact-sheet 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-fact-sheet`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-holdings`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: 3 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 7810404: no external capital movements found, so no money-weighted return series
 - account 904168868444: no time-weighted return series in any statement
 - account 904168868444: no flow block in any statement, so no value bridge
@@ -227,8 +231,9 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: 14 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710067: no external capital movements found, so no money-weighted return series
-- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-06-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
-- account SVAN Investment Managers LLP::8710090: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710090-2026-06-30-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: 16 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710090: no external capital movements found, so no money-weighted return series
 - account 9039671821: no time-weighted return series in any statement
 - account 9039671821: no external capital movements found, so no money-weighted return series

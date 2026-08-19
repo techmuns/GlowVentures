@@ -28,6 +28,22 @@
  "capitalGains": [],
  "income": [
   {
+   "security": "Bajaj Auto Ltd",
+   "securityKey": "bajaj-auto",
+   "isin": null,
+   "kind": "dividend",
+   "exDate": "2026-05-29",
+   "receivedDate": "2026-07-29",
+   "quantity": 119,
+   "ratePerUnit": 150,
+   "receivable": 17850,
+   "received": null,
+   "tds": 0,
+   "netAmount": 17850,
+   "entitlement": null,
+   "source": "green-lantern-capital-llp-510854-2026-07-27-dividend-statement"
+  },
+  {
    "security": "Bharat Heavy Electricals Ltd",
    "securityKey": "bharat-heavy-electricals",
    "isin": null,
