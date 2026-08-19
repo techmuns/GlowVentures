@@ -8,7 +8,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isDirectEquity } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isCompanyShare } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -219,8 +219,8 @@ export function MorningCIO() {
     // Folding it into "Equity" is the same conflation that put fund units into
     // the sector tables. This book holds none today, so the row is empty and
     // named as absent below rather than silently swelling the equity bucket the
-    // first time one arrives. `isDirectEquity` is the shared test.
-    const equityRows = p.filter(isDirectEquity);
+    // first time one arrives. `isCompanyShare` is the shared test.
+    const equityRows = p.filter(isCompanyShare);
     const equity = eqGroup(equityRows);
     // Vehicle split WITHIN equity, for the caption only — self-directed is the
     // family running the account itself (a demat/execution or truly direct
@@ -723,6 +723,19 @@ export function MorningCIO() {
                           <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
                           {b.key}
                         </span>
+                        {/* WHO CHOSE IT, under the class that says what it is.
+                            Both halves of this split were computed and rendered
+                            NOWHERE — the comment above them said "for the
+                            caption only" and there was no caption. So ₹127 Cr of
+                            shares a discretionary manager picked sat under the
+                            same word as ₹30 Cr the family bought itself, which
+                            is the reading that sent them to this page asking
+                            why Jammu Kashmir Bank was called direct. */}
+                        {b.key === "Equity" && (m.equityManagedMV > 0 || m.equitySelfMV > 0) && (
+                          <span className="mt-0.5 block text-[10px] leading-relaxed text-slate-500">
+                            {money(m.equityManagedMV)} chosen under a manager&rsquo;s mandate · {money(m.equitySelfMV)} bought in the family&rsquo;s own account
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap"><Auditable to={bucketHref(b)} title={`${b.key} — trace to source`}>{money(b.current)}</Auditable></td>

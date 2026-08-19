@@ -10,7 +10,7 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge } from "@/components/Preview";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isDirectEquity, isFundVehicle, excludedClasses, byAssetClass, sum } from "@/lib/analytics";
+import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isCompanyShare, isFundVehicle, excludedClasses, byAssetClass, sum } from "@/lib/analytics";
 import {
   IPS_BUCKETS, readFamilyInputs, writeFamilyInputs, ipsTargetTotal, pct,
   exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
@@ -62,7 +62,7 @@ export function ExposureIPS() {
   );
   const targetTotal = ipsTargetTotal(inputs);
   /**
-   * SECTOR AND MARKET-CAP ARE DIRECT-EQUITY VIEWS — `isDirectEquity`, not
+   * SECTOR AND MARKET-CAP ARE DIRECT-EQUITY VIEWS — `isCompanyShare`, not
    * `!isPrivateClass`.
    *
    * Excluding only the PRIVATE classes fixed the AIF folios and left every
@@ -75,11 +75,11 @@ export function ExposureIPS() {
    * Sector Composition's own bug, one page over. Both now narrow to shares in
    * companies and NAME what they left out.
    */
-  const equity = useMemo(() => consolidated.filter(isDirectEquity), [consolidated]);
+  const equity = useMemo(() => consolidated.filter(isCompanyShare), [consolidated]);
   const equityMV = useMemo(() => consolidatedMarketValue(equity), [equity]);
   const sectors = useMemo(() => bySector(equity), [equity]);
   /** What the sector and market-cap views do not cover, named with its value. */
-  const nonEquity = useMemo(() => excludedClasses(consolidated, isDirectEquity), [consolidated]);
+  const nonEquity = useMemo(() => excludedClasses(consolidated, isCompanyShare), [consolidated]);
   const nonEquityMV = useMemo(() => sum(nonEquity.map((c) => c.mv)), [nonEquity]);
   const fundMV = useMemo(() => consolidatedMarketValue(consolidated.filter(isFundVehicle)), [consolidated]);
   const mcap = useMemo(() => mcapExposure(equity), [equity]);
@@ -296,8 +296,9 @@ export function ExposureIPS() {
           </table>
         </div>
         <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-          Sectors cover <span className="font-medium text-slate-400">direct equity</span> ({money(equityMV)}) — shares in
-          companies the family holds, whether through a manager's mandate or its own demat.
+          Sectors cover <span className="font-medium text-slate-400">company shares</span> ({money(equityMV)}) — shares in
+          companies the family holds, whether a discretionary manager chose them under a PMS mandate or the family
+          bought them in its own account. Both are the same asset; who decided is on each name's own page.
           {nonEquity.length > 0 && <> The other {money(nonEquityMV)} is excluded rather than folded in:{" "}
             {nonEquity.map((c, i) => (
               <span key={c.key}>
@@ -461,7 +462,7 @@ export function ExposureIPS() {
                     {/* A fund unit's gain is as real as a company's and belongs
                         in this ranking; what it must not do is read as a stock.
                         The class rides beside the name for that reason alone. */}
-                    {!isDirectEquity(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
                   </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>
@@ -480,7 +481,7 @@ export function ExposureIPS() {
                     {/* A fund unit's gain is as real as a company's and belongs
                         in this ranking; what it must not do is read as a stock.
                         The class rides beside the name for that reason alone. */}
-                    {!isDirectEquity(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
                   </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>

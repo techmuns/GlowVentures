@@ -128,16 +128,60 @@ const FUND_CLASSES = new Set(["AIF", "Mutual Fund", "ETF"]);
 export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.assetClass);
 
 /**
- * DIRECT EQUITY — a share in a company, held in the family's own demat or
- * bought for it under a manager's discretionary mandate.
+ * COMPANY SHARES — a share in a company, whoever pressed the button.
  *
  * A PMS mandate is an ENGAGEMENT, not an asset class (see `Account.engagement`),
  * so the shares SVAN, Carnelian and Goldstandard hold for this family are the
- * same asset as the ones sitting in its own LKP demat and belong in the same
- * set. What is NOT in it is a fund unit: buying the Buoyant AIF is not buying
- * the companies Buoyant owns.
+ * same asset as the ones sitting in its own demat and belong in the same set.
+ * What is NOT in it is a fund unit: buying the Buoyant AIF is not buying the
+ * companies Buoyant owns.
+ *
+ * IT USED TO BE CALLED `isDirectEquity`, AND THE NAME WAS THE BUG. The family
+ * opened Jammu Kashmir Bank, saw it labelled "direct equity", and read on the
+ * same page that Carnelian manages it — so the label was claiming something the
+ * page itself contradicted two lines down. The set was right and its name was
+ * not: these are company shares, and WHETHER THE FAMILY BOUGHT THEM OR A
+ * MANAGER DID is a separate axis that this predicate never encoded and every
+ * caption pretended it did. That axis is `holdingRoute` below.
  */
-export const isDirectEquity = (p: { assetClass: string }) => p.assetClass === "Equity";
+export const isCompanyShare = (p: { assetClass: string }) => p.assetClass === "Equity";
+
+/**
+ * HOW A HOLDING CAME TO BE HELD — the axis the "direct equity" label was
+ * silently asserting.
+ *
+ * `Account.engagement` already carries it, read off each statement's own
+ * wording and never defaulted. Nothing on screen was reading it, so ₹127 Cr of
+ * shares a discretionary manager chose sat under the same word as ₹30 Cr the
+ * family bought in its own demat. They are the same ASSET and a different
+ * DECISION, and a reader deciding whether to sell needs to know which.
+ */
+export type HoldingRoute = "mandate" | "own" | "fund" | "unknown";
+
+export function holdingRoute(engagement: string | null | undefined): HoldingRoute {
+  switch (engagement) {
+    case "PMS": return "mandate";
+    case "Direct": case "Execution": return "own";
+    case "AIF": case "Distribution": case "Advisory": return "fund";
+    default: return "unknown";
+  }
+}
+
+/** How to say it on screen, in the second person the rest of the app uses. */
+export const ROUTE_LABEL: Record<HoldingRoute, string> = {
+  mandate: "manager's mandate",
+  own: "own account",
+  fund: "fund vehicle",
+  unknown: "route not stated",
+};
+
+/** The longer form, for a caption that has room to explain the difference. */
+export const ROUTE_NOTE: Record<HoldingRoute, string> = {
+  mandate: "chosen by a discretionary manager under a PMS mandate — the family owns the shares, the manager decides them",
+  own: "bought in the family's own demat or broking account",
+  fund: "one purchase of a manager's portfolio, not of the companies inside it",
+  unknown: "no statement for this account states how it is run",
+};
 
 /** One asset class's contribution, for naming what a narrowed view left out. */
 export type ClassSlice = { key: string; mv: number; count: number };
@@ -145,10 +189,10 @@ export type ClassSlice = { key: string; mv: number; count: number };
 /**
  * The classes a narrowed view does NOT cover, largest first.
  *
- * A page that answers a company question over direct equity alone is answering
+ * A page that answers a company question over company shares alone is answering
  * a narrower question than its heading implies, and the standing rule is that
  * the remainder is NAMED with its value rather than quietly dropped. Every
- * caller of `isDirectEquity` pairs it with this.
+ * caller of `isCompanyShare` pairs it with this.
  */
 export function excludedClasses(positions: Position[], keep: (p: Position) => boolean): ClassSlice[] {
   const m = new Map<string, { mv: number; count: number }>();

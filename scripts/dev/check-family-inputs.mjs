@@ -125,7 +125,7 @@ check("the classes mapped to no bucket are named with their value",
 check("the whole store can still be exported from here", /export/i.test(text));
 
 // ── The removed routes redirect rather than 404 ────────────────────────────
-for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"], ["/industry", "/macro"]]) {
+for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"]]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   check(`${from} redirects to ${to}`, new URL(page.url()).pathname === to, new URL(page.url()).pathname);
@@ -165,6 +165,15 @@ check("the real calendar is still on Economy & Macro, with its filters",
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 text = await page.locator("body").innerText();
+// News & Announcements was removed with the page, the sidebar entry and the
+// top-bar bell that rendered the same feed. The nav must not offer it and the
+// bell must not be there — a removal is verified by asserting it happened.
+await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
+await page.waitForTimeout(600);
+const nav = await page.locator("body").innerText();
+check("the News & Announcements nav entry is gone", !/News & Announcements/i.test(nav));
+check("the holdings-news bell is gone with it", !/Latest holdings news/i.test(nav));
+
 check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
 check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));
 await page.getByRole("button", { name: /^transactions$/i }).click();

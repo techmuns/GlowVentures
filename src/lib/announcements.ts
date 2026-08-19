@@ -8,7 +8,7 @@
 import type { Portfolio } from "./types";
 import { symbolFor } from "./quotes";
 import { fetchFeedChunked } from "./feedFetch";
-import { isDirectEquity } from "./analytics";
+import { isCompanyShare } from "./analytics";
 
 export type Announcement = {
   title: string;
@@ -46,7 +46,7 @@ export function topHoldingsForAnnouncements(portfolio: Portfolio, n?: number): A
     // for one), but it dropped them AFTER they had been counted into `total`,
     // which weighed every real company against a denominator including ₹282 Cr
     // of AIF folios it was never selected from.
-    if (!isDirectEquity(p)) continue;
+    if (!isCompanyShare(p)) continue;
     total += p.marketValue;
     const e = map.get(p.securityKey)
       ?? { name: p.security, key: p.securityKey, symbol: symbolFor(p), mv: 0 };

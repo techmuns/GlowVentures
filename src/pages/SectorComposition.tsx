@@ -6,8 +6,8 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum, consolidatedMarketValue, isPrivateClass, isDirectEquity, excludedClasses } from "@/lib/analytics";
-import { accountIndex, ownerOf } from "@/lib/accounts";
+import { bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, holdingRoute } from "@/lib/analytics";
+import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { BasisPill } from "@/components/BasisPill";
@@ -70,17 +70,26 @@ export function SectorComposition() {
    * as such rather than being the place funds went to hide.
    */
   const accIdx = accountIndex(portfolio.accounts);
-  // `isDirectEquity` and `excludedClasses` live in `analytics.ts` — the one
+  // `isCompanyShare` and `excludedClasses` live in `analytics.ts` — the one
   // place the company-vs-fund axis is decided, so this page, Exposure & IPS,
   // Return Analysis and the stock page narrow on the same rule rather than on
   // four local re-derivations of it.
-  const p = consolidated.filter(isDirectEquity);
+  const p = consolidated.filter(isCompanyShare);
   const totalMV = consolidatedMarketValue(p);
+  /**
+   * WHO CHOSE THESE SHARES, split out for the caption.
+   *
+   * "Company shares" is an asset-class statement and the page's old wording,
+   * "direct equity", was quietly making a second claim on top of it — that the
+   * family picked them. Most of this table is a discretionary manager's book.
+   */
+  const mandateMV = sum(p.filter((x) => holdingRoute(engagementOf(accIdx, x) || null) === "mandate").map((x) => x.marketValue));
+  const ownMV = sum(p.filter((x) => holdingRoute(engagementOf(accIdx, x) || null) === "own").map((x) => x.marketValue));
   const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
   // Every class this page does NOT cover, largest first, so the note below can
   // name them from the book rather than from a hardcoded list. `isPrivateClass`
   // still drives the private-book sentence; this drives the rest.
-  const excluded = excludedClasses(consolidated, isDirectEquity);
+  const excluded = excludedClasses(consolidated, isCompanyShare);
   const excludedMV = sum(excluded.map((c) => c.mv));
   const sectors = bySector(p);
   const unclassified = sectors.find((s) => s.key === "Unclassified") ?? null;
@@ -210,7 +219,7 @@ export function SectorComposition() {
                   {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{money(sc.mv)}</td>)}
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-slate-400">Weight of direct equity</td>
+                  <td className="px-3 py-2 text-slate-400">Weight of company shares</td>
                   {comparedSectors.map((sc) => <td key={sc.key} className="px-3 py-2 text-right mono">{(sc.weight * 100).toFixed(1)}%</td>)}
                 </tr>
                 <tr>
@@ -366,8 +375,10 @@ export function SectorComposition() {
           </div>
         </Card>
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        This is <span className="font-medium text-slate-400">direct equity only</span> — {money(totalMV)} across {p.length} holdings the family owns as shares in a company, each counted once,
-        whether held through a manager’s PMS mandate or the family’s own demat account.
+        This is <span className="font-medium text-slate-400">company shares only</span> — {money(totalMV)} across {p.length} holdings the family owns as shares in a company, each counted once.
+        It does NOT mean the family picked them: {money(mandateMV)} was chosen by a discretionary manager under a PMS
+        mandate and {money(ownMV)} was bought in the family’s own demat or broking account. A GICS sector is a property
+        of the company either way, which is why both belong in this table.
         {excluded.length > 0 && <> {money(excludedMV)} of the book sits in wrappers and is excluded rather than folded in—{" "}
           {excluded.map((c, i) => (
             <Fragment key={c.key}>

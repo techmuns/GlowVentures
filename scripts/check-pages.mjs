@@ -66,7 +66,6 @@ const ROUTES = [
   ["performance", "/performance"],
   ["returns", "/returns"],
   ["ledger", "/ledger"],
-  ["news", "/news"],
   ["audit", "/audit"],
   ["history", "/history"],
   ["upload", "/upload"],
@@ -152,6 +151,15 @@ const INVARIANTS = {
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
     // so Invested and Current printed one answer and the Total cell another.
+    /**
+     * ₹127 Cr of shares a manager chose and ₹30 Cr the family bought are one
+     * "Equity" row, correctly — they are the same asset. Both halves were
+     * computed and rendered NOWHERE, so the row said only what the holdings ARE
+     * and never who decided them. That silence is what the family read as a
+     * claim of directness.
+     */
+    ["the Equity row says how much was chosen by a manager and how much was not",
+      (t) => !/\bEquity\b/.test(t) || /chosen under a manager.s mandate/i.test(t)],
     ["the allocation total ties to its own Invested and Current columns", (t) => {
       const row = /Total\s+₹([\d.]+)\s*Cr\s+₹([\d.]+)\s*Cr\s+([+-])([\d.]+)%/.exec(t);
       if (!row) return true;   // layout changed; the other invariants still bind
@@ -165,7 +173,7 @@ const INVARIANTS = {
   // A GICS sector is a property of a company; the page is direct equity only,
   // and every excluded class must be NAMED with its value rather than dropped.
   sectors: [
-    ["sector view is direct-equity only, the excluded classes named", (t) => /direct equity/i.test(t) && /excluded rather than folded in/i.test(t)],
+    ["sector view is company shares only, the excluded classes named", (t) => /company shares only/i.test(t) && /excluded rather than folded in/i.test(t)],
     // The failure this replaced: a fund standing at the head of a sector table.
     // No wrapper may appear as a holding here at all.
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
@@ -219,7 +227,7 @@ const INVARIANTS = {
     // struck on FIGURES THE PAGE RENDERS, so a filter that widens moves one side
     // and not the other.
     ["sector GAP is direct-equity only, the non-equity classes named",
-      (t) => /direct equity/i.test(t) && /excluded rather than folded in/i.test(t)],
+      (t) => /company shares/i.test(t) && /excluded rather than folded in/i.test(t)],
     // The caption states what the table COVERS and what it EXCLUDES from two
     // independent computations. They must reconstruct the header's consolidated
     // NAV. Widening the covered set moves the first and leaves the second, and
@@ -227,7 +235,7 @@ const INVARIANTS = {
     // ₹339.4 = ₹520.2 against a ₹461 Cr book).
     ["covered + excluded reconstructs the consolidated NAV", (t) => {
       const nav = Number(/₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);           // header chip, first on the page
-      const covered = Number(/Sectors cover direct equity \(₹([\d.]+)\s*Cr\)/i.exec(t)?.[1] ?? NaN);
+      const covered = Number(/Sectors cover company shares \(₹([\d.]+)\s*Cr\)/i.exec(t)?.[1] ?? NaN);
       const excluded = Number(/The other ₹([\d.]+)\s*Cr is excluded/i.exec(t)?.[1] ?? NaN);
       return [nav, covered, excluded].every(Number.isFinite)
         && Math.abs(covered + excluded - nav) <= Math.max(0.6, nav * 0.002);
@@ -237,7 +245,7 @@ const INVARIANTS = {
     // underneath said it had been left out.
     ["no class named as excluded appears as a sector row", (t) => {
       const i = t.search(/SECTOR\s+VALUE/i);
-      const j = t.search(/Sectors cover direct equity/i);
+      const j = t.search(/Sectors cover company shares/i);
       if (i < 0 || j <= i) return false;
       const table = t.slice(i, j);
       const named = /is excluded rather than folded in:([\s\S]*?)\. A fund is a wrapper/i.exec(t)?.[1] ?? "";
@@ -280,6 +288,20 @@ const INVARIANTS = {
     // suppressing the research block on an asset class must not creep into the
     // pages it belongs on.
     ["a company page still carries its research panels", (t) => !/not applicable to/i.test(t)],
+    /**
+     * WHO CHOSE THE POSITION, ON THE PAGE THAT NAMES IT.
+     *
+     * The family opened Jammu Kashmir Bank, read "direct equity" and saw two
+     * lines down that Carnelian manages it. The asset class was never wrong —
+     * they are shares in a bank — but the page was asserting a second thing it
+     * had no business asserting, and its own table contradicted it. Both halves
+     * are checked: the route must be stated, and the word "direct" must not be
+     * used for shares a discretionary manager picked.
+     */
+    ["the page states how the position is held, not just what it is",
+      (t) => /via (manager's mandate|own account|fund vehicle)/i.test(t) && /Held via/i.test(t)],
+    ["a manager-chosen holding is never called direct",
+      (t) => !/direct equity/i.test(t)],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
   // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
@@ -332,7 +354,7 @@ const INVARIANTS = {
   compare: [
     ["the picker offers companies only, and names what it left out",
       (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
-        && /direct equity only/i.test(t)],
+        && /company shares only/i.test(t)],
   ],
   // Layer 1: Knowledge & Memory is a real note store, not a mock. In this
   // headless run nothing has been captured, so the page must show the ABSENT

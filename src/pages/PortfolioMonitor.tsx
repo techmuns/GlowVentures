@@ -7,8 +7,8 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
-import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, holdingRoute, ROUTE_LABEL } from "@/lib/analytics";
+import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { Auditable } from "@/components/Auditable";
@@ -22,6 +22,8 @@ type EntityPart = {
   // 360 ONE marks its AIF at a total value and prints no NAV per unit.
   entity: string; quantity: number; avgCost: number | null; currentPrice: number | null;
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
+  /** How the entity came to hold it — a manager's mandate, or its own account. */
+  routes: string[];
 };
 type Row = {
   key: string; security: string; securityKey: string; sector: string; assetClass: string;
@@ -430,6 +432,7 @@ export function PortfolioMonitor() {
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Owning entity</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Avg cost</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
@@ -442,6 +445,7 @@ export function PortfolioMonitor() {
                                   {r.parts.map((pt) => (
                                     <tr key={pt.entity}>
                                       <td className="px-3 py-1.5"><span className="text-slate-200">{pt.entity}</span></td>
+                                      <td className="px-3 py-1.5 text-slate-400">{pt.routes.join(" + ")}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(pt.quantity)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{pt.costNA ? "—" : pt.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(pt.avgCost)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-100">{fmtFromBase(pt.marketValue, { compact: true })}</td>
@@ -512,10 +516,11 @@ export function PortfolioMonitor() {
 // Roll the constituent positions of one consolidated security up to one row per
 // owning entity, so an expanded row shows exactly who holds it and how much.
 function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
-  const m = new Map<string, { entity: string; quantity: number; costs: (number | null)[]; costBasis: number | null; marketValue: number; currentPrice: number | null; costUnavailable: boolean }>();
+  const m = new Map<string, { entity: string; quantity: number; costs: (number | null)[]; costBasis: number | null; marketValue: number; currentPrice: number | null; costUnavailable: boolean; routes: Set<string> }>();
   for (const x of ps) {
     const who = ownerOf(accIdx, x);
-    const e = m.get(who) ?? { entity: who, quantity: 0, costs: [], costBasis: null, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false };
+    const e = m.get(who) ?? { entity: who, quantity: 0, costs: [], costBasis: null, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false, routes: new Set<string>() };
+    e.routes.add(ROUTE_LABEL[holdingRoute(engagementOf(accIdx, x) || null)]);
     e.quantity += x.quantity;
     // Collected and summed with sumOrNull below, not accumulated with `+=`: a
     // null cost added to a running total silently becomes NaN, and NaN formats
@@ -533,7 +538,7 @@ function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
     const costNA = e.costUnavailable || cost === null || (cost === 0 && e.marketValue > 0);
     const pnl = costNA ? null : e.marketValue - (cost as number);
     return {
-      entity: e.entity, quantity: e.quantity, currentPrice: e.currentPrice,
+      entity: e.entity, routes: [...e.routes], quantity: e.quantity, currentPrice: e.currentPrice,
       avgCost: !costNA && e.quantity > 0 ? (cost as number) / e.quantity : null, costBasis: cost,
       marketValue: e.marketValue, unrealizedPnL: pnl,
       returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null, costNA,

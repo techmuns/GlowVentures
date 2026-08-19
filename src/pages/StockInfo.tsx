@@ -5,14 +5,14 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, holdingRoute, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
 import { ledgerHref, auditHref, LEDGER } from "@/lib/auditFormulas";
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
-import { accountIndex, ownerOf, providerOf, strategyOf } from "@/lib/accounts";
+import { accountIndex, ownerOf, providerOf, strategyOf, engagementOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
 import { ReturnsTable } from "@/components/ReturnsTable";
 import { RatioTable } from "@/components/RatioTable";
@@ -73,6 +73,26 @@ export function StockInfo() {
    * are right to report as one, so it keeps them.
    */
   const assetClass = rows[0]?.assetClass ?? null;
+  /**
+   * HOW THIS NAME IS HELD, not just what it is.
+   *
+   * The family opened this page on Jammu Kashmir Bank, read the asset class as
+   * "direct equity", and saw two lines below that Carnelian manages it. The
+   * page was contradicting itself: the shares are equity — that part was never
+   * wrong — but nothing said the family did not choose them.
+   *
+   * One name can be held both ways at once (Onesource sits in a mandate and in
+   * a demat), so the routes are collected across the rows and the chip states
+   * every one of them rather than the first.
+   */
+  const routes = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const r of rows) {
+      const k = holdingRoute(engagementOf(accIdx, r) || null);
+      seen.set(k, (seen.get(k) ?? 0) + r.marketValue);
+    }
+    return [...seen.entries()].sort((a, b) => b[1] - a[1]);
+  }, [rows, accIdx]);
   const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
   const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
   const NOT_A_COMPANY_LABEL: Record<string, string> = {
@@ -135,6 +155,14 @@ export function StockInfo() {
                 since it reads as a sector nobody got round to assigning rather
                 than a property the thing does not have. */}
             {assetClass && <Pill tone={assetClass === "Equity" ? "info" : "core"}>{assetClass}</Pill>}
+            {/* The asset class says WHAT it is; this says WHO decided to hold
+                it. They are different questions and the page used to answer
+                only the first while its own table answered the second. */}
+            {routes.map(([k]) => (
+              <Pill key={k} tone="core">
+                <span title={ROUTE_NOTE[k as keyof typeof ROUTE_NOTE]}>via {ROUTE_LABEL[k as keyof typeof ROUTE_LABEL]}</span>
+              </Pill>
+            ))}
             {sector && !fundVehicle && <Pill tone="info">{sector}</Pill>}
             {fundVehicle && (
               <span className="text-[11px] text-slate-600" title="A GICS sector is a property of a company. This holding is a wrapper over many of them and no statement here prints a sector for it.">
@@ -214,13 +242,14 @@ export function StockInfo() {
         </Card>
       ) : (
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <Card className="lg:col-span-2" title="Position by account" subtitle="How this name is held — owning entity, and the platform that runs the account" pad={false}>
+          <Card className="lg:col-span-2" title="Position by account" subtitle="How this name is held — the owning entity, who chose the position, and the platform that runs the account" pad={false}>
             <div className="overflow-x-auto">
               <table className="min-w-full whitespace-nowrap text-sm">
                 <thead className="border-b border-ink-700">
                   <tr>
                     <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
                     <th className="label-xs px-4 py-2 text-left font-medium">Managed by</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Held via</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Avg cost</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
@@ -238,6 +267,12 @@ export function StockInfo() {
                         {providerOf(accIdx, r)}
                         {strategyOf(accIdx, r) && <div className="text-[10px] text-slate-600">{strategyOf(accIdx, r)}</div>}
                       </td>
+                      <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                        <span title={ROUTE_NOTE[holdingRoute(engagementOf(accIdx, r) || null)]}>
+                          {ROUTE_LABEL[holdingRoute(engagementOf(accIdx, r) || null)]}
+                        </span>
+                        {engagementOf(accIdx, r) && <div className="text-[10px] text-slate-600">{engagementOf(accIdx, r)}</div>}
+                      </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
@@ -253,6 +288,7 @@ export function StockInfo() {
                 <tfoot className="border-t-2 border-ink-600 font-semibold">
                   <tr>
                     <td className="px-4 py-2.5 text-left text-slate-200">Total</td>
+                    <td />
                     <td />
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>

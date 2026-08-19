@@ -1719,7 +1719,7 @@ feature that is broken instead of one that was never possible.
 | **Ratio analysis, 7 year-ends** | company page | `ratio_source` → `web-reader` — see Stage 10e |
 | Consensus / street estimates | company page | `street_estimates` |
 | Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
-| Insider trades, corporate announcements, news | company page, `/news` | `insider_trades`, `corp_announcements`, `news_search` |
+| Insider trades, corporate announcements | company page | `insider_trades`, `corp_announcements` — the `/news` page is REMOVED, see Stage 10k |
 
 ### Two limits that are load-bearing, and are stated on screen
 
@@ -2130,7 +2130,62 @@ different sets.** Money-weighted is dated and covers the 7 of 30 accounts that
 publish an opening portfolio value (₹99.4 Cr); Consolidated return is cumulative
 on cost and covers the whole ₹461 Cr book. Each states its own scope on its face.
 
-### Stage 10h — Sector Composition is DIRECT EQUITY, because nothing else has a sector
+### Stage 10j — "DIRECT EQUITY" WAS A CLAIM THE BOOK NEVER MADE
+
+The family opened Jammu Kashmir Bank, saw it chipped **Direct Equity**, and read
+two lines below that Carnelian manages it. They reported it as a classification
+error. It was not one — and it was a real error.
+
+**The asset class was right and its LABEL was making a second claim.** The shares
+are `Equity`; §5 is unchanged and PMS still cannot be an asset class, because a
+mandate is a relationship and the thing owned is a company's shares. What the
+word "direct" asserted on top of that is that THE FAMILY CHOSE THEM, and for
+₹127.12 Cr of this book a discretionary manager did. The page was contradicting
+its own table.
+
+**THE AXIS ALREADY EXISTED AND NOTHING READ IT.** `Account.engagement` is taken
+off each statement's own wording and never defaulted (§5). Measured on this drop:
+
+| | positions | value |
+| --- | ---: | ---: |
+| Equity · PMS mandate | 263 | ₹127.12 Cr |
+| Equity · own demat | 18 | ₹30.12 Cr |
+| Equity · broker (Execution) | 9 | ₹0.99 Cr |
+
+So `isDirectEquity` is **`isCompanyShare`** — the set was always right and only
+its name was wrong — and `holdingRoute` / `ROUTE_LABEL` / `ROUTE_NOTE` in
+`analytics.ts` are the one place the engagement becomes words. The stock page
+chips `via manager's mandate` beside the class and carries a **Held via** column;
+Portfolio Monitor's per-entity drill-down carries the same column; Sector
+Composition, Exposure & IPS and Compare say "company shares" and then state the
+mandate/own split instead of leading with a word that denies it.
+
+**AND MORNING CIO HAD COMPUTED THE SPLIT AND RENDERED IT NOWHERE.**
+`equityManagedMV` / `equitySelfMV` were derived, exported from the memo, and
+read by no caller — the comment above them said "for the caption only" and there
+was no caption. That is `dedupedPositions` again: **a helper that returns the
+right number into no caller looks exactly like a working feature.** The Equity
+row states both halves now, and `check:pages` asserts it, along with the stock
+page stating its route and never using the word "direct" for manager-chosen
+shares. Both were verified by reintroducing the bug.
+
+### Stage 10k — News & Announcements: REMOVED
+
+The family asked for the page to go. `/news` and `/recommendations` redirect to
+`/monitor`, the sidebar entry is gone, and `src/pages/News.tsx`, `src/lib/news.ts`
+and the top-bar `NotificationsBell` went with it — the bell rendered the same
+holdings feed and its only action was to open the page that no longer exists, so
+leaving it would have been a button to a redirect.
+
+`src/lib/announcements.ts` STAYS. `insider.ts` imports its `AnnHolding` type and
+its NSE-symbol resolution, and the company page's insider panel is still wired to
+both. Deleting a module because its most visible caller went is how a working
+panel goes dark one release later.
+
+`check:family` asserts the removal happened — both redirects, the nav entry gone
+and the bell gone — rather than the tests being deleted alongside the feature.
+
+### Stage 10h — Sector Composition is COMPANY SHARES, because nothing else has a sector
 
 A GICS sector is a property of a COMPANY. A fund — an AIF folio, a mutual fund
 scheme, an ETF, a liquid sweep — is a wrapper holding many, and no statement in
@@ -2163,9 +2218,12 @@ now live in `src/lib/analytics.ts` and every caller reads them from there:
   PORTFOLIO. A mutual fund is marked daily at a published NAV, so it is not
   private; it is also not a company, and it has no GICS sector, no market cap, no
   NSE symbol, no P&L statement and no concall.
-- `isDirectEquity` — `assetClass === "Equity"` — shares in a company, whether
+- `isCompanyShare` — `assetClass === "Equity"` — shares in a company, whether
   through a manager's discretionary mandate or the family's own demat. A PMS is
-  an ENGAGEMENT, so those shares are the same asset as the LKP ones.
+  an ENGAGEMENT, so those shares are the same asset as the LKP ones. It was
+  called `isDirectEquity` until the family read the word "direct" as a claim
+  about WHO CHOSE the position — see Stage 10j, and `holdingRoute` for the axis
+  that answers it.
 - `excludedClasses(positions, keep)` returns what a narrowed view left out, per
   class with its value, because the remainder is NAMED and never dropped.
 

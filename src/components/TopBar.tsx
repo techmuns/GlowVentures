@@ -1,7 +1,6 @@
 import { Search, Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
-import { NotificationsBell } from "@/components/NotificationsBell";
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
 
@@ -132,7 +131,6 @@ export function TopBar() {
           <button onClick={() => setIsDark((v) => !v)} className="btn-ghost h-9 px-2.5" title="Toggle theme">
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <NotificationsBell />
         </div>
       </div>
     </header>

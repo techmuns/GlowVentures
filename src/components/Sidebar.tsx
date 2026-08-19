@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, Newspaper, History, Lock, Table2, Calculator, Gauge,
+  Activity, History, Lock, Table2, Calculator, Gauge,
   GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -23,7 +23,6 @@ const NAV = [
   { to: "/audit", label: "Data Audit", icon: Table2, group: "Setup" },
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
-  { to: "/news", label: "News & Announcements", icon: Newspaper, group: "Daily" },
   { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },

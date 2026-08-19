@@ -9,7 +9,7 @@ import { StockLink } from "@/components/StockLink";
 import { Markdown } from "@/components/Markdown";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull, isDirectEquity, isFundVehicle } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull, isCompanyShare, isFundVehicle } from "@/lib/analytics";
 import { symbolFor } from "@/lib/quotes";
 import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
@@ -67,7 +67,7 @@ export function CompareCompanies() {
    * accounts and comparing it against itself is not a comparison.
    *
    * AND THE PICKER LISTS COMPANIES, WHICH IS WHAT THIS PAGE COMPARES. Every row
-   * it offers is a share in a company (`isDirectEquity`). A fund unit and a cash
+   * it offers is a share in a company (`isCompanyShare`). A fund unit and a cash
    * line were in the list too, so a reader could put "Sanshi Fund-I (Open Ended
    * AIF CAT-III) — Class E" and "Cash" side by side under a heading that reads
    * "Compare companies" — with a PE column, a filings row and a returns table
@@ -79,7 +79,7 @@ export function CompareCompanies() {
     if (!portfolio) return [];
     const m = new Map<string, Candidate>();
     for (const p of portfolio.positions) {
-      if (!isDirectEquity(p)) continue;
+      if (!isCompanyShare(p)) continue;
       const c = m.get(p.securityKey);
       if (c) { c.rows.push(p); continue; }
       m.set(p.securityKey, {
@@ -190,7 +190,7 @@ export function CompareCompanies() {
       >
         {notCompanies.funds > 0 && (
           <p className="mb-3 text-[11px] leading-relaxed text-slate-500">
-            The picker lists <span className="text-slate-400">direct equity</span> only. {notCompanies.funds}{" "}
+            The picker lists <span className="text-slate-400">company shares</span> only. {notCompanies.funds}{" "}
             fund {notCompanies.funds === 1 ? "holding" : "holdings"} worth {money(notCompanies.mv)} — AIF folios,
             mutual-fund schemes and ETFs — are not offered here: a fund is a wrapper holding many companies, so it has
             no PE, no filings and no peer set of its own. Its position and return are on Portfolio Monitor.

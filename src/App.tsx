@@ -9,7 +9,6 @@ import { SectorComposition } from "@/pages/SectorComposition";
 import { CapitalGains } from "@/pages/CapitalGains";
 import { Performance } from "@/pages/Performance";
 import { ReturnAnalysis } from "@/pages/ReturnAnalysis";
-import { News } from "@/pages/News";
 import { DataRefresh } from "@/pages/DataRefresh";
 import { UploadHistory } from "@/pages/UploadHistory";
 import { DataAudit } from "@/pages/DataAudit";
@@ -89,8 +88,12 @@ export default function App() {
             <Route path="/performance" element={<Gate><Performance /></Gate>} />
             <Route path="/returns" element={<Gate><ReturnAnalysis /></Gate>} />
             <Route path="/ledger" element={<LedgerInsights />} />
-            <Route path="/news" element={<Gate><News /></Gate>} />
-            <Route path="/recommendations" element={<Navigate to="/news" replace />} />
+            {/* News & Announcements was REMOVED at the family's request. Both
+                paths redirect rather than 404, because a bookmark is a promise
+                the app made and a removal is verified by asserting it happened —
+                see `check-pages.mjs`. */}
+            <Route path="/news" element={<Navigate to="/monitor" replace />} />
+            <Route path="/recommendations" element={<Navigate to="/monitor" replace />} />
             <Route path="/audit" element={<DataAudit />} />
             <Route path="/history" element={<UploadHistory />} />
             <Route path="*" element={<RootRedirect />} />
