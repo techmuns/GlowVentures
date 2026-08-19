@@ -24,7 +24,7 @@ export const BOOK_SUMMARY: BookSummary = {
   "positionsCount": 309,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 30
+  "accountsCount": 31
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -35,6 +35,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "accountNo": "1000632",
     "ownerId": "ajay-jaisinghani",
     "owner": "Ajay Jaisinghani",
+    "strategy": "360 ONE Special Opportunities Fund - Series 8",
+    "engagement": "AIF",
+    "providerEngagement": "Category II AIF — pass-through",
+    "members": [],
+    "asOf": "2026-05-18",
+    "inceptionDate": null,
+    "custodian": "360 ONE Alternates Asset Management",
+    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
+  },
+  {
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "provider": "360 ONE Alternates Asset Management",
+    "accountNo": "1000633",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
     "strategy": "360 ONE Special Opportunities Fund - Series 8",
     "engagement": "AIF",
     "providerEngagement": "Category II AIF — pass-through",
@@ -7722,6 +7737,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Bharat Jaisinghani · 360 1000633",
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "ownerId": "bharat-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · 360 37702",
     "accountId": "360-one-private-wealth-37702",
     "ownerId": "ajay-jaisinghani",
@@ -10195,6 +10224,17 @@ export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = [
     "entitlement": null,
     "amount": 715619,
     "source": "360-one-alternates-asset-management-1000632-2026-05-18-distribution-notice"
+  },
+  {
+    "security": "360 ONE Special Opportunities Fund - Series 8 Class A3",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3",
+    "accountId": "360-one-alternates-asset-management-1000633",
+    "kind": "distribution",
+    "exDate": "2025-05-29",
+    "quantity": null,
+    "entitlement": null,
+    "amount": 715619,
+    "source": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice"
   },
   {
     "security": "Vedanta Ltd",

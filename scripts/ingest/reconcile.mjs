@@ -620,6 +620,51 @@ function duplicateHoldings(docs) {
 
 // ── d) + e) Coverage and unresolved ──────────────────────────────────────────
 
+/**
+ * The SAME AIF income reported under two folios — check (c), one column over.
+ *
+ * `duplicateHoldings` keys on holdings, and an income-only folio has none, so a
+ * duplicate here was invisible to it. Bharat's folio 1000633 and Ajay's 1000632
+ * are the case: byte-identical income heads, the same 9,90,429.684 Class A3
+ * units and the same 7,38,106 of income, which is the same shape as 360 ONE
+ * Special Opportunities Series 8 appearing under both CRNs on the WEALTH side.
+ *
+ * Nothing sums `aifEarnings` into a book-wide figure today, so no figure on
+ * screen is wrong — which is exactly when a duplicate is cheapest to record and
+ * exactly how `dedupedPositions` came to sit correct and uncalled for a drop and
+ * a half. Reported, never netted: which folio owns the income is a question
+ * about the family's affairs, and the same "carry both, count once" policy this
+ * file already applies to holdings is the one a future consumer must follow.
+ */
+function duplicateAifEarnings(docs) {
+  const byFigures = new Map();
+  for (const doc of docs) {
+    if (doc.status === "failed" || !doc.aifEarnings) continue;
+    const e = doc.aifEarnings;
+    if (!isNum(e.totalIncome) && !isNum(e.units)) continue;
+    const k = [e.class ?? "-", e.units ?? "-", e.totalIncome ?? "-", e.netIncome ?? "-", e.tds ?? "-"].join("|");
+    (byFigures.get(k) ?? byFigures.set(k, []).get(k)).push(doc);
+  }
+  const out = [];
+  for (const [, entries] of byFigures) {
+    if (entries.length < 2) continue;
+    // Two reports of one folio are check (b); this is about DIFFERENT folios.
+    if (new Set(entries.map((d) => d.accountNo)).size < 2) continue;
+    const first = entries[0].aifEarnings;
+    out.push({
+      units: first.units, unitClass: first.class,
+      totalIncome: first.totalIncome, netIncome: first.netIncome, tds: first.tds,
+      owners: [...new Set(entries.map((d) => d.ownerId ?? d.owner ?? "(unknown)"))],
+      occurrences: entries.map((d) => ({
+        docKey: d.docKey, owner: d.owner, accountNo: d.accountNo, asOf: d.asOf, reportType: d.reportType,
+      })),
+      doubleCountRisk: isNum(first.totalIncome) ? round2(first.totalIncome) : null,
+      resolution: "NOT netted — both are reported. Any consumer of `aifEarnings` must count this group once.",
+    });
+  }
+  return out.sort((a, b) => (b.doubleCountRisk ?? 0) - (a.doubleCountRisk ?? 0));
+}
+
 function coverage(docs, pdfCount, duplicateSources = []) {
   const byStatus = { ok: [], partial: [], failed: [] };
   for (const d of docs) byStatus[d.status].push(d);
@@ -820,6 +865,7 @@ export function reconcile(docs, opts = {}) {
   const derived = docs.flatMap((d) => derivedVsPrinted(d, docs));
   const deltas = crossReportDeltas(docs);
   const duplicates = duplicateHoldings(docs);
+  const duplicateEarnings = duplicateAifEarnings(docs);
   // Tag the matching rows before any consolidated figure is computed.
   applyDedupePolicy(docs, duplicates);
   const consolidated = consolidatedValue(docs);
@@ -848,6 +894,7 @@ export function reconcile(docs, opts = {}) {
       datedRounding: dated.filter((d) => d.severity === "rounding").length,
       crossReportDeltas: deltas.length,
       suspectedDuplicates: duplicates.length,
+      suspectedDuplicateEarnings: duplicateEarnings.length,
       securitiesWithoutSymbol: unres.securitiesWithoutSymbol.length,
       ownerNamesUnmatched: unres.ownerNamesUnmatched.length,
       stitchesApplied: stitches.length,
@@ -859,6 +906,7 @@ export function reconcile(docs, opts = {}) {
     datedTableChecks: dated,
     crossReportDeltas: deltas,
     duplicateHoldings: duplicates,
+    duplicateAifEarnings: duplicateEarnings,
     unresolved: unres,
     stitches,
   };
@@ -1067,6 +1115,28 @@ export function renderMarkdown(r) {
       L.push(`dedupeGroup \`${esc(d.dedupeGroup)}\``);
       L.push("");
       L.push("| Owner | Account | As of | Report | Document |");
+      L.push("| --- | --- | --- | --- | --- |");
+      for (const o of d.occurrences) {
+        L.push(`| ${esc(o.owner)} | ${esc(o.accountNo)} | ${esc(o.asOf)} | ${esc(o.reportType)} | \`${esc(o.docKey)}\` |`);
+      }
+      L.push("");
+    }
+  }
+
+  L.push("### AIF income reported under two folios");
+  L.push("");
+  L.push("Identical income heads, units and totals on DIFFERENT folios. An income-only folio");
+  L.push("carries no holdings, so the check above cannot see it.");
+  L.push("");
+  if (!(r.duplicateAifEarnings ?? []).length) {
+    L.push("_None detected._");
+  } else {
+    for (const d of r.duplicateAifEarnings) {
+      L.push(`**Class ${esc(d.unitClass)} · ${fmt(d.units)} units · income ${fmt(d.totalIncome)} · net ${fmt(d.netIncome)}**`);
+      L.push("");
+      L.push(`Nothing aggregates \`aifEarnings\` today, so no figure on screen is affected. ${fmt(d.doubleCountRisk)} is what a naive sum across these folios would invent.`);
+      L.push("");
+      L.push("| Owner | Folio | As of | Report | Document |");
       L.push("| --- | --- | --- | --- | --- |");
       for (const o of d.occurrences) {
         L.push(`| ${esc(o.owner)} | ${esc(o.accountNo)} | ${esc(o.asOf)} | ${esc(o.reportType)} | \`${esc(o.docKey)}\` |`);

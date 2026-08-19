@@ -1,8 +1,8 @@
 {
- "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
+ "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
  "provider": "360 ONE Alternates Asset Management",
  "accountNo": "1000633",
- "ownerSource": "same-account",
+ "ownerSource": "printed",
  "accountNoSource": "printed",
  "clientCode": null,
  "owner": "Bharat Jaisinghani",
@@ -12,24 +12,16 @@
  "engagement": "AIF",
  "providerEngagement": "Category II AIF — pass-through",
  "members": [],
- "asOf": null,
+ "asOf": "2026-06-04",
  "inceptionDate": null,
- "reportType": "unknown",
- "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
- "pages": 1,
- "status": "partial",
+ "reportType": "statement-of-earnings",
+ "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+ "pages": 2,
+ "status": "ok",
  "warnings": [
   {
-   "code": "advice-only",
-   "detail": "this is the distribution ADVICE e-mail: it announces a payout of ~6.90% of capital commitment and carries no figures. The detailed letter it promises is the document with the numbers."
-  },
-  {
-   "code": "owner-unresolved",
-   "detail": "\"Investor\" matches no canonical owner — add an alias in shared/owners.mjs"
-  },
-  {
-   "code": "owner-from-account-number",
-   "detail": "this report does not print the client name where it can be read; taken from other statements for 360 ONE Alternates Asset Management account 1000633, which all name Bharat Jaisinghani"
+   "code": "pdf-encrypted",
+   "detail": "opened with GLOW_PDF_PASSWORDS entry #3"
   }
  ],
  "holdings": [],
@@ -43,7 +35,7 @@
  "expenses": [],
  "periodFrom": null,
  "periodTo": null,
- "pan": null,
+ "pan": "AEIPJ0261N",
  "sourcePages": null,
  "accrual": null,
  "sectionsWithoutRows": [],
@@ -58,7 +50,29 @@
  "securityNameSource": null,
  "excludedFromBook": null,
  "schemeHoldings": [],
- "aifEarnings": null,
+ "aifEarnings": {
+  "heads": [
+   {
+    "head": "Long Term Capital Gain/(Loss) on Listed Equity Share (STT Paid)",
+    "amount": -1767
+   },
+   {
+    "head": "Short Term Capital Gain/(Loss) on Listed Equity Share (STT Paid)",
+    "amount": 725037
+   },
+   {
+    "head": "Short Term Capital Gain/(Loss) on Debt/Liquid Mutual Funds",
+    "amount": 14836
+   }
+  ],
+  "totalIncome": 738106,
+  "totalExpenses": -26437,
+  "netIncome": 711669,
+  "tds": -73811,
+  "units": 990429.684,
+  "folio": "1000633",
+  "class": "A3"
+ },
  "jointHolders": [],
  "stitches": [],
  "derivedPortfolioTotal": null

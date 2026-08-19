@@ -191,11 +191,12 @@ spreadsheet. Four things follow, and they are load-bearing:
 
 **What is actually in `source/` today.** THREE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/` — two statements that arrived after it. Twenty-one issuers, 30
+`august-2026-b/` — two statements that arrived after it. Twenty-one issuers, 31
 accounts in the book, six holders and two family trusts, 43 files expanding to
-182 — of which **187 documents** are extracted and 166 read fully, 19 partially
-and **2 not at all**. What does not read is named below; nothing is silently
-dropped, and `source/README.md` carries the rule for adding the next delivery.
+182 — of which **187 documents** are extracted, 168 read fully, 19 partially and
+**none fail**. Every encrypted statement in the drop now opens; what reads only
+partially is named below, and `source/README.md` carries the rule for adding the
+next delivery.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
 `LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
@@ -403,24 +404,42 @@ and contributed nothing, because `authoritative()` returns null for a provider
 with no precedence block. Eight accounts at 0 positions and ₹0, holding
 ₹123.54 Cr between them. Nothing failed and nothing said so.
 
-*Two documents this run could not decrypt.* Bharat's 360 ONE Alternates
-distribution notice and statement of earnings are encrypted with a password
-that is NOT in the drop's own `pASSWORD.docx` — that file names the Kotak and
-ABSL ones only. They read in an earlier extraction, so the password exists
-somewhere; without it folio **1000633** has no readable statement naming its
-holder, and the one other document mentioning the folio prints the holder as
-the literal word "Investor".
+*Two documents this run could not decrypt — SINCE SOLVED.* Bharat's 360 ONE
+Alternates distribution notice and statement of earnings are encrypted with a
+password that is NOT in the drop's own `pASSWORD.docx` — that file names the
+Kotak and ABSL ones only. Without it folio **1000633** had no readable statement
+naming its holder, and the one other document mentioning the folio prints the
+holder as the literal word "Investor".
 
-**AN ACCOUNT NOBODY CAN BE SHOWN TO OWN IS EXCLUDED, NOT CARRIED EMPTY.**
-`Account.owner` is `string`, not `string | null`, and that is the model saying
-every account in this book belongs to a named member. The two wrong fixes were
-both available — widen the type for all 22 accounts to accommodate one, or emit
-`owner: null` and let a page render an account attributed to nobody. Folio
-1000633 goes to `excludedAccounts` instead, by the same mechanism as the HOPE
-INDIA TRUST folios: not summed, reason printed, and back the moment the
-password lets its statements be read. Its market value is nil either way — it
-is an income-only folio — so the consolidated total is unaffected; what is
-missing is ₹7.38 L of AIF income split by tax head, and its attribution.
+**AN ACCOUNT NOBODY CAN BE SHOWN TO OWN IS EXCLUDED, NOT CARRIED EMPTY.** That
+was the right call and this is what made it reversible. `Account.owner` is
+`string`, not `string | null`, and that is the model saying every account in
+this book belongs to a named member. The two wrong fixes were both available —
+widen the type for all 30 accounts to accommodate one, or emit `owner: null` and
+let a page render an account attributed to nobody. Folio 1000633 went to
+`excludedAccounts` instead, by the same mechanism as the HOPE INDIA TRUST
+folios: not summed, reason printed, **and back the moment the password lets its
+statements be read.**
+
+**THE PASSWORD IS THE HOLDER'S OWN PAN, and it was in the book all along** — the
+family supplied it, and it is the same PAN Bharat's SVAN investor report prints
+on page one. So the third entry in `GLOW_PDF_PASSWORDS` opens both documents,
+the folio names its holder in words, and it is an ordinary account in the book:
+31 accounts now, `owner: "Bharat Jaisinghani"`, still zero positions and still
+₹0, because it is income-only and no statement values it. The consolidated total
+does not move by a rupee. What came in is the ₹7,38,106 of AIF income split by
+tax head — LTCG on listed equity (₹1,767), STCG on listed equity ₹7,25,037,
+STCG on debt/liquid funds ₹14,836, expenses ₹26,437, TDS ₹73,811.
+
+**AND IT ARRIVED AS A DUPLICATE.** Bharat's folio 1000633 and Ajay's 1000632
+carry BYTE-IDENTICAL earnings: the same 9,90,429.684 Class A3 units, the same
+₹7,38,106, the same TDS — the AIF-manager's view of the position 360 ONE's
+WEALTH arm already reports under both CRN37702 and CRN60117. `duplicateHoldings`
+could not see it, because an income-only folio has no holdings to key on. Check
+(c) has a sibling now, `duplicateAifEarnings`, and the extraction report names
+the pair. Nothing aggregates `aifEarnings` today, so **no figure on screen is
+wrong** — which is exactly when a duplicate is cheapest to record, and exactly
+how `dedupedPositions` came to sit correct and uncalled for a drop and a half.
 
 ### The `august-2026-b` delivery — five files, two of them new
 
@@ -560,8 +579,9 @@ declare one leaves its deltas material.
 
 ### Encrypted statements — `GLOW_PDF_PASSWORDS`
 
-Six of the PDFs in this drop are encrypted. The passwords are **never committed**; they
-are read from the environment:
+EIGHT of the PDFs in this drop are encrypted, and with the third password the
+run now reports **zero failed documents**. The passwords are **never committed**;
+they are read from the environment:
 
 ```
 GLOW_PDF_PASSWORDS="one,two,three" npm run extract
@@ -569,10 +589,15 @@ GLOW_PDF_PASSWORDS="one,two,three" npm run extract
 
 `passwordsFromEnv()` in `lib/layout.mjs` supplies the list and every attempt is
 tried in order per file, because it is not one password — three different ones
-open six files across three issuers, and which opens which is not printed
-anywhere reliable (the one document that names a Kotak password names one that
-does not open it). The archive records THAT a document was encrypted and which
-list entry opened it, **by position, never the value**.
+open eight files across four issuers, and which opens which is not printed
+anywhere reliable. The drop's own `pASSWORD.docx` names two of the three, and
+even those it mislabels: the entry it calls the Kotak password opens the August
+Kotak statement and NOT the July one, which the ABSL entry opens instead. The
+third — the one that unlocks Bharat's 360 ONE Alternates pair — is named in no
+file here at all; it is his own PAN, printed on page one of statements this
+pipeline already reads. **An unreadable document is not proof the key is
+missing.** The archive records THAT a document was encrypted and which list
+entry opened it, **by position, never the value**.
 
 Two things about this are worth stating plainly rather than leaving implicit:
 

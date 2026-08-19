@@ -33,8 +33,9 @@
 // statement nobody had a reader for.
 //
 // THAT PARTICULAR PAN IS NOT LISTED BELOW, and its absence is deliberate. It is
-// also the password on six encrypted statements in this drop, and a password does
-// not go in a tracked file — see the `GLOW_PDF_PASSWORDS` note in CLAUDE.md. The
+// also the password on his two 360 ONE Alternates statements — one of the three
+// entries in GLOW_PDF_PASSWORDS — and a password does not go in a tracked file;
+// see the `GLOW_PDF_PASSWORDS` note in CLAUDE.md. The
 // alias it justified is listed instead, so the resolution is identical and the
 // evidence for it is recorded here in words rather than as a value someone could
 // lift out of the repository and try against the PDFs.

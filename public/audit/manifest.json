@@ -5694,8 +5694,8 @@
   "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
   "provider": "360 ONE Alternates Asset Management",
   "accountNo": "1000633",
-  "owner": "Investor",
-  "ownerId": null,
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": "360 ONE Special Opportunities Fund - Series 8",
   "asOf": null,
@@ -5706,7 +5706,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 2,
+  "warnings": 3,
   "fileKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
   "label": "360 ONE Alternates Asset Management · 1000633 · unknown",
   "fy": "",
@@ -5809,31 +5809,38 @@
   ]
  },
  {
-  "docKey": "unknown-unknown-unknown-unknown",
-  "provider": "(unidentified)",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
-  "reportType": "unknown",
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-05-18",
+  "reportType": "distribution-notice",
   "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-  "pages": 0,
+  "pages": 3,
   "sections": [
+   "distribution",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "unknown-unknown-unknown-unknown",
-  "label": "(unidentified) · unknown",
-  "fy": "",
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-05-18-distribution-notice",
+  "label": "360 ONE Alternates Asset Management · 1000633 · distribution-notice",
+  "fy": "2026-05-18",
   "source": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
   "sheets": [
    {
+    "key": "distribution",
+    "name": "distribution",
+    "rows": 10,
+    "cols": 3
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
-    "rows": 0,
+    "rows": 3,
     "cols": 2
    }
   ]
@@ -5876,31 +5883,38 @@
   ]
  },
  {
-  "docKey": "unknown-unknown-unknown-statement-of-earnings",
-  "provider": "(unidentified)",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "provider": "360 ONE Alternates Asset Management",
+  "accountNo": "1000633",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": null,
+  "strategy": "360 ONE Special Opportunities Fund - Series 8",
+  "asOf": "2026-06-04",
   "reportType": "statement-of-earnings",
   "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-  "pages": 0,
+  "pages": 2,
   "sections": [
+   "incomeByTaxHead",
    "pages"
   ],
-  "status": "failed",
+  "status": "ok",
   "warnings": 1,
-  "fileKey": "unknown-unknown-unknown-statement-of-earnings",
-  "label": "(unidentified) · statement-of-earnings",
-  "fy": "",
+  "fileKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+  "label": "360 ONE Alternates Asset Management · 1000633 · statement-of-earnings",
+  "fy": "2026-06-04",
   "source": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
   "sheets": [
    {
+    "key": "incomeByTaxHead",
+    "name": "incomeByTaxHead",
+    "rows": 8,
+    "cols": 2
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
-    "rows": 0,
+    "rows": 2,
     "cols": 2
    }
   ]

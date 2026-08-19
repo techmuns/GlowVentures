@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-19T09:52:34.352Z",
+  "generatedAt": "2026-08-19T10:28:35.834Z",
   "summary": {
     "documents": 187,
-    "parsed": 166,
+    "parsed": 168,
     "partial": 19,
-    "failed": 2,
+    "failed": 0,
     "rowSumChecks": 194,
     "totalMismatches": 89,
     "totalsMaterial": 0,
@@ -20,8 +20,9 @@
     "datedRounding": 47,
     "crossReportDeltas": 9,
     "suspectedDuplicates": 6,
+    "suspectedDuplicateEarnings": 1,
     "securitiesWithoutSymbol": 10,
-    "ownerNamesUnmatched": 3,
+    "ownerNamesUnmatched": 2,
     "stitchesApplied": 22
   },
   "coverage": {
@@ -43,9 +44,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 166,
+    "parsed": 168,
     "partial": 19,
-    "failed": 2,
+    "failed": 0,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -394,26 +395,14 @@
           "failed": 0
         },
         "distribution-notice": {
-          "ok": 1,
+          "ok": 2,
           "partial": 0,
           "failed": 0
         },
         "statement-of-earnings": {
-          "ok": 1,
+          "ok": 2,
           "partial": 0,
           "failed": 0
-        }
-      },
-      "(unidentified)": {
-        "unknown": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 1
-        },
-        "statement-of-earnings": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 1
         }
       },
       "Molecule Ventures LLP": {
@@ -484,26 +473,7 @@
         }
       }
     },
-    "failures": [
-      {
-        "docKey": "unknown-unknown-unknown-unknown",
-        "sourcePath": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-        "provider": "(unidentified)",
-        "reportType": "unknown",
-        "reasons": [
-          "pdf-read-failed: Incorrect Password"
-        ]
-      },
-      {
-        "docKey": "unknown-unknown-unknown-statement-of-earnings",
-        "sourcePath": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-        "provider": "(unidentified)",
-        "reportType": "statement-of-earnings",
-        "reasons": [
-          "pdf-read-failed: Incorrect Password"
-        ]
-      }
-    ],
+    "failures": [],
     "partials": [
       {
         "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
@@ -588,7 +558,8 @@
         "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
         "reasons": [
           "advice-only: this is the distribution ADVICE e-mail: it announces a payout of ~6.90% of capital commitment and carries no figures. The detailed letter it promises is the document with the numbers.",
-          "owner-unresolved: \"Investor\" matches no canonical owner — add an alias in shared/owners.mjs"
+          "owner-unresolved: \"Investor\" matches no canonical owner — add an alias in shared/owners.mjs",
+          "owner-from-account-number: this report does not print the client name where it can be read; taken from other statements for 360 ONE Alternates Asset Management account 1000633, which all name Bharat Jaisinghani"
         ]
       },
       {
@@ -39125,6 +39096,37 @@
       "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
     }
   ],
+  "duplicateAifEarnings": [
+    {
+      "units": 990429.684,
+      "unitClass": "A3",
+      "totalIncome": 738106,
+      "netIncome": 711669,
+      "tds": -73811,
+      "owners": [
+        "bharat-jaisinghani",
+        "ajay-jaisinghani"
+      ],
+      "occurrences": [
+        {
+          "docKey": "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings",
+          "owner": "Bharat Jaisinghani",
+          "accountNo": "1000633",
+          "asOf": "2026-06-04",
+          "reportType": "statement-of-earnings"
+        },
+        {
+          "docKey": "360-one-alternates-asset-management-1000632-2026-06-04-statement-of-earnings",
+          "owner": "Ajay T Jaisinghani",
+          "accountNo": "1000632",
+          "asOf": "2026-06-04",
+          "reportType": "statement-of-earnings"
+        }
+      ],
+      "doubleCountRisk": 738106,
+      "resolution": "NOT netted — both are reported. Any consumer of `aifEarnings` must count this group once."
+    }
+  ],
   "unresolved": {
     "securitiesWithoutSymbol": [
       {
@@ -39259,12 +39261,6 @@
           "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
           "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
           "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
-        ]
-      },
-      {
-        "name": "Investor",
-        "docs": [
-          "360-one-alternates-asset-management-1000633-unknown-unknown"
         ]
       }
     ],

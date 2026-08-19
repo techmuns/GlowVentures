@@ -9,7 +9,7 @@ Generated — **do not edit by hand**.
 | --- | ---: |
 | Consolidated market value | 4,61,35,91,249.92 |
 | Positions | 309 |
-| Accounts | 30 |
+| Accounts | 31 |
 | Owners | 6 |
 | Newest as-of | 2026-08-11 |
 
@@ -18,6 +18,7 @@ Generated — **do not edit by hand**.
 | Account | Provider | Owner | Strategy | As of | Positions | Market value |
 | --- | --- | --- | --- | --- | ---: | ---: |
 | 1000632 | 360 ONE Alternates Asset Management | Ajay Jaisinghani | 360 ONE Special Opportunities Fund - Series 8 | 2026-05-18 | 0 | 0 |
+| 1000633 | 360 ONE Alternates Asset Management | Bharat Jaisinghani | 360 ONE Special Opportunities Fund - Series 8 | 2026-05-18 | 0 | 0 |
 | 37702 | 360 ONE Private Wealth | Ajay Jaisinghani | — | 2026-07-31 | 1 | 1,46,68,362.66 |
 | 60117 | 360 ONE Private Wealth | Bharat Jaisinghani | — | 2026-06-30 | 1 | 1,45,80,412.51 |
 | 3000048 | 3P Investment Managers | Ajay Jaisinghani | — | 2026-07-31 | 3 | 0 |
@@ -54,7 +55,7 @@ Generated — **do not edit by hand**.
 | --- | ---: | ---: | ---: |
 | Ajay Jaisinghani | 15 | 162 | 2,58,03,72,068.45 |
 | Ankita Jaisinghani | 6 | 85 | 71,20,76,133.02 |
-| Bharat Jaisinghani | 6 | 59 | 32,71,70,566.29 |
+| Bharat Jaisinghani | 7 | 59 | 32,71,70,566.29 |
 | Aarti Jaisinghani | 1 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 1 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 1 | 1 | 1,71,45,962.25 |
@@ -69,7 +70,6 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 
 | Account | Provider | Holder | Value on its own statement | Why it is out |
 | --- | --- | --- | ---: | --- |
-| 1000633 | 360 ONE Alternates Asset Management | Investor | — | no statement for it resolves to a canonical owner |
 | 1019265797 | Aditya Birla Sun Life Mutual Fund | Hope India Trust | 7,70,028.13 | holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 1038104611 | Aditya Birla Sun Life Mutual Fund | HOPE INDIA TRUST | 7,98,563.95 | holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,77,205.81 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
@@ -113,7 +113,9 @@ never guessed into the nearest plausible bucket.
 - account 1000632: no time-weighted return series in any statement
 - account 1000632: no flow block in any statement, so no value bridge
 - account 1000632: no external capital movements found, so no money-weighted return series
-- account 1000633 (360 ONE Alternates Asset Management) is NOT in the book: no statement for it resolves to a canonical owner. It is excluded rather than carried with an empty owner, because an account attributed to nobody is a worse figure than a named absence.
+- account 1000633: no time-weighted return series in any statement
+- account 1000633: no flow block in any statement, so no value bridge
+- account 1000633: no external capital movements found, so no money-weighted return series
 - account 360 ONE Private Wealth::37702: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `360-one-private-wealth-37702-2026-05-31-holdings`; its dated rows are still counted
 - account 360 ONE Private Wealth::37702: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `360-one-private-wealth-37702-2026-06-30-holdings`; its dated rows are still counted
 - account 360 ONE Private Wealth::37702: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
@@ -253,6 +255,6 @@ never guessed into the nearest plausible bucket.
 - account TVC263: no external capital movements found, so no money-weighted return series
 - 4 holding(s) reported under more than one member: both rows are carried, and 1,71,45,962.25 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 309 position(s), across 1 of 30 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 309 position(s), across 1 of 31 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

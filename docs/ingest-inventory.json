@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-19T09:30:20.410Z",
+  "generatedAt": "2026-08-19T10:19:15.544Z",
   "sourceDir": "source",
   "counts": {
     "files": 182,
     "pdfs": 180,
     "nonPdf": 2,
-    "classified": 171,
-    "unclassified": 11,
+    "classified": 179,
+    "unclassified": 3,
     "encrypted": 11,
     "fromArchives": 157,
     "archivesExpanded": 18,
@@ -1824,17 +1824,19 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Aditya Birla Sun Life Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "1019265797",
+      "asOfDate": "2026-07-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
@@ -1844,17 +1846,19 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Aditya Birla Sun Life Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "1038104611",
+      "asOfDate": "2026-07-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/HDFC Acctstmt_H_16180583.pdf",
@@ -1886,17 +1890,19 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Kotak Mahindra Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "4295974",
+      "asOfDate": "2026-07-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/Mirae 70413280453.pdf",
@@ -2714,17 +2720,19 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Aditya Birla Sun Life Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "1038104611",
+      "asOfDate": "2026-06-30",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
@@ -2734,17 +2742,19 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Aditya Birla Sun Life Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "1019265797",
+      "asOfDate": "2026-06-30",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
@@ -2776,17 +2786,19 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Kotak Mahindra Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "4295974",
+      "asOfDate": "2026-06-30",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
@@ -3664,17 +3676,19 @@
       "pages": 3,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
-      "accountNo": null,
+      "accountNo": "1000633",
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "distribution-notice",
+      "sections": [
+        "distribution-notice"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
@@ -3706,8 +3720,8 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "360 ONE Alternates Asset Management",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -3717,7 +3731,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "medium",
       "matchedBy": "generic keywords"
     },
     {
@@ -5491,6 +5505,89 @@
       },
       "fileCount": 41
     },
+    "Aditya Birla Sun Life Mutual Fund": {
+      "accounts": {
+        "1019265797": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
+                    "pages": 5,
+                    "size": "445.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-06-30": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
+                    "pages": 4,
+                    "size": "439.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        },
+        "1038104611": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
+                    "pages": 3,
+                    "size": "432.1 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-06-30": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+                    "pages": 2,
+                    "size": "429.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 4
+    },
     "HDFC Mutual Fund": {
       "accounts": {
         "16180583": {
@@ -5520,6 +5617,50 @@
                     "path": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
                     "pages": 3,
                     "size": "143.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 2
+    },
+    "Kotak Mahindra Mutual Fund": {
+      "accounts": {
+        "4295974": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
+                    "pages": 3,
+                    "size": "769.5 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-06-30": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
+                    "pages": 4,
+                    "size": "826.0 KB",
                     "confidence": "high",
                     "sections": [
                       "holdings"
@@ -6385,6 +6526,29 @@
           },
           "fileCount": 1
         },
+        "1000633": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "distribution-notice": [
+                  {
+                    "path": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+                    "pages": 3,
+                    "size": "689.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "distribution-notice"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
         "(unidentified)": {
           "owner": null,
           "strategy": null,
@@ -6392,6 +6556,15 @@
             "(unidentified)": {
               "reportTypes": {
                 "statement-of-earnings": [
+                  {
+                    "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+                    "pages": 2,
+                    "size": "875.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "statement-of-earnings"
+                    ]
+                  },
                   {
                     "path": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
                     "pages": 2,
@@ -6403,13 +6576,13 @@
                   }
                 ]
               },
-              "fileCount": 1
+              "fileCount": 2
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         }
       },
-      "fileCount": 2
+      "fileCount": 4
     },
     "Molecule Ventures LLP": {
       "accounts": {
@@ -7052,6 +7225,18 @@
       ]
     },
     {
+      "provider": "360 ONE Alternates Asset Management",
+      "account": "(unidentified)",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "statement-of-earnings"
+      ],
+      "duplicateTypes": [
+        "statement-of-earnings"
+      ]
+    },
+    {
       "provider": "Transition Venture Capital",
       "account": "(unidentified)",
       "asOf": "2026-03-31",
@@ -7065,126 +7250,6 @@
     }
   ],
   "unclassified": [
-    {
-      "path": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
-      "fileName": "ABSL 2-Acctstmt_B_1019265797.pdf",
-      "bytes": 455673,
-      "size": "445.0 KB",
-      "pages": 5,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
-      "fileName": "ABSL1-Acctstmt_B_1038104611.pdf",
-      "bytes": 442498,
-      "size": "432.1 KB",
-      "pages": 3,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
-      "fileName": "KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
-      "bytes": 787971,
-      "size": "769.5 KB",
-      "pages": 3,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
-      "fileName": "ABSL1 Acctstmt_B_1038104611 (1).pdf",
-      "bytes": 439722,
-      "size": "429.4 KB",
-      "pages": 2,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
-      "fileName": "ABSL2 Acctstmt_B_1019265797.pdf",
-      "bytes": 449521,
-      "size": "439.0 KB",
-      "pages": 4,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
-      "fileName": "KOTAK Acctstmt_K_4295974.pdf",
-      "bytes": 845863,
-      "size": "826.0 KB",
-      "pages": 4,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
     {
       "path": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "fileName": "360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
@@ -7200,48 +7265,6 @@
       "asOfDate": null,
       "reportType": "unknown",
       "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-      "fileName": "360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-      "bytes": 705832,
-      "size": "689.3 KB",
-      "pages": 3,
-      "fromArchive": false,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-      "fileName": "360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-      "bytes": 896154,
-      "size": "875.2 KB",
-      "pages": 2,
-      "fromArchive": false,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "statement-of-earnings",
-      "sections": [
-        "statement-of-earnings"
-      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
