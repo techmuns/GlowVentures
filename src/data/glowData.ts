@@ -19,12 +19,12 @@ export const BOOK_AS_OF = "2026-08-13";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-13",
   "listedValue": 1921083707.45,
-  "privateValue": 3189213715.79,
-  "totalValue": 5110297423.24,
-  "positionsCount": 313,
+  "privateValue": 3426669540.21,
+  "totalValue": 5347753247.66,
+  "positionsCount": 316,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 37
+  "accountsCount": 40
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -131,6 +131,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "provider": "Baring Private Equity India Fund",
+    "accountNo": "AIFM_BPEPF6_0584",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "Category II AIF — drawdown private equity fund",
+    "members": [],
+    "asOf": "2026-03-31",
+    "inceptionDate": null,
+    "custodian": "Baring Private Equity India Fund",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "buoyant-capital-103472",
     "provider": "Buoyant Capital",
     "accountNo": "103472",
@@ -173,6 +188,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-08-10",
     "inceptionDate": "2025-01-06",
     "custodian": "Carnelian Asset Management and Advisors Pvt Ltd",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "provider": "Carnelian Bharat Amritkaal Fund",
+    "accountNo": "4551",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "Category III AIF Scheme",
+    "members": [],
+    "asOf": "2026-07-31",
+    "inceptionDate": null,
+    "custodian": "Carnelian Bharat Amritkaal Fund",
     "noPositionsReason": null
   },
   {
@@ -383,6 +413,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-07-31",
     "inceptionDate": null,
     "custodian": "Motilal Oswal Founders Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "provider": "Neo Infra Income Opportunities Fund",
+    "accountNo": "9039920536",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV",
+    "members": [],
+    "asOf": "2026-06-30",
+    "inceptionDate": null,
+    "custodian": "Neo Infra Income Opportunities Fund",
     "noPositionsReason": null
   },
   {
@@ -761,6 +806,30 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "symbol": null,
+    "isin": "INF15Q422013",
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "quantity": 202.5,
+    "avgCost": null,
+    "currentPrice": 93047.9444,
+    "costBasis": 20250000,
+    "marketValue": 18842208.74,
+    "unrealizedPnL": -1407791.26,
+    "returnPct": -6.95,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
     "security": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4",
     "symbol": null,
@@ -1126,6 +1195,29 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "accruedIncome": 0,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "carnelian-bharat-amritkaal-fund",
+    "security": "Carnelian Bharat Amritkaal Fund",
+    "symbol": null,
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "quantity": 12993094.825,
+    "avgCost": null,
+    "currentPrice": 12.554,
+    "costBasis": 150002925.1,
+    "marketValue": 163115312.43,
+    "unrealizedPnL": 13112387.33,
+    "returnPct": 8.74,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
@@ -4819,6 +4911,29 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5",
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "symbol": null,
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "quantity": 485837,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": 50000000,
+    "marketValue": 55498303.25,
+    "unrealizedPnL": 5498303.25,
+    "returnPct": 11,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "symbol": null,
@@ -7971,6 +8086,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ankita Jaisinghani · Baring AIFM_BPEPF6_0584",
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ankita Jaisinghani · Buoyant 103472",
     "accountId": "buoyant-capital-103472",
     "ownerId": "ankita-jaisinghani",
@@ -8010,6 +8139,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "periodTo": "2026-08-10",
     "lots": 27,
     "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-capital-gain"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Carnelian 4551",
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
   },
   {
     "entity": "Ankita Jaisinghani · Goldstandard 100022",
@@ -8192,6 +8335,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
   {
     "entity": "Ajay Jaisinghani · Motilal 90410016104",
     "accountId": "motilal-oswal-founders-fund-90410016104",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · Neo 9039920536",
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
     "ownerId": "ajay-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
@@ -10874,6 +11031,30 @@ export const BOOK_CORPORATE_ACTIONS: CorporateAction[] = [
  */
 export const BOOK_COMMITMENTS: Commitment[] = [
   {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "name": "Baring Private Equity India Fund",
+    "provider": "Baring Private Equity India Fund",
+    "ownerId": "ankita-jaisinghani",
+    "asOf": "2026-03-31",
+    "committed": 50000000,
+    "drawn": 20250000,
+    "undrawn": 29750000,
+    "distributed": null,
+    "arithmeticHolds": true
+  },
+  {
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "name": "Carnelian Bharat Amritkaal Fund",
+    "provider": "Carnelian Bharat Amritkaal Fund",
+    "ownerId": "ankita-jaisinghani",
+    "asOf": "2026-07-31",
+    "committed": 150000000,
+    "drawn": 150000000,
+    "undrawn": 0,
+    "distributed": null,
+    "arithmeticHolds": true
+  },
+  {
     "accountId": "india-sme-investments-175962",
     "name": "India SME Investments",
     "provider": "India SME Investments",
@@ -10932,6 +11113,18 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "undrawn": null,
     "distributed": null,
     "arithmeticHolds": null
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "name": "Neo Infra Income Opportunities Fund",
+    "provider": "Neo Infra Income Opportunities Fund",
+    "ownerId": "ajay-jaisinghani",
+    "asOf": "2026-06-30",
+    "committed": 50000000,
+    "drawn": 50000000,
+    "undrawn": 0,
+    "distributed": 4948221,
+    "arithmeticHolds": true
   },
   {
     "accountId": "sky-capital-rising-titans-fund-SKY003",

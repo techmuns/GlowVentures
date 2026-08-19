@@ -60,6 +60,9 @@ export const PROVIDERS = {
   threeP: "3P Investment Managers",
   indiaSme: "India SME Investments",
   skyCapital: "Sky Capital Rising Titans Fund",
+  neoInfra: "Neo Infra Income Opportunities Fund",
+  baringPe: "Baring Private Equity India Fund",
+  amritkaal: "Carnelian Bharat Amritkaal Fund",
 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -381,7 +384,214 @@ const LAYOUTS = [
     },
     note: "an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
   },
+  {
+    key: "neoInfra",
+    engagement: "AIF",
+    providerEngagement: "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV",
+    provider: PROVIDERS.neoInfra,
+    match: /Neo\s+Infra\s+Income\s+Opportunities\s+Fund/i,
+    /**
+     * AIF by LEGAL FORM, which is the axis `assetClass` answers. The family's
+     * consolidated review files this fund under **Debt → High Yield Fund**,
+     * which is its EXPOSURE, and the two are different questions: `isFundVehicle`
+     * has to keep treating it as a wrapper so it stays out of every
+     * company-level view. The review's classification is recorded in the warning
+     * below rather than overwriting the legal one.
+     */
+    assetClass: "AIF",
+    /**
+     * THIS FUND VALUES ITSELF, and it prints the valuation rather than a price
+     * that reproduces it. 4,85,837 units at the printed NAV of ₹114.24 derive
+     * ₹5,55,02,019 against a printed valuation of ₹5,54,98,303.25 — ₹3,716
+     * apart, which is more than a two-decimal NAV can explain (±₹2,429 on this
+     * unit count). The valuation is the fund's own primitive and is taken as the
+     * market value; the NAV is carried as a CHECK and named in a warning,
+     * exactly as 360 ONE's AIF units are.
+     */
+    rowsFrom: (text) => {
+      const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+      const units = at(NEO_ROWS.pending, 3);
+      const valuation = at(NEO_ROWS.contribution, 3);
+      if (units == null && valuation == null) return [];
+      return [{
+        quantity: units,
+        printedValue: valuation,
+        totalCost: at(NEO_ROWS.contribution, 1),
+        nav: at(NEO_ROWS.capital, 3),
+        faceValue: at(NEO_ROWS.undrawn, 3),
+      }];
+    },
+    read: (r) => r,
+    security: (text) => {
+      const k = (/Class:\s*([A-Z]\d?)/i.exec(text) ?? [])[1];
+      return k ? `Neo Infra Income Opportunities Fund I — Class ${k}` : "Neo Infra Income Opportunities Fund I";
+    },
+    folio: (text) => (/Folio No:\s*(\d{4,})/i.exec(text) ?? [])[1] ?? null,
+    holder: (text) => (/Statement of Account As of:[^\n]*\n\s*([A-Z][^\n]{2,60})/.exec(text) ?? [])[1]?.trim() ?? null,
+    /**
+     * THE AS-OF IS THE VALUATION DATE, NOT THE STATEMENT DATE. The header reads
+     * "As of: 31 Jul-26" and the note under it says the NAV and valuation are as
+     * of 30-Jun-2026 and are struck quarterly. `asOf` governs what the figure is
+     * worth, so it takes the date the figure was struck — and a contribution
+     * made after it is, in the fund's own words, not in the valuation.
+     */
+    asOf: (text) => toIso((/NAV\/unit and Valuation is as of\s*(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1])
+      ?? toIso((/Statement of Account As of:\s*(\d{1,2}\s*[A-Za-z]{3}-\d{2,4})/i.exec(text) ?? [])[1]),
+    commitmentFrom: (text) => {
+      const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+      return {
+        committed: at(NEO_ROWS.capital, 1),
+        drawn: at(NEO_ROWS.contribution, 1),
+        undrawn: at(NEO_ROWS.undrawn, 1),
+        distributed: at(NEO_ROWS.pending, 2),
+      };
+    },
+    verify: (text, holdings, warn) => {
+      const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+      const committed = at(NEO_ROWS.capital, 1), drawn = at(NEO_ROWS.contribution, 1), undrawn = at(NEO_ROWS.undrawn, 1);
+      if ([committed, drawn, undrawn].every((v) => v != null) && Math.abs(committed - drawn - undrawn) > 1) {
+        warn("commitment-does-not-tie",
+          `commitment ${committed} less drawn ${drawn} is not the printed undrawn ${undrawn}`);
+      }
+      const h = holdings[0];
+      const nav = at(NEO_ROWS.capital, 3);
+      if (h && nav != null && isNumLocal(h.quantity) && isNumLocal(h.printed?.marketValue)) {
+        const derived = Math.round(h.quantity * nav * 100) / 100;
+        const delta = Math.round((derived - h.printed.marketValue) * 100) / 100;
+        if (Math.abs(delta) > Math.max(1, h.quantity * 0.005)) {
+          warn("nav-does-not-reproduce-valuation",
+            `${h.quantity} units at the printed NAV of ${nav} derive ${derived} against a printed valuation of ${h.printed.marketValue} (${delta}). The valuation is used; the NAV is not a price this reader can multiply.`);
+        }
+      }
+    },
+    note: "the fund's own quarterly valuation is the primitive: market value is the printed Valuation (Net), not units x the printed NAV, which does not reproduce it. The family's consolidated review classifies this fund under Debt / High Yield Fund — its EXPOSURE, where `assetClass` records its legal form",
+  },
+  {
+    key: "baringPe",
+    engagement: "AIF",
+    providerEngagement: "Category II AIF — drawdown private equity fund",
+    provider: PROVIDERS.baringPe,
+    match: /Baring\s+Private\s+Equity\s+India\s+Fund/i,
+    assetClass: "AIF",
+    /**
+     * A DRAWDOWN PE FUND THAT STRIKES ITS OWN NAV, so unlike Sky Capital and
+     * India SME this one HAS a value: 202.50 units at ₹93,047.9444.
+     *
+     * The statement lays its commitment block out as labelled algebra —
+     * `Capital Commitment A`, `Capital Contribution C`, `Undrawn Capital
+     * G = A - B + E` — and each figure is read off its OWN label rather than by
+     * position, so a row inserted between them cannot shift a column.
+     */
+    rowsFrom: (text) => {
+      const units = n((/Balance Units I = H \/ Face Value\s*-\s*([\d,]+\.?\d*)/i.exec(text) ?? [])[1]);
+      const nav = n((/NAV per unit\s*-\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]);
+      if (units == null && nav == null) return [];
+      return [{
+        quantity: units,
+        marketPrice: nav,
+        totalCost: n((/Capital Contribution C\s+([\d,]+)/i.exec(text) ?? [])[1]),
+        isin: (/Class\s+[A-Z]\d?\s*\/\s*(INF[A-Z0-9]{9})/i.exec(text) ?? [])[1] ?? null,
+      }];
+    },
+    read: (r) => r,
+    security: (text) => {
+      const k = (/Class of Units\s*\/[\s\S]{0,40}?Class\s+([A-Z]\d?)\s*\//i.exec(text) ?? [])[1];
+      return k ? `Baring Private Equity India Fund 6 — Class ${k}` : "Baring Private Equity India Fund 6";
+    },
+    folio: (text) => (/Folio\s*#\s*([A-Za-z0-9_]+)\s*:/i.exec(text) ?? [])[1] ?? null,
+    holder: (text) => (/Folio\s*#\s*[A-Za-z0-9_]+\s*:\s*([^\n]+)/i.exec(text) ?? [])[1]?.trim() ?? null,
+    asOf: (text) => toIso((/Statement of Account as on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]),
+    commitmentFrom: (text) => ({
+      committed: n((/Capital Commitment A\s+([\d,]+)/i.exec(text) ?? [])[1]),
+      drawn: n((/Capital Contribution C\s+([\d,]+)/i.exec(text) ?? [])[1]),
+      undrawn: n((/Undrawn Capital G[^\n]*?\s([\d,]+)\s/i.exec(text) ?? [])[1]),
+    }),
+    /** The statement's own algebra: A − B + E = G, with B = C where nothing is pending. */
+    verify: (text, holdings, warn) => {
+      const a = n((/Capital Commitment A\s+([\d,]+)/i.exec(text) ?? [])[1]);
+      const c = n((/Capital Contribution C\s+([\d,]+)/i.exec(text) ?? [])[1]);
+      const g = n((/Undrawn Capital G[^\n]*?\s([\d,]+)\s/i.exec(text) ?? [])[1]);
+      if ([a, c, g].every((v) => v != null) && Math.abs(a - c - g) > 1) {
+        warn("commitment-does-not-tie", `commitment ${a} less contribution ${c} is not the printed undrawn ${g}`);
+      }
+    },
+    note: "the family's consolidated review files this fund under Alternate / PE Funds — its EXPOSURE, where `assetClass` records its legal form as a Category II AIF",
+  },
+  {
+    key: "amritkaal",
+    engagement: "AIF",
+    providerEngagement: "Category III AIF Scheme",
+    provider: PROVIDERS.amritkaal,
+    /**
+     * A DIFFERENT VEHICLE FROM THE CARNELIAN PMS MANDATE, and the classifier has
+     * to test this name before `CARNELIAN ASSET MANAGEMENT` or the fund lands in
+     * the discretionary account. Same manager, same family member, two products.
+     */
+    match: /CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i,
+    assetClass: "AIF",
+    rowsFrom: (text) => {
+      const units = n((/Closing Unit Balance\s*:[\s\S]{0,200}?\n\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]);
+      const nav = n((/Pre tax NAV\s*:\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]);
+      if (units == null && nav == null) return [];
+      return [{
+        quantity: units,
+        marketPrice: nav,
+        // AMOUNT CONTRIBUTED, not the capital called: they differ by ₹2,925.10
+        // of mutual-fund income the scheme reinvested, and the contributed
+        // figure is what the units actually cost.
+        totalCost: n((/Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
+        printedValue: n((/Closing Value\s*:\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]),
+      }];
+    },
+    read: (r) => r,
+    security: "Carnelian Bharat Amritkaal Fund",
+    folio: (text) => (/Folio No\s*:\s*(\d+)/i.exec(text) ?? [])[1] ?? null,
+    /**
+     * The holder sits on the line under the Personal Information header, with
+     * the NEXT column's label running straight on after it — `ANKITA BHARAT
+     * JAISINGHANI Bank Account Details`. Cut at that label, not at whitespace:
+     * the flat text collapses runs of spaces, so a `\s{2,}` cut took one letter
+     * of "Bank" with the name and produced "ANKITA BHARAT JAISINGHANI B".
+     */
+    holder: (text) => (/Personal Information Folio No[^\n]*\n\s*([A-Z][A-Z .]*?)(?=\s+(?:Bank|Address|Email|Mobile|Telephone|Joint|Nominee|DP|Client|Distributor)\b|\s*$)/m
+      .exec(text) ?? [])[1]?.trim() ?? null,
+    /**
+     * THE SUMMARY DATE, NOT THE STATEMENT DATE. It is printed 06-Aug-2026 and
+     * its closing balance is struck `as on 31-Jul-2026`; `asOf` follows the
+     * figure, the same rule NEO's valuation date follows.
+     */
+    asOf: (text) => toIso((/Summary as on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1])
+      ?? toIso((/Statement Date\s*:\s*(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]),
+    commitmentFrom: (text) => ({
+      committed: n((/Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
+      drawn: n((/Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*[\d,]+\.\d{2}\s+([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
+      undrawn: n((/Balance Uncalled Capital \(INR\)[\s\S]{0,120}?\n\s*([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
+    }),
+    note: "the family's consolidated review files this fund under Equity / Thematic-Tactical — its EXPOSURE, where `assetClass` records its legal form as a Category III AIF. Its units stay whole either way; it is never spread across the sectors it invests in",
+  },
 ];
+
+/** Local numeric guard — `verify` runs before the document layer is involved. */
+const isNumLocal = (v) => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * NEO INFRA's summary block is a THREE-COLUMN GRID: a line of three labels, then
+ * a line of the three values under them.
+ *
+ * Each row is matched with ALL THREE of its labels in order, so a column that
+ * moves fails to match instead of quietly handing back its neighbour's figure —
+ * the same rule `lib/table.mjs` applies to the statement PDFs, written out by
+ * hand because this block is prose-shaped rather than a table.
+ */
+const NEO_VALUE = String.raw`(?:₹\s*)?(-?[\d,]+(?:\.\d+)?)(?:\s*\(\s*[\d.]+%\s*\))?`;
+const neoTrio = (a, b, c) =>
+  new RegExp(`${a}\\s+${b}\\s+${c}\\s*\\n\\s*${NEO_VALUE}\\s+${NEO_VALUE}\\s+${NEO_VALUE}`);
+const NEO_ROWS = {
+  capital: neoTrio("Capital Commitment", "Principal Payout", String.raw`NAV \(Net\)`),
+  contribution: neoTrio("Gross Capital Contribution", String.raw`Income Payout \(Gross\)`, String.raw`Valuation \(Net\)`),
+  pending: neoTrio("Pending Drawdown", "Total Payout", "Units"),
+  undrawn: neoTrio("Undrawn Commitment", "Net Equalisation", "Face Value"),
+};
 
 /**
  * One UNIT ALLOTMENT line: scheme, class, series, ISIN, face value, units, date.

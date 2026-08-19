@@ -364,6 +364,9 @@ for (const provider of [
   "3P Investment Managers",
   "India SME Investments",
   "Sky Capital Rising Titans Fund",
+  "Neo Infra Income Opportunities Fund",
+  "Baring Private Equity India Fund",
+  "Carnelian Bharat Amritkaal Fund",
 ]) {
   PRECEDENCE[provider] = {
     holdings: { reportType: "holdings", note: "the fund's own account statement — the only document this issuer sends." },

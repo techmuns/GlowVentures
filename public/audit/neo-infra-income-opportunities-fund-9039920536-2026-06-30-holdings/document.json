@@ -1,0 +1,154 @@
+{
+ "docKey": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings",
+ "provider": "Neo Infra Income Opportunities Fund",
+ "accountNo": "9039920536",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Ajay Jaisinghani",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": "AIF",
+ "providerEngagement": "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV",
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
+ "pages": 4,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "nav-does-not-reproduce-valuation",
+   "detail": "485837 units at the printed NAV of 114.24 derive 55502018.88 against a printed valuation of 55498303.25 (3715.63). The valuation is used; the NAV is not a price this reader can multiply."
+  },
+  {
+   "code": "statement-basis",
+   "detail": "the fund's own quarterly valuation is the primitive: market value is the printed Valuation (Net), not units x the printed NAV, which does not reproduce it. The family's consolidated review classifies this fund under Debt / High Yield Fund — its EXPOSURE, where `assetClass` records its legal form"
+  }
+ ],
+ "holdings": [
+  {
+   "security": "Neo Infra Income Opportunities Fund I — Class A5",
+   "securityKey": "neo-infra-income-opportunities-fund-i-class-a5",
+   "isin": null,
+   "symbol": null,
+   "printedSecurity": null,
+   "assetClass": "AIF",
+   "providerSector": null,
+   "manager": null,
+   "memberId": null,
+   "quantity": 485837,
+   "unitCost": null,
+   "totalCost": 50000000,
+   "marketPrice": null,
+   "accruedIncome": null,
+   "distributedIncome": null,
+   "realized": null,
+   "positionIrrPct": null,
+   "benchmarkIrrPct": null,
+   "absoluteYieldPct": null,
+   "annualizedYieldPct": null,
+   "priceAsOn": null,
+   "marketValue": 55498303.25,
+   "gainLoss": 5498303.25,
+   "pctGainLoss": 11,
+   "pctAssets": 100,
+   "unrealized": 5498303.25,
+   "printed": {
+    "marketValue": 55498303.25,
+    "gainLoss": null,
+    "pctGainLoss": null,
+    "pctAssets": null,
+    "unrealized": null
+   },
+   "marketValueFromPrinted": true,
+   "dedupeGroup": null,
+   "alsoReportedUnder": [],
+   "source": null
+  }
+ ],
+ "totals": {
+  "equityMarketValue": null,
+  "cashValue": null,
+  "totalMarketValue": 55498303.25,
+  "equityCost": null,
+  "totalCost": 50000000,
+  "gainLoss": null,
+  "pctGainLoss": null,
+  "positionCount": 1,
+  "declaredAum": null,
+  "source": null
+ },
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": "AACPJ2099J",
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": {
+  "total": 50000000,
+  "contributed": 50000000,
+  "undrawn": 0,
+  "distributed": 4948221
+ },
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 716.97,
+   "parts": [
+    "545",
+    "55",
+    "490"
+   ],
+   "joined": "54555490",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 603.57,
+   "parts": [
+    "628",
+    "62",
+    "566"
+   ],
+   "joined": "62862566",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 535.602,
+   "parts": [
+    "455",
+    "46",
+    "409"
+   ],
+   "joined": "45546409",
+   "page": 3
+  }
+ ],
+ "derivedPortfolioTotal": 55498303.25
+}
