@@ -327,7 +327,7 @@ export const PRECEDENCE = {
 
 /**
  * THE SINGLE-SCHEME FUND STATEMENTS — Buoyant, Helios, Motilal Oswal's Founders
- * and Active Momentum funds, 3P and India SME.
+ * and Active Momentum funds, 3P, India SME and Sky Capital.
  *
  * ONE DOCUMENT EACH, so there is nothing to choose between — and that is
  * exactly why the entry has to exist. `authoritative()` returns null for a
@@ -345,6 +345,7 @@ for (const provider of [
   "Motilal Oswal Active Momentum Fund",
   "3P Investment Managers",
   "India SME Investments",
+  "Sky Capital Rising Titans Fund",
 ]) {
   PRECEDENCE[provider] = {
     holdings: { reportType: "holdings", note: "the fund's own account statement — the only document this issuer sends." },

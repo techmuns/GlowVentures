@@ -1,0 +1,166 @@
+{
+ "name": "expenses",
+ "rows": [
+  [
+   "date",
+   "settleDate",
+   "tranRef",
+   "detail",
+   "notes",
+   "amount"
+  ],
+  [
+   "Expenses - Paid"
+  ],
+  [
+   "30/04/2026",
+   "12/06/2026",
+   "612321",
+   "Management Fees",
+   "612321",
+   "61,006.48"
+  ],
+  [
+   "30/04/2026",
+   "20/07/2026",
+   "Custody Charges",
+   "Custody Charges For April 2026",
+   "1,158.70"
+  ],
+  [
+   "30/04/2026",
+   "20/07/2026",
+   "Fund Accountant Fees / Other Expenses",
+   "Fund Accountant Fees April 2026",
+   "1,129.74"
+  ],
+  [
+   "20/05/2026",
+   "21/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "5,050.00"
+  ],
+  [
+   "25/05/2026",
+   "25/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "5,000.00"
+  ],
+  [
+   "31/05/2026",
+   "12/06/2026",
+   "623391",
+   "Management Fees",
+   "623391",
+   "72,262.86"
+  ],
+  [
+   "31/05/2026",
+   "20/07/2026",
+   "Custody Charges",
+   "Custody Charges For May 2026",
+   "1,148.78"
+  ],
+  [
+   "31/05/2026",
+   "20/07/2026",
+   "Fund Accountant Fees / Other Expenses",
+   "Fund Accountant Fees May 2026",
+   "1,156.21"
+  ],
+  [
+   "02/06/2026",
+   "03/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "3,522.52"
+  ],
+  [
+   "15/06/2026",
+   "15/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "2,000.00"
+  ],
+  [
+   "30/06/2026",
+   "20/07/2026",
+   "Custody Charges",
+   "Custody Charges For June 2026",
+   "1,198.09"
+  ],
+  [
+   "30/06/2026",
+   "20/07/2026",
+   "Fund Accountant Fees / Other Expenses",
+   "Fund Accountant Fees June 2026",
+   "1,243.36"
+  ],
+  [
+   "30/06/2026",
+   "20/07/2026",
+   "625222",
+   "Management Fees",
+   "625222",
+   "77,709.75"
+  ],
+  [
+   "13/07/2026",
+   "14/07/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "3,165.90"
+  ],
+  [
+   "15/07/2026",
+   "15/07/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "3,957.29"
+  ],
+  [
+   "Total Expenses - Paid",
+   "2,40,709.67"
+  ],
+  [
+   "14/08/2026",
+   "1"
+  ],
+  [
+   "Expenses - Payable"
+  ],
+  [
+   "31/07/2026",
+   "Custody Charges",
+   "Custody Charges For July 2026",
+   "1,291.63"
+  ],
+  [
+   "31/07/2026",
+   "Fund Accountant Fees / Other Expenses",
+   "Fund Accountant Fees July 2026",
+   "1,311.26"
+  ],
+  [
+   "31/07/2026",
+   "646643",
+   "Management Fees",
+   "646643",
+   "81,954.06"
+  ],
+  [
+   "Total Expenses - Payable",
+   "84,556.96"
+  ],
+  [
+   "Total",
+   "3,25,266.63"
+  ],
+  [
+   "14/08/2026",
+   "2"
+  ]
+ ]
+}

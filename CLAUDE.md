@@ -191,12 +191,12 @@ spreadsheet. Four things follow, and they are load-bearing:
 
 **What is actually in `source/` today.** THREE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/` — two statements that arrived after it. Twenty-one issuers, 31
-accounts in the book, six holders and two family trusts, 43 files expanding to
-182 — of which **187 documents** are extracted, 168 read fully, 19 partially and
-**none fail**. Every encrypted statement in the drop now opens; what reads only
-partially is named below, and `source/README.md` carries the rule for adding the
-next delivery.
+`august-2026-b/` and `august-2026-c/` — statements that arrived after it.
+Twenty-two issuers, 35 accounts in the book, six holders and two family trusts,
+46 files expanding to 222 — of which **226 documents** are extracted, 189 read
+fully, 37 partially and **none fail**. Every encrypted statement in the drop now
+opens; what reads only partially is named below, and `source/README.md` carries
+the rule for adding the next delivery.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
 `LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
@@ -224,9 +224,9 @@ every ZIP already at the top level.
 | SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
 | Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | SVAN Investment Managers | 8710090 | Bharat Jaisinghani | **2026-07-31** | **₹10.70 Cr** |
-| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-07-06 | ₹9.24 Cr |
+| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | **2026-08-13** | **₹20.29 Cr** |
 | Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
-| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-07-06 | ₹6.55 Cr |
+| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | **2026-08-13** | **₹6.50 Cr** |
 | Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
 | Transition Venture Capital | TVC262 / TVC263 | Bharat Jaisinghani Family Trust 2 / 3 | 2026-03-31 | ₹1.71 Cr each* |
 | 360 ONE Private Wealth | CRN37702 / CRN60117 | Ajay / Bharat Jaisinghani | 2026-07-31 / 06-30 | ₹1.47 / ₹1.46 Cr |
@@ -236,6 +236,7 @@ every ZIP already at the top level.
 | 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income only) |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani (jt. Ankita) | 2026-08-06 | ₹0 (redeemed) |
 | India SME Investments | 175962 / 175964 / 177302 | Ajay / Bharat / Ankita | 2026-06-30 | — (no NAV published) |
+| Sky Capital Rising Titans Fund | SKY003 / SKY022 / SKY023 / SKY024 | Bharat / Ajay / BJ Trust 2 / BJ Trust 3 | **2026-07-31** | — (no NAV published) |
 
 **THIS COLUMN WAS TEN TIMES THE BOOK.** Every row read ₹976.8 Cr, ₹103.8 Cr,
 ₹11.2 Cr — while the consolidated figure below it, which is generated, was
@@ -248,7 +249,7 @@ three India SME folios — are in it.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹461.36 Cr**: listed ₹181.12 Cr, private ₹280.24 Cr. The split is
+**Consolidated ₹472.35 Cr**: listed ₹192.11 Cr, private ₹280.24 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -256,9 +257,10 @@ being reported under a label that did not describe it.
 
 Six PMS mandates run on one reporting system (Goldstandard, Green Lantern,
 Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-III
-AIF folios; two are drawdown AIF capital accounts held by TRUSTS; two are 360 ONE
-Distribution engagements; one is a self-directed demat account; one is a joint
-mutual-fund folio.
+AIF folios; six are drawdown AIF capital accounts, four of them Sky Capital's
+angel-fund folios and two held by TRUSTS; two are 360 ONE Distribution
+engagements; one is a self-directed demat account; one is a joint mutual-fund
+folio.
 
 **Read completely, and deliberately NOT in the book.** Four mutual-fund folios
 (₹32,70,831.46) are held by `HOPE INDIA TRUST` — a separate taxpayer, filed by
@@ -292,7 +294,7 @@ its own file because the layouts share nothing:
 
 | Reader | Documents | What it reads |
 | --- | ---: | --- |
-| `providers/altFundStatements.mjs` | 8 | six single-scheme fund statements — Buoyant, Helios, Motilal Oswal's Founders and Active Momentum funds, 3P and India SME. One reader, six declared layouts, each keyed on the FUND rather than the distributor whose stationery it arrives on |
+| `providers/altFundStatements.mjs` | 24 | seven single-scheme fund statements — Buoyant, Helios, Motilal Oswal's Founders and Active Momentum funds, 3P, India SME and Sky Capital's angel fund. One reader, seven declared layouts, each keyed on the FUND rather than the distributor whose stationery it arrives on |
 | `providers/pmsStatements.mjs` | 76 | the house statement sets — six managers, one reporting system |
 | `providers/pmsInvestorReport.mjs` | 5 | the SEBI PMS INVESTOR REPORT, keyed on the REPORT TYPE rather than the house: SVAN issues it monthly and Green Lantern quarterly, and it is one prescribed layout |
 | `providers/threeSixtyOne.mjs` | 4 | 360 ONE Private Wealth's client-level PORTFOLIO ANALYSIS REPORT |
@@ -466,6 +468,134 @@ the pipeline was run over the unchanged `source/` and `public/audit/`
 regenerated byte-identically — so every difference afterwards belongs to the two
 new statements and to nothing else. Without that the diff is 53 files and no way
 to tell a fix from a regression.
+
+### The `august-2026-c` delivery — a new manager, and three defects it found
+
+Five files. **Two were byte-identical** to statements already in
+`source/august-2026/` (LKP 1, Carnelian Ajay) and were not copied in again. The
+other three:
+
+| File | What it is |
+| --- | --- |
+| `SKY CAPITAL RISING FUND.zip` | 16 statements from an issuer this pipeline had never seen |
+| `VEC - AJAY.zip` | V.E.C 128005, 2026-07-06 → **2026-08-13** |
+| `VEC - ANKITA.zip` | V.E.C 128004, 2026-07-06 → **2026-08-13** |
+
+V.E.C 128005 moves **₹9.24 Cr → ₹20.29 Cr**, and that is real: its own capital
+register prints Fund Deposits of ₹10.65 Cr on 28 July and ₹59 L on 29 July. The
+consolidated total moves ₹461.36 Cr → **₹472.35 Cr**, which is those two
+accounts and nothing else, to the rupee.
+
+**SKY CAPITAL RISING TITANS FUND I** — a Category I AIF (Angel Fund), four
+folios, four month-ends each. It is a SEVENTH declared layout in
+`altFundStatements.mjs` rather than a provider file of its own: one reader, one
+layout per FUND, which is what that file exists for.
+
+| Folio | Holder | Series | Units | Drawn | Uncalled |
+| --- | --- | --- | ---: | ---: | ---: |
+| SKY003 | Bharat Jaisinghani | Hudle A1 + TED A2 | 17,000 + 285 | ₹1.73 Cr | NIL |
+| SKY022 | Ajay Jaisinghani | Oncare A3 | 15,000 | ₹1.50 Cr | NIL |
+| SKY023 | Bharat Jaisinghani Family Trust 2 | Oncare A3 | 7,500 | ₹75 L | NIL |
+| SKY024 | Bharat Jaisinghani Family Trust 3 | Oncare A3 | 7,500 | ₹75 L | NIL |
+
+**IT VALUES NOTHING**, like India SME: commitment, drawdowns, units and face
+value, and no NAV anywhere on either page. So ₹4.73 Cr of drawn capital is in
+the archive and OUT of the consolidated total, four accounts carry zero
+positions with the reason printed, and the book gains 4 accounts and 0
+positions.
+
+**ONE HOLDING PER SERIES, NOT PER ALLOTMENT AND NOT PER FOLIO.** Bharat's folio
+prints five allotment lines across two startups; three folios hold the SAME
+Oncare series. Per allotment would put five rows on one position; per folio
+would merge Hudle with TED and stop the three Oncare folios sharing a
+securityKey. Cost per series is units × the face value the row prints, and
+`verify` ties the sum to the printed Total Drawdown on every folio — two printed
+columns and a printed total, not an allocation nobody published. These are also
+the first statements in the book to print a real ISIN per series.
+
+**A FOURTH CHARACTER DECIDES WHETHER A NAME IS A PERSON.** `trimPersonName`
+turned `Bharat Jaisinghani Family Trust 2` and `Trust 3` into plain "Bharat
+Jaisinghani" — two trusts and the man they are named after, one owner, every
+per-entity total wrong. `investor()` now takes the holder VERBATIM when the
+PAN's fourth character is not `P`. `transitionVenture.mjs` reached the same
+conclusion for the same two trusts and hard-coded it; this derives it from the
+statement.
+
+**AND THE HOLDER ANCHOR IS LOAD-BEARING.** `\bName` matched the "Name" inside
+`Fund Name Sky Capital Rising Titans Fund I`, so every folio came back owned by
+the fund. Three of the four still resolved — `resolveOwner` tries the PAN first
+— and Bharat's did not, because his PAN is deliberately withheld from the
+registry. A fallback masked the bug on three folios out of four.
+
+### THE FILENAME OUTRANKED THE LETTERHEAD, AND AN ACCOUNT CHANGED MANAGER
+
+V.E.C Assago has always filed as `VECBES0004_145052_…`. This delivery names the
+same account `G128005_145052_…` — and `^G\d` is GOLDSTANDARD's prefix. All 23
+new V.E.C documents, two accounts and ₹26.8 Cr of Ajay's and Ankita's money were
+filed under Goldstandard Wealth.
+
+Two things were wrong at once in `pmsStatements.mjs`:
+
+- `detectProvider` tests the letterhead FIRST — and `extract()` called it with
+  **`text: ""`**, so that branch could never fire and the decision always fell
+  through to the filename. The pages were already in hand.
+- The order then put `filePrefix` above the classifier's own answer. A filename
+  is the WEAKEST evidence here: these six managers issue from one reporting
+  system and the prefix is an account code, not a house. It is the last resort
+  now, which is what it was written to be — the appraisal used to carry no
+  letterhead at all.
+
+Every one of those documents prints `V.E.C ASSAGO CAPITAL MANAGEMENT LLP` on
+page one. This is §"a phrase in a footnote is not what a document is", one layer
+down: **a filename is not a letterhead.**
+
+### ₹11.5 Cr OF UNCALLED CAPITAL WAS BEING DROPPED ON A FIELD NAME
+
+`transitionVenture.mjs` emits `commitment: { total, contributed, … }`;
+`altFundStatements.mjs` emits `{ committed, drawn, … }`. `build-book.mjs` gates
+on `isNum(c.total)`, so every commitment from the second shape fell out without
+a word — **India SME's ₹6.9 Cr, ₹2.3 Cr and ₹2.3 Cr of genuinely uncalled
+capital** among them. The dry-powder register held ₹1.5 Cr against a real
+₹13.0 Cr, which is exactly the failure it was built to stop: *denying a figure is
+worse than omitting it, because a reader plans around it.*
+
+`makeDocument` normalises both spellings to one shape at the boundary, so a
+third reader cannot repeat it. Field-by-field `??` and never `?? 0`: Motilal
+Oswal's Founders Fund prints a commitment and a drawdown and NO undrawn figure,
+and a zero there would assert the fund has nothing left to call. Sky Capital's
+`Uncalled Commitment NIL` is the opposite case and keeps its measured zero. The
+register is ten entries now.
+
+### Check (c) was flagging one folio against itself
+
+`duplicateHoldings` keyed on `account@asOf`, which lets ONE account's monthly
+reissues satisfy a check whose own heading is "across owners". Sky Capital
+reissues an unchanged statement every month, so Bharat's Hudle position appeared
+four times at identical figures and was reported as a duplicate of itself; the
+HDFC folio's two issues were doing the same, already. The guard is distinct
+ACCOUNTS now, and the five groups that remain are all real — the two Transition
+trusts, 360 ONE Special Opportunities under both CRNs, Sky's Oncare under both
+trusts, and India SME Fund II under Ankita's and Bharat's folios.
+
+### Two settlement deltas stand, and both are inside the printed precision
+
+`transaction settlement` is held to ±₹1 on the house statements, deliberately:
+that tightness is what caught brokerage being a per-unit RATE on all 256 rows.
+Two rows now exceed it, and neither is an extraction error — both are the
+residual of deriving a settlement from a price and a rate the report prints to
+FOUR decimals:
+
+```
+V.E.C 128005  SBFC Finance   53,846 × 90.6262 + 0.1024/unit + STT   delta −1.77   bound ±5.38
+Carnelian     Bandhan Bank   40,130 × 166.1882 + 0.1163/unit − STT  delta +1.27   bound ±4.01
+```
+
+The bound is `quantity × 1e-4` — half of the last printed decimal on each of the
+two per-unit figures. Both sit well inside it, and the brokerage bug that
+tolerance exists to catch was ~₹2,900 on a 22,476-share trade, more than a
+thousand times the allowance. They are reported rather than explained away: the
+`ratePrecision` machinery that would relax them exists and the house statements
+opt out of it on purpose.
 
 ### Two engine defects the Molecule statement exposed
 
@@ -914,12 +1044,13 @@ product:
   named. Also does not block, because it is understood rather than merely small.
 - `material` — anything else. Reported per row, and it blocks the golden test.
 
-**As of this calibration exactly ONE material delta stands**, and it is named:
-₹1.27 on a settlement row of Carnelian's 2026-08-10 transaction statement. The
-run is 194 row-sum checks, 579 derived-vs-printed, 1,692 dated-table row checks
-and 9 cross-report. Every other delta that is not `ok` is `explained` or
-`rounding`, and every `explained` one names a basis difference reproduced
-exactly — never a widened tolerance.
+**As of this calibration exactly TWO material deltas stand**, both named and
+both quantified above: ₹1.27 on Carnelian's 2026-08-10 transaction statement and
+₹1.77 on V.E.C 128005's 2026-08-13 one, each a settlement residual inside the
+precision of a four-decimal price. The run is 222 row-sum checks, 636
+derived-vs-printed, 1,881 dated-table row checks and 11 cross-report. Every
+other delta that is not `ok` is `explained` or `rounding`, and every `explained`
+one names a basis difference reproduced exactly — never a widened tolerance.
 
 This paragraph read "zero material deltas anywhere" with counts of 119 / 250 /
 1,112 / 5 for several drops after both had stopped being true. **A figure copied

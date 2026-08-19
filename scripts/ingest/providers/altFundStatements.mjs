@@ -39,6 +39,9 @@
 // and the undrawn commitment goes to the commitment register beside Transition
 // Venture's — which is exactly where a drawdown fund's uncalled capital belongs.
 //
+// **Sky Capital Rising Titans Fund I** is a Category I AIF (Angel Fund) with a
+// drawdown structure and NO valuation of any kind — see its layout below.
+//
 // **3P India Equity Fund 1** prints three classes, all reclassified out on
 // 31-03-2026, all standing at 0.000 units and ₹0.000. That is a MEASURED ZERO
 // and it keeps its zero — the fund is telling us the position was moved, not
@@ -47,6 +50,7 @@
 import { parseNum } from "../lib/parseNum.mjs";
 import { makeHolding, makeTotals } from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
+import { panHolderType } from "../../../shared/owners.mjs";
 
 export const PROVIDERS = {
   buoyant: "Buoyant Capital",
@@ -55,6 +59,7 @@ export const PROVIDERS = {
   activeMomentum: "Motilal Oswal Active Momentum Fund",
   threeP: "3P Investment Managers",
   indiaSme: "India SME Investments",
+  skyCapital: "Sky Capital Rising Titans Fund",
 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -267,7 +272,137 @@ const LAYOUTS = [
     }),
     note: "this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
   },
+  {
+    key: "skyCapital",
+    engagement: "AIF",
+    providerEngagement: "Category I Alternative Investment Fund – Angel Fund",
+    provider: PROVIDERS.skyCapital,
+    /**
+     * THE FUND'S OWN NAME, AGAIN, AND THIS ONE PROVES THE RULE TWICE OVER.
+     *
+     * These statements print `HDFC Bank Ltd` in the investor's bank block and
+     * `Motilal Oswal Financial Servies Ltd` as the DEPOSITORY PARTICIPANT — and
+     * the classifier duly filed two folios under HDFC and two under Motilal
+     * Oswal before this rule existed. Neither house issued them; Sky Impact
+     * Capital Advisors LLP does, for Sky Capital Rising Titans Fund I.
+     */
+    match: /Sky\s+Capital\s+Rising\s+Titans\s+Fund/i,
+    assetClass: "AIF",
+    /**
+     * ANOTHER STATEMENT THAT VALUES NOTHING. An angel fund holding unlisted
+     * startups strikes no periodic NAV, and this one prints none: commitment,
+     * drawdowns, units and face value, and not one valuation figure anywhere on
+     * either page. Units and cost are read; market value stays null.
+     */
+    valuesNothing: true,
+    /**
+     * ONE HOLDING PER SERIES, NOT PER ALLOTMENT AND NOT PER FOLIO.
+     *
+     * The statement prints one line per ALLOTMENT — Bharat's folio has four
+     * Hudle lines and one TED line — and each line names the series, its class
+     * and its own ISIN. Per allotment would put five rows on one folio for one
+     * position; per folio would merge two different startups into one row, and
+     * merge them differently again across folios, because SKY022, SKY023 and
+     * SKY024 all hold the SAME Oncare series and should share a securityKey
+     * while Bharat's Hudle and TED must not.
+     *
+     * COST IS DERIVED, NOT INVENTED. Every unit is issued at the face value the
+     * row prints (₹1,000), so a series' cost is its units × that face value —
+     * and `verify` ties the sum of them to the printed Total Drawdown on every
+     * folio. Two printed columns and a printed total, not an allocation nobody
+     * published.
+     */
+    rowsFrom: (text) => {
+      const bySeries = new Map();
+      for (const m of text.matchAll(ALLOTMENT)) {
+        const [, scheme, unitClass, series, isin, faceRaw, unitsRaw] = m;
+        const e = bySeries.get(series) ?? {
+          scheme: scheme.trim(), unitClass, series, isin,
+          face: n(faceRaw), quantity: 0, allotments: 0,
+        };
+        e.quantity += n(unitsRaw) ?? 0;
+        e.allotments += 1;
+        bySeries.set(series, e);
+      }
+      return [...bySeries.values()].map((e) => ({
+        ...e,
+        totalCost: e.face == null ? null : Math.round(e.quantity * e.face * 100) / 100,
+      }));
+    },
+    read: (r) => r,
+    security: (_text, r) => `Sky Capital Rising Titans Fund — ${r.scheme} — Class ${r.series}`,
+    folio: (text) => (/Folio No\.?\s*([A-Z]{2,4}\d{3,})/i.exec(text) ?? [])[1] ?? null,
+    /**
+     * The holder is on its own `Name` line, and the anchor is LOAD-BEARING.
+     *
+     * `\bName` matches the "Name" inside `Fund Name Sky Capital Rising Titans
+     * Fund I` two lines above it, so every folio came back owned by the fund
+     * itself. The two trusts survived it — `resolveOwner` tries the PAN before
+     * any name — and Bharat's folio did not, because his PAN is deliberately
+     * withheld from the registry (it is a document password), leaving the name
+     * as the only evidence and the name wrong. A fallback masked the bug on
+     * three folios out of four.
+     *
+     * `^Name` at a line start matches only the investor block: `Fund Name`,
+     * `Bank Name` and `DP Name` are all preceded by their own word, and the
+     * NOMINEE's `Name` line comes after the investor's, so the first match is
+     * the holder. For two of these folios that holder is a TRUST; `investor()`
+     * takes it verbatim on a trust PAN — see the note there.
+     */
+    holder: (text) => (/^Name\s+([^\n]{3,60})/m.exec(text) ?? [])[1]?.trim() ?? null,
+    asOf: (text) => toIso((/\bDate\s+([A-Z][a-z]+\s+\d{1,2},\s*\d{4})/.exec(text) ?? [])[1]),
+    commitmentFrom: (text) => ({
+      committed: n((/Total Capital Contribution Commitment\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]),
+      drawn: n((/Total Drawdown\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]),
+      /**
+       * `Uncalled Commitment NIL` is a MEASURED ZERO — the fund stating that
+       * nothing more will be called — and it keeps its zero. `parseNum("NIL")`
+       * is null, which would read as "not reported" and put this fund's dry
+       * powder beyond measurement when the statement measured it at nothing.
+       */
+      undrawn: /Uncalled Commitment\s+NIL\b/i.test(text)
+        ? 0
+        : n((/Uncalled Commitment\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]),
+    }),
+    /** Per-series cost must reconstruct the drawdown the statement prints. */
+    verify: (text, holdings, warn) => {
+      const drawn = n((/Total Drawdown\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]);
+      const derived = holdings.reduce((t, h) => t + (h.totalCost ?? 0), 0);
+      if (drawn != null && Math.abs(derived - drawn) > 1) {
+        warn("cost-does-not-tie-to-drawdown",
+          `per-series cost (units × face value) sums to ${derived} against a printed Total Drawdown of ${drawn}; the cost on these rows is derived and no longer reconciles`);
+      }
+      const printedUnits = n((/\bTotal\s+([\d,]+\.\d{5})/.exec(text) ?? [])[1]);
+      const derivedUnits = holdings.reduce((t, h) => t + (h.quantity ?? 0), 0);
+      if (printedUnits != null && Math.abs(derivedUnits - printedUnits) > 0.00001) {
+        warn("units-do-not-tie",
+          `allotment rows sum to ${derivedUnits} units against a printed Total of ${printedUnits}`);
+      }
+    },
+    note: "an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
+  },
 ];
+
+/**
+ * One UNIT ALLOTMENT line: scheme, class, series, ISIN, face value, units, date.
+ *
+ * `\s+` between the scheme and the class deliberately crosses a NEWLINE — where
+ * a folio holds one series the fund puts the scheme name on its own line and the
+ * figures on the next, and where it holds several they sit on one line each.
+ * The en-dash is the character the statement actually prints; the hyphen is
+ * allowed because a reissue that changes it should not silently read zero rows.
+ */
+const ALLOTMENT = new RegExp(
+  String.raw`Sky Capital Rising Titans Fund\s*[–-]\s*` +
+  String.raw`([A-Za-z][A-Za-z0-9 ]*?)\s+` +      // 1 scheme (the startup)
+  String.raw`([A-Z])\s+` +                       // 2 class of unit
+  String.raw`([A-Z]\d)\s+` +                     // 3 series
+  String.raw`(INF[A-Z0-9]{9})\s+` +              // 4 ISIN
+  String.raw`₹?\s*([\d,]+\.\d{2})\s+` +        // 5 face value
+  String.raw`([\d,]+\.\d{5})\s+` +             // 6 units
+  String.raw`(\d{2}-\d{2}-\d{4})`,              // 7 allotment date
+  "g",
+);
 
 /**
  * A labelled field, cut at the first token that begins another label.
@@ -303,7 +438,27 @@ function investor(text, layout) {
     ?? (/Account\s*:?\s*\d{4,}\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){1,3})/.exec(text) ?? [])[1]
     ?? (/Folio\s*No\.?\s*:[^\n]*\n(?:[^\n]*\n){0,2}?\s*([A-Z][A-Za-z]+(?:\s+[A-Z]\.?[A-Za-z]*){1,3})\s*(?:Joint|$)/m.exec(text) ?? [])[1]
     ?? null;
-  return { owner: labelled ? trimPersonName(labelled) : null, pan };
+  /**
+   * A TRUST IS NOT A PERSON, AND `trimPersonName` DOES NOT KNOW THAT.
+   *
+   * It strips trailing name-ish words, which is right for `Ajay Thakurdas
+   * Jaisinghani` and destroys `Bharat Jaisinghani Family Trust 2` — both trusts
+   * came back as plain "Bharat Jaisinghani", folding two separate taxpayers into
+   * the man they are named after AND into his own folio. Three PANs, one owner,
+   * every per-entity total wrong.
+   *
+   * The statement settles it in a character: the FOURTH letter of a PAN is the
+   * holder type the Income Tax Department assigned, `T` for trust and `P` for
+   * individual. So a non-individual holder's name is taken VERBATIM. A document
+   * printing no PAN keeps the old behaviour exactly, which is every layout that
+   * was here before this one. `transitionVenture.mjs` reached the same
+   * conclusion for the same two trusts and hard-coded it; this derives it.
+   */
+  const kind = panHolderType(pan);
+  const owner = labelled == null ? null
+    : kind && kind !== "individual" ? labelled.trim()
+    : trimPersonName(labelled);
+  return { owner, pan };
 }
 
 /** Which layout is this? Null when none claims it — never a guess. */
@@ -323,7 +478,13 @@ export function extract({ grid, meta = {} }) {
   const holdings = [];
   let commitment = null;
 
-  const rows = layout.allRows
+  // `rowsFrom` builds the rows itself, for a statement whose holdings are not
+  // one regex match each: Sky Capital prints one line per ALLOTMENT and the
+  // family holds several in the same series, so the rows are aggregated by
+  // series before they become holdings. Everything else keeps the regex path.
+  const rows = layout.rowsFrom
+    ? layout.rowsFrom(text)
+    : layout.allRows
     ? [...text.matchAll(layout.row)]
     : [layout.row.exec(text)].filter(Boolean);
 
@@ -338,7 +499,10 @@ export function extract({ grid, meta = {} }) {
     const security = typeof layout.security === "function" ? layout.security(text, r) : layout.security;
     holdings.push(makeHolding({
       security,
-      isin: layout.isin?.(text) ?? null,
+      // A row may carry its own ISIN — Sky Capital prints one per series, and
+      // they differ within a folio. The document-level hook stays for the
+      // layouts where one ISIN covers the statement.
+      isin: r.isin ?? layout.isin?.(text) ?? null,
       assetClass: layout.assetClass,
       quantity: r.quantity ?? null,
       // A fund that publishes no NAV publishes no price. The contributions are
@@ -353,6 +517,12 @@ export function extract({ grid, meta = {} }) {
       marketValue: layout.valuesNothing ? null : r.printedValue ?? null,
     }));
   }
+
+  // A layout may check its own arithmetic against a figure the statement prints
+  // elsewhere. Sky Capital derives each series' cost from units x face value and
+  // ties the sum to the printed Total Drawdown; a mismatch is reported, never
+  // absorbed.
+  if (layout.verify) layout.verify(text, holdings, (code, detail) => warn(warnings, code, detail));
 
   if (layout.commitmentFrom) {
     const c = layout.commitmentFrom(text);

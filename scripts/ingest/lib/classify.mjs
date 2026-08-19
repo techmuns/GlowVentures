@@ -375,6 +375,16 @@ const ISSUER_PROVIDER_RULES = [
    * document is not a claim about who issued it.
    */
   [/Buoyant\s+Opportunities\s+Strategy/i, "Buoyant Capital"],
+  /**
+   * ...and Sky Capital proves the rule twice on one page. Its statements print
+   * `HDFC Bank Ltd` in the investor's BANK block and `Motilal Oswal Financial
+   * Servies Ltd` as the DEPOSITORY PARTICIPANT, so before this rule two folios
+   * classified as HDFC and two as Motilal Oswal — four statements of one angel
+   * fund, split across two houses that issued none of them. It must sit above
+   * the bare `Motilal Oswal` issuer rule further down, which matches the whole
+   * text and would otherwise claim the two trust folios.
+   */
+  [/Sky\s+Capital\s+Rising\s+Titans\s+Fund/i, "Sky Capital Rising Titans Fund"],
   [/HELIOS\s+MUTUAL\s+FUND|Helios\s+Flexi\s+Cap/i, "Helios Mutual Fund"],
   [/Motilal\s+Oswal\s+Founders\s+Fund/i, "Motilal Oswal Founders Fund"],
   [/Active\s+Momentum\s+Fund/i, "Motilal Oswal Active Momentum Fund"],

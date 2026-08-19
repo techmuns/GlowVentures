@@ -1,0 +1,94 @@
+{
+ "name": "capital-gains",
+ "rows": [
+  [
+   "quantity",
+   "saleRate",
+   "purchaseDate",
+   "purchaseRate",
+   "price31Jan",
+   "purchaseAmt",
+   "daysHeld",
+   "effectiveLT",
+   "security",
+   "saleDate",
+   "saleAmount",
+   "effectiveCost",
+   "shortTerm",
+   "longTerm"
+  ],
+  [
+   "(M)"
+  ],
+  [
+   "Listed Shares/Equity Mutual Funds (STT paid on Sale)"
+  ],
+  [
+   "NSDL-IN300484-30506328"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "20/05/26",
+   "15,853",
+   "406.6792",
+   "64,47,085.36",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "20,58,156.94",
+   "20,58,156.94",
+   "271",
+   "43,88,928.41",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "02/06/26",
+   "8,000",
+   "586.6146",
+   "46,92,916.80",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "10,38,620.80",
+   "10,38,620.80",
+   "284",
+   "36,54,296.00",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Sterlite Technologies Ltd-INE089C01029",
+   "13/07/26",
+   "8,000",
+   "527.1128",
+   "42,16,902.48",
+   "22/08/25",
+   "129.8276",
+   "N.A",
+   "10,38,620.80",
+   "10,38,620.80",
+   "325",
+   "31,78,281.68",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "Total",
+   "1,53,56,904.63",
+   "41,35,398.54",
+   "41,35,398.54",
+   "1,12,21,506.09",
+   "0.00",
+   "0.00"
+  ],
+  [
+   "This is a computer generated statement and does not require signature."
+  ],
+  [
+   "14/08/2026",
+   "1"
+  ]
+ ]
+}

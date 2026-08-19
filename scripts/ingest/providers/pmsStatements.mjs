@@ -80,15 +80,30 @@ export const PROVIDERS = {
   },
 };
 
-/** Identify the manager from the letterhead, else from the filename prefix. */
+/**
+ * Identify the manager: LETTERHEAD, then the classifier's own answer, and only
+ * then the filename prefix.
+ *
+ * THE ORDER IS THE WHOLE POINT, and it was wrong. A FILENAME is the weakest
+ * evidence here and it used to outrank the classifier: these six managers issue
+ * from one reporting system and the prefix is an account code, not a house.
+ * V.E.C Assago filed as `VECBES0004_145052_…` for every drop until August, when
+ * the same account arrived as `G128005_145052_…` — and `^G\d` is Goldstandard's
+ * pattern. Twenty-three documents, two accounts and ₹15.8 Cr of Ajay's and
+ * Ankita's money changed manager on a filename, while the letterhead on page one
+ * of every one of them said V.E.C ASSAGO CAPITAL MANAGEMENT LLP.
+ *
+ * The prefix stays as the LAST resort because it earns its place — the appraisal
+ * used to carry no letterhead at all. It just cannot outrank two better signals.
+ */
 export function detectProvider({ fileName, text, name }) {
-  for (const p of Object.values(PROVIDERS)) if (p.letterhead.test(text)) return p;
-  for (const p of Object.values(PROVIDERS)) if (p.filePrefix.test(fileName ?? "")) return p;
+  for (const p of Object.values(PROVIDERS)) if (p.letterhead.test(text ?? "")) return p;
   // The classifier has usually already resolved the provider NAME off the
   // letterhead. Accepting it here means the engagement is read from the same
   // registry rather than defaulting to unknown when neither the file name nor
   // the text handed to this function carries the signature.
   for (const p of Object.values(PROVIDERS)) if (p.name === name) return p;
+  for (const p of Object.values(PROVIDERS)) if (p.filePrefix.test(fileName ?? "")) return p;
   return null;
 }
 
@@ -1398,8 +1413,15 @@ export function extract({ grid, meta }) {
   const pages = grid.pages ?? [];
   const source = meta.docKey;
   const sections = {};
+  // AND IT MUST BE GIVEN THE TEXT. This passed `text: ""`, so the letterhead
+  // branch above could never fire from here and the decision fell through to
+  // the filename every time. The pages are already in hand.
   const provider = meta.providerConfig
-    ?? detectProvider({ fileName: meta.fileName ?? "", text: "", name: meta.provider });
+    ?? detectProvider({
+      fileName: meta.fileName ?? "",
+      text: pages.map((p) => p.text ?? "").join("\n"),
+      name: meta.provider,
+    });
 
   const id = readIdentity(pages);
   const reportType = meta.reportType;

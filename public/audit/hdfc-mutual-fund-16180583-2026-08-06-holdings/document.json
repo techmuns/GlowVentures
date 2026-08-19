@@ -55,7 +55,7 @@
     "unrealized": null
    },
    "marketValueFromPrinted": false,
-   "dedupeGroup": "dg-hdfc-small-cap-fund-direct-growth-plan-2",
+   "dedupeGroup": null,
    "alsoReportedUnder": [],
    "source": "hdfc-mutual-fund-16180583-2026-08-06-holdings"
   },
@@ -94,7 +94,7 @@
     "unrealized": null
    },
    "marketValueFromPrinted": false,
-   "dedupeGroup": "dg-hdfc-liquid-fund-direct-plan-growth-option-2",
+   "dedupeGroup": null,
    "alsoReportedUnder": [],
    "source": "hdfc-mutual-fund-16180583-2026-08-06-holdings"
   }

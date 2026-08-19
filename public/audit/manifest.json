@@ -800,6 +800,1323 @@
   ]
  },
  {
+  "docKey": "sky-capital-rising-titans-fund-sky003-2026-04-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY003",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-04-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky003-2026-04-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY003 · holdings",
+  "fy": "2026-04-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY003",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY003 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY003",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY003 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky003-2026-05-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY003",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky003-2026-05-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY003 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky022-2026-04-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY022",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-04-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky022-2026-04-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY022 · holdings",
+  "fy": "2026-04-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky022-2026-07-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY022",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky022-2026-07-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY022 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky022-2026-06-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY022",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky022-2026-06-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY022 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky022-2026-05-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY022",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky022-2026-05-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY022 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky023-2026-04-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY023",
+  "owner": "Bharat Jaisinghani Family Trust 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-04-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky023-2026-04-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY023 · holdings",
+  "fy": "2026-04-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky023-2026-07-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY023",
+  "owner": "Bharat Jaisinghani Family Trust 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky023-2026-07-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY023 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky023-2026-06-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY023",
+  "owner": "Bharat Jaisinghani Family Trust 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky023-2026-06-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY023 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky023-2026-05-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY023",
+  "owner": "Bharat Jaisinghani Family Trust 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky023-2026-05-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY023 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky024-2026-04-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY024",
+  "owner": "Bharat Jaisinghani Family Trust 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-04-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky024-2026-04-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY024 · holdings",
+  "fy": "2026-04-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky024-2026-07-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY024",
+  "owner": "Bharat Jaisinghani Family Trust 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-07-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky024-2026-07-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY024 · holdings",
+  "fy": "2026-07-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky024-2026-06-30-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY024",
+  "owner": "Bharat Jaisinghani Family Trust 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-06-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky024-2026-06-30-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY024 · holdings",
+  "fy": "2026-06-30",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky024-2026-05-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY024",
+  "owner": "Bharat Jaisinghani Family Trust 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-05-31",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky024-2026-05-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY024 · holdings",
+  "fy": "2026-05-31",
+  "source": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-bank-book",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_BankBook178OT.pdf",
+  "pages": 10,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-bank-book",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · bank-book",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_BankBook178OT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 196,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 10,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-gain",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalGain90OT.pdf",
+  "pages": 2,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-gain",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · capital-gain",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalGain90OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 10,
+    "cols": 14
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-register",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalRegister1173OT.pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-register",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · capital-register",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalRegister1173OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 10,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-dividend-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_DividendStatement_India177OT.pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-dividend-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · dividend-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_DividendStatement_India177OT.pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 13,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-expense-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "expense-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_Expensestmt546OT.pdf",
+  "pages": 3,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-expense-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · expense-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_Expensestmt546OT.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 31,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioAppraisal675OT.pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · appraisal",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioAppraisal675OT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 31,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-fact-sheet",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortFolioFactSheet6020OT.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-fact-sheet",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · fact-sheet",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortFolioFactSheet6020OT.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 33,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-performance-benchmark",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfBM196OT.pdf",
+  "pages": 2,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-performance-benchmark",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-benchmark",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfBM196OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-performance-history",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_portfolioPerfHistory1155OT.pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-performance-history",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-history",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_portfolioPerfHistory1155OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfSummary1528OT.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfSummary1528OT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-transaction-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128005",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_TransactionStatement_India94OT.pdf",
+  "pages": 3,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-transaction-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128005 · transaction-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_TransactionStatement_India94OT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 34,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-bank-book",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_BankBook178OT.pdf",
+  "pages": 7,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-bank-book",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · bank-book",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_BankBook178OT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 135,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-gain",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "capital-gain",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalGain90OT.pdf",
+  "pages": 2,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-gain",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · capital-gain",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalGain90OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 11,
+    "cols": 14
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-register",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "capital-register",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalRegister1173OT.pdf",
+  "pages": 1,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-register",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · capital-register",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalRegister1173OT.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 8,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · dividend-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 13,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement-2",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "dividend-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (2).pdf",
+  "pages": 2,
+  "sections": [
+   "dividends",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement-2",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · dividend-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (2).pdf",
+  "sheets": [
+   {
+    "key": "dividends",
+    "name": "dividends",
+    "rows": 13,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-expense-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "expense-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_Expensestmt546OT.pdf",
+  "pages": 3,
+  "sections": [
+   "expenses",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-expense-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · expense-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_Expensestmt546OT.pdf",
+  "sheets": [
+   {
+    "key": "expenses",
+    "name": "expenses",
+    "rows": 26,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-appraisal",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioAppraisal675OT.pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-appraisal",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · appraisal",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioAppraisal675OT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 27,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-fact-sheet",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortFolioFactSheet6020OT.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-fact-sheet",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · fact-sheet",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortFolioFactSheet6020OT.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 29,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-benchmark",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "performance-benchmark",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfBM196OT.pdf",
+  "pages": 2,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-benchmark",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-benchmark",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfBM196OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 7,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-history",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_portfolioPerfHistory1155OT.pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-history",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-history",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_portfolioPerfHistory1155OT.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 4
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-04-01",
+  "reportType": "performance-summary",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfSummary1528OT.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · performance-summary",
+  "fy": "2026-04-01",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfSummary1528OT.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-transaction-statement",
+  "provider": "V.E.C Assago Capital Management LLP",
+  "accountNo": "128004",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+  "asOf": "2026-08-13",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_TransactionStatement_India94OT.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-transaction-statement",
+  "label": "V.E.C Assago Capital Management LLP · 128004 · transaction-statement",
+  "fy": "2026-08-13",
+  "source": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_TransactionStatement_India94OT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 15,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-capital-gain",
   "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
   "accountNo": "3517383",
@@ -5150,7 +6467,7 @@
   ]
  },
  {
-  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary-2",
   "provider": "V.E.C Assago Capital Management LLP",
   "accountNo": "128005",
   "owner": "AJAY JAISINGHANI",
@@ -5165,8 +6482,8 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 0,
-  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary-2",
   "label": "V.E.C Assago Capital Management LLP · 128005 · performance-summary",
   "fy": "2026-04-01",
   "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfSummary1528OT.pdf",
@@ -5550,7 +6867,7 @@
   ]
  },
  {
-  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary-2",
   "provider": "V.E.C Assago Capital Management LLP",
   "accountNo": "128004",
   "owner": "ANKITA BHARAT JAISINGHANI",
@@ -5565,8 +6882,8 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 0,
-  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary",
+  "warnings": 1,
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary-2",
   "label": "V.E.C Assago Capital Management LLP · 128004 · performance-summary",
   "fy": "2026-04-01",
   "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfSummary1528OT.pdf",

@@ -570,6 +570,24 @@ export function makeExpense(input) {
  *   partial  — the document was understood but something was missing; see warnings
  *   failed   — the document could not be read at all
  */
+/**
+ * One commitment shape from either spelling. Null in, null out.
+ *
+ * See the note on `commitment` in `makeDocument`. Field-by-field `??`, so a
+ * figure the statement does not print stays null rather than becoming a zero
+ * that claims the fund has nothing left to call.
+ */
+function normalizeCommitment(c) {
+  if (!c) return null;
+  const pick = (...vals) => vals.find((v) => v !== undefined && v !== null) ?? null;
+  return {
+    total: pick(c.total, c.committed),
+    contributed: pick(c.contributed, c.drawn),
+    undrawn: pick(c.undrawn),
+    distributed: pick(c.distributed),
+  };
+}
+
 export function makeDocument(input) {
   return {
     docKey: input.docKey,
@@ -628,8 +646,24 @@ export function makeDocument(input) {
     sectionsWithoutRows: input.sectionsWithoutRows ?? [],
     /** The client-portfolio XIRR the report states, as a percentage. */
     clientXirrPct: input.clientXirrPct ?? null,
-    /** Drawdown funds: { total, contributed, undrawn, distributed }. Not a holding. */
-    commitment: input.commitment ?? null,
+    /**
+     * Drawdown funds: { total, contributed, undrawn, distributed }. Not a holding.
+     *
+     * NORMALISED HERE BECAUSE TWO READERS SPELLED IT TWO WAYS AND ONE OF THEM
+     * WENT NOWHERE. `transitionVenture.mjs` emits `total`/`contributed`;
+     * `altFundStatements.mjs` emits `committed`/`drawn`. `build-book.mjs` gates
+     * on `isNum(c.total)`, so every commitment from the second shape was
+     * dropped without a word — India SME's ₹6.9 Cr, ₹2.3 Cr and ₹2.3 Cr of
+     * genuinely UNCALLED capital among them. The dry-powder tile read ₹1.5 Cr
+     * against a real ₹13.0 Cr, which is the "denying a figure is worse than
+     * omitting it" failure the commitment register was built to stop.
+     *
+     * One shape, converged at the boundary, so a third reader cannot repeat it.
+     * `?? null` per field and never `?? 0`: Motilal Oswal's Founders Fund prints
+     * a commitment and a drawdown and NO undrawn figure, and a zero there would
+     * assert the fund has nothing left to call.
+     */
+    commitment: normalizeCommitment(input.commitment),
     /** An AIF's capital account, itemised by the fund. */
     capitalAccount: input.capitalAccount ?? [],
     /** A NAV struck after tax, where the fund prints both bases. */

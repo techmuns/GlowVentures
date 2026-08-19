@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-19T10:19:15.544Z",
+  "generatedAt": "2026-08-19T10:46:35.531Z",
   "sourceDir": "source",
   "counts": {
-    "files": 182,
-    "pdfs": 180,
+    "files": 222,
+    "pdfs": 220,
     "nonPdf": 2,
-    "classified": 179,
-    "unclassified": 3,
+    "classified": 203,
+    "unclassified": 19,
     "encrypted": 11,
-    "fromArchives": 157,
-    "archivesExpanded": 18,
-    "pages": 529
+    "fromArchives": 197,
+    "archivesExpanded": 21,
+    "pages": 615
   },
   "reportTypes": [
     "holdings",
@@ -105,6 +105,27 @@
       "extractedTo": "source/_extracted/august-2026/reports",
       "files": 5,
       "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/august-2026-c/SKY CAPITAL RISING FUND.zip",
+      "extractedTo": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND",
+      "files": 16,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/august-2026-c/VEC - AJAY.zip",
+      "extractedTo": "source/_extracted/august-2026-c/VEC - AJAY",
+      "files": 11,
+      "skipped": 11,
+      "failed": 0
+    },
+    {
+      "archive": "source/august-2026-c/VEC - ANKITA.zip",
+      "extractedTo": "source/_extracted/august-2026-c/VEC - ANKITA",
+      "files": 13,
+      "skipped": 13,
       "failed": 0
     },
     {
@@ -647,6 +668,854 @@
       ],
       "familyGroup": null,
       "strategy": "Aristos Equity Portfolio",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+      "bytes": 124496,
+      "size": "121.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+      "bytes": 169243,
+      "size": "165.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+      "bytes": 169242,
+      "size": "165.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+      "bytes": 124546,
+      "size": "121.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+      "bytes": 177702,
+      "size": "173.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+      "bytes": 316603,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+      "bytes": 316602,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+      "bytes": 316600,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+      "bytes": 177568,
+      "size": "173.4 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+      "bytes": 316361,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+      "bytes": 316364,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+      "bytes": 316356,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+      "bytes": 177838,
+      "size": "173.7 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+      "bytes": 316669,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+      "bytes": 316669,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+      "bytes": 316661,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_BankBook178OT.pdf",
+      "fileName": "G128005_145052_BankBook178OT.pdf",
+      "bytes": 88657,
+      "size": "86.6 KB",
+      "pages": 10,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalGain90OT.pdf",
+      "fileName": "G128005_145052_CapitalGain90OT.pdf",
+      "bytes": 66263,
+      "size": "64.7 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalRegister1173OT.pdf",
+      "fileName": "G128005_145052_CapitalRegister1173OT.pdf",
+      "bytes": 64500,
+      "size": "63.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_DividendStatement_India177OT.pdf",
+      "fileName": "G128005_145052_DividendStatement_India177OT.pdf",
+      "bytes": 66027,
+      "size": "64.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_Expensestmt546OT.pdf",
+      "fileName": "G128005_145052_Expensestmt546OT.pdf",
+      "bytes": 67939,
+      "size": "66.3 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "expense-statement",
+      "sections": [
+        "expense-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioAppraisal675OT.pdf",
+      "fileName": "G128005_145052_PortfolioAppraisal675OT.pdf",
+      "bytes": 66935,
+      "size": "65.4 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": "2026-08-13",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortFolioFactSheet6020OT.pdf",
+      "fileName": "G128005_145052_PortFolioFactSheet6020OT.pdf",
+      "bytes": 111241,
+      "size": "108.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": null,
+      "accountNo": "145052",
+      "asOfDate": "2026-08-13",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfBM196OT.pdf",
+      "fileName": "G128005_145052_PortfolioPerfBM196OT.pdf",
+      "bytes": 87617,
+      "size": "85.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "performance-benchmark",
+      "sections": [
+        "performance-benchmark"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_portfolioPerfHistory1155OT.pdf",
+      "fileName": "G128005_145052_portfolioPerfHistory1155OT.pdf",
+      "bytes": 65522,
+      "size": "64.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": "2026-08-13",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfSummary1528OT.pdf",
+      "fileName": "G128005_145052_PortfolioPerfSummary1528OT.pdf",
+      "bytes": 64408,
+      "size": "62.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": "2026-04-01",
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_TransactionStatement_India94OT.pdf",
+      "fileName": "G128005_145052_TransactionStatement_India94OT.pdf",
+      "bytes": 69041,
+      "size": "67.4 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "128005",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_BankBook178OT.pdf",
+      "fileName": "G128004_145038_BankBook178OT.pdf",
+      "bytes": 80030,
+      "size": "78.2 KB",
+      "pages": 7,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalGain90OT.pdf",
+      "fileName": "G128004_145038_CapitalGain90OT.pdf",
+      "bytes": 66400,
+      "size": "64.8 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalRegister1173OT.pdf",
+      "fileName": "G128004_145038_CapitalRegister1173OT.pdf",
+      "bytes": 64226,
+      "size": "62.7 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf",
+      "fileName": "G128004_145038_DividendStatement_India177OT (1).pdf",
+      "bytes": 66023,
+      "size": "64.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (2).pdf",
+      "fileName": "G128004_145038_DividendStatement_India177OT (2).pdf",
+      "bytes": 66023,
+      "size": "64.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
+      "fileName": "G128004_145038_DividendStatement_India177OT.pdf",
+      "bytes": 66023,
+      "size": "64.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_Expensestmt546OT.pdf",
+      "fileName": "G128004_145038_Expensestmt546OT.pdf",
+      "bytes": 67688,
+      "size": "66.1 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "expense-statement",
+      "sections": [
+        "expense-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioAppraisal675OT.pdf",
+      "fileName": "G128004_145038_PortfolioAppraisal675OT.pdf",
+      "bytes": 66465,
+      "size": "64.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": "2026-08-13",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortFolioFactSheet6020OT.pdf",
+      "fileName": "G128004_145038_PortFolioFactSheet6020OT.pdf",
+      "bytes": 111522,
+      "size": "108.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": null,
+      "accountNo": "145038",
+      "asOfDate": "2026-08-13",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfBM196OT.pdf",
+      "fileName": "G128004_145038_PortfolioPerfBM196OT.pdf",
+      "bytes": 87624,
+      "size": "85.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "performance-benchmark",
+      "sections": [
+        "performance-benchmark"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_portfolioPerfHistory1155OT.pdf",
+      "fileName": "G128004_145038_portfolioPerfHistory1155OT.pdf",
+      "bytes": 65524,
+      "size": "64.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": "2026-08-13",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfSummary1528OT.pdf",
+      "fileName": "G128004_145038_PortfolioPerfSummary1528OT.pdf",
+      "bytes": 64407,
+      "size": "62.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": "2026-04-01",
+      "reportType": "performance-summary",
+      "sections": [
+        "performance-summary"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_TransactionStatement_India94OT.pdf",
+      "fileName": "G128004_145038_TransactionStatement_India94OT.pdf",
+      "bytes": 66103,
+      "size": "64.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "V.E.C Assago Capital Management LLP",
+      "ownerName": "ANKITA BHARAT JAISINGHANI",
+      "accountNo": "128004",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
     },
@@ -4738,6 +5607,598 @@
       },
       "fileCount": 46
     },
+    "V.E.C Assago Capital Management LLP": {
+      "accounts": {
+        "128004": {
+          "owner": "ANKITA BHARAT JAISINGHANI",
+          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_BankBook178OT.pdf",
+                    "pages": 7,
+                    "size": "78.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
+                    "pages": 3,
+                    "size": "69.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalGain90OT.pdf",
+                    "pages": 2,
+                    "size": "64.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalGain90OT.pdf",
+                    "pages": 2,
+                    "size": "65.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_CapitalRegister1173OT.pdf",
+                    "pages": 1,
+                    "size": "62.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalRegister1173OT.pdf",
+                    "pages": 1,
+                    "size": "62.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf",
+                    "pages": 2,
+                    "size": "64.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (2).pdf",
+                    "pages": 2,
+                    "size": "64.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
+                    "pages": 2,
+                    "size": "64.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_DividendStatement_India177OT (1).pdf",
+                    "pages": 2,
+                    "size": "64.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "expense-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_Expensestmt546OT.pdf",
+                    "pages": 3,
+                    "size": "66.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "expense-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_Expensestmt546OT.pdf",
+                    "pages": 3,
+                    "size": "65.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "expense-statement"
+                    ]
+                  }
+                ],
+                "performance-benchmark": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfBM196OT.pdf",
+                    "pages": 2,
+                    "size": "85.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfBM196OT.pdf",
+                    "pages": 2,
+                    "size": "76.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_TransactionStatement_India94OT.pdf",
+                    "pages": 2,
+                    "size": "64.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
+                    "pages": 2,
+                    "size": "64.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 16
+            },
+            "2026-08-13": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioAppraisal675OT.pdf",
+                    "pages": 1,
+                    "size": "64.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_portfolioPerfHistory1155OT.pdf",
+                    "pages": 1,
+                    "size": "64.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortfolioPerfSummary1528OT.pdf",
+                    "pages": 1,
+                    "size": "62.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfSummary1528OT.pdf",
+                    "pages": 1,
+                    "size": "62.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-07-06": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioAppraisal675OT (1).pdf",
+                    "pages": 1,
+                    "size": "65.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_portfolioPerfHistory1155OT.pdf",
+                    "pages": 1,
+                    "size": "63.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 22
+        },
+        "128005": {
+          "owner": "AJAY JAISINGHANI",
+          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_BankBook178OT.pdf",
+                    "pages": 10,
+                    "size": "86.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
+                    "pages": 3,
+                    "size": "69.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT.pdf",
+                    "pages": 3,
+                    "size": "69.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
+                ],
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalGain90OT.pdf",
+                    "pages": 2,
+                    "size": "64.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalGain90OT.pdf",
+                    "pages": 2,
+                    "size": "65.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_CapitalRegister1173OT.pdf",
+                    "pages": 1,
+                    "size": "63.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
+                    "pages": 1,
+                    "size": "62.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT.pdf",
+                    "pages": 1,
+                    "size": "62.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_DividendStatement_India177OT.pdf",
+                    "pages": 2,
+                    "size": "64.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
+                    "pages": 2,
+                    "size": "64.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "expense-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_Expensestmt546OT.pdf",
+                    "pages": 3,
+                    "size": "66.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "expense-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_Expensestmt546OT.pdf",
+                    "pages": 3,
+                    "size": "65.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "expense-statement"
+                    ]
+                  }
+                ],
+                "performance-benchmark": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfBM196OT.pdf",
+                    "pages": 2,
+                    "size": "85.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfBM196OT.pdf",
+                    "pages": 2,
+                    "size": "76.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "performance-benchmark"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_TransactionStatement_India94OT.pdf",
+                    "pages": 3,
+                    "size": "67.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
+                    "pages": 2,
+                    "size": "64.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ],
+                "corporate-benefits": [
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CorporateBenefitsReport1767OT.pdf",
+                    "pages": 1,
+                    "size": "62.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-benefits"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 17
+            },
+            "2026-08-13": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioAppraisal675OT.pdf",
+                    "pages": 1,
+                    "size": "65.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_portfolioPerfHistory1155OT.pdf",
+                    "pages": 1,
+                    "size": "64.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-04-01": {
+              "reportTypes": {
+                "performance-summary": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortfolioPerfSummary1528OT.pdf",
+                    "pages": 1,
+                    "size": "62.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfSummary1528OT.pdf",
+                    "pages": 1,
+                    "size": "62.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-summary"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "2026-07-06": {
+              "reportTypes": {
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioAppraisal675OT.pdf",
+                    "pages": 1,
+                    "size": "65.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_portfolioPerfHistory1155OT (1).pdf",
+                    "pages": 1,
+                    "size": "63.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 23
+        },
+        "145038": {
+          "owner": null,
+          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+          "asOfDates": {
+            "2026-08-13": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_PortFolioFactSheet6020OT.pdf",
+                    "pages": 1,
+                    "size": "108.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "145052": {
+          "owner": null,
+          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+          "asOfDates": {
+            "2026-08-13": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/august-2026-c/VEC - AJAY/G128005_145052_PortFolioFactSheet6020OT.pdf",
+                    "pages": 1,
+                    "size": "108.6 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "(unidentified)": {
+          "owner": null,
+          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
+          "asOfDates": {
+            "2026-07-06": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortFolioFactSheet6020OT.pdf",
+                    "pages": 1,
+                    "size": "108.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortFolioFactSheet6020OT.pdf",
+                    "pages": 1,
+                    "size": "108.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 49
+    },
     "Carnelian Asset Management and Advisors Pvt Ltd": {
       "accounts": {
         "3517383": {
@@ -6171,336 +7632,6 @@
       },
       "fileCount": 5
     },
-    "V.E.C Assago Capital Management LLP": {
-      "accounts": {
-        "128004": {
-          "owner": "ANKITA BHARAT JAISINGHANI",
-          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "bank-book": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
-                    "pages": 3,
-                    "size": "69.0 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "bank-book"
-                    ]
-                  }
-                ],
-                "capital-gain": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalGain90OT.pdf",
-                    "pages": 2,
-                    "size": "65.2 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "capital-gain"
-                    ]
-                  }
-                ],
-                "capital-register": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_CapitalRegister1173OT.pdf",
-                    "pages": 1,
-                    "size": "62.8 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "capital-register"
-                    ]
-                  }
-                ],
-                "dividend-statement": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_DividendStatement_India177OT (1).pdf",
-                    "pages": 2,
-                    "size": "64.2 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "dividend-statement"
-                    ]
-                  }
-                ],
-                "expense-statement": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_Expensestmt546OT.pdf",
-                    "pages": 3,
-                    "size": "65.9 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "expense-statement"
-                    ]
-                  }
-                ],
-                "performance-benchmark": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfBM196OT.pdf",
-                    "pages": 2,
-                    "size": "76.1 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-benchmark"
-                    ]
-                  }
-                ],
-                "transaction-statement": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
-                    "pages": 2,
-                    "size": "64.8 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "transaction-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 7
-            },
-            "2026-07-06": {
-              "reportTypes": {
-                "appraisal": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioAppraisal675OT (1).pdf",
-                    "pages": 1,
-                    "size": "65.0 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "appraisal"
-                    ]
-                  }
-                ],
-                "performance-history": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_portfolioPerfHistory1155OT.pdf",
-                    "pages": 1,
-                    "size": "63.8 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "performance-history"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 2
-            },
-            "2026-04-01": {
-              "reportTypes": {
-                "performance-summary": [
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortfolioPerfSummary1528OT.pdf",
-                    "pages": 1,
-                    "size": "62.7 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "performance-summary"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 10
-        },
-        "128005": {
-          "owner": "AJAY JAISINGHANI",
-          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "bank-book": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
-                    "pages": 3,
-                    "size": "69.1 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "bank-book"
-                    ]
-                  },
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT.pdf",
-                    "pages": 3,
-                    "size": "69.1 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "bank-book"
-                    ]
-                  }
-                ],
-                "capital-gain": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalGain90OT.pdf",
-                    "pages": 2,
-                    "size": "65.0 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "capital-gain"
-                    ]
-                  }
-                ],
-                "capital-register": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
-                    "pages": 1,
-                    "size": "62.6 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "capital-register"
-                    ]
-                  },
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT.pdf",
-                    "pages": 1,
-                    "size": "62.6 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "capital-register"
-                    ]
-                  }
-                ],
-                "corporate-benefits": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CorporateBenefitsReport1767OT.pdf",
-                    "pages": 1,
-                    "size": "62.3 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "corporate-benefits"
-                    ]
-                  }
-                ],
-                "dividend-statement": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
-                    "pages": 2,
-                    "size": "64.0 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "dividend-statement"
-                    ]
-                  }
-                ],
-                "expense-statement": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_Expensestmt546OT.pdf",
-                    "pages": 3,
-                    "size": "65.9 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "expense-statement"
-                    ]
-                  }
-                ],
-                "performance-benchmark": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfBM196OT.pdf",
-                    "pages": 2,
-                    "size": "76.1 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "performance-benchmark"
-                    ]
-                  }
-                ],
-                "transaction-statement": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
-                    "pages": 2,
-                    "size": "64.9 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "transaction-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 10
-            },
-            "2026-07-06": {
-              "reportTypes": {
-                "appraisal": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioAppraisal675OT.pdf",
-                    "pages": 1,
-                    "size": "65.2 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "appraisal"
-                    ]
-                  }
-                ],
-                "performance-history": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_portfolioPerfHistory1155OT (1).pdf",
-                    "pages": 1,
-                    "size": "63.8 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "performance-history"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 2
-            },
-            "2026-04-01": {
-              "reportTypes": {
-                "performance-summary": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortfolioPerfSummary1528OT.pdf",
-                    "pages": 1,
-                    "size": "62.7 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "performance-summary"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 13
-        },
-        "(unidentified)": {
-          "owner": null,
-          "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
-          "asOfDates": {
-            "2026-07-06": {
-              "reportTypes": {
-                "fact-sheet": [
-                  {
-                    "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_PortFolioFactSheet6020OT.pdf",
-                    "pages": 1,
-                    "size": "108.4 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "fact-sheet"
-                    ]
-                  },
-                  {
-                    "path": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_PortFolioFactSheet6020OT.pdf",
-                    "pages": 1,
-                    "size": "108.5 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "fact-sheet"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 2
-            }
-          },
-          "fileCount": 2
-        }
-      },
-      "fileCount": 25
-    },
     "360 ONE Alternates Asset Management": {
       "accounts": {
         "1000632": {
@@ -6814,6 +7945,55 @@
   },
   "overlaps": [
     {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128005",
+      "asOf": "(unidentified)",
+      "fileCount": 17,
+      "reportTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "expense-statement",
+        "performance-benchmark",
+        "transaction-statement",
+        "corporate-benefits"
+      ],
+      "duplicateTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "expense-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ]
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128004",
+      "asOf": "(unidentified)",
+      "fileCount": 16,
+      "reportTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "expense-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ],
+      "duplicateTypes": [
+        "bank-book",
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "expense-statement",
+        "performance-benchmark",
+        "transaction-statement"
+      ]
+    },
+    {
       "provider": "Goldstandard Wealth Private Limited",
       "account": "100023",
       "asOf": "(unidentified)",
@@ -6898,26 +8078,6 @@
       ]
     },
     {
-      "provider": "V.E.C Assago Capital Management LLP",
-      "account": "128005",
-      "asOf": "(unidentified)",
-      "fileCount": 10,
-      "reportTypes": [
-        "bank-book",
-        "capital-gain",
-        "capital-register",
-        "corporate-benefits",
-        "dividend-statement",
-        "expense-statement",
-        "performance-benchmark",
-        "transaction-statement"
-      ],
-      "duplicateTypes": [
-        "bank-book",
-        "capital-register"
-      ]
-    },
-    {
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
       "account": "3517383",
       "asOf": "(unidentified)",
@@ -6934,22 +8094,6 @@
         "dividend-statement",
         "transaction-statement"
       ]
-    },
-    {
-      "provider": "V.E.C Assago Capital Management LLP",
-      "account": "128004",
-      "asOf": "(unidentified)",
-      "fileCount": 7,
-      "reportTypes": [
-        "bank-book",
-        "capital-gain",
-        "capital-register",
-        "dividend-statement",
-        "expense-statement",
-        "performance-benchmark",
-        "transaction-statement"
-      ],
-      "duplicateTypes": []
     },
     {
       "provider": "Goldstandard Wealth Private Limited",
@@ -7062,6 +8206,86 @@
       ],
       "duplicateTypes": [
         "performance-summary"
+      ]
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128004",
+      "asOf": "2026-08-13",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128004",
+      "asOf": "2026-04-01",
+      "fileCount": 2,
+      "reportTypes": [
+        "performance-summary"
+      ],
+      "duplicateTypes": [
+        "performance-summary"
+      ]
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128004",
+      "asOf": "2026-07-06",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128005",
+      "asOf": "2026-08-13",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128005",
+      "asOf": "2026-04-01",
+      "fileCount": 2,
+      "reportTypes": [
+        "performance-summary"
+      ],
+      "duplicateTypes": [
+        "performance-summary"
+      ]
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "128005",
+      "asOf": "2026-07-06",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "V.E.C Assago Capital Management LLP",
+      "account": "(unidentified)",
+      "asOf": "2026-07-06",
+      "fileCount": 2,
+      "reportTypes": [
+        "fact-sheet"
+      ],
+      "duplicateTypes": [
+        "fact-sheet"
       ]
     },
     {
@@ -7191,40 +8415,6 @@
       ]
     },
     {
-      "provider": "V.E.C Assago Capital Management LLP",
-      "account": "128004",
-      "asOf": "2026-07-06",
-      "fileCount": 2,
-      "reportTypes": [
-        "appraisal",
-        "performance-history"
-      ],
-      "duplicateTypes": []
-    },
-    {
-      "provider": "V.E.C Assago Capital Management LLP",
-      "account": "128005",
-      "asOf": "2026-07-06",
-      "fileCount": 2,
-      "reportTypes": [
-        "appraisal",
-        "performance-history"
-      ],
-      "duplicateTypes": []
-    },
-    {
-      "provider": "V.E.C Assago Capital Management LLP",
-      "account": "(unidentified)",
-      "asOf": "2026-07-06",
-      "fileCount": 2,
-      "reportTypes": [
-        "fact-sheet"
-      ],
-      "duplicateTypes": [
-        "fact-sheet"
-      ]
-    },
-    {
       "provider": "360 ONE Alternates Asset Management",
       "account": "(unidentified)",
       "asOf": "(unidentified)",
@@ -7250,6 +8440,326 @@
     }
   ],
   "unclassified": [
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
+      "bytes": 124496,
+      "size": "121.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
+      "bytes": 169243,
+      "size": "165.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
+      "bytes": 169242,
+      "size": "165.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+      "fileName": "SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
+      "bytes": 124546,
+      "size": "121.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
+      "bytes": 177702,
+      "size": "173.5 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
+      "bytes": 316603,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
+      "bytes": 316602,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+      "fileName": "SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
+      "bytes": 316600,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
+      "bytes": 177568,
+      "size": "173.4 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
+      "bytes": 316361,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
+      "bytes": 316364,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+      "fileName": "SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
+      "bytes": 316356,
+      "size": "308.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
+      "bytes": 177838,
+      "size": "173.7 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
+      "bytes": 316669,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
+      "bytes": 316669,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+      "fileName": "SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
+      "bytes": 316661,
+      "size": "309.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sky Capital Rising Titans Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
     {
       "path": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "fileName": "360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",

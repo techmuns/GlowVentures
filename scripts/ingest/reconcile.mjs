@@ -593,11 +593,20 @@ function duplicateHoldings(docs) {
   for (const [, entries] of byFigures) {
     if (entries.length < 2) continue;
     const owners = new Set(entries.map((e) => e.doc.ownerId ?? e.doc.owner ?? "(unknown)"));
-    // Two reports of the SAME account and date are check (b) — one document per
-    // account/date pair is what makes this a double-report rather than the same
-    // statement seen twice.
-    const accountDates = new Set(entries.map((e) => `${e.doc.accountNo}@${e.doc.asOf}`));
-    if (accountDates.size < 2) continue;
+    /**
+     * THIS SECTION IS "ACROSS OWNERS", SO THE GUARD IS DISTINCT ACCOUNTS.
+     *
+     * It keyed on `account@asOf`, which lets ONE folio's own monthly statements
+     * satisfy it: Sky Capital reissues an unchanged statement every month, so
+     * Bharat's Hudle position appeared four times at identical figures under
+     * four different dates and was reported as a suspected duplicate against
+     * itself. The same false positive was already firing on the HDFC folio's two
+     * issues. A restatement of one account is the supersede rule's business, not
+     * this check's; what this check exists to catch is one position reported
+     * under two ACCOUNTS.
+     */
+    const accounts = new Set(entries.map((e) => e.doc.accountNo));
+    if (accounts.size < 2) continue;
     const first = entries[0].h;
     out.push({
       dedupeGroup: `dg-${first.securityKey}-${entries.length}`,

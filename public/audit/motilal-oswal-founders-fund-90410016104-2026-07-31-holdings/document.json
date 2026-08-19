@@ -92,9 +92,10 @@
  "sectionsWithoutRows": [],
  "clientXirrPct": null,
  "commitment": {
-  "committed": 200000000,
-  "drawn": 200000000,
-  "undrawn": null
+  "total": 200000000,
+  "contributed": 200000000,
+  "undrawn": null,
+  "distributed": null
  },
  "capitalAccount": [],
  "postTaxNav": null,
