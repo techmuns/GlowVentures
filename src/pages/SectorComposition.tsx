@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum, consolidatedMarketValue, isPrivateClass } from "@/lib/analytics";
+import { bySector, sum, consolidatedMarketValue, isPrivateClass, isDirectEquity, excludedClasses } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -70,24 +70,18 @@ export function SectorComposition() {
    * as such rather than being the place funds went to hide.
    */
   const accIdx = accountIndex(portfolio.accounts);
-  const isDirectEquity = (x: (typeof consolidated)[number]) => x.assetClass === "Equity";
+  // `isDirectEquity` and `excludedClasses` live in `analytics.ts` — the one
+  // place the company-vs-fund axis is decided, so this page, Exposure & IPS,
+  // Return Analysis and the stock page narrow on the same rule rather than on
+  // four local re-derivations of it.
   const p = consolidated.filter(isDirectEquity);
   const totalMV = consolidatedMarketValue(p);
   const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
   // Every class this page does NOT cover, largest first, so the note below can
   // name them from the book rather than from a hardcoded list. `isPrivateClass`
   // still drives the private-book sentence; this drives the rest.
-  const excludedClasses = (() => {
-    const m = new Map<string, { mv: number; count: number }>();
-    for (const x of consolidated) {
-      if (isDirectEquity(x)) continue;
-      const e = m.get(x.assetClass) ?? { mv: 0, count: 0 };
-      e.mv += x.marketValue; e.count += 1;
-      m.set(x.assetClass, e);
-    }
-    return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
-  })();
-  const excludedMV = sum(excludedClasses.map((c) => c.mv));
+  const excluded = excludedClasses(consolidated, isDirectEquity);
+  const excludedMV = sum(excluded.map((c) => c.mv));
   const sectors = bySector(p);
   const unclassified = sectors.find((s) => s.key === "Unclassified") ?? null;
   // Every figure on this page is rebuilt from position market values, so once the
@@ -374,10 +368,10 @@ export function SectorComposition() {
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
         This is <span className="font-medium text-slate-400">direct equity only</span> — {money(totalMV)} across {p.length} holdings the family owns as shares in a company, each counted once,
         whether held through a manager’s PMS mandate or the family’s own demat account.
-        {excludedClasses.length > 0 && <> {money(excludedMV)} of the book sits in wrappers and is excluded rather than folded in—{" "}
-          {excludedClasses.map((c, i) => (
+        {excluded.length > 0 && <> {money(excludedMV)} of the book sits in wrappers and is excluded rather than folded in—{" "}
+          {excluded.map((c, i) => (
             <Fragment key={c.key}>
-              {i > 0 && (i === excludedClasses.length - 1 ? " and " : ", ")}
+              {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
               <span className="font-medium text-slate-400">{c.key}</span> {money(c.mv)}
             </Fragment>
           ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,

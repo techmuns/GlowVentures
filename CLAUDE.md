@@ -1556,6 +1556,78 @@ class is NAMED with its value rather than dropped, and the residual Unclassified
 is real: direct equity whose own statement printed no sector. `check:pages`
 asserts that no fund name can appear as a holding on that page.
 
+### Stage 10i — THE SAME MISTAKE, ON EVERY OTHER COMPANY-LEVEL SCREEN
+
+Stage 10h fixed one page. The client came back with the same complaint — *"we
+are mixing the AIF securities and showing them as equity"* — because the rule
+lived in one component instead of in the model layer, and five more surfaces had
+each re-derived their own narrowing and got it wrong the same way.
+
+**THE AXIS IS `isFundVehicle`, AND `isPrivateClass` DOES NOT ANSWER IT.** Both
+now live in `src/lib/analytics.ts` and every caller reads them from there:
+
+- `isPrivateClass` — AIF / Unlisted / Structured Product — splits the book by how
+  a holding is VALUED, a mark from an exchange versus a mark from a manager. It
+  is the right axis for listed-vs-private and it drives `BOOK_SUMMARY`.
+- `isFundVehicle` — **AIF / Mutual Fund / ETF** — is one purchase of a MANAGER'S
+  PORTFOLIO. A mutual fund is marked daily at a published NAV, so it is not
+  private; it is also not a company, and it has no GICS sector, no market cap, no
+  NSE symbol, no P&L statement and no concall.
+- `isDirectEquity` — `assetClass === "Equity"` — shares in a company, whether
+  through a manager's discretionary mandate or the family's own demat. A PMS is
+  an ENGAGEMENT, so those shares are the same asset as the LKP ones.
+- `excludedClasses(positions, keep)` returns what a narrowed view left out, per
+  class with its value, because the remainder is NAMED and never dropped.
+
+Narrowing on the private axis fixed the AIF folios and left every other wrapper
+in. What that cost, measured on this book:
+
+| Surface | What it did | Now |
+| --- | --- | --- |
+| Exposure & IPS — sector GAP | covered ₹180.8 Cr: direct equity **plus ₹52.4 Cr of mutual funds under "Unclassified" and ₹6.8 Cr under "Cash"** | direct equity, ₹121.6 Cr, every excluded class named |
+| Exposure & IPS — market-cap bands | the same set, so ₹59 Cr of funds and cash sat permanently in `unmeasured` — a shortfall against a market cap a fund can never have, exactly what that helper's own doc forbids | direct equity only |
+| Return & Drawdown — attribution | bucketed only PRIVATE classes by class; mutual funds stayed in "Unclassified" beside direct equity that genuinely has no sector printed | every wrapper under its own class, named in the caption |
+| Morning CIO — allocation | `Equity` = `Equity \|\| ETF`, folding a fund into the equity bucket on a listed-vs-private reflex | ETF is its own bucket; empty here, so it is named under "Not held" |
+| Compare companies | the picker offered fund units and `Cash` under a heading reading "Compare companies", with a PE column and a filings row neither can fill | direct equity; the funds are named with their value |
+| `topHoldingsForNews` | its comment said "listed exposures" while the loop took everything, so the news endpoint was sent `Cash`, `Tax Deducted at Source` and `Sanshi Fund-I (Open Ended AIF CAT-III) — Class E` | direct equity, weighted against the set it covers |
+
+**AND A FUND UNIT MUST NOT BE RENDERED AS A COMPANY.** `/stock/:securityKey`
+serves every holding, which is right — an AIF folio's quantity, cost, entities
+and dated ledger belong on a page of their own. What did not belong is the five
+company panels underneath: returns table, ratio table, screener financials,
+concalls, insider trades, each rendering its own empty state. Five dashed boxes
+under a fund's name read as five failed feeds; it is one decided absence and is
+now stated once. **The test is the ASSET CLASS, not a null ticker** — a company
+whose NSE symbol did not resolve is a resolver shortfall and keeps its panels,
+because a future `build-symbols` fills them. A fund never will. The page also
+leads with the asset class, says "no sector — a fund holds many" instead of
+printing `Unclassified`, and its weight tile no longer reads "Weight in listed
+book" over an AIF folio measured against the whole book.
+
+**Look-through is what would make "securities in AIF show up inside AIF funds"
+literally true, and this book cannot supply it.** A fund's underlying holdings
+need each scheme's own portfolio disclosure joined to the folio the family
+holds; the drop carries one such disclosure (WhiteOak's) and it joins to nothing
+here. So the fund's value stays WHOLE, inside its own row, and the pages say so
+rather than spreading it across sectors it was never reported against.
+
+**THE FIRST DRAFT OF THE EXPOSURE CHECK COULD NOT FAIL.** It matched the
+caption's prose — "direct equity", "excluded rather than folded in" — and that
+prose is static: reverting the filter put Cash and the mutual funds straight
+back into the table and `check:pages` still reported clean. Every invariant added
+here is struck on FIGURES THE PAGE RENDERS, and each was verified by
+reintroducing its bug and watching it fail:
+
+- covered + excluded must reconstruct the header's consolidated NAV (the widened
+  set gave ₹180.8 + ₹339.4 = ₹520.2 against a ₹461 Cr book);
+- no class the caption names as excluded may stand as a row in the table above it;
+- every wrapper class Return & Drawdown names in its caption must have its own
+  attribution row, and no fund NAME may be a row label;
+- `/compare` offers no fund and says what it left out;
+- a new `stock-fund` route asserts the fund page states the research does not
+  apply and renders none of the five panels — while the existing `stock` route
+  asserts a COMPANY still carries all of them.
+
 ### Stage 10c — measuring against the deployed site
 
 `MUNS_TOKEN` exists only in the Cloudflare Pages environment, so locally every

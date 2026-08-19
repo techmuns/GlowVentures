@@ -39,7 +39,13 @@ export function News() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader eyebrow="Daily" title="News & Announcements" />
+      {/* The company filter is drawn from `topHoldingsForNews`, which is direct
+          equity — so a dropdown labelled "All companies" no longer offers
+          "Cash", "Tax Deducted at Source" or a fund folio among them. The
+          subtitle says which set the feeds cover rather than leaving a reader
+          to notice their AIF is missing from it. */}
+      <PageHeader eyebrow="Daily" title="News & Announcements"
+        subtitle="Across the companies this book holds directly. A fund folio has no news, filings or insider trades of its own — those belong to the companies its manager holds, which no statement here reports." />
 
       {/* Company filter + feed tabs + as-of/refresh on one row, freeing the space below */}
       <div className="mb-4 flex flex-wrap items-center gap-3">

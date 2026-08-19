@@ -8,7 +8,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isDirectEquity } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -189,8 +189,15 @@ export function MorningCIO() {
     // one ₹0 folio is tagged engagement "Direct", and filed ₹9.9 Cr of the
     // family's own self-directed stock (LKP, engagement "Execution") under "PMS".
     // How the equity is RUN is stated in the caption instead.
-    const isEquity = (x: (typeof p)[number]) => x.assetClass === "Equity" || x.assetClass === "ETF";
-    const equityRows = p.filter(isEquity);
+    // ...and an ETF is NOT equity for this purpose. It was folded in here
+    // because it is listed and marked on an exchange, which is the `listed vs
+    // private` axis, not this one: an ETF is one line standing for a basket
+    // somebody else assembled, exactly as a mutual fund or an AIF folio is.
+    // Folding it into "Equity" is the same conflation that put fund units into
+    // the sector tables. This book holds none today, so the row is empty and
+    // named as absent below rather than silently swelling the equity bucket the
+    // first time one arrives. `isDirectEquity` is the shared test.
+    const equityRows = p.filter(isDirectEquity);
     const equity = eqGroup(equityRows);
     // Vehicle split WITHIN equity, for the caption only — self-directed is the
     // family running the account itself (a demat/execution or truly direct
@@ -203,6 +210,7 @@ export function MorningCIO() {
     const classGroup = (cls: string) => eqGroup(p.filter((x) => x.assetClass === cls));
     const aifEq = classGroup("AIF");
     const mfEq = classGroup("Mutual Fund");
+    const etfEq = classGroup("ETF");
     const cashEq = classGroup("Cash");
     // The "Book performance — Listed vs private" card must split on ASSET CLASS,
     // not on the fund-of-funds model. That model (privateMarkets.*) is empty here,
@@ -324,6 +332,7 @@ export function MorningCIO() {
       { key: "Equity", color: "#d9c48f", count: equity.count, invested: equity.cost, current: equity.mv, kind: "MOIC", metric: equity.cost !== null && equity.cost > 0 ? equity.mv / equity.cost : null, retPct: equity.ret, distributed: 0, xirr: listedXirr([...directSide.parts, ...pmsSide.parts]), xirrBasis: "ledger", xirrNote: xirrCoverage(xirrExcluded), sheet: null },
       classBucket("AIF", "#a855f7", aifEq),
       classBucket("Mutual Fund", "#22d3ee", mfEq),
+      classBucket("ETF", "#0ea5e9", etfEq),
       classBucket("Cash", "#64748b", cashEq),
       { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
       // Fund buckets: the multiple and the return-on-cost both count cash already
@@ -386,8 +395,14 @@ export function MorningCIO() {
     const bySecurity = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
     const top10Pct = bookMV > 0 ? (sum(bySecurity.slice(0, 10).map(([, v]) => v)) / bookMV) * 100 : null;
     const largest = bySecurity[0];
-    const largestName = (largest && p.find((x) => x.securityKey === largest[0])?.security) || null;
+    const largestRow = largest ? p.find((x) => x.securityKey === largest[0]) ?? null : null;
+    const largestName = largestRow?.security ?? null;
     const largestPct = largest && bookMV > 0 ? (largest[1] / bookMV) * 100 : null;
+    // CONCENTRATION IS A BOOK-WIDE RISK MEASURE AND STAYS BOOK-WIDE — the
+    // largest single name here IS a fund folio, and narrowing to companies
+    // would hide the book's real biggest exposure. What it must not do is read
+    // as a stock: the tile carries the class so a fund is not mistaken for one.
+    const largestClass = largestRow?.assetClass ?? null;
     const priced = p.filter((x) => !x.costUnavailable);
     const winners = priced.filter((x) => (x.returnPct ?? 0) > 0).length;
     const losers = priced.filter((x) => (x.returnPct ?? 0) < 0).length;
@@ -417,7 +432,7 @@ export function MorningCIO() {
       // can no longer reach the screen as a yearly rate — see the note on it.
       bookMW: moneyWeightedReturn(bookXirr, xirrWindowDays),
       distinctNames: byKey.size, crossHeld, top10Pct,
-      largestName, largestKey: largest?.[0] ?? "", largestPct, winners, losers,
+      largestName, largestKey: largest?.[0] ?? "", largestClass, largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
     };
   }, [portfolio, convertFromBase, today]);
@@ -786,7 +801,9 @@ export function MorningCIO() {
                 <span className="text-slate-400">Largest name</span>
                 <span className="mono text-slate-100 truncate pl-3" title={m.largestName ?? undefined}>
                   {m.largestName == null || m.largestPct == null ? DASH
-                    : <><StockLink securityKey={m.largestKey} name={m.largestName} /> · {m.largestPct.toFixed(1)}%</>}
+                    : <><StockLink securityKey={m.largestKey} name={m.largestName} />
+                        {m.largestClass && m.largestClass !== "Equity" && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestClass}</span>}
+                        {" · "}{m.largestPct.toFixed(1)}%</>}
                 </span>
               </div>
               <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Winners / losers</span><span className="mono text-slate-100"><span className="text-gain">{m.winners}</span> / <span className="text-loss">{m.losers}</span></span></div>

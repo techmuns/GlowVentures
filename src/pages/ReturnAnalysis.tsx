@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum, isPriced, unpriced, isPrivateClass } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -80,17 +80,32 @@ export function ReturnAnalysis() {
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
-    // A private holding (AIF unit) carries no equity sector; keying it under
-    // "Unclassified" made a fund wrapper the single largest "sector". Bucket it
-    // under its asset class ("AIF") instead — its P&L still counts, so the rows
-    // still sum to the embedded return, but the label is honest.
+    // A FUND UNIT CARRIES NO EQUITY SECTOR — and the test for that is
+    // `isFundVehicle`, not `isPrivateClass`.
+    //
+    // Keying a wrapper under "Unclassified" made it the single largest "sector",
+    // which is why AIF units were moved to their own asset-class row. That fix
+    // stopped one class short: a mutual fund is marked at a published NAV so it
+    // is not PRIVATE, and this book holds ₹52.4 Cr of mutual-fund units — Helios
+    // Flexi Cap ₹31.0 Cr and Motilal Oswal Active Momentum ₹21.4 Cr — which went
+    // on sitting in "Unclassified" beside direct equity that genuinely has no
+    // sector printed. Bucket every wrapper under its asset class instead. Its
+    // P&L still counts, so the rows still sum to the embedded return exactly;
+    // only the label changes, from a sector it never had to the thing it is.
     const bySector = new Map<string, { pnl: number; cost: number; mv: number }>();
     for (const x of priced) {
-      const secKey = isPrivateClass(x) ? x.assetClass : x.sector;
+      const secKey = isFundVehicle(x) || isPrivateClass(x) ? x.assetClass : x.sector;
       const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0 };
       e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
       bySector.set(secKey, e);
     }
+    // The wrapper classes this table bucketed BY CLASS, derived from the same
+    // rows the table is built from. Named in the caption so the page states
+    // which of its rows are asset classes rather than sectors — and so the
+    // rendering check has something on the page to hold the table against: a
+    // class named here with no row in the table is a wrapper that leaked back
+    // into "Unclassified", which is exactly the regression being guarded.
+    const wrapperClasses = [...new Set(priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => x.assetClass))].sort();
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
         sector, ...e,
@@ -145,7 +160,7 @@ export function ReturnAnalysis() {
     const rated = byAccount.filter((a) => a.returnPct !== null);
     const winners = priced.filter((x) => x.unrealizedPnL > 0);
     return {
-      priced, withoutCost, cost, pnl, dist, contrib, sectors, byAccount, winners: winners.length,
+      priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, byAccount, winners: winners.length,
       embeddedRet: cost > 0 ? (pnl / cost) * 100 : null,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
       // Only across accounts that HAVE a return — an account without one is
@@ -224,12 +239,12 @@ export function ReturnAnalysis() {
         </Card>
 
         <Card className="lg:col-span-2" title="Contribution by sector"
-          subtitle="Each sector's unrealised P&amp;L as a share of total cost">
+          subtitle="Direct equity by sector, every fund wrapper under its own class — each as a share of total cost">
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
                 <tr>
-                  <th className="px-2 py-2 text-left">Sector</th>
+                  <th className="px-2 py-2 text-left">Sector / class</th>
                   <th className="px-2 py-2 text-right">P&amp;L</th>
                   <th className="px-2 py-2 text-right">Return</th>
                   <th className="px-2 py-2 text-right">Contrib.</th>
@@ -260,8 +275,12 @@ export function ReturnAnalysis() {
             </table>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            Contributions are each sector's P&amp;L over the book's TOTAL cost, so they add to the embedded
-            return exactly.
+            Contributions are each row's P&amp;L over the book's TOTAL cost, so they add to the embedded
+            return exactly. A GICS sector is a property of a company, so only direct equity is bucketed by one;
+            a fund is a wrapper holding many companies and appears under its own asset class instead. Its gain
+            still counts — it is not a sector.
+            {m.wrapperClasses.length > 0 && <> Bucketed by class here:{" "}
+              <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span>.</>}
           </p>
         </Card>
       </div>

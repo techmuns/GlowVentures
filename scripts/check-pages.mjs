@@ -57,6 +57,11 @@ const ROUTES = [
   ["thesis", "/thesis"],
   ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
+  // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
+  // has no price history, no PE, no filings and no insider trades, so the five
+  // company panels are absent BY DECISION there. Walked as its own route so a
+  // regression that puts them back is caught here rather than by the client.
+  ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -196,10 +201,52 @@ const INVARIANTS = {
   family: [
     ["no per-entity XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
   ],
-  // Exposure & IPS sector GAP is a listed-only view; the private book is named
-  // as excluded rather than folded in as one giant "Unclassified" slice.
+  // Exposure & IPS sector GAP and market-cap bands are DIRECT-EQUITY views, and
+  // every class they leave out is named with its value.
+  //
+  // These asserted "listed book" for a long time, which passed while the page
+  // was still wrong: excluding only the PRIVATE classes kept ₹52.4 Cr of
+  // mutual-fund units in the sector table (as "Unclassified") and in the
+  // market-cap card's unmeasured bucket, where they reported a permanent
+  // shortfall against a market cap a fund can never have. The wording moved
+  // with the fix so the check cannot pass on the old, weaker claim.
   exposure: [
-    ["sector GAP is listed-only, private book named as excluded", (t) => /listed book/i.test(t) && /excluded/i.test(t)],
+    // THE FIRST DRAFT OF THIS ONE COULD NOT FAIL, which is worse than not having
+    // it. It matched the caption's PROSE — "direct equity", "excluded rather
+    // than folded in" — and that prose is static: reverting the filter to
+    // `!isPrivateClass` put Cash and ₹52.4 Cr of mutual funds straight back into
+    // the sector table and the check still passed. Both invariants below are
+    // struck on FIGURES THE PAGE RENDERS, so a filter that widens moves one side
+    // and not the other.
+    ["sector GAP is direct-equity only, the non-equity classes named",
+      (t) => /direct equity/i.test(t) && /excluded rather than folded in/i.test(t)],
+    // The caption states what the table COVERS and what it EXCLUDES from two
+    // independent computations. They must reconstruct the header's consolidated
+    // NAV. Widening the covered set moves the first and leaves the second, and
+    // the sum then overshoots by exactly the classes counted twice (₹180.8 +
+    // ₹339.4 = ₹520.2 against a ₹461 Cr book).
+    ["covered + excluded reconstructs the consolidated NAV", (t) => {
+      const nav = Number(/₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);           // header chip, first on the page
+      const covered = Number(/Sectors cover direct equity \(₹([\d.]+)\s*Cr\)/i.exec(t)?.[1] ?? NaN);
+      const excluded = Number(/The other ₹([\d.]+)\s*Cr is excluded/i.exec(t)?.[1] ?? NaN);
+      return [nav, covered, excluded].every(Number.isFinite)
+        && Math.abs(covered + excluded - nav) <= Math.max(0.6, nav * 0.002);
+    }],
+    // And a class the caption NAMES as excluded may not stand as a row in the
+    // table above it. Cash did, under its own "Cash" sector, while the sentence
+    // underneath said it had been left out.
+    ["no class named as excluded appears as a sector row", (t) => {
+      const i = t.search(/SECTOR\s+VALUE/i);
+      const j = t.search(/Sectors cover direct equity/i);
+      if (i < 0 || j <= i) return false;
+      const table = t.slice(i, j);
+      const named = /is excluded rather than folded in:([\s\S]*?)\. A fund is a wrapper/i.exec(t)?.[1] ?? "";
+      const classes = [...named.matchAll(/of ([A-Za-z][A-Za-z ]*?)(?=,| and |$)/g)].map((m) => m[1].trim());
+      if (classes.length === 0) return false;
+      return classes.every((c) => !new RegExp(`(^|\n)${c}\t`, "i").test(table));
+    }],
+    ["market-cap bands are struck on direct equity, not the whole book",
+      (t) => /direct-equity/i.test(t)],
     // Phase 5: the IPS is an editor now. With NO family input recorded — which is
     // this harness's state — every gap must be absent and the page must say why.
     // A gap computed against a defaulted target is a fabricated instruction.
@@ -229,6 +276,63 @@ const INVARIANTS = {
   stock: [
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
+    // A COMPANY keeps every panel. This is the other half of `stock-fund` below:
+    // suppressing the research block on an asset class must not creep into the
+    // pages it belongs on.
+    ["a company page still carries its research panels", (t) => !/not applicable to/i.test(t)],
+  ],
+  // The same route serving a FUND. `/stock/:securityKey` is right to serve every
+  // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
+  // of their own — but the company research underneath does not apply, and five
+  // dashed panels under a fund's name read as five failed feeds rather than one
+  // decided absence. Asserted on the page, because the reason a card is empty is
+  // the only thing separating "the feed is down" from "this can never be filled".
+  "stock-fund": [
+    ["a fund page states the company research does not apply", (t) => /not applicable to/i.test(t)],
+    ["...and does not render the five company panels",
+      (t) => !/Ratio analysis|Street estimates|Annual reports|52-week range|Insider trades/i.test(t)],
+    // A fund's `sector` is "Unclassified" in the model, which is true and reads
+    // on screen as a sector nobody assigned rather than a property it lacks.
+    ["a fund's missing sector is explained, not shown as Unclassified",
+      (t) => /a fund holds many/i.test(t)],
+  ],
+  // Contribution attribution buckets DIRECT EQUITY by GICS sector and every fund
+  // wrapper under its own asset class. Bucketing only the PRIVATE classes that
+  // way left mutual funds — ₹52.4 Cr here — sitting in "Unclassified" beside
+  // direct equity that genuinely has no sector printed, which is how a wrapper
+  // came to head a sector table on the page next door.
+  returns: [
+    // DERIVED FROM THE PAGE, NOT FROM A LITERAL. The caption names the wrapper
+    // classes this table bucketed by class — computed from the same rows the
+    // table is — so a class named there with no ROW in the table is a wrapper
+    // that leaked back into "Unclassified" beside real direct equity. A check
+    // hardcoding "Mutual Fund" would instead go stale the first drop that holds
+    // none, and would pass over no input, which is what `golden.mjs` refuses.
+    ["every wrapper class the page names has its own attribution row", (t) => {
+      const i = t.search(/SECTOR \/ CLASS/i);
+      const named = /Bucketed by class here:\s*([^.]+)\./i.exec(t)?.[1] ?? "";
+      const classes = named.split(",").map((x) => x.trim()).filter(Boolean);
+      if (i < 0 || classes.length === 0) return false;
+      const end = t.indexOf("Total", i);
+      const table = t.slice(i, end > i ? end : i + 2000);
+      return classes.every((c) => table.includes(c));
+    }],
+    // And no fund's NAME may stand as a row label — the failure this replaced.
+    ["no fund name stands as a sector row", (t) => {
+      const i = t.search(/SECTOR \/ CLASS/i);
+      if (i < 0) return false;
+      const end = t.indexOf("Total", i);
+      const table = t.slice(i, end > i ? end : i + 2000);
+      return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum|Liquid ?Bees)/i.test(table);
+    }],
+  ],
+  // "Compare companies" compares COMPANIES. A fund unit has no PE, no filings and
+  // no peer set, and offering one in the picker put "Sanshi Fund-I (Open Ended
+  // AIF CAT-III) — Class E" and "Cash" side by side under that heading.
+  compare: [
+    ["the picker offers companies only, and names what it left out",
+      (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
+        && /direct equity only/i.test(t)],
   ],
   // Layer 1: Knowledge & Memory is a real note store, not a mock. In this
   // headless run nothing has been captured, so the page must show the ABSENT

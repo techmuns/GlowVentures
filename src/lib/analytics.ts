@@ -92,6 +92,76 @@ export function publicPrivateSplit(positions: Position[]): { listed: number; pri
 }
 
 /**
+ * A FUND VEHICLE — one purchase of a MANAGER'S PORTFOLIO, never a share in a
+ * company. THIS IS THE AXIS `isPrivateClass` DOES NOT ANSWER, and conflating
+ * the two is what put fund units into this book's company-level views.
+ *
+ * `isPrivateClass` splits the book by how a holding is VALUED — a mark from an
+ * exchange vs a mark from a manager. That is the right axis for "listed vs
+ * private" and the wrong one for "is this a company". A mutual fund is marked
+ * daily at a published NAV, so it is not private; it is also not a company, and
+ * it has no GICS sector, no market cap, no NSE symbol, no P&L statement and no
+ * concall. Every surface that asks a COMPANY question — a sector table, a
+ * market-cap band, a stock page, a news search, a peer comparison — must key on
+ * THIS predicate, not on that one.
+ *
+ * Sector Composition learnt it the expensive way. Excluding only the private
+ * classes left "Unclassified" reading 49.0%, ₹88.6 Cr, with **Helios Flexi Cap
+ * Fund at the head of a sector table** — a mutual fund taking the largest slice
+ * of an equity chart while describing nothing. The classes named below are the
+ * three that hold OTHER securities: an AIF folio, a mutual-fund scheme and an
+ * ETF are all one line standing for a portfolio somebody else assembled.
+ *
+ * There is no look-through behind them and this book cannot invent one: a
+ * fund's underlying holdings would need each scheme's own portfolio disclosure,
+ * which the drop carries for exactly ONE scheme and does not join to any folio
+ * the family holds. So a fund's value stays whole, inside its own fund row —
+ * never spread across sectors it was never reported against.
+ */
+const FUND_CLASSES = new Set(["AIF", "Mutual Fund", "ETF"]);
+
+/**
+ * Takes anything carrying an `assetClass`, not just a `Position`: the holdings
+ * table builds consolidated ROWS that are not positions, and a second copy of
+ * this set living over there is exactly how two surfaces come to disagree.
+ */
+export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.assetClass);
+
+/**
+ * DIRECT EQUITY — a share in a company, held in the family's own demat or
+ * bought for it under a manager's discretionary mandate.
+ *
+ * A PMS mandate is an ENGAGEMENT, not an asset class (see `Account.engagement`),
+ * so the shares SVAN, Carnelian and Goldstandard hold for this family are the
+ * same asset as the ones sitting in its own LKP demat and belong in the same
+ * set. What is NOT in it is a fund unit: buying the Buoyant AIF is not buying
+ * the companies Buoyant owns.
+ */
+export const isDirectEquity = (p: { assetClass: string }) => p.assetClass === "Equity";
+
+/** One asset class's contribution, for naming what a narrowed view left out. */
+export type ClassSlice = { key: string; mv: number; count: number };
+
+/**
+ * The classes a narrowed view does NOT cover, largest first.
+ *
+ * A page that answers a company question over direct equity alone is answering
+ * a narrower question than its heading implies, and the standing rule is that
+ * the remainder is NAMED with its value rather than quietly dropped. Every
+ * caller of `isDirectEquity` pairs it with this.
+ */
+export function excludedClasses(positions: Position[], keep: (p: Position) => boolean): ClassSlice[] {
+  const m = new Map<string, { mv: number; count: number }>();
+  for (const p of positions) {
+    if (keep(p)) continue;
+    const e = m.get(p.assetClass) ?? { mv: 0, count: 0 };
+    e.mv += p.marketValue; e.count += 1;
+    m.set(p.assetClass, e);
+  }
+  return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
+}
+
+/**
  * A position whose statement reported a usable cost basis.
  *
  * Return analysis, contribution decomposition and the winners/losers split are

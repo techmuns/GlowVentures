@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
@@ -345,7 +345,17 @@ export function PortfolioMonitor() {
                             {r.costNA && <Pill tone="warn">cost n/a</Pill>}
                           </div>
                         </td>
-                        <td className="px-2 py-2.5 text-slate-400">{r.sector}</td>
+                        {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
+                            WAY TO SAY SO. It reads as a sector the pipeline
+                            failed to map — the same cell a direct equity gets
+                            when its statement printed none — when the truth is
+                            that the property does not apply: an AIF folio or a
+                            mutual-fund scheme is a wrapper over many sectors. */}
+                        <td className="px-2 py-2.5 text-slate-400">
+                          {isFundVehicle(r)
+                            ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
+                            : r.sector}
+                        </td>
                         <td className="px-2 py-2.5 text-slate-400">
                           {multi ? (
                             <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}

@@ -10,7 +10,7 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge } from "@/components/Preview";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, byAssetClass } from "@/lib/analytics";
+import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isDirectEquity, isFundVehicle, excludedClasses, byAssetClass, sum } from "@/lib/analytics";
 import {
   IPS_BUCKETS, readFamilyInputs, writeFamilyInputs, ipsTargetTotal, pct,
   exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
@@ -61,22 +61,54 @@ export function ExposureIPS() {
     [portfolio, inputs],
   );
   const targetTotal = ipsTargetTotal(inputs);
-  // Sector GAP is a LISTED-equity view. An AIF/private holding is a fund wrapper
-  // with no equity sector, so folding it in put 62% of the book under a single
-  // "Unclassified" slice. The private book is named as excluded below.
-  const listed = useMemo(() => consolidated.filter((x) => !isPrivateClass(x)), [consolidated]);
-  const listedMV = useMemo(() => consolidatedMarketValue(listed), [listed]);
-  const sectors = useMemo(() => bySector(listed), [listed]);
-  // Market-cap exposure over the LISTED book only. An AIF unit is a fund wrapper
-  // with no market cap of its own, so including it would report a permanent
-  // shortfall against a figure that can never exist.
-  const mcap = useMemo(() => mcapExposure(listed), [listed]);
+  /**
+   * SECTOR AND MARKET-CAP ARE DIRECT-EQUITY VIEWS — `isDirectEquity`, not
+   * `!isPrivateClass`.
+   *
+   * Excluding only the PRIVATE classes fixed the AIF folios and left every
+   * other wrapper in: a mutual fund is marked daily at a published NAV, so it
+   * is not private, and it has no more of a GICS sector than an AIF folio does.
+   * This book holds ₹52.4 Cr of mutual-fund units and ₹6.8 Cr of cash — all of
+   * which landed in the sector table (funds under "Unclassified", cash under
+   * "Cash") and, worse, in the market-cap card's `unmeasured` bucket, which
+   * reports a shortfall against a market cap a fund can never have. That is
+   * Sector Composition's own bug, one page over. Both now narrow to shares in
+   * companies and NAME what they left out.
+   */
+  const equity = useMemo(() => consolidated.filter(isDirectEquity), [consolidated]);
+  const equityMV = useMemo(() => consolidatedMarketValue(equity), [equity]);
+  const sectors = useMemo(() => bySector(equity), [equity]);
+  /** What the sector and market-cap views do not cover, named with its value. */
+  const nonEquity = useMemo(() => excludedClasses(consolidated, isDirectEquity), [consolidated]);
+  const nonEquityMV = useMemo(() => sum(nonEquity.map((c) => c.mv)), [nonEquity]);
+  const fundMV = useMemo(() => consolidatedMarketValue(consolidated.filter(isFundVehicle)), [consolidated]);
+  const mcap = useMemo(() => mcapExposure(equity), [equity]);
   const nameByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of consolidated) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
     return m;
   }, [consolidated]);
-  const topHoldings = useMemo(() => bySecurity(consolidated).slice(0, 10).map((b) => ({ ...b, name: nameByKey.get(b.key) ?? b.key })), [consolidated, nameByKey]);
+  /**
+   * TOP HOLDINGS SPANS THE WHOLE BOOK, AND EVERY ROW SAYS WHAT IT IS.
+   *
+   * Six of this book's ten largest holdings are fund units, not companies — the
+   * Sanshi folios, Buoyant, Helios, Motilal Oswal — and in a bare Security /
+   * Value / Weight table each of them reads as a stock the family owns. That is
+   * the client's complaint in its plainest form. Narrowing the list to direct
+   * equity would be the wrong fix: these ARE the family's largest holdings and
+   * hiding them understates the book. So the list stays whole and each row
+   * carries its asset class, which is the one fact that separates a share in a
+   * company from one line standing for somebody else's portfolio.
+   */
+  const classByKey = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of consolidated) if (!m.has(p.securityKey)) m.set(p.securityKey, p.assetClass);
+    return m;
+  }, [consolidated]);
+  const topHoldings = useMemo(
+    () => bySecurity(consolidated).slice(0, 10)
+      .map((b) => ({ ...b, name: nameByKey.get(b.key) ?? b.key, assetClass: classByKey.get(b.key) ?? null })),
+    [consolidated, nameByKey, classByKey]);
   // costBasis / unrealizedPnL are nullable where no statement reported a cost;
   // a missing figure sorts as 0 (neutral) rather than distorting the ranking.
   const contributors = useMemo(() => [...consolidated].sort((a, b) => (b.unrealizedPnL ?? 0) - (a.unrealizedPnL ?? 0)).slice(0, 5), [consolidated]);
@@ -264,9 +296,18 @@ export function ExposureIPS() {
           </table>
         </div>
         <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-          Sectors cover the <span className="font-medium text-slate-400">listed book</span> ({money(listedMV)}); the
-          private book ({money(totalMV - listedMV)} of AIF units) carries no equity sector and is excluded here rather
-          than shown as one large "Unclassified" slice. The GAP also spans geography, market-cap, duration, tangible vs
+          Sectors cover <span className="font-medium text-slate-400">direct equity</span> ({money(equityMV)}) — shares in
+          companies the family holds, whether through a manager's mandate or its own demat.
+          {nonEquity.length > 0 && <> The other {money(nonEquityMV)} is excluded rather than folded in:{" "}
+            {nonEquity.map((c, i) => (
+              <span key={c.key}>
+                {i > 0 && (i === nonEquity.length - 1 ? " and " : ", ")}
+                <span className="font-medium text-slate-400">{money(c.mv)}</span> of {c.key}
+              </span>
+            ))}. A fund is a wrapper holding many companies and no statement here prints a sector for one, so folding
+            them in would put {money(fundMV)} of fund units under a single "Unclassified" slice — the largest row in an
+            equity sector table, describing nothing.</>}{" "}
+          The GAP also spans geography, market-cap, duration, tangible vs
           intangible, entity and advisor allocation — actuals for those need a look-through the book does not yet carry,
           so they are previewed below.
         </p>
@@ -330,7 +371,7 @@ export function ExposureIPS() {
                 </tbody>
               </table>
               <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500">
-                Of the listed book, {money(mcap.measured)} carries a market cap from the quote feed
+                Of the direct-equity book, {money(mcap.measured)} carries a market cap from the quote feed
                 {mcap.unmeasured > 0 && <> and {money(mcap.unmeasured)} does not ({mcap.unmeasuredNames.length} name{mcap.unmeasuredNames.length === 1 ? "" : "s"} with no live quote), which is excluded from the weights rather than banded as small</>}.
                 Bands are this dashboard's stated convention — <span className="text-slate-400">≥₹1,00,000 Cr</span>,{" "}
                 <span className="text-slate-400">₹25,000 Cr–₹1,00,000 Cr</span>, below that — not SEBI's rank-based
@@ -339,7 +380,7 @@ export function ExposureIPS() {
             </>
           ) : (
             <AbsentSection
-              what="No listed holding carries a market cap"
+              what="No direct-equity holding carries a market cap"
               needs="The figure comes from the live quote feed. With no quote resolved for any name there is nothing to
                 band, and banding on statement marks alone is not possible — a mark is a price, not a company's size." />
           )}
@@ -364,10 +405,11 @@ export function ExposureIPS() {
 
       {/* Top holdings & sectors — real */}
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
-        <Card title="Top 10 holdings" subtitle="Live from the book" right={<Pill tone="info">live</Pill>} pad={false}>
+        <Card title="Top 10 holdings" subtitle="Live from the book · every class, each row saying which" right={<Pill tone="info">live</Pill>} pad={false}>
           <table className="min-w-full text-[13px]">
             <thead className="border-b border-ink-700"><tr>
               <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
+              <th className="label-xs px-4 py-2 text-left font-medium">Class</th>
               <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
               <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
             </tr></thead>
@@ -375,6 +417,11 @@ export function ExposureIPS() {
               {topHoldings.map((t) => (
                 <tr key={t.key} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={t.key} name={t.name} /></td>
+                  <td className="px-4 py-2.5">
+                    {t.assetClass
+                      ? <Pill tone={t.assetClass === "Equity" ? "info" : undefined}>{t.assetClass}</Pill>
+                      : <AbsentCell reason="no statement in the book states an asset class for this holding" />}
+                  </td>
                   <td className="px-4 py-2.5 text-right mono text-slate-200">{money(t.mv)}</td>
                   <td className="px-4 py-2.5 text-right mono text-slate-400">{(t.weight * 100).toFixed(1)}%</td>
                 </tr>
@@ -382,7 +429,7 @@ export function ExposureIPS() {
             </tbody>
           </table>
         </Card>
-        <Card title="Top 10 sectors" subtitle="Live from the book" right={<Pill tone="info">live</Pill>} pad={false}>
+        <Card title="Top 10 sectors" subtitle="Direct equity only — a fund has no sector" right={<Pill tone="info">live</Pill>} pad={false}>
           <table className="min-w-full text-[13px]">
             <thead className="border-b border-ink-700"><tr>
               <th className="label-xs px-4 py-2 text-left font-medium">Sector</th>
@@ -409,7 +456,13 @@ export function ExposureIPS() {
             <tbody className="divide-y divide-ink-700/60">
               {contributors.map((p) => (
                 <tr key={p.securityKey + p.accountId} className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={p.securityKey} name={p.security} /></td>
+                  <td className="px-4 py-2.5 text-slate-100">
+                    <StockLink securityKey={p.securityKey} name={p.security} />
+                    {/* A fund unit's gain is as real as a company's and belongs
+                        in this ranking; what it must not do is read as a stock.
+                        The class rides beside the name for that reason alone. */}
+                    {!isDirectEquity(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                  </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>
                 </tr>
@@ -422,7 +475,13 @@ export function ExposureIPS() {
             <tbody className="divide-y divide-ink-700/60">
               {laggards.map((p) => (
                 <tr key={p.securityKey + p.accountId} className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={p.securityKey} name={p.security} /></td>
+                  <td className="px-4 py-2.5 text-slate-100">
+                    <StockLink securityKey={p.securityKey} name={p.security} />
+                    {/* A fund unit's gain is as real as a company's and belongs
+                        in this ranking; what it must not do is read as a stock.
+                        The class rides beside the name for that reason alone. */}
+                    {!isDirectEquity(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                  </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>
                 </tr>

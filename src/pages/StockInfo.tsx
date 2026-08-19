@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
@@ -50,6 +50,34 @@ export function StockInfo() {
   if (!portfolio) return null;
 
   const name = rows[0]?.security ?? led?.name ?? securityKey;
+  /**
+   * A FUND UNIT IS NOT A COMPANY, AND THIS PAGE MUST NOT RESEARCH IT AS ONE.
+   *
+   * The route is `/stock/:securityKey` and it serves every holding, which is
+   * right — an AIF folio's quantity, cost, entities and dated ledger all belong
+   * on a page of their own. What does not belong is the five company panels
+   * underneath: a returns table, a ratio table, screener's financials, concalls
+   * and insider trades, each rendering its own "nothing came back" state for a
+   * holding that HAS no company behind it. Five dashed boxes under a fund's name
+   * read as five failed feeds, which is the "a card that can never be filled
+   * must not look like one that is waiting" rule, five times over.
+   *
+   * This is a PERMANENT, DECIDED absence, stated once, and it is decided by the
+   * asset class rather than by the ticker being null: a company whose NSE symbol
+   * this book could not resolve is a resolver shortfall and keeps its panels,
+   * because a future `build-symbols` fills them. A fund never will.
+   *
+   * CASH IS IN THE SAME SET AND `Unlisted` IS NOT. A cash line and a liquid
+   * sweep have no company behind them either. An unlisted COMPANY does — it is
+   * a company whose figures nobody publishes, which is a data gap the panels
+   * are right to report as one, so it keeps them.
+   */
+  const assetClass = rows[0]?.assetClass ?? null;
+  const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
+  const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
+  const NOT_A_COMPANY_LABEL: Record<string, string> = {
+    "Mutual Fund": "a mutual fund", ETF: "an ETF", AIF: "an AIF folio", Cash: "a cash line",
+  };
   const sector = rows[0]?.sector;
   const providerSector = rows[0]?.providerSector;
   const isin = rows[0]?.isin;
@@ -100,7 +128,19 @@ export function StockInfo() {
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {sector && <Pill tone="info">{sector}</Pill>}
+            {/* The asset class is what this holding IS and it leads, because on
+                a page headed by a security name it is the one fact that
+                separates a company from a fund. A fund's `sector` is
+                "Unclassified" — true of the model and misleading on screen,
+                since it reads as a sector nobody got round to assigning rather
+                than a property the thing does not have. */}
+            {assetClass && <Pill tone={assetClass === "Equity" ? "info" : "core"}>{assetClass}</Pill>}
+            {sector && !fundVehicle && <Pill tone="info">{sector}</Pill>}
+            {fundVehicle && (
+              <span className="text-[11px] text-slate-600" title="A GICS sector is a property of a company. This holding is a wrapper over many of them and no statement here prints a sector for it.">
+                no sector — a fund holds many
+              </span>
+            )}
             {/* The provider's own sector label, kept alongside ours — the
                 taxonomies differ per platform and neither is authoritative. */}
             {providerSector && providerSector !== sector && (
@@ -247,7 +287,13 @@ export function StockInfo() {
             <div className="mt-2 flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">First bought</span><span className="mono text-slate-100">{firstBought ? fmtDate(firstBought) : led === undefined ? "…" : <AbsentCell reason="no purchase in the window the transaction statements cover — this holding predates it" />}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Last added</span><span className="mono text-slate-100">{lastAdded ? fmtDate(lastAdded) : led === undefined ? "…" : <AbsentCell reason="no purchase in the window the transaction statements cover" />}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Dividends recorded</span><span className="mono text-slate-100">{div !== null && div > 0 ? fmtFromBase(div, { compact: true }) : <AbsentCell reason="no dividend statement in this book records an event in this name" />}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in listed book</span><span className="mono text-slate-100">{weight.toFixed(1)}%</span></div>
+            {/* The denominator is the WHOLE consolidated book — see `bookMV`
+                above, which is deliberately not the listed subset because this
+                page serves every holding. The label said "listed book" anyway,
+                so an AIF folio's page read "Weight in listed book 38.0%" about a
+                holding that is not listed and against a total that is not the
+                listed one. Wrong on both halves of a three-word label. */}
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in book</span><span className="mono text-slate-100" title="Share of consolidated NAV — every asset class, each dually-reported holding counted once.">{weight.toFixed(1)}%</span></div>
           </Card>
         </div>
       )}
@@ -303,7 +349,31 @@ export function StockInfo() {
         </div>
       </Card>
 
-      <ReturnsTable ticker={sym} name={name} />
+      {/* Investment tools are the family's OWN judgements — a target price or a
+          review date is as meaningful against a fund as against a company — so
+          they render for every holding. */}
+      {notACompany ? (
+        <Card className="mt-5" title={`Company research — not applicable to ${NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
+          <p className="text-[12.5px] leading-relaxed text-slate-400">
+            This holding is <span className="font-medium text-slate-300">{assetClass}</span>
+            {fundVehicle
+              ? <> — one line standing for a portfolio the manager assembles, not a share in a company.</>
+              : <> — a balance, not a share in a company.</>} So there is no price history, no PE, no balance sheet,
+            no concall and no insider filing for it, and the five panels that carry those for a company are absent
+            here by decision rather than by a feed being down.
+          </p>
+          {fundVehicle && (
+            <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
+              The companies inside it are the manager's holdings, not this book's. Showing them would need the scheme's
+              own portfolio disclosure joined to this folio, and no statement in this drop carries one for it — so the
+              fund's value stays whole, here and in every total, rather than being spread across sectors it was never
+              reported against.
+            </p>
+          )}
+        </Card>
+      ) : (
+        <ReturnsTable ticker={sym} name={name} />
+      )}
 
       <InvestmentTools
         securityKey={securityKey}
@@ -312,15 +382,19 @@ export function StockInfo() {
         priceIsLive={live}
       />
 
-      <RatioTable ticker={sym} name={name} />
+      {!notACompany && (
+        <>
+          <RatioTable ticker={sym} name={name} />
 
-      <ResearchPanel ticker={sym} name={name} />
+          <ResearchPanel ticker={sym} name={name} />
 
-      {/* Deep company research — live 52-week range & insider trades, a pointer
-          to the live Research panel above, and previews for the sections no
-          endpoint serves as structured data yet. */}
-      <CompanyResearchPreview name={name} ticker={sym} price={rows[0]?.currentPrice ?? null} live={live}
-        low52={rows[0]?.low52 ?? null} high52={rows[0]?.high52 ?? null} />
+          {/* Deep company research — live 52-week range & insider trades, a pointer
+              to the live Research panel above, and previews for the sections no
+              endpoint serves as structured data yet. */}
+          <CompanyResearchPreview name={name} ticker={sym} price={rows[0]?.currentPrice ?? null} live={live}
+            low52={rows[0]?.low52 ?? null} high52={rows[0]?.high52 ?? null} />
+        </>
+      )}
 
       <p className="mt-4 text-[11px] text-slate-500">
         Figures are live from the current book and the dated ledger. Amounts are auditable — click any dotted number to trace it in <Link to={auditHref(LEDGER)} className="text-champagne-400 hover:underline">Data Audit</Link>.

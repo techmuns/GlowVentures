@@ -9,7 +9,7 @@ import { StockLink } from "@/components/StockLink";
 import { Markdown } from "@/components/Markdown";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull, isDirectEquity, isFundVehicle } from "@/lib/analytics";
 import { symbolFor } from "@/lib/quotes";
 import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
@@ -62,12 +62,24 @@ export function CompareCompanies() {
   // Per-account report dates — a statement mark closes on its own account's date.
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
 
-  // One row per SECURITY, not per position: the same name is held by several
-  // accounts and comparing it against itself is not a comparison.
+  /**
+   * One row per SECURITY, not per position: the same name is held by several
+   * accounts and comparing it against itself is not a comparison.
+   *
+   * AND THE PICKER LISTS COMPANIES, WHICH IS WHAT THIS PAGE COMPARES. Every row
+   * it offers is a share in a company (`isDirectEquity`). A fund unit and a cash
+   * line were in the list too, so a reader could put "Sanshi Fund-I (Open Ended
+   * AIF CAT-III) — Class E" and "Cash" side by side under a heading that reads
+   * "Compare companies" — with a PE column, a filings row and a returns table
+   * that can never be filled for either. This is not a narrowing that hides
+   * value: the fund's own figures are on Portfolio Monitor's AIF section and on
+   * its holding page. It is the page answering the question it asks.
+   */
   const candidates = useMemo<Candidate[]>(() => {
     if (!portfolio) return [];
     const m = new Map<string, Candidate>();
     for (const p of portfolio.positions) {
+      if (!isDirectEquity(p)) continue;
       const c = m.get(p.securityKey);
       if (c) { c.rows.push(p); continue; }
       m.set(p.securityKey, {
@@ -87,6 +99,12 @@ export function CompareCompanies() {
       .sort((a, b) => sum(b.rows.map((r) => r.marketValue)) - sum(a.rows.map((r) => r.marketValue)));
   }, [portfolio]);
 
+  /** Fund units and cash the picker does not offer — named, never silently dropped. */
+  const notCompanies = useMemo(() => {
+    if (!portfolio) return { funds: 0, mv: 0 };
+    const rows = dedupedPositions(portfolio.positions.filter(isFundVehicle));
+    return { funds: new Set(rows.map((p) => p.securityKey)).size, mv: sum(rows.map((p) => p.marketValue)) };
+  }, [portfolio]);
   const chosen = useMemo(
     () => picked.map((k) => candidates.find((c) => c.securityKey === k)).filter((c): c is Candidate => !!c),
     [picked, candidates],
@@ -161,15 +179,23 @@ export function CompareCompanies() {
       <PageHeader
         eyebrow="RESEARCH"
         title="Compare companies"
-        subtitle={<>Up to {MAX} names side by side — position, price, ratios and returns. The picker lists this book’s own holdings; a name that appears in no statement here has nothing to compare.</>}
+        subtitle={<>Up to {MAX} names side by side — position, price, ratios and returns. The picker lists the companies this book holds directly; a name that appears in no statement here has nothing to compare.</>}
         right={<BasisPill liveText="Position and price move with the feed; ratios and filings do not." />}
       />
 
       <Card
         title="Pick companies"
         subtitle={`${picked.length} of ${MAX} selected${picked.length >= MAX ? " — remove one to add another" : ""}`}
-        right={<Pill>{candidates.length} securities in the book</Pill>}
+        right={<Pill>{candidates.length} companies in the book</Pill>}
       >
+        {notCompanies.funds > 0 && (
+          <p className="mb-3 text-[11px] leading-relaxed text-slate-500">
+            The picker lists <span className="text-slate-400">direct equity</span> only. {notCompanies.funds}{" "}
+            fund {notCompanies.funds === 1 ? "holding" : "holdings"} worth {money(notCompanies.mv)} — AIF folios,
+            mutual-fund schemes and ETFs — are not offered here: a fund is a wrapper holding many companies, so it has
+            no PE, no filings and no peer set of its own. Its position and return are on Portfolio Monitor.
+          </p>
+        )}
         {chosen.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {chosen.map((c) => (
