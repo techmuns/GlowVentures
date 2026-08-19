@@ -181,7 +181,7 @@ export function MorningCIO() {
       };
     };
     // ALLOCATION IS BY ASSET CLASS — what a holding IS, not how it is run. Every
-    // listed equity is ONE "Equity" class regardless of vehicle: the family's PMS
+    // listed equity is ONE class regardless of vehicle: the family's PMS
     // mandates and its self-directed LKP demat hold the same asset, so they
     // consolidate into a single row. Splitting equity by vehicle here — "PMS /
     // Managed" vs "Direct Equity" — put an engagement on an asset-class axis (the
@@ -189,6 +189,15 @@ export function MorningCIO() {
     // one ₹0 folio is tagged engagement "Direct", and filed ₹9.9 Cr of the
     // family's own self-directed stock (LKP, engagement "Execution") under "PMS".
     // How the equity is RUN is stated in the caption instead.
+    //
+    // THE ROW IS LABELLED "Direct Equity" AND THAT IS NOT THAT SPLIT COMING BACK.
+    // The words are the ones the bad version used; the SET is the opposite one.
+    // That row was `engagement === "Direct"` — one vehicle out of several, which
+    // is why it was empty. This row is `isDirectEquity`, the whole `Equity` asset
+    // class across every vehicle, and "direct" here means *held as shares in a
+    // company* rather than through a fund. `assetClassLabel` in analytics.ts is
+    // the one place that word is chosen; the test is the row's COUNT, not its
+    // label, and `check:pages` asserts it is non-empty for that reason.
     // ...and an ETF is NOT equity for this purpose. It was folded in here
     // because it is listed and marked on an exchange, which is the `listed vs
     // private` axis, not this one: an ETF is one line standing for a basket
@@ -329,7 +338,7 @@ export function MorningCIO() {
       retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
     });
     const allBuckets: Bucket[] = [
-      { key: "Equity", color: "#d9c48f", count: equity.count, invested: equity.cost, current: equity.mv, kind: "MOIC", metric: equity.cost !== null && equity.cost > 0 ? equity.mv / equity.cost : null, retPct: equity.ret, distributed: 0, xirr: listedXirr([...directSide.parts, ...pmsSide.parts]), xirrBasis: "ledger", xirrNote: xirrCoverage(xirrExcluded), sheet: null },
+      { key: "Direct Equity", color: "#d9c48f", count: equity.count, invested: equity.cost, current: equity.mv, kind: "MOIC", metric: equity.cost !== null && equity.cost > 0 ? equity.mv / equity.cost : null, retPct: equity.ret, distributed: 0, xirr: listedXirr([...directSide.parts, ...pmsSide.parts]), xirrBasis: "ledger", xirrNote: xirrCoverage(xirrExcluded), sheet: null },
       classBucket("AIF", "#a855f7", aifEq),
       classBucket("Mutual Fund", "#22d3ee", mfEq),
       classBucket("ETF", "#0ea5e9", etfEq),

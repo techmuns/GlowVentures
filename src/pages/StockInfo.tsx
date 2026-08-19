@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
@@ -81,7 +81,16 @@ export function StockInfo() {
   const sector = rows[0]?.sector;
   const providerSector = rows[0]?.providerSector;
   const isin = rows[0]?.isin;
-  const cmp = rows[0]?.currentPrice ?? 0;
+  /**
+   * NULL, NOT ZERO. This read `?? 0` and printed a 2xl "₹0" as the CMP headline
+   * of every holding its statement marks at a TOTAL VALUE rather than a per-unit
+   * price — 360 ONE's AIF units among them, whose page therefore led with a zero
+   * price above a ₹1.47 Cr holding value. `price()` renders null as an em dash,
+   * so the default was the whole of the bug: a figure produced by a default is
+   * the exact failure this book exists to prevent, and the caption underneath
+   * already says which mark the number came from.
+   */
+  const cmp = rows[0]?.currentPrice ?? null;
   const qty = sum(drows.map((r) => r.quantity));
   const cost = sumOrNull(drows.map((r) => r.costBasis));
   const mv = sum(drows.map((r) => r.marketValue));
@@ -102,8 +111,27 @@ export function StockInfo() {
   const live = drows.length > 0 && drows.every((r) => r.live);
   const dayPct = live ? rows[0]?.dayChangePct ?? null : null;
   const dayChange = sum(drows.map((r) => r.dayChange ?? 0));
-  const held = drows.length;
+  /**
+   * PER-OWNER, SO THE RAW ROWS. This counted `drows` and reported "Held in 1
+   * entity" for 360 ONE Special Opportunities — a holding reported on Ajay's
+   * CRN37702 and Bharat's CRN60117, whose own "Position by account" table two
+   * cards below listed both of them. The pill and the table contradicted each
+   * other on one screen.
+   *
+   * It is the §"consolidated counts once, per-account does not" rule: the
+   * CONSOLIDATED value below is right to dedupe, and a count of the entities
+   * that report this name is not a consolidated figure — it is the answer to
+   * "whose statements is this on", and the answer is two.
+   */
+  const held = new Set(rows.map((r) => r.accountId)).size;
   const exited = held === 0;
+  /**
+   * What the account rows carry that the (consolidated) footer beneath them does
+   * not. Non-zero only where this name is reported under more than one member,
+   * and named under the table so a reader who adds the rows and gets a bigger
+   * number than the Total can see why. Derived from the two sets, never typed.
+   */
+  const dupCollapsed = sum(rows.map((r) => r.marketValue)) - sum(drows.map((r) => r.marketValue));
 
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
@@ -134,7 +162,7 @@ export function StockInfo() {
                 "Unclassified" — true of the model and misleading on screen,
                 since it reads as a sector nobody got round to assigning rather
                 than a property the thing does not have. */}
-            {assetClass && <Pill tone={assetClass === "Equity" ? "info" : "core"}>{assetClass}</Pill>}
+            {assetClass && <Pill tone={assetClass === "Equity" ? "info" : "core"}>{assetClassLabel(assetClass)}</Pill>}
             {sector && !fundVehicle && <Pill tone="info">{sector}</Pill>}
             {fundVehicle && (
               <span className="text-[11px] text-slate-600" title="A GICS sector is a property of a company. This holding is a wrapper over many of them and no statement here prints a sector for it.">
@@ -265,6 +293,20 @@ export function StockInfo() {
                 </tfoot>
               </table>
             </div>
+            {/* CARRY BOTH, COUNT ONCE — and SAY SO where both are on screen.
+                Every row above is a statement as its issuer printed it, so a
+                name reported under two members has two rows; the Total is the
+                consolidated figure, which counts the holding once. Without this
+                line the two disagree by exactly the duplicate and a reader who
+                adds the column has found a contradiction. */}
+            {dupCollapsed > 1 && (
+              <p className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                The rows above add to {money(sum(rows.map((r) => r.marketValue)))}: this is ONE holding, reported on
+                each of the {held} statements listed. Both are shown as printed, and the Total counts it once —
+                {money(mv)}, the same basis as the consolidated NAV. Which statement owns it is a question about the
+                family's affairs, not a parsing rule, so neither row is suppressed.
+              </p>
+            )}
           </Card>
 
           <Card title="Tax basis & holding">
@@ -355,7 +397,7 @@ export function StockInfo() {
       {notACompany ? (
         <Card className="mt-5" title={`Company research — not applicable to ${NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
           <p className="text-[12.5px] leading-relaxed text-slate-400">
-            This holding is <span className="font-medium text-slate-300">{assetClass}</span>
+            This holding is <span className="font-medium text-slate-300">{assetClassLabel(assetClass)}</span>
             {fundVehicle
               ? <> — one line standing for a portfolio the manager assembles, not a share in a company.</>
               : <> — a balance, not a share in a company.</>} So there is no price history, no PE, no balance sheet,

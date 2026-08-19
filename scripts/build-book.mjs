@@ -251,6 +251,56 @@ function build(docs) {
   }
   for (const k of isinConflicts.keys()) isinByKey.delete(k);
 
+  /**
+   * THE DEDUPE TAG MUST SURVIVE THE SUPERSEDE RULE.
+   *
+   * `duplicateHoldings` (check (c) in reconcile.mjs) matches on the security
+   * plus the FIGURES that would have to coincide by chance for the match to be
+   * innocent, and `applyDedupePolicy` writes `dedupeGroup` onto the holdings of
+   * the documents it matched. That is right for detection and it is the wrong
+   * granularity for the book, because those two things happen at different
+   * layers: the reconciler tags a DOCUMENT, and this file then picks ONE ISSUE
+   * per account per report type. When the two accounts' statements are drawn at
+   * the same date the picked issue is the tagged one and nobody notices.
+   *
+   * 360 ONE Special Opportunities Fund Series 8 Class A3 is the case where they
+   * came apart, and it cost this book a rupee figure:
+   *
+   *   CRN 37702 (Ajay)   2026-06-30   990,429.684 units   Rs 1,45,80,412.51  tagged
+   *   CRN 60117 (Bharat) 2026-06-30   990,429.684 units   Rs 1,45,80,412.51  tagged
+   *   CRN 37702 (Ajay)   2026-07-31   990,429.684 units   Rs 1,46,68,362.66  UNTAGGED
+   *
+   * 37702's July issue supersedes its June one — correctly, it is a snapshot —
+   * and carries no tag, because at 31 July the mark had moved and the pair no
+   * longer matched on figures. So the group kept ONE member in the book,
+   * `dedupedPositions` had nothing to collapse, and the SAME 990,429.684 units
+   * were counted under both CRNs: Rs 1.47 Cr of double-count in the consolidated
+   * total and in the AIF section that shows it.
+   *
+   * The duplication is a fact about the ACCOUNTS — two CRNs of one wealth
+   * platform reporting one AIF holding — not about one month's mark. Once the
+   * reconciler has established it on any issue, it holds for every issue of that
+   * account carrying that security, which is what this map applies. Same join as
+   * the ISIN and asset-class ones above: this drop's own paperwork, applied where
+   * it is unambiguous, never inferred.
+   *
+   * The tag is taken from the NEWEST issue that carries one, so a group id that
+   * changed shape between months resolves to the current answer rather than to
+   * whichever document happened to be read first.
+   */
+  const dedupeByAcctSec = new Map();
+  for (const d of [...docs].sort((a, b) => String(a.asOf ?? "").localeCompare(String(b.asOf ?? "")))) {
+    const k = acctKey(d);
+    if (!k) continue;
+    for (const h of d.holdings ?? []) {
+      if (!h?.securityKey || !h.dedupeGroup) continue;
+      dedupeByAcctSec.set(`${k}|${h.securityKey}`, {
+        dedupeGroup: h.dedupeGroup,
+        alsoReportedUnder: h.alsoReportedUnder?.length ? [...h.alsoReportedUnder] : [],
+      });
+    }
+  }
+
   // Asset class per security, from the reports that DO print one. Same kind of
   // join as the ISIN above: this drop's own paperwork, never inferred from text.
   const classByKey = new Map();
@@ -571,6 +621,7 @@ function build(docs) {
         unclassified.set(providerSector, (unclassified.get(providerSector) ?? 0) + 1);
       }
       const cp = incomeByKey.get(h.securityKey);
+      const carriedDedupe = dedupeByAcctSec.get(`${key}|${h.securityKey}`) ?? null;
       // Where the holdings statement prints no cost, the broker's opening
       // position supplies it — but only when the quantities agree exactly.
       const joinedCost = isNum(h.totalCost) ? null : costFor(h.securityKey, h.quantity);
@@ -676,8 +727,13 @@ function build(docs) {
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
         positionIrrPct: cp?.positionIrrPct ?? null,
-        dedupeGroup: h.dedupeGroup ?? undefined,
-        alsoReportedUnder: h.alsoReportedUnder?.length ? h.alsoReportedUnder : undefined,
+        // Falls back to the tag any OTHER issue of this account carried for this
+        // security — see `dedupeByAcctSec`. A snapshot supersedes; the fact that
+        // two accounts report one holding does not.
+        dedupeGroup: h.dedupeGroup ?? carriedDedupe?.dedupeGroup ?? undefined,
+        alsoReportedUnder: h.alsoReportedUnder?.length
+          ? h.alsoReportedUnder
+          : carriedDedupe?.alsoReportedUnder.length ? carriedDedupe.alsoReportedUnder : undefined,
       });
     }
 
@@ -965,6 +1021,33 @@ function build(docs) {
     totalValue += mv;
   }
   totalValue = r2(totalValue);
+  /**
+   * A GROUP WITH ONE MEMBER IS A BROKEN DEDUPE, NOT AN ABSENT DUPLICATE.
+   *
+   * `dedupeGroup` exists to make a consolidated total count one holding once. A
+   * group that reaches the book with a SINGLE position collapses nothing, so the
+   * total is the naive sum of rows the reconciler judged to be one holding —
+   * which is silent, because a tag that does nothing looks exactly like a book
+   * with no duplicates in it. That is how 1.47 Cr of 360 ONE Special
+   * Opportunities was double-counted for a drop: its partner row lost the tag to
+   * the supersede rule (see `dedupeByAcctSec`) and nothing said so.
+   *
+   * Reported rather than repaired. The propagation above is the repair; this is
+   * the check that says it worked, and a future drop where it stops working gets
+   * a named line in the book report instead of a wrong headline.
+   */
+  const groupMembers = new Map();
+  for (const p of positions) {
+    if (!p.dedupeGroup) continue;
+    (groupMembers.get(p.dedupeGroup) ?? groupMembers.set(p.dedupeGroup, []).get(p.dedupeGroup)).push(p);
+  }
+  const brokenGroups = [...groupMembers.entries()].filter(([, ps]) => ps.length < 2);
+  for (const [g, ps] of brokenGroups) {
+    notes.push(`dedupe group ${g} reached the book with ONE position (${ps[0].security}, `
+      + `${ps[0].accountId}) — the reconciler matched it against a row in another account that is not in `
+      + "the book, so nothing is collapsed and its value is counted as reported. Check the partner account's "
+      + "authoritative holdings issue.");
+  }
   if (doubleCounted) {
     notes.push(`${seenGroups.size} holding(s) reported under more than one member: both rows are carried, `
       + `and ${r2(doubleCounted).toLocaleString("en-IN")} is excluded from the consolidated total so each is counted once`);

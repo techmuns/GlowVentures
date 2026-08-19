@@ -139,6 +139,32 @@ export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.a
  */
 export const isDirectEquity = (p: { assetClass: string }) => p.assetClass === "Equity";
 
+/**
+ * THE SCREEN LABEL FOR AN ASSET CLASS. One place, because a label that is
+ * re-typed on each surface is a label that disagrees with itself.
+ *
+ * `AssetClass` (src/lib/types.ts) is the MODEL's vocabulary and does not change:
+ * it is what `assertNormalized` enforces at ingest, what `precedence.mjs` and
+ * `glowData.ts` are written in, and what every predicate above tests. Renaming
+ * the value would rewrite the generated book for a wording change.
+ *
+ * What did have to change is the WORD ON SCREEN. `Equity` heads the largest
+ * section of the holdings table, and the family read that heading as covering
+ * the whole table — their AIF folios included — and reported the book as mixing
+ * fund units into equity. It never did: `isDirectEquity` is `assetClass ===
+ * "Equity"` and every AIF folio is its own `AIF` row in its own section. But a
+ * heading a reader misreads is a defect in the heading. "Direct Equity" says
+ * what the section actually contains — shares in companies, held in the family's
+ * own demat or bought for it under a manager's mandate — and it is the phrase
+ * `isDirectEquity`'s own doc comment, `SectorComposition` and `ExposureIPS`
+ * already use in prose.
+ *
+ * Every other class is already unambiguous and passes through unchanged.
+ */
+const CLASS_LABEL: Record<string, string> = { Equity: "Direct Equity" };
+
+export const assetClassLabel = (cls: string) => CLASS_LABEL[cls] ?? cls;
+
 /** One asset class's contribution, for naming what a narrowed view left out. */
 export type ClassSlice = { key: string; mv: number; count: number };
 

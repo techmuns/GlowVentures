@@ -43,6 +43,11 @@ const ROUTES = [
   ["cio", "/cio"],
   ["monitor", "/monitor"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
+  // ...and the BY-ENTITY view of the same table, where every statement's row
+  // shows as printed. Both of this book's duplicate holdings are AIF, so this is
+  // the only view in which the AIF section's heading and the footer beneath it
+  // can disagree — which they did, by the ₹3.17 Cr the footer correctly excludes.
+  ["monitor-entity", "/monitor"],        // same route, By entity toggled
   ["family", "/family"],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
@@ -62,6 +67,12 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  // ...AND ONE AIF REPORTED UNDER TWO MEMBERS. The drill-down for a holding two
+  // family members' statements both carry is where "carry both, count once"
+  // either reads correctly or contradicts itself on one screen: the pill said
+  // "Held in 1 entity" over a table listing two, because a per-owner COUNT was
+  // taken from the deduped set.
+  ["stock-aif-dual", "/stock/360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887"],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -93,9 +104,19 @@ const INVARIANTS = {
   cio: [
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
     ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
-    // "are there no investments in direct equity?" — listed equity is one
-    // consolidated Equity asset class, not the empty "Direct Equity" row it was.
-    ["equity is a consolidated asset class, not an empty 'Direct Equity' row", (t) => /\bEquity\b/.test(t)],
+    // "are there no investments in direct equity?" — listed equity is ONE
+    // consolidated asset-class row covering every vehicle, and it is now
+    // LABELLED "Direct Equity" because the family read the old "Equity" heading
+    // as covering their AIF folios too (see `assetClassLabel`).
+    //
+    // THE LABEL AND THE SET ARE ASSERTED SEPARATELY, because the same two words
+    // once named the empty engagement-split row this line was written against.
+    // A label alone cannot tell those apart: the row must also carry holdings
+    // and a value, which the vehicle-split row never did.
+    ["allocation carries a 'Direct Equity' row", (t) => /Direct Equity/.test(t)],
+    ["...and it is the whole equity class, not an empty vehicle split",
+      (t) => !/PMS\s*\/\s*Managed/.test(t)
+        && /Direct Equity[\s\S]{0,200}?₹[\d,.]+\s*(?:Cr|L|K)?/.test(t)],
     // THE AIF WAS DOUBLE-COUNTED INTO NAV, and this is the guard against it
     // returning. It used to read "ties to ~₹335 Cr … not ₹5xx Cr" — a copy of a
     // figure the book GENERATES, written when the book was ₹335.43 Cr. The
@@ -175,6 +196,41 @@ const INVARIANTS = {
   // each dedupeGroup once (₹335.43 Cr, never the double-counted ₹338.6 Cr).
   monitor: [
     ["holdings are sectioned by asset class", (t) => /\bequity\b/i.test(t) && /\d+\s+holdings/i.test(t)],
+    // "we are mixing the AIF holdings into equity" — the model never did
+    // (`isDirectEquity` is `assetClass === "Equity"` and every AIF folio is its
+    // own AIF row), but the section HEADING read "EQUITY" and the family read it
+    // as covering the table beneath it. These three assert the fix on the page:
+    // the heading names the narrower thing, the filter offers CATEGORIES, and no
+    // fund unit stands inside the direct-equity section.
+    ["the equity section is headed 'Direct Equity'", (t) => /\bDIRECT EQUITY\b/i.test(t)],
+    ["the class filter reads 'All categories'", (t) => /All categories/.test(t) && !/All asset classes/.test(t)],
+    // Struck on the RENDERED ROWS, not on the caption: a fund name appearing
+    // between the Direct Equity heading and the next class heading is a wrapper
+    // sitting among the shares, whatever the heading above it says. Same list of
+    // this book's own fund names the sector check uses.
+    ["no fund unit stands inside the Direct Equity section", (t) => {
+      const i = t.search(/^DIRECT EQUITY$/m);
+      if (i < 0) return false;                       // heading gone → the check above fails too
+      const rest = t.slice(i + 1);
+      const j = rest.search(/^(MUTUAL FUND|AIF|ETF|BOND|STRUCTURED PRODUCT|UNLISTED|CASH)$/m);
+      const section = j < 0 ? rest : rest.slice(0, j);
+      return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees|Amritkaal|Delphi Equity|Neo Infra|Baring Private|Transition Venture|India SME|Rising Titans|Hedged Equity)/i.test(section);
+    }],
+    // AND THE SECTIONS MUST ADD UP TO THE FOOTER. A reader who sums the four
+    // headings and lands somewhere other than the Total row has found the
+    // contradiction this book's own rule says no caption rescues — and the
+    // heading subtotal is the one place it could happen, because BOTH of this
+    // book's duplicates are AIF holdings: in the by-entity view the AIF heading
+    // summed ₹3.17 Cr that the (deduped) footer beneath it correctly did not.
+    ["the class subtotals reconstruct the footer total", (t) => {
+      const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
+      const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
+        .map((m) => unit(m[1], m[2]));
+      const total = /Total\s*·\s*\d+\s*rows\s*₹[\d.,]+\s*(?:Cr|L|K)?\s*\S*\s*₹([\d.,]+)\s*(Cr|L|K)?/.exec(t);
+      if (!parts.length || !total) return false;     // no input is never a pass
+      const sum = parts.reduce((a, b) => a + b, 0);
+      return Math.abs(sum - unit(total[1], total[2])) <= Math.max(0.6, parts.length * 0.05);
+    }],
     // The by-security total must count each dedupeGroup once. Asserted against
     // the CONSOLIDATED NAV IN THE HEADER, which is on every page and is the
     // deduped figure by construction — not against a literal, and not against
@@ -192,6 +248,28 @@ const INVARIANTS = {
       return Number.isFinite(nav) && Number.isFinite(total)
         && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
     }],
+  ],
+  // The by-entity view of the holdings table. Every statement's row shows as
+  // printed here, so this is where "carry both, count once" is visible — and
+  // where the class heading above the rows must still be on the footer's basis.
+  "monitor-entity": [
+    ["the by-entity view still sections by class", (t) => /\bDIRECT EQUITY\b/i.test(t) && /\bAIF\b/.test(t)],
+    // THE SAME RECONSTRUCTION AS THE BY-SECURITY VIEW, and the one that binds:
+    // the section subtotal used to be a raw sum of the displayed rows, so the
+    // headings added to ₹3.17 Cr more than the (consolidated) footer beneath.
+    ["the class subtotals reconstruct the footer total", (t) => {
+      const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
+      const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
+        .map((m) => unit(m[1], m[2]));
+      const total = /Total\s*·\s*\d+\s*rows\s*₹[\d.,]+\s*(?:Cr|L|K)?\s*\S*\s*₹([\d.,]+)\s*(Cr|L|K)?/.exec(t);
+      if (!parts.length || !total) return false;
+      const sum = parts.reduce((a, b) => a + b, 0);
+      return Math.abs(sum - unit(total[1], total[2])) <= Math.max(0.6, parts.length * 0.05);
+    }],
+    // ...and a subtotal that counts less than the rows above it says so, rather
+    // than leaving the reader to find the difference by adding the column.
+    ["a section that collapses a duplicate names what it collapsed",
+      (t) => /reported twice, counted once/i.test(t)],
   ],
   // Audit: the per-entity money-weighted return must be measured over accounts
   // that carry an opening portfolio value only. Closing an owner's WHOLE market
@@ -295,6 +373,37 @@ const INVARIANTS = {
     // on screen as a sector nobody assigned rather than a property it lacks.
     ["a fund's missing sector is explained, not shown as Unclassified",
       (t) => /a fund holds many/i.test(t)],
+  ],
+  // The AIF drill-down for a holding reported under two members. "AIF holdings
+  // must be shown inside the respective AIF page drill down" — so every
+  // statement carrying this name has a row here, and the page's own count of
+  // them must agree with the rows it renders.
+  "stock-aif-dual": [
+    // THE COUNT AGAINST THE ROWS, not against a literal — this book's entity
+    // count for this folio is a generated figure and a copy of it here would be
+    // a second source for it. The bug was exactly this disagreement: a pill
+    // reading 1 above a table listing 2.
+    ["the entity count agrees with the account rows rendered", (t) => {
+      const pill = Number(/Held in (\d+) entit/i.exec(t)?.[1] ?? NaN);
+      const i = t.search(/^ENTITY\tMANAGED BY/m);
+      if (!Number.isFinite(pill) || i < 0) return false;
+      const body = t.slice(i).split("\n").slice(1);
+      const end = body.findIndex((l) => /^Total\t/.test(l));
+      if (end < 0) return false;
+      return body.slice(0, end).filter((l) => l.trim()).length === pill;
+    }],
+    // Both rows show and the Total counts the holding once, so the column does
+    // NOT add to its own footer — which is only honest because the page says so.
+    ["the rows-vs-total gap is named where a holding is reported twice",
+      (t) => /reported on\s+each of the \d+ statements listed/i.test(t)],
+    // A holding its statement marks at a TOTAL value has no per-unit price. This
+    // headline read "₹0" for exactly that reason (`currentPrice ?? 0`), which is
+    // a figure produced by a default over a ₹1.47 Cr position.
+    ["no fabricated zero price in the CMP headline", (t) => {
+      const lines = t.split("\n");
+      const i = lines.findIndex((l) => /^CMP\s*·/.test(l.trim()));
+      return i > 0 && !/^₹0(\.00)?$/.test(lines[i - 1].trim());
+    }],
   ],
   // Contribution attribution buckets DIRECT EQUITY by GICS sector and every fund
   // wrapper under its own asset class. Bucketing only the PRIVATE classes that
@@ -517,6 +626,12 @@ for (const theme of THEMES) {
       await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
       if (name === "monitor-txns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-entity") {
+        // The toggle is LABELLED WITH THE VIEW IT SWITCHES TO, so the button
+        // reading "By security" is the one that leaves the by-security view.
+        const t = page.getByRole("button", { name: /^By security$/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
       await page.waitForTimeout(FAST ? 350 : 800);

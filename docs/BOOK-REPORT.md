@@ -7,7 +7,7 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 5,45,90,40,783.01 |
+| Consolidated market value | 5,44,44,60,370.5 |
 | Positions | 317 |
 | Accounts | 42 |
 | Owners | 6 |
@@ -92,13 +92,13 @@ Together they carry **32,86,904.6** across 4 account(s). That figure is stated s
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 4,43,76,11,240.89 | 81.29% |
-| Financials | 25,85,86,623.95 | 4.74% |
+| Unclassified | 4,43,76,11,240.89 | 81.51% |
+| Financials | 25,85,86,623.95 | 4.75% |
 | Health Care | 19,08,15,090.8 | 3.50% |
 | Consumer Discretionary | 18,37,36,315.22 | 3.37% |
 | Industrials | 14,49,38,189.09 | 2.66% |
-| Cash | 11,57,87,076.72 | 2.12% |
-| Information Technology | 7,15,96,197.78 | 1.31% |
+| Cash | 11,57,87,076.72 | 2.13% |
+| Information Technology | 7,15,96,197.78 | 1.32% |
 | Materials | 2,35,59,866.25 | 0.43% |
 | Consumer Staples | 2,28,13,806.84 | 0.42% |
 | Communication Services | 1,10,42,228.2 | 0.20% |
@@ -337,7 +337,7 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: bank-book (no date) superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-unknown-bank-book`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- 2 holding(s) reported under more than one member: both rows are carried, and 1,71,45,962.25 is excluded from the consolidated total so each is counted once
+- 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
 - unrealised short/long-term split is populated on 3 of 317 position(s), across 1 of 42 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

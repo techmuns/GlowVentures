@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
@@ -37,6 +37,13 @@ type Row = {
   // Live-quote fields. `live: false` means CMP is still the workbook mark — the
   // row says so rather than letting a month-old price read as current.
   live: boolean; dayChange: number; dayChangePct: number | null;
+  /**
+   * Set only in the BY-ENTITY view, where both members' rows of a dually
+   * reported holding are shown as printed. Undefined in the by-security view,
+   * whose rows are already consolidated. The class-section subtotal reads it so
+   * the sections sum to the footer in both views — see `classGroups`.
+   */
+  dedupeGroup?: string;
 };
 type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "weight" | "dayChange";
 
@@ -151,6 +158,7 @@ export function PortfolioMonitor() {
         returnPct: p.returnPct, weight: totalMV > 0 ? p.marketValue / totalMV : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
+        dedupeGroup: p.dedupeGroup,
       }));
     }
     if (selected.size > 0) out = out.filter((r) => selected.has(r.security));
@@ -179,7 +187,37 @@ export function PortfolioMonitor() {
     const g = new Map<string, Row[]>();
     for (const r of rows) (g.get(r.assetClass) ?? g.set(r.assetClass, []).get(r.assetClass)!).push(r);
     return [...g.entries()]
-      .map(([cls, rs]) => ({ cls, rows: rs, subtotal: sum(rs.map((x) => x.marketValue)) }))
+      .map(([cls, rs]) => {
+        /**
+         * THE SECTION SUBTOTAL IS ON THE FOOTER'S BASIS — each `dedupeGroup`
+         * once — because a reader who adds the four section headings and lands
+         * somewhere other than the footer has found a contradiction, and this
+         * book's own rule says no caption rescues one.
+         *
+         * It bites on the AIF section and only there. Both of this book's
+         * duplicates are AIF holdings reported under two members — 360 ONE
+         * Special Opportunities under CRN37702 and CRN60117, Transition Venture
+         * Fund I under both Bharat trusts — so in the BY-ENTITY view, which
+         * shows every statement's row as printed, the AIF heading summed
+         * ₹3.17 Cr the footer beneath it (correctly) does not.
+         *
+         * Both rows still SHOW: `dedupedPositions`' policy is carry both, count
+         * once. What is collapsed is named in the heading, so the difference
+         * between the rows on screen and the subtotal above them is stated
+         * rather than left for the reader to discover by adding them up.
+         */
+        const seen = new Set<string>();
+        let subtotal = 0;
+        let collapsed = 0;
+        for (const r of rs) {
+          if (r.dedupeGroup) {
+            if (seen.has(r.dedupeGroup)) { collapsed += r.marketValue; continue; }
+            seen.add(r.dedupeGroup);
+          }
+          subtotal += r.marketValue;
+        }
+        return { cls, rows: rs, subtotal, collapsed };
+      })
       .sort((a, b) => classOrd(a.cls) - classOrd(b.cls));
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const showClassSections = assetClass === "All" && classGroups.length > 1;
@@ -264,7 +302,7 @@ export function PortfolioMonitor() {
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
         <select value={assetClass} onChange={(e) => setAssetClass(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
-          {assetClasses.map((s) => <option key={s} value={s}>{s === "All" ? "All asset classes" : s}</option>)}
+          {assetClasses.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : assetClassLabel(s)}</option>)}
         </select>
         <div className="ml-auto flex items-center gap-2">
           <button onClick={handleExport} disabled={exporting}
@@ -327,8 +365,14 @@ export function PortfolioMonitor() {
                       <tr className="bg-ink-900/50">
                         <td colSpan={13} className="px-2 py-1.5">
                           <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
-                            {grp.cls}
+                            {assetClassLabel(grp.cls)}
                             <span className="font-normal normal-case tracking-normal text-slate-500">· {grp.rows.length} {grp.rows.length === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}</span>
+                            {grp.collapsed > 0 && (
+                              <span className="font-normal normal-case tracking-normal text-slate-500"
+                                title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
+                                · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
+                              </span>
+                            )}
                           </span>
                         </td>
                       </tr>

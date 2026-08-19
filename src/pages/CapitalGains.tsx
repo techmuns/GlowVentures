@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { BasisPill } from "@/components/BasisPill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { sumOrNull, sum, isPriced } from "@/lib/analytics";
+import { sumOrNull, sum, isPriced, assetClassLabel } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
@@ -270,7 +270,7 @@ export function CapitalGains() {
                     <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5">
                         {c.assetClass
-                          ? <span className="font-medium text-slate-100">{c.assetClass}</span>
+                          ? <span className="font-medium text-slate-100">{assetClassLabel(c.assetClass)}</span>
                           : (
                             <>
                               <span className="text-slate-400">{DASH} no asset class on any statement</span>
