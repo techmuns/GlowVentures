@@ -1,0 +1,101 @@
+{
+ "docKey": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4",
+ "provider": "Motilal Oswal Financial Services (demat)",
+ "accountNo": null,
+ "ownerSource": "printed",
+ "accountNoSource": null,
+ "clientCode": null,
+ "owner": "AARTI AJAY JAISINGHANI",
+ "ownerId": "aarti-jaisinghani",
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": null,
+ "inceptionDate": null,
+ "reportType": "demat-statement",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+ "pages": 2,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"Motilal Oswal Financial Services (demat)\" / reportType demat-statement"
+  },
+  {
+   "code": "duplicate-doc-key",
+   "detail": "motilal-oswal-financial-services-demat-unknown-unknown-demat-statement was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf; filed as motilal-oswal-financial-services-demat-unknown-unknown-demat-statement-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 480.6,
+   "parts": [
+    "1201090000000116 73113"
+   ],
+   "joined": "120109000000011673113",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 292.6,
+   "parts": [
+    "1201090000000116 73114"
+   ],
+   "joined": "120109000000011673114",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 436,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": 416,
+   "parts": [
+    "1201090000003024 1211232026091"
+   ],
+   "joined": "12010900000030241211232026091",
+   "page": 2
+  }
+ ]
+}

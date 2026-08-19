@@ -72,6 +72,25 @@ export const PROVIDERS = {
   // and files under a SIX-letter client code, `VECBES0004_145052_…`, which is
   // why the shared filename gate in classify.mjs takes 1–8 letters rather than
   // the 1–4 that covered G / GLC / CBP.
+  /**
+   * Buoyant issues from this system too, under an `I83_` account code — and it
+   * is the first manager in the book whose documents come from TWO families.
+   * Its own Category III ACCOUNT STATEMENT is a single-scheme AIF statement and
+   * belongs to `altFundStatements.mjs`; this set is the house appraisal, fact
+   * sheet, capital register, transaction statement and performance history for
+   * the same folios. `extract.mjs` routes on the report type — see the note
+   * there — so the two do not fight over the provider name.
+   *
+   * The appraisal reports the AIF UNIT, not a look-through: one row,
+   * `BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4`, filed under
+   * "Alternative Assets". Nothing here turns a fund into equities.
+   */
+  buoyant: {
+    name: "Buoyant Capital",
+    filePrefix: /^I83/,
+    letterhead: /Buoyant\s+Opportunities\s+Strategy/i,
+    engagement: "AIF",
+  },
   vecAssago: {
     name: "V.E.C Assago Capital Management LLP",
     filePrefix: /^VEC/,
@@ -303,7 +322,30 @@ const FACTSHEET_COLUMNS = {
  * Only ever consulted for a row that carries no figures, so a real "Cash" data
  * row is never mistaken for a heading.
  */
-const SECTION_ROW = /^(equity|equities|cash|mutual\s*fund|debt|bond|liquid|others?)\b/i;
+const SECTION_ROW = /^(equity|equities|cash|mutual\s*fund|debt|bond|liquid|alternative|others?)\b/i;
+
+/**
+ * A section heading names WHAT THE ROWS UNDER IT ARE, and `Alternative Assets`
+ * is why this is a map rather than a cash test.
+ *
+ * It read `/^cash/i.test(section) ? "Cash" : "Equity"`, which was right while
+ * every appraisal in the book held shares and cash and nothing else. Buoyant's
+ * appraisal prints `Alternative Assets` over its Category III units — and
+ * because that heading was not in `SECTION_ROW` either, it was not recognised
+ * as a heading at all: it glued itself onto the Cash row above, the section
+ * never changed, and **₹76.99 Cr of AIF units came out classified as Cash**.
+ * That is the client's own bifurcation complaint, arriving through the ingest
+ * instead of the UI.
+ */
+function classOfSection(section, security) {
+  if (CASH_LINE.test(security ?? "")) return "Cash";
+  const t = String(section ?? "");
+  if (/^cash/i.test(t)) return "Cash";
+  if (/^alternative/i.test(t)) return "AIF";
+  if (/^mutual\s*fund/i.test(t)) return "Mutual Fund";
+  if (/^(debt|bond)/i.test(t)) return "Bond";
+  return "Equity";
+}
 
 /**
  * A row labelled with nothing but a section word, or "Total", and carrying no
@@ -1441,7 +1483,7 @@ export function extract({ grid, meta }) {
         // asset class. Cash is cash whether the statement puts it under a Cash
         // section (Carnelian, Green Lantern) or prints it as a single line with
         // no section above it.
-        assetClass: /^cash/i.test(x.section ?? "") || CASH_LINE.test(x.security) ? "Cash" : "Equity",
+        assetClass: classOfSection(x.section, x.security),
         quantity: x.quantity,
         unitCost: x.unitCost,
         totalCost: x.totalCost,

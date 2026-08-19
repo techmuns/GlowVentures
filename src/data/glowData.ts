@@ -19,12 +19,12 @@ export const BOOK_AS_OF = "2026-08-13";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-13",
   "listedValue": 1921083707.45,
-  "privateValue": 2802432052.65,
-  "totalValue": 4723515760.1,
-  "positionsCount": 309,
+  "privateValue": 3189213715.79,
+  "totalValue": 5110297423.24,
+  "positionsCount": 313,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 35
+  "accountsCount": 37
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -131,17 +131,32 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "provider": "Buoyant Capital",
+    "accountNo": "103472",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": "Buoyant Opportunities Strategy - Investor",
+    "engagement": "AIF",
+    "providerEngagement": "Portfolio Management Service",
+    "members": [],
+    "asOf": "2026-07-31",
+    "inceptionDate": "2024-06-01",
+    "custodian": "Buoyant Capital",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "buoyant-capital-103473",
     "provider": "Buoyant Capital",
     "accountNo": "103473",
     "ownerId": "ajay-jaisinghani",
     "owner": "Ajay Jaisinghani",
-    "strategy": null,
+    "strategy": "Buoyant Opportunities Strategy - Investor",
     "engagement": "AIF",
-    "providerEngagement": "Category III AIF - the statement titles the class CATEGORY III",
+    "providerEngagement": "Portfolio Management Service",
     "members": [],
     "asOf": "2026-07-31",
-    "inceptionDate": null,
+    "inceptionDate": "2024-06-01",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -338,6 +353,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-08-06",
     "inceptionDate": null,
     "custodian": "Motilal Oswal Active Momentum Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "provider": "Motilal Oswal Founders Fund",
+    "accountNo": "90410016093",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "Category II AIF - drawdown, with a commitment and called capital",
+    "members": [],
+    "asOf": "2026-07-31",
+    "inceptionDate": null,
+    "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
   {
@@ -732,20 +762,89 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
-    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "security": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4",
+    "symbol": null,
+    "accountId": "buoyant-capital-103472",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Alternative Assets",
+    "assetClass": "AIF",
+    "quantity": 1918953.2,
+    "avgCost": 129.97,
+    "currentPrice": 144.2878,
+    "costBasis": 249410446.32,
+    "marketValue": 276881535.53,
+    "unrealizedPnL": 27471089.21,
+    "returnPct": 11.01,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "cash",
+    "security": "Cash",
+    "symbol": null,
+    "accountId": "buoyant-capital-103472",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": null,
+    "assetClass": "Cash",
+    "quantity": 0,
+    "avgCost": 1,
+    "currentPrice": 1,
+    "costBasis": 0,
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "security": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4",
     "symbol": null,
     "accountId": "buoyant-capital-103473",
     "memberId": null,
     "sector": "Unclassified",
-    "providerSector": null,
+    "providerSector": "Alternative Assets",
     "assetClass": "AIF",
-    "quantity": 3416657.4167,
-    "avgCost": null,
+    "quantity": 3416657.417,
+    "avgCost": 139.13,
     "currentPrice": 144.2878,
     "costBasis": 475353990.9,
-    "marketValue": 492981982.01,
-    "unrealizedPnL": 17627991.11,
+    "marketValue": 492981982.05,
+    "unrealizedPnL": 17627991.15,
     "returnPct": 3.71,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "cash",
+    "security": "Cash",
+    "symbol": null,
+    "accountId": "buoyant-capital-103473",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": null,
+    "assetClass": "Cash",
+    "quantity": 0,
+    "avgCost": 1,
+    "currentPrice": 1,
+    "costBasis": 0,
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4677,6 +4776,29 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
     "security": "Motilal Oswal Founders Fund Series II — Class G1",
     "symbol": null,
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "quantity": 9514997.798,
+    "avgCost": null,
+    "currentPrice": 11.5502,
+    "costBasis": 100000000,
+    "marketValue": 109900127.57,
+    "unrealizedPnL": 9900127.57,
+    "returnPct": 9.9,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "symbol": null,
     "accountId": "motilal-oswal-founders-fund-90410016104",
     "memberId": null,
     "sector": "Unclassified",
@@ -7849,6 +7971,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ankita Jaisinghani · Buoyant 103472",
+    "accountId": "buoyant-capital-103472",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · Buoyant 103473",
     "accountId": "buoyant-capital-103473",
     "ownerId": "ajay-jaisinghani",
@@ -8028,6 +8164,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
   {
     "entity": "Ankita Jaisinghani · Motilal 904168868444",
     "accountId": "motilal-oswal-active-momentum-fund-904168868444",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Motilal 90410016093",
+    "accountId": "motilal-oswal-founders-fund-90410016093",
     "ownerId": "ankita-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
@@ -8391,6 +8541,28 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
  * Sign: amount < 0 = capital in, > 0 = capital out, per `CashFlow` in types.ts.
  */
 export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
+  "buoyant-capital-103473": [
+    {
+      "date": "2026-04-01",
+      "amount": -100000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": -250000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": -225353990.9,
+      "description": "Security in"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": 225353990.9,
+      "description": "Security out"
+    }
+  ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
     {
       "date": "2026-04-01",
@@ -8640,6 +8812,11 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
     },
     {
       "date": "2026-04-01",
+      "amount": -100000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2026-04-01",
       "amount": -98614842.68,
       "description": "Opening portfolio value 2026-04-01"
     },
@@ -8662,6 +8839,21 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2026-04-20",
       "amount": 9426,
       "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": -250000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": -225353990.9,
+      "description": "Security in"
+    },
+    {
+      "date": "2026-06-01",
+      "amount": 225353990.9,
+      "description": "Security out"
     },
     {
       "date": "2026-06-05",
@@ -8858,6 +9050,90 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
  * reports' own disclosure. `feeBasis` says whether returns are net of fees.
  */
 export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
+  "buoyant-capital-103472": [
+    {
+      "reportType": "fact-sheet",
+      "source": "buoyant-capital-103472-2026-07-31-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 1.24,
+          "qtd": 1.24,
+          "fytd": 12.62,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 9.76,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "buoyant-capital-103472-2026-07-31-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.24,
+          "m3": 3.69,
+          "m6": 4.7,
+          "y1": 7.91,
+          "si": 10.03,
+          "siAnnualised": true,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
+  "buoyant-capital-103473": [
+    {
+      "reportType": "fact-sheet",
+      "source": "buoyant-capital-103473-2026-07-31-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 1.24,
+          "qtd": 1.24,
+          "fytd": 10.75,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 15.3,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        }
+      ]
+    },
+    {
+      "reportType": "performance-history",
+      "source": "buoyant-capital-103473-2026-07-31-performance-history",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 1.24,
+          "m3": 3.64,
+          "m6": 4.53,
+          "y1": 7.41,
+          "si": 9.65,
+          "siAnnualised": true,
+          "feeBasis": null
+        }
+      ]
+    }
+  ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
     {
       "reportType": "fact-sheet",
@@ -9834,6 +10110,82 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
  * Windows are NOT interchangeable and nothing is added across them.
  */
 export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
+  "buoyant-capital-103472": [
+    {
+      "reportType": "fact-sheet",
+      "source": "buoyant-capital-103472-2026-07-31-fact-sheet",
+      "periodFrom": "2024-06-01",
+      "periodTo": "2026-07-31",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 248500000,
+      "withdrawal": 0,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 276881536,
+      "profit": 28381536
+    },
+    {
+      "reportType": "performance-history",
+      "source": "buoyant-capital-103472-2026-07-31-performance-history",
+      "periodFrom": "2024-06-01",
+      "periodTo": "2026-07-31",
+      "basis": "since-inception",
+      "opening": 276881535.58,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 248499999.94,
+      "realized": 910446.38,
+      "unrealized": 27471089.25,
+      "income": 0,
+      "fees": 0,
+      "expenses": null,
+      "closing": 276881535.58,
+      "profit": null
+    }
+  ],
+  "buoyant-capital-103473": [
+    {
+      "reportType": "fact-sheet",
+      "source": "buoyant-capital-103473-2026-07-31-fact-sheet",
+      "periodFrom": "2024-06-01",
+      "periodTo": "2026-07-31",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 460000000,
+      "withdrawal": 0,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 492981982,
+      "profit": 32981982
+    },
+    {
+      "reportType": "performance-history",
+      "source": "buoyant-capital-103473-2026-07-31-performance-history",
+      "periodFrom": "2024-06-01",
+      "periodTo": "2026-07-31",
+      "basis": "since-inception",
+      "opening": 492981982.01,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 460000000,
+      "realized": 15295129.24,
+      "unrealized": 17627991.11,
+      "income": 58861.66,
+      "fees": 0,
+      "expenses": null,
+      "closing": 492981982.01,
+      "profit": null
+    }
+  ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
     {
       "reportType": "fact-sheet",
@@ -10556,6 +10908,18 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "undrawn": 23000000,
     "distributed": null,
     "arithmeticHolds": true
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "name": "Motilal Oswal Founders Fund",
+    "provider": "Motilal Oswal Founders Fund",
+    "ownerId": "ankita-jaisinghani",
+    "asOf": "2026-07-31",
+    "committed": 100000000,
+    "drawn": 100000000,
+    "undrawn": null,
+    "distributed": null,
+    "arithmeticHolds": null
   },
   {
     "accountId": "motilal-oswal-founders-fund-90410016104",

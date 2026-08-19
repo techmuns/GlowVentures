@@ -1,0 +1,13 @@
+{
+ "name": "pages",
+ "pages": [
+  {
+   "page": 1,
+   "text": "Transaction Statement\nAccount : 103473 AJAY THAKURDAS JAISINGHANI - BOUYA388\nBuoyant Opportunities Strategy - Investor\nFrom 01/04/2026 to 31/07/2026\nTransaction Description Tran Date Settlement Security  Exchg  Quantity  Unit Price  Brkg.  STT  Settlement Amount\nDate\nCurrent Period Transactions\nCurrent Period Settled Transactions\nMutual Funds - AIF Category III\nBuy 01/04/2026 01/04/2026 BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A1 [BOUYA388]  7,17,459.678  139.4627  0.00  0.00  10,00,58,861.66\nSecurity in 01/06/2026 01/06/2026 BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 [BOUYA388]  16,19,755.801  139.1284  0.00  0.00  22,53,53,990.90\nSecurity out 01/06/2026 01/06/2026 BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A1 [BOUYA388]  14,89,474.003  151.2977  0.00  0.00  22,53,53,990.90\nBuy 01/06/2026 01/06/2026 BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 [BOUYA388]  17,96,901.615  139.1284  0.00  0.00  25,00,00,000.00"
+  },
+  {
+   "page": 2,
+   "text": "Transaction Statement\nAccount : 103473 AJAY THAKURDAS JAISINGHANI - BOUYA388\nBuoyant Opportunities Strategy - Investor\nFrom 01/04/2026 to 31/07/2026\nTRANSACTION STATEMENT SUMMARY\nTransaction Description  Current Period Tran -  Current Period Tran - Not  Total Current Period Tran  Total Current Period -\nSettled During Period  Settled  Settled\nSecurity in  22,53,53,990.90  0.00  22,53,53,990.90  22,53,53,990.90\nSecurity out  22,53,53,990.90  0.00  22,53,53,990.90  22,53,53,990.90\nBuy  35,00,58,861.66  0.00  35,00,58,861.66  35,00,58,861.66"
+  }
+ ]
+}

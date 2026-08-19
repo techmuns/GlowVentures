@@ -41,3 +41,16 @@ statements already in `august-2026/` and were NOT copied in: extracting them
 again would have cost a run and taught nobody anything. `extract.mjs` does
 detect byte-identical duplicates and reads each once, so a copy is safe — it is
 just noise, and noise in a provenance record is a cost of its own.
+
+## A delivery may be only PARTLY ingestible, and that is a real state
+
+`august-2026-d/` brought five managers this pipeline had never met. Two folios
+landed; twenty documents have no reader yet. Every one of those twenty is
+ATTRIBUTED to the institution that issued it and counted in the coverage report
+— which is not the same as being filed under a manager who never wrote it.
+
+Before adding a reader for any of them, read the `august-2026-d` section of
+CLAUDE.md: the demat statements list every fund the family owns as a transaction
+row, one of them names a `BHARAT JAISINGHANI FAMILY TRUST` with no numeral
+against two trusts that both exist, and the consolidated review workbook is
+deliberately not a source.

@@ -79,6 +79,10 @@ const EXTRACTORS = Object.fromEntries([
   // India SME — and Sky Capital after it. One reader, seven declared layouts,
   // keyed on each FUND rather than the distributor whose stationery it arrives on.
   ...altFunds.PROVIDER.map((name) => [name, altFunds]),
+  // ...and Buoyant back to the PMS reader for everything EXCEPT its own account
+  // statement, which `BY_PROVIDER_REPORT_TYPE` sends to altFunds. Order matters:
+  // `Object.fromEntries` keeps the last entry for a repeated key.
+  [pms.PROVIDERS.buoyant.name, pms],
   // Read in full and kept OUT of the family book: the holder is a trust with
   // its own PAN. One entry in shared/owners.mjs would change that, and it is a
   // decision about the family rather than a parsing rule.
@@ -103,6 +107,30 @@ const EXTRACTORS = Object.fromEntries([
  */
 const BY_REPORT_TYPE = {
   [investorReport.REPORT_TYPE]: investorReport,
+};
+
+/**
+ * ONE PROVIDER, TWO DOCUMENT FAMILIES — routed on the report type.
+ *
+ * Buoyant sends its own Category III ACCOUNT STATEMENT (a single-scheme AIF
+ * statement, `reportType: "holdings"`) and ALSO issues from the shared PMS
+ * reporting system (appraisal, fact sheet, capital register, transaction
+ * statement, performance history) for the same two folios. `EXTRACTORS` is keyed
+ * on the provider NAME alone, so one of the two families would always have gone
+ * to the wrong reader and come back empty.
+ *
+ * The name stays single — splitting it would split account 103473 across two
+ * providers and break every per-account figure — and the report type picks the
+ * reader. Anything not named here falls through to `EXTRACTORS` as before.
+ */
+const BY_PROVIDER_REPORT_TYPE = {
+  // `holdings` is what the classifier calls the account statement when it reads
+  // its content; `unknown` is what it calls it when the PMS filename gate claims
+  // the file first and no `GOLDSTANDARD_FILE_TYPES` pattern matches
+  // `BUOYANT - AJAY.pdf`. Both are that one document family, and both go to the
+  // reader written for it — otherwise the statement that carried this account
+  // before the PMS set arrived stops being read at all.
+  "Buoyant Capital": { holdings: altFunds, unknown: altFunds },
 };
 
 /** Which reader produced a document, for a warning that has to be actionable. */
@@ -265,7 +293,9 @@ function extractOne(file, grid, part = null) {
   // The reader is chosen by REPORT TYPE first, then by provider. The SEBI PMS
   // investor report is one prescribed layout that several managers issue, so it
   // has one reader; everything else is a house format and is keyed on the house.
-  const extractor = BY_REPORT_TYPE[meta.reportType] ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
+  const extractor = BY_REPORT_TYPE[meta.reportType]
+    ?? BY_PROVIDER_REPORT_TYPE[meta.provider]?.[meta.reportType]
+    ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
   if (!extractor) {
     return makeDocument({
       ...base,

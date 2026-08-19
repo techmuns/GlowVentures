@@ -135,6 +135,22 @@ export const PRECEDENCE = {
   "V.E.C Assago Capital Management LLP": PMS_REPORTING_SYSTEM,
 
   /**
+   * BUOYANT issues from this system too, and its PMS APPRAISAL is authoritative
+   * for holdings — not its own Category III account statement.
+   *
+   * Both report the same position for folio 103473 and agree, so for that folio
+   * the choice is cosmetic. It is not cosmetic for 103472: Ankita's ₹27.69 Cr
+   * folio sends the PMS set and NO account statement, so naming the account
+   * statement authoritative would leave her holding out of the book entirely.
+   * The appraisal also carries the primitives this book wants — quantity, unit
+   * cost, price — where the account statement carries a summary row.
+   *
+   * The appraisal reports the AIF UNIT, one row under "Alternative Assets". It
+   * is not a look-through, so nothing here turns a fund into equities.
+   */
+  "Buoyant Capital": PMS_REPORTING_SYSTEM,
+
+  /**
    * MOLECULE VENTURES delivers the whole report set as ONE PDF.
    *
    * It publishes no portfolio APPRAISAL, so the block above cannot be reused
@@ -339,7 +355,9 @@ export const PRECEDENCE = {
  * A provider whose statements this pipeline can read must appear here.
  */
 for (const provider of [
-  "Buoyant Capital",
+  // Buoyant is NOT here any more: it issues the shared PMS report set as well as
+  // its own account statement, and takes PMS_REPORTING_SYSTEM above. This loop
+  // runs after that assignment and would overwrite it.
   "Helios Mutual Fund",
   "Motilal Oswal Founders Fund",
   "Motilal Oswal Active Momentum Fund",

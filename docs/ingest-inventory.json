@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-19T10:46:35.531Z",
+  "generatedAt": "2026-08-19T11:26:04.549Z",
   "sourceDir": "source",
   "counts": {
-    "files": 222,
-    "pdfs": 220,
+    "files": 255,
+    "pdfs": 253,
     "nonPdf": 2,
-    "classified": 203,
-    "unclassified": 19,
-    "encrypted": 11,
-    "fromArchives": 197,
-    "archivesExpanded": 21,
-    "pages": 615
+    "classified": 235,
+    "unclassified": 20,
+    "encrypted": 13,
+    "fromArchives": 229,
+    "archivesExpanded": 22,
+    "pages": 703
   },
   "reportTypes": [
     "holdings",
@@ -126,6 +126,13 @@
       "extractedTo": "source/_extracted/august-2026-c/VEC - ANKITA",
       "files": 13,
       "skipped": 13,
+      "failed": 0
+    },
+    {
+      "archive": "source/august-2026-d/MOTILAL REPORTS.zip",
+      "extractedTo": "source/_extracted/august-2026-d/MOTILAL REPORTS",
+      "files": 32,
+      "skipped": 34,
       "failed": 0
     },
     {
@@ -1520,6 +1527,680 @@
       "matchedBy": "Goldstandard filename"
     },
     {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf",
+      "fileName": "3P_Folio 3000048.pdf",
+      "bytes": 189254,
+      "size": "184.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": null,
+      "provider": "ICICI Bank (payment advice)",
+      "ownerName": null,
+      "accountNo": "XXXXXXXX1520",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000049.pdf",
+      "fileName": "3P_Folio 3000049.pdf",
+      "bytes": 189507,
+      "size": "185.1 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": null,
+      "provider": "ICICI Bank (payment advice)",
+      "ownerName": null,
+      "accountNo": "XXXXXXXX1520",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
+      "fileName": "Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
+      "bytes": 486263,
+      "size": "474.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Founders Fund",
+      "ownerName": null,
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
+      "fileName": "Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
+      "bytes": 486219,
+      "size": "474.8 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
+      "ownerName": null,
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
+      "fileName": "Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
+      "bytes": 486216,
+      "size": "474.8 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Founders Fund",
+      "ownerName": null,
+      "accountNo": "06510040008050",
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
+      "fileName": "ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
+      "bytes": 89404,
+      "size": "87.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Baring Private Equity India Fund",
+      "ownerName": null,
+      "accountNo": "AIFM",
+      "asOfDate": "2026-03-31",
+      "reportType": "capital-call",
+      "sections": [
+        "capital-call"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_AccountStatement5004CT.pdf",
+      "fileName": "I83_103472_AccountStatement5004CT.pdf",
+      "bytes": 66507,
+      "size": "64.9 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "ANKITA JAISINGHANI Buoyant Opportunities",
+      "accountNo": "103472",
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_CapitalRegister1173CT.pdf",
+      "fileName": "I83_103472_CapitalRegister1173CT.pdf",
+      "bytes": 59733,
+      "size": "58.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "103472",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_PortfolioAppraisal675CT.pdf",
+      "fileName": "I83_103472_PortfolioAppraisal675CT.pdf",
+      "bytes": 62630,
+      "size": "61.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "103472",
+      "asOfDate": "2026-07-31",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_PortFolioFactSheet6020CT.pdf",
+      "fileName": "I83_103472_PortFolioFactSheet6020CT.pdf",
+      "bytes": 53147,
+      "size": "51.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_portfolioPerfHistory1155CT.pdf",
+      "fileName": "I83_103472_portfolioPerfHistory1155CT.pdf",
+      "bytes": 64678,
+      "size": "63.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "103472",
+      "asOfDate": "2026-07-31",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf",
+      "fileName": "I83_103473_AccountStatement5004CT (2).pdf",
+      "bytes": 66867,
+      "size": "65.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI Buoyant Opportunities",
+      "accountNo": "103473",
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_CapitalRegister1173CT.pdf",
+      "fileName": "I83_103473_CapitalRegister1173CT.pdf",
+      "bytes": 62225,
+      "size": "60.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI",
+      "accountNo": "103473",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortfolioAppraisal675CT (1).pdf",
+      "fileName": "I83_103473_PortfolioAppraisal675CT (1).pdf",
+      "bytes": 62720,
+      "size": "61.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI",
+      "accountNo": "103473",
+      "asOfDate": "2026-07-31",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortFolioFactSheet6020CT (1).pdf",
+      "fileName": "I83_103473_PortFolioFactSheet6020CT (1).pdf",
+      "bytes": 53359,
+      "size": "52.1 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_portfolioPerfHistory1155CT.pdf",
+      "fileName": "I83_103473_portfolioPerfHistory1155CT.pdf",
+      "bytes": 64538,
+      "size": "63.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI",
+      "accountNo": "103473",
+      "asOfDate": "2026-07-31",
+      "reportType": "performance-history",
+      "sections": [
+        "performance-history"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf",
+      "fileName": "I83_103473_TransactionStatement_India94CT.pdf",
+      "bytes": 62723,
+      "size": "61.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI",
+      "accountNo": "103473",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf",
+      "fileName": "Carnelian _4551_06082026162230819762.pdf",
+      "bytes": 131648,
+      "size": "128.6 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Carnelian Bharat Amritkaal Fund",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "capital-call",
+      "sections": [
+        "capital-call"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature + content keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+      "fileName": "Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+      "bytes": 546075,
+      "size": "533.3 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Delphi Equity Fund",
+      "ownerName": null,
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-07-01",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
+      "fileName": "H19119_Ajay Jaisinghani_Holding.pdf",
+      "bytes": 19745,
+      "size": "19.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
+      "fileName": "H19119_Ajay Jaisinghani_Transation.pdf",
+      "bytes": 48874,
+      "size": "47.7 KB",
+      "pages": 9,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding .pdf",
+      "fileName": "H19189_Bharat Jaisinghani_Holding .pdf",
+      "bytes": 22718,
+      "size": "22.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "BHARAT JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
+      "fileName": "H19189_Bharat Jaisinghani_Holding1 .pdf",
+      "bytes": 18642,
+      "size": "18.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "BHARAT JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191_Ankita Jaisinghani_Transation.pdf",
+      "fileName": "H19191_Ankita Jaisinghani_Transation.pdf",
+      "bytes": 34530,
+      "size": "33.7 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191-Ankita Jaisinghani_Holding.pdf",
+      "fileName": "H19191-Ankita Jaisinghani_Holding.pdf",
+      "bytes": 27765,
+      "size": "27.1 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
+      "fileName": "H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
+      "bytes": 19960,
+      "size": "19.5 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AARTI AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
+      "fileName": "H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
+      "bytes": 25071,
+      "size": "24.5 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "BHARAT JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Holding.pdf",
+      "fileName": "H46082_Aarti Ajay Jaisinghani_Holding.pdf",
+      "bytes": 20782,
+      "size": "20.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AARTI AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": "2026-07-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+      "fileName": "H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+      "bytes": 23738,
+      "size": "23.2 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AARTI AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
+      "fileName": "H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
+      "bytes": 21267,
+      "size": "20.8 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
+      "fileName": "H46082_Aarti Ajay Jaisinghani_Transation.pdf",
+      "bytes": 19306,
+      "size": "18.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "ownerName": "AARTI AJAY JAISINGHANI",
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "demat-statement",
+      "sections": [
+        "demat-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
+      "fileName": "NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
+      "bytes": 155761,
+      "size": "152.1 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Neo Infra Income Opportunities Fund",
+      "ownerName": null,
+      "accountNo": "9039920536",
+      "asOfDate": "2026-06-30",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/_extracted/august-2026/Carnelian - Ajay/CBP0142_40212_CapitalGain90OT (4).pdf",
       "fileName": "CBP0142_40212_CapitalGain90OT (4).pdf",
       "bytes": 26122,
@@ -2891,15 +3572,15 @@
       "encrypted": false,
       "readError": null,
       "provider": "Buoyant Capital",
-      "ownerName": null,
+      "ownerName": "AJAY THAKURDAS JAISINGHANI Buoyant Opportunities",
       "accountNo": "103473",
       "asOfDate": "2026-07-31",
       "reportType": "unknown",
       "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
     },
     {
       "path": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
@@ -4670,6 +5351,26 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+      "fileName": "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+      "bytes": 261983,
+      "size": "255.8 KB",
+      "pages": 25,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Consolidated family review (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
       "fileName": "ANKITA JAISINGHANI - Active Momentum Fund.pdf",
       "bytes": 175910,
@@ -6199,6 +6900,585 @@
       },
       "fileCount": 49
     },
+    "ICICI Bank (payment advice)": {
+      "accounts": {
+        "XXXXXXXX1520": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf",
+                    "pages": 1,
+                    "size": "184.8 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000049.pdf",
+                    "pages": 1,
+                    "size": "185.1 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 2
+    },
+    "Motilal Oswal Founders Fund": {
+      "accounts": {
+        "00841000060394": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
+                    "pages": 2,
+                    "size": "474.9 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
+                    "pages": 2,
+                    "size": "474.6 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        },
+        "06510040008050": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
+                    "pages": 2,
+                    "size": "474.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 3
+    },
+    "Motilal Oswal Hedged Equity Multi Factor Strategy": {
+      "accounts": {
+        "00841000060394": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
+                    "pages": 3,
+                    "size": "474.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Baring Private Equity India Fund": {
+      "accounts": {
+        "AIFM": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-03-31": {
+              "reportTypes": {
+                "capital-call": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
+                    "pages": 2,
+                    "size": "87.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "capital-call"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Buoyant Capital": {
+      "accounts": {
+        "103472": {
+          "owner": "ANKITA JAISINGHANI Buoyant Opportunities",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_AccountStatement5004CT.pdf",
+                    "pages": 2,
+                    "size": "64.9 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_PortfolioAppraisal675CT.pdf",
+                    "pages": 1,
+                    "size": "61.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_portfolioPerfHistory1155CT.pdf",
+                    "pages": 1,
+                    "size": "63.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_CapitalRegister1173CT.pdf",
+                    "pages": 1,
+                    "size": "58.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 4
+        },
+        "103473": {
+          "owner": "AJAY THAKURDAS JAISINGHANI Buoyant Opportunities",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf",
+                    "pages": 2,
+                    "size": "65.3 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
+                    "pages": 3,
+                    "size": "160.5 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortfolioAppraisal675CT (1).pdf",
+                    "pages": 1,
+                    "size": "61.3 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ],
+                "performance-history": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_portfolioPerfHistory1155CT.pdf",
+                    "pages": 1,
+                    "size": "63.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "performance-history"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 4
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "capital-register": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_CapitalRegister1173CT.pdf",
+                    "pages": 1,
+                    "size": "60.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf",
+                    "pages": 2,
+                    "size": "61.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 6
+        },
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_PortFolioFactSheet6020CT.pdf",
+                    "pages": 1,
+                    "size": "51.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortFolioFactSheet6020CT (1).pdf",
+                    "pages": 1,
+                    "size": "52.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 12
+    },
+    "Carnelian Bharat Amritkaal Fund": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "capital-call": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf",
+                    "pages": 2,
+                    "size": "128.6 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-call"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Motilal Oswal Delphi Equity Fund": {
+      "accounts": {
+        "00841000060394": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-01": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+                    "pages": 2,
+                    "size": "533.3 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Motilal Oswal Financial Services (demat)": {
+      "accounts": {
+        "AJAY JAISINGHANI (no account no.)": {
+          "owner": "AJAY JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
+                    "pages": 1,
+                    "size": "19.3 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "demat-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
+                    "pages": 9,
+                    "size": "47.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
+                    "pages": 2,
+                    "size": "20.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 3
+        },
+        "BHARAT JAISINGHANI (no account no.)": {
+          "owner": "BHARAT JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding .pdf",
+                    "pages": 2,
+                    "size": "22.2 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
+                    "pages": 1,
+                    "size": "18.2 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "demat-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
+                    "pages": 3,
+                    "size": "24.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 3
+        },
+        "ANKITA JAISINGHANI (no account no.)": {
+          "owner": "ANKITA JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "demat-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191_Ankita Jaisinghani_Transation.pdf",
+                    "pages": 5,
+                    "size": "33.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191-Ankita Jaisinghani_Holding.pdf",
+                    "pages": 2,
+                    "size": "27.1 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        },
+        "AARTI AJAY JAISINGHANI (no account no.)": {
+          "owner": "AARTI AJAY JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "2026-07-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
+                    "pages": 1,
+                    "size": "19.5 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Holding.pdf",
+                    "pages": 1,
+                    "size": "20.3 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "demat-statement": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
+                    "pages": 2,
+                    "size": "23.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
+                    "pages": 1,
+                    "size": "18.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 4
+        }
+      },
+      "fileCount": 12
+    },
+    "Neo Infra Income Opportunities Fund": {
+      "accounts": {
+        "9039920536": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-06-30": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
+                    "pages": 4,
+                    "size": "152.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
     "Carnelian Asset Management and Advisors Pvt Ltd": {
       "accounts": {
         "3517383": {
@@ -7369,58 +8649,6 @@
       },
       "fileCount": 1
     },
-    "Buoyant Capital": {
-      "accounts": {
-        "103473": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "unknown": [
-                  {
-                    "path": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
-                    "pages": 3,
-                    "size": "160.5 KB",
-                    "confidence": "high",
-                    "sections": []
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 1
-    },
-    "Motilal Oswal Founders Fund": {
-      "accounts": {
-        "00841000060394": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "unknown": [
-                  {
-                    "path": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
-                    "pages": 2,
-                    "size": "474.6 KB",
-                    "confidence": "high",
-                    "sections": []
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 1
-    },
     "SVAN Investment Managers LLP": {
       "accounts": {
         "8710067": {
@@ -8137,6 +9365,20 @@
       "duplicateTypes": []
     },
     {
+      "provider": "Buoyant Capital",
+      "account": "103473",
+      "asOf": "2026-07-31",
+      "fileCount": 4,
+      "reportTypes": [
+        "unknown",
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
       "provider": "Goldstandard Wealth Private Limited",
       "account": "100022",
       "asOf": "2026-07-10",
@@ -8167,6 +9409,18 @@
       "fileCount": 3,
       "reportTypes": [
         "holdings",
+        "appraisal",
+        "performance-history"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Buoyant Capital",
+      "account": "103472",
+      "asOf": "2026-07-31",
+      "fileCount": 3,
+      "reportTypes": [
+        "unknown",
         "appraisal",
         "performance-history"
       ],
@@ -8286,6 +9540,101 @@
       ],
       "duplicateTypes": [
         "fact-sheet"
+      ]
+    },
+    {
+      "provider": "ICICI Bank (payment advice)",
+      "account": "XXXXXXXX1520",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Founders Fund",
+      "account": "00841000060394",
+      "asOf": "2026-07-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Buoyant Capital",
+      "account": "103473",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "capital-register",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Buoyant Capital",
+      "account": "(unidentified)",
+      "asOf": "2026-07-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "fact-sheet"
+      ],
+      "duplicateTypes": [
+        "fact-sheet"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "account": "AJAY JAISINGHANI (no account no.)",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "demat-statement"
+      ],
+      "duplicateTypes": [
+        "demat-statement"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "account": "BHARAT JAISINGHANI (no account no.)",
+      "asOf": "2026-07-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "account": "AARTI AJAY JAISINGHANI (no account no.)",
+      "asOf": "2026-07-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "account": "AARTI AJAY JAISINGHANI (no account no.)",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "demat-statement"
+      ],
+      "duplicateTypes": [
+        "demat-statement"
       ]
     },
     {
@@ -8770,6 +10119,26 @@
       "encrypted": false,
       "readError": null,
       "provider": "360 ONE Alternates Asset Management",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+      "fileName": "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+      "bytes": 261983,
+      "size": "255.8 KB",
+      "pages": 25,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Consolidated family review (not a statement)",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,

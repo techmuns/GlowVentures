@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 4,72,35,15,760.1 |
-| Positions | 309 |
-| Accounts | 35 |
+| Consolidated market value | 5,11,02,97,423.24 |
+| Positions | 313 |
+| Accounts | 37 |
 | Owners | 6 |
 | Newest as-of | 2026-08-13 |
 
@@ -22,7 +22,8 @@ Generated — **do not edit by hand**.
 | 37702 | 360 ONE Private Wealth | Ajay Jaisinghani | — | 2026-07-31 | 1 | 1,46,68,362.66 |
 | 60117 | 360 ONE Private Wealth | Bharat Jaisinghani | — | 2026-06-30 | 1 | 1,45,80,412.51 |
 | 3000048 | 3P Investment Managers | Ajay Jaisinghani | — | 2026-07-31 | 3 | 0 |
-| 103473 | Buoyant Capital | Ajay Jaisinghani | — | 2026-07-31 | 1 | 49,29,81,982.01 |
+| 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-07-31 | 2 | 27,68,81,535.53 |
+| 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-07-31 | 2 | 49,29,81,982.05 |
 | 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-08-10 | 12 | 39,53,37,616.86 |
 | 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 8,01,95,236.76 |
 | 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 18,79,95,881.19 |
@@ -36,6 +37,7 @@ Generated — **do not edit by hand**.
 | 98245 | LKP Securities | Bharat Jaisinghani | — | 2026-03-31 | 10 | 98,76,174.92 |
 | 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-07-31 | 11 | 1,15,97,496.65 |
 | 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
+| 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 10,99,00,127.57 |
 | 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 21,82,50,873.93 |
 | 9039671821 | Sanshi Fund | Aarti Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 97,68,26,519.91 |
 | 9039671854 | Sanshi Fund | Bharat Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 19,56,88,390.51 |
@@ -57,8 +59,8 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 16 | 163 | 2,69,08,08,324.76 |
-| Ankita Jaisinghani | 6 | 84 | 71,15,64,386.89 |
+| Ajay Jaisinghani | 16 | 164 | 2,69,08,08,324.8 |
+| Ankita Jaisinghani | 8 | 87 | 1,09,83,46,049.99 |
 | Bharat Jaisinghani | 8 | 59 | 32,71,70,566.29 |
 | Aarti Jaisinghani | 1 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 2 | 1 | 1,71,45,962.25 |
@@ -85,24 +87,25 @@ Together they carry **32,86,904.6** across 4 account(s). That figure is stated s
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 3,70,20,86,217.98 | 78.38% |
-| Financials | 25,85,86,623.95 | 5.47% |
-| Health Care | 19,08,15,090.8 | 4.04% |
-| Consumer Discretionary | 18,37,36,315.22 | 3.89% |
-| Industrials | 14,49,38,189.09 | 3.07% |
-| Cash | 11,57,87,076.72 | 2.45% |
-| Information Technology | 7,15,96,197.78 | 1.52% |
-| Materials | 2,35,59,866.25 | 0.50% |
-| Consumer Staples | 2,28,13,806.84 | 0.48% |
-| Communication Services | 1,10,42,228.2 | 0.23% |
-| Utilities | 99,62,509.52 | 0.21% |
-| Real Estate | 57,37,600 | 0.12% |
+| Unclassified | 4,08,88,67,881.12 | 80.01% |
+| Financials | 25,85,86,623.95 | 5.06% |
+| Health Care | 19,08,15,090.8 | 3.73% |
+| Consumer Discretionary | 18,37,36,315.22 | 3.60% |
+| Industrials | 14,49,38,189.09 | 2.84% |
+| Cash | 11,57,87,076.72 | 2.27% |
+| Information Technology | 7,15,96,197.78 | 1.40% |
+| Materials | 2,35,59,866.25 | 0.46% |
+| Consumer Staples | 2,28,13,806.84 | 0.45% |
+| Communication Services | 1,10,42,228.2 | 0.22% |
+| Utilities | 99,62,509.52 | 0.19% |
+| Real Estate | 57,37,600 | 0.11% |
 
 ## Unclassified sectors
 
 Add these to `shared/sectors.mjs`. Until then they render as Unclassified —
 never guessed into the nearest plausible bucket.
 
+- **Alternative Assets** — 2 position(s)
 - **Other Apparels & Accessor** — 1 position(s)
 - **Coal** — 1 position(s)
 - **Shipping** — 2 position(s)
@@ -138,9 +141,9 @@ never guessed into the nearest plausible bucket.
 - account 1019265797 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,70,028.13.
 - account Aditya Birla Sun Life Mutual Fund::1038104611: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings`; its dated rows are still counted
 - account 1038104611 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,98,563.95.
-- account 103473: no time-weighted return series in any statement
-- account 103473: no flow block in any statement, so no value bridge
-- account 103473: no external capital movements found, so no money-weighted return series
+- account 103472: no external capital movements found, so no money-weighted return series
+- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-07-31 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
+- account 103473: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary-2`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: capital-gain 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain`; its dated rows are still counted
@@ -230,6 +233,10 @@ never guessed into the nearest plausible bucket.
 - account 904168868444: no time-weighted return series in any statement
 - account 904168868444: no flow block in any statement, so no value bridge
 - account 904168868444: no external capital movements found, so no money-weighted return series
+- account 90410016093: no time-weighted return series in any statement
+- account 90410016093: no flow block in any statement, so no value bridge
+- account 90410016093: no external capital movements found, so no money-weighted return series
+- account Motilal Oswal Founders Fund::90410016104: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-07-31 — `motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2`; its dated rows are still counted
 - account 90410016104: no time-weighted return series in any statement
 - account 90410016104: no flow block in any statement, so no value bridge
 - account 90410016104: no external capital movements found, so no money-weighted return series
@@ -312,6 +319,6 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - 2 holding(s) reported under more than one member: both rows are carried, and 1,71,45,962.25 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 309 position(s), across 1 of 35 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 313 position(s), across 1 of 37 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

@@ -1,0 +1,93 @@
+{
+ "docKey": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-unknown",
+ "provider": "Neo Infra Income Opportunities Fund",
+ "accountNo": "9039920536",
+ "ownerSource": null,
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": null,
+ "ownerId": null,
+ "familyGroup": null,
+ "strategy": null,
+ "engagement": null,
+ "providerEngagement": null,
+ "members": [],
+ "asOf": "2026-06-30",
+ "inceptionDate": null,
+ "reportType": "unknown",
+ "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
+ "pages": 4,
+ "status": "failed",
+ "warnings": [
+  {
+   "code": "no-extractor",
+   "detail": "no extractor for provider \"Neo Infra Income Opportunities Fund\" / reportType unknown"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": null,
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 716.97,
+   "parts": [
+    "545",
+    "55",
+    "490"
+   ],
+   "joined": "54555490",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 603.57,
+   "parts": [
+    "628",
+    "62",
+    "566"
+   ],
+   "joined": "62862566",
+   "page": 3
+  },
+  {
+   "kind": "same-line",
+   "column": 2,
+   "y": 535.602,
+   "parts": [
+    "455",
+    "46",
+    "409"
+   ],
+   "joined": "45546409",
+   "page": 3
+  }
+ ]
+}

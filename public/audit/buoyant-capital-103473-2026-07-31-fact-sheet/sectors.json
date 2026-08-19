@@ -1,0 +1,29 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "BUOYANT OPPORTUNITIES",
+   "492,981,982",
+   "100.00%"
+  ],
+  [
+   "1",
+   "Alternative Assets"
+  ],
+  [
+   "STRATEGY - CATEGORY III - CLASS A4"
+  ],
+  [
+   "Total",
+   "492,981,982",
+   "100%"
+  ]
+ ]
+}

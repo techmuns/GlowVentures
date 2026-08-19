@@ -228,23 +228,39 @@ const GOLDSTANDARD_FILE_TYPES = [
 const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
 
 function matchGoldstandard(text, name) {
+  // A DEPOSITORY STATEMENT IS NEVER A PMS HOUSE REPORT, and it lists every fund
+  // the family owns as a transaction row — Buoyant's among them, which the
+  // `byText` gate below would otherwise claim. `genericProvider` matches these
+  // on the DP's own SEBI registration line; this just stops them being taken
+  // before they get there.
+  if (/CDSL\s+AND\s+NSDL\s*:\s*IN-DP-/i.test(text)) return null;
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
     || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
     || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text)
-    || /MOLECULE\s+VENTURES/i.test(text);
+    || /MOLECULE\s+VENTURES/i.test(text)
+    // Buoyant issues from this system TOO, under an `I83_` account code. Its
+    // own Category III account statement is a different document family and
+    // goes to `altFundStatements.mjs`; see the dispatch note in extract.mjs.
+    || /Buoyant\s+Opportunities\s+Strategy/i.test(text);
   const byName = PMS_FILE.test(name);
   if (!byText && !byName) return null;
 
   // `Account : 12345  Some Owner Name`
   const provider = /GREEN\s+LANTERN\s+CAPITAL/i.test(text) ? "Green Lantern Capital LLP"
+    // The AMRITKAAL fund is a Category III AIF, a different vehicle from the
+    // PMS mandate, and its statement names Carnelian as its manager — so it has
+    // to be tested BEFORE the house rule or it lands in the PMS account.
+    : /CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i.test(text) ? "Carnelian Bharat Amritkaal Fund"
     : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
     : /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text) ? "V.E.C Assago Capital Management LLP"
     : /MOLECULE\s+VENTURES/i.test(text) ? "Molecule Ventures LLP"
+    : /Buoyant\s+Opportunities\s+Strategy/i.test(text) ? "Buoyant Capital"
     : /^GLC/i.test(name) ? "Green Lantern Capital LLP"
     : /^CBP/i.test(name) ? "Carnelian Asset Management and Advisors Pvt Ltd"
     : /^VEC/i.test(name) ? "V.E.C Assago Capital Management LLP"
     : /^G\d/i.test(name) ? "Goldstandard Wealth Private Limited"
+    : /^I83/i.test(name) ? "Buoyant Capital"
     : null;
   const strategy = /Aristos\s+Equity\s+Portfolio/i.test(text) ? "Aristos Equity Portfolio"
     : /GLC\s+GROWTH\s+FUND/i.test(text) ? "GLC Growth Fund"
@@ -361,6 +377,36 @@ function genericReportType(text) {
  */
 const ISSUER_PROVIDER_RULES = [
   /**
+   * A CONSOLIDATED REVIEW IS NOT A STATEMENT, AND IT NAMES EVERY MANAGER.
+   *
+   * The family's adviser sends a 25-tab workbook aggregating the whole book.
+   * Matched on any issuer name it would claim whichever one its cells happen to
+   * mention first — it landed under Helios, then under Motilal Oswal Founders
+   * Fund, with an "owner" read as the literal word "Sale". It contributed
+   * nothing either time only because the fund readers refused its summary row.
+   *
+   * It is matched on a COLUMN HEADER no issuer prints, and it has no reader by
+   * DECISION rather than by omission: every figure in this book traces to the
+   * statement of the institution that struck it, and an aggregation carries
+   * someone else's assumptions about what to include and how to value it. Its
+   * proper use is as an independent CROSS-CHECK of the generated book — the
+   * role `golden.mjs` plays for the extractors — not as a source.
+   */
+  [/Absolute\s+Gain\s*\/\s*\(Loss\)\s+Including\s+Redeemed\s+Funds/i, "Consolidated family review (not a statement)"],
+  /**
+   * A DEMAT STATEMENT IS MATCHED ON ITS DEPOSITORY REGISTRATION, and it comes
+   * first because its ROWS are other people's funds.
+   *
+   * These are the depository participant's own holding and transaction
+   * statements, and every fund the family owns is printed inside them as a
+   * line item — so matched on any fund name, one landed under Buoyant and
+   * another under Neo Infra, which is the WhiteOak failure exactly: a name on a
+   * document is not a claim about who issued it. `CDSL AND NSDL : IN-DP-…` is
+   * the DP's SEBI registration line, printed on its own letterhead and on
+   * nothing else in this drop.
+   */
+  [/CDSL\s+AND\s+NSDL\s*:\s*IN-DP-/i, "Motilal Oswal Financial Services (demat)"],
+  /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
    * These six come FIRST because four of them print `Motilal Oswal` on the
@@ -390,6 +436,36 @@ const ISSUER_PROVIDER_RULES = [
   [/Active\s+Momentum\s+Fund/i, "Motilal Oswal Active Momentum Fund"],
   [/3P\s+India\s+Equity\s+Fund/i, "3P Investment Managers"],
   [/India\s+SME\s+Investments\s+Fund/i, "India SME Investments"],
+  /**
+   * ...and the same rule again for everything the `august-2026-d` delivery
+   * introduced. EVERY ONE of these was landing under a house that did not issue
+   * it: the demat statements under HDFC / 3P / Buoyant / Aditya Birla, because
+   * the classifier matched a HOLDING inside them; the Delphi and NEO statements
+   * and a Baring PE folio under the bare `Motilal Oswal` rule, because Motilal
+   * Oswal is the distributor or the depository participant; and the CONSOLIDATED
+   * REVIEW WORKBOOK under Helios Mutual Fund, because the family owns some.
+   *
+   * THE POSITION OF THIS BLOCK IS LOAD-BEARING. Placed above the established
+   * fund rules it stole two accounts that were already in the book: the demat
+   * rule matched `Motilal Oswal Financial Services` printed as the DEPOSITORY
+   * PARTICIPANT on the Founders Fund and 3P statements, and ₹21.83 Cr walked out
+   * of the book on a re-run. It sits below every fund rule that predates it and
+   * above the bare `Motilal Oswal` and `CARNELIAN ASSET MANAGEMENT` rules, which
+   * is the only band where all of them resolve.
+   *
+   * These rules only ATTRIBUTE them. Most still have no reader, and the
+   * coverage section of the extraction report is where that is stated — which
+   * is the honest place for it, and is not the same thing as filing a document
+   * under a manager who never wrote it.
+   */
+  [/Neo\s+Infra\s+Income\s+Opportunities\s+Fund/i, "Neo Infra Income Opportunities Fund"],
+  [/Baring\s+Private\s+Equity\s+India\s+Fund/i, "Baring Private Equity India Fund"],
+  [/CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i, "Carnelian Bharat Amritkaal Fund"],
+  [/Motilal\s+Oswal\s+Wealth\s+Delphi\s+Equity\s+Fund|Delphi\s+Emerging\s+Equity\s+Fund/i, "Motilal Oswal Delphi Equity Fund"],
+  [/Motilal\s+Oswal\s+Hedged\s+Equity\s+Multi\s+Factor/i, "Motilal Oswal Hedged Equity Multi Factor Strategy"],
+  // A bank payment advice, not a statement. `3P_Folio 3000049.pdf` is named for
+  // the folio the money went to and is an ICICI receipt for the transfer.
+  [/ICICI\s+Bank\s+Advice\s+Receipt/i, "ICICI Bank (payment advice)"],
   // The ALTERNATES arm comes first and must: it signs its letters "360 ONE
   // ALTERNATES ASSET MANAGEMENT LIMITED", which the broader `360 ONE` rule below
   // also matches. Two arms of one group, two document families, two readers.
