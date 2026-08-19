@@ -36,7 +36,7 @@
 import PptxGenJS from "pptxgenjs";
 import type { Portfolio, Position } from "./types";
 import { staleAccounts, stalenessNote } from "./accounts";
-import { byAssetClass, byEntity, bySecurity, consolidatedMarketValue, doubleCountedValue, publicPrivateSplit, sumOrNull, unpriced } from "./analytics";
+import { byAssetClass, byEntity, bySecurity, consolidatedMarketValue, doubleCountedValue, publicPrivateSplit, sumOrNull, unpriced, assetClassLabel } from "./analytics";
 import { displaySecurity } from "./format";
 
 // The dashboard's palette, so the deck reads as the same product.
@@ -165,7 +165,10 @@ export async function exportReviewDeck(input: DeckInput): Promise<void> {
   table(s3, [
     head(["Asset class", "Value", "Weight", "Holdings"]),
     ...classes.map((b) => [
-      { text: b.key, options: { align: "left" as const } },
+      // The screen label, from the one place that chooses it — a deck slide that
+      // says "Equity" beside a monitor that says "Direct Equity" is two names for
+      // one row, and a slide travels without the screen that explains it.
+      { text: assetClassLabel(b.key), options: { align: "left" as const } },
       { text: fmt(b.mv), options: { align: "right" as const } },
       { text: `${b.weight.toFixed(1)}%`, options: { align: "right" as const } },
       { text: String(b.count), options: { align: "right" as const } },

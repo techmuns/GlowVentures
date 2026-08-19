@@ -11,6 +11,7 @@ import { Auditable } from "@/components/Auditable";
 import { StockLink } from "@/components/StockLink";
 import { auditHref } from "@/lib/auditFormulas";
 import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
+import { assetClassLabel } from "@/lib/analytics";
 import {
   loadTransactions, loadRealisedLots, loadIncome, loadSales,
   type TxnData, type LotData, type IncomeData, type SalesData,
@@ -341,7 +342,7 @@ function GainsView({ data }: { data: LotData | null }) {
                   <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
                       {c.assetClass
-                        ? <span className="font-medium text-slate-100">{c.assetClass}</span>
+                        ? <span className="font-medium text-slate-100">{assetClassLabel(c.assetClass)}</span>
                         : (
                           <>
                             <span className="text-slate-400">{DASH} no asset class on any statement</span>

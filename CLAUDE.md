@@ -240,7 +240,7 @@ every ZIP already at the top level.
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
 | Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹1.71 Cr\* |
 | Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹1.71 Cr\* |
-| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.47 Cr |
+| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.47 Cr\* |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
 | Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
@@ -272,7 +272,7 @@ is one row per account, all 42 of them, sorted by value.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹648.07 Cr**: listed ₹294.27 Cr, private ₹353.80 Cr. The split is
+**Consolidated ₹646.61 Cr**: listed ₹294.27 Cr, private ₹352.34 Cr. The split is
 on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
@@ -315,14 +315,50 @@ folios, which no statement values at all and which render `—` with the reason.
 
 
 **Two holdings are reported under two members each, and are counted once.**
-360 ONE Special Opportunities Fund Series 8 Class A3 appears with byte-identical
-figures under CRN37702 and CRN60117 (₹1,45,80,412.51 each), and Transition
-Venture Capital Fund I — Class A1 under both Bharat Jaisinghani family trusts
-(₹1,71,26,374.76 each). Both rows of each are carried, naming the other through
+360 ONE Special Opportunities Fund Series 8 Class A3 appears under CRN37702 and
+CRN60117 — the same 9,90,429.684 units on both — and Transition Venture Capital
+Fund I — Class A1 under both Bharat Jaisinghani family trusts (₹1,71,26,374.76
+each). Both rows of each are carried, naming the other through
 `alsoReportedUnder`; the consolidated total counts the `dedupeGroup` once.
 **₹3.17 Cr of double-count in total** — the figure to test any book-wide
 aggregate against. This is check (c) firing on real cases, and it is what the
 policy in §4c was written for.
+
+**AND THE 360 ONE PAIR STOPPED MATCHING ON FIGURES, WHICH COST ₹1.47 Cr.** They
+were byte-identical (₹1,45,80,412.51 each) for as long as both CRNs published to
+the same date. CRN37702 then advanced to 2026-07-31 and CRN60117 stayed at
+2026-06-30, so the two marks diverged by ₹87,950.15 and check (c) — which keys on
+the security plus the FIGURES that would have to coincide by chance — stopped
+matching them. It still matched their JUNE issues, and tagged those. But
+`newestPerReportType` supersedes: `build-book.mjs` takes 37702's JULY holdings,
+which carry no tag, so the group reached the book with ONE member,
+`dedupedPositions` had nothing to collapse, and the same units were counted under
+both CRNs.
+
+Nothing failed and nothing said so — the consolidated total ran ₹1,45,80,412.51
+above the truth, and the AIF section beneath it was over by the same amount.
+**A tag that collapses nothing looks exactly like a book with no duplicates in
+it.** (The figure is stated as the DELTA rather than as two totals, because the
+totals move with every drop and the overstatement is the fact.)
+
+Two things changed, and the second is the one that speaks up next time:
+
+- **The tag travels across ISSUES of the same account.** `dedupeByAcctSec` in
+  `build-book.mjs` carries a group established on any issue onto whichever issue
+  the supersede rule picked. The duplication is a fact about the ACCOUNTS — two
+  CRNs of one wealth platform reporting one AIF holding — not about one month's
+  mark. Detection stays exactly as strict; only the tag moves. Same join as the
+  ISIN and asset-class ones beside it: this drop's own paperwork, applied where
+  unambiguous.
+- **A group that reaches the book with ONE position is reported as a broken
+  dedupe**, by name, in `docs/BOOK-REPORT.md`. That is the line that was missing.
+
+**What this still cannot catch, stated rather than papered over:** a pair whose
+figures never coincide at ANY as-of forms no group on any issue, so there is no
+tag to carry. Widening detection to match on quantity alone is the wrong trade —
+India SME's three folios print coincidentally equal units — so the residual risk
+is named here instead. `duplicateAifEarnings` covers the income-only side of the
+same folio pair, which is how this one was visible in the archive at all.
 
 **Every issuer has a reader.** Getting there took four of them, and each earned
 its own file because the layouts share nothing:
@@ -513,7 +549,9 @@ Four files. **Two were byte-identical** to statements already in `august-2026/`
 `MOTILAL REPORTS.zip` and a 25-tab consolidated review workbook.
 
 **WHAT LANDED — ₹73.55 Cr, and the consolidated total ties to it exactly**
-(₹472.35 Cr → ₹545.90 Cr). The first two needed no new code; the rest are five
+(₹472.35 Cr → ₹545.90 Cr, of which ₹1.46 Cr turned out to be a double-count,
+found and removed later — see the 360 ONE pair above). The first two
+needed no new code; the rest are five
 new layouts on `altFundStatements.mjs`, built ONE AT A TIME and each verified
 against the family's own consolidated review before the next was started:
 
@@ -2152,9 +2190,17 @@ off each statement's own wording and never defaulted (§5). Measured on this dro
 | Equity · own demat | 18 | ₹30.12 Cr |
 | Equity · broker (Execution) | 9 | ₹0.99 Cr |
 
-So `isDirectEquity` is **`isCompanyShare`** — the set was always right and only
-its name was wrong — and `holdingRoute` / `ROUTE_LABEL` / `ROUTE_NOTE` in
-`analytics.ts` are the one place the engagement becomes words. The stock page
+So `isDirectEquity` is **`isCompanyShare`**, `assetClassLabel` renders the class
+as **`Company Shares`** — the set was always right and only its name was wrong —
+and `holdingRoute` / `ROUTE_LABEL` / `ROUTE_NOTE` in `analytics.ts` are the one
+place the engagement becomes words.
+
+**AND THE BUCKET THAT ESCAPED THE HELPER PROVED WHY IT EXISTS.** Morning CIO's
+allocation row was keyed on the literal string `"Direct Equity"` rather than on
+the asset class, so it was the one surface where the screen word was NOT chosen
+in `assetClassLabel` — and it silently stopped matching the moment that helper
+changed. Its key is `Equity` now and its label comes from the helper, like every
+other class. The stock page
 chips `via manager's mandate` beside the class and carries a **Held via** column;
 Portfolio Monitor's per-entity drill-down carries the same column; Sector
 Composition, Exposure & IPS and Compare say "company shares" and then state the
@@ -2275,6 +2321,90 @@ reintroducing its bug and watching it fail:
 - a new `stock-fund` route asserts the fund page states the research does not
   apply and renders none of the five panels — while the existing `stock` route
   asserts a COMPANY still carries all of them.
+
+### Stage 10j — THE COMPLAINT CAME BACK, AND THIS TIME THE MODEL WAS RIGHT
+
+*"we are mixing the AIF holdings into equity."* Stage 10i answered that on six
+surfaces by fixing the AXIS each of them narrowed on. The family said it again
+against a book where every one of those fixes was live, and the third time a
+complaint arrives is when it is worth checking whether the answer is the same.
+
+**IT WAS NOT.** Measured over `BOOK_POSITIONS`: every position classed `Equity`
+sits in a PMS or Execution account, every AIF folio is its own `AIF` row, and
+`isDirectEquity` is `assetClass === "Equity"`. **Nothing was mixed.** What was
+wrong were three other things the same sentence covers, and they are different
+in kind — one wording, one arithmetic, one page:
+
+**1. A HEADING A READER MISREADS IS A DEFECT IN THE HEADING.** The Portfolio
+Monitor sections its holdings by class, and the first and largest section was
+headed `EQUITY` — 146 holdings, ₹128.1 Cr, with `AIF`, `MUTUAL FUND` and `CASH`
+sectioned below it. Read as a heading over the whole table it says the table is
+equity; read as a section label it says only what it labels. Both readings are
+available and only one is right, which is the heading's fault and not the
+reader's. It became `Direct Equity` — and that word introduced a SECOND
+misreading within the day, because "direct" asserts who chose the position. It
+is **`Company Shares`** now, which carries neither claim: a fund is not a
+company, and nothing in the phrase says whose decision it was. See Stage 10j,
+which is the second half of this same fix.
+
+**`assetClassLabel` in `analytics.ts` is the ONE place that word is chosen.**
+`AssetClass` is the MODEL's vocabulary and does not move: it is what
+`assertNormalized` enforces at ingest, what `precedence.mjs` is written in, and
+what every predicate tests. Renaming the VALUE would rewrite the generated book
+for a wording change. Every surface that renders a class reads the label from
+that one function — the monitor's sections and its filter, Morning CIO's
+allocation bucket, Exposure & IPS's contributors, laggards and bucket mapping,
+Capital Gains, Ledger Insights, the stock page's pill, the review deck's
+allocation slide. A label re-typed per screen is a label that disagrees with
+itself, and this one already had six places to disagree in.
+
+The class filter is `All categories` now, and its options carry the same labels.
+
+**2. THE CLASS SUBTOTAL WAS NOT ON THE FOOTER'S BASIS.** Each section heading
+prints its own subtotal, summed from the rows it holds — and the footer counts
+each `dedupeGroup` once. In the BY-SECURITY view those agree, because its rows
+are already consolidated. In BY-ENTITY, which shows every statement's row as
+printed, they did not: **both of this book's duplicates are AIF holdings**, so
+the AIF heading summed ₹3.17 Cr the footer beneath it correctly did not, and a
+reader adding the four headings landed ₹3.17 Cr above the Total. That is the
+same "a total must tie to its own columns" rule the allocation footer already
+cost this book once. The subtotal is on the footer's basis now, and the heading
+NAMES what it collapsed — `₹3.17 Cr reported twice, counted once` — because the
+rows on screen still add to more than it, by design.
+
+**3. AND THE AIF'S OWN DRILL-DOWN HID ONE OF THE TWO STATEMENTS.** *"AIF holdings
+must be shown inside the respective AIF page drill down."* `/stock/:securityKey`
+serves every holding and its "Position by account" table maps the RAW rows, so
+both CRNs were listed — but the pill above read **"Held in 1 entity"**, because
+`held` counted the DEDUPED set. A count of the entities whose statements carry a
+name is a per-owner figure, and §"consolidated counts once, per-account does not"
+says it must not dedupe. Two contradictory claims on one screen, and the wrong
+one is the specific one a reader believes.
+
+The Total under that table is still consolidated and still right; what was
+missing is that the column does not add to its own footer, which now says so in
+a line under it rather than leaving it to be found by adding.
+
+**And the same page led with a fabricated ₹0.** `const cmp = rows[0]?.currentPrice
+?? 0` printed a 2xl `₹0` as the CMP of every holding marked at a TOTAL value
+rather than a per-unit price — 360 ONE's AIF units among them, so a ₹1.47 Cr
+position was headed by a zero price. `price()` already renders null as an em
+dash; the default was the whole of the bug. This is the watchlist's own rule
+(*a price nobody has set is `null`, never 0*) failing on the read side.
+
+**Each of these is asserted on the RENDERED PAGE, and each was verified by
+reintroducing its bug and watching the check fail** — the discipline Stage 10i
+established after its first draft turned out to match static prose:
+
+- `monitor` — the section is headed `Company Shares`, the filter reads `All
+  categories`, no fund NAME appears between that heading and the next class
+  heading, and the class subtotals reconstruct the footer;
+- a new `monitor-entity` route toggles the by-entity view and asserts the same
+  reconstruction there, plus that a collapsing section names what it collapsed;
+- a new `stock-aif-dual` route on the holding reported under both CRNs asserts
+  the entity COUNT agrees with the account rows rendered (against the rows, never
+  against a literal — the count is a generated figure), that the rows-vs-total
+  gap is named, and that no zero price stands in the CMP headline.
 
 ### Stage 10c — measuring against the deployed site
 

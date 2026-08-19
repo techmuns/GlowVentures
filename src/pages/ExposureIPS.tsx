@@ -10,7 +10,7 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge } from "@/components/Preview";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isCompanyShare, isFundVehicle, excludedClasses, byAssetClass, sum } from "@/lib/analytics";
+import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isCompanyShare, isFundVehicle, excludedClasses, byAssetClass, sum, assetClassLabel } from "@/lib/analytics";
 import {
   IPS_BUCKETS, readFamilyInputs, writeFamilyInputs, ipsTargetTotal, pct,
   exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
@@ -173,7 +173,7 @@ export function ExposureIPS() {
           <div className="flex flex-wrap gap-2">
             {classes.map((c) => (
               <label key={c.key} className="flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800/60 px-2.5 py-1.5">
-                <span className="text-[12px] text-slate-300">{c.key}</span>
+                <span className="text-[12px] text-slate-300">{assetClassLabel(c.key)}</span>
                 <span className="text-[10px] text-slate-600">{money(c.mv)}</span>
                 <select
                   value={inputs.bucketByAssetClass[c.key] ?? ""}
@@ -303,7 +303,7 @@ export function ExposureIPS() {
             {nonEquity.map((c, i) => (
               <span key={c.key}>
                 {i > 0 && (i === nonEquity.length - 1 ? " and " : ", ")}
-                <span className="font-medium text-slate-400">{money(c.mv)}</span> of {c.key}
+                <span className="font-medium text-slate-400">{money(c.mv)}</span> of {assetClassLabel(c.key)}
               </span>
             ))}. A fund is a wrapper holding many companies and no statement here prints a sector for one, so folding
             them in would put {money(fundMV)} of fund units under a single "Unclassified" slice — the largest row in an
@@ -420,7 +420,7 @@ export function ExposureIPS() {
                   <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={t.key} name={t.name} /></td>
                   <td className="px-4 py-2.5">
                     {t.assetClass
-                      ? <Pill tone={t.assetClass === "Equity" ? "info" : undefined}>{t.assetClass}</Pill>
+                      ? <Pill tone={t.assetClass === "Equity" ? "info" : undefined}>{assetClassLabel(t.assetClass)}</Pill>
                       : <AbsentCell reason="no statement in the book states an asset class for this holding" />}
                   </td>
                   <td className="px-4 py-2.5 text-right mono text-slate-200">{money(t.mv)}</td>
@@ -462,7 +462,7 @@ export function ExposureIPS() {
                     {/* A fund unit's gain is as real as a company's and belongs
                         in this ranking; what it must not do is read as a stock.
                         The class rides beside the name for that reason alone. */}
-                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{assetClassLabel(p.assetClass)}</span>}
                   </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>
@@ -481,7 +481,7 @@ export function ExposureIPS() {
                     {/* A fund unit's gain is as real as a company's and belongs
                         in this ranking; what it must not do is read as a stock.
                         The class rides beside the name for that reason alone. */}
-                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{p.assetClass}</span>}
+                    {!isCompanyShare(p) && <span className="ml-1.5 text-[10.5px] text-slate-500">{assetClassLabel(p.assetClass)}</span>}
                   </td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.unrealizedPnL)}`}>{money(p.unrealizedPnL, true)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(p.returnPct)}`}>{fmtPct(p.returnPct, { sign: true })}</td>

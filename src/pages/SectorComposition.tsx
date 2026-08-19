@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, holdingRoute } from "@/lib/analytics";
+import { bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, assetClassLabel, holdingRoute } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -383,7 +383,7 @@ export function SectorComposition() {
           {excluded.map((c, i) => (
             <Fragment key={c.key}>
               {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
-              <span className="font-medium text-slate-400">{c.key}</span> {money(c.mv)}
+              <span className="font-medium text-slate-400">{assetClassLabel(c.key)}</span> {money(c.mv)}
             </Fragment>
           ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,
           so every wrapper would land in a single false “Unclassified” slice and bury the sectors this view exists to show.

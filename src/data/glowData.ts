@@ -19,8 +19,8 @@ export const BOOK_AS_OF = "2026-08-13";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-13",
   "listedValue": 2942701456.96,
-  "privateValue": 3537957075.56,
-  "totalValue": 6480658532.52,
+  "privateValue": 3523376663.05,
+  "totalValue": 6466078120.01,
   "positionsCount": 360,
   "entitiesCount": 6,
   "startupsCount": 0,
@@ -827,7 +827,11 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+    "alsoReportedUnder": [
+      "bharat-jaisinghani"
+    ]
   },
   {
     "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",

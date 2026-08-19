@@ -183,6 +183,38 @@ export const ROUTE_NOTE: Record<HoldingRoute, string> = {
   unknown: "no statement for this account states how it is run",
 };
 
+/**
+ * THE SCREEN LABEL FOR AN ASSET CLASS. One place, because a label that is
+ * re-typed on each surface is a label that disagrees with itself.
+ *
+ * `AssetClass` (src/lib/types.ts) is the MODEL's vocabulary and does not change:
+ * it is what `assertNormalized` enforces at ingest, what `precedence.mjs` and
+ * `glowData.ts` are written in, and what every predicate above tests. Renaming
+ * the value would rewrite the generated book for a wording change.
+ *
+ * What did have to change is the WORD ON SCREEN, and it took two goes to get a
+ * word that carries no second claim.
+ *
+ * `Equity` heads the largest section of the holdings table, and the family read
+ * that heading as covering the whole table — their AIF folios included — and
+ * reported the book as mixing fund units into equity. It never did. So the
+ * heading became **"Direct Equity"**, which fixed that misreading and
+ * introduced another: the family opened Jammu Kashmir Bank, saw it chipped
+ * Direct Equity, and read two lines below that Carnelian manages it. "Direct"
+ * asserts WHO CHOSE THE POSITION, and for ₹127 Cr of this book a discretionary
+ * manager did.
+ *
+ * **"Company Shares"** carries neither claim. It cannot be misread as holding
+ * fund units — a fund is not a company — and it says nothing about whose
+ * decision it was, which is a separate axis with its own vocabulary
+ * (`holdingRoute` below) now that something on screen finally reads it.
+ *
+ * Every other class is already unambiguous and passes through unchanged.
+ */
+const CLASS_LABEL: Record<string, string> = { Equity: "Company Shares" };
+
+export const assetClassLabel = (cls: string) => CLASS_LABEL[cls] ?? cls;
+
 /** One asset class's contribution, for naming what a narrowed view left out. */
 export type ClassSlice = { key: string; mv: number; count: number };
 

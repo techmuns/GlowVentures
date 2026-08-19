@@ -8,7 +8,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isCompanyShare } from "@/lib/analytics";
+import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isCompanyShare, assetClassLabel } from "@/lib/analytics";
 import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -204,7 +204,7 @@ export function MorningCIO() {
       };
     };
     // ALLOCATION IS BY ASSET CLASS — what a holding IS, not how it is run. Every
-    // listed equity is ONE "Equity" class regardless of vehicle: the family's PMS
+    // listed equity is ONE class regardless of vehicle: the family's PMS
     // mandates and its self-directed LKP demat hold the same asset, so they
     // consolidate into a single row. Splitting equity by vehicle here — "PMS /
     // Managed" vs "Direct Equity" — put an engagement on an asset-class axis (the
@@ -212,6 +212,19 @@ export function MorningCIO() {
     // one ₹0 folio is tagged engagement "Direct", and filed ₹9.9 Cr of the
     // family's own self-directed stock (LKP, engagement "Execution") under "PMS".
     // How the equity is RUN is stated in the caption instead.
+    //
+    // THE ROW'S KEY IS THE ASSET CLASS AND ITS LABEL COMES FROM
+    // `assetClassLabel` — it was hardcoded as the label, which meant this bucket
+    // was the one place the screen word was NOT chosen in the shared helper, and
+    // it silently stopped matching when that helper changed.
+    // THE ROW IS LABELLED BY ITS CLASS AND THAT IS NOT THAT SPLIT COMING BACK.
+    // The words are the ones the bad version used; the SET is the opposite one.
+    // That row was `engagement === "Direct"` — one vehicle out of several, which
+    // is why it was empty. This row is `isCompanyShare`, the whole `Equity` asset
+    // class across every vehicle, and "direct" here means *held as shares in a
+    // company* rather than through a fund. `assetClassLabel` in analytics.ts is
+    // the one place that word is chosen; the test is the row's COUNT, not its
+    // label, and `check:pages` asserts it is non-empty for that reason.
     // ...and an ETF is NOT equity for this purpose. It was folded in here
     // because it is listed and marked on an exchange, which is the `listed vs
     // private` axis, not this one: an ETF is one line standing for a basket
@@ -721,7 +734,7 @@ export function MorningCIO() {
                       <td className="px-2 py-2.5">
                         <span className="flex items-center gap-2 font-medium text-slate-100">
                           <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                          {b.key}
+                          {assetClassLabel(b.key)}
                         </span>
                         {/* WHO CHOSE IT, under the class that says what it is.
                             Both halves of this split were computed and rendered
