@@ -6,39 +6,39 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 76 series, 344,931 points
-- **Failed:** 7
+- **Harvested:** 74 series, 344,709 points
+- **Failed:** 9
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
 ## Harvested
 
 | Series | Group | Points | From | To | Unit | Source | Provenance |
 | --- | --- | ---: | --- | --- | --- | --- | --- |
-| Brent Crude | Energy | 4,745 | 2007-07-30 | 2026-08-21 | USD/bbl | Yahoo Finance `BZ=F` | official-api |
-| WTI Crude | Energy | 6,527 | 2000-08-23 | 2026-08-21 | USD/bbl | Yahoo Finance `CL=F` | official-api |
-| Natural Gas | Energy | 6,524 | 2000-08-30 | 2026-08-21 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
+| Brent Crude | Energy | 4,746 | 2007-07-30 | 2026-08-24 | USD/bbl | Yahoo Finance `BZ=F` | official-api |
+| WTI Crude | Energy | 6,528 | 2000-08-23 | 2026-08-24 | USD/bbl | Yahoo Finance `CL=F` | official-api |
+| Natural Gas | Energy | 6,525 | 2000-08-30 | 2026-08-24 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 595 | 1977-01-01 | 2026-07-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 679 | 1970-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 15 | 2026-08-10 | 2026-08-24 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
-| Gold | Precious Metals | 6,518 | 2000-08-30 | 2026-08-21 | USD/oz | Yahoo Finance `GC=F` | official-api |
-| Silver | Precious Metals | 6,520 | 2000-08-30 | 2026-08-21 | USD/oz | Yahoo Finance `SI=F` | official-api |
-| Platinum | Precious Metals | 6,546 | 1997-10-29 | 2026-08-21 | USD/oz | Yahoo Finance `PL=F` | official-api |
-| Palladium | Precious Metals | 6,557 | 1998-09-28 | 2026-08-21 | USD/oz | Yahoo Finance `PA=F` | official-api |
-| Copper | Industrial Metals | 6,523 | 2000-08-30 | 2026-08-21 | USD/lb | Yahoo Finance `HG=F` | official-api |
-| Aluminium | Industrial Metals | 3,056 | 2014-05-06 | 2026-08-21 | USD/t | Yahoo Finance `ALI=F` | official-api |
-| Steel (HRC) | Industrial Metals | 4,449 | 2008-10-20 | 2026-08-23 | USD/short ton | Yahoo Finance `HRC=F` | official-api |
+| Electricity (IEX day-ahead) | Energy | 16 | 2026-08-10 | 2026-08-25 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Gold | Precious Metals | 6,519 | 2000-08-30 | 2026-08-24 | USD/oz | Yahoo Finance `GC=F` | official-api |
+| Silver | Precious Metals | 6,521 | 2000-08-30 | 2026-08-24 | USD/oz | Yahoo Finance `SI=F` | official-api |
+| Platinum | Precious Metals | 6,547 | 1997-10-29 | 2026-08-24 | USD/oz | Yahoo Finance `PL=F` | official-api |
+| Palladium | Precious Metals | 6,558 | 1998-09-28 | 2026-08-24 | USD/oz | Yahoo Finance `PA=F` | official-api |
+| Copper | Industrial Metals | 6,524 | 2000-08-30 | 2026-08-24 | USD/lb | Yahoo Finance `HG=F` | official-api |
+| Aluminium | Industrial Metals | 3,057 | 2014-05-06 | 2026-08-24 | USD/t | Yahoo Finance `ALI=F` | official-api |
+| Steel (HRC) | Industrial Metals | 4,450 | 2008-10-20 | 2026-08-24 | USD/short ton | Yahoo Finance `HRC=F` | official-api |
 | Zinc | Industrial Metals | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Zinc` | official-file |
 | Nickel | Industrial Metals | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Nickel` | official-file |
 | Lead | Industrial Metals | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Lead` | official-file |
 | Tin | Industrial Metals | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Tin` | official-file |
 | Iron Ore (cfr spot) | Industrial Metals | 799 | 1960-01-01 | 2026-07-01 | USD/dmtu | World Bank Pink Sheet `Iron ore, cfr spot` | official-file |
-| Wheat | Agriculture | 6,542 | 2000-07-17 | 2026-08-21 | USc/bu | Yahoo Finance `ZW=F` | official-api |
-| Rice | Agriculture | 6,752 | 1999-09-14 | 2026-08-21 | USD/cwt | Yahoo Finance `ZR=F` | official-api |
-| Corn | Agriculture | 6,530 | 2000-07-17 | 2026-08-21 | USc/bu | Yahoo Finance `ZC=F` | official-api |
-| Soybean | Agriculture | 6,522 | 2000-09-15 | 2026-08-21 | USc/bu | Yahoo Finance `ZS=F` | official-api |
-| Cotton | Agriculture | 6,680 | 2000-01-03 | 2026-08-21 | USc/lb | Yahoo Finance `CT=F` | official-api |
-| Sugar | Agriculture | 6,641 | 2000-03-01 | 2026-08-21 | USc/lb | Yahoo Finance `SB=F` | official-api |
-| Coffee | Agriculture | 6,678 | 2000-01-03 | 2026-08-21 | USc/lb | Yahoo Finance `KC=F` | official-api |
+| Wheat | Agriculture | 6,543 | 2000-07-17 | 2026-08-24 | USc/bu | Yahoo Finance `ZW=F` | official-api |
+| Rice | Agriculture | 6,753 | 1999-09-14 | 2026-08-24 | USD/cwt | Yahoo Finance `ZR=F` | official-api |
+| Corn | Agriculture | 6,531 | 2000-07-17 | 2026-08-24 | USc/bu | Yahoo Finance `ZC=F` | official-api |
+| Soybean | Agriculture | 6,523 | 2000-09-15 | 2026-08-24 | USc/bu | Yahoo Finance `ZS=F` | official-api |
+| Cotton | Agriculture | 6,681 | 2000-01-03 | 2026-08-24 | USc/lb | Yahoo Finance `CT=F` | official-api |
+| Sugar | Agriculture | 6,642 | 2000-03-01 | 2026-08-24 | USc/lb | Yahoo Finance `SB=F` | official-api |
+| Coffee | Agriculture | 6,679 | 2000-01-03 | 2026-08-24 | USc/lb | Yahoo Finance `KC=F` | official-api |
 | Palm Oil | Agriculture | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Palm oil` | official-file |
 | Rubber (TSR20) | Agriculture | 331 | 1999-01-01 | 2026-07-01 | USD/kg | World Bank Pink Sheet `Rubber, TSR20` | official-file |
 | Urea | Fertilisers | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Urea` | official-file |
@@ -46,37 +46,37 @@ not have.
 | Phosphate Rock | Fertilisers | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Phosphate rock` | official-file |
 | Potash (KCl) | Fertilisers | 799 | 1960-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Potassium chloride` | official-file |
 | Bloomberg Commodity Index | Others | 8,923 | 1991-01-02 | 2026-07-17 | index | Yahoo Finance `^BCOM` | official-api |
-| S&P 500 | United States | 14,281 | 1970-01-02 | 2026-08-21 | index | Yahoo Finance `^GSPC` | official-api |
-| Nasdaq Composite | United States | 14,003 | 1971-02-05 | 2026-08-21 | index | Yahoo Finance `^IXIC` | official-api |
-| Dow Jones Industrial | United States | 8,721 | 1992-01-02 | 2026-08-21 | index | Yahoo Finance `^DJI` | official-api |
-| Russell 2000 | United States | 9,811 | 1987-09-10 | 2026-08-21 | index | Yahoo Finance `^RUT` | official-api |
-| FTSE 100 | Europe | 10,771 | 1984-01-03 | 2026-08-21 | index | Yahoo Finance `^FTSE` | official-api |
-| DAX | Europe | 9,772 | 1987-12-30 | 2026-08-21 | index | Yahoo Finance `^GDAXI` | official-api |
-| CAC 40 | Europe | 9,264 | 1990-03-01 | 2026-08-21 | index | Yahoo Finance `^FCHI` | official-api |
-| Nikkei 225 | Asia | 13,926 | 1970-01-05 | 2026-08-21 | index | Yahoo Finance `^N225` | official-api |
-| Hang Seng | Asia | 9,782 | 1986-12-31 | 2026-08-21 | index | Yahoo Finance `^HSI` | official-api |
-| Shanghai Composite | Asia | 7,060 | 1997-07-02 | 2026-08-21 | index | Yahoo Finance `000001.SS` | official-api |
-| Nifty 50 | India | 4,644 | 2007-09-17 | 2026-08-21 | index | Yahoo Finance `^NSEI` | official-api |
-| Sensex | India | 7,179 | 1997-07-01 | 2026-08-21 | index | Yahoo Finance `^BSESN` | official-api |
-| USD / INR | India | 5,896 | 2003-12-01 | 2026-08-22 | INR per USD | Yahoo Finance `INR=X` | official-api |
-| EUR / USD | Majors | 5,898 | 2003-12-01 | 2026-08-21 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
-| GBP / USD | Majors | 5,910 | 2003-12-01 | 2026-08-21 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
-| USD / JPY | Majors | 7,733 | 1996-10-30 | 2026-08-21 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
-| USD / CNY | Majors | 6,298 | 2001-06-24 | 2026-08-20 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
-| Dollar Index (DXY) | Majors | 14,127 | 1971-01-04 | 2026-08-21 | index | Yahoo Finance `DX-Y.NYB` | official-api |
-| US 10 Year Treasury | Government Bonds | 14,179 | 1970-01-02 | 2026-08-21 | % | Yahoo Finance `^TNX` | official-api |
-| US 13 Week T-Bill | Government Bonds | 14,179 | 1970-01-02 | 2026-08-21 | % | Yahoo Finance `^IRX` | official-api |
-| US 5 Year Treasury | Government Bonds | 14,179 | 1970-01-02 | 2026-08-21 | % | Yahoo Finance `^FVX` | official-api |
-| US 30 Year Treasury | Government Bonds | 12,405 | 1977-02-15 | 2026-08-21 | % | Yahoo Finance `^TYX` | official-api |
+| S&P 500 | United States | 14,282 | 1970-01-02 | 2026-08-24 | index | Yahoo Finance `^GSPC` | official-api |
+| Nasdaq Composite | United States | 14,004 | 1971-02-05 | 2026-08-24 | index | Yahoo Finance `^IXIC` | official-api |
+| Dow Jones Industrial | United States | 8,722 | 1992-01-02 | 2026-08-24 | index | Yahoo Finance `^DJI` | official-api |
+| Russell 2000 | United States | 9,812 | 1987-09-10 | 2026-08-24 | index | Yahoo Finance `^RUT` | official-api |
+| FTSE 100 | Europe | 10,772 | 1984-01-03 | 2026-08-24 | index | Yahoo Finance `^FTSE` | official-api |
+| DAX | Europe | 9,773 | 1987-12-30 | 2026-08-24 | index | Yahoo Finance `^GDAXI` | official-api |
+| CAC 40 | Europe | 9,265 | 1990-03-01 | 2026-08-24 | index | Yahoo Finance `^FCHI` | official-api |
+| Nikkei 225 | Asia | 13,927 | 1970-01-05 | 2026-08-24 | index | Yahoo Finance `^N225` | official-api |
+| Hang Seng | Asia | 9,783 | 1986-12-31 | 2026-08-24 | index | Yahoo Finance `^HSI` | official-api |
+| Shanghai Composite | Asia | 7,061 | 1997-07-02 | 2026-08-24 | index | Yahoo Finance `000001.SS` | official-api |
+| Nifty 50 | India | 4,645 | 2007-09-17 | 2026-08-24 | index | Yahoo Finance `^NSEI` | official-api |
+| Sensex | India | 7,180 | 1997-07-01 | 2026-08-24 | index | Yahoo Finance `^BSESN` | official-api |
+| USD / INR | India | 5,897 | 2003-12-01 | 2026-08-23 | INR per USD | Yahoo Finance `INR=X` | official-api |
+| EUR / USD | Majors | 5,899 | 2003-12-01 | 2026-08-23 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
+| GBP / USD | Majors | 5,911 | 2003-12-01 | 2026-08-23 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
+| USD / JPY | Majors | 7,734 | 1996-10-30 | 2026-08-23 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
+| USD / CNY | Majors | 6,299 | 2001-06-24 | 2026-08-23 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
+| Dollar Index (DXY) | Majors | 14,128 | 1971-01-04 | 2026-08-24 | index | Yahoo Finance `DX-Y.NYB` | official-api |
+| US 10 Year Treasury | Government Bonds | 14,180 | 1970-01-02 | 2026-08-24 | % | Yahoo Finance `^TNX` | official-api |
+| US 13 Week T-Bill | Government Bonds | 14,180 | 1970-01-02 | 2026-08-24 | % | Yahoo Finance `^IRX` | official-api |
+| US 5 Year Treasury | Government Bonds | 14,180 | 1970-01-02 | 2026-08-24 | % | Yahoo Finance `^FVX` | official-api |
+| US 30 Year Treasury | Government Bonds | 12,406 | 1977-02-15 | 2026-08-24 | % | Yahoo Finance `^TYX` | official-api |
 | India 10 Year G-Sec | Government Bonds | 175 | 2011-12-01 | 2026-06-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
-| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 793 | 2023-08-11 | 2026-08-20 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
-| RBI Repo Rate | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 15 | 2026-08-10 | 2026-08-24 | % | Reserve Bank of India `SLR` | scraped-official |
+| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 794 | 2023-08-11 | 2026-08-21 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
+| RBI Repo Rate | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 16 | 2026-08-10 | 2026-08-25 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
@@ -84,8 +84,6 @@ not have.
 | Mutual Fund Folios | Capital markets | 88 | 2019-04-30 | 2026-07-31 | count | AMFI (Association of Mutual Funds in India) `grand-total/folios` | official-file |
 | Gold ETF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `gold-etf/net` | official-file |
 | Other ETF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `other-etf/net` | official-file |
-| India Wholesale Price Index | Inflation | 139 | 2012-04-01 | 2023-10-01 | index | data.gov.in (Open Government Data, India) `All Commodities` | official-api |
-| India Index of Industrial Production | Economic growth | 131 | 2012-04-01 | 2023-02-01 | index | data.gov.in (Open Government Data, India) `General` | official-api |
 | India GDP growth | Economic growth | 65 | 1961-12-31 | 2025-12-31 | % | World Bank Open Data `NY.GDP.MKTP.KD.ZG` | official-api |
 | India CPI inflation | Inflation | 66 | 1960-12-31 | 2025-12-31 | % | World Bank Open Data `FP.CPI.TOTL.ZG` | official-api |
 | India unemployment rate | Labour market | 35 | 1991-12-31 | 2025-12-31 | % | World Bank Open Data `SL.UEM.TOTL.ZS` | official-api |
@@ -137,7 +135,6 @@ but a one-day return spanning a roll is measuring the roll.
 | Debt MF Net Flows | warn | large-move | 16 consecutive move(s) over 25%; largest 3093.6% on 2020-07-31 (2861.678968749995 → 91391.72797698001) |
 | Gold ETF Net Flows | warn | large-move | 46 consecutive move(s) over 25%; largest 1763.0% on 2021-09-30 (23.92331886 → 445.6873044) |
 | Other ETF Net Flows | warn | large-move | 60 consecutive move(s) over 25%; largest 3427.7% on 2024-10-31 (381.040946580004 → 13441.81768795) |
-| India Index of Industrial Production | warn | large-move | 2 consecutive move(s) over 25%; largest 67.0% on 2020-05-01 (54 → 90.2) |
 | India GDP growth | warn | large-move | 27 consecutive move(s) over 25%; largest 671.9% on 1975-12-31 (1.18533626034039 → 9.14991201480592) |
 | India CPI inflation | warn | large-move | 33 consecutive move(s) over 25%; largest 353.3% on 1964-12-31 (2.94616135685225 → 13.3552611508153) |
 
@@ -147,6 +144,8 @@ These kept whatever was already stored — no partial write, no empty overwrite.
 
 | Series | Error | Points kept |
 | --- | --- | ---: |
+| India Wholesale Price Index | fetch failed | 139 |
+| India Index of Industrial Production | fetch failed | 131 |
 | India installed power capacity | CEA: no "Summary" worksheet (found: IC_July 2026) | 1 |
 | India coal capacity | CEA: no "Summary" worksheet (found: IC_July 2026) | 1 |
 | India solar capacity | CEA: no "Summary" worksheet (found: IC_July 2026) | 1 |
