@@ -567,10 +567,20 @@ export function MorningCIO() {
               : `= ${money(m.bookCost)} across ${m.p.length - m.noCostCount} of ${m.p.length} positions`,
           }}>{fmtFromBase(m.totalInvested, { compact: true })}</Auditable>}
           sub={<>
-            cost in · whole book
+            {/* A COUNT OF POSITIONS IS NOT A SHARE OF THE BOOK, and this caption
+                said only the count. "61 positions carry no cost basis" reads as
+                a footnote about 16% of the rows; those rows are 96% of the
+                book's VALUE, because one of them is a promoter holding worth
+                more than everything else put together. A reader comparing
+                ₹471.9 Cr against a ₹13,063.2 Cr NAV needs the second number to
+                understand the first, so the caption leads with the coverage and
+                the count follows it. Same rule as the tile that read "listed
+                only" over a whole-book sum: a scope stated wrong in either
+                direction is the same failure. */}
+            cost in · {m.costedMV > 0 ? <>covers {money(m.costedMV)} of {money(m.totalValue)}</> : <>whole book</>}
             {m.noCostCount > 0 && (
               <span className="block text-slate-500" title={`These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
-                {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} carry no cost basis
+                {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} worth {money(m.noCostMV)} carry no cost basis
               </span>
             )}
           </>}

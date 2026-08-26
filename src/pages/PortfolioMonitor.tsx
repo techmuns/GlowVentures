@@ -107,7 +107,7 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
-  const { rows, totMV, totCost, totPnL, rawMV } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount } = useMemo(() => {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
@@ -175,11 +175,29 @@ export function PortfolioMonitor() {
     // ₹3.17 Cr higher in the by-entity view where both members' rows are shown as
     // printed; the caption names that gap rather than letting the footer assert it.
     const db = dedupedPositions(base);
+    /**
+     * HOW MUCH OF THE MARKET VALUE COLUMN THE COST COLUMN ACTUALLY COVERS.
+     *
+     * `sumOrNull` skips a position whose statement carries no cost rather than
+     * entering it as zero, which is right — but it means Invested and Unrealised
+     * P&L are struck over a SMALLER SET than Market value, and the footer prints
+     * all three side by side. A reader adds ₹471.9 Cr and +₹74.1 Cr, gets
+     * ₹546 Cr against a printed ₹13,063.2 Cr, and has found a contradiction.
+     *
+     * There is none: the two are on their own consistent basis (invested + P&L
+     * IS the market value of the positions that report a cost, to the rupee).
+     * What was missing is any statement that they cover a different set. These
+     * three are what the caption needs to say so.
+     */
+    const costed = db.filter((x) => x.costBasis != null);
     return {
       rows: out, totMV: totalMV,
       totCost: sumOrNull(db.map((x) => x.costBasis)),
       totPnL: sumOrNull(db.map((x) => x.unrealizedPnL)),
       rawMV: sum(out.map((r) => r.marketValue)),
+      costedMV: sum(costed.map((x) => x.marketValue)),
+      costedCount: costed.length,
+      heldCount: db.length,
     };
   }, [positions, accIdx, consolidate, selected, sector, entity, assetClass, sortKey, asc]);
   // Rows grouped by asset class, so Equity / AIF / Mutual Fund / Cash read as the
@@ -229,6 +247,10 @@ export function PortfolioMonitor() {
   // In the by-entity view the displayed rows include both members' copies of a
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
+  // The market value the Invested and Unrealised P&L columns do NOT stand behind.
+  // Rendered whenever it is worth more than a rupee, because the size of it is
+  // the whole point: 61 of 370 positions here, and 96% of the book's value.
+  const uncostedMV = totMV - costedMV > 1 ? totMV - costedMV : 0;
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   const feedLive = rows.some((r) => r.live);
@@ -541,6 +563,21 @@ export function PortfolioMonitor() {
               </tfoot>
             </table>
           </div>
+          {uncostedMV > 0 && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">Invested and Unrealised P&amp;L do not add up to Market value,
+              and are not meant to.</span> They are struck over the {costedCount} of {heldCount} positions whose statement
+              reports a cost — {money(costedMV)} of the {money(totMV)} in the Market value column, and
+              {" "}{money(totCost)} and {money(totPnL, true)} make {money(costedMV)} across exactly those.
+              {/* "and … make" rather than "+ … =": `money(…, true)` already carries the
+                  sign, so a literal plus printed "₹471.9 Cr + +₹72.5 Cr", and dropping
+                  the sign instead would render a LOSS as though it were added. */}
+              The other {heldCount - costedCount} position{heldCount - costedCount === 1 ? "" : "s"},
+              worth {money(uncostedMV)}, are held through depository accounts: a depository records what is
+              held and never what was paid for it. Their cost is absent rather than zero — entered as zero it
+              would report the whole of that {money(uncostedMV)} as profit.
+            </p>
+          )}
           {dupGap > 0 && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
               The rows above show each member's statement as printed. Two holdings are reported under two members,
