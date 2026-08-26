@@ -54,3 +54,38 @@ CLAUDE.md: the demat statements list every fund the family owns as a transaction
 row, one of them names a `BHARAT JAISINGHANI FAMILY TRUST` with no numeral
 against two trusts that both exist, and the consolidated review workbook is
 deliberately not a source.
+
+## `august-2026-e/` — and the one thing a statement can be that no reader fixes
+
+Two files, both arriving from the client's Google Drive after every other
+delivery, and both dated **31 March 2026** — five months behind everything else
+in this corpus. They are the family's two DEPOSITORY accounts outside Motilal
+Oswal, and between them they are the only source anywhere in `source/` for the
+family's unlisted holdings, their pre-IPO allotments and their promoter stock.
+
+| File | Whose | What happened |
+| --- | --- | --- |
+| `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` | Ajay, ICICI Bank NSDL, client 49794950 | READ — `providers/nsdlDemat.mjs`, 38 holdings |
+| `HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` | Bharat, HDFC Bank NSDL, client 22025655 | **NOT READ — it is a scan** |
+
+**A SCANNED PDF IS NOT A DOCUMENT WITH NO READER.** Bharat's four pages are
+JPEGs: pdfjs returns zero text items on every one of them, so there is no header
+to match, no column to read at an x, and nothing to write a reader against.
+`extract.mjs` reports it as `no-text-layer` rather than `no-extractor`, because
+those two send the next person to do completely different things and only one of
+them is possible. What it needs is HDFC re-sending the statement as a text PDF.
+It is not an OCR job: a figure recovered by OCR cannot be traced back to what the
+document printed, which is the guarantee every other figure in this book keeps.
+
+It also carries NO VALUE COLUMN AT ALL — quantity only — so even read perfectly
+it would value nothing. Both facts are worth knowing before anyone spends a day
+on it.
+
+**AND THE IDENTITY OF BOTH WAS ESTABLISHED FROM THE BOOK'S OWN UNIT COUNTS.**
+Neither statement prints a PAN. Both carry fund units that this book already
+holds from the funds' own statements, at counts that match to the last decimal —
+Sanshi Class A2 2,341,480.851 and Class E 1,761,264.629 on Ajay's, Sanshi Class E
+1,211,186.597 and Sky Capital's Hudle A1 17,000 on Bharat's, and 360 ONE Special
+Opportunities Series 8 Class A3 at the same 9,90,429.684 units the two CRNs
+already report between them. A name can be a spelling; four exact unit counts
+against four different funds are not a coincidence.

@@ -159,6 +159,18 @@ export function makeHolding(input) {
     absoluteYieldPct: num(input.absoluteYieldPct),
     annualizedYieldPct: num(input.annualizedYieldPct),
     priceAsOn: input.priceAsOn ?? null,
+    /**
+     * THE PRICE A DEPOSITORY PRINTS WHERE IT HAS NO PRICE — the face value the
+     * security was allotted at. It is NOT a mark and never becomes `marketPrice`,
+     * which is why it has a field of its own rather than being dropped into one.
+     *
+     * Both depository readers have emitted this since they were written and it
+     * was silently discarded here, so the archive never showed the figure the
+     * statement actually printed and the comment in each reader saying it did was
+     * false. A holding whose value is absent must be able to say what stood in
+     * the column instead, or a reader has to open the PDF to find out.
+     */
+    faceValue: num(input.faceValue),
 
     // ── DERIVED — filled by deriveHolding(); null until then ────────────────
     marketValue: null,

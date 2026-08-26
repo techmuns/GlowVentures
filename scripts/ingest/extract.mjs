@@ -33,6 +33,7 @@ import * as investorReport from "./providers/pmsInvestorReport.mjs";
 import * as transitionVenture from "./providers/transitionVenture.mjs";
 import * as lkp from "./providers/lkpSecurities.mjs";
 import * as motilalDemat from "./providers/motilalDemat.mjs";
+import * as nsdlDemat from "./providers/nsdlDemat.mjs";
 import * as bankAdvice from "./providers/bankAdvice.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
@@ -76,6 +77,11 @@ const EXTRACTORS = Object.fromEntries([
   // the Client ID the page prints: three of the twelve file names name the
   // wrong member.
   [motilalDemat.PROVIDER, motilalDemat],
+  // ...and the family's NSDL account at ICICI Bank, which is a different
+  // depository, a different layout and NO RATE COLUMN — quantity and value are
+  // its primitives where the CDSL statement's are quantity and rate. It is the
+  // only source anywhere in `source/` for their unlisted and pre-IPO holdings.
+  [nsdlDemat.PROVIDER, nsdlDemat],
   // Two ICICI payment receipts. Read in full and attributed to nothing —
   // a receipt names no holder, no security and no folio.
   [bankAdvice.PROVIDER, bankAdvice],
@@ -301,6 +307,46 @@ function extractOne(file, grid, part = null) {
       detail: `pages ${part.fromPage}–${part.toPage} of ${part.ofPages} in ${path.basename(file)}, which carries ${part.partCount} reports`,
     });
   }
+/**
+ * A SCAN IS NOT A DOCUMENT WITH NO READER, AND THE DIFFERENCE IS ACTIONABLE.
+ *
+ * `no-extractor` tells the next person to go and write a provider reader. For an
+ * image-only PDF that is a wrong diagnosis and costs a day: there is no text to
+ * write a reader against, no header to match, no coordinate to read a column at.
+ * What it needs is OCR, or the issuer re-sending the statement as a text PDF —
+ * and the second is nearly always the right ask, because a figure recovered by
+ * OCR is a figure this book cannot trace to what the statement printed.
+ *
+ * The test is CATEGORICAL rather than a threshold on how much text is "enough":
+ * a document with pages and not one text row anywhere has no text layer at all.
+ * `source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` is four such
+ * pages — Bharat Jaisinghani's NSDL statement at HDFC Bank, scanned to JPEG.
+ */
+function noTextLayer(grid) {
+  const pages = grid?.pages ?? [];
+  /**
+   * A WORKBOOK IS NOT A SCAN, and this check said it was.
+   *
+   * `gridFromSpreadsheet` gives every sheet `rows: []` by design — a workbook has
+   * cells, not coordinates, and they ride along in `sheets` instead. So the first
+   * draft of this test diagnosed the family's 25-tab consolidated review as
+   * "25 pages of SCANNED IMAGE", which is a confidently wrong answer about a
+   * document that is perfectly readable and held out BY DECISION. `sheets` is
+   * what the grid itself uses to say which kind it is, and it is checked here for
+   * the same reason `lib/sheet.mjs` sniffs the format from the bytes rather than
+   * the extension.
+   */
+  if (grid?.sheets) return null;
+  if (!pages.length || pages.some((p) => (p.rows ?? []).length)) return null;
+  return {
+    code: "no-text-layer",
+    detail: `the file is ${pages.length} page(s) of SCANNED IMAGE and carries no text layer, so no reader can `
+      + "be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text "
+      + "items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure "
+      + "cannot be traced back to what the document printed, which is the guarantee every other figure here keeps.",
+  };
+}
+
   // The reader is chosen by REPORT TYPE first, then by provider. The SEBI PMS
   // investor report is one prescribed layout that several managers issue, so it
   // has one reader; everything else is a house format and is keyed on the house.
@@ -313,7 +359,7 @@ function extractOne(file, grid, part = null) {
       status: "failed",
       // Reason first, provenance second: the report prints the FIRST warning as
       // the cause, and "opened with password #2" is not why a document failed.
-      warnings: [{ code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }, ...openedWarnings],
+      warnings: [noTextLayer(grid) ?? { code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }, ...openedWarnings],
     });
   }
 

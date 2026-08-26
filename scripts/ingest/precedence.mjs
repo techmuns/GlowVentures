@@ -362,6 +362,28 @@ PRECEDENCE["Motilal Oswal Financial Services (demat)"] = {
 };
 
 /**
+ * THE FAMILY'S NSDL DEMAT ACCOUNT AT ICICI BANK.
+ *
+ * The mirror image of the block above, and the difference is the whole reason it
+ * is a separate entry rather than a second key on the same one: this statement
+ * prints `ISIN Code | Scrip Name | Account Description | Balance | Value (Rs.)`
+ * and has NO RATE COLUMN. So market value is the PRIMITIVE here and the per-unit
+ * price is what would have to be derived — which it deliberately is not, because
+ * the value column is a market mark on 14 rows and the face value the securities
+ * were allotted at on 24 more, and dividing one by the other would hand back a
+ * "price" of Re 1.00 for National Stock Exchange of India Ltd.
+ *
+ * Holdings only, and nothing named for cost: a depository does not know what
+ * shares cost. Nothing named for transactions either — this account issues no
+ * tape in this drop, and a depository movement would not be a trade if it did.
+ */
+PRECEDENCE["ICICI Bank (NSDL demat)"] = {
+  holdings: { reportType: "holdings", note: "`Statement of Holding` — the only source in this corpus for the family's unlisted, pre-IPO and promoter holdings." },
+  quantity: { reportType: "holdings", note: "the `Balance` column." },
+  marketValue: { reportType: "holdings", note: "the `Value (Rs.)` column, ADOPTED where it is a mark and REFUSED where it is the face value the security was allotted at. The rows read reproduce the statement's own printed grand total to the rupee." },
+};
+
+/**
  * THE SINGLE-SCHEME FUND STATEMENTS — Buoyant, Helios, Motilal Oswal's Founders
  * and Active Momentum funds, 3P, India SME and Sky Capital.
  *

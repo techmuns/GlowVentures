@@ -97,6 +97,33 @@ const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\
 // DATA INVARIANTS — the client's own data complaints, encoded so they cannot
 // silently regress. Checked against the rendered page text on the primary
 // theme/width. Each returns true when the page is CORRECT.
+/**
+ * A RUPEE-CRORE FIGURE OFF THE PAGE, WITH ITS THOUSANDS SEPARATOR.
+ *
+ * Every invariant below used `₹([\d.]+)\s*Cr`, which stops dead at a comma.
+ * `fmtFromBase` has always grouped Indian-style — its own header comment gives
+ * `₹1,606.8 Cr` as the format it exists to produce — so the moment this book
+ * crossed ₹1,000 Cr the header chip rendered `₹13,061.6 Cr`, three invariants
+ * read it as `13`, and all three failed against pages that were computing
+ * correctly. That is the stale-literal failure one step abstracted: a check that
+ * cannot read the figure it asserts on is worse than no check, because it fails
+ * loudly on the wrong thing and sends the next session to fix the page.
+ */
+const CR = String.raw`₹([\d,]+(?:\.\d+)?)\s*Cr`;
+/**
+ * NaN FOR A MISSING MATCH, NEVER ZERO — because every caller guards on
+ * `Number.isFinite` and would otherwise report confidence over no input.
+ *
+ * `Number(String(undefined ?? "").replace(...))` is `Number("")`, which is 0.
+ * With that, the listed/private invariant found nothing on the page, compared
+ * 0 + 0 against 0 and PASSED — a check that cannot see the figures it asserts
+ * on reporting that they agree. The captures it replaced were written
+ * `Number(… ?? NaN)` for exactly this reason and the reason had to survive the
+ * rewrite. Same rule as `golden.mjs`'s BLOCKED: a suite that passes with no
+ * input claims confidence nobody earned.
+ */
+const cr = (m) => (m == null ? NaN : Number(String(m).replace(/,/g, "")));
+
 const INVARIANTS = {
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
@@ -130,9 +157,9 @@ const INVARIANTS = {
     // double-counting the AIF puts value in the headline that is in neither
     // half. Listed + Private must reconstruct the headline.
     ["NAV = its own listed + private split (the AIF is not counted twice)", (t) => {
-      const nav = Number(/consolidated nav[\s\S]{0,60}?₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
-      const listed = Number(/Listed\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
-      const priv = Number(/Private\s*₹([\d.]+)\s*Cr/i.exec(t)?.[1] ?? NaN);
+      const nav = cr(new RegExp(String.raw`consolidated nav[\s\S]{0,60}?` + CR, "i").exec(t)?.[1]);
+      const listed = cr(new RegExp(String.raw`Listed\s*` + CR, "i").exec(t)?.[1]);
+      const priv = cr(new RegExp(String.raw`Private\s*` + CR, "i").exec(t)?.[1]);
       return [nav, listed, priv].every(Number.isFinite) && Math.abs(listed + priv - nav) <= 0.6;
     }],
     // THE +99% REGRESSION, GUARDED ON THE RENDERED PAGE.
@@ -183,10 +210,10 @@ const INVARIANTS = {
     ["the Equity row says how much was chosen by a manager and how much was not",
       (t) => !/\bEquity\b/.test(t) || /chosen under a manager.s mandate/i.test(t)],
     ["the allocation total ties to its own Invested and Current columns", (t) => {
-      const row = /Total\s+₹([\d.]+)\s*Cr\s+₹([\d.]+)\s*Cr\s+([+-])([\d.]+)%/.exec(t);
+      const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
       if (!row) return true;   // layout changed; the other invariants still bind
       const [, inv, cur, sign, pct] = row;
-      const expect = ((Number(cur) - Number(inv)) / Number(inv)) * 100;
+      const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
       return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
     }],
   ],
@@ -252,8 +279,8 @@ const INVARIANTS = {
     // construction, so a by-security table that double-counts a dually-reported
     // holding cannot match it.
     ["by-security total counts each dedupeGroup once", (t) => {
-      const nav = Number(/₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);   // header chip, first on the page
-      const total = Number(/Total\s*·\s*\d+\s*rows\s*₹[\d.]+\s*Cr\s*\S*\s*₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);
+      const nav = cr(new RegExp(CR).exec(t)?.[1]);   // header chip, first on the page
+      const total = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows\s*₹[\d,.]+\s*Cr\s*\S*\s*` + CR).exec(t)?.[1]);
       return Number.isFinite(nav) && Number.isFinite(total)
         && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
     }],
@@ -313,9 +340,9 @@ const INVARIANTS = {
     // the sum then overshoots by exactly the classes counted twice (₹180.8 +
     // ₹339.4 = ₹520.2 against a ₹461 Cr book).
     ["covered + excluded reconstructs the consolidated NAV", (t) => {
-      const nav = Number(/₹([\d.]+)\s*Cr/.exec(t)?.[1] ?? NaN);           // header chip, first on the page
-      const covered = Number(/Sectors cover company shares \(₹([\d.]+)\s*Cr\)/i.exec(t)?.[1] ?? NaN);
-      const excluded = Number(/The other ₹([\d.]+)\s*Cr is excluded/i.exec(t)?.[1] ?? NaN);
+      const nav = cr(new RegExp(CR).exec(t)?.[1]);           // header chip, first on the page
+      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
+      const excluded = cr(new RegExp(String.raw`The other ` + CR + String.raw` is excluded`, "i").exec(t)?.[1]);
       return [nav, covered, excluded].every(Number.isFinite)
         && Math.abs(covered + excluded - nav) <= Math.max(0.6, nav * 0.002);
     }],

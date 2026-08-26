@@ -8547,6 +8547,66 @@
   ]
  },
  {
+  "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+  "provider": "ICICI Bank (NSDL demat)",
+  "accountNo": "49794950",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-03-31",
+  "reportType": "holdings",
+  "sourcePath": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 6,
+  "fileKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+  "label": "ICICI Bank (NSDL demat) · 49794950 · holdings",
+  "fy": "2026-03-31",
+  "source": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "unknown-unknown-unknown-holdings",
+  "provider": "(unidentified)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "holdings",
+  "sourcePath": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+  "pages": 4,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "unknown-unknown-unknown-holdings",
+  "label": "(unidentified) · holdings",
+  "fy": "",
+  "source": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
   "provider": "Motilal Oswal Active Momentum Fund",
   "accountNo": "904168868444",

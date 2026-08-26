@@ -47,6 +47,7 @@
    "absoluteYieldPct": null,
    "annualizedYieldPct": null,
    "priceAsOn": "2026-07-31",
+   "faceValue": null,
    "marketValue": 109900127.57,
    "gainLoss": 9900127.57,
    "pctGainLoss": 9.9,

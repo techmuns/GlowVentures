@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 6,46,60,78,120.01 |
-| Positions | 360 |
-| Accounts | 48 |
+| Consolidated market value | 1,30,61,62,98,896.16 |
+| Positions | 372 |
+| Accounts | 49 |
 | Owners | 6 |
 | Newest as-of | 2026-08-13 |
 
@@ -33,6 +33,7 @@ Generated — **do not edit by hand**.
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
+| 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 12 | 1,24,15,02,20,776.15 |
 | 175962 | India SME Investments | Ajay Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 0 | 0 |
@@ -70,7 +71,7 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 21 | 166 | 2,85,75,94,163.4 |
+| Ajay Jaisinghani | 22 | 178 | 1,27,00,78,14,939.55 |
 | Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
 | Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
 | Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
@@ -99,18 +100,18 @@ Together they carry **8,55,57,677.53** across 5 account(s). That figure is state
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 5,45,92,28,990.4 | 84.43% |
-| Financials | 25,85,86,623.95 | 4.00% |
-| Health Care | 19,08,15,090.8 | 2.95% |
-| Consumer Discretionary | 18,37,36,315.22 | 2.84% |
-| Industrials | 14,49,38,189.09 | 2.24% |
-| Cash | 11,57,87,076.72 | 1.79% |
-| Information Technology | 7,15,96,197.78 | 1.11% |
-| Materials | 2,35,59,866.25 | 0.36% |
-| Consumer Staples | 2,28,13,806.84 | 0.35% |
-| Communication Services | 1,10,42,228.2 | 0.17% |
-| Utilities | 99,62,509.52 | 0.15% |
-| Real Estate | 57,37,600 | 0.09% |
+| Unclassified | 1,29,60,94,49,766.55 | 99.23% |
+| Financials | 25,85,86,623.95 | 0.20% |
+| Health Care | 19,08,15,090.8 | 0.15% |
+| Consumer Discretionary | 18,37,36,315.22 | 0.14% |
+| Industrials | 14,49,38,189.09 | 0.11% |
+| Cash | 11,57,87,076.72 | 0.09% |
+| Information Technology | 7,15,96,197.78 | 0.05% |
+| Materials | 2,35,59,866.25 | 0.02% |
+| Consumer Staples | 2,28,13,806.84 | 0.02% |
+| Communication Services | 1,10,42,228.2 | 0.01% |
+| Utilities | 99,62,509.52 | 0.01% |
+| Real Estate | 57,37,600 | 0.00% |
 
 ## Unclassified sectors
 
@@ -221,6 +222,10 @@ never guessed into the nearest plausible bucket.
 - account 10355977: no time-weighted return series in any statement
 - account 10355977: no flow block in any statement, so no value bridge
 - account 10355977: no external capital movements found, so no money-weighted return series
+- account 49794950 (ICICI Bank (NSDL demat)) carries 24 of 38 holding(s) with NO market value, so they are in the archive and out of every total: ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 (636 unit(s), recorded at a face value of 10); BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 (48 unit(s), recorded at a face value of 10); ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/ (378788 unit(s), recorded at a face value of 5); ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/ (330898 unit(s), recorded at a face value of 1); EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 (100 unit(s), recorded at a face value of 1); EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/ (710 unit(s), recorded at a face value of 1); INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability (67500 unit(s), recorded at a face value of 1000); INFOBAY AI LIMITED - 0.01% PREF 18AG44 (107 unit(s), recorded at a face value of 10); INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ (32017 unit(s), recorded at a face value of 10); INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/ (177981 unit(s), recorded at a face value of 1); MATRIX GAS AND RENEWABLES LIMITED - EQ (75000 unit(s), recorded at a face value of 10); NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/ (125000 unit(s), recorded at a face value of 1); OILMAX ENERGY PRIVATE LIMITED - EQ (17000 unit(s), recorded at a face value of 10); ONIX RENEWABLE LIMITED - EQ (90000 unit(s), recorded at a face value of 10); RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/ (71400 unit(s), recorded at a face value of 10); RAYS POWER EXPERTS PRIVATE LIMITED - EQ (59000 unit(s), recorded at a face value of 10); SKS FASTENERS LIMITED - EQ (24800 unit(s), recorded at a face value of 10); SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability (15000 unit(s), recorded at a face value of 1000); SOTEFIN BHARAT LIMITED - EQ (171879 unit(s), recorded at a face value of 10); SPRAY ENGINEERING DEVICES LIMITED - EQ (165566 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 (4000 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - EQ (148000 unit(s), recorded at a face value of 10); WEVOIS LABS PRIVATE LIMITED - EQ (55 unit(s), recorded at a face value of 10); ZENITH LEISURE HOLIDAYS LIMITED - EQ (32791 unit(s), recorded at a face value of 10). A depository records the value a security was allotted at where it holds no price for it, and that is not a mark: carried, it would state a valuation nobody struck. The remaining 14 row(s) on the same statement ARE marked and are in the book.
+- account 49794950: no time-weighted return series in any statement
+- account 49794950: no flow block in any statement, so no value bridge
+- account 49794950: no external capital movements found, so no money-weighted return series
 - account 175962 (India SME Investments) contributes no market value: its statement of 2026-06-30 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account 175962: no time-weighted return series in any statement
 - account 175962: no flow block in any statement, so no value bridge
@@ -257,12 +262,14 @@ never guessed into the nearest plausible bucket.
 - account 1201090012539150: no time-weighted return series in any statement
 - account 1201090012539150: no flow block in any statement, so no value bridge
 - account 1201090012539150: no external capital movements found, so no money-weighted return series
+- account 1201090012838316 (Motilal Oswal Financial Services (demat)) carries 18 of 41 holding(s) with NO market value, so they are in the archive and out of every total: 3P India Equity Fund 1 — Class B3 (1416918.692 unit(s), recorded at a face value of 100); ABSL BAL ADV-GROWTH (393095.951 unit(s), no price published); BAVF Series 20 — Class C6 (856.736 unit(s), no price published); Buoyant Opportunities Strategy — Class A4 (1918953.2 unit(s), recorded at a face value of 100); Baring Private Equity India Fund 6 — Class A1 (252.5 unit(s), no price published); Carnelian Bharat Amritkaal Fund — Class A2 (12993094.825 unit(s), recorded at a face value of 10); CHEELIZZA IND-EQ1/ (350980 unit(s), no price published); CLEAN MAX ENV-EQ 1/ (94967 unit(s), no price published); India SME Investments Fund II — Class A2 (27000 unit(s), recorded at a face value of 1000); ITF — Class A (78.686 unit(s), no price published); MIRAE LCF D-GROW (0.003 unit(s), no price published); Motilal Oswal Founders Fund Series II — Class G1 (9514997.798 unit(s), no price published); NATIONAL STOCK EX-EQ (75000 unit(s), no price published); PVC-II — Class A1 (16000 unit(s), no price published); Sanshi Fund-I — Class E (1820926.864 unit(s), no price published); TOCF-I — Class A2 (12899.355 unit(s), recorded at a face value of 1000); Transition Venture Capital Fund I — Class A1 (2500 unit(s), recorded at a face value of 1000); VOF I — Class A2 (1225000 unit(s), no price published). A depository records the value a security was allotted at where it holds no price for it, and that is not a mark: carried, it would state a valuation nobody struck. The remaining 23 row(s) on the same statement ARE marked and are in the book.
 - account 1201090012838316: no time-weighted return series in any statement
 - account 1201090012838316: no flow block in any statement, so no value bridge
 - account 1201090012838316: no external capital movements found, so no money-weighted return series
 - account 1201090012838320: no time-weighted return series in any statement
 - account 1201090012838320: no flow block in any statement, so no value bridge
 - account 1201090012838320: no external capital movements found, so no money-weighted return series
+- account 1201090012838335 (Motilal Oswal Financial Services (demat)) carries 1 of 7 holding(s) with NO market value, so they are in the archive and out of every total: ABSL BAL ADV-GROWTH (242412.122 unit(s), no price published). A depository records the value a security was allotted at where it holds no price for it, and that is not a mark: carried, it would state a valuation nobody struck. The remaining 6 row(s) on the same statement ARE marked and are in the book.
 - account 1201090012838335: no time-weighted return series in any statement
 - account 1201090012838335: no flow block in any statement, so no value bridge
 - account 1201090012838335: no external capital movements found, so no money-weighted return series
@@ -364,8 +371,9 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: bank-book (no date) superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-unknown-bank-book`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 360 position(s), across 1 of 48 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 372 position(s), across 1 of 49 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

@@ -169,13 +169,22 @@ function assetClassOf(isin, name, isAif) {
  * mismatch is reported, never silently dropped or silently doubled.
  *
  * An `INF` row that is NOT here is carried, because nothing else reports it.
+ *
+ * IT IS A REGISTER ABOUT DEPOSITORIES, NOT ABOUT THIS READER. `nsdlDemat.mjs`
+ * reads the family's NSDL account at ICICI Bank and hits exactly the same thing
+ * — Sanshi's Class A2 and Class E, India SME's Class A2, Sky Capital's Oncare A3
+ * — so `dropDepositoryDuplicates` checks BOTH providers against it. It lives
+ * here because this is where it was first needed; a third depository is the
+ * point at which it should move to `shared/`.
  */
 export const AIF_UNITS = {
   INF0R4I22066: { name: "3P India Equity Fund 1 — Class B3", reportedBy: "3P Investment Managers" },
   INF0RRI22040: { name: "Buoyant Opportunities Strategy — Class A4", reportedBy: "Buoyant Capital" },
   INF0ROG22363: { name: "Carnelian Bharat Amritkaal Fund — Class A2", reportedBy: "Carnelian Bharat Amritkaal Fund" },
   INF15Q422013: { name: "Baring Private Equity India Fund 6 — Class A1", reportedBy: "Baring Private Equity India Fund" },
+  INF1ISW22038: { name: "Sanshi Fund-I — Class A2", reportedBy: "Sanshi Fund" },
   INF1ISW22079: { name: "Sanshi Fund-I — Class E", reportedBy: "Sanshi Fund" },
+  INF1V9N22050: { name: "Sky Capital Rising Titans Fund I — Oncare Class A3", reportedBy: "Sky Capital Rising Titans Fund" },
   INF0XAZ22055: { name: "India SME Investments Fund II — Class A2", reportedBy: "India SME Investments" },
   INF0RRH22DW6: { name: "Motilal Oswal Founders Fund Series II — Class G1", reportedBy: "Motilal Oswal Founders Fund" },
   INF0VIS22016: { name: "Transition Venture Capital Fund I — Class A1", reportedBy: "Transition Venture Capital" },

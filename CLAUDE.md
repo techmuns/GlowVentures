@@ -189,15 +189,24 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** THREE DELIVERIES, and every one stays:
+**What is actually in `source/` today.** SIX DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/`, `august-2026-c/` and `august-2026-d/` — statements that
-arrived after it. Thirty-one issuers, 42 accounts in the book, six holders and
-two family trusts, 48 files expanding to 229 — of which **259 documents** are
-extracted, 197 read fully, 61 partially and **exactly ONE not at all**: the
-adviser's consolidated review workbook, which is held out BY DECISION and is
-not a statement. Every encrypted statement opens, every issuer has a reader,
-and `source/README.md` carries the rule for adding the next delivery.
+`august-2026-b/`, `august-2026-c/`, `august-2026-d/` and `august-2026-e/` —
+statements that arrived after it. Thirty-two issuers — ICICI Bank's NSDL
+depository is the new one — 49 accounts in the book, six holders and two family
+trusts, 50 files expanding to 229 — of which
+**261 documents** are extracted, 197 read fully, 62 partially and **exactly TWO
+not at all**, for two different reasons that must not be conflated:
+
+- the adviser's consolidated review workbook, held out BY DECISION, which is not
+  a statement;
+- Bharat's HDFC NSDL holding statement, which is a SCAN — four JPEG pages with
+  no text layer, so there is nothing for any reader to read. Reported as
+  `no-text-layer`, never as a missing reader, because those two send the next
+  person to do completely different things and only one of them is possible.
+
+Every encrypted statement opens, every issuer whose statements carry text has a
+reader, and `source/README.md` carries the rule for adding the next delivery.
 
 **A MONTHLY DROP REISSUES THE SAME FILENAMES, and both issues must survive.**
 `LKP 2.zip`, `GREEN LANTERN - ANKITA.zip` and `GREEN LANTERN - AJAY .zip` all
@@ -211,6 +220,7 @@ every ZIP already at the top level.
 
 | Provider | Account | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
+| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹12,415.02 Cr\*\* |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
 | Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
@@ -272,8 +282,16 @@ is one row per account, all 42 of them, sorted by value.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-**Consolidated ₹646.61 Cr**: listed ₹294.27 Cr, private ₹352.34 Cr. The split is
-on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
+\*\* **₹12,351.24 Cr of that one row is POLYCAB INDIA**, and it is the family's
+promoter stock rather than a portfolio position — see the `august-2026-e`
+section. It arrived last, it dwarfs everything above it, and the family's own
+consolidated review does not carry it. It is in the book because the statement
+says the account holds it; whether it belongs in the same total as the managed
+mandates is a decision about the family's affairs, not a parsing rule, and
+`excludedAccounts` reverses it in one line if they say so.
+
+**Consolidated ₹13,061.63 Cr**: listed ₹12,709.28 Cr, private ₹352.35 Cr. The
+split is on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
 being reported under a label that did not describe it.
@@ -375,6 +393,7 @@ its own file because the layouts share nothing:
 | `providers/lkpSecurities.mjs` | 4 | a self-directed demat account, in three file formats — the only LOT REGISTER in the book |
 | `providers/mutualFundFolio.mjs` | 5 | folio statements, three different layouts behind one reader |
 | `providers/motilalDemat.mjs` | 12 | the family's own CDSL demat accounts — SEVEN of them, keyed on the `Client ID:` the page prints because three of the twelve FILE NAMES name the wrong member |
+| `providers/nsdlDemat.mjs` | 1 | the family's NSDL account at ICICI Bank — the mirror image of the CDSL reader, with NO RATE COLUMN, so value is the primitive and the price would be the derived thing |
 | `providers/bankAdvice.mjs` | 2 | ICICI payment receipts — read in full, attributed to nothing, because a receipt names no holder and no security |
 | `providers/schemePortfolio.mjs` | 1 | a fund's own SEBI portfolio disclosure — archived for look-through, worth nothing to the book |
 
@@ -840,6 +859,130 @@ statement.
 the fund. Three of the four still resolved — `resolveOwner` tries the PAN first
 — and Bharat's did not, because his PAN is deliberately withheld from the
 registry. A fallback masked the bug on three folios out of four.
+
+### The `august-2026-e` delivery — the two NSDL accounts, and a scan
+
+Two files, found by diffing the client's Google Drive against `source/` after
+every other delivery had landed. Every one of the other 47 files in Drive matched
+a local file on name and byte size; these two matched nothing. Both are dated
+**31 March 2026**, five months behind the rest of the corpus, and both are
+DEPOSITORY statements for accounts this book had never seen.
+
+| File | Whose | Outcome |
+| --- | --- | --- |
+| `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` | Ajay — ICICI Bank NSDL, client 49794950 | read: 38 holdings, 12 in the book, **₹12,415.02 Cr** |
+| `HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` | Bharat — HDFC Bank NSDL, client 22025655 | **not read — it is a scan** |
+
+**AND ₹12,351.24 Cr OF THAT IS ONE ROW.** Polycab India, 13,901,229 shares at
+the ₹8,885.00 the depository marks them at. This is promoter stock — the family
+are Polycab's promoters — and Bharat's scanned statement carries 5,108,911 more.
+It is nineteen times the rest of the book put together, and **the family's own
+consolidated review, which totals ₹1,300 Cr, does not carry it at all.** That
+absence is the evidence that they do not think of it as part of the portfolio
+being tracked, and it is not evidence about what the statement says.
+
+So it is INGESTED, because the statement says the account holds it and refusing
+a measured holding for being inconveniently large is the fabrication rule run
+backwards. Whether it belongs in the same consolidated total as the managed
+mandates is a decision about the family's affairs, of exactly the kind §4c
+reserves for them, and one `excludedAccounts` entry reverses it. What must not
+happen is the third option: dropping it quietly and leaving the book looking
+complete.
+
+**A SCAN IS NOT A DOCUMENT WITH NO READER.** Bharat's four pages are JPEGs —
+pdfjs returns zero text items on every one — so there is no header to match and
+no coordinate to read a column at. `extract.mjs` said `no-extractor`, which sends
+the next person to write a provider reader for a file that has nothing to write
+one against; it says `no-text-layer` now, and names the actual remedy: HDFC
+re-sending it as a text PDF. Not OCR — a figure recovered by OCR cannot be traced
+to what the document printed. The statement also carries NO VALUE COLUMN AT ALL,
+so even read perfectly it would value nothing.
+
+**THAT CHECK'S FIRST DRAFT DIAGNOSED THE REVIEW WORKBOOK AS A SCAN**, because
+`gridFromSpreadsheet` gives every sheet `rows: []` by design. A confidently wrong
+answer about a perfectly readable document is worse than the vague one it
+replaced, so the test is gated on `grid.sheets` — what the grid itself uses to say
+which kind it is.
+
+**IDENTITY CAME FROM THE BOOK'S OWN UNIT COUNTS.** Neither statement prints a
+PAN. Both carry fund units this book already holds from the funds' own
+statements, matching to the last decimal: Sanshi Class A2 2,341,480.851 and Class
+E 1,761,264.629 on Ajay's; Sanshi Class E 1,211,186.597, Sky Capital's Hudle A1
+17,000 and 360 ONE Special Opportunities Series 8 Class A3 at the same
+9,90,429.684 units on Bharat's. A name is a spelling; four exact unit counts
+against four different funds are not.
+
+### THE VALUE COLUMN IS A MARK ON 14 ROWS AND PAR ON 24
+
+`motilalDemat.mjs`'s rate column prints `100.000` on an AIF unit and that is the
+face value, not a NAV. The NSDL statement has NO RATE COLUMN, so the same failure
+arrives through the only price-bearing column there is. Divide value by balance:
+
+```
+NATIONAL STOCK EXCHANGE OF INDIA LTD   125,000 sh   Rs 1,25,000.00   = Re 1.00
+INDIA SME INVESTMENTS AIF TRUST II      67,500 u    Rs 6,75,00,000   = Rs 1,000
+SKS FASTENERS LIMITED                   24,800 sh   Rs 2,48,000.00   = Rs 10.00
+```
+
+NSE's unlisted share is not worth a rupee. **Fourteen different securities coming
+to exactly Rs 10.0000 is not fourteen coincidences.** A par row therefore carries
+its QUANTITY and NO VALUE, in three graded tiers — `declared` where the scrip name
+states the face value and the implied price is exactly it, `scheme` for an `INF`
+identifier at a unit's issue price, and `par` for a whole-rupee denomination on a
+name that declares nothing. **Every row in the weakest tier is NAMED**, in the
+extraction report and in `docs/BOOK-REPORT.md`, so any one of them can be
+challenged. The error runs towards an em dash with a reason; the alternative is a
+mark nobody struck, which renders as a number.
+
+**AND THE PARTIAL CASE WAS GOING UNREPORTED.** `build-book`'s note for an account
+that contributes no market value fired only when EVERY row was unvalued. This
+account values 14 of 38, so its other 24 were dropped by the filter with nothing
+said anywhere — 38 rows silently becoming 12 positions. That is "shown for those
+and the rest are NAMED" failing INSIDE an account instead of across accounts, and
+those 24 are now listed with their units and their face value.
+
+**A RECORD IS THREE LINES AND THE ISIN IS THE MIDDLE ONE.** A cell too wide for
+its column wraps ABOVE and BELOW the anchor line, so read line by line, `NEW FV
+RS. 10/-` is a company. Non-anchor lines are assigned to the NEAREST ANCHOR BY Y,
+which is a measurement: within a record the gaps are 4.6-9.6pt and between records
+15-21pt. Two boundaries are load-bearing and both were found by getting them
+wrong — the table starts BELOW its own header (or the first holding is named
+`ICICI BANK LIMITED DP ID : IN302902 …`) and ends AT its own `Total Value of
+Holding` row (or the last one is named `ZENITH LEISURE HOLIDAYS LIMITED - EQ Total
+Value of Holding ( Prices as on 30-Mar-2026 ) Rs. 124,799,000,337.69 This is a
+computer generated report …`, and that string becomes its securityKey).
+
+**ONE VALUE WRAPS TOO, AND IT IS THE ROW THAT MATTERS MOST.** Polycab's
+`123,512,419,665.00` is drawn as `123,512,419,665.0` at y703 and `0` at y693,
+with the ISIN line between them at y698. Fragments are joined only where the join
+yields ONE well-formed number, and the check that it is the right number is the
+statement's own printed grand total: the 38 rows read reproduce
+`Rs. 1,24,79,90,00,337.69` **to the rupee**.
+
+**FOUR DEFECTS THIS DELIVERY FOUND IN CODE THAT WAS ALREADY HERE**, none of them
+about ICICI:
+
+- **`makeHolding` silently dropped `faceValue`.** Both depository readers have
+  emitted it since they were written and the field does not exist on the object,
+  so the archive never showed what the depository printed where it had no price —
+  and the comment in each reader saying it did was false.
+- **`dropDepositoryDuplicates`'s note had never printed.** It runs on POSITIONS,
+  and a face-valued row carries no market value, so the unvalued filter removes
+  every CDSL AIF row long before it. Its stated reason — that the depository
+  "marks them at the face value it prints" — was therefore unchecked, and is false
+  of the first rows it has ever actually dropped: the two Sanshi ones here, where
+  the depository prints a real NAV. A dead branch with a confident explanation is
+  how a future session "fixes" a rule that was never broken.
+- **`dropDepositoryDuplicates` was keyed on ONE provider by name.** Four of this
+  statement's fund ISINs are in `AIF_UNITS`; keyed on the CDSL provider alone,
+  every one would have been counted a second time. It takes a SET now.
+- **Three `check:pages` invariants could not read a book past ₹1,000 Cr.** They
+  parsed `₹([\d.]+)\s*Cr`, which stops dead at a thousands separator, so
+  `₹13,061.6 Cr` read as `13` and all three failed against pages computing
+  correctly. `fmtFromBase` has always grouped Indian-style — its own header
+  comment gives `₹1,606.8 Cr` as the format it exists to produce. The repair then
+  introduced its own bug in one line, `Number("")` being 0, which made a check
+  with no input PASS; that is `golden.mjs`'s rule, and a missing match is `NaN`.
 
 ### THE FILENAME OUTRANKED THE LETTERHEAD, AND AN ACCOUNT CHANGED MANAGER
 
@@ -1361,7 +1504,7 @@ product:
 **As of this calibration exactly TWO material deltas stand**, both named and
 both quantified above: ₹1.27 on Carnelian's 2026-08-10 transaction statement and
 ₹1.77 on V.E.C 128005's 2026-08-13 one, each a settlement residual inside the
-precision of a four-decimal price. The run is 259 row-sum checks, 670
+precision of a four-decimal price. The run is 261 row-sum checks, 670
 derived-vs-printed, 1,881 dated-table row checks and 18 cross-report. Every
 other delta that is not `ok` is `explained` or `rounding`, and every `explained`
 one names a basis difference reproduced exactly — never a widened tolerance.

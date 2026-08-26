@@ -51,6 +51,7 @@
    "absoluteYieldPct": null,
    "annualizedYieldPct": null,
    "priceAsOn": null,
+   "faceValue": null,
    "marketValue": 55498303.25,
    "gainLoss": 5498303.25,
    "pctGainLoss": 11,

@@ -407,6 +407,23 @@ const ISSUER_PROVIDER_RULES = [
    */
   [/CDSL\s+AND\s+NSDL\s*:\s*IN-DP-/i, "Motilal Oswal Financial Services (demat)"],
   /**
+   * ...and the NSDL one beside it, for exactly the same reason and with the same
+   * hazard proved on the document itself.
+   *
+   * ICICI Bank's `Statement of Holding` lists SANSHI TRUST, INDIA SME
+   * INVESTMENTS AIF TRUST II and SKY CAPITAL RISING TITANS FUND I as scrip rows,
+   * so before this rule it was claimed by `Sky Capital Rising Titans Fund` — a
+   * ₹12,479 Cr demat account filed under an angel fund whose four folios are
+   * worth ₹4.73 Cr, because the fund's name is a LINE ITEM inside it.
+   *
+   * It takes BOTH halves of the letterhead. `ICICI BANK LIMITED` alone is
+   * already in this book as an `ISIN NAME:` on a Motilal transaction statement —
+   * a security the family holds — and `DP ID :` alone is printed on thirty
+   * statements as a field about the INVESTOR's depository account. Only the two
+   * adjacent are the depository participant's own letterhead.
+   */
+  [/ICICI\s+BANK\s+LIMITED[\s\S]{0,40}?DP\s*ID\s*:\s*IN\d{6}/i, "ICICI Bank (NSDL demat)"],
+  /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
    * These six come FIRST because four of them print `Motilal Oswal` on the

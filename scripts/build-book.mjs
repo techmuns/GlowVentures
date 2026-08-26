@@ -22,7 +22,20 @@ import { fileURLToPath } from "node:url";
 import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
-import { AIF_UNITS, PROVIDER as DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
+import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
+import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
+
+/**
+ * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
+ *
+ * `dropDepositoryDuplicates` was written against the one CDSL provider and was
+ * keyed on it by name. The NSDL account at ICICI Bank carries four of the same
+ * fund ISINs — Sanshi Class A2 and Class E, India SME Class A2, Sky Capital's
+ * Oncare A3 — so keyed on one provider it would have counted every one of them
+ * a second time, at the face value the depository prints. A set, not a string,
+ * so a third depository is one entry rather than a second code path.
+ */
+const DEPOSITORY_PROVIDERS = new Set([CDSL_DEMAT_PROVIDER, NSDL_DEMAT_PROVIDER]);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
@@ -608,11 +621,36 @@ function build(docs) {
      * The commitment goes to the commitment register, which is where a drawdown
      * fund's called and uncalled capital belongs.
      */
-    const unvalued = (holdingsDoc?.holdings ?? []).filter((h) => !isNum(h.marketValue));
-    if (unvalued.length && unvalued.length === (holdingsDoc?.holdings ?? []).length) {
+    const allHoldings = holdingsDoc?.holdings ?? [];
+    const unvalued = allHoldings.filter((h) => !isNum(h.marketValue));
+    if (unvalued.length && unvalued.length === allHoldings.length) {
       notes.push(`account ${accountNo} (${provider}) contributes no market value: its statement of ${holdingsDoc.asOf} `
         + `carries ${unvalued.length} holding(s) with units and cost and NO NAV, so there is nothing to value them at. `
         + `Units and cost are in the archive; the consolidated total does not include them.`);
+    } else if (unvalued.length) {
+      /**
+       * AND THE PARTIAL CASE IS THE ONE THAT WENT UNREPORTED.
+       *
+       * The note above fires only when EVERY row in an account is unvalued. An
+       * account whose statement values some rows and not others passed it
+       * silently, and the unvalued rows were dropped by the filter below with
+       * nothing said anywhere — which is the "shown for those and the rest are
+       * NAMED" rule failing inside an account instead of across accounts.
+       *
+       * ICICI Bank's NSDL statement is 38 holdings of which the depository marks
+       * 14 and records the other 24 at the face value they were allotted at:
+       * National Stock Exchange of India Ltd at Re 1 a share, sixteen private
+       * companies at Rs 10. Those 24 are real holdings the family owns and this
+       * book cannot value, and a reader has to be told which they are — not left
+       * to notice that 38 rows became 12 positions.
+       */
+      notes.push(`account ${accountNo} (${provider}) carries ${unvalued.length} of ${allHoldings.length} holding(s) `
+        + `with NO market value, so they are in the archive and out of every total: `
+        + `${unvalued.map((h) => `${h.security}${isNum(h.quantity) ? ` (${h.quantity} unit(s)` : " ("}`
+          + `${isNum(h.faceValue) ? `, recorded at a face value of ${h.faceValue}` : ", no price published"})`).join("; ")}. `
+        + "A depository records the value a security was allotted at where it holds no price for it, and that is "
+        + "not a mark: carried, it would state a valuation nobody struck. The remaining "
+        + `${allHoldings.length - unvalued.length} row(s) on the same statement ARE marked and are in the book.`);
     }
 
     for (const h of (holdingsDoc?.holdings ?? []).filter((x) => isNum(x.marketValue))) {
@@ -1398,7 +1436,7 @@ console.log("  docs/BOOK-REPORT.md");
  * Anything not in the table is untouched. A silent drop is not available here.
  */
 function dropDepositoryDuplicates(positions, accounts, notes) {
-  const dematIds = new Set(accounts.filter((a) => a.provider === DEMAT_PROVIDER).map((a) => a.accountId));
+  const dematIds = new Set(accounts.filter((a) => DEPOSITORY_PROVIDERS.has(a.provider)).map((a) => a.accountId));
   if (!dematIds.size) return;
   const idsOf = (provider) =>
     new Set(accounts.filter((a) => a.provider === provider).map((a) => a.accountId));
@@ -1435,10 +1473,27 @@ function dropDepositoryDuplicates(positions, accounts, notes) {
     byFund.get(k).push(p);
   }
   for (const [fund, rows] of [...byFund].sort((a, b) => a[0].localeCompare(b[0]))) {
+    /**
+     * THE REASON HAS TO BE TRUE OF THE ROWS IT IS GIVEN FOR, AND THIS ONE NEVER
+     * WAS — because until now the note had never been printed at all.
+     *
+     * It read that the depository "marks them at the face value it prints". That
+     * is true of every CDSL row, and those rows never get here: a face-valued row
+     * carries no market value, so the unvalued filter upstream removes it long
+     * before this function runs on POSITIONS. So this loop was silent for as long
+     * as it existed, and its stated reason went unchecked.
+     *
+     * The first rows it has ever actually dropped are the two Sanshi ones on the
+     * NSDL statement, and the depository prints a real NAV for both (Rs 122.647
+     * and Rs 151.966 at 31 March). Dropping them is still right — the fund's own
+     * statement is the authority and is the more recent — but the reason given
+     * had to stop being one that is false of them. A dead branch with a
+     * confident explanation is how a future session "fixes" a rule that was
+     * never broken.
+     */
     notes.push(`${rows.length} depository row(s) for ${fund} are NOT carried: the unit count matches that `
-      + "fund's own statement exactly, so they are the same holding seen from custody. The depository marks "
-      + `them at the face value it prints (${rows.map((p) => p.currentPrice ?? "no rate").join(", ")}) rather `
-      + "than at a NAV, which is the other reason its copy is the one to drop.");
+      + "fund's own statement exactly, so they are the same holding seen from custody, and the fund is the "
+      + "authority on what its own units are worth.");
   }
   for (let i = positions.length - 1; i >= 0; i--) if (drop.has(positions[i])) positions.splice(i, 1);
 }
