@@ -349,10 +349,6 @@ export function Economy() {
         })}
       </div>
 
-      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        Each series would carry daily / weekly / monthly / quarterly / year-end history, a returns table, cross-series
-        comparison and export to Excel · PDF · PowerPoint — the cross-cutting research functionality the spec asks for.
-      </p>
     </div>
   );
 }

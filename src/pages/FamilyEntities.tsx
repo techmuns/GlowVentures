@@ -220,9 +220,6 @@ export function FamilyEntities() {
   const selSharesMV = sum(selShares.map((x) => x.marketValue));
   const selSectors = bySector(selShares);
   const selExcluded = excludedClasses(selRows, isCompanyShare);
-  const selExcludedMV = sum(selExcluded.map((c) => c.mv));
-  const selMandateShares = selShares.filter((x) => isMandateHeld(engagementOf(accIdx, x) || null));
-  const selMandateSharesMV = sum(selMandateShares.map((x) => x.marketValue));
   /**
    * ── THE CAPTION AND THE TABLE ARE KEYED ON DIFFERENT AXES ──
    *
@@ -248,13 +245,6 @@ export function FamilyEntities() {
     : ` Of that, ${money(selSleeveMV)} (${classList(selSleeveClasses)}) sits INSIDE a mandate rather than under a class`
       + ` heading of its own: a mandate is grouped as its own statement totals it, cash sleeve included, so that value is`
       + ` counted in the ${MANDATE_BUCKET} section.`;
-  const sleeveNote = selSleeve.length === 0 ? null : (
-    <>
-      {" "}Of that, {money(selSleeveMV)} ({classList(selSleeveClasses)}) sits INSIDE a mandate rather than under a
-      class heading of its own: a mandate is grouped as its own statement totals it, cash sleeve included, so that value
-      is counted in the <span className="text-slate-400">{MANDATE_BUCKET}</span> section.
-    </>
-  );
   const holdings = (() => {
     if (!selected) return [];
     const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
@@ -457,13 +447,6 @@ export function FamilyEntities() {
                   </li>
                 ))}
               </ul>
-              {/* The same two-sets note the tile carries, where the slice is drawn. */}
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                This splits the book by WHERE it is held, not by who chose it.{" "}
-                <span className="text-slate-400">{DIRECT}</span> is every asset class at accounts the family runs itself; the
-                holdings tables&rsquo; <span className="text-slate-400">{DIRECT_EQUITY_BUCKET}</span> ({money(directEquityMV)}) is
-                company shares only and counts shares bought through a broker, which land here under that broker&rsquo;s own name.
-              </p>
             </Card>
           </div>
           <Card className="mt-5" title="Entity breakdown" pad={false}>
@@ -547,20 +530,6 @@ export function FamilyEntities() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>}
-            {/* When there are no company shares at all the AbsentSection above has
-                already named every class, so this would only say it twice. */}
-            {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              {selMandateShares.length > 0 && <>Both routes count here: {money(selMandateSharesMV)} of these shares were chosen by a
-                discretionary manager and have a sector exactly like the ones {scope} bought directly. Which of the two chose a
-                name is in the <span className="text-slate-400">Held via</span> column below.{" "}</>}
-              {selExcluded.length > 0
-                ? <>{money(selExcludedMV)} across {selExcluded.reduce((n, c) => n + c.count, 0)} position
-                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}.
-                  A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a
-                  folio, so every wrapper would land in one false “Unclassified” slice and bury the sectors this chart exists to show.
-                  All of them are in the holdings table below.{sleeveNote}</>
-                : <>Every one of this entity&rsquo;s positions is a share in a company, so nothing is excluded from the chart above.</>}
-            </p>}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
             subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
@@ -601,15 +570,6 @@ export function FamilyEntities() {
                                 </span>
                               )}
                             </span>
-                          </td>
-                        </tr>
-                      )}
-                      {grp.key === MANDATE_BUCKET && (
-                        <tr className="bg-ink-900/40">
-                          <td colSpan={5} className="px-4 pb-1.5 pt-0.5 text-[11px] leading-relaxed text-slate-500">
-                            Shares a discretionary manager chose and holds in {scope}&rsquo;s own name — {scope} owns them, the
-                            manager decides them. Grouped by mandate, cash sleeve included, so each group ties to the account its
-                            statement totals; open one for the manager&rsquo;s own figures.
                           </td>
                         </tr>
                       )}

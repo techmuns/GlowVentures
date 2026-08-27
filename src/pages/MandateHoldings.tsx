@@ -695,26 +695,6 @@ export function MandateHoldings() {
         </div>
       </Card>
 
-      {/* WHY THESE SHARES ARE NOT UNDER "DIRECT EQUITY", said once, on the page
-          where the question arises. The family read the old label as a claim
-          that they had chosen the position; the shares are ordinary listed
-          equity and the DECISION was the manager's, and both halves belong on
-          screen together. */}
-      <Card className="mt-5" title="How to read this page">
-        <p className="text-[12.5px] leading-relaxed text-slate-400">
-          Every share above is ordinary listed equity — the family owns the shares, and{" "}
-          <span className="font-medium text-slate-300">{account.provider}</span> decides them under a discretionary
-          mandate. That is why they are grouped here under {MANDATE_BUCKET} rather than under{" "}
-          {DIRECT_EQUITY_BUCKET}, which on the holdings tables now means what the words say: shares the family bought
-          in its own demat or broking account.
-        </p>
-        <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-          The grouping is a holdings-table decision and nothing else moved with it. These positions still carry their
-          GICS sector, their market cap and their NSE symbol, and Sector Composition, Exposure &amp; IPS and Compare
-          still count every one of them — a look-through into a mandate is a gain for exposure analysis, not something
-          to undo. Each name's own page is one click away from the Security column.
-        </p>
-      </Card>
     </div>
   );
 }

@@ -726,20 +726,6 @@ export function PortfolioMonitor() {
                         </td>
                       </tr>
                     )}
-                    {/* WHAT A MANDATE ROW IS, said once above the ten of them.
-                        Rendered whenever mandates are on screen — including when
-                        the category filter has narrowed the table to them and the
-                        section heading above is therefore not drawn. */}
-                    {grp.key === MANDATE_BUCKET && (
-                      <tr className="bg-ink-900/40">
-                        <td colSpan={13} className="px-2 pb-1.5 pt-0.5 text-[11px] leading-relaxed text-slate-500">
-                          One row per mandate, not per share. These are shares a discretionary manager chose and holds
-                          in the family&rsquo;s own name — the family owns them, the manager decides them — so each row is
-                          the account its statement totals, cash sleeve included. Expand a mandate to list the shares
-                          inside it, or open its drill-down for the statement&rsquo;s own figures.
-                        </td>
-                      </tr>
-                    )}
                     {grp.rows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;

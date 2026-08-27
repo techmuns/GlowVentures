@@ -209,12 +209,6 @@ export function Alerts() {
             </table>
           </div>
         )}
-        <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-          A rule with no threshold is an <span className="font-medium text-slate-400">unfinished rule, not a passing one</span>, and
-          is reported as such rather than counted among the clear. IPS rules need at least one asset class mapped to the
-          bucket on <span className="font-medium text-slate-400">Exposure &amp; IPS</span>; price rules need a live quote,
-          because a month-old statement mark cannot answer whether a level was crossed today.
-        </p>
       </Card>
 
       {/* What still needs a source rather than a rule */}

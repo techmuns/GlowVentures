@@ -196,26 +196,9 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
               )}
             </tbody>
           </table>
-          <p className="mt-2 max-w-3xl">
-            The three lines reconcile to the rupee. The unattributed lots are{" "}
-            <span className="text-slate-400">{sales.unattributedSecurities.join(", ")}</span> — the LIQUID FUND sweep these
-            managers run alongside the equity mandate. Their redemptions are settled on the capital gain statement but
-            never printed on the equity transaction statement, so no sale row exists to hang them on. They are net{" "}
-            <span className="text-slate-400">gains</span>, which is the whole reason the attributed subtotal reads worse
-            than the statement total: removing gains from a loss makes the remainder look bigger. Nothing is missing and
-            nothing is double-counted — but the printed figure above is the one to quote.
-          </p>
         </div>
       )}
 
-      <p className="text-xs leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-400">This is the statements' window, not the holding period.</span>{" "}
-        {win ? <>These transaction statements cover <span className="text-slate-300">{win}</span>.</> : "These statements do not print their window."}{" "}
-        {data.accounts.length} of {data.accounts.length + data.accountsWithout.length} accounts issued one
-        {data.accountsWithout.length > 0 && <> — {data.accountsWithout.join(", ")} did not, so nothing they traded appears here</>}.
-        A purchase made before this window is not listed, which is why no annualised per-security return is computed
-        from it: a rate over a partial history would be a real number for the wrong period.
-      </p>
 
       <Card pad={false}>
         <div className="max-h-[560px] overflow-auto">
@@ -449,16 +432,6 @@ function GainsView({ data }: { data: LotData | null }) {
                       {!c.unclassified ? (
                         <>
                           <span className="font-medium text-slate-100">{c.label}</span>
-                          <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                            from {c.accounts.length} account{c.accounts.length === 1 ? "" : "s"}: {c.accounts.join(", ")}
-                          </div>
-                          {c.unresolved.length > 0 && (
-                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                              {c.unresolved.join(", ")} {c.unresolved.length === 1 ? "does" : "do"} not match one
-                              account in the registry, so how {c.unresolved.length === 1 ? "it is" : "they are"} run
-                              could not be read — grouped on what was sold, with no claim about who chose it.
-                            </div>
-                          )}
                         </>
                       ) : (
                           <>
@@ -501,12 +474,6 @@ function GainsView({ data }: { data: LotData | null }) {
               </tfoot>
             </table>
           </div>
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            A PMS mandate reports every share underneath it, so a lot its manager sold rolls up into the mandate
-            that chose it. <span className="font-medium text-slate-400">Direct Equity here means only what the
-            family bought in its own broking or demat account.</span> The grouping moves no figure — these are
-            the same lots, split as the managers split them, and the footer is the statements' own total.
-          </p>
         </Card>
       )}
 

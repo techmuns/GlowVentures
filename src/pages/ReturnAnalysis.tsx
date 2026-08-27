@@ -414,11 +414,6 @@ export function ReturnAnalysis() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-          These are point-in-time returns on cost, not time-weighted, so they are not a like-for-like ranking of
-          manager skill — an account funded later shows a different figure for the same performance. Each
-          manager's own time-weighted return is on <span className="font-medium text-slate-400">NAV &amp; Performance</span>.
-        </p>
       </Card>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">

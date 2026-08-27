@@ -90,7 +90,7 @@ export function CapitalGains() {
     return m;
   }, [portfolio]);
 
-  const { holdCandidates, crossed, crossedGain } = useMemo(() => {
+  const { holdCandidates, crossed } = useMemo(() => {
     const all = p.filter((x) => x.daysToLT != null && isPriced(x) && x.unrealizedPnL > 0)
       .map((x) => {
         const from = accountAsOf.get(x.accountId) ?? asOf;
@@ -107,7 +107,6 @@ export function CapitalGains() {
     return {
       holdCandidates: all.filter((x) => x.daysLeft > 0).sort((a, b) => a.daysLeft - b.daysLeft),
       crossed: done.length,
-      crossedGain: sumOrNull(done.map((x) => x.unrealizedPnL)),
     };
   }, [p, asOf, today, accountAsOf]);
 
@@ -337,16 +336,6 @@ export function CapitalGains() {
                         {!c.unclassified ? (
                           <>
                             <span className="font-medium text-slate-100">{c.label}</span>
-                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                              from {c.accounts.length} account{c.accounts.length === 1 ? "" : "s"}: {c.accounts.join(", ")}
-                            </div>
-                            {c.unresolved.length > 0 && (
-                              <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                                {c.unresolved.join(", ")} {c.unresolved.length === 1 ? "is" : "are"} not in the
-                                account registry, so how {c.unresolved.length === 1 ? "it is" : "they are"} run
-                                could not be read — grouped on what was sold, with no claim about who chose it.
-                              </div>
-                            )}
                           </>
                         ) : (
                             <>
@@ -390,13 +379,6 @@ export function CapitalGains() {
               </tfoot>
             </table>
           </div>
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            A PMS mandate reports every share underneath it, so a lot the manager sold rolls up into the mandate
-            that chose it rather than standing beside shares the family bought itself.{" "}
-            <span className="font-medium text-slate-400">Direct Equity here means only the second kind.</span>{" "}
-            The grouping moves no figure: these are the capital gain statements' own lots and their own
-            short/long split, and the total is the canonical one.
-          </p>
         </Card>
       )}
 
@@ -463,10 +445,6 @@ export function CapitalGains() {
             </tfoot>
           </table>
         </div>
-        <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-          Each account's window is its own — Green Lantern's statements close 25 June, Carnelian's 10 July — so
-          the total is a sum of what each manager booked over its own period, not a single-period figure.
-        </p>
       </Card>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
@@ -514,19 +492,6 @@ export function CapitalGains() {
                   ))}
                 </tbody>
               </table>
-              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                {crossed > 0 && <>
-                  {crossed} position{crossed === 1 ? "" : "s"} carrying {money(crossedGain)} of gain passed the
-                  one-year mark since {datedAccounts.length === 1 ? "that account's" : "their accounts'"} report
-                  date{datedAccounts.length === 1 ? "" : "s"}.{" "}
-                </>}
-                {/* SCOPE, on the same rule the realised total follows: a figure that exists for SOME accounts
-                    is shown for those and the rest are named. Each lot is aged from ITS OWN account's report
-                    date — the only lot register here closes 2026-03-31 while the book closes 2026-07-10. */}
-                Covers {datedLots.length} position{datedLots.length === 1 ? "" : "s"} on {datedAccounts.join(", ")},
-                the only account{datedAccounts.length === 1 ? "" : "s"} publishing a lot register. Each is aged
-                from its own report date, not the book's.
-              </p>
             </div>
           )}
         </Card>
@@ -583,11 +548,6 @@ export function CapitalGains() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 border-t border-dashed border-ink-700 px-1 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-                The losses and their size are real. <span className="font-medium text-slate-400">The tax effect
-                is not computed</span>: whether booking one offsets at 20% or 12.5% turns on whether the lot is
-                short- or long-term, and no statement in this book carries lot acquisition dates.
-              </p>
             </>
           )}
         </Card>
