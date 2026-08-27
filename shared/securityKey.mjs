@@ -100,3 +100,58 @@ export function securityKeyOf(name) {
   const norm = normalizeSecurityName(name);
   return norm ? norm.replace(/ /g, "-") : "unknown";
 }
+
+/**
+ * DEPOSITORY FURNITURE, STRIPPED FOR DISPLAY ONLY.
+ *
+ * A demat statement prints the SERIES and the FACE VALUE after the company name,
+ * because that is what identifies a line in a depository's own books:
+ * `CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/`, `SBI - EQ`,
+ * `FEDERAL BANK EQ 2/`, `RBL BNK-EQ RE 10`. None of it tells a reader anything
+ * about the holding — every one of these is ordinary equity — and it pushes the
+ * actual name out of the column.
+ *
+ * ANCHORED AT THE END, AND ONLY THERE. Three funds in this book are named
+ * "…Equity Fund" (3P India Equity Fund, Baring Private Equity India Fund,
+ * Motilal Oswal Wealth Delphi Equity Fund) and a rule matching "EQUITY" anywhere
+ * would amputate all three. Measured over every name in the book: 28 change, and
+ * those five fund names are untouched.
+ *
+ * WHAT IT DELIBERATELY KEEPS is anything naming a DIFFERENT INSTRUMENT — the
+ * `WARRANTS 13AG26` on Borosil Renewables, the `PREF 18042043` on EFPL. A
+ * warrant and a preference share are not the equity, and folding them into the
+ * company name would merge two holdings on screen. Same reasoning as
+ * `normalizeSecurityName` above, which preserves series, class and tranche.
+ *
+ * AND IT ONLY EVER REMOVES. Nothing here supplies a name the statement did not
+ * print, so a row still reads as its document does — which is why the clipped
+ * `THE KARUR VYS-EQ` becomes `The Karur Vys` and not "Karur Vysya Bank".
+ *
+ * DISPLAY ONLY. `securityKeyOf` is derived from the RAW name and is NOT routed
+ * through this, so nothing here can move a position between groups or break a
+ * join. It lives beside the key so the two rules are read together, and it is
+ * shared with the Node side so the symbol report and the screen agree.
+ */
+const DEPOSITORY_TAIL = new RegExp(
+  String.raw`[\s,]*(?:[-\u2013\u2014]\s*)?(?:`
+  + String.raw`(?:NEW\s+)?(?:FV\s+)?R[SE]\.?\s*\d+(?:\.\d+)?\s*\/?\s*-?`
+  + String.raw`|EQ(?:UITY|S)?\s*\d*\s*\/?\s*-?`
+  + String.raw`|\[[A-Z0-9]+\]`
+  + String.raw`)\s*$`,
+  "i",
+);
+
+export function stripDepositoryTail(name) {
+  let out = String(name ?? "");
+  // Repeated because tails stack — `CITY UNION -EQ RE1/` is two of them. Bounded
+  // rather than `while (true)`: a pattern that ever matched the empty string
+  // would spin, and a loop that cannot hang is cheaper than proving one never will.
+  for (let i = 0; i < 6; i++) {
+    const m = DEPOSITORY_TAIL.exec(out);
+    if (!m || m.index === 0) break;
+    const cut = out.slice(0, m.index).replace(/[\s,\-\u2013\u2014]+$/, "");
+    if (!/[A-Za-z]{2}/.test(cut)) break;   // never strip a name to nothing
+    out = cut;
+  }
+  return out;
+}

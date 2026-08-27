@@ -8,4 +8,5 @@
 export {
   normalizeSecurityName,
   securityKeyOf,
+  stripDepositoryTail,
 } from "../../shared/securityKey.mjs";

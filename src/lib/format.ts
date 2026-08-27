@@ -1,5 +1,6 @@
 // Currency / number / date formatters. INR compact uses Indian crore/lakh
 // (₹1,606.8 Cr) rather than Intl's "₹1.61KCr"; other currencies use Intl compact.
+import { stripDepositoryTail } from "../../shared/securityKey.mjs";
 export type CurrencyCode = "INR" | "USD" | "EUR" | "GBP";
 
 const LOCALE_BY_CURRENCY: Record<string, string> = { USD: "en-US", INR: "en-IN", EUR: "en-GB", GBP: "en-GB" };
@@ -110,6 +111,18 @@ const NAME_ACRONYMS = new Set([
   "IIFL", "HFCL", "HDFC", "ICICI", "RBL", "PNB", "JSW", "ITC", "PB", "GOCL", "RPSG", "ETF", "LT",
   "SBI", "LIC", "NBCC", "BSE", "NSE", "GST", "REIT", "IPO", "NAV", "AMC", "ONGC", "NTPC", "BHEL",
   "GAIL", "HAL", "IRCTC", "RVNL", "IDFC", "IDBI", "DLF", "UPL", "TVS", "MRF", "CNC", "ISGEC",
+  // Stripping the depository furniture exposed the acronyms it used to hide
+  // behind: with `PG ELECTRO-EQ1/` shortened to `PG ELECTRO`, the title-caser
+  // reached the first token and printed "Pg Electro". These are company and
+  // fund-house acronyms, listed here so they keep their case.
+  //
+  // ONLY UNAMBIGUOUS ONES. The same scan turned up `BNK`, `VYS`, `GR` and `CON`
+  // — those are the depository CLIPPING a real word, not acronyms, and adding
+  // them would freeze a truncation into something that looks deliberate. They
+  // title-case like any other word and stay visibly clipped, which is honest
+  // about what the statement printed.
+  "PG", "DSP", "ABSL", "GHCL", "PVR", "BLS", "EIH", "MPS", "GMM", "KSB", "ZF",
+  "EMA", "DCW", "EFPL", "HEG", "IFB", "SBFC", "VIP", "SGS", "AIF", "DP", "NFT",
 ]);
 const NAME_SUFFIX: Record<string, string> = {
   LIMITED: "Limited", LTD: "Ltd", "LTD.": "Ltd.", PVT: "Pvt", "PVT.": "Pvt.",
@@ -149,9 +162,18 @@ function normNameToken(tok: string): string {
   return tok.replace(/[A-Za-z]+/g, (w) => w[0] + w.slice(1).toLowerCase());
 }
 
+/**
+ * A security name as a reader should see it: the depository's trailing series
+ * and face-value furniture removed, then title-cased.
+ *
+ * `stripDepositoryTail` lives in `shared/securityKey.mjs`, beside the key it must
+ * never affect and shared with the Node side, so the screen and the symbol
+ * report clean a name with ONE implementation rather than two that drift.
+ */
 export function displaySecurity(name: string): string {
   if (!name) return name;
-  return name.split(/(\s+)/).map((p) => (/^\s+$/.test(p) ? p : normNameToken(p))).join("");
+  const clean = stripDepositoryTail(name);
+  return clean.split(/(\s+)/).map((p) => (/^\s+$/.test(p) ? p : normNameToken(p))).join("");
 }
 
 // Compact fiscal-year axis label: "FY2021-22" → "FY21-22", "Q1 FY26-27" → "Q1FY26-27".
