@@ -9,7 +9,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, displaySecurity } from "@/lib/format";
 import { auditHref } from "@/lib/auditFormulas";
 import { sumOrNull } from "@/lib/analytics";
-import { BOOK_POLYCAB, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
 
 /**
  * THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE.
@@ -46,16 +46,6 @@ export function Polycab() {
    */
   const mv = sumOrNull(BOOK_POLYCAB.map((p) => p.marketValue));
   const shares = sumOrNull(BOOK_POLYCAB.map((p) => p.quantity));
-  const managed = BOOK_SUMMARY.totalValue; // the rest of the book — already ex-Polycab
-  const timesBook = mv !== null && managed > 0 ? mv / managed : null;
-  /**
-   * Whether this book carries the promoter block for ONE holder or for more.
-   * Derived, because it gates the "a statement could not be read" card below: a
-   * hardcoded card would keep asserting the absence after the missing statement
-   * arrives and its rows appear in the table above it.
-   */
-  const onlyOneHolder = new Set(rows.map(({ a }) => a?.owner ?? "")).size <= 1;
-
   // The mark, derived: a depository prints value and units, not a rate, so the
   // per-share figure is value ÷ quantity — and only where both are present.
   const first = rows[0];
@@ -165,30 +155,6 @@ export function Polycab() {
       </div>
 
       {/* Why it is on its own page */}
-      <Card className="mt-5" title="Why Polycab is on a page of its own">
-        <div className="space-y-3 text-[12.5px] leading-relaxed text-slate-400">
-          <p>
-            Polycab India is the family's <span className="font-medium text-slate-300">promoter stock</span> — they are the
-            company's promoters, not a portfolio investor in it. The ICICI Bank NSDL statement says the account holds{" "}
-            <span className="font-medium text-slate-300">{shares === null ? "these" : `${fmtNum(shares)}`} shares</span>, so the book ingests it: refusing a
-            measured holding for being inconveniently large is the one rule this book exists to prevent, run backwards.
-          </p>
-          <p>
-            But at <span className="font-medium text-slate-300">{money(mv)}</span> it is
-            {timesBook !== null && timesBook >= 1 ? <> about <span className="font-medium text-slate-300">{Math.round(timesBook)}×</span> the {money(managed)} the rest of the book comes to</> : <> far larger than the rest of the book</>}
-            , and the family's own consolidated review carries it on a separate tab, outside the portfolio total. That is the
-            evidence they do not track it as a managed position — so it is <span className="font-medium text-slate-300">ring-fenced</span> out
-            of the consolidated NAV, the listed/private split and every allocation, sector, entity and holdings table across
-            the dashboard, and shown here alone.
-          </p>
-          <p className="text-slate-500">
-            The decision is reversible in one line: remove the security's key from{" "}
-            <span className="mono text-slate-400">RINGFENCED_SECURITY_KEYS</span> in{" "}
-            <span className="mono text-slate-400">scripts/build-book.mjs</span> and it folds back into every total.
-          </p>
-        </div>
-      </Card>
-
       {/* The holding, as the depository reports it */}
       <Card className="mt-5" pad={false} title="The holding, as the depository reports it" subtitle="Quantity and value are the depository's; the per-share mark is value ÷ units.">
         <div className="overflow-x-auto">
@@ -252,29 +218,21 @@ export function Polycab() {
       </Card>
 
       {/*
-        THE SECOND PROMOTER STATEMENT, AND WHY THIS CARD IS CONDITIONAL.
+        THE SECOND PROMOTER STATEMENT IS NOT MENTIONED HERE, BY REQUEST.
 
-        A second family member's promoter shares sit on an HDFC NSDL statement
-        that arrived as a SCAN — image pages with no text layer — so the pipeline
-        reports `no-text-layer` and carries no figure from it. Saying nothing
-        would leave the table above reading as the family's whole promoter block.
+        A second family member's promoter shares sit on an HDFC Bank NSDL
+        statement (DP IN301151, business date 10 Jun 2026) that arrived as a
+        SCAN — four JPEG pages, zero font objects, so pdfjs returns no text and
+        `extract.mjs` reports `no-text-layer`. That was measured, not assumed,
+        and it is recorded where a reader looking for it will find it:
+        `docs/EXTRACTION-REPORT.md` and the `august-2026-e` section of CLAUDE.md.
 
-        But the card is gated on `onlyOneHolder`, DERIVED, rather than rendered
-        unconditionally. If HDFC ever re-sends a text PDF, `nsdlDemat.mjs` reads
-        it, those shares land in `BOOK_POLYCAB` under this same securityKey, the
-        table above grows a row and a footer — and a hardcoded card would go on
-        saying the statement could not be read, next to the figures it says do
-        not exist. That is the stale-absence failure this book keeps naming: an
-        absence recorded against a premise nobody rechecked.
+        This page carried a card naming that absence. The family asked for it to
+        go, so the page now shows the promoter holding this book can actually
+        read and says nothing about the rest. The statement is still in
+        `source/`, still unread, and still needs a text PDF from the bank — not
+        OCR, whose figures could not be traced to what the document printed.
       */}
-      {onlyOneHolder && (
-        <Card className="mt-5" title="A second promoter statement, on a scan the pipeline cannot read">
-          <AbsentSection
-            what="One family member's promoter shares are on a statement that could not be read"
-            needs="An HDFC Bank NSDL holding statement arrived as a scan — image pages with no text layer — so nothing it reports can be extracted, and no share count or value from it is carried in the book or shown here. A text PDF from the bank, rather than an OCR guess, would supply it: a figure recovered by OCR cannot be traced to what the document printed. The table above is the promoter holding this book can actually read."
-          />
-        </Card>
-      )}
     </div>
   );
 }

@@ -944,10 +944,32 @@ statement has no rate column (§"the value column is a mark on 14 rows and par o
 the shares and did not buy them. A ₹0 cost would report the whole ₹12,351.24 Cr as
 profit at an infinite return.
 
+**THE PAGE IS THE HOLDING AND NOTHING ELSE — TWO CARDS HAVE SINCE BEEN REMOVED**,
+at the family's request, and the reasoning is kept here rather than on screen. One
+explained WHY the holding is ring-fenced; the other named Bharat's unreadable HDFC
+scan as an absence. That second removal was made only after the premise behind it
+was RE-MEASURED, because this file has recorded three absences against unchecked
+premises (FRED, the RBI, the release calendar) and a fourth was worth ruling out:
+the PDF carries **four DCTDecode JPEG images and ZERO font objects**, pdfjs returns
+no text, and opening the scan by eye confirms both the `no-text-layer` diagnosis and
+that the statement has **NO VALUE COLUMN AT ALL** — its Polycab line reads
+`INE455K01017 · Free Balance 51,08,911` and nothing more. So the diagnosis was
+right, no code could ever have extracted it, and OCR stays refused: a figure
+recovered by OCR cannot be traced to what the document printed. The statement is
+still in `source/`, still unread, and still needs a text PDF from the bank. What
+changed is only that the DASHBOARD no longer says so; `docs/EXTRACTION-REPORT.md`
+and the `august-2026-e` section above still do.
+
+**AND THE CHECK INVERTED RATHER THAN BEING DELETED WITH THE CARD.** `check:pages`
+now asserts the card STAYS gone — and, in the same line, that no share count from
+that scan ever appears on the page, which is the half that would actually be
+dangerous. Same treatment as the removed Public dashboard tab and the `/news`
+redirects: a removal is verified by asserting it happened.
+
 **BOTH HALVES ARE CHECKED, AND NEITHER IMPLIES THE OTHER.** `check:pages` walks
 `/polycab` and asserts the holding renders with a share count, a value, the
-statement that it is excluded from portfolio totals, an absent cost with its
-reason, and Bharat's unreadable scan as a NAMED absence. And on EVERY OTHER ROUTE
+statement that it is excluded from portfolio totals, and an absent cost with its
+reason. And on EVERY OTHER ROUTE
 in the sweep it asserts the page's `<main>` does not name Polycab at all. A page
 that named it everywhere would fail the second while passing the first; an empty
 `BOOK_POLYCAB` would satisfy every absence check while the page rendered nothing.
@@ -955,7 +977,7 @@ Both were verified by REINTRODUCING THE BUG: emptying `RINGFENCED_SECURITY_KEYS`
 fires the absence check on nine routes — `cio`, `monitor`, `monitor-entity`,
 `family-entity`, `sectors`, `compare`, `exposure`, `thesis`, `upload`, which is
 the leak surface measured rather than guessed — and emptying `BOOK_POLYCAB` fires
-all four page checks while leaving the absence checks green.
+the page's own checks while leaving the absence checks green.
 
 **THE ABSENCE CHECK IS SCOPED TO `<main>`, DELIBERATELY.** Every other invariant
 reads `document.body.innerText`, and the left nav carries a "Polycab" ENTRY on

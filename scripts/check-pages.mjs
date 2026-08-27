@@ -446,14 +446,21 @@ const INVARIANTS = {
         return !!tile && /—/.test(tile[1]) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(tile[1]);
       }],
     /**
-     * THE SECOND PROMOTER STATEMENT IS A NAMED ABSENCE, NOT A NUMBER. Bharat's
-     * HDFC NSDL statement is a SCAN with no text layer, so nothing it reports can
-     * be extracted. Naming a share count from it here would be a figure recovered
-     * from an unread document — and saying nothing at all would leave the page
-     * looking like the family's whole promoter block.
+     * THE SECOND-STATEMENT CARD IS GONE, AND THIS ASSERTS THE REMOVAL RATHER
+     * THAN DISAPPEARING WITH IT.
+     *
+     * The page used to carry a card naming the HDFC Bank NSDL scan — four JPEG
+     * pages, zero fonts, `no-text-layer` — that holds a second family member's
+     * promoter shares. The family asked for it to go, so the assertion INVERTS
+     * instead of being deleted alongside the feature, which is the same
+     * treatment the removed Public dashboard tab and the `/news` redirects get.
+     *
+     * It also guards the thing that would actually be dangerous: that scan is
+     * still unread, so any share count from it appearing here would be a figure
+     * recovered from a document nobody could machine-read.
      */
-    ["the unreadable second statement is named as an absence, with no figure claimed",
-      (t) => /could not be read/i.test(t) && /no text layer/i.test(t)],
+    ["the removed second-statement card stays removed, and no figure is claimed from the scan",
+      (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
