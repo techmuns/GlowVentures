@@ -19,11 +19,18 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
-// `weightFormula` is deliberately NOT imported: its `plain` sentence is fixed at
-// "a share of the whole listed book", and this table's denominator is neither
-// fixed nor the listed book — it moves with the entity, sector and category
-// filters and spans every asset class. The Weight cell builds its own FormulaDef
-// so the popover states the denominator it actually divided by.
+// `weightFormula` is deliberately NOT imported, and the REASON has changed under
+// this comment — which is why it is being restated rather than left standing.
+//
+// It used to be that the helper's `plain` sentence was FIXED at "a share of the
+// whole listed book", so a table dividing by anything else could not use it. That
+// sentence now takes the denominator's meaning as an argument, so the old reason
+// is gone. What remains is a different one: this table's denominator MOVES with
+// the entity, sector, category and company filters, so the popover has to say
+// which of those the reader currently has applied — a per-render sentence rather
+// than one the caller can name once. The Weight cell builds its own FormulaDef
+// for that, and a future session that gives `weightFormula` a way to express a
+// filtered denominator should collapse the two.
 import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";

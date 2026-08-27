@@ -6,10 +6,11 @@ import ExcelJS from "exceljs";
 import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
 import { displaySecurity, fmtCr, DASH } from "./format";
-import { accountIndex, ownerOf, engagementOf } from "./accounts";
+import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
   holdingBucket, bucketLabel, holdingRoute, ROUTE_LABEL,
+  isMandateHeld, mandateLabelWithOwner, MANDATE_BUCKET,
 } from "./analytics";
 
 // Brand palette (ARGB — leading FF = opaque).
@@ -29,6 +30,17 @@ const C = {
 
 type HoldingRow = {
   security: string; bucket: string; heldVia: string; sector: string; entities: string;
+  /** The mandate this row sits in, or null for a row no manager runs. */
+  mandate: string | null;
+  /** The issuers whose statements carry this row — named when it reports no cost. */
+  sources: string;
+  /**
+   * True when NO cost was reported for this row at all, as against a cost that
+   * summed to zero beside a positive market value. Both are left out of the P&L
+   * total — a zero cost books the whole holding as profit — and they are
+   * different findings, so the note under the total counts them apart.
+   */
+  costNone: boolean;
   qty: number; avgCost: number | null; cmp: number | null; marketValue: number;
   weight: number | null; pnl: number | null; returnPct: number | null;
 };
@@ -38,20 +50,30 @@ type HoldingRow = {
  * independent of any on-screen filter, so the export is always complete.
  *
  * ONE ROW PER SECURITY **PER BUCKET**, because the tab this file is named after
- * is now sectioned by bucket (`holdingBucket`), and a workbook that flattens the
+ * is sectioned by bucket (`holdingBucket`), and a workbook that flattens the
  * sections back out is no longer the tab it claims to be. Grouping on
  * securityKey alone also forces a single Class cell onto a name held two ways,
- * and there is no honest value to put in it: in this book `Cash` spans the
- * mandate sleeves (₹11.58 Cr, which belong to their manager's row) and the two
- * unmanaged cash rows, and one liquid ETF's securityKey arrives classed `ETF` on
- * one statement and `Mutual Fund` on another. Splitting keeps every cell a fact
- * about the rows under it; the grand total is unmoved either way.
+ * and there is no honest value to put in it: a `Cash` securityKey spans the
+ * mandate sleeves (which belong to their manager) and the unmanaged cash rows,
+ * and one liquid ETF's securityKey arrives classed `ETF` on one statement and
+ * `Mutual Fund` on another. Splitting keeps every cell a fact about the rows
+ * under it; the grand total is unmoved either way.
+ *
+ * AND ONE ROW PER **MANDATE** INSIDE THE PMS BUCKET, which is the half a flat
+ * sheet was missing. The tab rolls a mandate's shares into one expandable row
+ * that drills into `/mandate/<accountId>`; a workbook has no expansion, so the
+ * mandate has to travel on the row itself. Merged on securityKey alone, a PMS
+ * row routinely spans two or more mandates — these managers hold the same names
+ * for several members — so the Mandate cell would have had to list
+ * them all and the sheet still could not answer WHICH mandate holds a given
+ * company, the question the regroup was built for. Split, every cell is one
+ * fact and each mandate's rows sum to the mandate row on the tab.
  */
 function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
   const idx = accountIndex(accounts);
   // CONSOLIDATED export: each dedupeGroup counts once, so the grand total is the
-  // book's true NAV and the dually-reported holdings appear at their real value
-  // rather than 2×. Summing the raw set exported ₹3.17 Cr more than the book.
+  // book's true NAV and a holding reported on two members' statements appears at
+  // its real value rather than 2×. A raw sum exported more than the book holds.
   const totalMV = consolidatedMarketValue(positions);
   const bySecurity = new Map<string, Position[]>();
   for (const p of positions) {
@@ -64,22 +86,30 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
     // other way round: a group collapsed inside each bucket separately would
     // survive once per bucket and be counted twice.
     const kept = new Set(dedupedPositions(raw));
-    const groups = new Map<string, { kept: Position[]; raw: Position[] }>();
+    const groups = new Map<string, { bucket: string; mandate: string | null; kept: Position[]; raw: Position[] }>();
     for (const p of raw) {
       // Engagement comes from the ACCOUNT, never the position: how a holding is
       // run is a fact about the account holding it.
-      const b = holdingBucket(p, engagementOf(idx, p));
-      const g = groups.get(b) ?? { kept: [], raw: [] };
+      const eng = engagementOf(idx, p);
+      const bucket = holdingBucket(p, eng);
+      // A mandate-held row is grouped per MANDATE ACCOUNT as well as per bucket,
+      // so its Mandate cell names one mandate rather than every manager that
+      // happens to hold the name. The key is the accountId and never the label:
+      // one strategy run for two members prints the same name on both.
+      const mandate = isMandateHeld(eng) ? mandateLabelWithOwner(accountOf(idx, p), ownerOf(idx, p)) : null;
+      const k = isMandateHeld(eng) ? MANDATE_BUCKET + "\u0000" + p.accountId : bucket;
+      const g = groups.get(k) ?? { bucket, mandate, kept: [], raw: [] };
       g.raw.push(p);
       if (kept.has(p)) g.kept.push(p);
-      groups.set(b, g);
+      groups.set(k, g);
     }
-    for (const [bucket, g] of groups) {
-      // Every row of this bucket was collapsed into an identical row counted in
+    for (const g of groups.values()) {
+      // Every row of this group was collapsed into an identical row counted in
       // another one, so it contributes nothing and must not be exported as a
       // zero-valued line. No dedupeGroup in this book spans two buckets; this is
       // written because the first one that did would otherwise be silent.
       if (!g.kept.length) continue;
+      const bucket = g.bucket;
       const ps = g.kept;
       const mv = ps.reduce((s, x) => s + x.marketValue, 0);
       // `sumOrNull`, not a plain sum: a position whose statement reported no cost
@@ -95,10 +125,17 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
         // the holding, and so did the account that states the route.
         heldVia: [...new Set(g.raw.map((x) => ROUTE_LABEL[holdingRoute(engagementOf(idx, x))]))].join(", "),
         entities: [...new Set(g.raw.map((x) => ownerOf(idx, x)))].join(", "),
+        mandate: g.mandate,
+        // WHOSE STATEMENT THIS ROW CAME FROM, read off the registry. The note
+        // under the Total names these for the rows that report no cost, so a
+        // reader chasing a missing cost basis is sent to the right document
+        // instead of to one cause asserted over all of them.
+        sources: [...new Set(ps.map((x) => providerOf(idx, x)))].sort().join(" + "),
+        costNone: cost === null,
         // `cmp` is the per-unit mark and is genuinely absent for a holding whose
         // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
-        // NAV per unit). Exported as null so the sheet renders an empty cell, not
-        // a zero price that would read as a measurement.
+        // NAV per unit). Kept null here and rendered as an em dash by the caller,
+        // never as a zero price that would read as a measurement.
         qty, avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, cmp: ps[0].currentPrice ?? null,
         marketValue: mv, weight: totalMV > 0 ? (mv / totalMV) * 100 : null,
         // NULL, NEVER 0. The cell already rendered an em dash; the zero survived
@@ -108,15 +145,33 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
       });
     }
   }
-  // Sectioned like the tab: buckets in descending order of what they hold, names
-  // in descending order within each. The order is DERIVED from the rows rather
-  // than typed out, so it cannot drift away from the figures it is ordering.
+  /**
+   * READING ORDER, DERIVED FROM THE FIGURES: classes largest first, mandates
+   * largest first inside the PMS class, names largest first inside each. Every
+   * key is computed from the rows themselves, so the order cannot drift away
+   * from the values it is ordering.
+   *
+   * It is deliberately NOT a copy of the tab's fixed section order. That list
+   * lives in the page component and re-typing it here would give this book two
+   * orders to disagree in — the subtitle says what this sheet does instead of
+   * claiming to reproduce the tab's sections.
+   */
   const bucketMV = new Map<string, number>();
-  for (const r of rows) bucketMV.set(r.bucket, (bucketMV.get(r.bucket) ?? 0) + r.marketValue);
-  return rows.sort((a, b) =>
-    a.bucket === b.bucket
-      ? b.marketValue - a.marketValue
-      : (bucketMV.get(b.bucket) ?? 0) - (bucketMV.get(a.bucket) ?? 0) || a.bucket.localeCompare(b.bucket));
+  const mandateMV = new Map<string, number>();
+  for (const r of rows) {
+    bucketMV.set(r.bucket, (bucketMV.get(r.bucket) ?? 0) + r.marketValue);
+    if (r.mandate) mandateMV.set(r.mandate, (mandateMV.get(r.mandate) ?? 0) + r.marketValue);
+  }
+  return rows.sort((a, b) => {
+    if (a.bucket !== b.bucket) {
+      return (bucketMV.get(b.bucket) ?? 0) - (bucketMV.get(a.bucket) ?? 0) || a.bucket.localeCompare(b.bucket);
+    }
+    if (a.mandate !== b.mandate) {
+      return (mandateMV.get(b.mandate ?? "") ?? 0) - (mandateMV.get(a.mandate ?? "") ?? 0)
+        || (a.mandate ?? "").localeCompare(b.mandate ?? "");
+    }
+    return b.marketValue - a.marketValue;
+  });
 }
 
 type ColSpec = { header: string; width: number; numFmt?: string; align?: "left" | "right" | "center"; signed?: boolean };
@@ -173,11 +228,13 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   const ws = wb.addWorksheet("Holdings", { views: [{ state: "frozen", ySplit: 3 }] });
   const cols: ColSpec[] = [
     { header: "Security", width: 34 },
-    // The two columns the regrouped tab turns on: WHICH SECTION this row sits in,
-    // and WHO CHOSE IT. Without them the workbook flattens the tab's sections
-    // back into one undifferentiated list.
+    // The three columns the regrouped tab turns on: WHICH SECTION this row sits
+    // in, WHO CHOSE IT, and — where a manager did — WHICH MANDATE. Without them
+    // the workbook flattens the tab's sections back into one undifferentiated
+    // list, and cannot answer which mandate holds a given company.
     { header: "Class", width: 18 },
     { header: "Held via", width: 20 },
+    { header: "Mandate", width: 34 },
     { header: "Sector", width: 20 },
     { header: "Entities", width: 24 },
     { header: "Qty", width: 14, numFmt: QTY, align: "right" },
@@ -192,9 +249,15 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { header: "Return", width: 11, numFmt: PCT, align: "right", signed: true },
   ];
   const asOf = new Date().toISOString().slice(0, 10);
+  // WHAT THIS SHEET DOES, not what another screen does. It used to claim the
+  // rows were laid out "in the Portfolio Monitor's own sections", which a reader
+  // can check and find false: the tab orders its sections by reading order and
+  // rolls each mandate into ONE expandable row, while this sheet orders classes
+  // by value and prints every constituent. The Class, Held via and Mandate
+  // columns carry the tab's grouping; the subtitle no longer claims its layout.
   titleBlock(ws, cols.length,
-    `Holdings · one row per security per class, in the Portfolio Monitor's own sections · `
-    + `each dedupeGroup counted once · values in INR · exported ${asOf}`);
+    `Holdings · one row per security per class, and per mandate inside PMS mandates · `
+    + `classes largest first · each dedupeGroup counted once · values in INR · exported ${asOf}`);
   headerRow(ws, cols, 3);
 
   const rows = consolidate(positions, accounts);
@@ -205,29 +268,54 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     styleDataCell(row.getCell(1), cols[0], displaySecurity(h.security), zebra);
     styleDataCell(row.getCell(2), cols[1], bucketLabel(h.bucket), zebra);
     styleDataCell(row.getCell(3), cols[2], h.heldVia, zebra);
-    styleDataCell(row.getCell(4), cols[3], h.sector, zebra);
-    styleDataCell(row.getCell(5), cols[4], h.entities, zebra);
-    styleDataCell(row.getCell(6), cols[5], h.qty, zebra);
-    styleDataCell(row.getCell(7), cols[6], h.avgCost ?? DASH, zebra);
-    styleDataCell(row.getCell(8), cols[7], h.cmp, zebra);
-    styleDataCell(row.getCell(9), cols[8], h.marketValue, zebra);
-    styleDataCell(row.getCell(10), cols[9], h.weight ?? DASH, zebra);
-    styleDataCell(row.getCell(11), cols[10], h.pnl ?? DASH, zebra, h.pnl ?? undefined);
-    styleDataCell(row.getCell(12), cols[11], h.returnPct ?? DASH, zebra, h.returnPct ?? undefined);
+    // DASH, like every other absent cell on the row: a row no manager runs has
+    // no mandate, and a blank is a third state a reader cannot interpret.
+    styleDataCell(row.getCell(4), cols[3], h.mandate ?? DASH, zebra);
+    styleDataCell(row.getCell(5), cols[4], h.sector, zebra);
+    styleDataCell(row.getCell(6), cols[5], h.entities, zebra);
+    styleDataCell(row.getCell(7), cols[6], h.qty, zebra);
+    styleDataCell(row.getCell(8), cols[7], h.avgCost ?? DASH, zebra);
+    // `?? DASH` like the four money cells beside it. Written as null it rendered
+    // an EMPTY cell — a third state next to their em dashes, and the one a
+    // reader's own formula silently treats as zero.
+    styleDataCell(row.getCell(9), cols[8], h.cmp ?? DASH, zebra);
+    styleDataCell(row.getCell(10), cols[9], h.marketValue, zebra);
+    styleDataCell(row.getCell(11), cols[10], h.weight ?? DASH, zebra);
+    styleDataCell(row.getCell(12), cols[11], h.pnl ?? DASH, zebra, h.pnl ?? undefined);
+    styleDataCell(row.getCell(13), cols[12], h.returnPct ?? DASH, zebra, h.returnPct ?? undefined);
     r++;
   }
   // Totals. Market value covers every row; unrealised P&L cannot, and says so.
   const totMV = rows.reduce((s, h) => s + h.marketValue, 0);
   // `sumOrNull`, not a plain sum over a column that carried a 0 for every
   // cost-less row. The cell already rendered an em dash while the zero went
-  // silently into this total, dragging it towards a figure nobody measured. As
-  // this drop stands that is 54 of 217 rows and ₹12,517.19 Cr of market value —
-  // most of it the promoter stock a depository reports with no cost at all. They
-  // are skipped and COUNTED, in the note printed under the total.
+  // silently into this total, dragging it towards a figure nobody measured. How
+  // many rows that is, and what they are worth, is COUNTED into the note printed
+  // under the total rather than stated here — a figure typed into a comment does
+  // not regenerate with the book.
   const priced = rows.filter((h) => h.pnl !== null);
   const totPnL = sumOrNull(rows.map((h) => h.pnl));
   const unpricedRows = rows.length - priced.length;
   const unpricedMV = rows.reduce((s, h) => s + (h.pnl === null ? h.marketValue : 0), 0);
+  /**
+   * WHERE THE COST-LESS ROWS COME FROM, derived per row from the account behind
+   * it. The note used to assert ONE cause for all of them — "a depository holds
+   * shares, it did not buy them" — which is true of the demat rows and false of
+   * the rest: a fund's own account statement and an AMC folio statement carry
+   * rows here too, and a reader chasing one of those for a depository statement
+   * is looking for a document that was never the source. Naming the issuers is a
+   * measured fact about every row the sentence covers.
+   */
+  const bySource = new Map<string, number>();
+  for (const h of rows) if (h.pnl === null) bySource.set(h.sources, (bySource.get(h.sources) ?? 0) + 1);
+  // A cost of zero beside a positive market value is skipped for a different
+  // reason than a cost nobody reported, so it is counted apart and the clause
+  // naming it writes itself on the drop where one lands.
+  const zeroCostRows = rows.filter((h) => h.pnl === null && !h.costNone).length;
+  const sourceList = [...bySource.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, n]) => `${name} ${n} row${n === 1 ? "" : "s"}`)
+    .join(", ");
   const tr = ws.getRow(r);
   const set = (col: number, val: unknown, fmt?: string, signed?: number) => {
     const cell = tr.getCell(col);
@@ -235,14 +323,14 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     if (fmt) cell.numFmt = fmt;
     const color = typeof signed === "number" ? (signed > 0 ? C.gain : signed < 0 ? C.loss : C.text) : C.text;
     cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: color } };
-    cell.alignment = { vertical: "middle", horizontal: col >= 6 ? "right" : "left" };
+    cell.alignment = { vertical: "middle", horizontal: col >= 7 ? "right" : "left" };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: C.totalFill } };
     cell.border = { top: { style: "thin", color: { argb: C.champagne } } };
   };
   set(1, `Total · ${rows.length} holdings`);
   for (let c = 2; c <= cols.length; c++) set(c, "");
-  set(9, totMV, MONEY);
-  set(11, totPnL ?? DASH, totPnL === null ? undefined : MONEY_SIGNED, totPnL ?? undefined);
+  set(10, totMV, MONEY);
+  set(12, totPnL ?? DASH, totPnL === null ? undefined : MONEY_SIGNED, totPnL ?? undefined);
   tr.height = 18;
 
   // WHAT THE TOTAL COVERS, printed under it rather than left to be discovered by
@@ -254,12 +342,25 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   note.value = unpricedRows === 0
     ? `Unrealised P&L covers all ${rows.length} rows. Market value covers all ${rows.length}.`
     : `Unrealised P&L covers ${priced.length} of ${rows.length} rows. The other ${unpricedRows}`
-      + ` (${fmtCr(unpricedMV, 2)} of market value) report no cost basis on their statement — a depository`
-      + ` holds shares, it did not buy them — and are left out of this total rather than counted as zero.`
-      + ` Market value covers all ${rows.length}.`;
+      + ` (${fmtCr(unpricedMV, 2)} of market value) have no cost basis this total can stand on, so they are`
+      + ` left out of it rather than counted as zero`
+      + (zeroCostRows > 0
+        ? ` — ${zeroCostRows} of them report a cost of zero against a positive market value, which would book`
+          + ` the whole holding as profit`
+        : ``)
+      + `. Whose statements they are: ${sourceList}. Market value covers all ${rows.length}.`;
   note.font = { name: "Calibri", size: 9, italic: true, color: { argb: C.muted } };
-  note.alignment = { vertical: "middle", horizontal: "left", indent: 1, wrapText: false };
-  ws.getRow(r).height = 16;
+  // WRAPPED, AND THE ROW MADE TALL ENOUGH TO SHOW IT. A merged cell CLIPS rather
+  // than overflowing, so at `wrapText: false` and a fixed 16pt this sentence —
+  // the one thing standing between a P&L struck over part of the book and one
+  // that reads as struck over all of it — was invisible in the file the moment
+  // it outgrew the merged span by a character. Excel does not auto-fit a merged
+  // row, so the height is computed: the span's own width in column units is the
+  // characters that fit on a line (conservative at Calibri 9 against the
+  // Calibri 11 those units are measured in).
+  note.alignment = { vertical: "top", horizontal: "left", indent: 1, wrapText: true };
+  const perLine = cols.reduce((w, c) => w + c.width, 0);
+  ws.getRow(r).height = 14 * Math.max(1, Math.ceil(String(note.value).length / perLine)) + 4;
 }
 
 function buildTransactions(wb: ExcelJS.Workbook, txns: Txn[]) {

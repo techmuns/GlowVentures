@@ -83,6 +83,43 @@ function bookArray(src, name) {
  * page is the FUND branch rather than assuming it, so drift fails loudly.
  */
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
+/**
+ * THE OWNER WHOSE FAMILY DRILL-DOWN IS WALKED — resolved from the book, not typed.
+ *
+ * `/family`'s entity view is where a holding finally says WHO CHOSE IT, and until
+ * this sweep none of it was reachable: the scope lived in component state, so the
+ * sectioned table, the Held via column and the narrowed sector mix all sat behind
+ * a click and no invariant could touch them. Reverting any of it would have left
+ * this file reporting clean — the repo's own "a helper that returns the right
+ * number into no caller looks exactly like a working feature", one layer up.
+ *
+ * The owner picked is the one holding shares through BOTH routes, because that is
+ * the only entity on which the split can be wrong; among those, the largest. A
+ * book that stops carrying such an owner FAILS these invariants rather than
+ * skipping them.
+ */
+const FAMILY_ENTITY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const byOwner = new Map();
+    for (const p of positions) {
+      const a = acc.get(p.accountId);
+      if (!a || p.assetClass !== "Equity") continue;
+      const e = byOwner.get(a.ownerId) ?? { mandate: 0, own: 0 };
+      if (a.engagement === "PMS") e.mandate += Number(p.marketValue) || 0;
+      else if (a.engagement === "Direct" || a.engagement === "Execution") e.own += Number(p.marketValue) || 0;
+      byOwner.set(a.ownerId, e);
+    }
+    const both = [...byOwner].filter(([id, e]) => id && e.mandate > 0 && e.own > 0)
+      .sort((x, y) => (y[1].mandate + y[1].own) - (x[1].mandate + x[1].own));
+    return both[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
 const FUND_ACCOUNT_ID = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -128,6 +165,11 @@ const ROUTES = [
   // one fails these invariants rather than skipping them.
   ["mandate-fund", () => (FUND_ACCOUNT_ID ? `/mandate/${encodeURIComponent(FUND_ACCOUNT_ID)}` : "/mandate/none-resolved-from-the-book")],
   ["family", "/family"],
+  // ...AND ONE ENTITY'S DRILL-DOWN, which is where the family's own complaint lands:
+  // open a member and see, per row, whether they chose a holding or a manager did.
+  // The owner is resolved from the book (see `FAMILY_ENTITY`) rather than typed, and
+  // the scope now lives in the URL so this route can exist at all.
+  ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
   ["watchlist", "/watchlist"],
@@ -685,6 +727,71 @@ const INVARIANTS = {
   // value against partial openings produced +147% / +2,624% p.a. for real family
   // members. A de-annualised to-date figure here never reaches four digits, so a
   // 4-digit percentage anywhere on these pages is the blow-up regressing.
+  /**
+   * THE ENTITY DRILL-DOWN — the page the family's complaint actually lands on.
+   *
+   * Every invariant here is struck on a FIGURE OR A STRUCTURE THE PAGE RENDERS.
+   * The first draft of the exposure checks matched a caption's prose and could not
+   * fail; these have to break when the grouping is reverted, which is the only
+   * reason to write them.
+   */
+  "family-entity": [
+    // The two routes are separate headings, and a mandate names itself between them.
+    ["the drill-down sections by route, not by asset class alone",
+      (t) => /DIRECT EQUITY/i.test(t) && /PMS MANDATES/i.test(t)],
+    /**
+     * EVERY ROW UNDER A MANDATE CARRIES THAT MANDATE'S NAME IN A CELL.
+     *
+     * THE FIRST DRAFT OF THIS CHECK COULD NOT FAIL, and it is worth recording how,
+     * because it is the very failure this file warns about two blocks up. It tested
+     * `/HELD VIA/i` against the page text — and the page also CAPTIONS the table
+     * with "Which of the two chose a name is in the Held via column below". So the
+     * caption satisfied the check. Renaming the actual column header to "Route" and
+     * re-running reported clean.
+     *
+     * This one is struck on STRUCTURE instead: inside the PMS mandates section, the
+     * mandate sub-headings name the mandates, and EVERY money row between them must
+     * carry one of those names as a cell. Delete the route column and the rows stop
+     * carrying it, whatever the prose around them says.
+     */
+    ["every row under a mandate names its mandate, per row and not once in a caption", (t) => {
+      const from = t.search(/PMS MANDATES/i);
+      if (from < 0) return false;                       // no input is never a pass
+      const rest = t.slice(from);
+      const lines = rest.split("\n").map((l) => l.trim()).filter(Boolean);
+      // A sub-heading is the line that names an account; the line under it is its
+      // provider/holdings/value line. Collect the mandate names from the headings.
+      const names = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (/account\s+\S+\s*·/i.test(lines[i]) && i > 0) names.push(lines[i - 1]);
+      }
+      if (!names.length) return false;
+      // Money rows in this region: tab-separated, carrying a rupee figure.
+      const rows = lines.filter((l) => l.includes("\t") && /₹/.test(l) && !/^Total\b/i.test(l));
+      if (!rows.length) return false;
+      const named = rows.filter((r) => names.some((n) => r.includes(n)));
+      // Rows below the PMS section belong to later sections and legitimately carry
+      // no mandate, so this asks that the mandate rows dominate the region rather
+      // than that every line does — and it breaks the moment the column goes.
+      return named.length >= Math.max(5, Math.floor(rows.length * 0.4));
+    }],
+    /**
+     * A MANDATE SUB-HEADING CARRIES ITS ACCOUNT AND ITS OWN TOTAL, so a reader can
+     * tell two apart: four of this book's ten mandates share a strategy name with
+     * another, because one strategy runs for two family members.
+     */
+    ["a mandate sub-heading names its account and its own value",
+      (t) => new RegExp(String.raw`account\s+\S+\s*·[^\n]*?` + CR).test(t)],
+    /**
+     * THE SECTOR MIX EXCLUDES THE WRAPPERS AND NAMES THEM WITH A VALUE — a fund has
+     * no GICS sector, so folding one in invents a slice. Struck on the FIGURE the
+     * caption carries, not on the sentence around it.
+     */
+    ["the sector mix names what it excluded, with a value",
+      (t) => new RegExp(CR + String.raw`[^\n]{0,120}?excluded rather than folded in`, "i").test(t)
+        || new RegExp(String.raw`excluded rather than folded in[^\n]{0,200}?` + CR, "i").test(t)],
+  ],
+
   family: [
     ["no per-entity XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
   ],
