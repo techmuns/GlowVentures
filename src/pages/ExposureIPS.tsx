@@ -10,7 +10,11 @@ import { StockLink } from "@/components/StockLink";
 import { PreviewBadge } from "@/components/Preview";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isCompanyShare, isFundVehicle, excludedClasses, byAssetClass, sum, assetClassLabel } from "@/lib/analytics";
+import {
+  bySector, bySecurity, consolidatedMarketValue, isPrivateClass, isCompanyShare, isFundVehicle, excludedClasses,
+  byAssetClass, sum, assetClassLabel, holdingRoute, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
+} from "@/lib/analytics";
+import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   IPS_BUCKETS, readFamilyInputs, writeFamilyInputs, ipsTargetTotal, pct,
   exportFamilyInputs, importFamilyInputs, type FamilyInputs, type IpsBucketKey,
@@ -62,22 +66,53 @@ export function ExposureIPS() {
   );
   const targetTotal = ipsTargetTotal(inputs);
   /**
-   * SECTOR AND MARKET-CAP ARE DIRECT-EQUITY VIEWS — `isCompanyShare`, not
-   * `!isPrivateClass`.
+   * SECTOR AND MARKET-CAP ARE COMPANY-SHARE VIEWS — `isCompanyShare`, which is
+   * neither `!isPrivateClass` nor `isDirectEquity`. Both of the other two have
+   * been tried here and both are wrong, in opposite directions.
    *
-   * Excluding only the PRIVATE classes fixed the AIF folios and left every
-   * other wrapper in: a mutual fund is marked daily at a published NAV, so it
-   * is not private, and it has no more of a GICS sector than an AIF folio does.
-   * This book holds ₹52.4 Cr of mutual-fund units and ₹6.8 Cr of cash — all of
-   * which landed in the sector table (funds under "Unclassified", cash under
-   * "Cash") and, worse, in the market-cap card's `unmeasured` bucket, which
-   * reports a shortfall against a market cap a fund can never have. That is
-   * Sector Composition's own bug, one page over. Both now narrow to shares in
-   * companies and NAME what they left out.
+   * TOO WIDE: excluding only the PRIVATE classes fixed the AIF folios and left
+   * every other wrapper in. A mutual fund is marked daily at a published NAV,
+   * so it is not private, and it has no more of a GICS sector than an AIF folio
+   * does. This book's mutual-fund units and cash landed in the sector table
+   * (funds under "Unclassified", cash under "Cash") and, worse, in the
+   * market-cap card's `unmeasured` bucket, where they reported a permanent
+   * shortfall against a market cap a fund can never have.
+   *
+   * TOO NARROW: the holdings tables now split company shares by WHO CHOSE THEM
+   * — a mandate's shares sit inside the mandate, and "Direct Equity" means the
+   * family bought it. Following that here would drop ₹127 Cr of shares a
+   * manager picked out of this family's sector and market-cap exposure, which
+   * is a fact about the companies they own and not about whose decision it was.
+   * A manager's statement reports every share underneath the mandate, so those
+   * rows carry a sector, a market cap and an NSE symbol like any other; a
+   * look-through into a mandate is a GAIN for exposure analysis. Narrowing
+   * would also leave the table to depository rows that mostly print no sector.
+   *
+   * So the set is every share in a company, both routes, and every caption
+   * below says so in those words and names what it left out.
    */
   const equity = useMemo(() => consolidated.filter(isCompanyShare), [consolidated]);
   const equityMV = useMemo(() => consolidatedMarketValue(equity), [equity]);
   const sectors = useMemo(() => bySector(equity), [equity]);
+  /**
+   * The covered set's own mandate/own split, so the caption can state the set
+   * with figures instead of an adjective. `engagement` comes from the ACCOUNT,
+   * never the position — reading it off a position is what would put two rows
+   * of one mandate on two sides of this line.
+   */
+  const equityRoutes = useMemo(() => {
+    const idx = accountIndex(portfolio?.accounts ?? []);
+    const route = (p: (typeof equity)[number]) => holdingRoute(engagementOf(idx, p) || null);
+    const mv = (keep: (r: string) => boolean) => sum(equity.filter((p) => keep(route(p))).map((p) => p.marketValue));
+    // The third figure exists so the two named ones cannot silently fail to add
+    // up to the covered total: an account whose engagement no statement states
+    // is `unknown` and is never defaulted to either side.
+    return {
+      mandate: mv((r) => r === "mandate"),
+      own: mv((r) => r === "own"),
+      other: mv((r) => r !== "mandate" && r !== "own"),
+    };
+  }, [portfolio, equity]);
   /** What the sector and market-cap views do not cover, named with its value. */
   const nonEquity = useMemo(() => excludedClasses(consolidated, isCompanyShare), [consolidated]);
   const nonEquityMV = useMemo(() => sum(nonEquity.map((c) => c.mv)), [nonEquity]);
@@ -296,9 +331,22 @@ export function ExposureIPS() {
           </table>
         </div>
         <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-          Sectors cover <span className="font-medium text-slate-400">company shares</span> ({money(equityMV)}) — shares in
-          companies the family holds, whether a discretionary manager chose them under a PMS mandate or the family
-          bought them in its own account. Both are the same asset; who decided is on each name's own page.
+          Sectors cover <span className="font-medium text-slate-400">company shares</span> ({money(equityMV)}) — every share in a
+          company this family owns, however it came to be held. That is wider than the{" "}
+          <span className="font-medium text-slate-400">{DIRECT_EQUITY_BUCKET}</span> section of the holdings tables, and deliberately so:{" "}
+          {equityRoutes.mandate > 0
+            ? <>{money(equityRoutes.mandate)} of it was chosen by a discretionary manager under a PMS mandate, which the holdings
+              tables group under “{MANDATE_BUCKET}”</>
+            : <>no holding in it is run under a discretionary mandate</>}
+          {equityRoutes.own > 0
+            ? <>, and {money(equityRoutes.own)} was bought in the family’s own demat or broking account</>
+            : <>, and none of it was bought in the family’s own account</>}
+          {equityRoutes.other > 0
+            ? <>, with {money(equityRoutes.other)} in accounts whose statements do not state how they are run</>
+            : null}.{" "}
+          A manager’s statement reports every share underneath the mandate, so those rows carry a GICS sector, a market cap and a
+          symbol exactly like a self-bought one — dropping them would take real exposure out of this family’s sector picture over a
+          question (who decided) that a sector table does not ask. Who decided is on each name’s own page.
           {nonEquity.length > 0 && <> The other {money(nonEquityMV)} is excluded rather than folded in:{" "}
             {nonEquity.map((c, i) => (
               <span key={c.key}>
@@ -307,7 +355,9 @@ export function ExposureIPS() {
               </span>
             ))}. A fund is a wrapper holding many companies and no statement here prints a sector for one, so folding
             them in would put {money(fundMV)} of fund units under a single "Unclassified" slice — the largest row in an
-            equity sector table, describing nothing.</>}{" "}
+            equity sector table, describing nothing. Those class names are the same ones the holdings tables use, with one
+            difference worth knowing: a mandate’s cash sleeve is counted under Cash here, because cash has no sector, while
+            Portfolio Monitor keeps it inside its mandate, where the manager’s own statement totals it.</>}{" "}
           The GAP also spans geography, market-cap, duration, tangible vs
           intangible, entity and advisor allocation — actuals for those need a look-through the book does not yet carry,
           so they are previewed below.
@@ -372,7 +422,9 @@ export function ExposureIPS() {
                 </tbody>
               </table>
               <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500">
-                Of the direct-equity book, {money(mcap.measured)} carries a market cap from the quote feed
+                Bands are struck on company shares — every share in a company the family owns, which is a wider set than the
+                direct-equity section of the holdings tables, because a share a manager chose has a market cap exactly like one
+                the family bought. Of that book, {money(mcap.measured)} carries a market cap from the quote feed
                 {mcap.unmeasured > 0 && <> and {money(mcap.unmeasured)} does not ({mcap.unmeasuredNames.length} name{mcap.unmeasuredNames.length === 1 ? "" : "s"} with no live quote), which is excluded from the weights rather than banded as small</>}.
                 Bands are this dashboard's stated convention — <span className="text-slate-400">≥₹1,00,000 Cr</span>,{" "}
                 <span className="text-slate-400">₹25,000 Cr–₹1,00,000 Cr</span>, below that — not SEBI's rank-based
@@ -381,9 +433,11 @@ export function ExposureIPS() {
             </>
           ) : (
             <AbsentSection
-              what="No direct-equity holding carries a market cap"
-              needs="The figure comes from the live quote feed. With no quote resolved for any name there is nothing to
-                band, and banding on statement marks alone is not possible — a mark is a price, not a company's size." />
+              what="No company share carries a market cap"
+              needs="The bands are struck on every share in a company the family owns — a wider set than the direct-equity
+                section of the holdings tables, since a share a manager chose has a market cap like any other — and the figure
+                comes from the live quote feed. With no quote resolved for any name there is nothing to band, and banding on
+                statement marks alone is not possible — a mark is a price, not a company's size." />
           )}
         </Card>
 
@@ -430,7 +484,7 @@ export function ExposureIPS() {
             </tbody>
           </table>
         </Card>
-        <Card title="Top 10 sectors" subtitle="Direct equity only — a fund has no sector" right={<Pill tone="info">live</Pill>} pad={false}>
+        <Card title="Top 10 sectors" subtitle="Company shares only, mandate-chosen and self-bought alike — a fund has no sector" right={<Pill tone="info">live</Pill>} pad={false}>
           <table className="min-w-full text-[13px]">
             <thead className="border-b border-ink-700"><tr>
               <th className="label-xs px-4 py-2 text-left font-medium">Sector</th>

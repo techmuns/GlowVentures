@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Presentation } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -7,7 +8,11 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel, holdingRoute, ROUTE_LABEL } from "@/lib/analytics";
+import {
+  sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
+  holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
+} from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
@@ -25,11 +30,47 @@ type EntityPart = {
   /** How the entity came to hold it — a manager's mandate, or its own account. */
   routes: string[];
 };
+/**
+ * One share inside a mandate — a constituent of the roll-up, shown when the
+ * mandate row is expanded and nowhere else on this table.
+ */
+type MandateHolding = {
+  securityKey: string; security: string; sector: string;
+  quantity: number; avgCost: number | null; currentPrice: number | null;
+  costBasis: number | null; marketValue: number; unrealizedPnL: number | null;
+  returnPct: number | null; costNA: boolean; live: boolean;
+};
+/**
+ * What a mandate ROW stands for: one PMS account, its manager, and the shares
+ * that manager chose inside it.
+ *
+ * `accountMV` / `accountCount` are the account's OWN totals, struck before this
+ * page's filters. The roll-up ties to the statement only when nothing has been
+ * filtered out, so a narrowed row prints both figures rather than quietly
+ * reporting part of a mandate as the whole of it.
+ */
+type MandateInfo = {
+  accountId: string; manager: string; accountNo: string; asOf: string;
+  holdings: MandateHolding[];
+  accountMV: number; accountCount: number;
+};
 type Row = {
+  /**
+   * A SECURITY the family holds, or a MANDATE it has handed to a discretionary
+   * manager. The two are different things and the family asked three times to
+   * stop seeing them in one list: a mandate row carries no quantity, no price
+   * and no sector, and its shares live in its own expansion.
+   */
+  kind: "security" | "mandate";
+  /** Section key — `holdingBucket`, never the raw asset class. */
+  bucket: string;
   key: string; security: string; securityKey: string; sector: string; assetClass: string;
   // avgCost / currentPrice are PER-UNIT and nullable — 360 ONE prints neither
   // for its AIF holding. See the note on Position in src/lib/types.ts.
-  entities: string[]; parts: EntityPart[]; quantity: number; avgCost: number | null; currentPrice: number | null;
+  // Quantity is NULL on a mandate row and only there: a mandate is an account,
+  // not a security, and its constituents are what carry quantities. A 0 would
+  // read as a mandate holding nothing.
+  entities: string[]; parts: EntityPart[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
   // Cost and the two figures derived from it are NULLABLE for the same reason
   // the per-unit ones are: a depository holding statement reports a value and no
   // cost. `costNA` stays the flag the cells switch on; the values themselves are
@@ -40,14 +81,50 @@ type Row = {
   // row says so rather than letting a month-old price read as current.
   live: boolean; dayChange: number; dayChangePct: number | null;
   /**
+   * The market value the DAY figure is struck over — the live-priced part of
+   * this row, which is the whole of it for a security and the live constituents
+   * for a mandate. The footer's day % divides by this rather than by market
+   * value, so rolling ₹127 Cr of live-priced shares into ten mandate rows
+   * leaves the book's day move exactly where it was.
+   */
+  liveMV: number;
+  /**
+   * The securityKeys this row stands for, for the realised-gain lookup — one for
+   * a security, its constituents' for a mandate. The footer sums over the UNION
+   * of these, so rolling shares into mandates cannot drop a realised figure out
+   * of the total.
+   */
+  realizedKeys: string[];
+  /**
    * Set only in the BY-ENTITY view, where both members' rows of a dually
    * reported holding are shown as printed. Undefined in the by-security view,
-   * whose rows are already consolidated. The class-section subtotal reads it so
-   * the sections sum to the footer in both views — see `classGroups`.
+   * whose rows are already consolidated. The bucket-section subtotal reads it so
+   * the sections sum to the footer in both views — see `bucketGroups`.
    */
   dedupeGroup?: string;
+  /** Set on `kind === "mandate"` and nowhere else. */
+  mandate?: MandateInfo;
 };
 type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "weight" | "dayChange";
+
+/**
+ * WHICH SECTION A HOLDING BELONGS IN. `holdingBucket` decides; this only supplies
+ * the engagement, which is a fact about the ACCOUNT and never about the position.
+ */
+const bucketFor = (idx: AccountIndex, p: Position) => holdingBucket(p, engagementOf(idx, p) || null);
+const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engagementOf(idx, p) || null);
+
+/**
+ * Sections in reading order: what the family chose itself, then what it handed
+ * to a manager, then the wrappers, then cash.
+ *
+ * `"Equity"` is in the list because `holdingBucket` returns the raw asset class
+ * for a share whose account states NO route — no such account is in this book,
+ * and if one arrives it gets its own section rather than being folded into
+ * either of the first two, neither of which would be true of it.
+ */
+const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, "Equity", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 // Weight, P&L and return all move with the live price, so they no longer match
 // any cell in the workbook — an audit link would point at a different number.
@@ -64,11 +141,13 @@ export function PortfolioMonitor() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sector, setSector] = useState("All");
   const [entity, setEntity] = useState("All");
-  // Asset-class filter — Equity / AIF / Mutual Fund / Cash were shown in one flat
-  // list, so a ₹176 Cr AIF folio sat between two equity lines as if it were the
-  // same kind of thing. This filters to one class; the holdings table also
-  // sections by class with a subtotal when all are shown.
-  const [assetClass, setAssetClass] = useState("All");
+  // Category filter — Direct Equity / PMS mandates / AIF / Mutual Fund / ETF /
+  // Cash were shown in one flat list, so a ₹176 Cr AIF folio sat between two
+  // equity lines as if it were the same kind of thing. It filters to one BUCKET
+  // (`holdingBucket`), not to an asset class: what a reader is choosing between
+  // here is shares the family bought and mandates it handed to a manager, and
+  // those are the same asset class.
+  const [bucket, setBucket] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("marketValue");
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -91,10 +170,26 @@ export function PortfolioMonitor() {
   const owner = (p: Position) => ownerOf(accIdx, p);
   const sectors = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.sector))).sort()], [positions]);
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
-  // Asset classes present, in a fixed reading order (listed → alternatives → cash).
-  const CLASS_ORDER = ["Equity", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
-  const classOrd = (c: string) => { const i = CLASS_ORDER.indexOf(c); return i < 0 ? CLASS_ORDER.length : i; };
-  const assetClasses = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.assetClass))).sort((a, b) => classOrd(a) - classOrd(b))], [positions]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Buckets present, in a fixed reading order (own → mandates → wrappers → cash).
+  const buckets = useMemo(
+    () => ["All", ...Array.from(new Set(positions.map((p) => bucketFor(accIdx, p)))).sort((a, b) => bucketOrd(a) - bucketOrd(b))],
+    [positions, accIdx],
+  );
+  /**
+   * Each mandate account's OWN totals, struck over every position it holds
+   * BEFORE this page's filters. A filtered mandate row prints both figures so a
+   * partial roll-up can never pass for the mandate the statement reports.
+   */
+  const mandateTotals = useMemo(() => {
+    const m = new Map<string, { mv: number; count: number }>();
+    for (const p of positions) {
+      if (!heldUnderMandate(accIdx, p)) continue;
+      const e = m.get(p.accountId) ?? { mv: 0, count: 0 };
+      e.mv += p.marketValue; e.count += 1;
+      m.set(p.accountId, e);
+    }
+    return m;
+  }, [positions, accIdx]);
   // Company pick-list, biggest holding first (matches the table's default sort).
   const securityNames = useMemo(() => {
     const mv = new Map<string, number>();
@@ -111,22 +206,111 @@ export function PortfolioMonitor() {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
-    if (assetClass !== "All") base = base.filter((p) => p.assetClass === assetClass);
+    if (bucket !== "All") base = base.filter((p) => bucketFor(accIdx, p) === bucket);
+    // THE COMPANY FILTER NARROWS THE POSITIONS, NOT THE BUILT ROWS. It used to
+    // run over the rows, which was the same thing while every row was a security
+    // — and would now hide every mandate the moment a company was picked, since
+    // a mandate row is not named after any of its shares. Picking Jammu Kashmir
+    // Bank has to reach INSIDE Carnelian's mandate; that is the whole of what
+    // the family asked for.
+    if (selected.size > 0) base = base.filter((p) => selected.has(p.security));
     // Weight denominator — consolidated, so the column sums to 100 rather than
     // to 101.4 when a holding is reported under two members.
     const totalMV = consolidatedMarketValue(base);
+
+    /**
+     * THE MANDATES COME OUT OF THE TABLE FIRST.
+     *
+     * A share a discretionary manager chose is still a share — §5 stands, PMS is
+     * an engagement and never an asset class — but it is not a holding the
+     * family decided on, and listing 263 of them beside the 38 it bought itself
+     * is the mixing reported three times now. Each PMS ACCOUNT becomes ONE row;
+     * its shares move into that row's expansion and its own drill-down.
+     *
+     * The split is on the ACCOUNT's engagement (`holdingBucket`), so a mandate's
+     * CASH SLEEVE travels with it — which is what makes the row's market value
+     * tie to the total its own statement prints (Carnelian 3517383: 39.53 Cr).
+     */
+    const mandateOf = new Map<string, Position[]>();
+    const rest: Position[] = [];
+    for (const p of base) {
+      if (heldUnderMandate(accIdx, p)) (mandateOf.get(p.accountId) ?? mandateOf.set(p.accountId, []).get(p.accountId)!).push(p);
+      else rest.push(p);
+    }
+    const mandateRows: Row[] = [...mandateOf.entries()].map(([accountId, ps]) => {
+      const acc = accIdx.get(accountId);
+      const mv = sum(ps.map((x) => x.marketValue));
+      // `sumOrNull` on both sides: a constituent whose statement carries no cost
+      // contributes nothing rather than a zero, which would report its whole
+      // market value as profit. Every PMS row in this drop reports one.
+      const cost = sumOrNull(ps.map((x) => x.costBasis));
+      const pnl = sumOrNull(ps.map((x) => x.unrealizedPnL));
+      const costNA = cost === null || (cost === 0 && mv > 0);
+      // The day figure is struck over the LIVE-PRICED constituents only, and the
+      // row carries that value separately: a mandate whose shares are half
+      // quoted must not divide its move by the half that never moved.
+      const livePs = ps.filter((x) => x.live);
+      const liveMV = sum(livePs.map((x) => x.marketValue));
+      const dayChange = sum(livePs.map((x) => x.dayChange ?? 0));
+      const whole = mandateTotals.get(accountId);
+      return {
+        kind: "mandate" as const,
+        bucket: MANDATE_BUCKET,
+        key: "mandate:" + accountId,
+        // The mandate's own name, as the manager prints it. A statement that
+        // names no strategy falls back to the house — never to a made-up label.
+        security: acc?.strategy || acc?.provider || accountId,
+        securityKey: "", sector: "", assetClass: "",
+        entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
+        parts: [],
+        quantity: null, avgCost: null, currentPrice: null,
+        costBasis: cost, marketValue: mv, unrealizedPnL: costNA ? null : pnl,
+        returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
+        weight: totalMV > 0 ? mv / totalMV : 0,
+        costNA,
+        live: livePs.length > 0,
+        dayChange,
+        dayChangePct: livePs.length && liveMV - dayChange !== 0 ? (dayChange / (liveMV - dayChange)) * 100 : null,
+        liveMV,
+        realizedKeys: [...new Set(ps.map((x) => x.securityKey))],
+        mandate: {
+          accountId, manager: acc?.provider ?? "", accountNo: acc?.accountNo ?? "", asOf: acc?.asOf ?? "",
+          holdings: ps.map((x) => ({
+            securityKey: x.securityKey, security: x.security, sector: x.sector,
+            quantity: x.quantity, avgCost: x.avgCost, currentPrice: x.currentPrice,
+            costBasis: x.costBasis, marketValue: x.marketValue, unrealizedPnL: x.unrealizedPnL,
+            returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
+          })).sort((a, b) => b.marketValue - a.marketValue),
+          accountMV: whole?.mv ?? mv, accountCount: whole?.count ?? ps.length,
+        },
+      };
+    });
+
     let out: Row[];
     if (consolidate) {
-      // Consolidated on securityKey: the same company held through two platforms
-      // is one row, and ISIN could not do this grouping — most rows have none.
+      /**
+       * Consolidated on (BUCKET, securityKey) — not on securityKey alone.
+       *
+       * ISIN could not do this grouping at all: most rows have none. And the
+       * bucket has to be half the key, because a name held BOTH ways is two
+       * different decisions about one company and must read as two rows — one
+       * under Direct Equity, one under the mandate that chose it — rather than
+       * silently landing under whichever route the first lot happened to take.
+       * No name in this drop is held both ways (measured: zero of 175 distinct
+       * equity names), so nothing on screen moves today; the key is what stops a
+       * future drop merging them without a word.
+       */
       const m = new Map<string, Position[]>();
-      for (const p of base) (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)!).push(p);
+      for (const p of rest) {
+        const k = bucketFor(accIdx, p) + " | " + p.securityKey;
+        (m.get(k) ?? m.set(k, []).get(k)!).push(p);
+      }
       out = [...m.values()].map((ps) => {
         // COUNT EACH dedupeGroup ONCE. This is the CONSOLIDATED (by-security)
         // view, so a holding reported under two members — 360 ONE Special Opp
         // (both CRNs) and Transition Fund I (both trusts) share one securityKey —
         // must contribute its value once. Summing the raw lots showed those two
-        // rows at 2× and pushed the footer to ₹338.6 Cr against a ₹335.43 Cr NAV.
+        // rows at 2x and pushed the footer above the book's own NAV.
         // `dedupedPositions` collapses only same-dedupeGroup rows; a name held by
         // several DIFFERENT accounts still sums all of them.
         const dps = dedupedPositions(ps);
@@ -137,7 +321,11 @@ export function PortfolioMonitor() {
         const qty = sum(dps.map((x) => x.quantity));
         const costNA = cost === null || (cost === 0 && mv > 0);
         const pnl = costNA ? null : mv - (cost as number);
+        // A security is live only if every lot of it is — they share one quote,
+        // so in practice this is all-or-nothing.
+        const live = dps.every((x) => x.live);
         return {
+          kind: "security" as const, bucket: bucketFor(accIdx, ps[0]),
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(dps, accIdx), quantity: qty,
           avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
@@ -145,35 +333,43 @@ export function PortfolioMonitor() {
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
           weight: totalMV > 0 ? mv / totalMV : 0,
           costNA,
-          // A security is live only if every lot of it is — they share one quote,
-          // so in practice this is all-or-nothing.
-          live: dps.every((x) => x.live),
+          live,
           dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
           dayChangePct: ps[0].dayChangePct ?? null,
+          liveMV: live ? mv : 0,
+          realizedKeys: [ps[0].securityKey],
         };
       });
     } else {
-      out = base.map((p) => ({
+      out = rest.map((p) => ({
+        kind: "security" as const, bucket: bucketFor(accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], parts: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: totalMV > 0 ? p.marketValue / totalMV : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
+        liveMV: p.live ? p.marketValue : 0,
+        realizedKeys: [p.securityKey],
         dedupeGroup: p.dedupeGroup,
       }));
     }
-    if (selected.size > 0) out = out.filter((r) => selected.has(r.security));
+    // A mandate row IS one account's statement already, so it is the same row in
+    // both views: the by-entity toggle splits a CONSOLIDATED security back into
+    // the statements that reported it, and a mandate was never consolidated.
+    out = [...out, ...mandateRows];
     out.sort((a, b) => {
       const av = a[sortKey], bv = b[sortKey];
       const cmp = typeof av === "string" ? String(av).localeCompare(String(bv)) : (av as number) - (bv as number);
       return asc ? cmp : -cmp;
     });
     // Footer totals are CONSOLIDATED in every view (each dedupeGroup once), so the
-    // family total is the true ₹335.43 Cr NAV regardless of grouping. `rawMV` is
-    // the sum of displayed rows — equal to the total in the by-security view, and
-    // ₹3.17 Cr higher in the by-entity view where both members' rows are shown as
-    // printed; the caption names that gap rather than letting the footer assert it.
+    // family total is the true NAV regardless of grouping — and it is struck over
+    // the POSITIONS, so rolling the mandates up into ten rows cannot move it by a
+    // rupee. `rawMV` is the sum of displayed rows — equal to the total in the
+    // by-security view, and higher in the by-entity view where both members' rows
+    // of a dually-reported AIF show as printed; the caption names that gap rather
+    // than letting the footer assert it.
     const db = dedupedPositions(base);
     /**
      * HOW MUCH OF THE MARKET VALUE COLUMN THE COST COLUMN ACTUALLY COVERS.
@@ -181,8 +377,8 @@ export function PortfolioMonitor() {
      * `sumOrNull` skips a position whose statement carries no cost rather than
      * entering it as zero, which is right — but it means Invested and Unrealised
      * P&L are struck over a SMALLER SET than Market value, and the footer prints
-     * all three side by side. A reader adds ₹471.9 Cr and +₹74.1 Cr, gets
-     * ₹546 Cr against a printed ₹13,063.2 Cr, and has found a contradiction.
+     * all three side by side. A reader adds the first two, lands well short of
+     * the third, and has found a contradiction.
      *
      * There is none: the two are on their own consistent basis (invested + P&L
      * IS the market value of the positions that report a cost, to the rupee).
@@ -199,18 +395,21 @@ export function PortfolioMonitor() {
       costedCount: costed.length,
       heldCount: db.length,
     };
-  }, [positions, accIdx, consolidate, selected, sector, entity, assetClass, sortKey, asc]);
-  // Rows grouped by asset class, so Equity / AIF / Mutual Fund / Cash read as the
-  // distinct things they are rather than as one mixed ledger. Sectioning only
-  // when more than one class is on screen.
-  const classGroups = useMemo(() => {
+  }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, sortKey, asc]);
+  /**
+   * Rows grouped by BUCKET, not by asset class — the fix the family asked for
+   * three times. Direct Equity is what they bought themselves; PMS mandates is
+   * what a discretionary manager runs for them; the wrappers and cash keep their
+   * own class. Sectioning only when more than one bucket is on screen.
+   */
+  const bucketGroups = useMemo(() => {
     const g = new Map<string, Row[]>();
-    for (const r of rows) (g.get(r.assetClass) ?? g.set(r.assetClass, []).get(r.assetClass)!).push(r);
+    for (const r of rows) (g.get(r.bucket) ?? g.set(r.bucket, []).get(r.bucket)!).push(r);
     return [...g.entries()]
-      .map(([cls, rs]) => {
+      .map(([key, rs]) => {
         /**
          * THE SECTION SUBTOTAL IS ON THE FOOTER'S BASIS — each `dedupeGroup`
-         * once — because a reader who adds the four section headings and lands
+         * once — because a reader who adds the section headings and lands
          * somewhere other than the footer has found a contradiction, and this
          * book's own rule says no caption rescues one.
          *
@@ -236,11 +435,16 @@ export function PortfolioMonitor() {
           }
           subtotal += r.marketValue;
         }
-        return { cls, rows: rs, subtotal, collapsed };
+        // HOW MANY HOLDINGS THE SECTION STANDS FOR, which is not how many rows it
+        // draws: a mandate row stands for every share inside it, so the PMS
+        // heading counts 281 across 10 rows. Counting rows there would report the
+        // section as ten holdings and quietly retire 271 of them from the page.
+        const holdings = rs.reduce((n, r) => n + (r.mandate ? r.mandate.holdings.length : 1), 0);
+        return { key, rows: rs, subtotal, collapsed, holdings };
       })
-      .sort((a, b) => classOrd(a.cls) - classOrd(b.cls));
-  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const showClassSections = assetClass === "All" && classGroups.length > 1;
+      .sort((a, b) => bucketOrd(a.key) - bucketOrd(b.key));
+  }, [rows]);
+  const showBucketSections = bucket === "All" && bucketGroups.length > 1;
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
   const totalRet = totCost !== null && totPnL !== null && totCost > 0 ? (totPnL / totCost) * 100 : null;
@@ -253,10 +457,17 @@ export function PortfolioMonitor() {
   const uncostedMV = totMV - costedMV > 1 ? totMV - costedMV : 0;
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
+  //
+  // The denominator is each row's `liveMV`, not its market value. They are the
+  // same figure for a security and they are NOT for a mandate, whose cash sleeve
+  // and unquoted names sit inside the row: dividing the mandate's move by its
+  // whole value would dilute the book's day figure by everything the feed never
+  // priced. Summed this way the ten mandate rows contribute exactly what their
+  // 263 constituent shares contributed before the roll-up.
   const feedLive = rows.some((r) => r.live);
   const liveRows = rows.filter((r) => r.live && r.dayChangePct != null);
   const totDay = sum(liveRows.map((r) => r.dayChange));
-  const liveMV = sum(liveRows.map((r) => r.marketValue));
+  const liveMV = sum(liveRows.map((r) => r.liveMV));
   const totDayPct = liveRows.length && liveMV - totDay !== 0 ? (totDay / (liveMV - totDay)) * 100 : null;
   const sortBtn = (k: SortKey) => () => { if (sortKey === k) setAsc(!asc); else { setSortKey(k); setAsc(false); } };
   const toggleRow = (key: string) => setExpanded((prev) => {
@@ -325,8 +536,11 @@ export function PortfolioMonitor() {
         <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
-        <select value={assetClass} onChange={(e) => setAssetClass(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
-          {assetClasses.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : assetClassLabel(s)}</option>)}
+        {/* Categories, not asset classes: "PMS mandates" is a bucket rather than
+            a class (§5 — a mandate is a relationship), and it is the choice a
+            reader of this table is actually making. */}
+        <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+          {buckets.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : bucketLabel(s)}</option>)}
         </select>
         <div className="ml-auto flex items-center gap-2">
           <button onClick={handleExport} disabled={exporting}
@@ -383,14 +597,31 @@ export function PortfolioMonitor() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {classGroups.map((grp) => (
-                  <Fragment key={grp.cls}>
-                    {showClassSections && (
+                {bucketGroups.map((grp) => (
+                  <Fragment key={grp.key}>
+                    {showBucketSections && (
                       <tr className="bg-ink-900/50">
                         <td colSpan={13} className="px-2 py-1.5">
-                          <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
-                            {assetClassLabel(grp.cls)}
-                            <span className="font-normal normal-case tracking-normal text-slate-500">· {grp.rows.length} {grp.rows.length === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}</span>
+                          <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
+                            {bucketLabel(grp.key)}
+                            {/* The count is of HOLDINGS, not of rows: ten mandate
+                                rows stand for 281 of them, and a heading reading
+                                "10 holdings" over ₹138.7 Cr would retire 271
+                                positions from the page without saying so. */}
+                            <span className="font-normal normal-case tracking-normal text-slate-500">
+                              {grp.key === MANDATE_BUCKET ? `· ${grp.rows.length} ${grp.rows.length === 1 ? "mandate" : "mandates"} ` : ""}· {grp.holdings} {grp.holdings === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}
+                            </span>
+                            {/* A MEASURED ZERO KEEPS ITS ZERO, and says why it is
+                                one. The section is not empty — every row in it is
+                                reported at nil, which is a different fact from
+                                "no statement carries this" and must not be shown
+                                as an em dash. */}
+                            {grp.subtotal === 0 && grp.rows.length > 0 && (
+                              <span className="font-normal normal-case tracking-normal text-slate-500"
+                                title="Not an absent figure: every statement in this section reports a nil balance, so the subtotal is a measurement.">
+                                · a measured nil — every row here is reported at zero
+                              </span>
+                            )}
                             {grp.collapsed > 0 && (
                               <span className="font-normal normal-case tracking-normal text-slate-500"
                                 title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
@@ -401,26 +632,79 @@ export function PortfolioMonitor() {
                         </td>
                       </tr>
                     )}
+                    {/* WHAT A MANDATE ROW IS, said once above the ten of them.
+                        Rendered whenever mandates are on screen — including when
+                        the category filter has narrowed the table to them and the
+                        section heading above is therefore not drawn. */}
+                    {grp.key === MANDATE_BUCKET && (
+                      <tr className="bg-ink-900/40">
+                        <td colSpan={13} className="px-2 pb-1.5 pt-0.5 text-[11px] leading-relaxed text-slate-500">
+                          One row per mandate, not per share. These are shares a discretionary manager chose and holds
+                          in the family&rsquo;s own name — the family owns them, the manager decides them — so each row is
+                          the account its statement totals, cash sleeve included. Expand a mandate to list the shares
+                          inside it, or open its drill-down for the statement&rsquo;s own figures.
+                        </td>
+                      </tr>
+                    )}
                     {grp.rows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
+                  /**
+                   * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
+                   * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
+                   * price and sector belong to a security; a mandate holds many
+                   * of each and prints none of them. Every one renders through
+                   * `AbsentCell` with the reason rather than a 0 or a blend.
+                   */
+                  const m = r.mandate;
+                  // Where the row's figures trace to: a mandate's are its own
+                  // account's statements, a security's are its name in the archive.
+                  const trace = m ? ledgerHref(m.accountNo) : ledgerHref(r.security);
                   return (
                     <Fragment key={r.key}>
                       <tr className="hover:bg-ink-700/40">
                         <td className="px-2 py-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
-                            {r.costNA && <Pill tone="warn">cost n/a</Pill>}
-                          </div>
+                          {m ? (
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
+                                  title={isOpen ? "Hide the shares inside this mandate" : "List the shares inside this mandate"}
+                                  className="-ml-0.5 rounded text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
+                                  <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                                </button>
+                                <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
+                                  title={`${m.manager} — account ${m.accountNo}. Open the mandate drill-down.`}
+                                  className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                  {r.security}
+                                </Link>
+                                <Pill tone="core">PMS mandate</Pill>
+                                {r.costNA && <Pill tone="warn">cost n/a</Pill>}
+                              </div>
+                              <span className="pl-5 text-[11px] text-slate-500">
+                                {m.manager} · account {m.accountNo} ·{" "}
+                                {m.holdings.length < m.accountCount
+                                  ? <>{m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}</>
+                                  : <>{m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"}</>}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
+                              {r.costNA && <Pill tone="warn">cost n/a</Pill>}
+                            </div>
+                          )}
                         </td>
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
-                            failed to map — the same cell a direct equity gets
-                            when its statement printed none — when the truth is
-                            that the property does not apply: an AIF folio or a
-                            mutual-fund scheme is a wrapper over many sectors. */}
+                            failed to map — the same cell a directly-held share
+                            gets when its statement printed none — when the truth
+                            is that the property does not apply: an AIF folio, a
+                            mutual-fund scheme or a whole mandate is a wrapper
+                            over many sectors. */}
                         <td className="px-2 py-2.5 text-slate-400">
-                          {isFundVehicle(r)
+                          {m
+                            ? <AbsentCell reason="a mandate spans many sectors and is not one holding; expand it, or open its drill-down, for each share's own" />
+                            : isFundVehicle(r)
                             ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
                             : r.sector}
                         </td>
@@ -436,32 +720,47 @@ export function PortfolioMonitor() {
                             <span className="text-[12px]">{r.entities[0]}</span>
                           )}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable to={ledgerHref(r.security)} title="Shares held — trace to the ledger">{fmtNum(r.quantity)}</Auditable></td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : <Auditable to={ledgerHref(r.security)} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}</td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={ledgerHref(r.security)} title="Invested (cost) — trace to the ledger">{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
+                          {r.quantity === null
+                            ? <AbsentCell reason="a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing." />
+                            : <Auditable to={trace} title="Shares held — trace to the ledger">{fmtNum(r.quantity)}</Auditable>}
+                        </td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
+                          {m ? <AbsentCell reason="an average cost per unit needs one security; this row rolls up the mandate's holdings, each with a cost of its own" />
+                            : r.costNA ? "—"
+                            : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
+                            : <Auditable to={trace} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}
+                        </td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={trace} title={m ? "What the mandate's holdings cost, added up — trace to its statements" : "Invested (cost) — trace to the ledger"}>{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
-                          {r.currentPrice === null
+                          {m
+                            ? <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />
+                            : r.currentPrice === null
                             ? <AbsentCell reason="marked at a total value, not a per-unit price" />
                             : r.live
                             ? fmtFromBase(r.currentPrice)
-                            : <><Auditable to={ledgerHref(r.security)} title="Market price — trace to the ledger">{fmtFromBase(r.currentPrice)}</Auditable>
+                            : <><Auditable to={trace} title="Market price — trace to the ledger">{fmtFromBase(r.currentPrice)}</Auditable>
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
-                          title={r.live && r.dayChangePct != null ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} on the position since previous close` : undefined}>
+                          title={r.live && r.dayChangePct != null
+                            ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} since previous close${m ? `, across the ${fmtFromBase(r.liveMV, { compact: true })} of this mandate the feed prices` : " on the position"}`
+                            : undefined}>
                           {r.live && r.dayChangePct != null
                             ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
-                            : <AbsentCell reason={r.currentPrice === null
+                            : <AbsentCell reason={m
+                                ? "no live quote for any share inside this mandate, so there is no previous close to move from"
+                                : r.currentPrice === null
                                 ? "this holding is marked at a total value, not a per-unit price, so it has no day move"
                                 : "no live quote for this security, so there is no previous close to move from"} />}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">
                           {r.live ? fmtFromBase(r.marketValue, { compact: true })
-                                  : <Auditable to={ledgerHref(r.security)} title="Market value — trace to the ledger">{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
+                                  : <Auditable to={trace} title={m ? "The whole mandate's market value, shares and cash sleeve — trace to its statements" : "Market value — trace to the ledger"}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? LIVE_CELL : undefined}>
                           {r.live ? `${(r.weight * 100).toFixed(1)}%`
@@ -470,30 +769,93 @@ export function PortfolioMonitor() {
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? LIVE_CELL : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
-                            : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money, ledgerHref(r.security))}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
+                            : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money, trace)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
                         </td>
-                        {/* Three distinct states, never collapsed into one dash
-                            without a reason: not looked up (per-entity view),
-                            archive unreachable, name never sold, name sold but
-                            no capital gain statement covers that account. */}
+                        {/* Distinct states, never collapsed into one dash without
+                            a reason: a mandate (whose names are reported per
+                            security across the book, not per mandate), the
+                            per-entity view, an unreachable archive, a name never
+                            sold, and a name sold under no capital gain statement. */}
                         <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{
-                          !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
+                          m ? <AbsentCell reason="realised gain is reported per security across the whole book, and these managers hold the same names in more than one mandate — attributing a name's whole realised figure to this mandate would count it twice. Open the mandate's drill-down, or Capital Gains, for the per-account figures." />
+                          : !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
                           : realized === undefined ? <span className="text-slate-500">…</span>
                           : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
                           : !realized.has(r.securityKey) ? <AbsentCell reason="no sale of this name on the transaction statements" />
                           : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
-                          : <span className={changeColor(realized.get(r.securityKey)!)}><Auditable to={ledgerHref(r.security)} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</Auditable></span>
+                          : <span className={changeColor(realized.get(r.securityKey)!)}><Auditable to={trace} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</Auditable></span>
                         }</td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? LIVE_CELL : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtPct(r.returnPct, { sign: true })
-                            : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, ledgerHref(r.security))}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
+                            : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, trace)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
                         </td>
                       </tr>
-                      {multi && isOpen && (
+                      {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
+                          asked for, in place. Each share appears here and in the
+                          mandate's row above, and nowhere beside the shares the
+                          family bought itself. */}
+                      {m && isOpen && (
                         <tr className="bg-ink-900/60">
                           <td colSpan={13} className="px-3 pb-3 pt-1">
-                            <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
+                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                              The {m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"} inside this mandate,
+                              as {m.manager} reports them at {fmtDate(m.asOf)}. The family owns these shares; the manager chose
+                              them — which is why they are counted here and in the row above, and never a second time among
+                              the shares the family bought in its own name.
+                            </p>
+                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                              <table className="min-w-full text-[12px]">
+                                <thead>
+                                  <tr className="border-b border-ink-700/70">
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Sector</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Avg cost</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Invested</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">CMP</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium whitespace-nowrap">% of mandate</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-ink-700/50">
+                                  {m.holdings.map((h) => (
+                                    <tr key={h.securityKey || h.security}>
+                                      <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
+                                      <td className="px-3 py-1.5 text-slate-400">{h.sector}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(h.quantity)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : h.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(h.avgCost)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : fmtFromBase(h.costBasis, { compact: true })}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.currentPrice === null ? <AbsentCell reason="this row is marked at a total value, not a per-unit price" /> : fmtFromBase(h.currentPrice)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(h.marketValue, { compact: true })}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                        {r.marketValue > 0
+                                          ? `${((h.marketValue / r.marketValue) * 100).toFixed(1)}%`
+                                          : <AbsentCell reason="the mandate is valued at nil, so a share of it cannot be struck" />}
+                                      </td>
+                                      <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.unrealizedPnL)}`}>{h.costNA ? "—" : fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</td>
+                                      <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.returnPct)}`}>{h.costNA ? "—" : fmtPct(h.returnPct, { sign: true })}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            <p className="mt-1.5 text-[11px] text-slate-500">
+                              <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
+                                className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                Open the full {r.security} drill-down
+                              </Link>
+                              {" "}for this mandate&rsquo;s own returns, capital movements and dated ledger.
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                      {!m && multi && isOpen && (
+                        <tr className="bg-ink-900/60">
+                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
@@ -553,8 +915,15 @@ export function PortfolioMonitor() {
                   </td>
                   {/* sumOrNull, not sum: a name with no realised figure must not
                       be added in as zero — that turns "never reported" into a
-                      measurement and drags the total towards it. */}
-                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const tr = sumOrNull(rows.map((r) => realized.get(r.securityKey) ?? null)); return tr === null ? <AbsentCell reason="no capital gain statement covers any of these names" /> : <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <AbsentCell reason="realised gain is shown in the consolidated view" />}</td>
+                      measurement and drags the total towards it.
+                      AND IT SUMS OVER THE UNION OF THE ROWS' OWN KEYS, not over
+                      one key per row. Ten mandate rows now stand for 263 shares,
+                      and most of this book's realised gain was made inside them;
+                      reading `r.securityKey` alone would have quietly emptied
+                      this cell the moment the shares moved into their mandates.
+                      A Set, because a name in two mandates is still one name on
+                      the capital gain statements. */}
+                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const keys = new Set<string>(); for (const r of rows) for (const k of r.realizedKeys) keys.add(k); const tr = sumOrNull([...keys].map((k) => realized.get(k) ?? null)); return tr === null ? <AbsentCell reason="no capital gain statement covers any of these names" /> : <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <AbsentCell reason="realised gain is shown in the consolidated view" />}</td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}

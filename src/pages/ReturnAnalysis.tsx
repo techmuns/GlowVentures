@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, assetClassLabel, bucketLabel } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -88,27 +88,48 @@ export function ReturnAnalysis() {
     // stopped one class short: a mutual fund is marked at a published NAV so it
     // is not PRIVATE, and this book holds ₹52.4 Cr of mutual-fund units — Helios
     // Flexi Cap ₹31.0 Cr and Motilal Oswal Active Momentum ₹21.4 Cr — which went
-    // on sitting in "Unclassified" beside direct equity that genuinely has no
-    // sector printed. Bucket every wrapper under its asset class instead. Its
-    // P&L still counts, so the rows still sum to the embedded return exactly;
-    // only the label changes, from a sector it never had to the thing it is.
-    const bySector = new Map<string, { pnl: number; cost: number; mv: number }>();
+    // on sitting in "Unclassified" beside shares that genuinely have no sector
+    // printed. Bucket every wrapper under its asset class instead. Its P&L still
+    // counts, so the rows still sum to the embedded return exactly; only the
+    // label changes, from a sector it never had to the thing it is.
+    //
+    // THE COMPANY SIDE IS `isCompanyShare`'S SET AND STAYS THAT WAY. A share a
+    // discretionary manager chose under a PMS mandate has a GICS sector exactly
+    // like one the family bought itself, so it belongs in this table under that
+    // sector — narrowing to own-held shares here would drop ₹127 Cr of real
+    // sector exposure and answer a narrower question than the heading asks. The
+    // holdings TABLES regroup by mandate; a sector attribution does not, and the
+    // caption says so rather than leaving the reader to infer it from a word.
+    //
+    // A ROW IS A SECTOR OR A CLASS, AND WHICH IT IS TRAVELS WITH IT. The label
+    // for a class comes from `bucketLabel` — the one place a class becomes a
+    // word — so this table cannot print a class name that Portfolio Monitor,
+    // Morning CIO or Exposure & IPS have since relabelled. A sector is the
+    // provider's own normalised taxonomy and is never passed through it.
+    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean }>();
     for (const x of priced) {
-      const secKey = isFundVehicle(x) || isPrivateClass(x) ? x.assetClass : x.sector;
-      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0 };
+      const byClass = isFundVehicle(x) || isPrivateClass(x);
+      const secKey = byClass ? x.assetClass : x.sector;
+      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass };
       e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
       bySector.set(secKey, e);
     }
     // The wrapper classes this table bucketed BY CLASS, derived from the same
-    // rows the table is built from. Named in the caption so the page states
-    // which of its rows are asset classes rather than sectors — and so the
-    // rendering check has something on the page to hold the table against: a
-    // class named here with no row in the table is a wrapper that leaked back
-    // into "Unclassified", which is exactly the regression being guarded.
-    const wrapperClasses = [...new Set(priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => x.assetClass))].sort();
+    // rows the table is built from and carrying the SAME label the rows do.
+    // Named in the caption so the page states which of its rows are asset
+    // classes rather than sectors — and so the rendering check has something on
+    // the page to hold the table against: a class named here with no row in the
+    // table is a wrapper that leaked back into "Unclassified", which is exactly
+    // the regression being guarded. Labelled through `bucketLabel` on both
+    // sides, because a caption naming "Mutual Fund" over a row headed something
+    // else would satisfy a reader and fail the reader's arithmetic.
+    const wrapperClasses = [...new Set(
+      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(x.assetClass)),
+    )].sort();
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
         sector, ...e,
+        label: e.isClass ? bucketLabel(sector) : sector,
         returnPct: e.cost > 0 ? (e.pnl / e.cost) * 100 : null,
         contribPct: cost > 0 ? (e.pnl / cost) * 100 : 0,
       }))
@@ -239,7 +260,8 @@ export function ReturnAnalysis() {
         </Card>
 
         <Card className="lg:col-span-2" title="Contribution by sector"
-          subtitle="Direct equity by sector, every fund wrapper under its own class — each as a share of total cost">
+          subtitle={<>{assetClassLabel("Equity")} by sector — a manager&rsquo;s mandate included — and every fund
+            wrapper under its own class, each as a share of total cost</>}>
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
@@ -253,7 +275,7 @@ export function ReturnAnalysis() {
               <tbody>
                 {m.sectors.map((s) => (
                   <tr key={s.sector} className="border-t border-ink-700/60">
-                    <td className="px-2 py-2 text-slate-200">{s.sector}</td>
+                    <td className="px-2 py-2 text-slate-200">{s.label}</td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
                     <td className="px-2 py-2 text-right mono">
                       {s.returnPct === null
@@ -276,17 +298,20 @@ export function ReturnAnalysis() {
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
             Contributions are each row's P&amp;L over the book's TOTAL cost, so they add to the embedded
-            return exactly. A GICS sector is a property of a company, so only direct equity is bucketed by one;
-            a fund is a wrapper holding many companies and appears under its own asset class instead. Its gain
-            still counts — it is not a sector.
+            return exactly. A GICS sector is a property of a COMPANY, so every share in a company is bucketed by
+            one — including the shares a discretionary manager chose under a PMS mandate, which carry a sector
+            like any other share. This is an attribution, not a holdings table: seeing into a mandate is what
+            makes the sector picture real, so those names are not rolled up into their manager here.
+            A fund is a wrapper holding many companies and has no sector of its own, so it appears under its
+            asset class instead. Its gain still counts — it is not a sector.
             {m.wrapperClasses.length > 0 && <> Bucketed by class here:{" "}
               <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span>.</>}
           </p>
         </Card>
       </div>
 
-      <Card className="mt-5" title="Per manager"
-        subtitle="The same measure across the three managers, and each one's best and worst name">
+      <Card className="mt-5" title="Per account"
+        subtitle="The same measure on every account the book carries, and each one's best and worst name — a PMS mandate is one account here, and so is the family's own demat">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">

@@ -8,8 +8,11 @@ import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isCompanyShare, assetClassLabel } from "@/lib/analytics";
-import { accountIndex, isDirect, ownerOf } from "@/lib/accounts";
+import {
+  sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass, isCompanyShare, assetClassLabel,
+  holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, ROUTE_NOTE,
+} from "@/lib/analytics";
+import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
@@ -18,11 +21,19 @@ import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 
-// Morning CIO — asset-class cockpit. Summarises the whole book by asset class —
-// what a holding IS (Equity, AIF, Mutual Fund, Cash, and — where the book carries
-// them — Startups, Unlisted, PE/VC, Pre-IPO, Debt), never by how it is run — with
-// invested / current / return, plus capital deployment, concentration and book
-// performance. Every figure is CONSOLIDATED: each dedupeGroup counted once.
+// Morning CIO — the whole book in one screen: invested / current / return per
+// bucket, plus capital deployment, concentration and book performance. Every
+// figure is CONSOLIDATED: each dedupeGroup counted once.
+//
+// THE ALLOCATION BUCKETS ARE NOT PURE ASSET CLASSES, AND THAT IS THE POINT.
+// This page grouped strictly on what a holding IS, so shares a discretionary
+// manager chose and shares the family bought in its own demat were one "Equity"
+// row separated by a caption. The family asked three times for that difference —
+// and the third time made it plain that they were asking for a GROUPING, not a
+// better word: a share held through a mandate belongs inside that mandate.
+// `holdingBucket` in analytics.ts decides it, once, for every surface; §5 is
+// untouched, because a PMS is still an ENGAGEMENT and never an `assetClass`.
+// What changed is how the rows GROUP, and the heading says so.
 //
 // WHAT CHANGED FOR THIS BOOK, AND WHY. Every private-market bucket is EMPTY —
 // these five accounts are discretionary PMS mandates in listed Indian equity,
@@ -44,6 +55,26 @@ import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART
 // flows the Performance page uses (`accountCashFlows`, from each account's
 // capital register or bank book), so the headline figure and the per-account
 // table on /performance are the same measurement rather than two.
+/**
+ * ONE COLOUR PER BUCKET, so the donut and the table beside it agree.
+ *
+ * Direct Equity keeps the champagne the equity row has always had; the mandate
+ * bucket takes its darker sibling, because the two are the same asset held two
+ * ways and reading as neighbours is the point. Anything the book produces that
+ * is not named here takes the shared categorical palette in order — a class
+ * this drop does not carry must arrive with a colour rather than a blank swatch.
+ */
+const BUCKET_COLOR: Record<string, string> = {
+  [DIRECT_EQUITY_BUCKET]: "#d9c48f",
+  [MANDATE_BUCKET]: "#c3a962",
+  [UNROUTED_EQUITY_BUCKET]: "#f59e0b",
+  AIF: "#a855f7",
+  "Mutual Fund": "#22d3ee",
+  ETF: "#0ea5e9",
+  Cash: "#64748b",
+};
+const bucketColor = (key: string, i: number) => BUCKET_COLOR[key] ?? CHART_COLORS[i % CHART_COLORS.length];
+
 export function MorningCIO() {
   const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   // One "today" for every XIRR on the page, so every figure closes on the same
@@ -185,11 +216,12 @@ export function MorningCIO() {
     const pp = publicPrivateSplit(p);
     const hasPrivateClass = pp.private > 0;
 
-    // Listed book split by vehicle: in-house "Direct Equity" vs externally-managed
-    // "PMS / Managed" — read from the account registry's `engagement` field,
-    // which the statement states outright, rather than pattern-matched out of an
-    // account label.
+    // The account registry, read for every question below that asks how an
+    // account is RUN — the allocation buckets, and the two sides the
+    // money-weighted return is measured over. `engagement` is what each
+    // statement states outright; nothing here is pattern-matched out of a label.
     const accIdx = accountIndex(portfolio.accounts);
+    /** Run by an external manager — the side split the XIRR below is pooled on. */
     const managedRow = (x: (typeof p)[number]) => {
       const a = accIdx.get(x.accountId);
       return a ? !isDirect(a) : true;   // unattributed defaults to managed, not direct
@@ -198,56 +230,86 @@ export function MorningCIO() {
       const cost = sumOrNull(rows.map((x) => x.costBasis));
       const mv = sum(rows.map((x) => x.marketValue));
       const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
+      // WHICH ROWS THE COST SIDE ACTUALLY COVERS. `sumOrNull` skips a position
+      // whose statement reports no cost rather than entering it as zero, which
+      // is right and leaves Invested covering a narrower set than Current in the
+      // same row. Counting the skipped ones is the other half of that rule: the
+      // row can then say so instead of inviting a reader to divide one printed
+      // cell by another and land somewhere neither figure claims.
+      const noCost = rows.filter((x) => x.costBasis == null);
       return {
         count: rows.length, cost, mv, pnl,
+        withoutCost: noCost.length,
+        withoutCostMV: sum(noCost.map((x) => x.marketValue)),
         ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
     };
-    // ALLOCATION IS BY ASSET CLASS — what a holding IS, not how it is run. Every
-    // listed equity is ONE class regardless of vehicle: the family's PMS
-    // mandates and its self-directed LKP demat hold the same asset, so they
-    // consolidate into a single row. Splitting equity by vehicle here — "PMS /
-    // Managed" vs "Direct Equity" — put an engagement on an asset-class axis (the
-    // model forbids exactly that), left an empty "Direct Equity" row because only
-    // one ₹0 folio is tagged engagement "Direct", and filed ₹9.9 Cr of the
-    // family's own self-directed stock (LKP, engagement "Execution") under "PMS".
-    // How the equity is RUN is stated in the caption instead.
-    //
-    // THE ROW'S KEY IS THE ASSET CLASS AND ITS LABEL COMES FROM
-    // `assetClassLabel` — it was hardcoded as the label, which meant this bucket
-    // was the one place the screen word was NOT chosen in the shared helper, and
-    // it silently stopped matching when that helper changed.
-    // THE ROW IS LABELLED BY ITS CLASS AND THAT IS NOT THAT SPLIT COMING BACK.
-    // The words are the ones the bad version used; the SET is the opposite one.
-    // That row was `engagement === "Direct"` — one vehicle out of several, which
-    // is why it was empty. This row is `isCompanyShare`, the whole `Equity` asset
-    // class across every vehicle, and "direct" here means *held as shares in a
-    // company* rather than through a fund. `assetClassLabel` in analytics.ts is
-    // the one place that word is chosen; the test is the row's COUNT, not its
-    // label, and `check:pages` asserts it is non-empty for that reason.
-    // ...and an ETF is NOT equity for this purpose. It was folded in here
-    // because it is listed and marked on an exchange, which is the `listed vs
-    // private` axis, not this one: an ETF is one line standing for a basket
-    // somebody else assembled, exactly as a mutual fund or an AIF folio is.
-    // Folding it into "Equity" is the same conflation that put fund units into
-    // the sector tables. This book holds none today, so the row is empty and
-    // named as absent below rather than silently swelling the equity bucket the
-    // first time one arrives. `isCompanyShare` is the shared test.
-    const equityRows = p.filter(isCompanyShare);
-    const equity = eqGroup(equityRows);
-    // Vehicle split WITHIN equity, for the caption only — self-directed is the
-    // family running the account itself (a demat/execution or truly direct
-    // engagement); everything else is run through an external manager.
-    const engOf = (x: (typeof p)[number]) => accIdx.get(x.accountId)?.engagement ?? "";
-    const isSelfDirected = (x: (typeof p)[number]) => engOf(x) === "Direct" || engOf(x) === "Execution";
-    const equitySelfMV = sum(equityRows.filter(isSelfDirected).map((x) => x.marketValue));
-    const equityManagedMV = sum(equityRows.filter((x) => !isSelfDirected(x)).map((x) => x.marketValue));
-    // Non-equity asset classes, each as its own bucket. AIF is 62% of this book.
-    const classGroup = (cls: string) => eqGroup(p.filter((x) => x.assetClass === cls));
-    const aifEq = classGroup("AIF");
-    const mfEq = classGroup("Mutual Fund");
-    const etfEq = classGroup("ETF");
-    const cashEq = classGroup("Cash");
+    /**
+     * ── ALLOCATION IS GROUPED THE WAY THE FAMILY HOLDS THE BOOK ──
+     *
+     * These rows were keyed on `assetClass` with a hardcoded "Equity" bucket, so
+     * the shares a discretionary manager chose sat in the same row as the ones
+     * the family bought in its own demat accounts, distinguished only by a
+     * caption underneath. The family asked three times for that difference to be
+     * a GROUPING rather than a word: a share held through a mandate belongs
+     * inside that mandate, and Direct Equity means shares held directly.
+     *
+     * `holdingBucket` in analytics.ts is THE ONE PLACE THAT DECIDES IT. A bucket
+     * re-derived per screen is a bucket that disagrees with itself, which is
+     * exactly how the words "Direct Equity" survived on this row for a release
+     * after every other surface had stopped using them. The engagement comes
+     * from the ACCOUNT (`engagementOf`) and never from the position: how a
+     * holding is run is a fact about the account that holds it, and reading it
+     * off the position is what would put two rows of one mandate in two buckets.
+     *
+     * A MANDATE TAKES ITS CASH SLEEVE WITH IT, so its row ties to the totals its
+     * own statements print. What moves with it is NAMED at both ends — cash
+     * disappearing out of the Cash row into a bucket that does not mention it is
+     * the same silence this page has already been fixed for once.
+     */
+    const bucketRows = new Map<string, typeof p>();
+    for (const x of p) {
+      const key = holdingBucket(x, engagementOf(accIdx, x));
+      const rows = bucketRows.get(key) ?? [];
+      rows.push(x);
+      bucketRows.set(key, rows);
+    }
+    const rowsIn = (key: string) => bucketRows.get(key) ?? [];
+    const accountsIn = (rows: typeof p) => new Set(rows.map((x) => x.accountId));
+    const providersIn = (rows: typeof p) =>
+      new Set([...accountsIn(rows)].map((id) => accIdx.get(id)?.provider).filter(Boolean));
+
+    // WHAT EACH ROW SAYS ABOUT ITSELF, DERIVED. The mandate row's caption is how
+    // many mandates it spans and how many managers run them; the direct row's is
+    // how many of the family's own accounts hold the shares. No manager is named
+    // and no figure is typed in — every one comes from the account registry and
+    // the positions themselves.
+    const mandateRows = rowsIn(MANDATE_BUCKET);
+    const sleeveRows = mandateRows.filter((x) => !isCompanyShare(x));
+    const mandateSpan = {
+      accounts: accountsIn(mandateRows).size,
+      managers: providersIn(mandateRows).size,
+      shareMV: sum(mandateRows.filter(isCompanyShare).map((x) => x.marketValue)),
+      sleeveMV: sum(sleeveRows.map((x) => x.marketValue)),
+      sleeveClasses: [...new Set(sleeveRows.map((x) => assetClassLabel(x.assetClass)))],
+    };
+    const directSpan = { accounts: accountsIn(rowsIn(DIRECT_EQUITY_BUCKET)).size };
+    const unroutedSpan = { accounts: accountsIn(rowsIn(UNROUTED_EQUITY_BUCKET)).size };
+    /**
+     * HOW MUCH OF A CLASS IS COUNTED ONE ROW UP.
+     *
+     * Every rupee of cash in this book sits inside a PMS mandate, so the Cash
+     * row left behind is two fund statements reporting a zero balance. Printed
+     * alone that reads as a book holding no cash — a measurement of nothing over
+     * money that is really there. The class row says where the rest went and the
+     * mandate row says what it took: the same fact from both ends, so neither
+     * can be read as the whole of it.
+     */
+    const mandateClassMV: Record<string, number> = {};
+    for (const x of sleeveRows) mandateClassMV[x.assetClass] = (mandateClassMV[x.assetClass] ?? 0) + x.marketValue;
+    // Every class the book actually carries — the test for whether a bucket is
+    // genuinely ABSENT as opposed to absorbed into a mandate above it.
+    const heldClasses = new Set<string>(p.map((x) => x.assetClass));
     // The "Book performance — Listed vs private" card must split on ASSET CLASS,
     // not on the fund-of-funds model. That model (privateMarkets.*) is empty here,
     // so gating the private card on it labelled the ₹207.65 Cr AIF book as
@@ -339,15 +401,19 @@ export function MorningCIO() {
       distributed: number;                            // cash already returned; 0 for listed & startups
       xirr: number | null;                            // annualised money-weighted return
       xirrBasis: Basis; xirrNote: string | null;
+      /** How many of `count` report no cost — Invested and Return cover the rest. */
+      withoutCost: number;
+      /** …and what they are worth, so the row can say what stands behind no cost. */
+      withoutCostMV: number;
       sheet: PrivateSheet | null;
     };
     const fundBasis = (r: XirrResult) =>
       r.dated < r.total ? `${r.total - r.dated} of ${r.total} holdings carry no dated first investment and sit outside this XIRR.` : null;
-    function xirrCoverage(excluded: string[]) {
-      return excluded.length
-        ? `${excluded.length === 1 ? "Account" : "Accounts"} ${excluded.join(", ")} ${excluded.length === 1 ? "is" : "are"} excluded on BOTH sides — ${excluded.length === 1 ? "its statements carry" : "their statements carry"} no opening portfolio value, and counting ${excluded.length === 1 ? "its market value without its" : "their market value without their"} opening stake would overstate the rate.`
-        : null;
-    }
+    // (The per-bucket XIRR note that used to live here went with the "Equity"
+    // row: a rate struck over whole ACCOUNTS cannot be attributed to a bucket
+    // that now splits their holdings by how they are held. The book-wide
+    // money-weighted return, and the accounts it excludes, are stated in full on
+    // the tile above and in the allocation footer's popover.)
     const fundBucket = (
       key: string, color: string, count: number, f: ReturnType<typeof fundTotals>, x: XirrResult, sheet: PrivateSheet,
     ): Bucket => ({
@@ -356,21 +422,40 @@ export function MorningCIO() {
       metric: netMultiple(f.drawn, f.currentValue, f.distributed),
       retPct: f.drawn > 0 ? ((f.currentValue + f.distributed - f.drawn) / f.drawn) * 100 : null,
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
+      // A fund's drawn capital IS its cost, on every fund in the model — there
+      // is no such thing as a drawdown with no call behind it.
+      withoutCost: 0, withoutCostMV: 0,
     });
-    // A bucket for a non-equity asset class — no dated capital-movement flows, so
-    // no money-weighted rate; its total return on cost is what the row shows.
-    const classBucket = (key: string, color: string, g: typeof equity): Bucket => ({
-      key, color, count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
-      metric: g.cost !== null && g.cost > 0 ? g.mv / g.cost : null,
-      retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
-    });
+    // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
+    // so no money-weighted rate; its total return on cost is what the row shows.
+    const positionBucket = (key: string, i: number): Bucket => {
+      const g = eqGroup(rowsIn(key));
+      return {
+        key, color: bucketColor(key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
+        metric: g.cost !== null && g.cost > 0 ? g.mv / g.cost : null,
+        retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
+        withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV,
+      };
+    };
+    /**
+     * THE BUCKETS THIS BOOK IS DECLARED TO HAVE, PLUS ANY THE POSITIONS PRODUCE.
+     *
+     * The declared list is in the BUCKET vocabulary, so it can no longer name
+     * "Equity" — a bucket that no longer exists — and a declared bucket holding
+     * nothing is named as absent below rather than drawn as a row of zeros.
+     * Anything `holdingBucket` returns that is not declared (a class this drop
+     * does not carry, or equity whose account states no engagement) still gets
+     * its own row: a bucket the book HAS must never be silently dropped for not
+     * being on a list written before it arrived.
+     */
+    const DECLARED_BUCKETS = [MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, "AIF", "Mutual Fund", "ETF", "Cash"];
+    const positionKeys = [
+      ...DECLARED_BUCKETS,
+      ...[...bucketRows.keys()].filter((k) => !DECLARED_BUCKETS.includes(k)),
+    ];
     const allBuckets: Bucket[] = [
-      { key: "Equity", color: "#d9c48f", count: equity.count, invested: equity.cost, current: equity.mv, kind: "MOIC", metric: equity.cost !== null && equity.cost > 0 ? equity.mv / equity.cost : null, retPct: equity.ret, distributed: 0, xirr: listedXirr([...directSide.parts, ...pmsSide.parts]), xirrBasis: "ledger", xirrNote: xirrCoverage(xirrExcluded), sheet: null },
-      classBucket("AIF", "#a855f7", aifEq),
-      classBucket("Mutual Fund", "#22d3ee", mfEq),
-      classBucket("ETF", "#0ea5e9", etfEq),
-      classBucket("Cash", "#64748b", cashEq),
-      { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup" },
+      ...positionKeys.map(positionBucket),
+      { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0 },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -382,7 +467,18 @@ export function MorningCIO() {
     // below the table as absent, so a reader can tell "nothing here" from
     // "nothing left". This is the whole §0 rule applied to the allocation view.
     const buckets = allBuckets.filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
-    const emptyBuckets = allBuckets.filter((b) => b.count === 0).map((b) => b.key);
+    /**
+     * AND A CLASS THE MANDATES SWALLOWED IS NOT "NOT HELD".
+     *
+     * Every cash position in this book sits inside a PMS mandate and is counted
+     * on that row, so an empty Cash bucket here means the cash MOVED, not that
+     * there is none. Naming it under "Not held" would be a flat contradiction of
+     * the mandate row two lines above it, which is why the test is whether the
+     * BOOK carries the class at all rather than whether this bucket does.
+     */
+    const emptyBuckets = allBuckets
+      .filter((b) => b.count === 0 && !heldClasses.has(b.key))
+      .map((b) => b.key);
 
     // Book-level XIRR: every listed dated flow closed against the live listed
     // value, pooled with the private book's calls and marks.
@@ -460,7 +556,7 @@ export function MorningCIO() {
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      equityManagedMV, equitySelfMV, listedBook, privateBook,
+      mandateSpan, directSpan, unroutedSpan, mandateClassMV, listedBook, privateBook,
       buckets, emptyBuckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       xirrAccounts: listedParts.length,
@@ -478,7 +574,7 @@ export function MorningCIO() {
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
-  const donutData = m.buckets.map((b) => ({ name: b.key, value: convertFromBase(b.current) }));
+  const donutData = m.buckets.map((b) => ({ name: bucketLabel(b.key), value: convertFromBase(b.current) }));
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
@@ -487,6 +583,10 @@ export function MorningCIO() {
   const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
   const bucketHref = (b: { sheet: PrivateSheet | null }) => b.sheet ? auditHref({ file: "private", sheet: b.sheet }) : auditHref(LEDGER);
+  // "10 mandates", "1 mandate" — a count and its noun, agreeing.
+  const many = (n: number, one: string, plural = `${one}s`) => `${n} ${n === 1 ? one : plural}`;
+  // "Cash", "Cash and Bonds" — a list of class labels read as a sentence.
+  const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
   // XIRR, with the multiple and the return-on-cost kept a click away. Both bases
   // run the identical solver; what each popover explains is how finely its
   // source dates the money.
@@ -505,7 +605,7 @@ export function MorningCIO() {
     }
     const mult = b.metric == null ? DASH : `${b.metric.toFixed(2)}×`;
     const formula = {
-      title: `${b.key} — total return to date`,
+      title: `${bucketLabel(b.key)} — total return to date`,
       excel: b.distributed > 0 ? "= (Current value + Cash returned − Invested) ÷ Invested" : "= (Current value − Invested) ÷ Invested",
       plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.current)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.`,
       worked: `${money(b.invested)} invested → ${money(b.current)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total`,
@@ -707,8 +807,8 @@ export function MorningCIO() {
             all of them close on the book's own report date — is in this subtitle
             and in each figure's popover, which is where the coverage and the
             excluded accounts have always been stated in full. */}
-        <Card className="lg:col-span-2" title="Allocation by asset class"
-          subtitle={`Invested, current value & total return to date per bucket — cumulative, not annualised · every figure closes at ${portfolio.asOf}`}
+        <Card className="lg:col-span-2" title="Allocation by asset class &amp; mandate"
+          subtitle={`Shares chosen under a discretionary mandate roll up into that mandate; everything else groups by what it IS · invested, current value & total return to date — cumulative, not annualised · every figure closes at ${portfolio.asOf}`}
           right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
@@ -731,7 +831,7 @@ export function MorningCIO() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b border-ink-700">
-                    <th className="label-xs px-2 py-2 text-left font-medium">Asset class</th>
+                    <th className="label-xs px-2 py-2 text-left font-medium">Asset class / mandate</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Invested</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Current</th>
                     <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap" title="Total return to date on the capital in each bucket — cumulative, not annualised.">Return (total)</th>
@@ -744,24 +844,69 @@ export function MorningCIO() {
                       <td className="px-2 py-2.5">
                         <span className="flex items-center gap-2 font-medium text-slate-100">
                           <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                          {assetClassLabel(b.key)}
+                          {bucketLabel(b.key)}
                         </span>
-                        {/* WHO CHOSE IT, under the class that says what it is.
-                            Both halves of this split were computed and rendered
-                            NOWHERE — the comment above them said "for the
-                            caption only" and there was no caption. So ₹127 Cr of
-                            shares a discretionary manager picked sat under the
-                            same word as ₹30 Cr the family bought itself, which
-                            is the reading that sent them to this page asking
-                            why Jammu Kashmir Bank was called direct. */}
-                        {b.key === "Equity" && (m.equityManagedMV > 0 || m.equitySelfMV > 0) && (
+                        {/* WHAT THE ROW IS, IN THE ROW ITSELF.
+
+                            This used to be one "Equity" row with a caption
+                            splitting it into what a manager chose and what the
+                            family bought — computed, and for a release rendered
+                            nowhere at all. The split is the GROUPING now, which
+                            is what the family asked for three times, so what is
+                            left to say is what each bucket spans. Every figure
+                            and every count here is derived from the account
+                            registry and the positions: no manager is named and
+                            no number is typed in. */}
+                        {b.key === MANDATE_BUCKET && m.mandateSpan.accounts > 0 && (
+                          <span className="mt-0.5 block text-[10px] leading-relaxed text-slate-500"
+                            title={ROUTE_NOTE.mandate}>
+                            {many(m.mandateSpan.accounts, "mandate")} · {many(m.mandateSpan.managers, "manager")} · the manager chooses these holdings, the family owns them
+                            {m.mandateSpan.sleeveMV > 0 && <> · includes {money(m.mandateSpan.sleeveMV)} of {listOf(m.mandateSpan.sleeveClasses)} the mandates hold, so each ties to the statement it came from</>}
+                          </span>
+                        )}
+                        {b.key === DIRECT_EQUITY_BUCKET && m.directSpan.accounts > 0 && (
+                          <span className="mt-0.5 block text-[10px] leading-relaxed text-slate-500"
+                            title={ROUTE_NOTE.own}>
+                            {many(m.directSpan.accounts, "account")} · {ROUTE_NOTE.own}
+                            {m.mandateSpan.shareMV > 0 && <> · a further {money(m.mandateSpan.shareMV)} of company shares is held under the mandates above and counted there</>}
+                          </span>
+                        )}
+                        {b.key === UNROUTED_EQUITY_BUCKET && m.unroutedSpan.accounts > 0 && (
+                          <span className="mt-0.5 block text-[10px] leading-relaxed text-amber-400">
+                            {many(m.unroutedSpan.accounts, "account")} · {ROUTE_NOTE.unknown}, so neither claim can be made about who chose these
+                          </span>
+                        )}
+                        {/* AND A ROW WHOSE INVESTED COVERS FEWER HOLDINGS THAN
+                            ITS CURRENT SAYS SO. `sumOrNull` skips a position
+                            whose statement reports no cost — a depository
+                            records what is held and never what it cost — so
+                            Invested and Return here are struck over part of the
+                            row. Unsaid, a reader divides the two printed cells
+                            and gets a return neither of them claims. This is the
+                            same contradiction the Total row was fixed for, one
+                            level down. */}
+                        {b.withoutCost > 0 && (
                           <span className="mt-0.5 block text-[10px] leading-relaxed text-slate-500">
-                            {money(m.equityManagedMV)} chosen under a manager&rsquo;s mandate · {money(m.equitySelfMV)} bought in the family&rsquo;s own account
+                            {b.withoutCost === b.count
+                              ? <>no statement reports what {b.count === 1 ? "this holding" : "these holdings"} cost, so Invested and Return are absent rather than struck on part of the row</>
+                              : <>Invested and Return cover {b.count - b.withoutCost} of {many(b.count, "holding")} · {money(b.withoutCostMV)} reports no cost and is in Current only</>}
+                          </span>
+                        )}
+                        {/* A CLASS ROW WHOSE HOLDING MOSTLY MOVED UPSTAIRS SAYS SO.
+                            Every rupee of cash in this book sits inside a PMS
+                            mandate; the row left here is two fund statements
+                            reporting a zero balance, and printed alone it reads
+                            as a book with no cash in it. A measured zero keeps
+                            its zero — the reason goes beside it. */}
+                        {(m.mandateClassMV[b.key] ?? 0) > 0 && (
+                          <span className="mt-0.5 block text-[10px] leading-relaxed text-slate-500">
+                            {b.count > 0 && b.current === 0 && <>{many(b.count, "holding")} reported at a zero balance · </>}
+                            {money(m.mandateClassMV[b.key])} more is held inside the PMS mandates above and counted there
                           </span>
                         )}
                       </td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
-                      <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap"><Auditable to={bucketHref(b)} title={`${b.key} — trace to source`}>{money(b.current)}</Auditable></td>
+                      <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap"><Auditable to={bucketHref(b)} title={`${bucketLabel(b.key)} — trace to source`}>{money(b.current)}</Auditable></td>
                       <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
                     </tr>
@@ -821,9 +966,10 @@ export function MorningCIO() {
           {m.emptyBuckets.length > 0 && (
             <p className="mt-3 rounded-lg border border-dashed border-ink-600/70 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
               <span className="font-medium text-slate-400">{DASH} Not held:</span>{" "}
-              {m.emptyBuckets.join(", ")}. No statement in this book carries a holding in {m.emptyBuckets.length === 1 ? "that class" : "those classes"},
+              {m.emptyBuckets.map(bucketLabel).join(", ")}. No statement in this book carries a holding in {m.emptyBuckets.length === 1 ? "that bucket" : "those buckets"},
               so {m.emptyBuckets.length === 1 ? "it is" : "they are"} named here rather than shown as a row of zeros — an empty bucket and a bucket
-              worth nothing are different facts.
+              worth nothing are different facts. A class the mandates hold on the book&rsquo;s behalf is not named here: it is
+              counted on the mandate row and said so there, which is a different fact from an absence.
             </p>
           )}
         </Card>

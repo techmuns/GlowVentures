@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { X, Plus, GitCompare } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -9,14 +9,17 @@ import { StockLink } from "@/components/StockLink";
 import { Markdown } from "@/components/Markdown";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions, sumOrNull, isCompanyShare, isFundVehicle } from "@/lib/analytics";
+import {
+  sum, consolidatedMarketValue, dedupedPositions, sumOrNull, isCompanyShare,
+  excludedClasses, assetClassLabel, holdingRoute, ROUTE_NOTE, DIRECT_EQUITY_BUCKET,
+} from "@/lib/analytics";
 import { symbolFor } from "@/lib/quotes";
 import { fmtPct, changeColor } from "@/lib/format";
 import { fetchRatios, isRatiosError, DEFAULT_METRICS, type Ratios, type RatiosError } from "@/lib/ratios";
 import { fetchPriceHistory, type PriceResult } from "@/lib/prices";
 import { HORIZON_COLS, fmtReturn } from "@/lib/series";
 import { readWatchlist, upsidePct } from "@/lib/watchlist";
-import { accountIndex } from "@/lib/accounts";
+import { accountIndex, engagementOf } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
 import { isOutage, outageHeadline, outageSentence } from "@/lib/upstreamStatus";
 
@@ -74,6 +77,16 @@ export function CompareCompanies() {
    * that can never be filled for either. This is not a narrowing that hides
    * value: the fund's own figures are on Portfolio Monitor's AIF section and on
    * its holding page. It is the page answering the question it asks.
+   *
+   * `isCompanyShare` AND NOT `isDirectEquity`, DELIBERATELY. The holdings tables
+   * now group a manager-held share under its mandate, which is what the family
+   * asked for — a mandate is what they bought and what its statement totals. A
+   * COMPARISON is the other question: Jammu Kashmir Bank has a sector, a market
+   * cap, an NSE symbol, a concall and a peer set whether Carnelian chose it or
+   * the family did, and dropping the ₹127 Cr of mandate-held names from this
+   * picker would leave a research screen that cannot open most of the companies
+   * this book actually owns. So the picker offers both routes and the caption
+   * says which is which, rather than a heading implying it offers one.
    */
   const candidates = useMemo<Candidate[]>(() => {
     if (!portfolio) return [];
@@ -99,12 +112,34 @@ export function CompareCompanies() {
       .sort((a, b) => sum(b.rows.map((r) => r.marketValue)) - sum(a.rows.map((r) => r.marketValue)));
   }, [portfolio]);
 
-  /** Fund units and cash the picker does not offer — named, never silently dropped. */
-  const notCompanies = useMemo(() => {
-    if (!portfolio) return { funds: 0, mv: 0 };
-    const rows = dedupedPositions(portfolio.positions.filter(isFundVehicle));
-    return { funds: new Set(rows.map((p) => p.securityKey)).size, mv: sum(rows.map((p) => p.marketValue)) };
-  }, [portfolio]);
+  /**
+   * WHAT THE PICKER LEFT OUT, PER CLASS AND WITH ITS VALUE — from the book, not
+   * from a list typed here.
+   *
+   * It used to count fund units alone and describe them in words this page chose
+   * for itself ("AIF folios, mutual-fund schemes and ETFs"), which is a class
+   * vocabulary a surface owns privately and therefore a vocabulary that goes
+   * stale the moment another surface renames one. `excludedClasses` is the
+   * remainder of `isCompanyShare` computed from the same positions, and
+   * `assetClassLabel` is the one place a class becomes a word. Cash and the
+   * unlisted holdings are named now too — they were being dropped silently, and
+   * the standing rule is that a narrowed view NAMES its remainder.
+   *
+   * Consolidated, because these are book-wide values: a holding reported under
+   * two members counts once.
+   */
+  const excluded = useMemo(() => excludedClasses(consolidated, isCompanyShare), [consolidated]);
+  const excludedMV = useMemo(() => sum(excluded.map((c) => c.mv)), [excluded]);
+  /**
+   * HOW MANY OF THE OFFERED NAMES A MANAGER CHOSE. The picker offers both routes
+   * and this is what stops the caption implying otherwise: a reader who reads
+   * "companies this book holds" as "companies the family bought" would think the
+   * list is short by every mandate name in it.
+   */
+  const mandateNames = useMemo(
+    () => candidates.filter((c) => c.rows.some((r) => holdingRoute(engagementOf(accIdx, r) || null) === "mandate")).length,
+    [candidates, accIdx],
+  );
   const chosen = useMemo(
     () => picked.map((k) => candidates.find((c) => c.securityKey === k)).filter((c): c is Candidate => !!c),
     [picked, candidates],
@@ -179,7 +214,7 @@ export function CompareCompanies() {
       <PageHeader
         eyebrow="RESEARCH"
         title="Compare companies"
-        subtitle={<>Up to {MAX} names side by side — position, price, ratios and returns. The picker lists the companies this book holds directly; a name that appears in no statement here has nothing to compare.</>}
+        subtitle={<>Up to {MAX} names side by side — position, price, ratios and returns. The picker lists every company this book holds a share in, whoever chose it; a name that appears in no statement here has nothing to compare.</>}
         right={<BasisPill liveText="Position and price move with the feed; ratios and filings do not." />}
       />
 
@@ -188,14 +223,22 @@ export function CompareCompanies() {
         subtitle={`${picked.length} of ${MAX} selected${picked.length >= MAX ? " — remove one to add another" : ""}`}
         right={<Pill>{candidates.length} companies in the book</Pill>}
       >
-        {notCompanies.funds > 0 && (
-          <p className="mb-3 text-[11px] leading-relaxed text-slate-500">
-            The picker lists <span className="text-slate-400">company shares</span> only. {notCompanies.funds}{" "}
-            fund {notCompanies.funds === 1 ? "holding" : "holdings"} worth {money(notCompanies.mv)} — AIF folios,
-            mutual-fund schemes and ETFs — are not offered here: a fund is a wrapper holding many companies, so it has
-            no PE, no filings and no peer set of its own. Its position and return are on Portfolio Monitor.
-          </p>
-        )}
+        <p className="mb-3 text-[11px] leading-relaxed text-slate-500">
+          The picker lists <span className="text-slate-400">company shares only</span> — and both routes into
+          them, which is why it is longer than the {DIRECT_EQUITY_BUCKET} section of a holdings table.
+          {mandateNames > 0 && <> {mandateNames} of the {candidates.length} names offered here are {ROUTE_NOTE.mandate}.</>}{" "}
+          A share has a sector, a market cap, an NSE symbol and a concall whichever way it was bought, so this
+          page compares them all; the holdings tables are where a mandate&rsquo;s names sit under their manager.
+          {excluded.length > 0 && <> Not offered — {money(excludedMV)} of the book, named rather than dropped:{" "}
+            {excluded.map((c, i) => (
+              <Fragment key={c.key}>
+                {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
+                <span className="font-medium text-slate-400">{assetClassLabel(c.key)}</span> {money(c.mv)}
+              </Fragment>
+            ))}. Nothing in that list is a listed company this page could look up: a fund is a wrapper holding
+            many companies, so it has no PE, no filings and no peer set of its own, and nothing else there
+            carries a ticker either. Their position and return are on Portfolio Monitor.</>}
+        </p>
         {chosen.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {chosen.map((c) => (

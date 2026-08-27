@@ -14,6 +14,7 @@ import { UploadHistory } from "@/pages/UploadHistory";
 import { DataAudit } from "@/pages/DataAudit";
 import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
+import { MandateHoldings } from "@/pages/MandateHoldings";
 import { CompareCompanies } from "@/pages/CompareCompanies";
 import { Watchlist } from "@/pages/Watchlist";
 // FOOS-spec preview pages — each implements a spec layer whose live data source
@@ -57,6 +58,15 @@ export default function App() {
                 no ISIN at all, so a route keyed on one would have no address for
                 most of the holdings. */}
             <Route path="/stock/:securityKey" element={<Gate><StockInfo /></Gate>} />
+            {/* ONE DISCRETIONARY MANDATE AND EVERY SHARE INSIDE IT — the
+                drill-down the family asked for three times. A stock held through
+                a PMS is shown here, under the manager who chose it, which is
+                what lets the holdings tables call the rest "Direct Equity"
+                honestly. Keyed by accountId because a mandate IS an account: the
+                same manager runs two of them for two family members, and each
+                has its own strategy, its own as-of and its own statement total
+                to tie to. */}
+            <Route path="/mandate/:accountId" element={<Gate><MandateHoldings /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
             <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />

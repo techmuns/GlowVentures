@@ -5,7 +5,12 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel, holdingRoute, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import {
+  sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel,
+  holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
+  holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+} from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
@@ -93,6 +98,57 @@ export function StockInfo() {
     }
     return [...seen.entries()].sort((a, b) => b[1] - a[1]);
   }, [rows, accIdx]);
+  /**
+   * WHERE THE HOLDINGS TABLES FILE THIS NAME — the same key they group on.
+   *
+   * The chip beside the security name used to read `assetClassLabel(assetClass)`,
+   * and for a share a discretionary manager picked that is the falsehood the
+   * family reported twice: a page headed "Jammu Kashmir Bank", chipped with the
+   * word the holdings table reserves for shares the family chose itself, saying
+   * two lines lower that Carnelian manages it. The asset class was never wrong —
+   * these ARE company shares, they keep their GICS sector and their concall and
+   * every exposure surface still counts them (`isCompanyShare`). What the chip
+   * was doing was answering a question it had not been asked.
+   *
+   * `holdingBucket` is the ONE place that decides the grouping, so this chip and
+   * the Portfolio Monitor's section headings cannot drift apart — a bucket
+   * re-derived per screen is a bucket that disagrees with itself.
+   *
+   * One name can in principle be held both ways at once (none is in this drop),
+   * so the buckets are collected ACROSS the rows and every one is chipped rather
+   * than the first row's speaking for all of them.
+   */
+  const buckets = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const r of rows) {
+      const k = holdingBucket(r, engagementOf(accIdx, r) || null);
+      seen.set(k, (seen.get(k) ?? 0) + r.marketValue);
+    }
+    return [...seen.entries()].sort((a, b) => b[1] - a[1]);
+  }, [rows, accIdx]);
+  /**
+   * THE MANDATES THIS NAME SITS INSIDE, for the line above the fold and the
+   * link on each row.
+   *
+   * A reader who lands on a company page from a search has no way to discover
+   * that the position is one of thirty-odd a manager runs on the family's
+   * behalf, and no way to reach the other twenty-nine — which is precisely what
+   * the family asked for. The account IS the mandate (`/mandate/:accountId`):
+   * two managers here run one strategy for two members, so each has its own
+   * as-of, its own statement total and its own page.
+   */
+  const mandates = useMemo(() => rows
+    .filter((r) => isMandateHeld(engagementOf(accIdx, r) || null))
+    .map((r) => ({
+      accountId: r.accountId,
+      // Strategy where the manager prints one, else the provider — one helper,
+      // so this link is labelled exactly as the mandate page titles itself.
+      label: mandateLabel(accIdx.get(r.accountId)),
+      provider: providerOf(accIdx, r),
+      owner: ownerOf(accIdx, r),
+      mv: r.marketValue,
+    }))
+    .sort((a, b) => b.mv - a.mv), [rows, accIdx]);
   const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
   const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
   const NOT_A_COMPANY_LABEL: Record<string, string> = {
@@ -176,16 +232,32 @@ export function StockInfo() {
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {/* The asset class is what this holding IS and it leads, because on
-                a page headed by a security name it is the one fact that
-                separates a company from a fund. A fund's `sector` is
-                "Unclassified" — true of the model and misleading on screen,
-                since it reads as a sector nobody got round to assigning rather
-                than a property the thing does not have. */}
-            {assetClass && <Pill tone={assetClass === "Equity" ? "info" : "core"}>{assetClassLabel(assetClass)}</Pill>}
-            {/* The asset class says WHAT it is; this says WHO decided to hold
-                it. They are different questions and the page used to answer
-                only the first while its own table answered the second. */}
+            {/* WHERE THIS HOLDING IS FILED, which for everything that is not a
+                mandate-held share is still exactly its asset class — a fund's
+                chip reads AIF, a cash line's reads Cash, and only a share a
+                manager chose now reads the mandate bucket instead of a word
+                that claims the family picked it. `bucketLabel` and the monitor's
+                section headings come from the same function on purpose.
+
+                A fund's `sector` is "Unclassified" in the model — true, and
+                misleading on screen, since it reads as a sector nobody got round
+                to assigning rather than a property the thing does not have. That
+                is stated separately below. */}
+            {buckets.map(([k]) => (
+              <Pill key={k} tone={k === MANDATE_BUCKET || k === DIRECT_EQUITY_BUCKET || k === UNROUTED_EQUITY_BUCKET ? "info" : "core"}>
+                <span title={k === MANDATE_BUCKET
+                  ? "Company shares, held under a discretionary mandate. The holdings tables file them under the manager who chose them, not with the shares the family bought itself."
+                  : `How the holdings tables group this holding — ${bucketLabel(k)}.`}>{bucketLabel(k)}</span>
+              </Pill>
+            ))}
+            {/* The bucket above says WHERE THE BOOK FILES IT; this says HOW IT
+                CAME TO BE HELD. They coincide for a mandate — which is the whole
+                point of the regrouping — and they do not for anything else: an
+                AIF folio buckets as AIF and is routed as a fund vehicle, and a
+                cash sleeve inside a mandate buckets with the mandate while its
+                own route is the mandate too. Kept because the route is stated
+                per row in the table below and a chip a reader can compare it
+                against is how the two are checked against each other. */}
             {routes.map(([k]) => (
               <Pill key={k} tone="core">
                 <span title={ROUTE_NOTE[k as keyof typeof ROUTE_NOTE]}>via {ROUTE_LABEL[k as keyof typeof ROUTE_LABEL]}</span>
@@ -241,6 +313,29 @@ export function StockInfo() {
         )}
       </div>
 
+      {/* ABOVE THE FOLD, NOT SIX CARDS DOWN.
+          The "Held via" column three cards below has always carried this, and
+          the family read the page top-to-bottom and formed their belief from the
+          chip before they ever reached it. A fact that contradicts what a reader
+          has already concluded has to arrive before the conclusion does. It
+          names the mandate and links to it, because "a manager chose this" with
+          no way to see WHAT ELSE that manager chose is half an answer. */}
+      {mandates.length > 0 && (
+        <p className="mb-4 text-[12.5px] leading-relaxed text-slate-400">
+          <span className="font-medium text-slate-300">Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
+          {" — the family owns these shares and the manager decides them: "}
+          {mandates.map((m, i) => (
+            <span key={m.accountId}>
+              {i > 0 && ", "}
+              <Link to={`/mandate/${encodeURIComponent(m.accountId)}`} className="text-champagne-400 hover:underline" title="Open the mandate — every holding the manager runs inside it, and the statement it ties to">{m.label}</Link>
+              <span className="text-slate-500">{m.label === m.provider ? "" : ` · ${m.provider}`} · {m.owner}</span>
+            </span>
+          ))}
+          {". Every other holding in "}{mandates.length === 1 ? "that mandate" : "those mandates"}{" is on "}
+          {mandates.length === 1 ? "its" : "their"}{" own page."}
+        </p>
+      )}
+
       {/* KPI strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Holding value" value={<Auditable to={ledgerHref(name)} title="Holding value — trace to the ledger">{fmtFromBase(mv, { compact: true })}</Auditable>} sub={`${weight.toFixed(1)}% of book`} icon={<Wallet className="h-4 w-4" />} />
@@ -288,7 +383,10 @@ export function StockInfo() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {[...rows].sort((a, b) => b.marketValue - a.marketValue).map((r) => (
+                  {[...rows].sort((a, b) => b.marketValue - a.marketValue).map((r) => {
+                  const eng = engagementOf(accIdx, r) || null;
+                  const route = holdingRoute(eng);
+                  return (
                     <tr key={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
                       <td className="px-4 py-2.5 text-[12px] text-slate-400">
@@ -299,10 +397,27 @@ export function StockInfo() {
                         {/* ONE LINE. A second <div> here becomes a newline in
                             innerText, which splits every account row in two and
                             breaks the entity-count check on a dually-reported
-                            holding. The engagement rides in the tooltip. */}
-                        <span title={`${engagementOf(accIdx, r) || "engagement not stated"} — ${ROUTE_NOTE[holdingRoute(engagementOf(accIdx, r) || null)]}`}>
-                          {ROUTE_LABEL[holdingRoute(engagementOf(accIdx, r) || null)]}
+                            holding. The engagement rides in the tooltip, and the
+                            mandate link is INLINE for the same reason. */}
+                        <span title={`${eng || "engagement not stated"} — ${ROUTE_NOTE[route]}`}>
+                          {ROUTE_LABEL[route]}
                         </span>
+                        {/* THE ROW IS THE DOOR INTO THE MANDATE. A reader who
+                            arrived on this name has one question left — what
+                            else is in there — and this is the only place on the
+                            page that can answer it per account, which matters
+                            where one name is held under two different mandates.
+                            Labelled with the strategy the manager prints, or the
+                            manager itself where none is printed. */}
+                        {isMandateHeld(eng) && (
+                          <>
+                            {" · "}
+                            <Link to={`/mandate/${encodeURIComponent(r.accountId)}`} className="text-champagne-400 hover:underline"
+                              title="Open this mandate — every holding the manager runs in it, tied to the statement it came from">
+                              {mandateLabel(accIdx.get(r.accountId))}
+                            </Link>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
@@ -314,7 +429,8 @@ export function StockInfo() {
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
                 <tfoot className="border-t-2 border-ink-600 font-semibold">
                   <tr>
@@ -444,12 +560,33 @@ export function StockInfo() {
             here by decision rather than by a feed being down.
           </p>
           {fundVehicle && (
-            <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-              The companies inside it are the manager's holdings, not this book's. Showing them would need the scheme's
-              own portfolio disclosure joined to this folio, and no statement in this drop carries one for it — so the
-              fund's value stays whole, here and in every total, rather than being spread across sectors it was never
-              reported against.
-            </p>
+            <>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
+                The companies inside it are the manager's holdings, not this book's. Showing them would need the scheme's
+                own portfolio disclosure joined to this folio, and no statement in this drop carries one for it — so the
+                fund's value stays whole, here and in every total, rather than being spread across sectors it was never
+                reported against.
+              </p>
+              {/* WHY THIS HAS TO BE SAID HERE, AND SAID AS A CONTRAST.
+                  A reader who has just learnt that a share held through a PMS is
+                  listed inside that manager's drill-down will come to a fund
+                  expecting the same page and read its absence as something not
+                  built yet. The two look alike and are not: a PMS reports every
+                  share it holds because the FAMILY owns those shares — the
+                  manager only chose them — so the rollup is a real, documented
+                  one. A fund unit is one purchase of somebody else's portfolio,
+                  the fund owns the companies, and no statement here says which
+                  they are. So there is no list to render, and this is a decided,
+                  permanent absence rather than an empty table waiting on a feed. */}
+              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
+                <span className="font-medium text-slate-300">And that is why this page has no list of underlying
+                companies, though a PMS mandate's page does.</span> Under a mandate the family owns each share and the
+                manager merely picks it, so every one is reported by name and the mandate's own page carries all of them.
+                A fund unit is the opposite: the fund owns the companies, this book is told only what the unit is worth,
+                and the names behind it are never reported to it. There is nothing withheld here and nothing pending —
+                the whole of what the statement says about this holding is already above.
+              </p>
+            </>
           )}
         </Card>
       ) : (

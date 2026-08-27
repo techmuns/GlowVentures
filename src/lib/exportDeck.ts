@@ -35,8 +35,11 @@
 
 import PptxGenJS from "pptxgenjs";
 import type { Portfolio, Position } from "./types";
-import { staleAccounts, stalenessNote } from "./accounts";
-import { byAssetClass, byEntity, bySecurity, consolidatedMarketValue, doubleCountedValue, publicPrivateSplit, sumOrNull, unpriced, assetClassLabel } from "./analytics";
+import { accountIndex, engagementOf, staleAccounts, stalenessNote } from "./accounts";
+import {
+  byEntity, bySecurity, bucketBy, consolidatedMarketValue, doubleCountedValue, publicPrivateSplit, sumOrNull, unpriced,
+  bucketLabel, holdingBucket, isCompanyShare, isMandateHeld, assetClassLabel, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, ROUTE_NOTE, sum,
+} from "./analytics";
 import { displaySecurity } from "./format";
 
 // The dashboard's palette, so the deck reads as the same product.
@@ -159,21 +162,66 @@ export async function exportReviewDeck(input: DeckInput): Promise<void> {
     s2.addText(stalenessNote(portfolio) ?? "", { x: 0.4, y: 4.5, w: 9.2, h: 0.5, fontSize: 9.5, color: C.muted, fontFace: "Arial" });
   }
 
-  // ── 3 · Allocation by asset class ─────────────────────────────────────────
-  const classes = byAssetClass(consolidated);
-  const s3 = slide("Allocation by asset class", "What each holding IS — a PMS mandate is how an account is run, not an asset class");
+  // ── 3 · Allocation by asset class & mandate ───────────────────────────────
+  //
+  // THE SAME BUCKETS THE SCREEN SHOWS, FROM THE SAME FUNCTION. `holdingBucket`
+  // rolls a share chosen under a discretionary mandate up into that mandate and
+  // leaves Direct Equity meaning shares the family bought itself — which is what
+  // the family asked for three times, and what the Morning CIO allocation now
+  // renders. A deck built on `byAssetClass` would put those two back in one
+  // "Equity" row, and a slide travels without the screen that would contradict
+  // it. §5 is untouched: a PMS is an ENGAGEMENT, never an `assetClass`; only the
+  // grouping reads it.
+  //
+  // The engagement comes from the ACCOUNT, so the registry is indexed once here
+  // rather than a manager being inferred from anything printed on a position.
+  const accIdx = accountIndex(portfolio.accounts);
+  const buckets = bucketBy(consolidated, (x) => holdingBucket(x, engagementOf(accIdx, x)));
+  const s3 = slide(
+    "Allocation by asset class & mandate",
+    "Shares chosen under a discretionary mandate roll up into that mandate; everything else groups by what it IS",
+  );
   table(s3, [
-    head(["Asset class", "Value", "Weight", "Holdings"]),
-    ...classes.map((b) => [
+    head(["Asset class / mandate", "Value", "Weight", "Holdings"]),
+    ...buckets.map((b) => [
       // The screen label, from the one place that chooses it — a deck slide that
       // says "Equity" beside a monitor that says "Direct Equity" is two names for
       // one row, and a slide travels without the screen that explains it.
-      { text: assetClassLabel(b.key), options: { align: "left" as const } },
+      { text: bucketLabel(b.key), options: { align: "left" as const } },
       { text: fmt(b.mv), options: { align: "right" as const } },
       { text: `${b.weight.toFixed(1)}%`, options: { align: "right" as const } },
       { text: String(b.count), options: { align: "right" as const } },
     ]),
   ], 1.2, [3.4, 2.4, 1.7, 1.7]);
+
+  // WHAT THE MANDATE ROW SPANS, DERIVED — a slide has no tooltip to put it in.
+  // Counts come from the registry and the positions; no manager is named, and a
+  // mandate's cash sleeve is counted with it so the bucket ties to the totals
+  // its own statements print. Said here because that is the one thing a reader
+  // cannot work out from the four columns above.
+  const mandateRows = consolidated.filter((x) => isMandateHeld(engagementOf(accIdx, x)));
+  const mandateAccounts = new Set(mandateRows.map((x) => x.accountId));
+  const mandateManagers = new Set([...mandateAccounts].map((id) => accIdx.get(id)?.provider).filter(Boolean));
+  const sleeveRows = mandateRows.filter((x) => !isCompanyShare(x));
+  const sleeveMV = sum(sleeveRows.map((x) => x.marketValue));
+  const sleeveClasses = [...new Set(sleeveRows.map((x) => assetClassLabel(x.assetClass)))];
+  if (mandateAccounts.size) {
+    s3.addText(
+      [
+        `The ${MANDATE_BUCKET} row covers ${mandateAccounts.size} mandate${mandateAccounts.size === 1 ? "" : "s"}`,
+        ` run by ${mandateManagers.size} manager${mandateManagers.size === 1 ? "" : "s"} — ${ROUTE_NOTE.mandate}.`,
+        sleeveMV > 0
+          ? ` It includes ${fmt(sleeveMV)} of ${sleeveClasses.join(", ")} the mandates hold, so the row ties to the statements it came from.`
+          : "",
+        // The two bucket names come from the one place that chooses them, so a
+        // slide cannot end up naming a row the screen does not have.
+        buckets.some((b) => b.key === DIRECT_EQUITY_BUCKET)
+          ? ` ${bucketLabel(DIRECT_EQUITY_BUCKET)} is shares ${ROUTE_NOTE.own}.`
+          : "",
+      ].join(""),
+      { x: 0.4, y: 4.35, w: 9.2, h: 0.7, fontSize: 9.5, color: C.muted, fontFace: "Arial" },
+    );
+  }
 
   // ── 4 · Allocation by family entity ───────────────────────────────────────
   // PER-OWNER, so the RAW set is correct here: a holding reported on two

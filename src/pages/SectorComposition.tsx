@@ -6,7 +6,10 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, assetClassLabel, holdingRoute } from "@/lib/analytics";
+import {
+  bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, assetClassLabel,
+  holdingRoute, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
+} from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -46,7 +49,8 @@ export function SectorComposition() {
    * reason it is wrong here.
    */
   /**
-   * SECTOR IS A DIRECT-EQUITY VIEW. Nothing else on this book HAS a sector.
+   * THIS PAGE IS COMPANY SHARES — `isCompanyShare`, AND DELIBERATELY NOT
+   * `isDirectEquity`.
    *
    * A GICS sector is a property of a COMPANY. A fund — an AIF folio, a mutual
    * fund scheme, an ETF, a liquid sweep — is a wrapper holding many companies,
@@ -55,17 +59,32 @@ export function SectorComposition() {
    * which fixed the worst of it and left the rest: Unclassified still read
    * **49.0%, ₹88.6 Cr, top holding "Helios Flexi Cap Fund"** — a mutual fund
    * standing at the head of a sector table, in the largest slice of the chart,
-   * describing nothing.
+   * describing nothing. So the denominator is `assetClass === "Equity"`.
    *
-   * So the denominator is `assetClass === "Equity"` — shares in companies the
-   * family holds directly, whether through a PMS mandate or its own demat. That
-   * is what the family asked for and it is also the only set the question is
-   * answerable on. Everything else is NAMED below with its value, per class,
-   * rather than folded in as a false sector: a fund's look-through would need
-   * each scheme's own portfolio disclosure, which this book has for exactly one
-   * scheme and does not join to the folios the family holds.
+   * THE HOLDINGS TABLES HAVE SINCE SPLIT THAT SET IN TWO and this one must not
+   * follow them. On Portfolio Monitor and Morning CIO a share a discretionary
+   * manager chose now sits inside its mandate (`MANDATE_BUCKET`) and "Direct
+   * Equity" means what the words say — shares the family bought itself. That is
+   * the right answer to "who decided this?", which is the holdings-table
+   * question. It is the wrong answer to "what is this family exposed to?":
+   * narrowing HERE to own-held shares would take ₹127 Cr of real sector
+   * exposure off the page and leave the table to depository rows that mostly
+   * print no sector at all. A mandate reports every share underneath it, so a
+   * manager's book is analysable by sector exactly like a self-bought one — a
+   * look-through into a mandate is a GAIN for exposure analysis, not something
+   * to undo.
    *
-   * The residual Unclassified is now real — direct equity whose own statement
+   * Both are therefore in, the split is RENDERED rather than merely computed
+   * (see `mandateMV` / `ownMV` below and the card that prints them), and the
+   * caption says which word means which set so a reader who has just met
+   * "Direct Equity" on the holdings table cannot read this table as that set.
+   *
+   * Everything that is not a share in a company is NAMED below with its value,
+   * per class, rather than folded in as a false sector: a fund's look-through
+   * would need each scheme's own portfolio disclosure, which this book has for
+   * exactly one scheme and does not join to the folios the family holds.
+   *
+   * The residual Unclassified is now real — company shares whose own statement
    * printed no sector, listed in `docs/BOOK-REPORT.md` — and it is stated below
    * as such rather than being the place funds went to hide.
    */
@@ -77,14 +96,34 @@ export function SectorComposition() {
   const p = consolidated.filter(isCompanyShare);
   const totalMV = consolidatedMarketValue(p);
   /**
-   * WHO CHOSE THESE SHARES, split out for the caption.
+   * WHO CHOSE THESE SHARES — split out, and RENDERED.
    *
-   * "Company shares" is an asset-class statement and the page's old wording,
-   * "direct equity", was quietly making a second claim on top of it — that the
-   * family picked them. Most of this table is a discretionary manager's book.
+   * "Company shares" is an asset-class statement; "Direct Equity" is a claim
+   * about WHO DECIDED, and on the holdings tables it is now the narrower set.
+   * Most of this table is a discretionary manager's book, so the split is on
+   * screen with its figures rather than living in a caption's adjective.
+   *
+   * A helper that returns the right number into no caller looks exactly like a
+   * working feature — these two were computed and only ever appeared inside one
+   * sentence at the foot of the page.
+   *
+   * The route comes from the ACCOUNT (`engagementOf`), never from the position:
+   * how a holding is run is a fact about the account that holds it.
    */
-  const mandateMV = sum(p.filter((x) => holdingRoute(engagementOf(accIdx, x) || null) === "mandate").map((x) => x.marketValue));
-  const ownMV = sum(p.filter((x) => holdingRoute(engagementOf(accIdx, x) || null) === "own").map((x) => x.marketValue));
+  const routeOf = (x: (typeof p)[number]) => holdingRoute(engagementOf(accIdx, x) || null);
+  const mandateRows = p.filter((x) => routeOf(x) === "mandate");
+  const ownRows = p.filter((x) => routeOf(x) === "own");
+  // Shares in an account whose engagement is neither — `unknown` is never
+  // defaulted, so this is empty in this drop and must still be named the day a
+  // statement arrives that does not say how its account is run.
+  const otherRows = p.filter((x) => routeOf(x) !== "mandate" && routeOf(x) !== "own");
+  const mandateMV = sum(mandateRows.map((x) => x.marketValue));
+  const ownMV = sum(ownRows.map((x) => x.marketValue));
+  const otherMV = sum(otherRows.map((x) => x.marketValue));
+  const mandateAccounts = new Set(mandateRows.map((x) => x.accountId)).size;
+  const ownAccounts = new Set(ownRows.map((x) => x.accountId)).size;
+  /** A share of this table's own total, omitted rather than shown as 0 when there is no total. */
+  const shareOfTable = (v: number) => (totalMV > 0 ? <> · {((v / totalMV) * 100).toFixed(1)}% of this table</> : null);
   const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
   // Every class this page does NOT cover, largest first, so the note below can
   // name them from the book rather than from a hardcoded list. `isPrivateClass`
@@ -131,10 +170,10 @@ export function SectorComposition() {
   });
   return (
     <div>
-      <PageHeader eyebrow="Allocation" title="Sector Composition" subtitle="Direct equity only — shares in companies the family holds, through a manager's mandate or its own demat"
+      <PageHeader eyebrow="Allocation" title="Sector Composition" subtitle="Company shares only — every share in a company this family owns, whether a manager chose it under a mandate or the family bought it itself"
         right={<div className="flex items-center gap-2">
           <BasisPill liveText={feedLive ? "Live prices" : "Workbook marks"}
-            hint="Direct equity only — a GICS sector is a property of a company, and no statement here prints one for a fund. Values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy — each provider's own label is kept per position." />
+            hint="Company shares only — a GICS sector is a property of a company, and no statement here prints one for a fund. Mandate-held shares are IN: a manager's statement reports every share underneath it, so it can be read by sector like any other. Values, weights and returns are rebuilt from live prices; cost basis comes from the statements. Sectors are our normalised taxonomy — each provider's own label is kept per position." />
           <Pill tone="info">{sectors.length} sectors</Pill>
         </div>} />
       <Card className="mt-1">
@@ -152,7 +191,7 @@ export function SectorComposition() {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <div className="label-xs">Direct equity</div>
+              <div className="label-xs">Company shares</div>
               <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(totalMV, { compact: true })}</div>
             </div>
           </div>
@@ -168,6 +207,49 @@ export function SectorComposition() {
               </li>
             ))}
           </ul>
+        </div>
+        {/* WHO CHOSE THEM — the split that decides how the holdings tables group
+            these same shares, printed here with its figures because this table
+            deliberately spans BOTH sides of it. Computed above and, until now,
+            rendered only inside one sentence at the foot of the page. */}
+        <div className="mt-5 grid gap-4 border-t border-ink-700/70 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <div className="label-xs">Chosen by a manager</div>
+            <div className="mono text-sm font-semibold text-slate-100">
+              {mandateRows.length > 0
+                ? fmtFromBase(mandateMV, { compact: true })
+                : <AbsentCell reason="No account in this book states a discretionary mandate, so no share on this page was chosen by a manager." />}
+            </div>
+            <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+              {mandateRows.length > 0
+                ? <>{mandateRows.length} holdings across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}{shareOfTable(mandateMV)} · the holdings tables group these under “{MANDATE_BUCKET}”, and they are in this table because the sector belongs to the company, not to whoever picked it</>
+                : <>No statement here states a discretionary mandate.</>}
+            </div>
+          </div>
+          <div>
+            <div className="label-xs">Bought by the family</div>
+            <div className="mono text-sm font-semibold text-slate-100">
+              {ownRows.length > 0
+                ? fmtFromBase(ownMV, { compact: true })
+                : <AbsentCell reason="No demat or broking account in this book holds a share the family bought itself." />}
+            </div>
+            <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+              {ownRows.length > 0
+                ? <>{ownRows.length} holdings across {ownAccounts} {ownAccounts === 1 ? "account" : "accounts"}{shareOfTable(ownMV)} · this is the set the holdings tables call “{DIRECT_EQUITY_BUCKET}”</>
+                : <>No own demat or broking holding in this book.</>}
+            </div>
+          </div>
+          {otherRows.length > 0 && (
+            <div>
+              <div className="label-xs">Route not stated</div>
+              <div className="mono text-sm font-semibold text-slate-100">{fmtFromBase(otherMV, { compact: true })}</div>
+              <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                {otherRows.length} holdings{shareOfTable(otherMV)} · no statement for their account says how it is run, so this book
+                cannot claim either that a manager chose them or that the family did. They are still shares in companies and still
+                carry a sector, so they are counted here.
+              </div>
+            </div>
+          )}
         </div>
       </Card>
       {/* ── Compare sectors ────────────────────────────────────────────────
@@ -273,9 +355,9 @@ export function SectorComposition() {
               </tbody>
             </table>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              Weights are of the <span className="text-slate-400">direct-equity book</span>, the same denominator the
-              rest of this page uses — every fund wrapper is excluded rather than folded in, so the column sums to 100
-              across all sectors. A sector whose holdings report no cost shows <span className="text-slate-400">—</span> for cost,
+              Weights are of the <span className="text-slate-400">company-share book</span> — every share in a company,
+              mandate-chosen and self-bought alike — which is the same denominator the rest of this page uses. Every fund
+              wrapper is excluded rather than folded in, so the column sums to 100 across all sectors. A sector whose holdings report no cost shows <span className="text-slate-400">—</span> for cost,
               P&amp;L and return rather than a zero, which would report its whole market value as profit; where only
               some holdings lack a cost the row above names how many.
             </p>
@@ -335,6 +417,11 @@ export function SectorComposition() {
                                     <tr className="border-b border-ink-700/70">
                                       <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
                                       <th className="label-xs px-3 py-1.5 text-left font-medium">Entity</th>
+                                      {/* WHICH SIDE OF THE HOLDINGS-TABLE SPLIT THIS ROW IS ON. A reader who
+                                          has just learnt that "Direct Equity" excludes mandate-held shares needs
+                                          to see, per row, that this table covers both — a caption cannot answer
+                                          it for one name. */}
+                                      <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
                                       <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
                                       <th className="label-xs px-3 py-1.5 text-right font-medium">% of sector</th>
                                       <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
@@ -345,6 +432,7 @@ export function SectorComposition() {
                                       <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/30">
                                         <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                                         <td className="px-3 py-1.5 text-slate-400">{ownerOf(accIdx, h)}</td>
+                                        <td className="px-3 py-1.5 text-[11.5px] text-slate-500" title={ROUTE_NOTE[routeOf(h)]}>{ROUTE_LABEL[routeOf(h)]}</td>
                                         <td className="px-3 py-1.5 text-right mono text-slate-100" title={h.live ? LIVE_CELL : undefined}>
                                           {h.live ? fmtFromBase(h.marketValue, { compact: true })
                                             : <Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Market value — trace to this account's appraisal">{fmtFromBase(h.marketValue, { compact: true })}</Auditable>}
@@ -375,11 +463,26 @@ export function SectorComposition() {
           </div>
         </Card>
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        This is <span className="font-medium text-slate-400">company shares only</span> — {money(totalMV)} across {p.length} holdings the family owns as shares in a company, each counted once.
-        It does NOT mean the family picked them: {money(mandateMV)} was chosen by a discretionary manager under a PMS
-        mandate and {money(ownMV)} was bought in the family’s own demat or broking account. A GICS sector is a property
-        of the company either way, which is why both belong in this table.
-        {excluded.length > 0 && <> {money(excludedMV)} of the book sits in wrappers and is excluded rather than folded in—{" "}
+        This is <span className="font-medium text-slate-400">company shares only</span> — {money(totalMV)} across {p.length} holdings, every one of them
+        a share in a company the family owns, each counted once. That is <span className="font-medium text-slate-400">not</span> the same set as{" "}
+        <span className="font-medium text-slate-400">{DIRECT_EQUITY_BUCKET}</span> on the holdings tables, and the difference is deliberate:{" "}
+        {mandateRows.length > 0
+          ? <>{money(mandateMV)} of this table was chosen by a discretionary manager under a PMS mandate, across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}</>
+          : <>no account here states a discretionary mandate, so nothing in this table was chosen by a manager</>}
+        {ownRows.length > 0
+          ? <>, and {money(ownMV)} was bought in the family’s own demat or broking account</>
+          : <>, and no account here holds a share the family bought itself</>}
+        {otherRows.length > 0 ? <>, with {money(otherMV)} in accounts whose statements do not say how they are run</> : null}.
+        A GICS sector is a property of the COMPANY either way, and a mandate reports every share underneath it — so a
+        manager’s book can be read by sector, market cap and symbol exactly like a self-bought one. Narrowing this page to
+        the self-bought half would drop{mandateRows.length > 0 ? <> {money(mandateMV)} of</> : null} real sector exposure and
+        leave the table to depository rows that mostly print no sector at all; a look-through into a mandate is a gain
+        here, not something to undo. Which of the two chose a name is in the{" "}
+        <span className="font-medium text-slate-400">Held via</span> column above and on the name’s own page, and{" "}
+        <span className="font-medium text-slate-400">Portfolio Monitor</span> and <span className="font-medium text-slate-400">Morning CIO</span> group
+        them apart — under “{MANDATE_BUCKET}” and “{DIRECT_EQUITY_BUCKET}” — because a holdings table answers who decided,
+        and this one answers what the family is exposed to.
+        {excluded.length > 0 && <> {money(excludedMV)} of the book is not a share in a company at all and is excluded rather than folded in—{" "}
           {excluded.map((c, i) => (
             <Fragment key={c.key}>
               {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
@@ -387,9 +490,11 @@ export function SectorComposition() {
             </Fragment>
           ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,
           so every wrapper would land in a single false “Unclassified” slice and bury the sectors this view exists to show.
+          A mandate’s cash sleeve is out for the same reason — cash has no sector — even though the holdings tables keep it
+          inside its mandate, where the manager’s own statement totals it.
           {privateMV > 0 && <> They are broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span> and folio by folio in <span className="font-medium text-slate-400">Portfolio Monitor</span>.</>}
         </>}
-        {unclassified && <> Within direct equity, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its own statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
+        {unclassified && <> Within company shares, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its own statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
       </p>
     </div>
   );
