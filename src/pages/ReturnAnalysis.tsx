@@ -10,10 +10,9 @@ import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
 import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } from "@/lib/analytics";
-import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
-import { auditHref, LEDGER, stockHref } from "@/lib/auditFormulas";
+import { stockHref } from "@/lib/auditFormulas";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
@@ -233,9 +232,7 @@ export function ReturnAnalysis() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Embedded return"
-          value={<Auditable to={auditHref(LEDGER)} title="Unrealised gain on cost — trace to the ledger">
-            <span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>
-          </Auditable>}
+          value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>}
           sub={<>{money(m.pnl, true)} on {money(m.cost)} of cost</>} icon={<Percent className="h-4 w-4" />} />
 
         <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}

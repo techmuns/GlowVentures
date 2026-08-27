@@ -26,7 +26,7 @@ import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
-import { holdingHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 
 /**
  * Sections in reading order, mirroring Portfolio Monitor's: what the entity
@@ -384,8 +384,8 @@ export function FamilyEntities() {
             ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
             : h.sector}
         </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Market value — trace to this account's appraisal">{fmtFromBase(h.marketValue, { compact: true })}</Auditable></td>
-        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, holdingHref(accIdx.get(h.accountId), h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+        <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
+        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </tr>
     );
   };
@@ -398,11 +398,11 @@ export function FamilyEntities() {
         </div>} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Entities" value={entities.length} sub="distinct owners in the book" icon={<Users className="h-4 w-4" />} />
-        <StatTile label="Largest entity" value={largest?.key ?? "—"} sub={largest ? <><Auditable to={auditHref({ ...LEDGER, find: largest.key })} title="Largest entity NAV — trace to the ledger">{fmtFromBase(largest.mv, { compact: true })}</Auditable>{" · "}<Auditable formula={weightFormula(largest.mv, totalMV, largest.weight * 100, money, WEIGHT_OF)}>{`${(largest.weight * 100).toFixed(0)}%`}</Auditable></> : "—"} icon={<Building2 className="h-4 w-4" />} />
+        <StatTile label="Largest entity" value={largest?.key ?? "—"} sub={largest ? <>{fmtFromBase(largest.mv, { compact: true })}{" · "}<Auditable formula={weightFormula(largest.mv, totalMV, largest.weight * 100, money, WEIGHT_OF)}>{`${(largest.weight * 100).toFixed(0)}%`}</Auditable></> : "—"} icon={<Building2 className="h-4 w-4" />} />
         {direct
           ? <StatTile label="In-house custody"
-              value={<Auditable formula={{ title: "In-house custody share", excel: "= In-house market value ÷ Total market value × 100", plain: "The share of the whole book — every asset class — sitting at accounts the family runs itself, with no manager and no distributor between it and the issuer. This is a CUSTODY figure. It is NOT the holdings tables' Direct Equity, which counts company shares only and includes shares bought through a broker.", worked: `= ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${((directMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((directMV / totalMV) * 100).toFixed(0)}%`}</Auditable>}
-              sub={<><Auditable to={auditHref(LEDGER)} title="In-house NAV — trace to the ledger">{fmtFromBase(directMV, { compact: true })}</Auditable>{inHouseAccountsUnreported > 0
+              value={<Auditable formula={{ title: "In-house custody share", excel: "= In-house market value ÷ Total market value × 100", plain: "The share of the whole book — every asset class — sitting at accounts the family runs itself, with no manager and no distributor between it and the issuer. This is a CUSTODY figure. It is NOT the holdings tables' Direct Equity, which counts company shares only and includes shares bought through a broker.", worked: `= ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${((directMV / totalMV) * 100).toFixed(0)}%`,  }}>{`${((directMV / totalMV) * 100).toFixed(0)}%`}</Auditable>}
+              sub={<>{fmtFromBase(directMV, { compact: true })}{inHouseAccountsUnreported > 0
                 ? ` · ${directAccounts} of ${inHouseAccountsInRegistry} accounts`
                 : ` · ${directAccounts} account${directAccounts === 1 ? "" : "s"}`}</>}
               hint={<>Custody, not choice — every asset class at those accounts{inHouseNotShares.length > 0 && <>, of which {money(inHouseNotSharesMV)} is not a share in a company at all ({classList(inHouseNotShares)})</>}. The holdings tables&rsquo; <span className="text-slate-400">Direct Equity</span> is a different set: company shares only, {money(directEquityMV)}{ownElsewhere.length > 0 && <>, and it includes {money(ownElsewhereMV)} bought through {ownElsewhereWhere.join(", ")}, which custody files under that name rather than here</>}.{inHouseAccountsUnreported > 0 && <> The other {inHouseAccountsUnreported} in-house account{inHouseAccountsUnreported === 1 ? "" : "s"} in the registry {inHouseAccountsUnreported === 1 ? "carries" : "carry"} no position in this book, so {inHouseAccountsUnreported === 1 ? "it is" : "they are"} outside this figure rather than counted at zero.</>}</>}
@@ -416,7 +416,7 @@ export function FamilyEntities() {
                   ? "The accounts exist in the registry and no statement in this drop values a holding in one, so there is nothing to measure. A 0% would say they are empty, which is a different claim from not having been reported."
                   : "Every account here reaches its assets through a manager, a distributor or a broker, so there is no in-house bucket to measure. A 0% would say the family runs an in-house book that holds nothing, which is a different claim.")}
               icon={<Wallet className="h-4 w-4" />} />}
-        <StatTile label="External custodians" value={<Auditable formula={{ title: "External-custody share", excel: "= External market value ÷ Total market value × 100", plain: "The share of the whole book held through external custodians, managers, distributors and brokers, rather than in the family's own name at the issuer.", worked: `= ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${((externalMV / totalMV) * 100).toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${((externalMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<>{externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}{" · "}<Auditable to={auditHref(LEDGER)} title="External-custody NAV — trace to the ledger">{fmtFromBase(externalMV, { compact: true })}</Auditable></>} icon={<UserCheck className="h-4 w-4" />} />
+        <StatTile label="External custodians" value={<Auditable formula={{ title: "External-custody share", excel: "= External market value ÷ Total market value × 100", plain: "The share of the whole book held through external custodians, managers, distributors and brokers, rather than in the family's own name at the issuer.", worked: `= ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${((externalMV / totalMV) * 100).toFixed(0)}%`,  }}>{`${((externalMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<>{externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}{" · "}{fmtFromBase(externalMV, { compact: true })}</>} icon={<UserCheck className="h-4 w-4" />} />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-1.5">
         {[ALL_ENTITIES, ...entities.map((e) => e.key)].map((m) => {
@@ -466,7 +466,7 @@ export function FamilyEntities() {
                 {cust.map((c, i) => (
                   <li key={c.key} className="flex items-center justify-between text-xs">
                     <span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />{c.key}</span>
-                    <span className="mono text-slate-200"><Auditable to={auditHref(LEDGER)} title={`${c.key} NAV — trace to the ledger`}>{fmtFromBase(c.mv, { compact: true })}</Auditable></span>
+                    <span className="mono text-slate-200">{fmtFromBase(c.mv, { compact: true })}</span>
                   </li>
                 ))}
               </ul>
@@ -501,11 +501,11 @@ export function FamilyEntities() {
                     return (
                       <tr key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
                         <td className="px-4 py-2.5 font-medium text-slate-100">{e.key}</td>
-                        <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={auditHref({ ...LEDGER, find: e.key })} title="Entity NAV — trace to the ledger">{fmtFromBase(e.mv, { compact: true })}</Auditable></td>
+                        <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money, auditHref({ ...LEDGER, find: e.key }))}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, auditHref({ ...LEDGER, find: e.key }))}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
@@ -533,9 +533,9 @@ export function FamilyEntities() {
           <Card className="mt-5" title={`${scope} — sector mix`}
             subtitle={selShares.length === 0
               ? <>No company shares — this entity holds fund vehicles and cash only{" · "}{selRows.length} position{selRows.length === 1 ? "" : "s"}{" · "}
-                <Auditable to={auditHref({ ...LEDGER, find: scope })} title="Entity NAV — trace to the ledger">{fmtFromBase(selMV, { compact: true })}</Auditable> NAV</>
+                {fmtFromBase(selMV, { compact: true })} NAV</>
               : <>Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
-                <Auditable to={auditHref({ ...LEDGER, find: scope })} title="Entity NAV — trace to the ledger">{fmtFromBase(selMV, { compact: true })}</Auditable> NAV</>}>
+                {fmtFromBase(selMV, { compact: true })} NAV</>}>
             {selShares.length === 0
               ? <AbsentSection what={`${scope} holds no shares in a company`}
                   needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${classList(selExcluded)}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />

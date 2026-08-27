@@ -15,7 +15,7 @@ import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { BasisPill } from "@/components/BasisPill";
 import { Auditable } from "@/components/Auditable";
-import { holdingHref, auditHref, LEDGER, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { returnFormula, weightFormula } from "@/lib/auditFormulas";
 import { AbsentCell } from "@/components/Absent";
 
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
@@ -394,7 +394,7 @@ export function SectorComposition() {
                         </td>
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                           {liveBySector[s.key] ? fmtFromBase(s.mv, { compact: true })
-                            : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} holdings`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} holdings`,  }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
                         </td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                           {liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
@@ -409,7 +409,7 @@ export function SectorComposition() {
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{s.count}</td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(s.returnPct)}`} title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                           {liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                            : <Auditable formula={{ title: "Sector return", excel: "= Σ P&L ÷ Σ Cost × 100", plain: "The value-weighted average return of every holding in this sector — combined gain or loss against combined cost.", worked: `= ${money(s.pnl)} ÷ ${money(s.cost)} × 100 = ${fmtPct(s.returnPct, { sign: true })}`, auditHref: auditHref(LEDGER) }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Sector return", excel: "= Σ P&L ÷ Σ Cost × 100", plain: "The value-weighted average return of every holding in this sector — combined gain or loss against combined cost.", worked: `= ${money(s.pnl)} ÷ ${money(s.cost)} × 100 = ${fmtPct(s.returnPct, { sign: true })}`,  }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
                         </td>
                         <td className="px-4 py-2.5 text-left text-[12px] text-slate-400"><span className="block max-w-[170px] truncate" title={topHolding[s.key]}>{topHolding[s.key]}</span></td>
                       </tr>
@@ -441,7 +441,7 @@ export function SectorComposition() {
                                         <td className="px-3 py-1.5 text-[11.5px] text-slate-500" title={ROUTE_NOTE[routeOf(h)]}>{ROUTE_LABEL[routeOf(h)]}</td>
                                         <td className="px-3 py-1.5 text-right mono text-slate-100" title={h.live ? LIVE_CELL : undefined}>
                                           {h.live ? fmtFromBase(h.marketValue, { compact: true })
-                                            : <Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Market value — trace to this account's appraisal">{fmtFromBase(h.marketValue, { compact: true })}</Auditable>}
+                                            : fmtFromBase(h.marketValue, { compact: true })}
                                         </td>
                                         <td className="px-3 py-1.5 text-right mono text-slate-400" title={h.live ? LIVE_CELL : undefined}>
                                           {h.live ? `${s.mv > 0 ? ((h.marketValue / s.mv) * 100).toFixed(1) : "0.0"}%`
@@ -450,7 +450,7 @@ export function SectorComposition() {
                                         <td className={`px-3 py-1.5 text-right mono ${h.costUnavailable ? "text-slate-500" : changeColor(h.returnPct)}`} title={h.live && !h.costUnavailable ? LIVE_CELL : undefined}>
                                           {h.costUnavailable ? "—"
                                             : h.live ? fmtPct(h.returnPct, { sign: true })
-                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, holdingHref(accIdx.get(h.accountId), h.security))}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                         </td>
                                       </tr>
                                     ))}

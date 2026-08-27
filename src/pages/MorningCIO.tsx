@@ -16,7 +16,7 @@ import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
-import { auditHref, LEDGER, type PrivateSheet } from "@/lib/auditFormulas";
+import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -592,7 +592,6 @@ export function MorningCIO() {
   const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
   const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
-  const bucketHref = (b: { sheet: PrivateSheet | null }) => b.sheet ? auditHref({ file: "private", sheet: b.sheet }) : auditHref(LEDGER);
   // "10 mandates", "1 mandate" — a count and its noun, agreeing.
   const many = (n: number, one: string, plural = `${one}s`) => `${n} ${n === 1 ? one : plural}`;
   // XIRR, with the multiple and the return-on-cost kept a click away. Both bases
@@ -653,7 +652,6 @@ export function MorningCIO() {
         : `= (${b.withoutCost > 0 ? "Value of the costed holdings" : "Current value"} − Invested) ÷ Invested`,
       plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.costedMV)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.${partial}`,
       worked: `${money(b.invested)} invested → ${money(b.costedMV)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total${b.withoutCost > 0 ? ` · over ${covered} of ${b.count} holdings` : ""}`,
-      auditHref: bucketHref(b),
     };
     return (
       <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.retPct)}`}>
@@ -773,7 +771,7 @@ export function MorningCIO() {
                     : `THIS IS NOT ANNUALISED, AND THAT IS DELIBERATE. The flows span only ${m.bookMW.windowDays} days. Compounding that onto a full year gives ${m.bookMW.annualPct == null ? "—" : fmtPct(m.bookMW.annualPct, { sign: true, decimals: 1 })} p.a., which is a projection of ${m.bookMW.windowDays} strong days rather than a year the book has lived — and it would contradict the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. So the figure shown is what the book has actually earned over the window it has.`
                 }\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.`,
                 worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}`,
-                auditHref: auditHref(LEDGER),
+                
               }}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</Auditable></span>}
           sub={m.bookMW.pct == null
             ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
@@ -809,7 +807,7 @@ export function MorningCIO() {
                     : ""
                 }`,
                 worked: `= ${money(m.embeddedGain, true)} ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}`,
-                auditHref: auditHref(LEDGER),
+                
               }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable></span>}
           sub={m.gainPct == null
             ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
@@ -826,7 +824,7 @@ export function MorningCIO() {
             schedule that draws nothing, which is a different claim entirely. */}
         <Kpi label="Dry powder"
           value={hasCommitments
-            ? <span className="text-amber-400"><Auditable formula={{ title: "Dry powder", excel: "= Σ (Committed − Called) across funds", plain: "Capital you've committed to funds that hasn't been called yet — still to be deployed.", worked: `= ${money(m.deploy.committed)} − ${money(m.deploy.drawn)} = ${money(m.deploy.unfunded)}`, auditHref: auditHref({ file: "private" }) }}>{fmtFromBase(m.deploy.unfunded, { compact: true })}</Auditable></span>
+            ? <span className="text-amber-400"><Auditable formula={{ title: "Dry powder", excel: "= Σ (Committed − Called) across funds", plain: "Capital you've committed to funds that hasn't been called yet — still to be deployed.", worked: `= ${money(m.deploy.committed)} − ${money(m.deploy.drawn)} = ${money(m.deploy.unfunded)}`,  }}>{fmtFromBase(m.deploy.unfunded, { compact: true })}</Auditable></span>
             : <AbsentValue />}
           sub={hasCommitments
             ? "undrawn fund commitments"
@@ -835,7 +833,7 @@ export function MorningCIO() {
 
         <Kpi label="Distributions"
           value={hasCommitments
-            ? <Auditable to={auditHref({ file: "private" })} title="Distributions — trace to the private-markets source">{fmtFromBase(m.deploy.distributed, { compact: true })}</Auditable>
+            ? fmtFromBase(m.deploy.distributed, { compact: true })
             : <AbsentValue />}
           sub={hasCommitments
             ? "cash returned to date · incl. exited funds"
@@ -892,7 +890,7 @@ export function MorningCIO() {
                         </span>
                       </td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
-                      <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap"><Auditable to={bucketHref(b)} title={`${bucketLabel(b.key)} — trace to source`}>{money(b.current)}</Auditable></td>
+                      <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
                       <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
                     </tr>
@@ -929,7 +927,7 @@ export function MorningCIO() {
                               : ""
                           }`,
                           worked: `= (${money(m.totalValue)} − ${money(m.totalInvested)}) ÷ ${money(m.totalInvested)} = ${fmtPct(m.footerPct, { sign: true, decimals: 1 })}, closed at ${portfolio.asOf}`,
-                          auditHref: auditHref(LEDGER),
+                          
                         }}>{fmtPct(m.footerPct, { sign: true, decimals: 1 })}</Auditable>
                       )}
                     </td>

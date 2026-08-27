@@ -1,23 +1,29 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { Table2 } from "lucide-react";
 import type { FormulaDef } from "@/lib/auditFormulas";
 
-// Wrap any number so it's traceable:
-//   • `to`      → a raw source value; renders a hyperlink into the Data Audit tab.
-//   • `formula` → a calculated value; renders a dotted number that opens a popover
-//                  explaining the calculation (Excel-style + plain language).
-// Without either it just renders its children (a graceful no-op).
-const LINK_CLS = "cursor-pointer text-inherit underline decoration-dotted decoration-1 decoration-slate-500/50 underline-offset-[3px] transition-colors hover:decoration-champagne-500";
+// Wrap a CALCULATED number so the arithmetic behind it can be inspected:
+// `formula` renders a dashed number that opens a popover explaining the
+// calculation (Excel-style + plain language). Without one it just renders its
+// children (a graceful no-op).
+//
+// THE DEEP-LINKS INTO DATA AUDIT ARE GONE, at the family's request — every one
+// of them, across every page. This component used to take a `to` and render a
+// dotted hyperlink into the Data Audit tab, and the popover carried a "See the
+// source numbers in Data Audit" link of its own. Both are removed rather than
+// hidden: a prop that every call site still passes into a component that
+// silently ignores it is the dead-code-that-looks-alive failure this repo keeps
+// naming, so `to` and its companion `title` were deleted from the signature and
+// stripped from all 42 call sites, and the href builders they used went with
+// them (see auditFormulas.ts).
+//
+// The Data Audit page itself is untouched and still reachable from the nav; its
+// own document chips are buttons, not links, so nothing on it changed.
 const CALC_CLS = "cursor-pointer text-inherit underline decoration-dashed decoration-1 decoration-slate-500/50 underline-offset-[3px] transition-colors hover:decoration-champagne-500";
 
-export function Auditable({ children, to, formula, title }: {
+export function Auditable({ children, formula }: {
   children: ReactNode;
-  to?: string;
   formula?: FormulaDef;
-  title?: string;
 }) {
-  if (to) return <Link to={to} title={title ?? "Trace to the source in Data Audit"} className={LINK_CLS}>{children}</Link>;
   if (formula) return <FormulaTrigger formula={formula}>{children}</FormulaTrigger>;
   return <>{children}</>;
 }
@@ -77,12 +83,6 @@ function FormulaTrigger({ formula, children }: { formula: FormulaDef; children: 
           <div className="rounded-md border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 mono text-[12px] leading-relaxed text-slate-200">{formula.excel}</div>
           {formula.worked && <div className="mt-1.5 mono text-[11px] leading-relaxed text-slate-400">{formula.worked}</div>}
           <p className="mt-2 text-[12px] leading-snug text-slate-400">{formula.plain}</p>
-          {formula.auditHref && (
-            <Link to={formula.auditHref} onClick={() => setOpen(false)}
-              className="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-medium text-champagne-400 hover:underline">
-              <Table2 className="h-3.5 w-3.5" /> See the source numbers in Data Audit
-            </Link>
-          )}
         </div>
       )}
     </>

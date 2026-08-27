@@ -31,7 +31,7 @@ import { BasisPill } from "@/components/BasisPill";
 // than one the caller can name once. The Weight cell builds its own FormulaDef
 // for that, and a future session that gives `weightFormula` a way to express a
 // filtered denominator should collapse the two.
-import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula } from "@/lib/auditFormulas";
+import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 
@@ -787,9 +787,6 @@ export function PortfolioMonitor() {
                   const mixedBasisNote = partLive
                     ? `Part live: ${money(r.liveMV)} of this mandate's ${money(r.marketValue)} is repriced from live quotes and the rest keeps its statement mark — a mandate's cash sleeve can never be quoted, and neither can a share whose NSE symbol does not resolve. Every figure on this row that market value feeds — value, weight, unrealised P&L and return — therefore blends the two bases, and has no single statement cell to trace to.`
                     : LIVE_CELL;
-                  // Where the row's figures trace to: a mandate's are its own
-                  // account's statements, a security's are its name in the archive.
-                  const trace = m ? ledgerHref(m.accountNo) : ledgerHref(r.security);
                   return (
                     <Fragment key={r.key}>
                       <tr className="hover:bg-ink-700/40">
@@ -853,17 +850,15 @@ export function PortfolioMonitor() {
                         <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
                           {r.quantity === null
                             ? <AbsentCell reason="a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing." />
-                            : <Auditable to={trace} title="Shares held — trace to the ledger">{fmtNum(r.quantity)}</Auditable>}
+                            : fmtNum(r.quantity)}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
                           {m ? <AbsentCell reason="an average cost per unit needs one security; this row rolls up the mandate's holdings, each with a cost of its own" />
                             : r.costNA ? "—"
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
-                            : <Auditable to={trace} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}
+                            : fmtFromBase(r.avgCost)}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={trace} title={!m ? "Invested (cost) — trace to the ledger"
-                          : whole ? "What every holding inside this mandate cost, added up — trace to its statements"
-                          : `What the ${m.holdings.length} of ${m.accountCount} holdings matching the filters cost, added up — NOT the mandate's own invested figure. Clear the filters, or open its drill-down, for that.`}>{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : fmtFromBase(r.costBasis, { compact: true })}</td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
@@ -874,7 +869,7 @@ export function PortfolioMonitor() {
                             ? <AbsentCell reason="marked at a total value, not a per-unit price" />
                             : r.live
                             ? fmtFromBase(r.currentPrice)
-                            : <><Auditable to={trace} title="Market price — trace to the ledger">{fmtFromBase(r.currentPrice)}</Auditable>
+                            : <>{fmtFromBase(r.currentPrice)}
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
@@ -896,9 +891,7 @@ export function PortfolioMonitor() {
                               ? <>{fmtFromBase(r.marketValue, { compact: true })}
                                   <span className="ml-1 cursor-help text-[10px] text-amber-400/80" title={mixedBasisNote}>◦</span></>
                               : fmtFromBase(r.marketValue, { compact: true })
-                            : <Auditable to={trace} title={!m ? "Market value — trace to the ledger"
-                                : whole ? "The whole mandate's market value, shares and cash sleeve — trace to its statements"
-                                : `The ${m.holdings.length} of ${m.accountCount} holdings matching the filters — NOT the whole mandate, whose own total across all ${m.accountCount} is ${money(m.accountMV)} on this page's current basis. Open its drill-down to trace that against the statement.`}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
+                            : fmtFromBase(r.marketValue, { compact: true })}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? mixedBasisNote : undefined}>
                           {r.live ? `${(r.weight * 100).toFixed(1)}%`
@@ -912,7 +905,7 @@ export function PortfolioMonitor() {
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
-                            : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money, trace)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
+                            : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
                         </td>
                         {/* Distinct states, never collapsed into one dash without
                             a reason: a mandate (whose names are reported per
@@ -926,12 +919,12 @@ export function PortfolioMonitor() {
                           : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
                           : !realized.has(r.securityKey) ? <AbsentCell reason="no sale of this name on the transaction statements" />
                           : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
-                          : <span className={changeColor(realized.get(r.securityKey)!)}><Auditable to={trace} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</Auditable></span>
+                          : <span className={changeColor(realized.get(r.securityKey)!)}>{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</span>
                         }</td>
                         <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtPct(r.returnPct, { sign: true })
-                            : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, trace)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
+                            : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
                         </td>
                       </tr>
                       {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
@@ -1066,7 +1059,7 @@ export function PortfolioMonitor() {
               <tfoot className="sticky bottom-0 bg-ink-800">
                 <tr className="border-t border-ink-700 font-semibold">
                   <td className="px-2 py-2.5 text-slate-200" colSpan={5}>Total · {rows.length} rows</td>
-                  <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                  <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
                   <td className="px-2 py-2.5"></td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
                     title={totDayPct == null ? undefined : `${money(totDay, true)} across the live-priced book since previous close`}>
@@ -1074,12 +1067,12 @@ export function PortfolioMonitor() {
                   </td>
                   <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap" title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totMV, { compact: true })
-                              : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of the holdings in this table, added together — every asset class, not the listed ones alone.", worked: `= ${money(totMV)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
+                              : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of the holdings in this table, added together — every asset class, not the listed ones alone.", worked: `= ${money(totMV)} across ${rows.length} rows`,  }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
                   </td>
                   <td className="px-2 py-2.5"></td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totPnL, { compact: true, sign: true })
-                              : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
+                              : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`,  }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
                   </td>
                   {/* sumOrNull, not sum: a name with no realised figure must not
                       be added in as zero — that turns "never reported" into a
@@ -1347,10 +1340,10 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                   <td className="px-3 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
                   <td className="px-3 py-2 text-slate-400">{t.account}</td>
                   <td className="px-3 py-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
-                  <td className="px-3 py-2 text-right mono text-slate-300"><Auditable to={ledgerHref(t.security)} title="Shares transacted — trace to the ledger">{fmtNum(Math.round(t.qty))}</Auditable></td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? <Auditable to={ledgerHref(t.security)} title="Trade price — trace to the ledger">{fmtFromBase(t.price)}</Auditable> : <AbsentCell reason="this trade row reports no unit price on its statement" />}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? <Auditable to={ledgerHref(t.security)} title="Trade value — trace to the ledger">{fmtFromBase(t.amount, { compact: true })}</Auditable> : <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />}</td>
-                  <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : <Auditable to={ledgerHref(t.security)} title="Realized profit on this sale — trace to the ledger">{fmtFromBase(t.realized, { compact: true, sign: true })}</Auditable>}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? fmtFromBase(t.price) : <AbsentCell reason="this trade row reports no unit price on its statement" />}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? fmtFromBase(t.amount, { compact: true }) : <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />}</td>
+                  <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
                 </tr>
               ))}
               {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}

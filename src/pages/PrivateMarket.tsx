@@ -16,7 +16,7 @@ import { sum, sumOrNull, consolidatedMarketValue, excludedClasses, isPrivateClas
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
 } from "@/lib/privateMarket";
-import { auditHref, weightFormula } from "@/lib/auditFormulas";
+import { weightFormula } from "@/lib/auditFormulas";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 
 // PRIVATE MARKET — the private book this drop actually carries.
@@ -327,9 +327,7 @@ export function PrivateMarket() {
                   </td>
                   <td className="px-4 py-2.5 text-slate-400">{f.owner}</td>
                   <td className="px-4 py-2.5 text-slate-400">
-                    <Auditable to={auditHref({ find: f.accountNo })} title={`${f.provider} ${f.accountNo} — find this account's statements`}>
-                      {f.provider} {f.accountNo}
-                    </Auditable>
+                    {f.provider} {f.accountNo}
                   </td>
                   <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.position.quantity, 3)}</td>
                   <td className="px-4 py-2.5 text-right mono text-slate-400">
@@ -503,9 +501,7 @@ export function PrivateMarket() {
                   {m.unvalued.map((u) => (
                     <tr key={u.account.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100">
-                        <Auditable to={auditHref({ find: u.account.accountNo })} title={`${u.account.provider} ${u.account.accountNo} — find this account's statements`}>
-                          {u.account.provider} {u.account.accountNo}
-                        </Auditable>
+                        {u.account.provider} {u.account.accountNo}
                       </td>
                       <td className="px-4 py-2.5 text-slate-400">{u.account.owner}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">

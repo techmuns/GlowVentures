@@ -2133,10 +2133,24 @@ violate any of them.**
   a PER-ACCOUNT breakdown emptied Bharat's 360 ONE row to `0 · ₹0 · ₹0` for an
   account holding ₹1.46 Cr. The helper existed in `analytics.ts` and was wired
   into nothing for as long as no drop contained a duplicate.
-- A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
-  builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
-  composes the docKey. A consolidated figure spans five documents and names none:
-  it links to the archive index with the search term pre-filled.
+- **THE DATA AUDIT DEEP-LINKS ARE GONE — every one of them, at the family's
+  request.** A figure used to hyperlink to its source document (`holdingHref`
+  built `<accountId>-<asOf>-appraisal`, exactly as `extract.mjs` composes the
+  docKey) and a consolidated one to the archive index with its search
+  pre-filled. All 42 of those links were removed across 12 pages, along with the
+  `to`/`title` props on `<Auditable>`, the "See the source numbers in Data Audit"
+  link inside the formula popover, `FormulaDef.auditHref`, and the builders that
+  made the URLs (`auditHref`, `AUDIT_INDEX`, `LEDGER`, `ledgerHref`,
+  `holdingHref`, `appraisalDocKey`, `privateHref`). They were DELETED rather
+  than left exported and uncalled: a builder nothing calls is the
+  dead-code-that-looks-alive failure this file keeps naming, and the next
+  session would wire it back believing it load-bearing.
+  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
+  behind it, which is an explanation rather than a hyperlink. **And the Data
+  Audit PAGE is untouched and still in the nav**: only the links pointing INTO
+  it were removed, its own document chips are `<button>`s, and the provenance it
+  serves is unchanged. A future session that wants a figure traceable again
+  should read this paragraph first rather than reinventing `holdingHref`.
 - Nothing on screen may be hardcoded that isn't derived from the book. No
   security names, entity names, dates, amounts, document titles or sample rows.
   Icon maps, sector tables and statutory tax rates are the legitimate exceptions.
@@ -2178,10 +2192,24 @@ violate any of them.**
   definition and correctly do not convert.
 - Wide tables scroll inside their own `overflow-x-auto` container. The page body
   must never scroll horizontally at any width.
-- A figure links to its SOURCE DOCUMENT, not to a generic ledger. `holdingHref`
-  builds `<accountId>-<asOf>-appraisal`, which is exactly how `extract.mjs`
-  composes the docKey. A consolidated figure spans five documents and names none:
-  it links to the archive index with the search term pre-filled.
+- **THE DATA AUDIT DEEP-LINKS ARE GONE — every one of them, at the family's
+  request.** A figure used to hyperlink to its source document (`holdingHref`
+  built `<accountId>-<asOf>-appraisal`, exactly as `extract.mjs` composes the
+  docKey) and a consolidated one to the archive index with its search
+  pre-filled. All 42 of those links were removed across 12 pages, along with the
+  `to`/`title` props on `<Auditable>`, the "See the source numbers in Data Audit"
+  link inside the formula popover, `FormulaDef.auditHref`, and the builders that
+  made the URLs (`auditHref`, `AUDIT_INDEX`, `LEDGER`, `ledgerHref`,
+  `holdingHref`, `appraisalDocKey`, `privateHref`). They were DELETED rather
+  than left exported and uncalled: a builder nothing calls is the
+  dead-code-that-looks-alive failure this file keeps naming, and the next
+  session would wire it back believing it load-bearing.
+  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
+  behind it, which is an explanation rather than a hyperlink. **And the Data
+  Audit PAGE is untouched and still in the nav**: only the links pointing INTO
+  it were removed, its own document chips are `<button>`s, and the provenance it
+  serves is unchanged. A future session that wants a figure traceable again
+  should read this paragraph first rather than reinventing `holdingHref`.
 - Large holdings lists get a `SearchInput` (filter by security name or ISIN).
 - Pages showing a consolidated total should carry a `<BasisPill>` so the reader
   knows what the figure is actually based on.

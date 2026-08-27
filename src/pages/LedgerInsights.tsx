@@ -7,9 +7,8 @@ import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, changeColor, fmtDate } from "@/lib/format";
-import { Auditable } from "@/components/Auditable";
 import { StockLink } from "@/components/StockLink";
-import { auditHref } from "@/lib/auditFormulas";
+
 import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
 import { holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
 import type { Account } from "@/lib/types";
@@ -199,7 +198,6 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
         </div>
       )}
 
-
       <Card pad={false}>
         <div className="max-h-[560px] overflow-auto">
           <table className="min-w-full text-sm">
@@ -291,8 +289,8 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
  * what the STATEMENT prints — and recovering an account by string-matching a
  * label built for a reader is exactly the inference `custodianOf()` was deleted
  * for. `Lot.source` is the `docKey`, which this repo composes as
- * `<accountId>-<asOf>-<reportType>` (see `appraisalDocKey` in auditFormulas,
- * which builds one the same way). So the join is id to id: the account whose
+ * `<accountId>-<asOf>-<reportType>`, exactly as `extract.mjs` composes it. So
+ * the join is id to id: the account whose
  * `accountId` the docKey is prefixed with.
  *
  * A docKey matching two accounts or none RESOLVES TO NOTHING and its row says
@@ -514,9 +512,7 @@ function GainsView({ data }: { data: LotData | null }) {
                   <td className="px-4 py-2 text-right mono text-slate-200">{l.saleAmount == null ? <AbsentCell /> : fmtFromBase(l.saleAmount, { compact: true })}</td>
                   <td className="px-4 py-2 text-center">{l.term == null ? <AbsentCell reason="the statement books no gain against this lot" /> : <Pill tone={l.term === "Long" ? "info" : "warn"}>{l.term}</Pill>}</td>
                   <td className={`px-4 py-2 text-right mono ${changeColor(l.gain)}`}>
-                    <Auditable to={auditHref({ file: l.source })} title="Realised gain — trace to the capital gain statement">
-                      {fmtFromBase(l.gain, { compact: true, sign: true })}
-                    </Auditable>
+                    {fmtFromBase(l.gain, { compact: true, sign: true })}
                   </td>
                 </tr>
               ))}
@@ -593,9 +589,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                     <td className="px-4 py-2 text-right mono text-slate-400">{r.tds == null ? <AbsentCell /> : fmtFromBase(r.tds, { compact: true })}</td>
                     <td className="px-4 py-2 text-right mono text-slate-200">
                       {r.net == null ? <AbsentCell /> : (
-                        <Auditable to={auditHref({ file: r.source })} title="Dividend — trace to the dividend statement">
-                          {fmtFromBase(r.net, { compact: true })}
-                        </Auditable>
+                        fmtFromBase(r.net, { compact: true })
                       )}
                     </td>
                   </tr>

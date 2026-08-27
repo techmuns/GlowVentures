@@ -13,8 +13,7 @@ import {
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
-import { Auditable } from "@/components/Auditable";
-import { ledgerHref, auditHref, LEDGER } from "@/lib/auditFormulas";
+
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf, engagementOf } from "@/lib/accounts";
@@ -394,7 +393,7 @@ export function StockInfo() {
 
       {/* KPI strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Holding value" value={<Auditable to={ledgerHref(name)} title="Holding value — trace to the ledger">{fmtFromBase(mv, { compact: true })}</Auditable>} sub={`${weight.toFixed(1)}% of book`} icon={<Wallet className="h-4 w-4" />} />
+        <Kpi label="Holding value" value={fmtFromBase(mv, { compact: true })} sub={`${weight.toFixed(1)}% of book`} icon={<Wallet className="h-4 w-4" />} />
         {/* THE SAME TYPED NOUN, ONE TILE OVER. `/stock/:securityKey` serves every
             holding, so "shares held" was printed under the quantity of an AIF
             folio's units and under a mandate's cash balance. It comes off the
@@ -402,14 +401,14 @@ export function StockInfo() {
             claims nothing. */}
         <Kpi label="Quantity" value={fmtNum(qty)} sub={qtyNoun} icon={<Layers className="h-4 w-4" />} />
         <Kpi label="Avg cost" value={<span className="mono">{price(avgCost)}</span>} sub={`invested ${money(cost)}`} icon={<Coins className="h-4 w-4" />} />
-        <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}><Auditable to={ledgerHref(name)} title="Unrealised P&L — trace to the ledger">{fmtFromBase(pnl, { compact: true, sign: true })}</Auditable></span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />
+        <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
             name's sells. Null is not zero: the sells may be real and what they
             realised simply never reported. */}
         <Kpi label="Realised P&L"
           value={led === undefined ? "…" : led?.realizedProfit == null
             ? <AbsentValue />
-            : <span className={changeColor(led.realizedProfit)}><Auditable to={ledgerHref(name)} title="Realised P&L — trace to the ledger">{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</Auditable></span>}
+            : <span className={changeColor(led.realizedProfit)}>{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</span>}
           sub={led === undefined ? "booked on exits" : led?.realizedProfit == null
             ? <span className="text-slate-500">no capital gain statement covers this name</span>
             : "booked on exits"}
@@ -483,7 +482,7 @@ export function StockInfo() {
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-200"><Auditable to={ledgerHref(name)} title="Current value — trace to the ledger">{money(r.marketValue)}</Auditable></td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
                       <td className="px-4 py-2.5 text-right">
@@ -598,7 +597,7 @@ export function StockInfo() {
                     <td className="px-4 py-2 text-[13px] text-slate-300">{t.account}</td>
                     <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(t.qty)}</td>
                     <td className="px-4 py-2 text-right mono text-slate-400">{price(t.rate)}</td>
-                    <td className="px-4 py-2 text-right mono text-slate-200"><Auditable to={ledgerHref(name)} title="Trace this transaction in Data Audit">{fmtFromBase(t.amount, { compact: true })}</Auditable></td>
+                    <td className="px-4 py-2 text-right mono text-slate-200">{fmtFromBase(t.amount, { compact: true })}</td>
                   </tr>
                 ))}
               </tbody>

@@ -3,11 +3,10 @@ import { ChevronLeft, Wallet, Layers, Landmark, Coins, User, Shield } from "luci
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
-import { Auditable } from "@/components/Auditable";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, displaySecurity } from "@/lib/format";
-import { auditHref } from "@/lib/auditFormulas";
+
 import { sumOrNull } from "@/lib/analytics";
 import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
 
@@ -56,13 +55,6 @@ export function Polycab() {
   const asOf = first?.a?.asOf ?? null;
   const holder = first?.a?.owner ?? null;
   const name = first ? displaySecurity(first.p.security) : "Polycab";
-  // A ROW links to ITS OWN document; a TOTAL that spans several names none, and
-  // links to the archive index with the search pre-filled. One row today, so the
-  // two coincide — but a figure summed across two statements that points at one
-  // of them invites the reader to check it against a document printing less.
-  const sourceHref = (r: { p: (typeof rows)[number]["p"]; a: (typeof rows)[number]["a"] }) =>
-    r.a ? auditHref({ file: `${r.p.accountId}-${r.a.asOf}-holdings`, find: "Polycab" }) : auditHref({ find: r.p.security });
-  const totalHref = rows.length === 1 && first ? sourceHref(first) : auditHref({ find: "Polycab" });
 
   if (!BOOK_POLYCAB.length) {
     return (
@@ -130,7 +122,7 @@ export function Polycab() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Market value"
-          value={<Auditable to={totalHref} title="Market value — trace to the depository holding statement it is struck on">{money(mv)}</Auditable>}
+          value={money(mv)}
           sub={shares === null ? "ring-fenced from the book" : `${fmtNum(shares)} shares · ring-fenced from the book`}
           icon={<Wallet className="h-4 w-4" />}
         />
@@ -192,7 +184,7 @@ export function Polycab() {
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{typeof p.quantity === "number" ? fmtNum(p.quantity) : <AbsentCell />}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">{price(rowMark) ?? <AbsentCell reason="this row reports no quantity, so a per-share mark cannot be derived from its value" />}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-200">
-                      <Auditable to={sourceHref({ p, a })} title="Market value — trace to this account's NSDL holding statement">{money(p.marketValue)}</Auditable>
+                      {money(p.marketValue)}
                     </td>
                   </tr>
                 );

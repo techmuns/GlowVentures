@@ -12,7 +12,7 @@ import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
-import { holdingHref, auditHref, LEDGER, sumFormula } from "@/lib/auditFormulas";
+import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
 
 // Capital Gains & Tax — honest about two holes.
@@ -285,7 +285,7 @@ export function CapitalGains() {
               excel: "= max(0, Realised ST) × 20% + max(0, Realised LT) × 12.5%",
               plain: "Illustrative tax on the gains actually booked. Losses are not netted against other heads here.",
               worked: `= max(0, ${money(totRealST ?? 0)}) × 20% + max(0, ${money(totRealLT ?? 0)}) × 12.5% = ${money(estTaxRealised)}`,
-              auditHref: auditHref(LEDGER),
+              
             }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>}
             sub={realisedTotal !== null && realisedTotal < 0
               ? <span className="text-slate-400">net realised LOSS · nothing to tax</span>
@@ -409,16 +409,10 @@ export function CapitalGains() {
                       <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
-                        <Auditable to={c.source ? auditHref({ file: c.source }) : auditHref(LEDGER)}
-                          title={`${c.entity} · realised short-term — trace to the capital gain statement`}>
-                          {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
-                        </Auditable>
+                        {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
                       </td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT ?? 0)}`}>
-                        <Auditable to={c.source ? auditHref({ file: c.source }) : auditHref(LEDGER)}
-                          title={`${c.entity} · realised long-term — trace to the capital gain statement`}>
-                          {fmtFromBase(c.realisedLT ?? 0, { compact: true, sign: true })}
-                        </Auditable>
+                        {fmtFromBase(c.realisedLT ?? 0, { compact: true, sign: true })}
                       </td>
                       <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
                       <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
@@ -528,9 +522,7 @@ export function CapitalGains() {
                         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                         <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                         <td className="px-4 py-2.5 text-right mono text-loss">
-                          <Auditable to={holdingHref(accIdx.get(h.accountId), h.security)} title="Unrealised loss — trace to this account's appraisal">
-                            {money(h.unrealizedPnL, true)}
-                          </Auditable>
+                          {money(h.unrealizedPnL, true)}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(h.returnPct)}`}>
                           {fmtPct(h.returnPct, { sign: true, decimals: 1 })}

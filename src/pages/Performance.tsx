@@ -11,7 +11,7 @@ import { xirrWithTerminal, pooledXirr, totalReturnFromXirr } from "@/lib/bucketX
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
-import { auditHref, LEDGER, embeddedReturnFormula } from "@/lib/auditFormulas";
+import { embeddedReturnFormula } from "@/lib/auditFormulas";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 
@@ -222,14 +222,14 @@ export function Performance() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Consolidated NAV"
-          value={<Auditable to={auditHref(LEDGER)} title="Sum of every holding's market value — trace to the ledger">{money(listedMV)}</Auditable>}
+          value={money(listedMV)}
           sub={p.length === consolidated.length
             ? `${p.length} positions across ${accounts.length} accounts`
             : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once`}
           icon={<Layers className="h-4 w-4" />} />
 
         <StatTile label="Embedded return"
-          value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money, auditHref(LEDGER))}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
+          value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money)}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
           sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
@@ -248,7 +248,7 @@ export function Performance() {
         )}
 
         <StatTile label="Top-10 concentration"
-          value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the consolidated book sits in just its ten biggest holdings.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`, auditHref: auditHref(LEDGER) }}>{`${top10.toFixed(0)}%`}</Auditable>}
+          value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the consolidated book sits in just its ten biggest holdings.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`,  }}>{`${top10.toFixed(0)}%`}</Auditable>}
           sub="of consolidated NAV in the 10 biggest holdings" icon={<Crosshair className="h-4 w-4" />} />
       </div>
 
@@ -304,10 +304,7 @@ export function Performance() {
                           {v === null
                             ? <AbsentCell reason={`${t.account.provider.split(" ")[0]} does not publish a ${per.label} figure`} />
                             : <span className={v >= 0 ? "text-gain" : "text-loss"}>
-                                <Auditable to={auditHref({ file: t.block!.source })}
-                                  title={`${s.series} ${per.label} — trace to the ${t.block!.reportType}`}>
-                                  {fmtPct(v, { sign: true, decimals: 2 })}
-                                </Auditable>
+                                {fmtPct(v, { sign: true, decimals: 2 })}
                               </span>}
                         </td>
                       );
@@ -366,11 +363,9 @@ export function Performance() {
                                 <td key={b.source} className="px-3 py-1.5 text-right mono">
                                   {v === null
                                     ? <AbsentCell reason={`the ${b.reportType} does not print this component`} />
-                                    : <Auditable to={auditHref({ file: b.source })} title={`${row.label} — trace to the ${b.reportType}`}>
-                                        <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}>
+                                    : <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}>
                                           {money(v)}
-                                        </span>
-                                      </Auditable>}
+                                        </span>}
                                 </td>
                               );
                             })}

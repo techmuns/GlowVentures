@@ -7,12 +7,11 @@ import { Kpi } from "@/components/Kpi";
 import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
-import { Auditable } from "@/components/Auditable";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { auditHref, stockHref } from "@/lib/auditFormulas";
+import { stockHref } from "@/lib/auditFormulas";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 
@@ -45,10 +44,12 @@ import type { Account, Position } from "@/lib/types";
  */
 
 // ── Which document sourced these holdings ────────────────────────────────────
-// `holdingHref` composes `<accountId>-<asOf>-appraisal`, which is right for the
-// seven mandates whose manager issues a PORTFOLIO APPRAISAL and a STALE LINK for
-// the three who do not: SVAN and Green Lantern publish the SEBI investor report,
-// Molecule a CURRENT PORTFOLIO. A file key the manifest does not carry leaves
+// A docKey of `<accountId>-<asOf>-appraisal` is right for the seven mandates
+// whose manager issues a PORTFOLIO APPRAISAL and WRONG for the three who do not:
+// SVAN and Green Lantern publish the SEBI investor report, Molecule a CURRENT
+// PORTFOLIO. (The deep-links that used this are gone — see Auditable.tsx — but
+// the resolution below still names the right document, which is what the printed
+// total beneath the table is read from.) A file key the manifest does not carry leaves
 // Data Audit showing whichever statement was already open, which is exactly how
 // a reader ends up reading another account's document believing it is the one
 // they clicked. So the key is RESOLVED against the archive's own manifest, in
@@ -198,9 +199,6 @@ export function MandateHoldings() {
     [portfolio, accountId],
   );
   const source = useHoldingsSource(account);
-  const sourceHref = source.docKey
-    ? auditHref({ file: source.docKey })
-    : auditHref({ find: account?.accountNo ?? accountId });
 
   const mv = sum(rows.map((r) => r.marketValue));
   // sumOrNull, not sum: a mandate whose statement reports no cost on some row
@@ -501,11 +499,11 @@ export function MandateHoldings() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="Market value"
-          value={<Auditable to={sourceHref} title="Market value — trace to this account's own statement">{money(mv)}</Auditable>}
+          value={money(mv)}
           sub={`${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
           icon={<Wallet className="h-4 w-4" />} />
         <Kpi label="Invested"
-          value={cost === null ? <AbsentValue /> : <Auditable to={sourceHref} title="Cost — trace to this account's own statement">{money(cost)}</Auditable>}
+          value={cost === null ? <AbsentValue /> : money(cost)}
           sub={cost === null
             ? <span className="text-slate-500">no row on this statement reports a cost</span>
             : noCost
@@ -574,7 +572,7 @@ export function MandateHoldings() {
                       {price(r.currentPrice) ?? <AbsentCell reason="this holding is marked at a total value, with no per-unit price anywhere on the statement" />}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-200">
-                      <Auditable to={sourceHref} title="Market value — trace to this account's own statement">{money(r.marketValue)}</Auditable>
+                      {money(r.marketValue)}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
                       {mv > 0 ? fmtPct((r.marketValue / mv) * 100, { decimals: 1 })
@@ -617,8 +615,7 @@ export function MandateHoldings() {
               {money(stmtMV)} is <span className="text-slate-400">this account's own statement total, on the basis
               this book derives</span> — the sum of every row above{basis === "LIVE" ? " at its statement mark" : ""},
               and not a figure copied from the statement's own total line. That is why the rows add to it, and it is
-              what makes this page checkable against{" "}
-              <Link to={sourceHref} className="text-champagne-400 hover:underline">the source document</Link>.
+              what makes this page checkable against the source document.
               {basis === "LIVE" && Math.abs(mv - stmtMV) >= 1 && (
                 <> The Total shown is {money(mv)} because live prices are applied; the statement figure is unchanged.</>
               )}
