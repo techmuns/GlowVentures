@@ -790,6 +790,13 @@ export function PortfolioMonitor() {
                   return (
                     <Fragment key={r.key}>
                       <tr className="hover:bg-ink-700/40">
+                        {/* NO "cost n/a" BADGE BESIDE THE NAME. The row already
+                            says it four times over — Avg cost, Invested,
+                            Unrealised P&L and Return each render an em dash off
+                            this same `costNA` flag — so the chip was a fifth
+                            statement of one fact, sitting in the one column a
+                            reader scans for the security's NAME. The flag stays
+                            and every dash it drives stays; only the badge is gone. */}
                         <td className="px-2 py-2.5">
                           {m ? (
                             <div className="flex flex-col gap-0.5">
@@ -805,7 +812,6 @@ export function PortfolioMonitor() {
                                   {r.security}
                                 </Link>
                                 <Pill tone="core">PMS mandate</Pill>
-                                {r.costNA && <Pill tone="warn">cost n/a</Pill>}
                               </div>
                               <span className="pl-5 text-[11px] text-slate-500">
                                 {m.manager} · account {m.accountNo} ·{" "}
@@ -815,10 +821,7 @@ export function PortfolioMonitor() {
                               </span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
-                              {r.costNA && <Pill tone="warn">cost n/a</Pill>}
-                            </div>
+                            <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
                           )}
                         </td>
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
