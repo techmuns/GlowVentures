@@ -125,11 +125,48 @@ check("the classes mapped to no bucket are named with their value",
 check("the whole store can still be exported from here", /export/i.test(text));
 
 // ── The removed routes redirect rather than 404 ────────────────────────────
-for (const [from, to] of [["/household", "/family"], ["/private", "/monitor"], ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"]]) {
+//
+// `/private` NOW FORWARDS TO `/private-market`, AND THAT IS NOT THE REMOVED PAGE
+// COMING BACK. The fund-of-funds tracker of Stage 10f is still gone: it read
+// `portfolio.privateMarkets`, whose six arrays are empty, and drew a deployment
+// bar over nothing. What stands at `/private-market` is a different page built
+// from the AIF folios, the capital accounts and the folios nothing values.
+//
+// The redirect moved because leaving it pointed at the monitor while a live
+// Private Market page exists one link away is a STALE routing decision — the
+// same one Stage 9d removed the day the calendar was wired. `/look-through`,
+// `/funds` and `/value-creation` were tabs of the removed page and follow it.
+// `/data-bank` and `/household` do NOT move: neither is about private markets.
+for (const [from, to] of [
+  ["/household", "/family"],
+  ["/private", "/private-market"],
+  ["/look-through", "/private-market"],
+  ["/funds", "/private-market"],
+  ["/value-creation", "/private-market"],
+  ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   check(`${from} redirects to ${to}`, new URL(page.url()).pathname === to, new URL(page.url()).pathname);
 }
+
+// ── …and the page it forwards to is the NEW one, not the removed tracker ───
+//
+// Asserted on figures and on the absence of the removed page's own tiles: the
+// old one printed a "₹0 invested → ₹0 today" private book and a 100%-undrawn
+// deployment bar off six empty arrays. If those ever come back, the giveaway is
+// a private market value of zero on a book whose statements report ₹352 Cr.
+await page.goto(`${BASE}/private-market`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+text = await page.locator("body").innerText();
+check("the Private Market page names the funds and accounts it covers",
+  /\d+ funds · \d+ accounts/.test(text), /\d+ funds · \d+ accounts/.exec(text)?.[0]);
+check("its private market value is a real measured figure, not the removed page's ₹0",
+  /PRIVATE MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
+  && !/PRIVATE MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
+  /PRIVATE MARKET VALUE\s*\n?\s*(₹[\d,.]+\s*(?:Cr|L))/i.exec(text)?.[1]);
+check("the capital the family paid into funds that publish no NAV is stated on its own",
+  /DRAWN AGAINST NO VALUATION/i.test(text) && /in no total on this page/i.test(text));
 
 // ── The release calendar lives on Economy, and nowhere else ────────────────
 //

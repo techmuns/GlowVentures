@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
 import { Polycab } from "@/pages/Polycab";
 import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
+import { PrivateMarket } from "@/pages/PrivateMarket";
 import { FamilyEntities } from "@/pages/FamilyEntities";
 import { SectorComposition } from "@/pages/SectorComposition";
 import { CapitalGains } from "@/pages/CapitalGains";
@@ -93,6 +94,10 @@ export default function App() {
             <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
+            {/* THE PRIVATE BOOK THIS DROP ACTUALLY CARRIES — not the
+                fund-of-funds tracker removed at Stage 10f. See the note on the
+                redirects below, and the header of PrivateMarket.tsx. */}
+            <Route path="/private-market" element={<Gate><PrivateMarket /></Gate>} />
             {/* Keyed by securityKey, not ISIN: several providers in this book print
                 no ISIN at all, so a route keyed on one would have no address for
                 most of the holdings. */}
@@ -119,19 +124,30 @@ export default function App() {
             <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
             <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
-            {/* PRIVATE MARKETS, DATA BANK AND THE FAMILY DASHBOARD ARE REMOVED,
-                at the family's request — this book holds no private-market deals
-                to track, and every AIF folio the drop does carry is already in
-                Portfolio Monitor's own AIF section, folio for folio, with the
-                same invested, current value and gain. Their old addresses (and
-                the two that Private Markets had already absorbed) redirect
-                rather than 404, because links to them exist in this repo's own
-                docs and in whatever the family has bookmarked. */}
-            <Route path="/look-through" element={<Navigate to="/monitor" replace />} />
-            <Route path="/funds" element={<Navigate to="/monitor" replace />} />
-            <Route path="/value-creation" element={<Navigate to="/monitor" replace />} />
+            {/* THE FUND-OF-FUNDS PRIVATE MARKETS PAGE OF Stage 10f IS STILL
+                GONE, and so are the Data Bank and the Family Dashboard. What
+                stands at /private-market is a DIFFERENT page: the private book
+                this drop actually carries — the AIF folios, the capital accounts
+                behind them, and the folios whose fund publishes no valuation at
+                all. None of that is the TVPI/DPI/startup tracker the family
+                asked to remove, whose six source arrays are still empty and are
+                named as absent on the new page rather than drawn.
+
+                /private and the addresses that were TABS of the removed page
+                forward THERE rather than to the monitor: leaving them pointed at
+                a page with no private-market content while a live Private Market
+                page exists one link away is a stale routing decision, the same
+                one Stage 9d removed the day the calendar was wired.
+
+                /data-bank and /household do NOT move — neither is about private
+                markets. Every one of these redirects rather than 404s because
+                links to them exist in this repo's docs and in whatever the
+                family has bookmarked. */}
+            <Route path="/look-through" element={<Navigate to="/private-market" replace />} />
+            <Route path="/funds" element={<Navigate to="/private-market" replace />} />
+            <Route path="/value-creation" element={<Navigate to="/private-market" replace />} />
             <Route path="/industry" element={<Navigate to="/macro" replace />} />
-            <Route path="/private" element={<Navigate to="/monitor" replace />} />
+            <Route path="/private" element={<Navigate to="/private-market" replace />} />
             <Route path="/data-bank" element={<Navigate to="/monitor" replace />} />
             <Route path="/household" element={<Navigate to="/family" replace />} />
             <Route path="/performance" element={<Gate><Performance /></Gate>} />

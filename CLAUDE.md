@@ -2311,6 +2311,84 @@ each removed route now REDIRECTS (`/household` → `/family`, `/private` and
 verified by asserting it happened, never by deleting the test alongside the
 feature.**
 
+**AND `/private` NOW FORWARDS TO `/private-market`, WHICH IS NOT THIS PAGE
+COMING BACK — see Stage 10m.** The fund-of-funds tracker described above is
+still gone and its six source arrays are still empty. What stands at the new
+address is a different page over a different set of facts, and the redirect
+moved because leaving it pointed at the Monitor while a live Private Market page
+exists one link away is a stale routing decision — the same one Stage 9d removed
+the day the calendar was wired. `/look-through`, `/funds` and `/value-creation`
+were tabs of the removed page and follow it; `/data-bank` and `/household` do
+not move, because neither is about private markets.
+
+### Stage 10m — PRIVATE MARKET, and the money no other screen could show
+
+*"there's no private market data anywhere on the dashboard. Make a new page below
+portfolio monitor, 'Private Market' … whatever information for private markets is
+there in the files, show that."*
+
+Stage 10f removed a private-markets page and this adds one, so the difference has
+to be stated plainly or the next session will read the pair as a reversal. **The
+removed page rendered `portfolio.privateMarkets` — `BOOK_PE_FUNDS`,
+`BOOK_PREIPO_FUNDS`, `BOOK_UNLISTED_COMPANIES`, `BOOK_DEBT_FUNDS`,
+`BOOK_CLOSED_FUNDS`, `BOOK_STARTUPS`, all of them still `[]`** — so it drew a
+₹0-invested private book and a deployment bar 100% undrawn against nothing
+committed. Every one of those reads as a measurement. `PrivateMarket.tsx`
+imports none of them, and never `src/lib/privateValue.ts`, whose helpers return
+`0` rather than `null` for an empty input. Those absences are the last card on
+the page, each named with what would fill it.
+
+What the page shows instead is what the statements actually carry:
+
+| | |
+| --- | ---: |
+| AIF holdings, deduped / raw | **19 rows ₹352.35 Cr** / 21 rows ₹355.52 Cr |
+| Distinct funds · accounts · owners | 14 · 29 · 6 |
+| Cost, and the rows reporting one | ₹293.73 Cr on **15 of 19** |
+| Capital accounts: committed / drawn / still to call | ₹97.73 Cr / ₹81.75 Cr / **₹15.98 Cr on 13 of 15** |
+| **Drawn against no valuation** | **₹18.23 Cr across 7 accounts** |
+
+**THE AXIS IS `isPrivateClass`, NEVER `Account.engagement`.** Keying on the
+engagement would be wrong in both directions on this book: three private
+holdings sit in accounts whose engagement is `Distribution` (both 360 ONE CRNs)
+or `Direct` (the ICICI NSDL row), and both Buoyant accounts carry engagement
+`AIF` with a cash sleeve row that is not a private holding. The one question
+engagement DOES answer is the opposite one — an account holding nothing has no
+position to read a class off — which is why `unvaluedAccounts` is scoped to it.
+
+**THE WHOLE OF THIS BOOK'S DOUBLE COUNT IS PRIVATE.** Both duplicated holdings —
+360 ONE Special Opportunities under two CRNs, Transition Venture Fund I under
+both trusts — are on this page, so ₹3.17 Cr of ₹3.17 Cr. Getting the dedupe
+backwards here is guaranteed to be wrong in one direction or the other, and both
+directions have shipped before. The fund table counts each group once, the folio
+and per-owner tables do not, the page STATES the difference, and two invariants
+assert it from opposite ends: a page that deduped everything passes one and fails
+the other.
+
+**₹18.23 Cr IS THE REASON THE PAGE EARNS ITS PLACE.** India SME's three folios
+and Sky Capital's four report units and the capital drawn against a commitment
+and no valuation anywhere. That money is real, paid, and appears on no holdings
+table in this app — and it must never be added to a market value, because
+contributions are what was PAID and not what the stake is WORTH. It has its own
+tile, its own card and a footer saying it is in no total on the page.
+
+**Two of the page's own checks were tautologies, and reintroducing the bug is
+what found them.** The first draft computed the fund table's footer independently
+of its rows, so building the rows from the raw set left every row carrying the
+double count while the footer went on printing the deduped total — each figure
+correct on its own terms, and no check able to see it. The footer is summed FROM
+the rows now. The second compared the drawn-against-no-valuation tile against
+another rendering of the same variable and passed while the tile was halved; it
+reconstructs the tile from the table's rendered rows instead. **A check that
+compares a figure with its own copy cannot fail**, which is this file's own rule
+arriving through arithmetic rather than through prose. All eight invariants were
+verified by reintroducing their bug and watching each fail.
+
+`npm run test:family` carries the arithmetic (`privateMarket.test.ts`), anchored
+on the deduped private total equalling **`BOOK_SUMMARY.privateValue` to the
+rupee** — two independent paths to one figure, so it cannot go stale when the
+next drop moves the book.
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to

@@ -4,6 +4,7 @@ import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, History, Lock, Table2, Calculator, Gauge,
   GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing, Cable,
+  Handshake,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
@@ -26,6 +27,7 @@ const NAV = [
   { to: "/polycab", label: "Polycab", icon: Cable, group: "Daily" },
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
+  { to: "/private-market", label: "Private Market", icon: Handshake, group: "Daily" },
   { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },
