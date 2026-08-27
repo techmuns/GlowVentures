@@ -15,19 +15,22 @@
 //
 // ── THE THREE REASONS THE TWO TOTALS CANNOT BE COMPARED DIRECTLY ────────────
 //
-// Anyone reading "Rs 1,300.05 Cr" against "Rs 13,061.63 Cr" and concluding the
-// dashboard is wrong has hit one of these, and all three are the review's own
-// decisions rather than defects on either side:
+// Anyone reading "Rs 1,300.05 Cr" against the book's managed total and concluding
+// the dashboard is wrong has hit one of these, and all three are decisions about
+// what belongs in a portfolio total rather than defects on either side:
 //
-//   1. THE PROMOTER STOCK IS CARRIED AT ZERO. The review's `Promoter Holding`
-//      tab lists 2,37,29,601 Polycab shares — Ajay's 1,39,01,229 among them,
-//      sourced, in the review's own words, from the "ICIC Demat" — with a market
-//      value column of 0, on a tab outside the portfolio total. This book
-//      ingested that same statement and carries the same 1,39,01,229 shares at
-//      the Rs 8,885.00 the depository marks them at, which is Rs 12,351.24 Cr.
-//      Neither is wrong. The review is stating that the promoter block is not
-//      part of the portfolio being managed; the book is stating what the
-//      statement says the account holds.
+//   1. THE PROMOTER STOCK IS OUTSIDE THE TOTAL ON BOTH SIDES. The review's
+//      `Promoter Holding` tab lists 2,37,29,601 Polycab shares — Ajay's
+//      1,39,01,229 among them, sourced, in the review's own words, from the "ICIC
+//      Demat" — with a market value column of 0, on a tab outside the portfolio
+//      total. This book ingested that same statement and carries the same
+//      1,39,01,229 shares at the Rs 8,885.00 the depository marks them at, which
+//      is Rs 12,351.24 Cr — but ring-fences it into `BOOK_POLYCAB`, out of every
+//      consolidated total and onto the Polycab page alone (see
+//      RINGFENCED_SECURITY_KEYS in build-book.mjs). So both keep the promoter
+//      block out of the managed total; they agree on the quantity to the share,
+//      and differ only in that the review carries it at zero while the book
+//      carries what the statement says the account holds.
 //   2. THE AS-OF DATES ARE NOT THE SAME. The review is struck at 30 June 2026.
 //      This book carries each account at ITS OWN statement date, spread from
 //      31 March to 13 August 2026 (§3). Every price-driven difference below is
@@ -76,6 +79,11 @@ function grab(src, name) {
 // ── the book ────────────────────────────────────────────────────────────────
 const src = readFileSync(BOOK, "utf8");
 const POSITIONS = grab(src, "BOOK_POSITIONS");
+// The ring-fenced promoter stock lives in its own export now (see
+// RINGFENCED_SECURITY_KEYS in build-book.mjs) — out of BOOK_POSITIONS and every
+// book total, on the Polycab page alone. It is read here so the promoter
+// reconciliation below still fires: the review carries it outside its total too.
+const POLYCAB = grab(src, "BOOK_POLYCAB");
 const ACCOUNTS = grab(src, "BOOK_ACCOUNTS");
 const SUMMARY = grab(src, "BOOK_SUMMARY");
 const ACC = new Map(ACCOUNTS.map((a) => [a.accountId, a]));
@@ -391,25 +399,33 @@ say("generated book, the role `golden.mjs` plays for the extractors.");
 say();
 
 // ── A. why the totals differ before a single line is compared ───────────────
-const poly = CONSOLIDATED.find((p) => /polycab/i.test(p.security));
+// The promoter stock is read from BOOK_POLYCAB, not CONSOLIDATED: this book now
+// ring-fences it out of every total, exactly as the review carries it outside
+// its own — so the two totals below are BOTH ex-promoter and directly comparable.
+const poly = POLYCAB.find((p) => /polycab/i.test(p.security)) ?? null;
 const promoterRows = sheet("Promoter Holding")
   .map((r) => r.map((x) => String(x ?? "").trim()))
   .filter((c) => c.some(Boolean));
 const alloc = assetAllocation();
 const reviewTotal = alloc.find((r) => /^Total$/i.test(r.label))?.mv ?? null;
-const bookTotal = SUMMARY.totalValue / CR;
-const bookExPromoter = bookTotal - (poly ? poly.marketValue / CR : 0);
+const bookTotal = SUMMARY.totalValue / CR;   // already EXCLUDES the promoter stock
+const polyCr = poly ? poly.marketValue / CR : 0;
+// The book total is already ex-promoter (BOOK_POLYCAB is outside every total), so
+// the "less the promoter stock" figure the bridge below reconciles against IS it.
+const bookExPromoter = bookTotal;
 
 say("## A. Three reasons the two totals are not comparable line for line");
 say();
 say("| | Review (30 Jun 2026) | Book |");
 say("| --- | ---: | ---: |");
-say(`| Portfolio total | **₹${cr(reviewTotal)} Cr** | **₹${cr(bookTotal)} Cr** |`);
-say(`| ...less the promoter holding | — (carried at zero, see below) | ₹${cr(poly ? poly.marketValue / CR : 0)} Cr |`);
-say(`| Comparable subtotal | ₹${cr(reviewTotal)} Cr | **₹${cr(bookExPromoter)} Cr** |`);
+say(`| Managed portfolio total | **₹${cr(reviewTotal)} Cr** | **₹${cr(bookTotal)} Cr** |`);
+say(`| Promoter holding — outside the total | — (own tab, carried at zero) | ₹${cr(polyCr)} Cr (own page, ring-fenced) |`);
 say();
-say("**1. THE PROMOTER STOCK IS CARRIED AT ZERO, ON ITS OWN TAB, OUTSIDE THE TOTAL.**");
-say("The review's `Promoter Holding` tab reads, verbatim:");
+say("**1. THE PROMOTER STOCK IS OUTSIDE THE TOTAL ON BOTH SIDES.**");
+say("The review carries it on a `Promoter Holding` tab, at zero, outside the portfolio total;");
+say("this book ring-fences it into `BOOK_POLYCAB` and shows it on the Polycab page alone, out of");
+say("every consolidated total — so the two totals above are both ex-promoter and comparable as");
+say("they stand. The review's tab reads, verbatim:");
 say();
 say("```");
 for (const c of promoterRows) say("  " + c.filter(Boolean).join("  |  "));
@@ -418,7 +434,7 @@ say();
 if (poly) {
   const ajay = promoterRows.find((c) => /Ajay JS/i.test(c.join(" ")));
   const ajayQty = ajay ? num(ajay.find((x) => num(x) != null && num(x) > 1000)) : null;
-  say(`The book carries **${qty(poly.quantity)} shares** of Polycab at ₹${cr(poly.marketValue / CR)} Cr, from`);
+  say(`The book carries **${qty(poly.quantity)} shares** of Polycab at ₹${cr(polyCr)} Cr, from`);
   say("Ajay's ICICI Bank NSDL statement. The review's own line for it is");
   say(`\`Ajay JS: Individual ${qty(ajayQty)}\` — **the same quantity**, sourced in the review's own words`);
   say("from the \"ICIC Demat\", the very document this book read.");
@@ -427,7 +443,7 @@ if (poly) {
     ? "**The two agree on the quantity to the share.** They differ only on whether that holding"
     : `**They differ on quantity by ${qty(Math.abs((ajayQty ?? 0) - poly.quantity))} shares**, which needs an explanation. Separately, they differ on whether the holding`);
   say("belongs in a portfolio total, and that is a decision about the family's affairs rather");
-  say("than a parsing rule — `excludedAccounts` reverses this book's side of it in one line.");
+  say("than a parsing rule — removing its key from `RINGFENCED_SECURITY_KEYS` folds it back in one line.");
 }
 say();
 say("**2. THE AS-OF DATES ARE NOT THE SAME.** The review is struck at 30 June 2026; this book");
@@ -451,31 +467,48 @@ say("## B. Per holder");
 say();
 const iw = investorwise();
 const bo = bookByOwner();
-say("| Holder | Review | Book | Book less promoter stock | Difference |");
-say("| --- | ---: | ---: | ---: | ---: |");
+/**
+ * THE "LESS THE PROMOTER STOCK" COLUMN IS GONE, AND ITS REMOVAL IS THE FIX.
+ *
+ * It subtracted Polycab from each holder's book total back when `CONSOLIDATED`
+ * still carried it. It no longer does — the holding is ring-fenced into
+ * `BOOK_POLYCAB`, so every figure `bookByOwner` returns is ALREADY ex-promoter —
+ * and subtracting again put **−₹12,001.70 Cr** against Ajay and **−₹11,640.85 Cr**
+ * on the Total row of the one document whose job is to be the independent check
+ * on the generated book. A negative market value is not a small error: it is the
+ * "a total must tie to its own columns" rule failing in the report that exists to
+ * enforce it.
+ *
+ * Deleted rather than zeroed, because a column identical to the one beside it
+ * invites the next session to "restore" the subtraction. Section A states the
+ * promoter figure once, where it belongs.
+ */
+say("| Holder | Review | Book (ex-promoter) | Difference |");
+say("| --- | ---: | ---: | ---: |");
 const OWNER_ALIAS = new Map([
   ["Aarti Ajay Jaisinghani", "Aarti Jaisinghani"],
   ["Bharat Jaisinghani Family Trust II", "Bharat Jaisinghani Family Trust 2"],
   ["Bharat Jaisinghani Family Trust III", "Bharat Jaisinghani Family Trust 3"],
 ]);
-let revSum = 0, bookSum = 0, exSum = 0, absentHolders = 0;
+let revSum = 0, bookSum = 0, absentHolders = 0;
 for (const { holder, mv } of iw) {
   const bookName = OWNER_ALIAS.get(holder) ?? holder;
   const b = bo.get(bookName) ?? null;
-  const polyHere = poly && ACC.get(poly.accountId)?.owner === bookName ? poly.marketValue / CR : 0;
   const bookCr = b == null ? null : b / CR;
-  const exCr = bookCr == null ? null : bookCr - polyHere;
-  revSum += mv ?? 0; bookSum += bookCr ?? 0; exSum += exCr ?? 0;
+  revSum += mv ?? 0; bookSum += bookCr ?? 0;
   if (b == null) absentHolders += mv ?? 0;
-  const diff = exCr == null || mv == null ? null : exCr - mv;
-  say(`| ${holder}${bookName !== holder ? ` <br><sub>book: ${bookName}</sub>` : ""} | ₹${cr(mv)} Cr | ${bookCr == null ? "— *not in the book*" : "₹" + cr(bookCr) + " Cr"} | ${exCr == null ? "—" : "₹" + cr(exCr) + " Cr"} | ${diff == null ? "—" : (diff >= 0 ? "+" : "") + cr(diff) + " Cr"} |`);
+  const diff = bookCr == null || mv == null ? null : bookCr - mv;
+  say(`| ${holder}${bookName !== holder ? ` <br><sub>book: ${bookName}</sub>` : ""} | ₹${cr(mv)} Cr | ${bookCr == null ? "— *not in the book*" : "₹" + cr(bookCr) + " Cr"} | ${diff == null ? "—" : (diff >= 0 ? "+" : "") + cr(diff) + " Cr"} |`);
 }
 // Owners the book has and the review's columns do not.
 for (const [o, v] of bo) if (!iw.some(({ holder }) => (OWNER_ALIAS.get(holder) ?? holder) === o)) {
-  say(`| — *not a review column* | — | ₹${cr(v / CR)} Cr | ₹${cr(v / CR)} Cr | — |`);
-  bookSum += v / CR; exSum += v / CR;
+  say(`| — *not a review column* | — | ₹${cr(v / CR)} Cr | — |`);
+  bookSum += v / CR;
 }
-say(`| **Total** | **₹${cr(revSum)} Cr** | **₹${cr(bookSum)} Cr** | **₹${cr(exSum)} Cr** | **${(exSum - revSum >= 0 ? "+" : "") + cr(exSum - revSum)} Cr** |`);
+say(`| **Total** | **₹${cr(revSum)} Cr** | **₹${cr(bookSum)} Cr** | **${(bookSum - revSum >= 0 ? "+" : "") + cr(bookSum - revSum)} Cr** |`);
+say();
+say("Every book figure here is ex-promoter by construction: Polycab is ring-fenced into");
+say("`BOOK_POLYCAB` and reaches no per-owner total. Section A states it once, on its own.");
 say();
 say("`Hope India Trust` is a review column and deliberately NOT in this book: its four");
 say("mutual-fund folios are filed by each AMC as `Status : Trust`, a separate taxpayer. One");
@@ -622,7 +655,12 @@ say("## E. What this book carries that the review does not");
 say();
 const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
 const orphan = CONSOLIDATED.filter((p) => {
-  if (poly && p === poly) return false;
+  // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
+  // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
+  // can never be true and the branch was dead. Ring-fencing already keeps the
+  // holding out of this list. A dead branch with a confident purpose is how a
+  // future session "fixes" a rule that was never broken — this file names that
+  // failure elsewhere, so it does not get to keep one of its own.
   if (!reviewNames.has(p.securityKey)) {
     const prov = ACC.get(p.accountId)?.provider;
     return !matchedProviders.has(prov);
@@ -667,7 +705,10 @@ for (const [label, amt, why] of steps) {
 }
 const residual = bookExPromoter - running;
 say(`| **What the book would carry on those two adjustments alone** | | **₹${cr(running)} Cr** | |`);
-say(`| **What the book actually carries, less the promoter stock** | | **₹${cr(bookExPromoter)} Cr** | |`);
+// "less the promoter stock" would now describe a subtraction that no longer
+// happens — the book total is ex-promoter by construction. The caption says what
+// the figure IS rather than how it once got there.
+say(`| **What the book actually carries (ex-promoter)** | | **₹${cr(bookExPromoter)} Cr** | |`);
 say(`| **Residual** | | **${(residual >= 0 ? "+" : "−") + "₹" + cr(Math.abs(residual))} Cr** | see below |`);
 say();
 say("**THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things this");

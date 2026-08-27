@@ -288,7 +288,9 @@ export function FamilyEntities() {
    *
    * The family clicked a holding and reported that a Carnelian-managed share was
    * presented as theirs to choose: Jammu & Kashmir Bank sat in a flat list beside
-   * Polycab with nothing on the row saying who chose it. Sectioning answers it at
+   * the shares they had bought in their own demat — Polycab among them at the time,
+   * since ring-fenced onto its own page — with nothing on the row saying who chose
+   * which. Sectioning answers it at
    * the group level and the "Held via" column answers it per row, which a section
    * heading cannot do once the search box has narrowed the table.
    *

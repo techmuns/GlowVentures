@@ -1,8 +1,10 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
+import { Polycab } from "@/pages/Polycab";
 import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
 import { FamilyEntities } from "@/pages/FamilyEntities";
 import { SectorComposition } from "@/pages/SectorComposition";
@@ -42,6 +44,38 @@ function RootRedirect() {
   return <Navigate to={portfolio && !bookIsEmpty ? "/cio" : "/upload"} replace />;
 }
 
+/**
+ * A RING-FENCED SECURITY HAS ITS OWN PAGE, AND `StockInfo` WOULD LIE ABOUT IT.
+ *
+ * `BOOK_POLYCAB` is deliberately outside `BOOK_POSITIONS`, so `StockInfo`'s
+ * `rows` filter comes back EMPTY for it — and empty there does not render an
+ * absence, it renders the FULLY-EXITED branch: "Position closed", "HOLDING
+ * VALUE ₹0", "QUANTITY 0", "This name is fully exited — no current holding".
+ * Every one of those is false about a holding of 1.39 Cr shares worth
+ * ₹12,351 Cr, and the ₹0 is precisely the failure this book exists to prevent:
+ * a measured zero standing where the truth is "counted on another page".
+ *
+ * That security's page IS `/polycab`, so the address redirects there rather
+ * than 404ing — a link, a bookmark or a pasted URL is a promise the app made,
+ * and this is the treatment `/news` and `/private` already get.
+ *
+ * IT IS A WRAPPER RATHER THAN A GUARD INSIDE `StockInfo` because React Router
+ * REUSES that component when only the param changes. An early return there
+ * would change the hook count between `/stock/abc` and `/stock/<fenced>` on the
+ * same mounted instance, which React throws on. Swapping the CHILD is safe.
+ *
+ * Derived from the book, never from a typed-in key: remove the security from
+ * `RINGFENCED_SECURITY_KEYS` in build-book.mjs and `BOOK_POLYCAB` empties, this
+ * set empties with it, and the ordinary company page serves the route again.
+ */
+const RINGFENCED_KEYS = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
+
+function StockRoute() {
+  const { securityKey = "" } = useParams();
+  if (RINGFENCED_KEYS.has(securityKey)) return <Navigate to="/polycab" replace />;
+  return <StockInfo />;
+}
+
 export default function App() {
   return (
     <div className="flex h-screen bg-ink-950 text-slate-200 bg-grid">
@@ -52,12 +86,17 @@ export default function App() {
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/upload" element={<DataRefresh />} />
+            {/* The family's ring-fenced promoter stock, on its own page — kept OUT
+                of every consolidated total and every other route (see
+                RINGFENCED_SECURITY_KEYS in build-book.mjs). Reads BOOK_POLYCAB
+                directly, never the portfolio context, so it cannot leak back in. */}
+            <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
             {/* Keyed by securityKey, not ISIN: several providers in this book print
                 no ISIN at all, so a route keyed on one would have no address for
                 most of the holdings. */}
-            <Route path="/stock/:securityKey" element={<Gate><StockInfo /></Gate>} />
+            <Route path="/stock/:securityKey" element={<Gate><StockRoute /></Gate>} />
             {/* ONE DISCRETIONARY MANDATE AND EVERY SHARE INSIDE IT — the
                 drill-down the family asked for three times. A stock held through
                 a PMS is shown here, under the manager who chose it, which is

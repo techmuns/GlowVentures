@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing,
+  GitCompare, Star, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing, Cable,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
@@ -21,6 +21,9 @@ const clampWidth = (w: number) => Math.max(NAV_MIN, Math.min(NAV_MAX, Math.round
 
 const NAV = [
   { to: "/audit", label: "Data Audit", icon: Table2, group: "Setup" },
+  // Above Morning CIO by request: the ring-fenced promoter holding on its own
+  // page, kept out of every other route's figures (see RINGFENCED_SECURITY_KEYS).
+  { to: "/polycab", label: "Polycab", icon: Cable, group: "Daily" },
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
