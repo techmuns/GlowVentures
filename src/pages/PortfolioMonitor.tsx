@@ -1115,6 +1115,13 @@ export function PortfolioMonitor() {
               </tfoot>
             </table>
           </div>
+          {uncostedMV > 0 && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              Invested and Unrealised P&amp;L are struck over the {costedCount} of {heldCount} positions that report a
+              cost; the other {heldCount - costedCount} are held through depository accounts that record no cost, so they
+              sit in the Market value column only.
+            </p>
+          )}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
