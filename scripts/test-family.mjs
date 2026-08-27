@@ -21,6 +21,7 @@ const SUITES = [
   ["cash flow & calendar", "src/lib/__tests__/yfinStatements.test.ts"],
   ["ratio table", "src/lib/__tests__/ratioTable.test.ts"],
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
+  ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["econ calendar", "src/lib/__tests__/econCalendar.test.ts"],
 ];
 

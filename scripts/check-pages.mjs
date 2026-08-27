@@ -139,9 +139,37 @@ const FUND_ACCOUNT_ID = (() => {
   } catch { return null; }
 })();
 
+/**
+ * THE NEWEST DATE ANY PRIVATE HOLDING IS ACTUALLY MARKED AT.
+ *
+ * Derived, never typed: the Private Market page's own claim is that it does NOT
+ * print the book's newest date over marks that are older than it, and both dates
+ * move with every drop. A literal here would be a second source for a generated
+ * figure — the mistake that made three earlier invariants fail against pages
+ * computing correctly.
+ *
+ * Today the book closes 2026-08-13 and the newest private mark is 2026-07-31.
+ */
+const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
+const PRIV_ASOF_MAX = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const ids = new Set(positions.filter((p) => PRIVATE_CLASSES.has(p.assetClass)).map((p) => p.accountId));
+    for (const a of accounts) if (a.engagement === "AIF") ids.add(a.accountId);
+    const dates = [...ids]
+      .map((id) => accounts.find((a) => a.accountId === id)?.asOf)
+      .filter(Boolean).sort();
+    return dates.at(-1) ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   ["cio", "/cio"],
   ["monitor", "/monitor"],
+  ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   // ...and the BY-ENTITY view of the same table, where every statement's row
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
@@ -478,6 +506,131 @@ const INVARIANTS = {
   // was excluded, why Unclassified was STILL 49% with a mutual fund at its head.
   // A GICS sector is a property of a company; the page is direct equity only,
   // and every excluded class must be NAMED with its value rather than dropped.
+  /**
+   * ── PRIVATE MARKET ───────────────────────────────────────────────────────
+   *
+   * "there's no private market data anywhere on the dashboard." This page is the
+   * answer, and it is the ONE screen where the whole of this book's double count
+   * lives: both duplicated holdings — 360 ONE Special Opportunities under two
+   * CRNs and Transition Venture Fund I under both family trusts — are private.
+   * So the consolidated-counts-once / per-account-does-not rule is this page's
+   * central arithmetic rather than a background concern, and PM-1 and PM-6
+   * assert it from BOTH ends: a page that deduped everything would pass one and
+   * fail the other.
+   *
+   * Every one of these is struck on a FIGURE THE PAGE RENDERS. The page also
+   * carries a lot of true prose, and matching that is what made two earlier
+   * drafts elsewhere in this file unable to fail.
+   */
+  "private-market": [
+    // PM-1. The per-folio table shows every statement as printed; the fund table
+    // counts each holding once. The difference is the double count, and the page
+    // must NAME it rather than leave a reader to find it by adding.
+    ["the folio total less the fund total is exactly the double count the page names", (t) => {
+      // The footer prints Invested THEN Value, so the VALUE is the second money
+      // in the row. Taking the first silently compares a cost against a market
+      // value — which is how this check failed the first time it was run.
+      const consol = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*funds\s*` + CR + String.raw`\s*` + CR, "i").exec(t)?.[2]);
+      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
+      const dup = cr(new RegExp(CR + String.raw`\s*of the\s*` + CR + String.raw`\s*above is two holdings`, "i").exec(t)?.[1]);
+      if (![consol, raw, dup].every(Number.isFinite)) return false;
+      return dup > 0 && Math.abs(raw - consol - dup) <= Math.max(0.6, consol * 0.002);
+    }],
+    // PM-2. What the page shows plus what it says it left out must reconstruct
+    // the whole book. Narrowing on the wrong axis moves one side and not the other.
+    ["private value + the classes named as excluded reconstructs the consolidated NAV", (t) => {
+      const nav = cr(new RegExp(CR).exec(t)?.[1]);                 // header chip, first ₹…Cr
+      const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      const rest = [...(new RegExp(String.raw`Not on this page:([^\n]{0,400})`, "i").exec(t)?.[1] ?? "")
+        .matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
+      if (![nav, priv].every(Number.isFinite) || rest.length < 2) return false;
+      // THE BOUND IS THE PRINTING PRECISION, NOT A FRACTION OF THE NAV. Scaled
+      // to the book (0.2% of ₹13,061 Cr) this would allow ₹26 Cr of drift and
+      // swallow the exact error it exists to catch — the ₹18.2 Cr of drawn
+      // capital being folded into the private value. Every figure here prints to
+      // one decimal in Cr, so six of them can round by at most ~₹0.3 Cr in total.
+      return Math.abs(priv + rest.reduce((a, b) => a + b, 0) - nav) <= 0.6;
+    }],
+    // PM-3. Invested and Unrealised are struck over the rows that HAVE a cost, so
+    // they add to the COSTED market value and not to the whole private book — and
+    // the coverage count must be a strict subset. `costBasis ?? 0` leaves the
+    // totals untouched and silently makes the count read 19 of 19.
+    ["invested + unrealised = the costed value, and the cost covers fewer rows than the book holds", (t) => {
+      const inv = cr(new RegExp(String.raw`CAPITAL INVESTED\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      const pnl = cr(new RegExp(String.raw`UNREALISED P&L\s*\n?\s*\+?` + CR, "i").exec(t)?.[1]);
+      const cov = cr(new RegExp(String.raw`covering\s*` + CR, "i").exec(t)?.[1]);
+      const n = /(\d+) of (\d+) folio rows report one/i.exec(t);
+      if (![inv, pnl, cov].every(Number.isFinite) || !n) return false;
+      return Math.abs(inv + pnl - cov) <= Math.max(0.6, cov * 0.002) && Number(n[1]) < Number(n[2]);
+    }],
+    // PM-4. Undrawn is summed AS PRINTED. Two folios print a commitment and a
+    // drawdown and no undrawn figure; a `?? 0`, or deriving committed − drawn,
+    // puts a figure on all fifteen and the coverage count gives it away.
+    ["the dry-powder tile covers fewer capital accounts than the register holds", (t) => {
+      const tile = cr(new RegExp(String.raw`STILL TO CALL \(DRY POWDER\)\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      const foot = new RegExp(String.raw`Still to call\s*` + CR + String.raw`\s*\((\d+) of (\d+)\)`, "i").exec(t);
+      if (!Number.isFinite(tile) || !foot) return false;
+      const total = cr(foot[1]), have = Number(foot[2]), rows = Number(foot[3]);
+      return Number.isFinite(total) && Math.abs(total - tile) <= 0.6 && have > 0 && have < rows;
+    }],
+    // PM-5. The capital paid into funds that value nothing ties to its own table
+    // and is NOT inside the private market value. Carrying drawn capital as a
+    // mark would report what was paid as what the stake is worth.
+    ["the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total", (t) => {
+      const tile = cr(new RegExp(String.raw`DRAWN AGAINST NO VALUATION\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      const consol = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*funds\s*` + CR + String.raw`\s*` + CR, "i").exec(t)?.[2]);
+      const i = t.search(/Private accounts whose fund publishes no valuation/i);
+      const j = t.search(/of drawn capital across \d+ of these accounts/i);
+      if (![tile, priv, consol].every(Number.isFinite) || i < 0 || j <= i) return false;
+      // RECONSTRUCTED FROM THE RENDERED ROWS, not compared against another
+      // rendering of the same variable — that version was tautological and
+      // passed while the tile was halved. Each row is
+      // `account \t owner \t drawn \t still-to-call \t — \t why`.
+      const drawn = [...t.slice(i, j).matchAll(/\n[^\t\n]+\t[^\t\n]+\t(?:₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?|—)\t/g)]
+        .filter((r) => r[1]).map((r) => crU(r[1], r[2]));
+      if (!drawn.length) return false;
+      return tile > 0
+        && Math.abs(drawn.reduce((a, b) => a + b, 0) - tile) <= 0.6
+        // …and the private total is still the fund table's own footer, so the
+        // drawn capital has not been folded into it.
+        && Math.abs(priv - consol) <= 0.6;
+    }],
+    // PM-6. The other end of PM-1: a per-owner figure counts each member's own
+    // statement and therefore does NOT dedupe. Computing this table off the
+    // deduped set empties two owners' rows and the sum lands short of the footer.
+    ["the per-owner subtotals add to the folio total, not to the consolidated one", (t) => {
+      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
+      const said = new RegExp(String.raw`these add to\s*` + CR + String.raw`\s*and not to the consolidated\s*` + CR, "i").exec(t);
+      const owners = [...t.matchAll(/\n[^\n\t]+\t+\d+ rows?\t+(?:₹[\d,.]+\s*(?:Cr|L|K)?|—)\t+₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)]
+        .map((x) => crU(x[1], x[2]));
+      if (!Number.isFinite(raw) || !said || owners.length < 2) return false;
+      const sum = owners.reduce((a, b) => a + b, 0);
+      // It adds to the RAW total and is DIFFERENT from the consolidated one.
+      return Math.abs(sum - raw) <= Math.max(0.6, owners.length * 0.06)
+        && Math.abs(cr(said[1]) - raw) <= 0.6 && Math.abs(cr(said[1]) - cr(said[2])) > 0.05;
+    }],
+    // PM-7. The book closes newer than every private mark on this page, so
+    // printing `portfolio.asOf` over these rows would date them forward. The
+    // expected date is DERIVED from the book, never typed here.
+    ["the newest private mark rendered is the newest one the book carries", (t) => {
+      if (!PRIV_ASOF_MAX) return false;         // the harness could not read the book: a failure, not a skip
+      const want = new Date(`${PRIV_ASOF_MAX}T00:00:00Z`)
+        .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+        .replace(/^0/, "");
+      return new RegExp(String.raw`Marks span[^\n]*?${want.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(t);
+    }],
+    // PM-8. A fund whose statement reports no cost shows no return — a percentage
+    // over an absent cost is struck against nothing. Asserted on the ROW: the
+    // depository-held fund prints a value, an em dash for cost, and no return.
+    ["no fund row prints a return where its cost is absent", (t) => {
+      const rows = [...t.matchAll(/\n[^\n\t]+\t[^\n\t]*\t\d+\t[\d,.]+\t(—|₹[\d,.]+\s*(?:Cr|L|K)?)\t(?:₹[\d,.]+\s*(?:Cr|L|K)?|₹0)\t(—|[+-][\d.]+%)/g)];
+      if (!rows.length) return false;
+      // Every row whose Invested cell is a dash must have a dash in Return too.
+      return rows.filter((r) => r[1] === "—").every((r) => r[2] === "—")
+        && rows.some((r) => r[1] === "—");     // and the book really does carry one
+    }],
+  ],
   sectors: [
     ["sector view is company shares only, the excluded classes named", (t) => /company shares only/i.test(t) && /excluded rather than folded in/i.test(t)],
     // The failure this replaced: a fund standing at the head of a sector table.
