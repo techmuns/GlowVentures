@@ -215,6 +215,134 @@ const CLASS_LABEL: Record<string, string> = { Equity: "Company Shares" };
 
 export const assetClassLabel = (cls: string) => CLASS_LABEL[cls] ?? cls;
 
+/**
+ * ── THE THIRD TIME THE SAME COMPLAINT ARRIVED, THE WORD WAS NEVER THE PROBLEM ──
+ *
+ * "Direct Equity" was read as a claim about who chose the position, so it became
+ * "Company Shares". The family came back a third time and said what they had
+ * meant all along, plainly: *a stock held through a PMS or an AIF should be
+ * shown INSIDE that mandate's drill-down, and Direct Equity should mean shares
+ * held directly.* That is not a request for a better label. It is a request for
+ * a different GROUPING — and once the grouping is right, "Direct Equity" becomes
+ * TRUE and goes back on the heading, which is why `CLASS_LABEL` above now reads
+ * the word the first two rounds could not honestly use.
+ *
+ * SO THE TWO WORDS NAME TWO DIFFERENT SETS, and both are now true of theirs.
+ * `assetClassLabel("Equity")` stays **"Company Shares"** — it answers "what IS
+ * this?", and a share a manager picked is a company share exactly like one the
+ * family picked. `DIRECT_EQUITY_BUCKET` is **"Direct Equity"**, and it answers
+ * "who chose it?", which is the holdings-table question and the narrower set.
+ * Neither can be misread as the other, because neither is being asked to carry
+ * both claims — which is what the first two rounds each tried to make one word do.
+ *
+ * `assetClass` does not move. §5 stands: PMS is an ENGAGEMENT, never an asset
+ * class, and `assertNormalized` still rejects a document that says otherwise.
+ * The shares Carnelian holds for this family ARE ordinary listed equity. What
+ * changes is only how the holdings tables GROUP them, and this is the one place
+ * that decides it — a bucket re-derived per screen is a bucket that disagrees
+ * with itself, which is exactly how "Direct Equity" survived on the Morning CIO
+ * allocation row after every other surface had stopped saying it.
+ *
+ * A mandate's CASH SLEEVE buckets with it deliberately. The Carnelian mandate is
+ * worth what its statement says it is worth — ₹39.53 Cr of shares and cash — so
+ * bucketing the cash elsewhere would make the mandate row disagree with the
+ * document it came from. That also gives every mandate row a figure that ties to
+ * an account total, which is the check that keeps this honest.
+ */
+export const DIRECT_EQUITY_BUCKET = "Direct Equity";
+export const MANDATE_BUCKET = "PMS mandates";
+/** Shares whose account states no engagement — neither claim can be made. */
+export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
+
+/**
+ * Which bucket a holding belongs to on a HOLDINGS TABLE.
+ *
+ * Keys are strings, and every class that is not touched passes through as its
+ * own `assetClass`, so a caller can keep grouping on one key and still get AIF,
+ * Mutual Fund, ETF, Cash and Unlisted exactly where they were.
+ *
+ * `engagement` comes from the ACCOUNT (`engagementOf`), never from the position:
+ * how a holding is run is a fact about the account that holds it, and reading it
+ * off the position is what would let two rows of one mandate land in two
+ * buckets.
+ */
+export function holdingBucket(p: { assetClass: string }, engagement: string | null | undefined): string {
+  const route = holdingRoute(engagement);
+  // A mandate takes its whole account — the shares AND the cash sleeve beside
+  // them — because that is what the manager runs and what the statement totals.
+  if (route === "mandate") return MANDATE_BUCKET;
+  /**
+   * AN UNREADABLE ENGAGEMENT DOES NOT BECOME "DIRECT".
+   *
+   * `Account.engagement` is `unknown` where no statement states how the account
+   * is run, and it is never defaulted (§5). Falling through to Direct Equity
+   * here would restore the exact bug being fixed, one rung down: a share nobody
+   * can show the family picked, filed under the heading that says they did. No
+   * account in this drop is in that state, which is precisely why it has to be
+   * written now — the first one that arrives would otherwise land silently in
+   * the wrong bucket.
+   */
+  if (p.assetClass === "Equity") return route === "own" ? DIRECT_EQUITY_BUCKET : UNROUTED_EQUITY_BUCKET;
+  return p.assetClass;
+}
+
+/** The screen label for a bucket. Class keys fall through to `assetClassLabel`. */
+export const bucketLabel = (key: string) => (key === MANDATE_BUCKET ? MANDATE_BUCKET : assetClassLabel(key));
+
+/**
+ * DIRECT EQUITY, MEANING WHAT THE WORDS SAY: a share the family bought itself.
+ *
+ * `isCompanyShare` is deliberately NOT this and deliberately stays. The two
+ * answer different questions and both are asked in this app:
+ *
+ *   isCompanyShare  — "is this a share in a company?"  A PMS-held share is, and
+ *                     it has a GICS sector, a market cap, an NSE symbol and a
+ *                     concall exactly like any other. Sector Composition,
+ *                     Exposure & IPS, Compare and the market-cap bands must keep
+ *                     using it: narrowing THOSE to own-held shares would throw
+ *                     away ₹127.12 Cr of real sector exposure and leave a sector
+ *                     table built from depository rows that carry no sector at
+ *                     all. A look-through into a mandate is a gain for exposure
+ *                     analysis, not something to undo.
+ *   isDirectEquity  — "did the family choose this?"  That is the holdings-table
+ *                     question, and the one the family has now asked three times.
+ */
+export const isDirectEquity = (p: { assetClass: string }, engagement: string | null | undefined) =>
+  p.assetClass === "Equity" && holdingRoute(engagement) === "own";
+
+/** Held under a discretionary mandate — the set that rolls up into its manager. */
+export const isMandateHeld = (engagement: string | null | undefined) =>
+  holdingRoute(engagement) === "mandate";
+
+/**
+ * WHAT TO CALL A MANDATE ON SCREEN — and why it needs a helper at all.
+ *
+ * A mandate's own name is `Account.strategy`, which the statements print
+ * ("CARNELIAN BESPOKE PORTFOLIO", "Aristos Equity Portfolio"). Four of this
+ * book's ten mandates SHARE that name with another one, because the same
+ * strategy is run for two family members: Goldstandard's Aristos for Ankita and
+ * Ajay, SVAN's Velocity for Ajay and Bharat, Green Lantern's GLC Growth Fund
+ * for Ankita and Ajay, V.E.C Assago's Small and Mid-Cap Growth for both. Listed
+ * on strategy alone that is four pairs of rows that look like duplicates of each
+ * other, and a reader who sees "Aristos Equity Portfolio" twice with two
+ * different values has no way to tell which is whose.
+ *
+ * So the OWNER is part of the name wherever mandates are listed together, and it
+ * is derived here rather than re-typed per surface. An account with no strategy
+ * printed falls back to its provider — the manager is at least a fact the
+ * statement states.
+ */
+export function mandateLabel(a: Account | undefined): string {
+  if (!a) return "Mandate not in the account registry";
+  return a.strategy || a.provider || "Mandate not named on its statement";
+}
+
+/** The same name, qualified by whose money it runs — for lists of mandates. */
+export function mandateLabelWithOwner(a: Account | undefined, owner: string): string {
+  const base = mandateLabel(a);
+  return owner ? `${base} · ${owner}` : base;
+}
+
 /** One asset class's contribution, for naming what a narrowed view left out. */
 export type ClassSlice = { key: string; mv: number; count: number };
 
