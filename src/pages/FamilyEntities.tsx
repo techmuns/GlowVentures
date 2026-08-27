@@ -103,8 +103,13 @@ export function FamilyEntities() {
   // See ENTITY_PARAM above. Resolved against the entities THIS BOOK carries, so
   // a name that resolves in the registry but owns nothing here still falls back
   // to All rather than drawing an entity with no rows.
-  const wantedEntity = ownerDisplayName(searchParams.get(ENTITY_PARAM) || "").toLowerCase();
-  const scope = entities.find((e) => e.key.toLowerCase() === wantedEntity)?.key ?? ALL_ENTITIES;
+  // An EMPTY param is not an unresolved owner: `ownerDisplayName("")` answers
+  // "Unattributed", which is the very name `ownerOf` gives a position whose
+  // account is missing from the registry — so calling it unguarded would make
+  // bare `/family` select an Unattributed entity the moment a drop carries one.
+  const rawEntity = searchParams.get(ENTITY_PARAM) ?? "";
+  const wantedEntity = rawEntity ? ownerDisplayName(rawEntity).toLowerCase() : "";
+  const scope = (wantedEntity && entities.find((e) => e.key.toLowerCase() === wantedEntity)?.key) || ALL_ENTITIES;
   const setScope = (next: string) => {
     const q = new URLSearchParams(searchParams);
     if (next === ALL_ENTITIES) q.delete(ENTITY_PARAM); else q.set(ENTITY_PARAM, next);
@@ -167,9 +172,10 @@ export function FamilyEntities() {
   // …and the ones the figure does NOT cover. The absent branch below goes to
   // some length to tell "no in-house account" apart from "in-house accounts
   // that report nothing", and the branch that renders on this book made neither
-  // distinction: it printed the 7 accounts behind the figure and said nothing
-  // about the other 3 in the registry. A figure that exists for SOME accounts
-  // is shown for those and the rest are NAMED, in the total's own caption.
+  // distinction: it printed the count of accounts BEHIND the figure and said
+  // nothing about the in-house accounts in the registry that contribute no
+  // position to it. A figure that exists for SOME accounts is shown for those
+  // and the rest are NAMED, in the total's own caption.
   const inHouseAccountsUnreported = inHouseAccountsInRegistry - directAccounts;
   const directEquityRows = consolidatedRows.filter((x) => isDirectEquity(x, engagementOf(accIdx, x) || null));
   const directEquityMV = sum(directEquityRows.map((x) => x.marketValue));
@@ -220,6 +226,9 @@ export function FamilyEntities() {
   const selSharesMV = sum(selShares.map((x) => x.marketValue));
   const selSectors = bySector(selShares);
   const selExcluded = excludedClasses(selRows, isCompanyShare);
+  const selExcludedMV = sum(selExcluded.map((c) => c.mv));
+  const selMandateShares = selShares.filter((x) => isMandateHeld(engagementOf(accIdx, x) || null));
+  const selMandateSharesMV = sum(selMandateShares.map((x) => x.marketValue));
   /**
    * ── THE CAPTION AND THE TABLE ARE KEYED ON DIFFERENT AXES ──
    *
@@ -227,10 +236,10 @@ export function FamilyEntities() {
    * table below groups by `holdingBucket` — who chose it — and a MANDATE takes
    * its whole account, cash sleeve included, because that is what the manager
    * runs and what the statement totals. The two therefore disagree, and on this
-   * book they disagree on exactly one class: Ajay's caption named "Cash
-   * ₹10.08 Cr" and sent the reader to a CASH section reading ₹0, and Bharat's
-   * named "Cash ₹0.49 Cr" for an entity whose table has no Cash section at all —
-   * his single cash row is the Molecule mandate's sleeve.
+   * book they disagree on exactly one class: CASH. The caption named an entity's
+   * whole cash figure and then sent the reader to a Cash section holding only
+   * the one row outside a mandate — a measured nil — and, for a member whose
+   * only cash row IS a mandate's sleeve, to a table with no Cash section at all.
    *
    * So the caption keeps `excludedClasses` (the chart's own axis: a sector is a
    * property of a company, and a class is what makes a holding not one) and
@@ -241,10 +250,21 @@ export function FamilyEntities() {
   const selSleeve = selRows.filter((x) => !isCompanyShare(x) && isMandateHeld(engagementOf(accIdx, x) || null));
   const selSleeveMV = sum(selSleeve.map((x) => x.marketValue));
   const selSleeveClasses = excludedClasses(selSleeve, () => false);
+  // One class reads better named than repeated — "<value> of Cash", not
+  // "<value> (Cash <value>)". Several keep the per-class breakdown.
+  const sleeveWhat = selSleeveClasses.length === 1
+    ? `${money(selSleeveMV)} of ${assetClassLabel(selSleeveClasses[0].key)}`
+    : `${money(selSleeveMV)} (${classList(selSleeveClasses)})`;
   const sleeveNoteText = selSleeve.length === 0 ? ""
-    : ` Of that, ${money(selSleeveMV)} (${classList(selSleeveClasses)}) sits INSIDE a mandate rather than under a class`
-      + ` heading of its own: a mandate is grouped as its own statement totals it, cash sleeve included, so that value is`
-      + ` counted in the ${MANDATE_BUCKET} section.`;
+    : ` Of that, ${sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is grouped`
+      + ` as its own statement totals it, cash sleeve included, so that value is counted in the ${MANDATE_BUCKET} section.`;
+  const sleeveNote = selSleeve.length === 0 ? null : (
+    <>
+      {" "}Of that, {sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is
+      grouped as its own statement totals it, cash sleeve included, so that value is counted in the{" "}
+      <span className="text-slate-400">{MANDATE_BUCKET}</span> section.
+    </>
+  );
   const holdings = (() => {
     if (!selected) return [];
     const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
@@ -306,13 +326,14 @@ export function FamilyEntities() {
    * would report the whole value as profit.
    *
    * WHAT THE RETURN COVERS IS STATED IN MONEY, NOT IN A ROW COUNT. The note here
-   * read "15 rows report no cost basis", which a reader scans as ~8% of 178 —
-   * while those 15 rows are Ajay's ₹12,415.02 Cr of the ₹12,700.78 Cr printed
-   * one cell to the left, and the +11.71% beside it is struck on ₹255.81 Cr of
-   * cost. A count cannot convey coverage in a book where one row is 94.6% of the
-   * NAV; the house convention is the money ("Covers ₹99.4 Cr of ₹461 Cr" on the
-   * money-weighted tile), and it is what the footer prints now. Every figure in
-   * the sentence is derived here, so it follows the book rather than this note.
+   * read "N rows report no cost basis", which a reader scans as a small share of
+   * the table — while on the member holding the promoter stock those few rows
+   * are nearly all of the market value printed one cell to the left, and the
+   * percentage beside it is struck on the sliver that remains. A count cannot
+   * convey coverage in a book where ONE row is most of the NAV; the house
+   * convention is the money ("Covers ₹99.4 Cr of ₹461 Cr" on the money-weighted
+   * tile), and it is what the footer prints now. Every figure in that sentence
+   * is derived here, so it follows the book rather than this note.
    */
   const visMV = sum(holdings.map((h) => h.marketValue));
   const visCost = sumOrNull(holdings.map((h) => h.costBasis));
@@ -530,6 +551,20 @@ export function FamilyEntities() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>}
+            {/* When there are no company shares at all the AbsentSection above has
+                already named every class, so this would only say it twice. */}
+            {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              {selMandateShares.length > 0 && <>Both routes count here: {money(selMandateSharesMV)} of these shares were chosen by a
+                discretionary manager and have a sector exactly like the ones {scope} bought directly. Which of the two chose a
+                name is in the <span className="text-slate-400">Held via</span> column below.{" "}</>}
+              {selExcluded.length > 0
+                ? <>{money(selExcludedMV)} across {selExcluded.reduce((n, c) => n + c.count, 0)} position
+                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}.
+                  A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a
+                  folio, so every wrapper would land in one false “Unclassified” slice and bury the sectors this chart exists to show.
+                  All of them are in the holdings table below.{sleeveNote}</>
+                : <>Every one of this entity&rsquo;s positions is a share in a company, so nothing is excluded from the chart above.</>}
+            </p>}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
             subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
@@ -626,13 +661,15 @@ export function FamilyEntities() {
                           {showSections && <> · the section subtotals above add to this figure</>}
                           {visNoCost > 0 && (visCost === null
                             ? <> · every one of these {visNoCost} {visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying {money(visNoCostMV)} with nothing to measure a return against</>
-                            : <> · the return covers {money(visMV - visNoCostMV)} of the {money(visMV)} beside it, struck on {money(visCost)} of cost — the other {visNoCost} {visNoCost === 1 ? "row" : "rows"}, carrying {money(visNoCostMV)}, report no cost basis and {visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero</>)}
+                            : <> · the return covers {money(visMV - visNoCostMV)} of the {money(visMV)} beside it, struck on {money(visCost)} of cost — the other {visNoCost} {visNoCost === 1 ? "row" : "rows"}, carrying {money(visNoCostMV)}, {visNoCost === 1 ? "reports" : "report"} no cost basis and {visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero</>)}
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-100">{money(visMV)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${visRet == null ? "text-slate-500" : changeColor(visRet)}`}>
                         {visRet == null
-                          ? <AbsentCell reason="no row on screen reports a cost basis, so there is nothing to strike a return on — a 0.00% here would read as a book that broke even" />
+                          ? <AbsentCell reason={visCost === null
+                              ? "no row on screen reports a cost basis, so there is nothing to strike a return on — a 0.00% here would read as a book that broke even"
+                              : "the rows on screen that do report a cost basis leave no positive cost to divide by, so no return can be struck — a 0.00% here would read as a book that broke even"} />
                           : fmtPct(visRet, { sign: true })}
                       </td>
                     </tr>

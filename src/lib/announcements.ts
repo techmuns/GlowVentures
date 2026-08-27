@@ -11,7 +11,7 @@
 import type { Portfolio } from "./types";
 import { symbolFor } from "./quotes";
 import { fetchFeedChunked } from "./feedFetch";
-import { isCompanyShare } from "./analytics";
+import { isCompanyShare, dedupedPositions } from "./analytics";
 
 export type Announcement = {
   title: string;
@@ -42,7 +42,15 @@ export type AnnHolding = { symbol: string; name: string; key: string; weight: nu
 export function topHoldingsForAnnouncements(portfolio: Portfolio, n?: number): AnnHolding[] {
   const map = new Map<string, { name: string; key: string; symbol: string | null; mv: number }>();
   let total = 0;
-  for (const p of portfolio.positions) {
+  // `weight` is a share of the CONSOLIDATED book, so it counts each dedupeGroup
+  // once — on both sides of the division. Summing the raw set would put a
+  // holding reported on two members' statements into its own numerator and into
+  // every other name's denominator twice, which is the overstatement CLAUDE.md
+  // records against a raw `sum(positions)`. No company share carries a
+  // dedupeGroup in this drop (both of the book's groups are AIF folios), so
+  // nothing on screen moves today; this is what stops the first drop where a
+  // manager and a demat report the same share from being silent.
+  for (const p of dedupedPositions(portfolio.positions)) {
     // Exchange announcements are a COMPANY's own filings, so this list narrows on
     // `isCompanyShare` — the class axis, and deliberately NOT the narrower
     // `Direct Equity` bucket the holdings tables group on. A company files with
