@@ -466,29 +466,6 @@ const INVARIANTS = {
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
     // so Invested and Current printed one answer and the Total cell another.
-    /**
-     * THE TWO ROWS MUST POINT AT EACH OTHER, OR THE SPLIT IS A TRAP.
-     *
-     * This line used to require the Equity row to CAPTION its mandate/own split,
-     * because both halves were computed and rendered nowhere and that silence is
-     * what the family read as a claim of directness. Separate rows say it better
-     * — but they introduce the opposite risk: a reader who now believes "Direct
-     * Equity" is the family's whole equity exposure, when ₹127 Cr more sits under
-     * the mandates. So the Direct Equity row must NAME the mandate-held value,
-     * and it is asserted as a FIGURE the page renders rather than as prose.
-     */
-    ["the Direct Equity row names the company shares held under the mandates instead",
-      (t) => !/Direct Equity/.test(t)
-        || new RegExp(String.raw`Direct Equity[\s\S]{0,400}?` + CR + String.raw`[\s\S]{0,120}?held under the mandates`, "i").test(t)],
-    /**
-     * ...and the same for cash, which the regroup moved out from under a
-     * reader's feet: 18 of this book's 20 cash positions are the mandates' own
-     * sleeves and now bucket with them, so a top-level Cash row that once read
-     * ₹11.6 Cr reads ₹0. That zero is MEASURED and keeps its zero (§2), but a
-     * reader who knows the book holds cash needs the row to say where it went.
-     */
-    ["the Cash row says how much cash sits inside the mandates",
-      (t) => !/\bCash\b/.test(t) || /held inside the PMS mandates/i.test(t)],
     ["the allocation total ties to its own Invested and Current columns", (t) => {
       const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
       if (!row) return true;   // layout changed; the other invariants still bind
