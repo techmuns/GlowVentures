@@ -11,10 +11,11 @@ import { Auditable } from "@/components/Auditable";
 import { StockLink } from "@/components/StockLink";
 import { auditHref } from "@/lib/auditFormulas";
 import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
-import { assetClassLabel } from "@/lib/analytics";
+import { holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
+import type { Account } from "@/lib/types";
 import {
   loadTransactions, loadRealisedLots, loadIncome, loadSales,
-  type TxnData, type LotData, type IncomeData, type SalesData,
+  type TxnData, type LotData, type Lot, type IncomeData, type SalesData,
 } from "@/lib/ledger";
 
 // Ledger Insights — the DATED record behind the book, straight from the archive.
@@ -297,8 +298,91 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
 }
 
 // ── Realised gains ───────────────────────────────────────────────────────────
+
+/**
+ * WHICH ACCOUNT A LOT CAME FROM, so the split below can be made on HOW that
+ * account is run rather than on what the security is.
+ *
+ * The archive names an account `<owner> · <provider> <accountNo>` with the owner
+ * AS PRINTED, and the printed spelling differs per provider — "Mr. AJAY T
+ * JAISINGHANI" on one statement, "AJAY JAISINGHANI" on the next — so the label
+ * cannot be rebuilt from the registry, whose `owner` is the canonical name. The
+ * ACCOUNT NUMBER can be matched, it is what `docKey` is keyed on, and it is
+ * unique across this registry.
+ *
+ * A label matching two accounts or none RESOLVES TO NOTHING and its row says so.
+ * That is the point of doing it this way round: a wrong match would print "Direct
+ * Equity" over a mandate's realised loss, which is the exact claim this grouping
+ * exists to stop, and there is nothing on screen a reader could catch it by.
+ */
+function accountForLot(accounts: Account[], label: string): Account | undefined {
+  const hits = accounts.filter((a) => label.endsWith(` ${a.accountNo}`));
+  return hits.length === 1 ? hits[0] : undefined;
+}
+
+type LotSplit = {
+  key: string; label: string; heldNote: string | null; unclassified: boolean;
+  lots: number; short: number; long: number; total: number;
+  securities: string[]; accounts: string[]; unresolved: string[];
+};
+
+/**
+ * The canonical realised total, split by HOW THE HOLDING WAS RUN.
+ *
+ * `LotData.byClass` splits it by asset class, and `assetClassLabel` is a word
+ * about what a security IS. Nearly every account publishing a capital gain
+ * statement in this book is a PMS mandate, so that word put a manager's realised
+ * figure under a heading claiming the family picked the share. `holdingBucket`
+ * is the one place that decision is made and the engagement comes from the
+ * ACCOUNT, never from the row.
+ *
+ * The arithmetic is `byClass`'s own, lot for lot — every lot counted once, short
+ * and long added as the manager split them — so the rows still reconstruct the
+ * statements' printed total in the footer. Only the grouping changed.
+ */
+function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
+  type Row = Omit<LotSplit, "securities" | "accounts" | "unresolved" | "total">
+    & { securities: Set<string>; accounts: Set<string>; unresolved: Set<string> };
+  const m = new Map<string, Row>();
+  for (const l of lots) {
+    const acc = accountForLot(accounts, l.account);
+    // A mandate takes its whole account, including the sleeve whose asset class
+    // no statement carries: how an account is run is a fact about the ACCOUNT,
+    // knowable even where the security's class is not.
+    const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
+      : l.assetClass ? holdingBucket({ assetClass: l.assetClass }, acc?.engagement)
+      : null;
+    const key = `${held ?? "unbucketed"}::${l.assetClass === null ? "no-class" : "class"}`;
+    const e = m.get(key) ?? {
+      key,
+      label: held ? bucketLabel(held) : "",
+      heldNote: held ? bucketLabel(held) : null,
+      unclassified: l.assetClass === null,
+      lots: 0, short: 0, long: 0,
+      securities: new Set<string>(), accounts: new Set<string>(), unresolved: new Set<string>(),
+    };
+    e.lots++; e.short += l.shortTerm ?? 0; e.long += l.longTerm ?? 0;
+    e.securities.add(l.security);
+    e.accounts.add(l.account);
+    if (!acc) e.unresolved.add(l.account);
+    m.set(key, e);
+  }
+  return [...m.values()]
+    .map((e) => ({
+      ...e, total: e.short + e.long,
+      securities: [...e.securities].sort(),
+      accounts: [...e.accounts].sort(),
+      unresolved: [...e.unresolved].sort(),
+    }))
+    // The classified buckets first, biggest book first; an absence last.
+    .sort((a, b) => Number(a.unclassified) - Number(b.unclassified) || b.lots - a.lots);
+}
+
 function GainsView({ data }: { data: LotData | null }) {
-  const { fmtFromBase } = usePortfolio();
+  // STATEMENT BASIS, like the rest of this page: the account registry is read
+  // only to resolve how each account is RUN, and reading the live-overlaid book
+  // for it on a page pinned to statement records is the trap the BasisPill names.
+  const { statementPortfolio, fmtFromBase } = usePortfolio();
   if (!data) return <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the capital gain statements…</div>;
   if (!data.lots.length) {
     return (
@@ -306,6 +390,7 @@ function GainsView({ data }: { data: LotData | null }) {
         needs="Realised short- and long-term gains are a determination the manager makes on its own statement. No account in this drop issued one, so there is nothing to show — which is different from having realised nothing." />
     );
   }
+  const byBucket = splitLotsByBucket(data.lots, statementPortfolio?.accounts ?? []);
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -321,16 +406,19 @@ function GainsView({ data }: { data: LotData | null }) {
             : { value: <span className={changeColor(data.totalLong)}>{fmtFromBase(data.totalLong, { compact: true, sign: true })}</span>, sub: "as the managers split it" })} />
       </div>
 
-      {/* THE HEADLINE NETS TWO UNLIKE BOOKS. −₹1.93 Cr is an equity book that
-          lost money and a liquid-fund cash sweep that made some, added together.
-          The split changes no figure and makes that visible. */}
-      {data.byClass.length > 1 && (
-        <Card title="Realised, by asset class" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
+      {/* THE HEADLINE NETS UNLIKE BOOKS — shares a manager chose, shares the
+          family bought itself, and a liquid-fund sweep whose class no statement
+          carries. The split changes no figure and makes that visible. It is cut
+          on HOW each account is run rather than on what was sold: nearly every
+          account publishing a capital gain statement here is a PMS mandate, and
+          the class label claimed the family had picked their shares. */}
+      {byBucket.length > 1 && (
+        <Card title="Realised, by how the holding was run" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <tr>
-                  <th className="label-xs px-4 py-2 font-medium">Asset class</th>
+                  <th className="label-xs px-4 py-2 font-medium">Held as</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Short-term</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Long-term</th>
@@ -338,18 +426,35 @@ function GainsView({ data }: { data: LotData | null }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {data.byClass.map((c) => (
-                  <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
+                {byBucket.map((c) => (
+                  <tr key={c.key} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
-                      {c.assetClass
-                        ? <span className="font-medium text-slate-100">{assetClassLabel(c.assetClass)}</span>
-                        : (
+                      {!c.unclassified ? (
+                        <>
+                          <span className="font-medium text-slate-100">{c.label}</span>
+                          <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                            from {c.accounts.length} account{c.accounts.length === 1 ? "" : "s"}: {c.accounts.join(", ")}
+                          </div>
+                          {c.unresolved.length > 0 && (
+                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                              {c.unresolved.join(", ")} {c.unresolved.length === 1 ? "does" : "do"} not match one
+                              account in the registry, so how {c.unresolved.length === 1 ? "it is" : "they are"} run
+                              could not be read — grouped on what was sold, with no claim about who chose it.
+                            </div>
+                          )}
+                        </>
+                      ) : (
                           <>
-                            <span className="text-slate-400">{DASH} no asset class on any statement</span>
+                            <span className="text-slate-400">
+                              {DASH} no asset class on any statement
+                              {c.heldNote ? <> · inside {c.heldNote}</> : null}
+                            </span>
                             <div className="mt-0.5 text-[11px] leading-snug text-slate-500">
                               {c.securities.join(", ")} — the cash sweep. These appear on no appraisal and no
                               transaction statement, so nothing classifies them. "Mutual Fund" in a printed
-                              name is not a classification any statement made, so none is asserted.
+                              name is not a classification any statement made, so none is asserted. It keeps its
+                              own line rather than being added into the mandate above: what the sweep realised
+                              and what the equity book realised are the two figures this card exists to separate.
                             </div>
                           </>
                         )}
@@ -372,6 +477,12 @@ function GainsView({ data }: { data: LotData | null }) {
               </tfoot>
             </table>
           </div>
+          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+            A PMS mandate reports every share underneath it, so a lot its manager sold rolls up into the mandate
+            that chose it. <span className="font-medium text-slate-400">Direct Equity here means only what the
+            family bought in its own broking or demat account.</span> The grouping moves no figure — these are
+            the same lots, split as the managers split them, and the footer is the statements' own total.
+          </p>
         </Card>
       )}
 

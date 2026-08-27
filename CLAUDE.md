@@ -2358,6 +2358,121 @@ row states both halves now, and `check:pages` asserts it, along with the stock
 page stating its route and never using the word "direct" for manager-chosen
 shares. Both were verified by reintroducing the bug.
 
+### Stage 10L — THE THIRD ROUND, AND THE WORD WAS NEVER THE PROBLEM
+
+*"Any stock that is held thru an AIF or PMS, that will be shown inside the AIF/MF
+drill down page. Direct Equity will be shares held directly. Also rename 'Company
+shares' as 'Direct Equity'."* Jammu Kashmir Bank again — the same name, the third
+report about it.
+
+Rounds one and two both answered with a WORD. `Equity` → `Direct Equity` when the
+heading was read as covering the AIF folios; `Direct Equity` → `Company Shares`
+when "direct" was read as a claim about who chose the position. Both readings were
+real and both fixes were right about what they fixed. **Neither was what the family
+was asking for**, and the third time a complaint arrives on one screen is when the
+answer has to stop being a better label.
+
+They were asking for a different GROUPING: a share a manager picked and a share the
+family bought are in one table under one heading, and they want the first inside its
+mandate. Once the grouping is right, "Direct Equity" becomes TRUE — which is why the
+word they asked for goes back on the heading in the same change that stops it lying.
+
+**THE AXIS IS `holdingBucket`, AND IT IS NOT A NEW MODEL.** `assetClass` does not
+move: §5 stands, PMS is an ENGAGEMENT, and `assertNormalized` still rejects a
+document that says otherwise. The shares Carnelian holds for this family ARE
+ordinary listed equity. What changed is only how the HOLDINGS TABLES group them:
+
+```
+mandate route (engagement PMS)  -> MANDATE_BUCKET  "PMS mandates"  (its cash sleeve too)
+Equity + own                    -> DIRECT_EQUITY_BUCKET "Direct Equity"
+Equity + unroutable             -> UNROUTED_EQUITY_BUCKET
+anything else                   -> its own assetClass
+```
+
+Measured on the rendered page, and every figure precomputed from `BOOK_POSITIONS`
+before a line was written:
+
+| Section | | |
+| --- | ---: | ---: |
+| Direct Equity | 38 holdings | ₹12,446.1 Cr |
+| PMS mandates | 10 mandates · 281 holdings | ₹138.7 Cr |
+| AIF | 14 | ₹352.3 Cr |
+| Mutual Fund | 20 | ₹99.9 Cr |
+| ETF | 3 | ₹24.6 Cr |
+| Cash | 2 | ₹0 |
+
+The by-security row count falls 215 → 86, and Jammu Kashmir Bank now sits inside
+Carnelian Bespoke Portfolio at `/mandate/<accountId>`.
+
+**THE TWO WORDS NAME TWO DIFFERENT SETS AND BOTH ARE NOW TRUE OF THEIRS.**
+`assetClassLabel("Equity")` stays **"Company Shares"** — it answers *what IS this*,
+and a share a manager picked is a company share exactly like one the family picked.
+`DIRECT_EQUITY_BUCKET` answers *who chose it*. Neither is asked to carry both claims,
+which is precisely what rounds one and two each tried to make one word do. It is also
+why **Sector Composition, Exposure & IPS, Compare and the market-cap bands KEEP
+counting mandate-held shares**: a PMS-held share has a GICS sector and a market cap,
+and narrowing those would throw away ₹127.12 Cr of real sector exposure and leave a
+sector table built from depository rows that carry almost none. A look-through into a
+mandate is a GAIN for exposure analysis. Those pages say so on their face.
+
+**A MANDATE TAKES ITS CASH SLEEVE, SO ITS ROW TIES TO ITS STATEMENT.** Carnelian
+3517383 reads ₹39.53 Cr — shares and cash, the figure its own statement prints.
+Bucketing the cash elsewhere would leave the row with no document to tie to. The cost
+is that the top-level Cash row falls from ₹11.58 Cr to ₹0, so **that row names where
+the cash went** (`₹11.6 Cr more is held inside the PMS mandates above and counted
+there`) and `check:pages` asserts it. The ₹0 is a MEASURED zero and keeps its zero.
+
+**AND A PMS ROLLS UP WHERE AN AIF CANNOT.** A mandate reports every underlying share
+— the family owns them, the manager picks them — so the rollup is data the archive
+actually holds. An AIF folio is ONE purchase of a fund, and the drop carries no
+scheme portfolio that joins to any folio the family holds. So an AIF stays one row
+and its drill-down SAYS the companies inside it are not reported to this book, rather
+than drawing an empty constituent table. Same request, two different honest answers.
+
+### The regroup's own defects, found by measuring rather than by reading
+
+Eight surfaces changed at once, and an adversarial pass over each found **29 defects**
+in the change itself. They are worth recording as a class, because six of them are the
+same failure: **a figure that was whole became a figure over a FILTERED subset, and
+its caption went on describing the whole.**
+
+- **`% of mandate` divided by the filtered roll-up**, so selecting Jammu Kashmir Bank
+  — the very holding this round was reported on — printed `100.0%` for a ₹4.3872 Cr
+  position in a ₹39.53 Cr mandate. It is 11.10%.
+- **The Weight column re-based on the company filter**, because the security
+  multi-select had to move upstream to reach inside a mandate and the weight
+  denominator moved with it. One selected name read 100.0% of a ₹13,061.63 Cr book.
+- **A caption asserted what a named manager reports.** `The N holdings inside this
+  mandate, as {manager} reports them at {asOf}` rendered over a filtered list —
+  "The 1 holding inside this mandate, as Carnelian … reports them", about an account
+  whose statement reports twelve. That is the §"never assert a FACT about a real,
+  named counterparty" rule, arriving through a filter rather than through a preview.
+- **An audit tooltip claimed the whole mandate** over a partial sum, and invited the
+  reader to trace it to a statement printing a different figure.
+- **The Realised P&L footer stopped tying to its column**: six of the seven accounts
+  issuing a capital-gain statement are PMS mandates, whose rows now render `—`, so the
+  visible cells summed to ~₹7 L against a footer an order of magnitude away.
+- **A mandate row claimed LIVE pricing** because one constituent had a quote, while
+  every mandate holds an unquotable cash sleeve.
+
+And two that are the failure this file keeps naming in other forms: **a helper that
+exists and is not called.** `mandateLabelWithOwner` was written for the four pairs of
+mandates that share a strategy name — Goldstandard's Aristos for Ankita and Ajay,
+SVAN's Velocity, Green Lantern's GLC Growth, V.E.C's Small & Mid-Cap — and the monitor
+re-derived `strategy || provider` inline instead, drawing four pairs of
+identically-named rows. `UNROUTED_EQUITY_BUCKET` was likewise never imported, so the
+first unrouted account would have sorted its section below Cash.
+
+**AND A RETURN WAS STRUCK ACROSS TWO DIFFERENT SETS OF HOLDINGS.** Morning CIO's
+allocation showed Direct Equity at **−18.9%** beside ₹1.22 Cr invested and ₹12,446.1 Cr
+current, because cost is reported for 9 of its 38 holdings and the regroup had isolated
+the depository rows, which record what is held and never what it cost. Every figure was
+right on its own terms; the three together were indefensible. The footer already
+refuses exactly this ("No whole-book return in the Total row") and the row now uses the
+footer's own 0.5% coverage test: a return appears only where the costed holdings
+account for essentially the whole row. It keeps AIF (+20.0%) and PMS mandates (+11.4%),
+and correctly refuses Direct Equity and Mutual Fund.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

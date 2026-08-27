@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { BasisPill } from "@/components/BasisPill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { sumOrNull, sum, isPriced, assetClassLabel } from "@/lib/analytics";
+import { sumOrNull, sum, isPriced, holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
@@ -154,18 +154,73 @@ export function CapitalGains() {
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
   const harvestTotal = sumOrNull(harvest.map((x) => x.unrealizedPnL));
-  // Rolled up across accounts: the split is about WHAT was sold, not by whom.
-  const byClass = (() => {
-    const m = new Map<string | null, { assetClass: string | null; lots: number; st: number; lt: number; securities: Set<string> }>();
+  /**
+   * REALISED GAINS, SPLIT BY HOW THE HOLDING WAS RUN — not by what it WAS.
+   *
+   * This card grouped on `assetClass` and rendered `assetClassLabel`, and SIX of
+   * the seven accounts that publish a capital gain statement in this book are
+   * PMS mandates. So a loss Carnelian booked on Jammu Kashmir Bank printed under
+   * the one word the family has now objected to three times — the same claim the
+   * holdings tables are being regrouped to remove, made on the page a reader
+   * checks against the PDF.
+   *
+   * The split is `holdingBucket` now — the ONE place that decision is made
+   * (src/lib/analytics.ts) — with the engagement read off the ACCOUNT, never off
+   * the row. NO FIGURE MOVES: the same lots, the same short/long split, the same
+   * canonical total in the footer. Only which line each account's lots land on.
+   *
+   * A ROW WHOSE ASSET CLASS NO STATEMENT CARRIES KEEPS ITS OWN LINE rather than
+   * being folded into the bucket above it. That row is the liquid-fund sweep the
+   * Carnelian mandate runs beside its equity book, and separating what IT
+   * realised from what the equity book realised is the whole reason this card
+   * exists. Merging it into the mandate's subtotal would put an absence inside a
+   * labelled group and lose both the figure and the reason — while the mandate's
+   * own classified lots stay whole, which is the account-level tie.
+   */
+  const byBucket = (() => {
+    type Row = {
+      key: string; label: string; heldNote: string | null; unclassified: boolean;
+      lots: number; st: number; lt: number;
+      securities: Set<string>; accounts: Set<string>; unresolved: Set<string>;
+    };
+    const m = new Map<string, Row>();
     for (const r of BOOK_REALISED_BY_CLASS) {
-      const e = m.get(r.assetClass) ?? { assetClass: r.assetClass, lots: 0, st: 0, lt: 0, securities: new Set<string>() };
+      // `engagementOf`'s own lookup, kept as the ACCOUNT itself: an accountId
+      // that resolves to nothing has to be CAUGHT here rather than read as an
+      // empty engagement, which would label an unroutable row as confidently as
+      // a routed one.
+      const acc = accIdx.get(r.accountId);
+      // A mandate takes its whole account — including the sleeve whose class no
+      // statement carries. How an account is run is a fact about the ACCOUNT,
+      // and it is knowable even where the security's class is not.
+      const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
+        : r.assetClass ? holdingBucket({ assetClass: r.assetClass }, acc?.engagement)
+        : null;
+      const key = `${held ?? "unbucketed"}::${r.assetClass === null ? "no-class" : "class"}`;
+      const e = m.get(key) ?? {
+        key,
+        // Never `assetClassLabel` on a row that has an account: the bucket is
+        // what the account supports and the class label is what it does not.
+        label: held ? bucketLabel(held) : "",
+        heldNote: held ? bucketLabel(held) : null,
+        unclassified: r.assetClass === null,
+        lots: 0, st: 0, lt: 0,
+        securities: new Set<string>(), accounts: new Set<string>(), unresolved: new Set<string>(),
+      };
       e.lots += r.lots; e.st += r.realisedST ?? 0; e.lt += r.realisedLT ?? 0;
       for (const n of r.securities) e.securities.add(n);
-      m.set(r.assetClass, e);
+      e.accounts.add(r.entity);
+      if (!acc) e.unresolved.add(r.entity);
+      m.set(key, e);
     }
     return [...m.values()]
-      .map((e) => ({ ...e, securities: [...e.securities].sort() }))
-      .sort((a, b) => Number(a.assetClass === null) - Number(b.assetClass === null) || b.lots - a.lots);
+      .map((e) => ({
+        ...e,
+        securities: [...e.securities].sort(),
+        accounts: [...e.accounts].sort(),
+        unresolved: [...e.unresolved].sort(),
+      }))
+      .sort((a, b) => Number(a.unclassified) - Number(b.unclassified) || b.lots - a.lots);
   })();
 
   const byEnt = [...cg].sort((a, b) =>
@@ -245,18 +300,19 @@ export function CapitalGains() {
       </div>
 
       {/* ── Realised, per account ── */}
-      {/* THE HEADLINE NETS TWO UNLIKE BOOKS. −₹1.93 Cr is an equity mandate that
-          lost money plus a liquid-fund cash sweep that made some. No figure
-          changes here; the split just stops the sweep silently flattering the
-          equity result. */}
-      {byClass.length > 1 && (
-        <Card className="mt-5" title="Realised, by asset class"
+      {/* THE HEADLINE NETS UNLIKE BOOKS: shares a discretionary manager chose,
+          shares the family bought itself, and a liquid-fund sweep whose class no
+          statement carries. No figure changes here; the split just stops one
+          silently flattering another, and it is cut on HOW each account is run
+          rather than on what was sold — see `byBucket` above. */}
+      {byBucket.length > 1 && (
+        <Card className="mt-5" title="Realised, by how the holding was run"
           subtitle="The same canonical total, split — the headline above nets these together" pad={false}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Asset class</th>
+                  <th className="label-xs px-4 py-2 text-left font-medium">Held as</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Realised ST</th>
                   <th className="label-xs px-4 py-2 text-right font-medium">Realised LT</th>
@@ -264,21 +320,38 @@ export function CapitalGains() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {byClass.map((c) => {
+                {byBucket.map((c) => {
                   const tot = (c.st ?? 0) + (c.lt ?? 0);
                   return (
-                    <tr key={c.assetClass ?? "unclassified"} className="hover:bg-ink-700/40">
+                    <tr key={c.key} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5">
-                        {c.assetClass
-                          ? <span className="font-medium text-slate-100">{assetClassLabel(c.assetClass)}</span>
-                          : (
+                        {!c.unclassified ? (
+                          <>
+                            <span className="font-medium text-slate-100">{c.label}</span>
+                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                              from {c.accounts.length} account{c.accounts.length === 1 ? "" : "s"}: {c.accounts.join(", ")}
+                            </div>
+                            {c.unresolved.length > 0 && (
+                              <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                                {c.unresolved.join(", ")} {c.unresolved.length === 1 ? "is" : "are"} not in the
+                                account registry, so how {c.unresolved.length === 1 ? "it is" : "they are"} run
+                                could not be read — grouped on what was sold, with no claim about who chose it.
+                              </div>
+                            )}
+                          </>
+                        ) : (
                             <>
-                              <span className="text-slate-400">{DASH} no asset class on any statement</span>
+                              <span className="text-slate-400">
+                                {DASH} no asset class on any statement
+                                {c.heldNote ? <> · inside {c.heldNote}</> : null}
+                              </span>
                               <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
                                 {c.securities.join(", ")} — the cash sweep these managers run beside the equity
                                 mandate. They appear on no appraisal and no transaction statement, so nothing
                                 classifies them; "Mutual Fund" in a printed name is not a classification a
-                                statement made, so none is asserted.
+                                statement made, so none is asserted. It keeps its own line rather than being
+                                added into the mandate above it: what the sweep realised and what the equity book
+                                realised are the two figures this card exists to stop netting together.
                               </div>
                             </>
                           )}
@@ -294,7 +367,7 @@ export function CapitalGains() {
               <tfoot className="border-t-2 border-ink-600 font-semibold">
                 <tr>
                   <td className="px-4 py-2.5 text-slate-200">Total — the canonical figure</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{byClass.reduce((s, c) => s + c.lots, 0)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">{byBucket.reduce((s, c) => s + c.lots, 0)}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>
@@ -302,6 +375,13 @@ export function CapitalGains() {
               </tfoot>
             </table>
           </div>
+          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+            A PMS mandate reports every share underneath it, so a lot the manager sold rolls up into the mandate
+            that chose it rather than standing beside shares the family bought itself.{" "}
+            <span className="font-medium text-slate-400">Direct Equity here means only the second kind.</span>{" "}
+            The grouping moves no figure: these are the capital gain statements' own lots and their own
+            short/long split, and the total is the canonical one.
+          </p>
         </Card>
       )}
 

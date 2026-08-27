@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { Auditable } from "@/components/Auditable";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { auditHref, stockHref } from "@/lib/auditFormulas";
@@ -59,8 +59,49 @@ const HOLDINGS_REPORTS = ["appraisal", "investor-report", "holdings", "unknown"]
 
 type ManifestRow = { docKey: string; provider: string; accountNo: string; asOf: string; reportType: string };
 
-/** `undefined` = still loading · `null` = the archive did not respond · `""` = no holdings document. */
-function useHoldingsDocKey(account: Account | undefined): string | null | undefined {
+/**
+ * AND THE DOCUMENT'S OWN TWO TOTALS COME BACK WITH THE KEY, BECAUSE THIS PAGE
+ * INVITES A READER TO GO AND CHECK.
+ *
+ * The tie-out sentence under the table used to call the book's sum "this
+ * account's own statement total, as <manager> printed it" — and that is not
+ * what it is. Every one of these managers prints an INCOME-INCLUSIVE portfolio
+ * total (§4b), so the printed figure is HIGHER than the sum of the rows on all
+ * ten mandates: Goldstandard 100023 prints ₹18,83,21,031.19 where the book
+ * carries ₹18,79,95,881.19. A reader who does exactly what the sentence invites
+ * — click through to the appraisal — finds a different number and nothing on
+ * screen explaining it, which is rule 4 run backwards: a printed value re-
+ * asserted as this book's source.
+ *
+ * So both figures are read off the winning document and BOTH are printed. The
+ * difference is NAMED as accrued income only where that document's own accrued
+ * column reproduces it, which is the reconciler's discipline rather than a
+ * plausible-sounding cause typed in here — on Molecule's CURRENT PORTFOLIO it
+ * does NOT reproduce it (the ₹21,451.35 is that statement's outstanding
+ * dividend), and the page says the difference is not attributed here instead of
+ * asserting the wrong reason.
+ */
+type DocTotals = {
+  /** What the MANAGER printed as this account's portfolio total. `null` where the document prints none. */
+  printedTotal: number | null;
+  /** The same document's derived total — price × quantity — which is the basis the book carries. */
+  derivedTotal: number | null;
+  /** That document's own accrued-income column, summed over the rows both totals are struck on. */
+  accruedIncome: number | null;
+};
+
+type HoldingsSource = DocTotals & {
+  /** `undefined` = still loading · `null` = the archive did not respond · `""` = no holdings document. */
+  docKey: string | null | undefined;
+  /** The key resolved and its `document.json` did not — an absence with its own cause. */
+  docUnreadable: boolean;
+  /** The document has been asked for and has not answered yet. Not an absence. */
+  docLoading: boolean;
+};
+
+const fin = (n: unknown): number | null => (typeof n === "number" && Number.isFinite(n) ? n : null);
+
+function useHoldingsSource(account: Account | undefined): HoldingsSource {
   const [rows, setRows] = useState<ManifestRow[] | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -70,7 +111,8 @@ function useHoldingsDocKey(account: Account | undefined): string | null | undefi
       .catch(() => { if (alive) setRows(null); });
     return () => { alive = false; };
   }, []);
-  return useMemo(() => {
+
+  const docKey = useMemo(() => {
     if (rows === undefined || rows === null || !account) return rows === undefined ? undefined : null;
     const mine = rows.filter((d) => d.provider === account.provider && d.accountNo === account.accountNo);
     const type = HOLDINGS_REPORTS.find((t) => mine.some((d) => d.reportType === t));
@@ -80,6 +122,59 @@ function useHoldingsDocKey(account: Account | undefined): string | null | undefi
     const best = mine.filter((d) => d.reportType === type).reduce((a, d) => (d.asOf > a.asOf ? d : a));
     return best.docKey;
   }, [rows, account]);
+
+  const [doc, setDoc] = useState<DocTotals | null | undefined>(undefined);
+  useEffect(() => {
+    if (!docKey) { setDoc(undefined); return; }
+    let alive = true;
+    setDoc(undefined);
+    fetch(`${import.meta.env.BASE_URL}audit/${docKey}/document.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d: { totals?: { totalMarketValue?: number | null } | null;
+                  derivedPortfolioTotal?: number | null;
+                  holdings?: { accruedIncome?: number | null }[] | null }) => {
+        if (!alive) return;
+        setDoc({
+          printedTotal: fin(d?.totals?.totalMarketValue),
+          derivedTotal: fin(d?.derivedPortfolioTotal),
+          // sumOrNull, never sum: a document whose rows report no accrued income
+          // must leave this `null`, so the difference below stays unattributed
+          // rather than being explained by a zero nobody measured.
+          accruedIncome: sumOrNull((d?.holdings ?? []).map((h) => fin(h?.accruedIncome))),
+        });
+      })
+      .catch(() => { if (alive) setDoc(null); });
+    return () => { alive = false; };
+  }, [docKey]);
+
+  return {
+    docKey,
+    printedTotal: doc?.printedTotal ?? null,
+    derivedTotal: doc?.derivedTotal ?? null,
+    accruedIncome: doc?.accruedIncome ?? null,
+    docUnreadable: doc === null,
+    docLoading: !!docKey && doc === undefined,
+  };
+}
+
+/**
+ * ONE ACCOUNT'S ROWS, BUCKETED THE WAY THE HOLDINGS TABLES BUCKET THEM.
+ *
+ * `holdingBucket` is the one place that decides which heading a row sits under,
+ * and the engagement it reads comes from the ACCOUNT — never from the position,
+ * which is what would let two rows of one account land in two buckets. Sorted
+ * by value so the largest thing the account holds is named first.
+ */
+function bucketsOf(rows: Position[], engagement: string | null | undefined) {
+  const m = new Map<string, { key: string; count: number; mv: number }>();
+  for (const r of rows) {
+    const key = holdingBucket(r, engagement);
+    const e = m.get(key) ?? { key, count: 0, mv: 0 };
+    e.count += 1;
+    e.mv += r.marketValue;
+    m.set(key, e);
+  }
+  return [...m.values()].sort((a, b) => b.mv - a.mv);
 }
 
 export function MandateHoldings() {
@@ -102,8 +197,10 @@ export function MandateHoldings() {
     () => (portfolio ? portfolio.positions.filter((p) => p.accountId === accountId) : []),
     [portfolio, accountId],
   );
-  const docKey = useHoldingsDocKey(account);
-  const sourceHref = docKey ? auditHref({ file: docKey }) : auditHref({ find: account?.accountNo ?? accountId });
+  const source = useHoldingsSource(account);
+  const sourceHref = source.docKey
+    ? auditHref({ file: source.docKey })
+    : auditHref({ find: account?.accountNo ?? accountId });
 
   const mv = sum(rows.map((r) => r.marketValue));
   // sumOrNull, not sum: a mandate whose statement reports no cost on some row
@@ -114,11 +211,17 @@ export function MandateHoldings() {
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   const noCost = rows.filter((r) => r.costBasis === null).length;
   /**
-   * The account's own printed total, taken from `statementPortfolio` — the book
-   * the live feed never touches. On STATEMENT basis it is the same figure as
-   * `mv` above; on LIVE basis `mv` has moved and this has not, and the caption
-   * below says so rather than letting a marked-to-market number sit under a
-   * sentence claiming it ties to a document.
+   * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
+   * whole of what this figure is. It is NOT the manager's printed total, which
+   * is a separate number read off the document itself (`source.printedTotal`)
+   * and is higher on every mandate in this drop because these reports total an
+   * income-inclusive basis their own market-value column excludes (§4b).
+   *
+   * It is taken from `statementPortfolio` — the book the live feed never
+   * touches. On STATEMENT basis it is the same figure as `mv` above; on LIVE
+   * basis `mv` has moved and this has not, and the caption below says so rather
+   * than letting a marked-to-market number sit under a sentence claiming it ties
+   * to a document.
    */
   const stmtMV = useMemo(
     () => (statementPortfolio
@@ -128,6 +231,13 @@ export function MandateHoldings() {
   );
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * TO THE RUPEE, for the tie-out sentence alone. A compact ₹18.80 Cr cannot
+   * show a ₹3,25,150 basis difference at all — both figures round to the same
+   * label — so the one place this page asks a reader to compare two totals
+   * prints them at the precision the comparison needs.
+   */
+  const full = (n: number | null | undefined) => fmtFromBase(n, { compact: false });
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null);
 
@@ -162,6 +272,14 @@ export function MandateHoldings() {
 
   const route = holdingRoute(account.engagement);
   const ownerName = account.ownerId ? ownerDisplayName(account.ownerId) : account.owner;
+  /**
+   * The account's own rows grouped exactly as a holdings table groups them, for
+   * the non-mandate branches below. Plain arithmetic rather than `useMemo`,
+   * because this sits after the page's early returns and a conditional hook is
+   * a different bug from the one being fixed.
+   */
+  const ownBuckets = bucketsOf(rows, account.engagement);
+  const ownDirectEquity = ownBuckets.some((b) => b.key === DIRECT_EQUITY_BUCKET);
 
   // ── The account exists and is not a discretionary mandate ──────────────────
   if (route !== "mandate") {
@@ -214,12 +332,53 @@ export function MandateHoldings() {
               )}
             </>
           ) : route === "own" ? (
-            <p className="text-[12.5px] leading-relaxed text-slate-400">
-              <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is the family's
-              own account — the shares in it were bought by the family, not chosen by a manager, so they are{" "}
-              {DIRECT_EQUITY_BUCKET} and belong in the holdings table rather than behind a manager's drill-down. There is
-              no mandate to open here.
-            </p>
+            <>
+              {/* WHAT THE ACCOUNT HOLDS, READ OFF ITS OWN ROWS — never asserted
+                  from the route. This branch used to say "the shares in it were
+                  bought by the family … so they are Direct Equity" for ANY
+                  own-route account, without testing a single row's asset class.
+                  Three of them hold no share at all — Helios 10355977, Motilal
+                  Oswal's Active Momentum 904168868444 and HDFC 16180583 are one
+                  or two MUTUAL FUND lines each — so the page told a reader their
+                  fund units were Direct Equity, which is the fund-shown-as-
+                  equity mislabel the family has now reported three times,
+                  reappearing on the page built to answer it. The buckets below
+                  are `holdingBucket` on this account's own engagement, which is
+                  the same call the holdings tables group by. */}
+              <p className="text-[12.5px] leading-relaxed text-slate-400">
+                <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is the
+                family's own account — nothing in it is chosen by a discretionary manager, so there is no mandate to
+                open here. What it holds is filed on the holdings tables by what each row IS:
+              </p>
+              {ownBuckets.length > 0 ? (
+                <ul className="mt-2 grid gap-1 text-[12.5px] text-slate-400">
+                  {ownBuckets.map((b) => (
+                    <li key={b.key}>
+                      <span className="font-medium text-slate-300">{bucketLabel(b.key)}</span> — {b.count}{" "}
+                      {b.count === 1 ? "row" : "rows"}, {money(b.mv)}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
+                  {account.noPositionsReason
+                    ? <>This account carries no valued position in the book: {account.noPositionsReason}.</>
+                    : <>This account carries no valued position in the book, so there is no bucket to name for it.</>}
+                </p>
+              )}
+              {ownDirectEquity ? (
+                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
+                  The {DIRECT_EQUITY_BUCKET} rows are shares the family bought in this account, which is exactly what
+                  that heading means on the holdings tables. Any fund unit or ETF listed beside them stays under its
+                  own class: buying one is a single purchase of a manager's portfolio, not of the companies inside it.
+                </p>
+              ) : rows.length > 0 ? (
+                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
+                  None of it is {DIRECT_EQUITY_BUCKET}: not one row on this statement is a share in a company, so that
+                  heading does not cover this account at all. Each row is filed under its own class above.
+                </p>
+              ) : null}
+            </>
           ) : (
             <p className="text-[12.5px] leading-relaxed text-slate-400">
               No statement for <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span>{" "}
@@ -247,11 +406,21 @@ export function MandateHoldings() {
    * A ₹0 in this table is real: a cash sleeve has no gain, and Molecule's
    * `Tax Deducted at Source` line is a nil balance the manager prints. Those are
    * arithmetic, not absences — they keep their zero, and the rule is that the
-   * reason goes where a reader scanning the column can see it. Both counts are
+   * reason goes where a reader scanning the column can see it. Every count is
    * DERIVED from the rows, so a drop where nothing is zero says nothing.
+   *
+   * AND THE REASON IS DERIVED TOO, WHICH IS WHY THE ZERO-P&L SET IS SPLIT.
+   * It was one filter on `unrealizedPnL === 0` under one sentence asserting the
+   * cause — "because a cash balance has none". All 14 zero-P&L rows across the
+   * ten mandates happen to be `Cash` in this drop, so the sentence is true
+   * today and would silently become a fabrication the first time a SHARE closed
+   * exactly at cost: a named company's row described to the reader as a cash
+   * balance, which is the index-cycled valuation method in miniature. A share
+   * at cost is a different measurement and gets its own words.
    */
   const zeroValue = rows.filter((r) => r.marketValue === 0);
-  const zeroPnl = rows.filter((r) => r.unrealizedPnL === 0);
+  const zeroPnlCash = rows.filter((r) => r.unrealizedPnL === 0 && r.assetClass === "Cash");
+  const zeroPnlHeld = rows.filter((r) => r.unrealizedPnL === 0 && r.assetClass !== "Cash");
 
   const term = q.trim().toLowerCase();
   const shown = term

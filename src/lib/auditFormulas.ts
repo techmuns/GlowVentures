@@ -130,12 +130,58 @@ export const netReturnFormula = (
   };
 };
 
-export const weightFormula = (mv: number, total: number, wPct: number | null | undefined, m: Money): FormulaDef => ({
-  title: "Weight",
-  excel: "= Market value ÷ Total market value × 100",
-  plain: "How big this holding is as a share of the whole listed book.",
-  worked: `= ${m(mv)} ÷ ${m(total)} × 100 = ${orDash(wPct, (v) => `${v.toFixed(1)}%`)}`,
-});
+/**
+ * A weight — and THE DENOMINATOR'S MEANING IS THE CALLER'S TO STATE.
+ *
+ * This popover asserted "as a share of the whole listed book" and was wrong on
+ * every one of its three callers, three different ways: Family Entities divides
+ * by the whole CONSOLIDATED book (every asset class, listed AND private),
+ * Sector Composition by the COMPANY-SHARE subtotal that page is narrowed to,
+ * and the Portfolio Monitor by its own footer total across every bucket. None
+ * of them is the listed book, and this is the one popover a reader opens
+ * precisely because they want to CHECK the arithmetic — a wrong scope here is
+ * the "caption that narrows a figure it does not narrow" rule failing at the
+ * exact place a reader went looking for the truth.
+ *
+ * So the scope is a PARAMETER. `ofWhat` is a short noun phrase naming the set
+ * the total covers, in the caller's own words — it is the caller, not this
+ * helper, that knows what it divided by.
+ *
+ * It is OPTIONAL, and the default names no set at all. A helper that guesses a
+ * scope for a caller that has not said is how the wrong sentence got here; a
+ * default that says "nobody has named this" is honest for an un-updated caller
+ * and reads as the defect it is.
+ *
+ * THE WORKED EXAMPLE ALSO CHECKS ITSELF. `total` and `wPct` arrive as separate
+ * arguments, so a caller can hand over a total it did not actually divide by —
+ * the Portfolio Monitor strikes its row weights against a `weightBase` that is
+ * not always its footer `totMV`. When the division does not reproduce the
+ * percentage it is shown beside, the popover says so rather than printing an
+ * equation whose two halves disagree.
+ */
+export const weightFormula = (
+  mv: number,
+  total: number,
+  wPct: number | null | undefined,
+  m: Money,
+  ofWhat?: string,
+): FormulaDef => {
+  // Half of the last decimal this line prints — the same "reproduce the
+  // statement's own precision" bound the reconciler uses, never a tolerance
+  // widened until it fits. Inside it the two halves round to the same digit on
+  // screen and the equation a reader reads does reproduce.
+  const reproduces = has(wPct) && total > 0 ? Math.abs((mv / total) * 100 - wPct) <= 0.05 : true;
+  return {
+    title: "Weight",
+    excel: "= Market value ÷ Total market value × 100",
+    plain: ofWhat
+      ? `How big this holding is as a share of ${ofWhat}.`
+      : "How big this holding is as a share of the total in the division below. Which set that total covers is not named here — the page showing this figure has not said, and this popover will not guess at it.",
+    worked:
+      `= ${m(mv)} ÷ ${m(total)} × 100 = ${orDash(wPct, (v) => `${v.toFixed(1)}%`)}` +
+      (reproduces ? "" : " — this does not reproduce: the percentage shown was struck against a different total from the one above."),
+  };
+};
 
 export const sumFormula = (title: string, plain: string, parts: { label: string; value: number }[], total: number, m: Money): FormulaDef => ({
   title,

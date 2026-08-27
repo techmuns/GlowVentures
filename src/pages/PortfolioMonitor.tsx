@@ -11,14 +11,20 @@ import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
   holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
+  mandateLabel, mandateLabelWithOwner,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
-import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
+// `weightFormula` is deliberately NOT imported: its `plain` sentence is fixed at
+// "a share of the whole listed book", and this table's denominator is neither
+// fixed nor the listed book — it moves with the entity, sector and category
+// filters and spans every asset class. The Weight cell builds its own FormulaDef
+// so the popover states the denominator it actually divided by.
+import { ledgerHref, auditHref, LEDGER, pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 
@@ -50,7 +56,15 @@ type MandateHolding = {
  * reporting part of a mandate as the whole of it.
  */
 type MandateInfo = {
-  accountId: string; manager: string; accountNo: string; asOf: string;
+  accountId: string;
+  /**
+   * The mandate's name WITHOUT the owner qualifier — `mandateLabel`. `Row.security`
+   * carries the qualified one (`mandateLabelWithOwner`) because four of the ten
+   * mandates share a strategy name with another; inside this row's own expansion
+   * there is nothing to disambiguate against, so the prose uses the short name.
+   */
+  name: string;
+  manager: string; accountNo: string; asOf: string;
   holdings: MandateHolding[];
   accountMV: number; accountCount: number;
 };
@@ -118,12 +132,16 @@ const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engag
  * Sections in reading order: what the family chose itself, then what it handed
  * to a manager, then the wrappers, then cash.
  *
- * `"Equity"` is in the list because `holdingBucket` returns the raw asset class
- * for a share whose account states NO route — no such account is in this book,
- * and if one arrives it gets its own section rather than being folded into
- * either of the first two, neither of which would be true of it.
+ * `UNROUTED_EQUITY_BUCKET` is in the list because that — and NOT the raw
+ * `"Equity"` — is what `holdingBucket` returns for a share whose account states
+ * no route. No such account is in this book, and if one arrives it gets its own
+ * section between the two routed ones rather than being folded into either,
+ * neither of which would be true of it. Spelling it `"Equity"` here made the
+ * entry dead: the key that actually arrives fell through `bucketOrd`'s `i < 0`
+ * branch and sorted the section BELOW Cash, which is the opposite of what this
+ * comment claimed.
  */
-const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, "Equity", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
 const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 // Weight, P&L and return all move with the live price, so they no longer match
@@ -202,11 +220,28 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
-  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount, weightBase, weightCount } = useMemo(() => {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
     if (bucket !== "All") base = base.filter((p) => bucketFor(accIdx, p) === bucket);
+    /**
+     * THE WEIGHT DENOMINATOR IS STRUCK HERE, BEFORE THE COMPANY FILTER.
+     *
+     * Weight answers "how big is this holding in the book" — the book the
+     * entity / sector / category filters describe. The company pick-list is a
+     * SEARCH over that book, not a redefinition of it: struck after it, picking
+     * Jammu Kashmir Bank made a ₹4.39 Cr position read 100.0% of a ₹13,061.63 Cr
+     * book, under a header that says only "Weight". Deduped, so the column sums
+     * to 100 rather than to 101.4 when a holding is reported under two members.
+     *
+     * The FOOTER total keeps using the fully filtered set below — a footer must
+     * tie to the rows above it — so the two differ whenever companies are
+     * picked, and the caption under the table says so.
+     */
+    const weightSet = dedupedPositions(base);
+    const weightBase = sum(weightSet.map((x) => x.marketValue));
+    const weightCount = weightSet.length;
     // THE COMPANY FILTER NARROWS THE POSITIONS, NOT THE BUILT ROWS. It used to
     // run over the rows, which was the same thing while every row was a security
     // — and would now hide every mandate the moment a company was picked, since
@@ -214,8 +249,6 @@ export function PortfolioMonitor() {
     // Bank has to reach INSIDE Carnelian's mandate; that is the whole of what
     // the family asked for.
     if (selected.size > 0) base = base.filter((p) => selected.has(p.security));
-    // Weight denominator — consolidated, so the column sums to 100 rather than
-    // to 101.4 when a holding is reported under two members.
     const totalMV = consolidatedMarketValue(base);
 
     /**
@@ -257,16 +290,25 @@ export function PortfolioMonitor() {
         kind: "mandate" as const,
         bucket: MANDATE_BUCKET,
         key: "mandate:" + accountId,
-        // The mandate's own name, as the manager prints it. A statement that
-        // names no strategy falls back to the house — never to a made-up label.
-        security: acc?.strategy || acc?.provider || accountId,
+        /**
+         * The mandate's own name, from `mandateLabelWithOwner` and never
+         * re-derived here. FOUR OF THIS BOOK'S TEN MANDATES SHARE A STRATEGY
+         * NAME with another one — the same strategy run for two members
+         * (Goldstandard's Aristos, SVAN's Velocity, Green Lantern's GLC Growth,
+         * V.E.C's Small and Mid-Cap) — so listed on strategy alone this section
+         * draws four pairs of identically-named rows and a reader cannot tell
+         * which is whose. The helper qualifies the name with the owner for
+         * exactly that, and falls back to the house, then to a stated absence,
+         * rather than to the raw accountId slug the inline version printed.
+         */
+        security: mandateLabelWithOwner(acc, ownerOf(accIdx, ps[0])),
         securityKey: "", sector: "", assetClass: "",
         entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
         parts: [],
         quantity: null, avgCost: null, currentPrice: null,
         costBasis: cost, marketValue: mv, unrealizedPnL: costNA ? null : pnl,
         returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
-        weight: totalMV > 0 ? mv / totalMV : 0,
+        weight: weightBase > 0 ? mv / weightBase : 0,
         costNA,
         live: livePs.length > 0,
         dayChange,
@@ -274,7 +316,8 @@ export function PortfolioMonitor() {
         liveMV,
         realizedKeys: [...new Set(ps.map((x) => x.securityKey))],
         mandate: {
-          accountId, manager: acc?.provider ?? "", accountNo: acc?.accountNo ?? "", asOf: acc?.asOf ?? "",
+          accountId, name: mandateLabel(acc),
+          manager: acc?.provider ?? "", accountNo: acc?.accountNo ?? "", asOf: acc?.asOf ?? "",
           holdings: ps.map((x) => ({
             securityKey: x.securityKey, security: x.security, sector: x.sector,
             quantity: x.quantity, avgCost: x.avgCost, currentPrice: x.currentPrice,
@@ -331,7 +374,7 @@ export function PortfolioMonitor() {
           avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
-          weight: totalMV > 0 ? mv / totalMV : 0,
+          weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           live,
           dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
@@ -346,7 +389,7 @@ export function PortfolioMonitor() {
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], parts: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
-        returnPct: p.returnPct, weight: totalMV > 0 ? p.marketValue / totalMV : 0,
+        returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
         liveMV: p.live ? p.marketValue : 0,
@@ -394,6 +437,7 @@ export function PortfolioMonitor() {
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
       heldCount: db.length,
+      weightBase, weightCount,
     };
   }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, sortKey, asc]);
   /**
@@ -455,6 +499,55 @@ export function PortfolioMonitor() {
   // Rendered whenever it is worth more than a rupee, because the size of it is
   // the whole point: 61 of 370 positions here, and 96% of the book's value.
   const uncostedMV = totMV - costedMV > 1 ? totMV - costedMV : 0;
+  /**
+   * WHAT THE WEIGHT COLUMN DIVIDES BY, IN WORDS — and by how much that
+   * denominator exceeds the rows on screen.
+   *
+   * `weightBase` is struck BEFORE the company pick-list (see the memo), so a
+   * picked company keeps the weight it has on the unfiltered table instead of
+   * being re-based to 100% of itself. The price of that is a column which no
+   * longer adds to 100 while a company filter is on, and the caption below the
+   * table states it: a reader who adds a column and lands somewhere else must
+   * be told why, not left to discover it.
+   */
+  const weightScope = [entity !== "All" ? entity : null, sector !== "All" ? sector : null, bucket !== "All" ? bucketLabel(bucket) : null].filter(Boolean).join(" · ");
+  const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
+  const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
+  /**
+   * THE REALISED COLUMN CANNOT ADD UP TO ITS OWN FOOTER, AND THE PAGE SAYS SO.
+   *
+   * The footer sums the realised gain over the UNION of every row's keys, which
+   * is right — rolling 281 shares into ten mandate rows must not empty the book's
+   * realised figure. But a mandate row shows `—` in that column, deliberately: a
+   * name's realised gain is reported per security across the whole book and
+   * these managers hold the same names in more than one mandate, so attributing
+   * it to one mandate row would count it twice.
+   *
+   * Six of the seven accounts that issue a capital gain statement are mandates,
+   * so most of the footer is made inside rows that display none of it. That is a
+   * printed total which does not tie to its own visible cells, and this book's
+   * own rule is that such a gap is NAMED with its size rather than left for a
+   * reader to find by adding. `inMandates` is that size, derived here so it
+   * cannot drift from the total beside it.
+   *
+   * A name held BOTH inside a mandate and in the family's own demat has a
+   * security row of its own, which displays it — so it is removed from the
+   * hidden set rather than counted as concealed.
+   */
+  const realisedSplit = (() => {
+    if (!consolidate || !realized) return null;
+    const shown = new Set<string>();
+    const inside = new Set<string>();
+    for (const r of rows) for (const k of r.realizedKeys) (r.kind === "mandate" ? inside : shown).add(k);
+    for (const k of shown) inside.delete(k);
+    const val = (k: string) => realized.get(k) ?? null;
+    return {
+      total: sumOrNull([...shown, ...inside].map(val)),
+      inMandates: sumOrNull([...inside].map(val)),
+      names: [...inside].filter((k) => val(k) !== null).length,
+      mandates: rows.reduce((n, r) => n + (r.kind === "mandate" ? 1 : 0), 0),
+    };
+  })();
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   //
@@ -657,6 +750,38 @@ export function PortfolioMonitor() {
                    * `AbsentCell` with the reason rather than a 0 or a blend.
                    */
                   const m = r.mandate;
+                  /**
+                   * IS THIS ROW THE WHOLE MANDATE, OR WHAT THE FILTERS LEFT OF IT?
+                   *
+                   * A mandate row's figures are summed over the constituents that
+                   * survived the company / sector / entity filters, and under a
+                   * filter that is a PART of the account. Every caption that says
+                   * "the mandate" — the Invested and Market value traces, the
+                   * expansion's own sentence — has to branch on this, or it makes
+                   * a claim about a named manager's account that the cell beside
+                   * it does not carry. The row's sub-line already branches; these
+                   * used to contradict it one line down.
+                   */
+                  const whole = !m || m.holdings.length === m.accountCount;
+                  /**
+                   * AND IS ITS MARKET VALUE ONE BASIS OR TWO?
+                   *
+                   * `r.live` on a mandate row is true when ANY constituent has a
+                   * quote — and every mandate in this book holds a cash sleeve
+                   * that can never be quoted, so in production a mandate row is
+                   * routinely PART live. Treating it as wholly live strips the
+                   * statement trace off a figure most of which is still on the
+                   * statement mark; treating it as wholly statement-based would
+                   * offer a trace to a document that prints a different number.
+                   * So the flag stays mixed and the cells SAY SO, using `liveMV`
+                   * — the value the feed actually repriced.
+                   */
+                  const partLive = !!m && r.live && r.marketValue - r.liveMV > 1;
+                  // Only where it is actually true: a mandate every constituent
+                  // of which is quoted is wholly live and says the ordinary thing.
+                  const mixedBasisNote = partLive
+                    ? `Part live: ${money(r.liveMV)} of this mandate's ${money(r.marketValue)} is repriced from live quotes and the rest keeps its statement mark — a mandate's cash sleeve can never be quoted, and neither can a share whose NSE symbol does not resolve. Every figure on this row that market value feeds — value, weight, unrealised P&L and return — therefore blends the two bases, and has no single statement cell to trace to.`
+                    : LIVE_CELL;
                   // Where the row's figures trace to: a mandate's are its own
                   // account's statements, a security's are its name in the archive.
                   const trace = m ? ledgerHref(m.accountNo) : ledgerHref(r.security);
@@ -731,7 +856,9 @@ export function PortfolioMonitor() {
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
                             : <Auditable to={trace} title="Average cost — trace to the ledger">{fmtFromBase(r.avgCost)}</Auditable>}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={trace} title={m ? "What the mandate's holdings cost, added up — trace to its statements" : "Invested (cost) — trace to the ledger"}>{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : <Auditable to={trace} title={!m ? "Invested (cost) — trace to the ledger"
+                          : whole ? "What every holding inside this mandate cost, added up — trace to its statements"
+                          : `What the ${m.holdings.length} of ${m.accountCount} holdings matching the filters cost, added up — NOT the mandate's own invested figure. Clear the filters, or open its drill-down, for that.`}>{fmtFromBase(r.costBasis, { compact: true })}</Auditable>}</td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
@@ -759,14 +886,25 @@ export function PortfolioMonitor() {
                                 : "no live quote for this security, so there is no previous close to move from"} />}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">
-                          {r.live ? fmtFromBase(r.marketValue, { compact: true })
-                                  : <Auditable to={trace} title={m ? "The whole mandate's market value, shares and cash sleeve — trace to its statements" : "Market value — trace to the ledger"}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
+                          {r.live
+                            ? partLive
+                              ? <>{fmtFromBase(r.marketValue, { compact: true })}
+                                  <span className="ml-1 cursor-help text-[10px] text-amber-400/80" title={mixedBasisNote}>◦</span></>
+                              : fmtFromBase(r.marketValue, { compact: true })
+                            : <Auditable to={trace} title={!m ? "Market value — trace to the ledger"
+                                : whole ? "The whole mandate's market value, shares and cash sleeve — trace to its statements"
+                                : `The ${m.holdings.length} of ${m.accountCount} holdings matching the filters — NOT the mandate, which its statement totals at ${money(m.accountMV)}. Clear the filters, or open its drill-down, to trace that figure.`}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? LIVE_CELL : undefined}>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? mixedBasisNote : undefined}>
                           {r.live ? `${(r.weight * 100).toFixed(1)}%`
-                                  : <Auditable formula={weightFormula(r.marketValue, totMV, r.weight * 100, money)}>{(r.weight * 100).toFixed(1)}%</Auditable>}
+                                  : <Auditable formula={{
+                                      title: "Weight",
+                                      excel: "= Market value ÷ Total market value × 100",
+                                      plain: weightPlain,
+                                      worked: `= ${money(r.marketValue)} ÷ ${money(weightBase)} × 100 = ${(r.weight * 100).toFixed(1)}%`,
+                                    }}>{(r.weight * 100).toFixed(1)}%</Auditable>}
                         </td>
-                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? LIVE_CELL : undefined}>
+                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
                             : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money, trace)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
@@ -785,7 +923,7 @@ export function PortfolioMonitor() {
                           : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
                           : <span className={changeColor(realized.get(r.securityKey)!)}><Auditable to={trace} title="Realised P&L — trace to the ledger">{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</Auditable></span>
                         }</td>
-                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? LIVE_CELL : undefined}>
+                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtPct(r.returnPct, { sign: true })
                             : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, trace)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
@@ -799,8 +937,25 @@ export function PortfolioMonitor() {
                         <tr className="bg-ink-900/60">
                           <td colSpan={13} className="px-3 pb-3 pt-1">
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                              The {m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"} inside this mandate,
-                              as {m.manager} reports them at {fmtDate(m.asOf)}. The family owns these shares; the manager chose
+                              {/* WHAT THE MANAGER REPORTS, OR WHAT THE FILTERS LEFT OF IT — never the
+                                  first sentence over the second list. Filtered to one company this read
+                                  "The 1 holding inside this mandate, as {manager} reports them", which is a
+                                  false statement about a named counterparty that reports {accountCount} of
+                                  them; the row's own sub-line one line above already said otherwise. */}
+                              {whole ? (
+                                <>
+                                  The {m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"} inside this mandate,
+                                  as {m.manager} reports them at {fmtDate(m.asOf)}.
+                                </>
+                              ) : (
+                                <>
+                                  The {m.holdings.length} of {m.accountCount} holdings in this mandate that match the filters
+                                  above — not the mandate as {m.manager} reports it, which is {m.accountCount} holdings worth
+                                  {" "}{money(m.accountMV)} at {fmtDate(m.asOf)}. Clear the filters, or open the drill-down
+                                  below, for the statement&rsquo;s own list.
+                                </>
+                              )}{" "}
+                              The family owns these shares; the manager chose
                               them — which is why they are counted here and in the row above, and never a second time among
                               the shares the family bought in its own name.
                             </p>
@@ -815,7 +970,8 @@ export function PortfolioMonitor() {
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Invested</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">CMP</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium whitespace-nowrap">% of mandate</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium whitespace-nowrap"
+                                        title={`Each holding's share of the mandate's own total — ${money(m.accountMV)} across ${m.accountCount} holdings, struck before this page's filters.`}>% of mandate</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
                                   </tr>
@@ -830,9 +986,16 @@ export function PortfolioMonitor() {
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : fmtFromBase(h.costBasis, { compact: true })}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.currentPrice === null ? <AbsentCell reason="this row is marked at a total value, not a per-unit price" /> : fmtFromBase(h.currentPrice)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(h.marketValue, { compact: true })}</td>
+                                      {/* DIVIDED BY THE MANDATE, WHICH IS WHAT THE HEADER SAYS —
+                                          `m.accountMV`, the account's own pre-filter total, and never
+                                          `r.marketValue`, which is the roll-up of whatever survived the
+                                          filters. Filtered to one company that read 100.0% for a
+                                          ₹4.39 Cr holding of a ₹39.53 Cr mandate. Under a filter these
+                                          therefore sum to less than 100%, which the sentence above the
+                                          table states. */}
                                       <td className="px-3 py-1.5 text-right mono text-slate-400">
-                                        {r.marketValue > 0
-                                          ? `${((h.marketValue / r.marketValue) * 100).toFixed(1)}%`
+                                        {m.accountMV > 0
+                                          ? `${((h.marketValue / m.accountMV) * 100).toFixed(1)}%`
                                           : <AbsentCell reason="the mandate is valued at nil, so a share of it cannot be struck" />}
                                       </td>
                                       <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.unrealizedPnL)}`}>{h.costNA ? "—" : fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</td>
@@ -845,7 +1008,7 @@ export function PortfolioMonitor() {
                             <p className="mt-1.5 text-[11px] text-slate-500">
                               <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
                                 className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                                Open the full {r.security} drill-down
+                                Open the full {m.name} drill-down
                               </Link>
                               {" "}for this mandate&rsquo;s own returns, capital movements and dated ledger.
                             </p>
@@ -917,13 +1080,26 @@ export function PortfolioMonitor() {
                       be added in as zero — that turns "never reported" into a
                       measurement and drags the total towards it.
                       AND IT SUMS OVER THE UNION OF THE ROWS' OWN KEYS, not over
-                      one key per row. Ten mandate rows now stand for 263 shares,
+                      one key per row. Ten mandate rows now stand for 281 shares,
                       and most of this book's realised gain was made inside them;
                       reading `r.securityKey` alone would have quietly emptied
                       this cell the moment the shares moved into their mandates.
                       A Set, because a name in two mandates is still one name on
-                      the capital gain statements. */}
-                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{consolidate && realized ? (() => { const keys = new Set<string>(); for (const r of rows) for (const k of r.realizedKeys) keys.add(k); const tr = sumOrNull([...keys].map((k) => realized.get(k) ?? null)); return tr === null ? <AbsentCell reason="no capital gain statement covers any of these names" /> : <span className={changeColor(tr)}>{fmtFromBase(tr, { compact: true, sign: true })}</span>; })() : <AbsentCell reason="realised gain is shown in the consolidated view" />}</td>
+                      the capital gain statements.
+                      The consequence — a total whose visible column shows only
+                      part of it — is measured in `realisedSplit` and named in the
+                      caption under the table. Each state gets its OWN reason: a
+                      still-loading archive, an unreachable one and a book with no
+                      capital gain statement are three different findings, and the
+                      cell used to report all three as "shown in the consolidated
+                      view". */}
+                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{
+                    !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
+                    : realized === undefined ? <span className="text-slate-500">…</span>
+                    : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
+                    : realisedSplit === null || realisedSplit.total === null ? <AbsentCell reason="no capital gain statement covers any of these names" />
+                    : <span className={changeColor(realisedSplit.total)}>{fmtFromBase(realisedSplit.total, { compact: true, sign: true })}</span>
+                  }</td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
@@ -945,6 +1121,35 @@ export function PortfolioMonitor() {
               worth {money(uncostedMV)}, are held through depository accounts: a depository records what is
               held and never what was paid for it. Their cost is absent rather than zero — entered as zero it
               would report the whole of that {money(uncostedMV)} as profit.
+            </p>
+          )}
+          {/* THE REALISED COLUMN DOES NOT ADD TO ITS OWN FOOTER, AND HERE IS BY
+              HOW MUCH. Rendered only when there is a gap to name: with no mandate
+              on screen, or none of them holding a name that realised anything,
+              the column and the footer agree and there is nothing to say. */}
+          {realisedSplit && realisedSplit.inMandates !== null && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">The Realised P&amp;L column does not add up to the Realised
+              P&amp;L total, and the difference is the mandates.</span> The total is the whole book&rsquo;s realised gain;
+              {" "}{money(realisedSplit.inMandates, true)} of it was realised on {realisedSplit.names} name
+              {realisedSplit.names === 1 ? "" : "s"} held inside the {realisedSplit.mandates} PMS mandate
+              {realisedSplit.mandates === 1 ? "" : "s"} above, and those rows show {DASH}. A realised figure is reported
+              per security across the whole book, and these managers hold the same names in more than one mandate, so
+              putting a name&rsquo;s whole realised gain on one mandate row would count it twice.
+              {" "}<Link to="/capital-gains" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">Capital Gains</Link>,
+              or a mandate&rsquo;s own drill-down, carries the per-account figures.
+            </p>
+          )}
+          {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
+              filter is on: the denominator is the book the other filters
+              describe, so the picked rows are a part of it by design. */}
+          {weightGap > 0 && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">Weight is a share of the book, not of the companies you
+              picked.</span> The column divides by {money(weightBase)} across {weightCount} positions — the book the
+              entity, sector and category filters describe — so a picked name keeps the weight it has on the
+              unfiltered table. The rows on screen are {money(totMV)} of that, which is why the column adds to
+              {" "}{weightBase > 0 ? ((totMV / weightBase) * 100).toFixed(1) : "0.0"}% and not to 100%.
             </p>
           )}
           {dupGap > 0 && (

@@ -48,6 +48,13 @@ const ROUTES = [
   // the only view in which the AIF section's heading and the footer beneath it
   // can disagree — which they did, by the ₹3.17 Cr the footer correctly excludes.
   ["monitor-entity", "/monitor"],        // same route, By entity toggled
+  // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
+  // share a discretionary manager chose is shown inside that manager's mandate,
+  // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
+  // THE MONITOR'S OWN LINK during this sweep — see `MANDATE_PATH`. Typing an
+  // accountId here would be a second source for a generated figure, and a stale
+  // one would still "pass" by rendering the page's not-found state.
+  ["mandate", () => MANDATE_PATH ?? "/mandate/none-resolved-from-monitor"],
   ["family", "/family"],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
@@ -123,6 +130,96 @@ const CR = String.raw`₹([\d,]+(?:\.\d+)?)\s*Cr`;
  * input claims confidence nobody earned.
  */
 const cr = (m) => (m == null ? NaN : Number(String(m).replace(/,/g, "")));
+/** The same figure when `fmtFromBase` chose a smaller suffix. NaN in, NaN out. */
+const crU = (n, unit) => cr(n) * (unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1);
+
+/**
+ * ── THE HOLDINGS TABLE IS SECTIONED BY BUCKET, AND THE SECTIONS ARE READ HERE ──
+ *
+ * The family asked three times for one thing and the first two rounds answered
+ * with a WORD. What they wanted was a GROUPING: a share a discretionary manager
+ * chose belongs inside that mandate's row, and "Direct Equity" should mean what
+ * the words say — shares the family bought itself. That landed, and these
+ * helpers are how the invariants below check it on the RENDERED PAGE rather than
+ * on a caption, which is the rule the first draft of the exposure check broke.
+ *
+ * A section heading is a colSpan row: no tab in it, its label uppercased by CSS,
+ * and its own count/subtotal beside it. A DATA row is a table row and carries a
+ * tab per column. Those two facts are the whole of what separates them, and both
+ * come from the page's own structure rather than from a list of names.
+ */
+const BUCKET_HEADINGS = ["DIRECT EQUITY", "PMS MANDATES", "COMPANY SHARES", "EQUITY", "ETF",
+  "MUTUAL FUND", "AIF", "BOND", "STRUCTURED PRODUCT", "UNLISTED", "CASH"];
+/**
+ * innerText renders each flex item on its own line, so a heading is usually the
+ * label alone — but that is a rendering detail, not a contract. Both forms are
+ * accepted: the label on its own line, and the label with its `· N holdings ·
+ * ₹X` span folded onto the same one.
+ */
+const headingIs = (line, label) => {
+  // A trailing cell separator is a rendering artefact, not a column: strip it
+  // before deciding whether this line is a table ROW or a heading over one.
+  const s = line.replace(/\t+$/, "").trim();
+  return !s.includes("\t") && (s === label || s.startsWith(label + " ·"));
+};
+const isAnyHeading = (line) => BUCKET_HEADINGS.some((h) => headingIs(line, h));
+/** A rendered table row: one tab per column boundary, and this table has 13. */
+const isDataRow = (line) => (line.match(/\t/g) ?? []).length >= 5;
+/**
+ * One section of the holdings table: its heading block, its body, and the data
+ * rows drawn inside it. `null` when the heading is not on the page at all —
+ * which every caller treats as a FAILURE, never as nothing to check.
+ */
+function sectionOf(text, label) {
+  const lines = text.split("\n");
+  const at = lines.findIndex((l) => headingIs(l, label));
+  if (at < 0) return null;
+  let end = lines.length;
+  for (let i = at + 1; i < lines.length; i++) if (isAnyHeading(lines[i])) { end = i; break; }
+  const block = lines.slice(at, end);
+  return {
+    // The heading plus its sibling spans (count, subtotal, and the notes about a
+    // measured nil or a collapsed duplicate) — never a data row.
+    head: block.filter((l) => !isDataRow(l)).slice(0, 5).join("\n"),
+    body: block.join("\n"),
+    rows: block.filter(isDataRow),
+  };
+}
+/** `· N holdings · ₹X` off a section heading, in crore. */
+function headingCount(head) {
+  const m = /·\s*([\d,]+)\s*holdings?\s*·\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(head ?? "");
+  return m ? { holdings: cr(m[1]), mv: crU(m[2], m[3]) } : null;
+}
+/**
+ * A MANDATE ROW, which is an ACCOUNT and not a security. Its sub-line is the
+ * one the manager, the account number and the constituent count are printed on,
+ * and it is the line the row's figures hang off — so finding it is how the
+ * checks tell a rolled-up mandate from a share that leaked in beside one.
+ */
+const MANDATE_SUBLINE = /^(.+?)\s+·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?\b/;
+const mandateRowsIn = (body) => (body ?? "").split("\n")
+  .map((l) => MANDATE_SUBLINE.exec(l))
+  .filter(Boolean)
+  .map((m) => ({ manager: m[1].trim(), accountNo: m[2], holdings: Number(m[3]) }));
+
+/**
+ * WHAT `/monitor` PRINTED ABOUT EACH MANDATE, so the drill-down can be checked
+ * against it. Two pages showing two counts for one account is the contradiction
+ * this whole regrouping exists to remove, and it cannot be caught inside either
+ * page on its own. The routes run in order in one process, `monitor` first.
+ *
+ * Empty is never a pass: the mandate route's invariant requires an entry for the
+ * account it is rendering, so a monitor that stops printing mandate rows fails
+ * on both pages rather than quietly passing on one.
+ */
+const MANDATE_ROWS = new Map();
+/**
+ * The mandate drill-down's own address, DERIVED from the link the monitor draws
+ * rather than typed in here. A hardcoded accountId is a second source for a
+ * generated figure — it would go stale the first drop that renames an account,
+ * and it would still "pass" by rendering the page's not-found state.
+ */
+let MANDATE_PATH = null;
 
 const INVARIANTS = {
   // "on the dashboard there's only one asset class" — the CIO allocation must
@@ -130,20 +227,43 @@ const INVARIANTS = {
   cio: [
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
     ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
-    // "are there no investments in direct equity?" — listed equity is ONE
-    // consolidated asset-class row covering every vehicle, and it is now
-    // LABELLED "Company Shares": the family read the old "Equity" heading as
-    // covering their AIF folios too, and read the "Direct Equity" that replaced
-    // it as a claim that they had picked the positions (see `assetClassLabel`).
-    //
-    // THE LABEL AND THE SET ARE ASSERTED SEPARATELY, because the same two words
-    // once named the empty engagement-split row this line was written against.
-    // A label alone cannot tell those apart: the row must also carry holdings
-    // and a value, which the vehicle-split row never did.
-    ["allocation carries a 'Company Shares' row", (t) => /Company Shares/.test(t) && !/Direct Equity/.test(t)],
-    ["...and it is the whole equity class, not an empty vehicle split",
-      (t) => !/PMS\s*\/\s*Managed/.test(t)
-        && /Company Shares[\s\S]{0,300}?₹[\d,.]+\s*(?:Cr|L|K)?/.test(t)],
+    /**
+     * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
+     * that are asserted because either alone can pass on the wrong page.
+     *
+     * The family asked three times for this. Rounds one and two changed the WORD
+     * ("Equity" -> "Direct Equity" -> "Company Shares") and neither fixed it,
+     * because what they were reporting was that a share a manager picked and a
+     * share they bought themselves sat in one row. Round three said so plainly.
+     * So the check is that BOTH rows exist and each carries a value — a label
+     * with no holdings behind it is the empty vehicle-split row this line was
+     * originally written against.
+     */
+    ["allocation has a Direct Equity row AND a PMS mandates row, each with a value",
+      (t) => /Direct Equity[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)
+        && /PMS mandates[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)],
+    ["'Company Shares' is gone from the allocation", (t) => !/Company Shares/.test(t)],
+    /**
+     * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
+     *
+     * After the regroup, Direct Equity reports a cost for 9 of its 38 holdings,
+     * so a return on cost read **−18.9%** in a row printing ₹1.22 Cr invested
+     * and ₹12,446.1 Cr current. Every figure was right on its own terms and the
+     * three together were indefensible. The row uses the footer's own 0.5% test
+     * now, and this asserts it on the RENDERED page rather than on the helper:
+     * for every allocation row, either its three cells reconcile, or its return
+     * is an em dash.
+     */
+    ["every allocation row's return ties to its own Invested and Current, or is absent", (t) => {
+      const rows = [...t.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*([+-]\d+\.\d)%/g)];
+      if (!rows.length) return true;   // layout changed; the other invariants still bind
+      const u = (n, s) => cr(n) * (s === "L" ? 0.01 : s === "K" ? 0.0001 : 1);
+      return rows.every((m) => {
+        const inv = u(m[1], m[2]), cur = u(m[3], m[4]), pct = Number(m[5]);
+        if (!Number.isFinite(inv) || !Number.isFinite(cur) || !inv) return false;
+        return Math.abs(((cur - inv) / inv) * 100 - pct) <= 1.0;
+      });
+    }],
     // THE AIF WAS DOUBLE-COUNTED INTO NAV, and this is the guard against it
     // returning. It used to read "ties to ~₹335 Cr … not ₹5xx Cr" — a copy of a
     // figure the book GENERATES, written when the book was ₹335.43 Cr. The
@@ -201,14 +321,28 @@ const INVARIANTS = {
     // it carried a money-weighted rate in a column of return-on-cost figures,
     // so Invested and Current printed one answer and the Total cell another.
     /**
-     * ₹127 Cr of shares a manager chose and ₹30 Cr the family bought are one
-     * "Equity" row, correctly — they are the same asset. Both halves were
-     * computed and rendered NOWHERE, so the row said only what the holdings ARE
-     * and never who decided them. That silence is what the family read as a
-     * claim of directness.
+     * THE TWO ROWS MUST POINT AT EACH OTHER, OR THE SPLIT IS A TRAP.
+     *
+     * This line used to require the Equity row to CAPTION its mandate/own split,
+     * because both halves were computed and rendered nowhere and that silence is
+     * what the family read as a claim of directness. Separate rows say it better
+     * — but they introduce the opposite risk: a reader who now believes "Direct
+     * Equity" is the family's whole equity exposure, when ₹127 Cr more sits under
+     * the mandates. So the Direct Equity row must NAME the mandate-held value,
+     * and it is asserted as a FIGURE the page renders rather than as prose.
      */
-    ["the Equity row says how much was chosen by a manager and how much was not",
-      (t) => !/\bEquity\b/.test(t) || /chosen under a manager.s mandate/i.test(t)],
+    ["the Direct Equity row names the company shares held under the mandates instead",
+      (t) => !/Direct Equity/.test(t)
+        || new RegExp(String.raw`Direct Equity[\s\S]{0,400}?` + CR + String.raw`[\s\S]{0,120}?held under the mandates`, "i").test(t)],
+    /**
+     * ...and the same for cash, which the regroup moved out from under a
+     * reader's feet: 18 of this book's 20 cash positions are the mandates' own
+     * sleeves and now bucket with them, so a top-level Cash row that once read
+     * ₹11.6 Cr reads ₹0. That zero is MEASURED and keeps its zero (§2), but a
+     * reader who knows the book holds cash needs the row to say where it went.
+     */
+    ["the Cash row says how much cash sits inside the mandates",
+      (t) => !/\bCash\b/.test(t) || /held inside the PMS mandates/i.test(t)],
     ["the allocation total ties to its own Invested and Current columns", (t) => {
       const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
       if (!row) return true;   // layout changed; the other invariants still bind
@@ -228,29 +362,114 @@ const INVARIANTS = {
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
-  // holdings must be sectioned by asset class; and the by-security total counts
-  // each dedupeGroup once (₹335.43 Cr, never the double-counted ₹338.6 Cr).
+  // holdings are sectioned by BUCKET (who chose the position), the sections must
+  // reconstruct the footer, and the by-security total counts each `dedupeGroup`
+  // once. The NAV is asserted as a RELATION against the header chip, never as a
+  // literal: this line used to carry "₹335.43 Cr" and the book has moved twice
+  // since — a check carrying its own copy of a generated figure is a second
+  // source for it.
   monitor: [
-    ["holdings are sectioned by asset class", (t) => /\bequity\b/i.test(t) && /\d+\s+holdings/i.test(t)],
-    // "we are mixing the AIF holdings into equity" — the model never did
-    // (`isDirectEquity` is `assetClass === "Equity"` and every AIF folio is its
-    // own AIF row), but the section HEADING read "EQUITY" and the family read it
-    // as covering the table beneath it. These three assert the fix on the page:
-    // the heading names the narrower thing, the filter offers CATEGORIES, and no
-    // fund unit stands inside the company-shares section.
-    ["the equity section is headed 'Company Shares'", (t) => /\bCOMPANY SHARES\b/i.test(t) && !/\bDIRECT EQUITY\b/i.test(t)],
+    /**
+     * ── THE THIRD ROUND: A GROUPING, NOT A WORD ──────────────────────────────
+     *
+     * "We are mixing AIF investments and Direct Equity holdings. Any stock held
+     * through an AIF or PMS should be shown inside that AIF/PMS drill-down."
+     * The model never mixed them — every AIF folio has always been its own AIF
+     * row — but ₹127 Cr of shares a discretionary manager chose sat in the same
+     * section as the ₹12,446 Cr the family bought itself, under a heading that
+     * two rounds of relabelling could not make honest. Both words were true of
+     * SOME of what was under them and neither was true of all of it.
+     *
+     * So the table sections on `holdingBucket` now, and these assert it where a
+     * reader forms the belief: on the rendered rows. The FIRST DRAFT OF THE
+     * EXPOSURE CHECK matched a caption's prose and could not fail, which is why
+     * every one of these is struck on structure or on figures the page prints.
+     */
+    ["holdings are sectioned into Direct Equity and PMS mandates",
+      (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES")],
+    ["the Direct Equity section states its own holding count and subtotal",
+      (t) => { const s = sectionOf(t, "DIRECT EQUITY"); return !!s && !!headingCount(s.head) && s.rows.length > 0; }],
+    /**
+     * "COMPANY SHARES" WAS THE SECOND ROUND'S ANSWER AND IT IS RETIRED HERE.
+     * It is a true statement about the asset — a manager-chosen share IS a
+     * company share, which is why `isCompanyShare` stays and why Sector
+     * Composition, Exposure & IPS and Compare still count every one of them —
+     * and it is the wrong question for a HOLDINGS TABLE, whose reader is asking
+     * who decided. Case-insensitive on purpose: the heading is uppercased by
+     * CSS, so a case-sensitive test would miss the exact regression it exists
+     * to catch. (That lesson is already recorded on the CIO tile checks.)
+     */
+    ["'Company Shares' appears nowhere on this page", (t) => !/company\s+shares/i.test(t)],
     ["the class filter reads 'All categories'", (t) => /All categories/.test(t) && !/All asset classes/.test(t)],
+    /**
+     * NOTHING MANDATE-HELD MAY STAND UNDER DIRECT EQUITY — asserted three ways,
+     * each on a different piece of what the page draws, because the one thing a
+     * leaked share does NOT carry is a label saying it leaked.
+     *
+     * A mandate ROW is identifiable: it prints `<manager> · account <no> · N
+     * holdings` under its name and carries a "PMS mandate" pill. Neither may
+     * appear between the Direct Equity heading and the next one. And the manager
+     * names are harvested FROM THE PMS SECTION rather than typed here, so this
+     * cannot go stale when a manager arrives or leaves.
+     */
+    ["no mandate row stands inside the Direct Equity section", (t) => {
+      const de = sectionOf(t, "DIRECT EQUITY");
+      if (!de) return false;                          // heading gone → nothing checked is nothing passed
+      return mandateRowsIn(de.body).length === 0 && !/\bPMS mandate\b/.test(de.body);
+    }],
+    ["no manager named in the PMS section appears under Direct Equity", (t) => {
+      const de = sectionOf(t, "DIRECT EQUITY");
+      const pms = sectionOf(t, "PMS MANDATES");
+      if (!de || !pms) return false;
+      const managers = [...new Set(mandateRowsIn(pms.body).map((m) => m.manager))];
+      if (managers.length === 0) return false;        // the PMS section drew no mandate row
+      return managers.every((m) => !de.body.includes(m));
+    }],
     // Struck on the RENDERED ROWS, not on the caption: a fund name appearing
-    // between the Company Shares heading and the next class heading is a wrapper
+    // between the Direct Equity heading and the next class heading is a wrapper
     // sitting among the shares, whatever the heading above it says. Same list of
     // this book's own fund names the sector check uses.
-    ["no fund unit stands inside the Company Shares section", (t) => {
-      const i = t.search(/^COMPANY SHARES$/m);
-      if (i < 0) return false;                       // heading gone → the check above fails too
-      const rest = t.slice(i + 1);
-      const j = rest.search(/^(MUTUAL FUND|AIF|ETF|BOND|STRUCTURED PRODUCT|UNLISTED|CASH)$/m);
-      const section = j < 0 ? rest : rest.slice(0, j);
-      return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees|Amritkaal|Delphi Equity|Neo Infra|Baring Private|Transition Venture|India SME|Rising Titans|Hedged Equity)/i.test(section);
+    ["no fund unit stands inside the Direct Equity section", (t) => {
+      const de = sectionOf(t, "DIRECT EQUITY");
+      if (!de) return false;                          // heading gone → the checks above fail too
+      return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees|Amritkaal|Delphi Equity|Neo Infra|Baring Private|Transition Venture|India SME|Rising Titans|Hedged Equity)/i.test(de.body);
+    }],
+    /**
+     * ── THE PMS SECTION IS A ROLL-UP OF ACCOUNTS, AND IT RECONSTRUCTS ITSELF ──
+     *
+     * Every row in it must be a MANDATE, and the heading's holding count must be
+     * the sum of what each of those rows says it stands for. That second half is
+     * the one that binds: if the regrouping came undone and the constituent
+     * shares were drawn as their own rows again, there would be no `· account N
+     * · M holdings` sub-lines to sum and this fails with nothing to add. If a
+     * mandate silently dropped its constituents, the sum falls short of the
+     * heading. Neither number is written here — both are read off the page.
+     */
+    ["every row in the PMS section is a mandate, not a share", (t) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      if (!pms) return false;
+      const rows = mandateRowsIn(pms.body);
+      return rows.length >= 2 && rows.length === pms.rows.length;
+    }],
+    ["the PMS heading's holding count is the sum of its mandates' own counts", (t) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      const head = headingCount(pms?.head);
+      if (!pms || !head) return false;
+      const rows = mandateRowsIn(pms.body);
+      if (rows.length === 0) return false;
+      const constituents = rows.reduce((n, r) => n + r.holdings, 0);
+      // A roll-up that stands for no more than it draws is not a roll-up. Today
+      // it is 281 shares across 10 rows; the relation is asserted, not the pair.
+      return constituents === head.holdings && constituents > rows.length;
+    }],
+    // ...and each of those rows is a way IN. A mandate a reader cannot open is
+    // a section that hides 271 positions instead of filing them.
+    ["every mandate row links to its own drill-down", (t, ctx) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      if (!pms) return false;
+      const rows = mandateRowsIn(pms.body);
+      const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
+      return rows.length > 0 && links.size === rows.length;
     }],
     // AND THE SECTIONS MUST ADD UP TO THE FOOTER. A reader who sums the four
     // headings and lands somewhere other than the Total row has found the
@@ -324,7 +543,22 @@ const INVARIANTS = {
   // printed here, so this is where "carry both, count once" is visible — and
   // where the class heading above the rows must still be on the footer's basis.
   "monitor-entity": [
-    ["the by-entity view still sections by class", (t) => /\bCOMPANY SHARES\b/i.test(t) && /\bAIF\b/.test(t)],
+    ["the by-entity view still sections into Direct Equity, PMS mandates and the wrappers",
+      (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES") && !!sectionOf(t, "AIF")],
+    // A mandate row is one account's statement already, so the by-entity toggle
+    // — which splits a CONSOLIDATED security back into the statements that
+    // reported it — must leave the mandates rolled up exactly as they were.
+    // This is where a "show every statement's row" switch would most plausibly
+    // unroll them, so it is asserted on the view where the risk lives.
+    ["the mandates stay rolled up when every statement's row is shown", (t) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      const head = headingCount(pms?.head);
+      if (!pms || !head) return false;
+      const rows = mandateRowsIn(pms.body);
+      return rows.length >= 2 && rows.length === pms.rows.length
+        && rows.reduce((n, r) => n + r.holdings, 0) === head.holdings;
+    }],
+    ["'Company Shares' appears nowhere on this page either", (t) => !/company\s+shares/i.test(t)],
     // THE SAME RECONSTRUCTION AS THE BY-SECURITY VIEW, and the one that binds:
     // the section subtotal used to be a raw sum of the displayed rows, so the
     // headings added to ₹3.17 Cr more than the (consolidated) footer beneath.
@@ -367,8 +601,43 @@ const INVARIANTS = {
     // the sector table and the check still passed. Both invariants below are
     // struck on FIGURES THE PAGE RENDERS, so a filter that widens moves one side
     // and not the other.
-    ["sector GAP is direct-equity only, the non-equity classes named",
+    /**
+     * AND THIS PAGE DELIBERATELY DOES NOT REGROUP. The holdings tables now file
+     * a manager-chosen share inside its mandate; a SECTOR table must not, because
+     * a share Carnelian picked has a GICS sector, a market cap, an NSE symbol and
+     * a concall exactly like one the family bought. Narrowing here to own-held
+     * shares would throw ₹127 Cr of real exposure out of the family's sector
+     * picture over a question — who decided — that a sector table does not ask.
+     * A look-through into a mandate is a GAIN for exposure analysis.
+     */
+    ["sector GAP covers company shares by both routes, the non-equity classes named",
       (t) => /company shares/i.test(t) && /excluded rather than folded in/i.test(t)],
+    /**
+     * THE FIGURE THAT PROVES IT, rather than the sentence that claims it: the
+     * caption states the covered set and then splits it by ROUTE, and the two
+     * (three where an engagement is unstated) must reconstruct the covered
+     * total. Narrow this page to own-held shares and the mandate figure goes to
+     * zero while the covered total falls with it — this fails on the first,
+     * before the reader ever has to notice the second.
+     */
+    ["the covered set's mandate/own split reconstructs it — mandate-held shares are counted", (t) => {
+      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
+      // Each half is either a figure or the page's own explicit "none" wording.
+      // A missing clause is NOT read as zero: that would let the mandate half
+      // vanish from the caption and still pass.
+      const half = (rx, none) => (none.test(t) ? 0 : cr(rx.exec(t)?.[1]));
+      const mandate = half(
+        new RegExp(CR + String.raw` of it was chosen by a discretionary manager`, "i"),
+        /no holding in it is run under a discretionary mandate/i);
+      const own = half(
+        new RegExp(String.raw`and ` + CR + String.raw` was bought in the family.s own demat`, "i"),
+        /none of it was bought in the family.s own account/i);
+      const otherM = new RegExp(String.raw`with ` + CR + String.raw` in accounts whose statements do not state`, "i").exec(t);
+      const other = otherM ? cr(otherM[1]) : 0;       // the clause renders only when it is non-zero
+      if (![covered, mandate, own].every(Number.isFinite)) return false;
+      return mandate > 0                              // this book holds ₹127 Cr of them
+        && Math.abs(mandate + own + other - covered) <= Math.max(0.6, covered * 0.002);
+    }],
     // The caption states what the table COVERS and what it EXCLUDES from two
     // independent computations. They must reconstruct the header's consolidated
     // NAV. Widening the covered set moves the first and leaves the second, and
@@ -394,8 +663,15 @@ const INVARIANTS = {
       if (classes.length === 0) return false;
       return classes.every((c) => !new RegExp(`(^|\n)${c}\t`, "i").test(table));
     }],
-    ["market-cap bands are struck on direct equity, not the whole book",
-      (t) => /direct-equity/i.test(t)],
+    // The bands sit on the SAME set as the sector table above — every share in a
+    // company, however it came to be held — and the card has to say so, because
+    // the holdings table one link away now uses "Direct Equity" for the narrower
+    // half. Two surfaces using one phrase for two sets is exactly what the last
+    // two rounds of this complaint were. The figure-bearing guard is the
+    // reconstruction above; this one is the card stating its own scope.
+    ["market-cap bands state their scope: company shares, wider than Direct Equity",
+      (t) => /(struck on company shares|struck on every share in a company the family owns)/i.test(t)
+        && /direct-equity section of the holdings tables/i.test(t)],
     // Phase 5: the IPS is an editor now. With NO family input recorded — which is
     // this harness's state — every gap must be absent and the page must say why.
     // A gap computed against a defaulted target is a fabricated instruction.
@@ -441,8 +717,101 @@ const INVARIANTS = {
      */
     ["the page states how the position is held, not just what it is",
       (t) => /via (manager's mandate|own account|fund vehicle)/i.test(t) && /Held via/i.test(t)],
+    /**
+     * THE WORD IS BACK, AND THIS NAME MUST NOT CARRY IT. `/stock/aditya-birla-
+     * capital` is held by Carnelian under a discretionary mandate — the same
+     * shape as the Jammu & Kashmir Bank page the family opened to report this.
+     * Now that "Direct Equity" means own-held shares, printing it here would be
+     * the original complaint restored, and this time it would be false rather
+     * than merely ambiguous.
+     */
     ["a manager-chosen holding is never called direct",
       (t) => !/direct equity/i.test(t)],
+    /**
+     * ...AND THE ANSWER TO "WHO CHOSE IT" IS A PLACE, NOT AN ADJECTIVE. The
+     * mandate is named above the fold and linked, because "a manager chose this"
+     * with no way to see what else that manager chose is half an answer — and
+     * because the drill-down is where the family asked for the share to live.
+     * The link is read off the DOM rather than the text: prose saying a mandate
+     * exists is not a route to it.
+     */
+    ["a mandate-held share names its mandate and links to the drill-down",
+      (t, ctx) => /Held through .{0,24}discretionary mandate/i.test(t)
+        && (ctx?.hrefs ?? []).some((h) => /^\/mandate\/./.test(h))],
+  ],
+  /**
+   * ── THE MANDATE DRILL-DOWN, THE PAGE THE FAMILY ACTUALLY ASKED FOR ─────────
+   *
+   * "Any stock held through an AIF or PMS should be shown inside that AIF/PMS
+   * drill-down … Jammu Kashmir Bank … should appear inside the Carnelian
+   * Bespoke Portfolio drill-down." This route is that page, and the address is
+   * RESOLVED FROM THE MONITOR'S OWN LINK rather than typed in — a hardcoded
+   * accountId would be a second source for a generated figure, and worse, it
+   * would keep "passing" by rendering the page's own not-found state.
+   *
+   * A PMS rollup is legitimate because the family owns each share and the
+   * manager only picked it, so the statement reports every one by name. An AIF
+   * folio is one purchase of somebody else's portfolio and no look-through
+   * exists — which is why nothing here asserts a constituent list for a fund.
+   */
+  mandate: [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["it names its manager, its account number and how the account is run",
+      (t) => /Run by\s+\S[^\n]*\bfor\b/i.test(t) && /·\s*account\s+\S+/i.test(t) && /manager's mandate/i.test(t)],
+    /**
+     * MORE THAN ONE HOLDING, AND THE COUNT AGREES WITH THE ROWS DRAWN. The KPI,
+     * the headline and the table are three renderings of one number; a page
+     * where they disagree is the "Held in 1 entity" pill over a two-row table
+     * all over again, and the specific figure is the one a reader believes.
+     */
+    ["it lists more than one holding, and every count agrees with the rows drawn", (t) => {
+      const lines = t.split("\n");
+      const h = lines.findIndex((l) => /^SECURITY\tSECTOR\tQTY\b/i.test(l));
+      if (h < 0) return false;
+      const foot = lines.findIndex((l, i) => i > h && /^Total(\t|\s*\(whole mandate\))/.test(l));
+      if (foot < 0) return false;
+      const drawn = lines.slice(h + 1, foot).filter(isDataRow).length;
+      const kpi = cr(/^HOLDINGS\n([\d,]+)/m.exec(t)?.[1]);
+      const headline = cr(/([\d,]+)\s+holdings the manager runs/i.exec(t)?.[1]);
+      return drawn > 1 && kpi === drawn && headline === drawn;
+    }],
+    /**
+     * THE TOTAL TIES TO THE MANAGER'S OWN STATEMENT. This is the check that
+     * keeps the whole regrouping honest: the mandate's cash sleeve is bucketed
+     * WITH it precisely so that the rows add to the figure the document prints,
+     * and if they ever stop, something has been moved that should not have been.
+     * Both figures come off this page — no literal — and the LIVE-basis escape
+     * is the page's own sentence, not a widened tolerance.
+     */
+    ["the Total ties to the account's own statement total", (t) => {
+      const foot = new RegExp(String.raw`^Total\b[^\n]*₹([\d,.]+)\s*(Cr|L|K)?\s*100\.0\s?%`, "m").exec(t);
+      const stmt = /₹([\d,.]+)\s*(Cr|L|K)?\s+is\s+this account.s own statement total/i.exec(t);
+      if (!foot || !stmt) return false;
+      const [total, printed] = [crU(foot[1], foot[2]), crU(stmt[1], stmt[2])];
+      if (![total, printed].every(Number.isFinite)) return false;
+      if (Math.abs(total - printed) <= 0.005) return true;
+      // On LIVE basis the Total has moved and the statement figure has not. The
+      // page must say so; a silent difference is a total that ties to nothing.
+      return /The Total shown is .* because live prices are applied/i.test(t);
+    }],
+    /**
+     * AND IT AGREES WITH THE MONITOR ROW THAT LINKS HERE. Two pages printing two
+     * counts for one account is the contradiction no caption rescues, and it is
+     * invisible inside either page — so it is checked across them. An empty
+     * capture FAILS: a monitor that stopped drawing mandate rows must not make
+     * this pass by leaving nothing to compare.
+     */
+    ["the holding count agrees with the mandate row on Portfolio Monitor", (t) => {
+      const acct = /·\s*account\s+(\S+)/.exec(t)?.[1];
+      const headline = cr(/([\d,]+)\s+holdings the manager runs/i.exec(t)?.[1]);
+      const seen = acct ? MANDATE_ROWS.get(acct) : undefined;
+      return !!seen && Number.isFinite(headline) && seen.holdings === headline;
+    }],
+    // A drill-down whose Security column is a dead end sends the reader back to
+    // the table they came from. Each constituent keeps its own page.
+    ["each constituent still links to its own company page",
+      (t, ctx) => (ctx?.hrefs ?? []).filter((h) => /^\/stock\/./.test(h)).length > 1],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
   // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
@@ -683,7 +1052,11 @@ const report = [];
 
 for (const theme of THEMES) {
   for (const width of WIDTHS) {
-    for (const [name, path] of ROUTES) {
+    for (const [name, route] of ROUTES) {
+      // A route may resolve its own address from what an earlier route rendered
+      // (the mandate drill-down does). Resolved at navigation time, so it sees
+      // this sweep's monitor rather than a previous run's.
+      const path = typeof route === "function" ? route() : route;
       const ctx = await browser.newContext({ viewport: { width, height: 1000 } });
       // Set the theme BEFORE the app boots, so it never paints the wrong one first.
       await ctx.addInitScript((t) => {
@@ -722,6 +1095,25 @@ for (const theme of THEMES) {
       await page.waitForTimeout(FAST ? 350 : 800);
 
       const text = FAST ? "" : await page.evaluate(() => document.body.innerText);
+      /**
+       * THE LINKS THE PAGE ACTUALLY DRAWS, read off the DOM.
+       *
+       * An invariant about a DRILL-DOWN cannot be struck on prose: a sentence
+       * saying a mandate exists is not a route to it, and this book has been
+       * bitten once already by a check that matched a caption and could not
+       * fail. Collected on every route (it costs nothing) and handed to the
+       * invariants as their second argument; every older one ignores it.
+       */
+      // Collected even in FAST mode: it is one cheap call, and the responsive
+      // sweep would otherwise walk the mandate route's not-found page at every
+      // width — measuring the layout of a screen nobody sees.
+      const hrefs = await page.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href") ?? ""));
+      // What the monitor printed about each mandate, so the drill-down can be
+      // checked against it — and the address of the drill-down itself.
+      if (name === "monitor") {
+        MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
+        for (const m of mandateRowsIn(text)) MANDATE_ROWS.set(m.accountNo, m);
+      }
       const zeros = !FAST && theme === "light" && width === WIDTHS[0]
         ? [...text.matchAll(ZEROISH)].map((m) => {
             const i = Math.max(0, m.index - 70);
@@ -732,7 +1124,14 @@ for (const theme of THEMES) {
       const contrast = FAST ? [] : await page.evaluate(theme === "light" ? DARK_IN_LIGHT : LIGHT_IN_DARK);
       // Data invariants — only the primary theme/width, where innerText is real.
       const invariants = !FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]
-        ? INVARIANTS[name].filter(([, test]) => !test(text)).map(([desc]) => desc)
+        ? INVARIANTS[name].flatMap(([desc, test]) => {
+            // A CHECK THAT THREW HAS NOT PASSED, and it must not take the sweep
+            // down with it either. Reported by name with the message, so a
+            // broken matcher reads as a broken matcher rather than as a clean
+            // page — the same rule as `golden.mjs`'s BLOCKED.
+            try { return test(text, { hrefs, path }) ? [] : [desc]; }
+            catch (e) { return [`${desc} — the check itself threw: ${e.message}`]; }
+          })
         : [];
       if (SHOTS && width === WIDTHS[0]) {
         await page.screenshot({ path: `${OUT}/${theme}-${name}.png`, fullPage: true });

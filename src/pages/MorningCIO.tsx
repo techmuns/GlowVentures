@@ -237,11 +237,34 @@ export function MorningCIO() {
       // row can then say so instead of inviting a reader to divide one printed
       // cell by another and land somewhere neither figure claims.
       const noCost = rows.filter((x) => x.costBasis == null);
+      const withoutCostMV = sum(noCost.map((x) => x.marketValue));
+      /**
+       * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
+       *
+       * Naming the coverage in a caption is not enough on its own, and this row
+       * is where that became obvious: after the regroup, Direct Equity reports a
+       * cost for 9 of its 38 holdings, so a return on cost read **−18.9%** in a
+       * row printing ₹1.22 Cr invested and ₹12,446.1 Cr current. Every figure was
+       * correct on its own terms and the three together were indefensible —
+       * exactly the contradiction the footer already refuses ("No whole-book
+       * return in the Total row"), arriving one row down because the regroup
+       * isolated the depository holdings, which report what is held and never
+       * what it cost.
+       *
+       * So the row uses the FOOTER'S OWN TEST, per bucket: the return is shown
+       * only when the costed holdings account for essentially the whole row's
+       * current value, to the same 0.5%. On this book that keeps AIF (+20.0%,
+       * ₹98,742 uncovered out of ₹352.3 Cr) and PMS mandates (+11.4%, fully
+       * costed), and correctly refuses Direct Equity and Mutual Fund, where the
+       * two columns describe different sets of holdings.
+       */
+      const costCoversRow = mv > 0 && withoutCostMV <= mv * 0.005;
       return {
         count: rows.length, cost, mv, pnl,
         withoutCost: noCost.length,
-        withoutCostMV: sum(noCost.map((x) => x.marketValue)),
-        ret: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        withoutCostMV,
+        costCoversRow,
+        ret: costCoversRow && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
     };
     /**
@@ -597,11 +620,13 @@ export function MorningCIO() {
   // money-weighted figure (de-annualised) lives once in the footer total.
   const returnCell = (b: typeof m.buckets[number]) => {
     if (b.retPct == null) {
-      return (
-        <span className="text-slate-500" title="No cost basis reported for this bucket, so there is no return to show.">
-          {DASH}
-        </span>
-      );
+      // Two different absences, and a reader acts differently on each: nothing in
+      // the row reports a cost at all, or some of it does and a percentage across
+      // the two columns would divide one set of holdings by another.
+      const why = b.withoutCost === b.count
+        ? "No statement reports what these holdings cost, so there is no return to strike."
+        : `Invested covers ${b.count - b.withoutCost} of ${b.count} holdings here and Current covers all of them — ${money(b.withoutCostMV)} reports no cost. A percentage across those two would divide one set of holdings by another, so it is not shown.`;
+      return <span className="text-slate-500" title={why}>{DASH}</span>;
     }
     const mult = b.metric == null ? DASH : `${b.metric.toFixed(2)}×`;
     const formula = {

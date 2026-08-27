@@ -4,10 +4,10 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, dedupedPositions, isPrivateClass } from "@/lib/analytics";
+import { sum, dedupedPositions, isCompanyShare, excludedClasses, assetClassLabel } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
-import { DASH } from "@/components/Absent";
+import { DASH, absentTile } from "@/components/Absent";
 
 // Provenance and status of the ingested book. Unlike the analytics pages this
 // one is NOT gated on a non-empty book — when nothing has been ingested yet,
@@ -19,18 +19,33 @@ export function DataRefresh() {
   const accIdx = accountIndex(portfolio.accounts);
   const asOf = portfolio.asOf;
   // BOTH SIDES OF A RATIO ON ONE MEASUREMENT. The denominator already deduped
-  // (`consolidatedMarketValue` does it internally) while the numerator summed
-  // the raw set, so a duplicated holding that HAD a sector would have pushed
-  // coverage over 100%. Neither of this drop's two duplicated holdings carries
-  // one, which is the only reason the figure reads correctly today.
+  // (`dedupedPositions` counts each `dedupeGroup` once) while the numerator
+  // summed the raw set, so a duplicated holding that HAD a sector would have
+  // pushed coverage over 100%. Neither of this drop's two duplicated holdings
+  // carries one, which is the only reason the figure read correctly then.
   const deduped = dedupedPositions(p);
-  // Sector coverage is a LISTED-book ratio: AIF/private units carry no equity
-  // sector, so a denominator that included them understated coverage (~78% →
-  // ~30%). Both sides now run over the listed book only.
-  const listedRows = deduped.filter((x) => !isPrivateClass(x));
-  const listedMV = sum(listedRows.map((x) => x.marketValue));
-  const classified = sum(listedRows.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue));
-  const coverage = listedMV > 0 ? (classified / listedMV) * 100 : 0;
+  // SECTOR COVERAGE IS A COMPANY-SHARE RATIO, NOT A LISTED-BOOK ONE.
+  //
+  // This narrowed on the PRIVATE axis (`!isPrivateClass`), which drops the AIF
+  // folios and stops there — so a mutual-fund scheme and an ETF, both marked
+  // daily at a published NAV and therefore not private, stayed in the
+  // denominator carrying no GICS sector and dragged coverage DOWN, while every
+  // Cash row went in with the sector string "Cash" and was counted as
+  // CLASSIFIED, pushing it back up. Two errors in opposite directions inside
+  // one ratio, which is the worst shape available: neither is visible in the
+  // answer.
+  //
+  // A GICS sector is a property of a COMPANY. A fund unit is one line standing
+  // for a portfolio somebody else assembled and there is no look-through behind
+  // it in this book; cash is not classified, it is cash. So both sides run over
+  // `isCompanyShare` — Stage 10h/10i's axis — and every class that leaves is
+  // NAMED with its value below rather than quietly dropped.
+  const shareRows = deduped.filter(isCompanyShare);
+  const shareMV = sum(shareRows.map((x) => x.marketValue));
+  const sectored = shareRows.filter((x) => x.sector !== "Unclassified");
+  const classified = sum(sectored.map((x) => x.marketValue));
+  const coverage = shareMV > 0 ? (classified / shareMV) * 100 : null;
+  const notCompany = excludedClasses(deduped, isCompanyShare);
   const costNA = new Set(p.filter((x) => x.costUnavailable).map((x) => x.security)).size;
   const withIsin = p.filter((x) => !!x.isin).length;
   const pm = portfolio.privateMarkets;
@@ -95,8 +110,23 @@ export function DataRefresh() {
         <StatTile label="Accounts" value={portfolio.accounts.length}
           sub={providers.length ? `${providers.length} provider${providers.length === 1 ? "" : "s"} · ${stale.length} behind latest` : "no accounts yet"}
           icon={<Layers className="h-4 w-4" />} />
-        <StatTile label="Sector coverage" value={listedMV > 0 ? `${coverage.toFixed(1)}%` : DASH}
-          sub={listedMV > 0 ? `of the listed book · ${costNA} names cost-unavailable` : "no listed positions to classify yet"} icon={<ShieldCheck className="h-4 w-4" />} />
+        {/* The dash carries its OWN reason, and the two absences are different
+            findings: a book with no company shares in it, and a book whose
+            company shares carry no market value to weight the ratio by. */}
+        {coverage === null ? (
+          <StatTile label="Sector coverage" icon={<ShieldCheck className="h-4 w-4" />}
+            {...absentTile(
+              shareRows.length === 0
+                ? "no company shares in this book to classify"
+                : "company shares are held but none carries a market value to weight by",
+              `${costNA} name${costNA === 1 ? "" : "s"} across the whole book report no cost.`,
+            )} />
+        ) : (
+          <StatTile label="Sector coverage" value={`${coverage.toFixed(1)}%`}
+            sub={`of company-share value · ${sectored.length} of ${shareRows.length} rows carry one`}
+            hint={`Company shares only — a GICS sector is a property of a company, and a fund unit, an ETF or a cash row has none. ${costNA} name${costNA === 1 ? "" : "s"} across the whole book report no cost.`}
+            icon={<ShieldCheck className="h-4 w-4" />} />
+        )}
       </div>
 
       <Card className="mt-5" title="Accounts & report dates"
@@ -149,7 +179,7 @@ export function DataRefresh() {
                 book has no private holding at all, so the figure is absent. */}
             <Row label="Private book" value={hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}
               muted={!hasPrivate} />
-            <Row label="Sector classification" value={listedMV > 0 ? `${coverage.toFixed(1)}% of listed NAV` : "no positions to classify yet"} />
+            <Row label="Sector classification" value={coverage === null ? "no company shares to classify yet" : `${coverage.toFixed(1)}% of company-share value`} />
             <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length} />
             <Row label="Cost-unavailable names" value={`${costNA} (excluded from P&L)`} />
             <Row label="Private instruments"
@@ -157,6 +187,19 @@ export function DataRefresh() {
               muted={!hasPrivate} />
             <Row label="NAV snapshots" value={portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"} muted={!portfolio.navHistory.length} />
           </ul>
+          {/* WHAT A NARROWED RATIO LEFT OUT IS NAMED, NEVER DROPPED. The
+              classes below are excluded from BOTH sides of the coverage figure:
+              counting them in the denominator alone understates it, and cash —
+              whose sector string is literally "Cash" — would otherwise count as
+              classified and overstate it. */}
+          {notCompany.length > 0 && (
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              Sector coverage is measured over company shares alone — {shareRows.length} of {deduped.length} consolidated
+              positions. A GICS sector is a property of a company, and this book carries no look-through behind a fund,
+              so {notCompany.map((c) => `${assetClassLabel(c.key)} ${fmtFromBase(c.mv, { compact: true })}`).join(" · ")} sit
+              outside both sides of the ratio rather than being counted as unclassified.
+            </p>
+          )}
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
             ISIN and ticker are enrichment here, not identity — several providers print neither. Positions are
             joined on a slug of the normalised security name, so a holding is never dropped for lacking an ISIN.

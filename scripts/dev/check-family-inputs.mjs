@@ -181,6 +181,110 @@ await page.waitForTimeout(700);
 text = await page.locator("body").innerText();
 check("the Transactions tab still renders", /transaction/i.test(text));
 
+// ── THE HOLDINGS TABLE GROUPS BY WHO CHOSE THE POSITION ────────────────────
+//
+// The family asked three times for one thing, and the first two rounds answered
+// with a WORD — "Direct Equity" became "Company Shares" and neither was true of
+// everything under it. What they wanted was a GROUPING: a share a discretionary
+// manager chose belongs inside that mandate's drill-down, and Direct Equity
+// should mean shares held directly.
+//
+// `check:pages` asserts the sections and their arithmetic off the rendered text.
+// What only THIS suite can do is drive the page: pick the category, follow the
+// link, and land on the drill-down. A route nobody can reach is a feature that
+// exists in the model and not for a reader — which is the same failure as a
+// helper returning the right number into no caller.
+await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+
+// Read the OPTIONS off the DOM, not the label innerText shows: a `<select>`
+// renders only its selected option, so matching page text would check one of
+// them and report on all.
+const categories = await page.$$eval("select", (sels) => {
+  const cat = sels.find((s) => [...s.options].some((o) => /All categories/i.test(o.textContent || "")));
+  return cat ? [...cat.options].map((o) => (o.textContent || "").trim()) : [];
+});
+check("the category filter offers Direct Equity and PMS mandates as separate choices",
+  categories.includes("Direct Equity") && categories.includes("PMS mandates"),
+  categories.join(" · "));
+check("...and no longer offers the retired 'Company Shares' category",
+  categories.length > 0 && !categories.some((o) => /company shares/i.test(o)));
+
+// Narrowing to the mandates must leave MANDATES on screen — one row per account,
+// each standing for the shares inside it. A filter that returned 263 share rows
+// would be the regrouping undone with the label still in place.
+const catSelect = page.locator('select:has(option:text-is("PMS mandates"))').first();
+if (await catSelect.count()) {
+  await catSelect.selectOption({ label: "PMS mandates" });
+  await page.waitForTimeout(800);
+  text = await page.locator("body").innerText();
+  const subLines = [...text.matchAll(/·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?/g)];
+  const rowsPill = Number(/(\d+)\s+rows/.exec(text)?.[1] ?? NaN);
+  const links = await page.locator('a[href^="/mandate/"]').count();
+  check("filtering to PMS mandates lists mandates, one row each",
+    subLines.length >= 2 && rowsPill === subLines.length && links === subLines.length,
+    `${subLines.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
+  // ...and each stands for more shares than it draws, which is what a roll-up is.
+  const constituents = subLines.reduce((n, m) => n + Number(m[2]), 0);
+  check("each mandate row stands for the shares inside it",
+    subLines.length > 0 && constituents > subLines.length,
+    `${constituents} constituent holdings across ${subLines.length} mandates`);
+  await catSelect.selectOption({ label: "All categories" });
+  await page.waitForTimeout(600);
+} else {
+  check("filtering to PMS mandates lists mandates, one row each", false, "no category filter offering PMS mandates");
+}
+
+// ── The link is the whole point: a mandate row must OPEN its drill-down ─────
+const mandateLink = page.locator('a[href^="/mandate/"]').first();
+const mandateHref = (await mandateLink.count()) ? await mandateLink.getAttribute("href") : null;
+if (mandateHref) {
+  await mandateLink.click();
+  await page.waitForTimeout(1200);
+  text = await page.locator("body").innerText();
+  check("a mandate row opens its own drill-down", new URL(page.url()).pathname === mandateHref,
+    `${new URL(page.url()).pathname}`);
+  check("the drill-down names its manager and lists what that manager holds",
+    /Run by/.test(text) && /\d+\s+holdings the manager runs/.test(text) && !/Mandate not found/i.test(text),
+    /(\d+)\s+holdings the manager runs/.exec(text)?.[0]);
+  // THE ROUND TRIP, which is the family's own complaint read backwards: they
+  // opened a share and could not see the mandate. The largest constituent of a
+  // PMS mandate is a company share (a cash sleeve is never the biggest line),
+  // so its own page must name the mandate it came from and must NOT call it
+  // direct — the word now means the family bought it, and here a manager did.
+  const mandateName = (await page.locator("h1").first().innerText()).trim();
+  const constituent = page.locator('a[href^="/stock/"]').first();
+  if (await constituent.count()) {
+    await constituent.click();
+    await page.waitForTimeout(1200);
+    text = await page.locator("body").innerText();
+    check("a share inside a mandate names that mandate on its own page",
+      text.includes(mandateName) && /Held through .{0,24}discretionary mandate/i.test(text),
+      mandateName);
+    check("...and is never called Direct Equity there", !/direct equity/i.test(text));
+    check("...and links back to the mandate it is held in",
+      (await page.locator('a[href^="/mandate/"]').count()) > 0);
+  } else {
+    check("a share inside a mandate names that mandate on its own page", false, "no constituent link on the drill-down");
+  }
+} else {
+  check("a mandate row opens its own drill-down", false, "no /mandate/ link on Portfolio Monitor");
+}
+
+// ── An address that names no account is an ABSENCE WITH A REASON ───────────
+//
+// Not an empty holdings table, which reads as a mandate holding nothing, and not
+// a blank page. It says which account it could not find and lists the ones this
+// book does carry, so the reader has somewhere to go.
+await page.goto(`${BASE}/mandate/not-an-account-in-this-book`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+text = await page.locator("body").innerText();
+check("an unknown mandate address renders a named absence, not an empty table",
+  /Mandate not found/i.test(text) && /not-an-account-in-this-book/.test(text)
+    && !/holdings the manager runs/.test(text));
+check("...and names the mandates this book does carry",
+  (await page.locator('a[href^="/mandate/"]').count()) > 1);
+
 await browser.close();
 
 const failed = checks.filter((c) => !c.ok);
