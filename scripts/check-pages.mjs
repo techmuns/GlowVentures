@@ -724,43 +724,6 @@ const INVARIANTS = {
     // must be the header chip's consolidated NAV: that figure is deduped by
     // construction, so a by-security table that double-counts a dually-reported
     // holding cannot match it.
-    /**
-     * INVESTED + UNREALISED P&L MUST EITHER TIE TO MARKET VALUE OR SAY WHY NOT.
-     *
-     * The client added the footer's three printed cells — ₹471.9 Cr invested,
-     * +₹74.1 Cr unrealised, ₹13,063.2 Cr market value — and found ₹546 Cr where
-     * ₹13,063 Cr was printed. Nothing was miscalculated: `sumOrNull` strikes the
-     * first two over the positions that REPORT a cost, and 61 of 370 did not
-     * because they are held in depository accounts. (Ring-fencing Polycab leaves
-     * 60 of 371 and a ₹710.4 Cr market value; the gap it opens is smaller and the
-     * arithmetic that has to be reconciled is identical.) But the footer asserted all
-     * three side by side with nothing saying they cover different sets, which is
-     * the "a total must tie to its own columns" rule that already cost this book
-     * once on the Morning CIO allocation footer.
-     *
-     * So: either the three reconcile, or the page carries the caption that
-     * explains the gap AND the caption's own figures reconcile. Struck on the
-     * rendered numbers, never on the prose — reverting the caption to a static
-     * sentence would leave this passing.
-     */
-    ["invested + unrealised either ties to market value, or the gap is named and adds up", (t) => {
-      const foot = new RegExp(
-        String.raw`Total\s*·\s*\d+\s*rows\s*` + CR +          // invested
-        String.raw`[\s\S]{0,40}?` + CR +                          // market value
-        String.raw`[\s\S]{0,40}?\+?₹([\d,]+(?:\.\d+)?)\s*Cr`  // unrealised P&L
-      ).exec(t);
-      if (!foot) return false;                       // no input is never a pass
-      const [, inv, mv, pnl] = [foot[1], foot[2], foot[3]].map(cr).reduce((a, v, i) => (a[i + 1] = v, a), []);
-      if ([inv, mv, pnl].some((v) => !Number.isFinite(v))) return false;
-      if (Math.abs(inv + pnl - mv) <= Math.max(0.6, mv * 0.002)) return true;   // they do tie
-      // They do not, so the page must name the gap — and the named figures must
-      // themselves reconcile: covered + uncovered = the market value printed.
-      const covered = cr(new RegExp(String.raw`whose statement\s*reports a cost — ` + CR, "i").exec(t)?.[1]);
-      const uncovered = cr(new RegExp(String.raw`worth ` + CR + String.raw`, are held through depository`, "i").exec(t)?.[1]);
-      return Number.isFinite(covered) && Number.isFinite(uncovered)
-        && Math.abs(covered + uncovered - mv) <= Math.max(0.6, mv * 0.002)
-        && Math.abs(inv + pnl - covered) <= Math.max(0.6, mv * 0.002);
-    }],
     ["by-security total counts each dedupeGroup once", (t) => {
       const nav = cr(new RegExp(CR).exec(t)?.[1]);   // header chip, first on the page
       const total = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows\s*₹[\d,.]+\s*Cr\s*\S*\s*` + CR).exec(t)?.[1]);

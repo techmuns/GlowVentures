@@ -206,8 +206,6 @@ export function Performance() {
   // A column is worth a heading only if some account publishes it.
   const livePeriods = PERIODS.filter((per) =>
     twrr.some((t) => t.portfolio && t.portfolio[per.key] !== null));
-  const feeBases = [...new Set(twrr.map((t) => t.portfolio?.feeBasis).filter(Boolean))] as string[];
-  const notAnnualised = twrr.filter((t) => t.portfolio?.siAnnualised === false).map((t) => t.account.accountNo);
 
   const top10Val = sum(consolidatedWeights.slice(0, 10));
   const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
@@ -328,26 +326,6 @@ export function Performance() {
             </tbody>
           </table>
         </div>
-        <div className="mt-3 space-y-1 text-[11px] leading-relaxed text-slate-500">
-          <p>
-            <span className="font-medium text-slate-400">FYTD is the Indian FINANCIAL year to date</span> — 1 April
-            to the report date. The statements label it "YTD"; it is not a calendar-year figure.
-          </p>
-          {notAnnualised.length > 0 && (
-            <p>
-              <span className="font-medium text-slate-400">Since inception is NOT annualised</span> for account
-              {notAnnualised.length === 1 ? " " : "s "}{notAnnualised.join(", ")} — those accounts are under a year
-              old and the reports annualise only past twelve months. It is a cumulative return over the period.
-            </p>
-          )}
-          {feeBases.length > 0 && (
-            <p>
-              Returns are stated <span className="font-medium text-slate-400">{feeBases.join(" / ")}</span> management
-              fees and expenses, per each report's own disclosure — so the managers' figures are not directly
-              comparable with one another.
-            </p>
-          )}
-        </div>
       </Card>
 
       {/* ── Value bridge ── */}
@@ -406,11 +384,6 @@ export function Performance() {
             );
           })}
         </div>
-        <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-          The two columns are <span className="font-medium text-slate-400">different windows and are never added
-          together</span>: the fact sheet and performance appraisal run since inception, the performance summary
-          runs the financial year to date. Both print a "Realised Gain" and both are right.
-        </p>
       </Card>
 
       {/* ── Money-weighted return, per account ── */}
@@ -467,31 +440,6 @@ export function Performance() {
               </tr>
             </tbody>
           </table>
-        </div>
-        <div className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-slate-500">
-          <p>
-            <span className="font-medium text-slate-400">Method.</span> Newton–Raphson over the dated flows, as
-            Excel's XIRR() does. Each account's series is its EXTERNAL capital movements — the capital register, or
-            the bank book where a manager issues none — with the window's opening portfolio value as the first
-            entry, closed against that account's market value on its own report date. Trades are excluded: they
-            move cash inside the account, not into or out of it.
-          </p>
-          {unmeasurable.length > 0 && (
-            <p>
-              <span className="font-medium text-slate-400">The consolidated row covers {measurable.length} of {accounts.length} accounts</span>
-              {" — "}{money(measuredMV)} of the book's {money(listedMV)}. Account {xirrMissing.join(", ")} is left out
-              of BOTH sides: pooling its flows while adding its market value to the terminal figure would credit the
-              book with value it never shows the opening stake for, and reads {" "}
-              <span className="text-slate-400">64.6 pp higher</span> than the measurable accounts do.
-            </p>
-          )}
-          <p>
-            <span className="font-medium text-slate-400">The window is one quarter.</span> These flows open on
-            1 April and close on the report date, so each figure is the money-weighted return earned over about three
-            months — the return <em>to date</em>, not annualised. The annualised XIRR p.a. behind each is in its
-            tooltip; it is kept off the table because an annualised quarter can read well over 100% and be mistaken for
-            a sustained yearly rate.
-          </p>
         </div>
       </Card>
     </div>

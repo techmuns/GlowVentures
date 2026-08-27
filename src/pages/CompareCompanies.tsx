@@ -497,12 +497,6 @@ export function CompareCompanies() {
         </Card>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        The spec also asks to compare operating metrics, shareholding and capital allocation.
-        Those need per-company fundamentals the current API set returns only as prose on a
-        single-company page — see the Financials tab on any company. Comparing them across four
-        names needs a structured fundamentals endpoint this cockpit does not have.
-      </p>
     </div>
   );
 }

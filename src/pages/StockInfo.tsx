@@ -675,9 +675,6 @@ export function StockInfo() {
         </>
       )}
 
-      <p className="mt-4 text-[11px] text-slate-500">
-        Figures are live from the current book and the dated ledger. Amounts are auditable — click any dotted number to trace it in <Link to={auditHref(LEDGER)} className="text-champagne-400 hover:underline">Data Audit</Link>.
-      </p>
     </div>
   );
 }

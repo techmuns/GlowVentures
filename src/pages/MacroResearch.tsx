@@ -206,7 +206,6 @@ export function MacroResearch() {
     );
   }
 
-  const asOf = rows.length ? rows.map((r) => r.last).sort().slice(-1)[0] : null;
   const totalPoints = rows.reduce((s, r) => s + r.count, 0);
 
   return (
@@ -219,15 +218,6 @@ export function MacroResearch() {
           <Pill tone="gain">{rows.length} live</Pill>
           <Pill tone="info">{totalPoints.toLocaleString()} observations</Pill>
         </div>} />
-
-      <p className="mb-5 text-[12px] leading-relaxed text-slate-500">
-        Levels, the full returns table, the 52-week range and every chart are computed from
-        daily closes stored under <span className="mono text-slate-400">public/series/</span>, harvested from{" "}
-        <span className="text-slate-400">Yahoo Finance</span> and committed with each series' source, symbol and unit.
-        {asOf && <> Last settled close <span className="text-slate-400">{asOf}</span>.</>}{" "}
-        Only completed sessions are stored, so today's in-progress move is not in these figures.
-        {absentRows.length > 0 && <> {absentRows.length} series the spec asks for {absentRows.length === 1 ? "has" : "have"} no free feed and {absentRows.length === 1 ? "is" : "are"} named below.</>}
-      </p>
 
       <ViewToggle
         views={VIEWS} active={view} onChange={setView}

@@ -470,13 +470,6 @@ export function FamilyEntities() {
                   </li>
                 ))}
               </ul>
-              {/* The same two-sets note the tile carries, where the slice is drawn. */}
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                This splits the book by WHERE it is held, not by who chose it.{" "}
-                <span className="text-slate-400">{DIRECT}</span> is every asset class at accounts the family runs itself; the
-                holdings tables&rsquo; <span className="text-slate-400">{DIRECT_EQUITY_BUCKET}</span> ({money(directEquityMV)}) is
-                company shares only and counts shares bought through a broker, which land here under that broker&rsquo;s own name.
-              </p>
             </Card>
           </div>
           <Card className="mt-5" title="Entity breakdown" pad={false}>
@@ -614,15 +607,6 @@ export function FamilyEntities() {
                                 </span>
                               )}
                             </span>
-                          </td>
-                        </tr>
-                      )}
-                      {grp.key === MANDATE_BUCKET && (
-                        <tr className="bg-ink-900/40">
-                          <td colSpan={5} className="px-4 pb-1.5 pt-0.5 text-[11px] leading-relaxed text-slate-500">
-                            Shares a discretionary manager chose and holds in {scope}&rsquo;s own name — {scope} owns them, the
-                            manager decides them. Grouped by mandate, cash sleeve included, so each group ties to the account its
-                            statement totals; open one for the manager&rsquo;s own figures.
                           </td>
                         </tr>
                       )}
