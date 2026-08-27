@@ -147,17 +147,30 @@ export const netReturnFormula = (
  * the total covers, in the caller's own words — it is the caller, not this
  * helper, that knows what it divided by.
  *
- * It is OPTIONAL, and the default names no set at all. A helper that guesses a
- * scope for a caller that has not said is how the wrong sentence got here; a
- * default that says "nobody has named this" is honest for an un-updated caller
- * and reads as the defect it is.
+ * It is OPTIONAL, and the default NAMES THE FIGURE WITHOUT NAMING THE SET. A
+ * helper that guesses a scope for a caller that has not said is how the wrong
+ * sentence got here — but a default that only confesses the gap leaves the
+ * reader with nothing to check the arithmetic against, which is the one thing
+ * they opened this popover to do. So the default prints the total ITSELF: the
+ * figure is unambiguous (it is the number in the division below, in money), and
+ * the one clause about what that total covers says the page has not stated it
+ * rather than inventing a scope. An un-updated caller therefore still hands over
+ * a checkable equation.
  *
- * THE WORKED EXAMPLE ALSO CHECKS ITSELF. `total` and `wPct` arrive as separate
- * arguments, so a caller can hand over a total it did not actually divide by —
- * the Portfolio Monitor strikes its row weights against a `weightBase` that is
- * not always its footer `totMV`. When the division does not reproduce the
- * percentage it is shown beside, the popover says so rather than printing an
- * equation whose two halves disagree.
+ * THE WORKED EXAMPLE ALSO CHECKS ITSELF, AND A CHECK OVER NO INPUT IS NOT A
+ * PASS. `total` and `wPct` arrive as separate arguments, so a caller can hand
+ * over a total it did not actually divide by — the Portfolio Monitor strikes its
+ * row weights against a `weightBase` that is not always its footer `totMV`. When
+ * the division does not reproduce the percentage it is shown beside, the popover
+ * says so rather than printing an equation whose two halves disagree.
+ *
+ * The divide-by-zero guard used to EXEMPT a zero or negative total from that
+ * check (`has(wPct) && total > 0 ? … : true`), so `= ₹4.39 Cr ÷ ₹0 × 100 =
+ * 11.1%` — the one equation a reader can see is impossible — was reported as
+ * reproducing, having been checked against nothing. It is a FAILURE now, and it
+ * gets its own sentence: an undefined division and a percentage struck against a
+ * different total are two different findings with two different remedies, and a
+ * reader who cannot tell them apart cannot act on either.
  */
 export const weightFormula = (
   mv: number,
@@ -170,16 +183,28 @@ export const weightFormula = (
   // statement's own precision" bound the reconciler uses, never a tolerance
   // widened until it fits. Inside it the two halves round to the same digit on
   // screen and the equation a reader reads does reproduce.
-  const reproduces = has(wPct) && total > 0 ? Math.abs((mv / total) * 100 - wPct) <= 0.05 : true;
+  //
+  // Three states, not two, because the failures are not the same finding:
+  //   • no percentage was printed  → nothing to contradict; the worked line
+  //     already shows an em dash where the answer would be.
+  //   • a positive total          → the division is defined, so check it.
+  //   • a zero or negative total  → the division is NOT defined. Only a zero
+  //     weight is consistent with it; anything else came from elsewhere.
+  const dividable = total > 0;
+  const reproduces = !has(wPct) ? true
+    : dividable ? Math.abs((mv / total) * 100 - wPct) <= 0.05
+    : wPct === 0;
+  const failure = reproduces ? ""
+    : dividable
+      ? " — this does not reproduce: the percentage shown was struck against a different total from the one above."
+      : " — this does not reproduce: the total above is not a positive number, so the division is undefined and the percentage beside it was measured against something else.";
   return {
     title: "Weight",
     excel: "= Market value ÷ Total market value × 100",
     plain: ofWhat
       ? `How big this holding is as a share of ${ofWhat}.`
-      : "How big this holding is as a share of the total in the division below. Which set that total covers is not named here — the page showing this figure has not said, and this popover will not guess at it.",
-    worked:
-      `= ${m(mv)} ÷ ${m(total)} × 100 = ${orDash(wPct, (v) => `${v.toFixed(1)}%`)}` +
-      (reproduces ? "" : " — this does not reproduce: the percentage shown was struck against a different total from the one above."),
+      : `How big this holding is as a share of ${m(total)} — the total in the division below, which is the figure this page divided by. WHAT that total covers is not stated here: the page showing this figure has not named the set, and this popover will not guess at one.`,
+    worked: `= ${m(mv)} ÷ ${m(total)} × 100 = ${orDash(wPct, (v) => `${v.toFixed(1)}%`)}${failure}`,
   };
 };
 

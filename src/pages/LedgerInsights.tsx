@@ -303,20 +303,28 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
  * WHICH ACCOUNT A LOT CAME FROM, so the split below can be made on HOW that
  * account is run rather than on what the security is.
  *
- * The archive names an account `<owner> · <provider> <accountNo>` with the owner
- * AS PRINTED, and the printed spelling differs per provider — "Mr. AJAY T
- * JAISINGHANI" on one statement, "AJAY JAISINGHANI" on the next — so the label
- * cannot be rebuilt from the registry, whose `owner` is the canonical name. The
- * ACCOUNT NUMBER can be matched, it is what `docKey` is keyed on, and it is
- * unique across this registry.
+ * ON THE DOCUMENT KEY, NEVER ON THE DISPLAY LABEL. `Lot.account` is
+ * `<owner as printed> · <provider> <accountNo>`, composed in `ledger.ts` out of
+ * what the STATEMENT prints — and recovering an account by string-matching a
+ * label built for a reader is exactly the inference `custodianOf()` was deleted
+ * for. `Lot.source` is the `docKey`, which this repo composes as
+ * `<accountId>-<asOf>-<reportType>` (see `appraisalDocKey` in auditFormulas,
+ * which builds one the same way). So the join is id to id: the account whose
+ * `accountId` the docKey is prefixed with.
  *
- * A label matching two accounts or none RESOLVES TO NOTHING and its row says so.
- * That is the point of doing it this way round: a wrong match would print "Direct
- * Equity" over a mandate's realised loss, which is the exact claim this grouping
- * exists to stop, and there is nothing on screen a reader could catch it by.
+ * A docKey matching two accounts or none RESOLVES TO NOTHING and its row says
+ * so. That direction is deliberate: a wrong match would print "Direct Equity"
+ * over a mandate's realised loss, which is the exact claim this grouping exists
+ * to stop, and there is nothing on screen a reader could catch it by.
+ *
+ * What it still cannot catch, stated rather than papered over: a document whose
+ * printed account number the registry does not carry produces no `accountId` to
+ * prefix-match, so its lots fall to the unrouted line — named there, never
+ * silently relabelled. Removing that residue means putting the account id on the
+ * `Lot` itself, which is a change to `src/lib/ledger.ts`.
  */
-function accountForLot(accounts: Account[], label: string): Account | undefined {
-  const hits = accounts.filter((a) => label.endsWith(` ${a.accountNo}`));
+function accountForLot(accounts: Account[], docKey: string): Account | undefined {
+  const hits = accounts.filter((a) => docKey.startsWith(`${a.accountId}-`));
   return hits.length === 1 ? hits[0] : undefined;
 }
 
@@ -339,13 +347,22 @@ type LotSplit = {
  * The arithmetic is `byClass`'s own, lot for lot — every lot counted once, short
  * and long added as the manager split them — so the rows still reconstruct the
  * statements' printed total in the footer. Only the grouping changed.
+ *
+ * THE UNCLASSIFIED LINE IS NOT THE CASH SWEEP, and an earlier draft of the
+ * caption below said it was. `loadRealisedLots` joins each lot's class from the
+ * same security's rows on the appraisals, fact sheets and transaction
+ * statements; the liquid-fund instruments these mandates sweep into ARE carried
+ * on other reports in this drop, so those lots come back classified `Equity`,
+ * land in the mandate bucket and are netted there. Only the security no report
+ * classifies reaches the last line. Describing it as the sweep would put a
+ * caption over a figure a fraction of the size of the thing it named.
  */
 function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
   type Row = Omit<LotSplit, "securities" | "accounts" | "unresolved" | "total">
     & { securities: Set<string>; accounts: Set<string>; unresolved: Set<string> };
   const m = new Map<string, Row>();
   for (const l of lots) {
-    const acc = accountForLot(accounts, l.account);
+    const acc = accountForLot(accounts, l.source);
     // A mandate takes its whole account, including the sleeve whose asset class
     // no statement carries: how an account is run is a fact about the ACCOUNT,
     // knowable even where the security's class is not.
@@ -407,7 +424,7 @@ function GainsView({ data }: { data: LotData | null }) {
       </div>
 
       {/* THE HEADLINE NETS UNLIKE BOOKS — shares a manager chose, shares the
-          family bought itself, and a liquid-fund sweep whose class no statement
+          family bought itself, and lots whose asset class no report in this drop
           carries. The split changes no figure and makes that visible. It is cut
           on HOW each account is run rather than on what was sold: nearly every
           account publishing a capital gain statement here is a PMS mandate, and
@@ -449,12 +466,19 @@ function GainsView({ data }: { data: LotData | null }) {
                               {DASH} no asset class on any statement
                               {c.heldNote ? <> · inside {c.heldNote}</> : null}
                             </span>
-                            <div className="mt-0.5 text-[11px] leading-snug text-slate-500">
-                              {c.securities.join(", ")} — the cash sweep. These appear on no appraisal and no
-                              transaction statement, so nothing classifies them. "Mutual Fund" in a printed
-                              name is not a classification any statement made, so none is asserted. It keeps its
-                              own line rather than being added into the mandate above: what the sweep realised
-                              and what the equity book realised are the two figures this card exists to separate.
+                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
+                              {c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in
+                              this drop carries an asset class for {c.securities.length === 1 ? "it" : "them"},
+                              so none is asserted. "Mutual Fund" in a printed name is not a classification any
+                              statement made. It keeps its own line rather than being added into the bucket
+                              above, so the absence is not buried inside a labelled group.
+                              <br />
+                              <span className="text-slate-400">This line is not the cash sweep.</span>{" "}
+                              A lot's class is joined from the same security's rows elsewhere in the archive, and
+                              the other liquid-fund instruments these mandates sweep into ARE carried on other
+                              reports here — so those lots come back classified and are netted inside the bucket
+                              above. What this line separates is the lots nothing classifies, which is a smaller
+                              set than the sweep and does not measure it.
                             </div>
                           </>
                         )}

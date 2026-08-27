@@ -523,12 +523,13 @@ export function PortfolioMonitor() {
    * these managers hold the same names in more than one mandate, so attributing
    * it to one mandate row would count it twice.
    *
-   * Six of the seven accounts that issue a capital gain statement are mandates,
-   * so most of the footer is made inside rows that display none of it. That is a
-   * printed total which does not tie to its own visible cells, and this book's
+   * Six of the seven accounts that issue a capital gain statement in this drop
+   * are mandates, so most of the footer is made inside rows that display none of
+   * it. That is a printed total which does not tie to its own visible cells,
+   * and this book's
    * own rule is that such a gap is NAMED with its size rather than left for a
-   * reader to find by adding. `inMandates` is that size, derived here so it
-   * cannot drift from the total beside it.
+   * reader to find by adding. `inMandates` is that size — derived from the same
+   * map the cells read, so it cannot drift from the total beside it.
    *
    * A name held BOTH inside a mandate and in the family's own demat has a
    * security row of its own, which displays it — so it is removed from the

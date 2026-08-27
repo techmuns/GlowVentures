@@ -218,12 +218,12 @@ export function SectorComposition() {
             <div className="mono text-sm font-semibold text-slate-100">
               {mandateRows.length > 0
                 ? fmtFromBase(mandateMV, { compact: true })
-                : <AbsentCell reason="No account in this book states a discretionary mandate, so no share on this page was chosen by a manager." />}
+                : <AbsentCell reason="No company share on this page is held under a discretionary mandate. Accounts run as a mandate may still be in the book — this page counts only their company shares, and a mandate holding nothing but its cash sleeve contributes no row here." />}
             </div>
             <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
               {mandateRows.length > 0
                 ? <>{mandateRows.length} holdings across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}{shareOfTable(mandateMV)} · the holdings tables group these under “{MANDATE_BUCKET}”, and they are in this table because the sector belongs to the company, not to whoever picked it</>
-                : <>No statement here states a discretionary mandate.</>}
+                : <>No company share here is held under a discretionary mandate.</>}
             </div>
           </div>
           <div>
@@ -231,12 +231,12 @@ export function SectorComposition() {
             <div className="mono text-sm font-semibold text-slate-100">
               {ownRows.length > 0
                 ? fmtFromBase(ownMV, { compact: true })
-                : <AbsentCell reason="No demat or broking account in this book holds a share the family bought itself." />}
+                : <AbsentCell reason="No company share on this page was bought in the family's own demat or broking account. Such accounts may still be in the book — this page counts only their company shares, not the fund or ETF units one may hold." />}
             </div>
             <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
               {ownRows.length > 0
                 ? <>{ownRows.length} holdings across {ownAccounts} {ownAccounts === 1 ? "account" : "accounts"}{shareOfTable(ownMV)} · this is the set the holdings tables call “{DIRECT_EQUITY_BUCKET}”</>
-                : <>No own demat or broking holding in this book.</>}
+                : <>No own-account company share on this page.</>}
             </div>
           </div>
           {otherRows.length > 0 && (
@@ -398,7 +398,13 @@ export function SectorComposition() {
                         </td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                           {liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
-                            : <Auditable formula={weightFormula(s.mv, totalMV, s.weight * 100, money)}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
+                            : <Auditable formula={weightFormula(s.mv, totalMV, s.weight * 100, money,
+                                /* The denominator is THIS page's set, not the book: company shares only,
+                                   each dedupeGroup counted once. `weightFormula` used to assert "the whole
+                                   listed book" for every caller, which is neither what this divides by nor
+                                   what the ₹13,061.63 Cr header chip says — and this popover is the one a
+                                   reader opens precisely to check the arithmetic. */
+                                "the company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
                         </td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{s.count}</td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(s.returnPct)}`} title={liveBySector[s.key] ? LIVE_CELL : undefined}>

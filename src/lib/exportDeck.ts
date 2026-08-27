@@ -72,6 +72,18 @@ export type DeckInput = {
 
 const pct = (x: number | null): string => (x == null ? DASH : `${x >= 0 ? "+" : ""}${x.toFixed(2)}%`);
 
+/**
+ * A WEIGHT IS A FRACTION IN THE MODEL AND A PERCENTAGE ON THE PAGE.
+ *
+ * `Bucket.weight` is `mv ÷ total` — every screen that renders it multiplies by
+ * 100 first (`(s.weight * 100).toFixed(1)`). This deck printed `w.toFixed(1)%`
+ * on three slides, so the largest bucket in the book read **1.0%** and every
+ * other row read **0.0%**, and a Weight column that adds up to 1% is the
+ * "a total must tie to its own columns" failure in its purest form. One helper,
+ * so the three slides cannot drift apart again.
+ */
+const weightPct = (w: number): string => `${(w * 100).toFixed(1)}%`;
+
 export async function exportReviewDeck(input: DeckInput): Promise<void> {
   const { portfolio, consolidated, basis, fmt, currency } = input;
 
@@ -116,10 +128,12 @@ export async function exportReviewDeck(input: DeckInput): Promise<void> {
       valign: "middle",
     });
 
-  const head = (cells: string[]): PptxGenJS.TableRow =>
+  // `leftCols` — how many leading columns carry TEXT rather than figures, so a
+  // header sits over its own column's alignment instead of across from it.
+  const head = (cells: string[], leftCols = 1): PptxGenJS.TableRow =>
     cells.map((t, i) => ({
       text: t,
-      options: { bold: true, color: C.champagneText, fill: { color: C.ink }, align: i === 0 ? "left" : "right" as const },
+      options: { bold: true, color: C.champagneText, fill: { color: C.ink }, align: i < leftCols ? "left" : "right" as const },
     }));
 
   // ── 1 · Title ─────────────────────────────────────────────────────────────
@@ -189,7 +203,7 @@ export async function exportReviewDeck(input: DeckInput): Promise<void> {
       // one row, and a slide travels without the screen that explains it.
       { text: bucketLabel(b.key), options: { align: "left" as const } },
       { text: fmt(b.mv), options: { align: "right" as const } },
-      { text: `${b.weight.toFixed(1)}%`, options: { align: "right" as const } },
+      { text: weightPct(b.weight), options: { align: "right" as const } },
       { text: String(b.count), options: { align: "right" as const } },
     ]),
   ], 1.2, [3.4, 2.4, 1.7, 1.7]);
@@ -234,63 +248,134 @@ export async function exportReviewDeck(input: DeckInput): Promise<void> {
     ...entities.map((b) => [
       { text: b.key, options: { align: "left" as const } },
       { text: fmt(b.mv), options: { align: "right" as const } },
-      { text: `${b.weight.toFixed(1)}%`, options: { align: "right" as const } },
+      { text: weightPct(b.weight), options: { align: "right" as const } },
       { text: String(b.count), options: { align: "right" as const } },
     ]),
   ], 1.2, [3.4, 2.4, 1.7, 1.7]);
 
   // ── 5 · Top holdings ──────────────────────────────────────────────────────
+  //
+  // AND EACH NAME SAYS HOW IT IS HELD. Slide 3 groups the book by that axis, so
+  // a largest-holdings table with only a name and a value invites the reader to
+  // carry the assumption from one slide to the other — and the whole reason the
+  // family asked for the regroup is that an unqualified equity line reads as a
+  // position they chose. `holdingBucket` decides it, the same function the
+  // slide above and the Morning CIO allocation use.
+  //
+  // A ROLLED-UP NAME CAN SPAN BUCKETS, AND THEN BOTH ARE NAMED. `bySecurity`
+  // consolidates one security across every account, so a share held in a
+  // mandate AND in the family's own demat is one row here. No name in this book
+  // is held both ways today; picking the first row's bucket would nonetheless
+  // print a claim about the whole line that covers only part of it.
   const bySec = bySecurity(consolidated).slice(0, 12);
   const nameOf = new Map(consolidated.map((p) => [p.securityKey, p.security]));
-  const s5 = slide("Largest holdings", "Consolidated across every account and mandate");
+  const bucketsOf = new Map<string, Set<string>>();
+  for (const x of consolidated) {
+    const s = bucketsOf.get(x.securityKey) ?? new Set<string>();
+    s.add(bucketLabel(holdingBucket(x, engagementOf(accIdx, x))));
+    bucketsOf.set(x.securityKey, s);
+  }
+  const s5 = slide("Largest holdings", "Consolidated across every account and mandate — each name shows how it is held");
   table(s5, [
-    head(["Security", "Value", "Weight"]),
+    head(["Security", "Held via", "Value", "Weight"], 2),
     ...bySec.map((b) => [
       { text: displaySecurity(nameOf.get(b.key) ?? b.key), options: { align: "left" as const } },
+      { text: [...(bucketsOf.get(b.key) ?? [])].join(" + ") || DASH, options: { align: "left" as const } },
       { text: fmt(b.mv), options: { align: "right" as const } },
-      { text: `${b.weight.toFixed(1)}%`, options: { align: "right" as const } },
+      { text: weightPct(b.weight), options: { align: "right" as const } },
     ]),
-  ], 1.15, [5.0, 2.4, 1.8]);
+  ], 1.15, [3.6, 2.2, 1.9, 1.5]);
 
   // ── 6 · Cost, gain and what is not measurable ─────────────────────────────
+  //
   // `sumOrNull` rather than a plain sum: a cost the depository never knew must
   // not enter the total as zero, which would report the whole market value as
   // profit.
+  //
+  // AND THE GAIN IS STRUCK OVER THE SAME POSITIONS THE COST COVERS. This slide
+  // subtracted the partial cost from the WHOLE NAV, which is arithmetically the
+  // same as entering the 61 missing costs as zero — the one thing its own
+  // subtitle promised it does not do. It printed Cost basis ₹471.9 Cr, Market
+  // value ₹13,061.6 Cr, Unrealised gain ₹12,589.7 Cr and Return on cost
+  // +2667.7%, while the Morning CIO tile read +15.4% for the same book off the
+  // same archive. Two figures for one measurement, and the deck's was the one
+  // that leaves the building.
+  //
+  // So the ratio's numerator is `costedMV` — what the costed positions are
+  // worth — and the slide PRINTS that figure as its own row whenever it differs
+  // from the NAV. A reader who subtracts one printed cell from another has to
+  // land on the third: on a slide there is no popover to explain why they do
+  // not, which is the whole reason the allocation footer on screen was fixed.
   const costs = consolidated.map((p) => p.costBasis ?? null);
   const totalCost = sumOrNull(costs);
   const missingCost = costs.filter((c) => c == null).length;
-  const gain = totalCost == null ? null : nav - totalCost;
-  const gainPct = totalCost == null || totalCost === 0 ? null : ((nav - totalCost) / totalCost) * 100;
+  const costedMV = sum(consolidated.filter((p) => p.costBasis != null).map((p) => p.marketValue));
+  // Summed directly rather than as `nav − costedMV`, so the "no cost basis" row
+  // reports what those positions are worth and never absorbs a discrepancy
+  // between the two into itself.
+  const noCostMV = sum(consolidated.filter((p) => p.costBasis == null).map((p) => p.marketValue));
+  const gain = totalCost == null ? null : costedMV - totalCost;
+  const gainPct = totalCost == null || totalCost === 0 ? null : ((costedMV - totalCost) / totalCost) * 100;
   const notLive = unpriced(consolidated).length;
+  const covered = consolidated.length - missingCost;
 
-  const s6 = slide("Cost and unrealised gain", "Positions with no cost basis are excluded from the total and counted, never entered as zero");
+  const s6 = slide(
+    "Cost and unrealised gain",
+    missingCost
+      ? `Struck over the ${covered} of ${consolidated.length} positions whose statement reports a cost — ${fmt(costedMV)} of the ${fmt(nav)} market value. The rest are counted below, never entered as zero`
+      : "Every position in this book reports a cost, so these figures span the whole of it",
+  );
   table(s6, [
     head(["", "Value"]),
     [
-      { text: "Cost basis", options: { align: "left" as const } },
+      { text: missingCost ? `Cost basis · ${covered} of ${consolidated.length} positions report one` : "Cost basis", options: { align: "left" as const } },
       { text: totalCost == null ? `${DASH} · no position carries a cost` : fmt(totalCost), options: { align: "right" as const } },
     ],
     [
-      { text: "Market value", options: { align: "left" as const } },
+      { text: "Market value · whole book", options: { align: "left" as const } },
       { text: fmt(nav), options: { align: "right" as const } },
     ],
+    // THE ROW THAT MAKES THE SUBTRACTION WORK. Printed only where the two sets
+    // differ — on a book that costs every position it would restate the row
+    // above it.
+    ...(missingCost ? [[
+      { text: `Market value · the ${covered} positions costed above`, options: { align: "left" as const } },
+      { text: fmt(costedMV), options: { align: "right" as const } },
+    ]] : []),
     [
-      { text: "Unrealised gain", options: { align: "left" as const } },
+      { text: missingCost ? `Unrealised gain · on those ${covered} positions` : "Unrealised gain", options: { align: "left" as const } },
       { text: gain == null ? DASH : fmt(gain), options: { align: "right" as const, color: gain != null && gain < 0 ? C.loss : C.gain } },
     ],
     [
-      { text: "Return on cost", options: { align: "left" as const } },
+      { text: missingCost ? `Return on cost · same ${covered} positions` : "Return on cost", options: { align: "left" as const } },
       { text: pct(gainPct), options: { align: "right" as const, color: gainPct != null && gainPct < 0 ? C.loss : C.gain } },
     ],
     [
       { text: "Positions with no cost basis", options: { align: "left" as const } },
-      { text: missingCost ? `${missingCost} — excluded from the total above` : "none", options: { align: "right" as const } },
+      {
+        // WHAT STANDS BEHIND THE MISSING COST, IN MONEY. A count alone reads as
+        // a footnote about 16% of the rows; those rows are 96% of this book's
+        // value, because one of them is a promoter holding worth more than
+        // everything else put together.
+        text: missingCost
+          ? `${missingCost} — worth ${fmt(noCostMV)}, in Market value and in neither figure above`
+          : "none",
+        options: { align: "right" as const },
+      },
     ],
     [
       { text: "Positions not priced live", options: { align: "left" as const } },
       { text: notLive ? `${notLive} — carried at their statement mark` : "none", options: { align: "right" as const } },
     ],
   ] as PptxGenJS.TableRow[], 1.2, [5.4, 3.8]);
+  // A depository reports what is held and never what it cost — the reason the
+  // gap exists, named on the slide rather than left as an unexplained exclusion.
+  if (missingCost) {
+    s6.addText(
+      `A depository statement records what is held, not what was paid for it, so ${missingCost} position${missingCost === 1 ? "" : "s"} carry no cost. Entering that as zero would report ${fmt(noCostMV)} of market value as profit; it is excluded from the cost, the gain and the return, and counted here instead.`,
+      { x: 0.4, y: 4.45, w: 9.2, h: 0.6, fontSize: 9.5, color: C.muted, fontFace: "Arial" },
+    );
+  }
 
   // ── 7 · What this deck does not carry ─────────────────────────────────────
   // Read the registry directly: `providerOf` takes a Position, and faking one

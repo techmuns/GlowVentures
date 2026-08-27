@@ -103,16 +103,50 @@ export function ExposureIPS() {
   const equityRoutes = useMemo(() => {
     const idx = accountIndex(portfolio?.accounts ?? []);
     const route = (p: (typeof equity)[number]) => holdingRoute(engagementOf(idx, p) || null);
-    const mv = (keep: (r: string) => boolean) => sum(equity.filter((p) => keep(route(p))).map((p) => p.marketValue));
-    // The third figure exists so the two named ones cannot silently fail to add
-    // up to the covered total: an account whose engagement no statement states
-    // is `unknown` and is never defaulted to either side.
+    /**
+     * EACH SIDE CARRIES ITS COUNT AS WELL AS ITS VALUE, AND THE COUNT IS WHAT
+     * DECIDES WHETHER THE CLAUSE IS A DENIAL.
+     *
+     * These clauses used to be gated on the VALUE being above zero, so a route
+     * holding only positions marked at a MEASURED zero printed the flat denial
+     * "no holding in it is run under a discretionary mandate" while those very
+     * holdings stood in the sector rows above. This book already carries
+     * measured-zero positions — 3P's classes, both Motilal Oswal Hedged Equity
+     * classes, HDFC folio 16180583 — so that is not a hypothetical, and denying
+     * a figure is worse than omitting it because a reader plans around it.
+     *
+     * The third pair exists so the two named ones cannot silently fail to add
+     * up to the covered total: an account whose engagement no statement states
+     * is `unknown` and is never defaulted to either side.
+     */
+    const part = (keep: (r: string) => boolean) => {
+      const rows = equity.filter((p) => keep(route(p)));
+      return { mv: sum(rows.map((p) => p.marketValue)), n: rows.length };
+    };
     return {
-      mandate: mv((r) => r === "mandate"),
-      own: mv((r) => r === "own"),
-      other: mv((r) => r !== "mandate" && r !== "own"),
+      mandate: part((r) => r === "mandate"),
+      own: part((r) => r === "own"),
+      other: part((r) => r !== "mandate" && r !== "own"),
     };
   }, [portfolio, equity]);
+  /**
+   * A ROUTE THAT HOLDS ROWS AND SUMS TO ZERO — named, so the ₹0 beside it reads
+   * as the measurement it is. A computed zero is legitimate and keeps its zero;
+   * what it must never do is sit on screen with no reason, indistinguishable
+   * from a route this book could not measure at all.
+   */
+  const zeroRoutesNote = useMemo(() => {
+    const zero = [
+      { label: "mandate", ...equityRoutes.mandate },
+      { label: "own-account", ...equityRoutes.own },
+      { label: "route-not-stated", ...equityRoutes.other },
+    ].filter((r) => r.n > 0 && r.mv === 0);
+    if (zero.length === 0) return null;
+    const parts = zero.map((r) => `the ${r.label} figure covers ${r.n} ${r.n === 1 ? "holding" : "holdings"}`);
+    const list = parts.length === 1 ? parts[0]
+      : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+    return `${list.charAt(0).toUpperCase()}${list.slice(1)} whose own statements mark them at zero, so that ₹0 is a measured value and not an absent one.`;
+  }, [equityRoutes]);
   /** What the sector and market-cap views do not cover, named with its value. */
   const nonEquity = useMemo(() => excludedClasses(consolidated, isCompanyShare), [consolidated]);
   const nonEquityMV = useMemo(() => sum(nonEquity.map((c) => c.mv)), [nonEquity]);
@@ -280,9 +314,21 @@ export function ExposureIPS() {
             : Math.abs(targetTotal - 100) > 0.5
               ? <><span className="font-medium text-amber-400">Targets sum to {targetTotal.toFixed(1)}%, not 100%.</span> Each gap is still that bucket&rsquo;s own actual minus its own target — they do not assume the rest.</>
               : <>Targets sum to 100%.</>}
-          {actuals && actuals.unmappedValue > 0 && (
-            <> {money(actuals.unmappedValue)} ({((actuals.unmappedValue / actuals.total) * 100).toFixed(0)}% of the book) sits in{" "}
-              <span className="font-medium text-slate-400">{actuals.unmappedClasses.join(", ")}</span>, mapped to no bucket — so the actual column is a partial view until it is.</>
+          {/* GATED ON THE CLASSES, NOT ON THEIR VALUE. `bucketActuals` adds a
+              class to `unmappedClasses` for any unmapped ROW, so a class whose
+              holdings are all marked at a measured zero leaves the value at ₹0
+              while the actual column is still partial — gated on the value the
+              page said nothing at all about it. The share of the book is only
+              struck where there is a book to take a share of.
+
+              AND THE CLASS NAMES GO THROUGH `assetClassLabel`, like the chips
+              seventy lines above that map these very classes. This printed the
+              model's own vocabulary ("Equity") beside a chip reading "Company
+              Shares" for the same class — one card naming one class two ways. */}
+          {actuals && actuals.unmappedClasses.length > 0 && (
+            <> {money(actuals.unmappedValue)}
+              {actuals.total > 0 && <> ({((actuals.unmappedValue / actuals.total) * 100).toFixed(0)}% of the book)</>} sits in{" "}
+              <span className="font-medium text-slate-400">{actuals.unmappedClasses.map(assetClassLabel).join(", ")}</span>, mapped to no bucket — so the actual column is a partial view until it is.</>
           )}
           {" "}These are the family&rsquo;s own entries and live in this browser only. <span className="font-medium text-slate-400">Export</span> writes
           the whole family-input store — this charter and its targets, the bucket mapping, the theses on Thesis &amp; Triggers, the
@@ -334,16 +380,25 @@ export function ExposureIPS() {
           Sectors cover <span className="font-medium text-slate-400">company shares</span> ({money(equityMV)}) — every share in a
           company this family owns, however it came to be held. That is wider than the{" "}
           <span className="font-medium text-slate-400">{DIRECT_EQUITY_BUCKET}</span> section of the holdings tables, and deliberately so:{" "}
-          {equityRoutes.mandate > 0
-            ? <>{money(equityRoutes.mandate)} of it was chosen by a discretionary manager under a PMS mandate, which the holdings
+          {/* EACH CLAUSE IS GATED ON ITS ROW COUNT, NEVER ON ITS VALUE. A route
+              whose holdings are every one of them marked at a MEASURED zero has
+              rows on this page and in the sector table above it; gated on value
+              it printed the flat denial below while those holdings were on
+              screen, and the mandate + own + other reconstruction this sentence
+              exists to state lost a term. `zeroRoutesNote` then says why a ₹0 is a
+              measurement rather than an absence, because the count is what the
+              reader cannot see. */}
+          {equityRoutes.mandate.n > 0
+            ? <>{money(equityRoutes.mandate.mv)} of it was chosen by a discretionary manager under a PMS mandate, which the holdings
               tables group under “{MANDATE_BUCKET}”</>
             : <>no holding in it is run under a discretionary mandate</>}
-          {equityRoutes.own > 0
-            ? <>, and {money(equityRoutes.own)} was bought in the family’s own demat or broking account</>
+          {equityRoutes.own.n > 0
+            ? <>, and {money(equityRoutes.own.mv)} was bought in the family’s own demat or broking account</>
             : <>, and none of it was bought in the family’s own account</>}
-          {equityRoutes.other > 0
-            ? <>, with {money(equityRoutes.other)} in accounts whose statements do not state how they are run</>
+          {equityRoutes.other.n > 0
+            ? <>, with {money(equityRoutes.other.mv)} in accounts whose statements do not state how they are run</>
             : null}.{" "}
+          {zeroRoutesNote && <>{zeroRoutesNote}{" "}</>}
           A manager’s statement reports every share underneath the mandate, so those rows carry a GICS sector, a market cap and a
           symbol exactly like a self-bought one — dropping them would take real exposure out of this family’s sector picture over a
           question (who decided) that a sector table does not ask. Who decided is on each name’s own page.

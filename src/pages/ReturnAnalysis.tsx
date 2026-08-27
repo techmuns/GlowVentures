@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, assetClassLabel, bucketLabel } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } from "@/lib/analytics";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -30,9 +30,13 @@ const GAIN = "#10b981", LOSS = "#ef4444";
 // WHAT IS REAL HERE. Every position carries a cost basis, a market value and
 // therefore a return. That supports a genuine distribution, a
 // contribution-to-return decomposition by position and by sector, the best and
-// worst name per account, and the spread between managers. All of it is
-// point-in-time on the statements' own marks, which is stated rather than
-// dressed up as a time series.
+// worst name per account, and the spread between ACCOUNTS — which is what the
+// registry supports. A spread between MANAGERS would have to be struck over the
+// discretionary mandates alone; the ends of this one are a venture-fund capital
+// account and the family's own broking account, and neither is a manager.
+//
+// All of it is point-in-time on the statements' own marks, which is stated
+// rather than dressed up as a time series.
 
 /** Return bands, lowest first so the axis reads left to right. */
 const BANDS = [
@@ -48,15 +52,27 @@ const BANDS = [
 const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
+/**
+ * The short form for the spread tile's two ends. It carries the ACCOUNT NUMBER
+ * as well as the provider because a provider is not an account: this book holds
+ * two Transition Venture Capital folios, two SVAN accounts, two Green Lanterns,
+ * two V.E.Cs and two Goldstandards, so the provider word alone does not say
+ * which row of the table below the figure came from.
+ */
+const acctEnd = (a: { provider: string; accountNo: string }) =>
+  `${a.provider.split(" ")[0]} ${a.accountNo}`;
+
 export function ReturnAnalysis() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
 
   const model = useMemo(() => {
     if (!portfolio) return null;
-    // CONSOLIDATED: every figure on this page is book-wide — a return
-    // distribution, a contribution decomposition, a spread between managers —
-    // so a holding reported under two members counts once. Without this the
-    // distribution puts the same 1.46 Cr in the same band twice.
+    // CONSOLIDATED: the book-wide figures on this page — the return
+    // distribution, the contribution decomposition by name and by sector, the
+    // embedded return — count a holding reported under two members once. Without
+    // this the distribution puts the same ₹1.46 Cr in the same band twice. The
+    // PER-ACCOUNT table below, and the spread struck from it, read the full
+    // position set instead: see the note above `pricedByAccount`.
     const priced = consolidated.filter(isPriced);
     // Named, not just dropped: a position whose statement reports no cost cannot
     // answer a question about return, and the page says how many that is.
@@ -225,11 +241,25 @@ export function ReturnAnalysis() {
         <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
           sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
 
-        <StatTile label="Spread between managers"
+        {/* SPREAD BETWEEN ACCOUNTS, WHICH IS WHAT IS MEASURED. `rated` is every
+            account in the registry that carries a cost basis, and on this book
+            the two ends are a drawdown venture-fund capital account (Transition
+            Venture Capital, engagement AIF) and the family's own self-directed
+            broking account (LKP, engagement Execution). Neither is a manager
+            running a discretionary mandate, so "Spread between managers" over
+            them asserts manager dispersion nobody measured — the same failure as
+            a word claiming how a holding is run over a set where it is not true.
+            The table directly below is headed "Per account" and says a PMS
+            mandate and the family's own demat are each one row of it; this tile
+            is the same set and now uses the same word. Restricting `rated` to
+            `isMandateHeld` accounts would be the other honest answer, and it is
+            deliberately not taken: the widest dispersion in the book is a real
+            finding, and narrowing it to the ten mandates would hide it. */}
+        <StatTile label="Spread between accounts"
           value={m.spread === null ? <span className="text-slate-500">{DASH}</span> : `${m.spread.toFixed(1)} pp`}
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
-            : `${m.spreadEnds![0].account.provider.split(" ")[0]} to ${m.spreadEnds![1].account.provider.split(" ")[0]}`}
+            : `${acctEnd(m.spreadEnds![0].account)} to ${acctEnd(m.spreadEnds![1].account)}`}
           hint={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
@@ -259,9 +289,31 @@ export function ReturnAnalysis() {
           </div>
         </Card>
 
+        {/* THE SET NAME IS A SENTENCE, NOT A CLASS LABEL. This card's rows are
+            every share in a company — own-held and mandate-held alike — plus one
+            row per fund wrapper, and no class word names that set.
+
+            It used to read `assetClassLabel("Equity")`, the ONLY hardcoded call
+            to that helper in src/ and the one place a class label was being used
+            as a noun phrase for a set rather than as a row label. That is a
+            binding no caption should have: `CLASS_LABEL` exists to answer "what
+            IS this holding?", it has already been rewritten twice as the family
+            read successive words as claims about WHO CHOSE the position, and
+            each rewrite silently changed the meaning of this sentence — which
+            then went on to say "a manager's mandate included" in its own next
+            clause. Whatever the class vocabulary settles on, a caption that
+            reads "<class word> by sector — a manager's mandate included" is
+            either redundant or self-contradicting, and nothing on the `returns`
+            route checks its vocabulary.
+
+            The phrase below states the set outright, so it is true under either
+            vocabulary and cannot go stale when a class is relabelled. The class
+            words this card DOES render — its row labels and the wrapper classes
+            named under the table — still come from `bucketLabel`, which is
+            correct: those ARE classes. */}
         <Card className="lg:col-span-2" title="Contribution by sector"
-          subtitle={<>{assetClassLabel("Equity")} by sector — a manager&rsquo;s mandate included — and every fund
-            wrapper under its own class, each as a share of total cost</>}>
+          subtitle={<>Every share in a company, by sector — a manager&rsquo;s mandate included — and every
+            fund wrapper under its own class, each as a share of total cost</>}>
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">

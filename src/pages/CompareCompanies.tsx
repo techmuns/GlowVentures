@@ -52,7 +52,19 @@ type Candidate = {
   security: string;
   symbol: string | null;
   sector: string;
+  /**
+   * CONSOLIDATED — each `dedupeGroup` once. Every figure that is a VALUE about
+   * the book reads these: quantity, cost, market value, weight in NAV.
+   */
   rows: Position[];
+  /**
+   * EVERY STATEMENT ROW AS PRINTED. Anything that counts or classifies ACCOUNTS
+   * reads these and must never dedupe — §"a consolidated figure counts each
+   * dedupeGroup ONCE; a per-account or per-owner figure does not". Deduping a
+   * count of accounts is how the stock page came to say "Held in 1 entity" over
+   * a holding two CRNs both report.
+   */
+  allRows: Position[];
 };
 
 export function CompareCompanies() {
@@ -90,25 +102,31 @@ export function CompareCompanies() {
    */
   const candidates = useMemo<Candidate[]>(() => {
     if (!portfolio) return [];
-    const m = new Map<string, Candidate>();
+    const m = new Map<string, Omit<Candidate, "rows">>();
     for (const p of portfolio.positions) {
       if (!isCompanyShare(p)) continue;
       const c = m.get(p.securityKey);
-      if (c) { c.rows.push(p); continue; }
+      if (c) { c.allRows.push(p); continue; }
       m.set(p.securityKey, {
         securityKey: p.securityKey,
         security: p.security,
         symbol: symbolFor(p),
         sector: p.sector,
-        rows: [p],
+        allRows: [p],
       });
     }
-    // COUNT ONCE per candidate: a name reported under two members (360 ONE, the
-    // Transition trust) shares one securityKey, so its lots include both rows.
-    // Dedupe them or "Weight in book" doubles — while the column's own hint says
-    // "each duplicate counted once".
+    // BOTH SETS TRAVEL, because this page asks both kinds of question about one
+    // candidate. COUNT ONCE for value: a name reported under two members (360
+    // ONE, the Transition trust) shares one securityKey, so its rows include
+    // both statements' copies, and summing them doubles "Weight in book" while
+    // that column's own hint says "each duplicate counted once". KEEP BOTH ROWS
+    // for anything about accounts: how many accounts carry the name, and which
+    // routes it arrives by, are per-account facts that a dedupe would understate
+    // — it drops one of the two accounts outright and leaves every value in the
+    // same column correct, so the row would look internally consistent while the
+    // count was wrong.
     return [...m.values()]
-      .map((c) => ({ ...c, rows: dedupedPositions(c.rows) }))
+      .map((c) => ({ ...c, rows: dedupedPositions(c.allRows) }))
       .sort((a, b) => sum(b.rows.map((r) => r.marketValue)) - sum(a.rows.map((r) => r.marketValue)));
   }, [portfolio]);
 
@@ -137,12 +155,22 @@ export function CompareCompanies() {
    * list is short by every mandate name in it.
    */
   const mandateNames = useMemo(
-    () => candidates.filter((c) => c.rows.some((r) => holdingRoute(engagementOf(accIdx, r) || null) === "mandate")).length,
+    // `allRows`, not `rows`: this asks which ACCOUNTS a name arrives through, and
+    // the deduped set keeps whichever copy came first. A name reported by both a
+    // mandate and an own-demat account would lose the mandate row half the time
+    // and stop being counted here, understating the caption against a picker
+    // that still offers it.
+    () => candidates.filter((c) => c.allRows.some((r) => holdingRoute(engagementOf(accIdx, r) || null) === "mandate")).length,
     [candidates, accIdx],
   );
   const chosen = useMemo(
     () => picked.map((k) => candidates.find((c) => c.securityKey === k)).filter((c): c is Candidate => !!c),
     [picked, candidates],
+  );
+  /** Chosen names whose consolidated rows are fewer than their statement rows. */
+  const dualReported = useMemo(
+    () => chosen.filter((c) => c.rows.length < c.allRows.length),
+    [chosen],
   );
   const tickers = useMemo(
     () => chosen.map((c) => c.symbol).filter((s): s is string => !!s),
@@ -309,7 +337,11 @@ export function CompareCompanies() {
                 {metric("Sector", "Our normalised sector, from the provider's own taxonomy", (c) => (
                   <span className="text-[12px] text-slate-400">{c.sector}</span>
                 ))}
-                {metric("Held by", "How many of the family's accounts carry this name", (c) => c.rows.length)}
+                {/* PER-ACCOUNT, SO IT DOES NOT DEDUPE — and it counts distinct
+                    ACCOUNTS rather than rows, which is what the label says. The
+                    value metrics below stay on the consolidated `rows`. */}
+                {metric("Held by", "How many of the family's accounts carry this name — every statement counted, including a name two members both report",
+                  (c) => new Set(c.allRows.map((r) => r.accountId)).size)}
                 {metric("Quantity", "Total units held across every account", (c) =>
                   sum(c.rows.map((r) => r.quantity)).toLocaleString("en-IN"))}
                 {metric("Price", "Live where a quote resolved, otherwise the statement mark", (c) =>
@@ -353,6 +385,25 @@ export function CompareCompanies() {
               </tbody>
             </table>
           </div>
+          {/* WHERE THE TWO BASES DIVERGE, THE PAGE SAYS SO — derived from the
+              chosen names, never asserted. "Held by" counts accounts and so
+              counts both statements; every value row is consolidated and counts
+              a duplicated holding once. Those are the right bases for their own
+              questions and they disagree only for a name two members both
+              report, so a reader who notices "Held by 2" over a quantity that
+              covers one statement is told why here rather than left to decide
+              which figure is wrong. Nothing renders when no chosen name is
+              reported twice, which is the case across this book's company
+              shares today. */}
+          {dualReported.length > 0 && (
+            <p className="px-4 pb-3 pt-2 text-[11px] leading-relaxed text-slate-500">
+              {dualReported.map((c) => c.security).join(", ")}{" "}
+              {dualReported.length === 1 ? "is" : "are"} reported on more than one account&rsquo;s statement.
+              &ldquo;Held by&rdquo; counts every one of those accounts; quantity, cost, value and weight count
+              the holding once, as the consolidated NAV does. Each account&rsquo;s own row is on Portfolio
+              Monitor.
+            </p>
+          )}
         </Card>
       )}
 

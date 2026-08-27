@@ -170,12 +170,21 @@ export function CapitalGains() {
    * canonical total in the footer. Only which line each account's lots land on.
    *
    * A ROW WHOSE ASSET CLASS NO STATEMENT CARRIES KEEPS ITS OWN LINE rather than
-   * being folded into the bucket above it. That row is the liquid-fund sweep the
-   * Carnelian mandate runs beside its equity book, and separating what IT
-   * realised from what the equity book realised is the whole reason this card
-   * exists. Merging it into the mandate's subtotal would put an absence inside a
-   * labelled group and lose both the figure and the reason — while the mandate's
-   * own classified lots stay whole, which is the account-level tie.
+   * being folded into the bucket above it. Merging it into the mandate's
+   * subtotal would put an absence inside a labelled group and lose both the
+   * figure and the reason, while the mandate's own classified lots stay whole,
+   * which is the account-level tie.
+   *
+   * WHAT THAT LINE IS NOT IS THE ACCOUNT'S CASH SWEEP, and an earlier draft of
+   * the caption below said it was. `build-book` joins each lot's asset class
+   * from the same security's rows elsewhere in the drop, and the liquid-fund
+   * instruments these mandates sweep into ARE carried on other reports here —
+   * so those lots come back classified `Equity`, land in the bucket above and
+   * are netted there. Only the one security no report in this drop classifies
+   * reaches this line. The row is therefore "the lots nothing classifies";
+   * claiming it separates what the sweep realised from what the equity book
+   * realised would be a caption narrowing a figure it does not cover, and a
+   * reader would take the figure beside it for the sweep's realised total.
    */
   const byBucket = (() => {
     type Row = {
@@ -301,8 +310,8 @@ export function CapitalGains() {
 
       {/* ── Realised, per account ── */}
       {/* THE HEADLINE NETS UNLIKE BOOKS: shares a discretionary manager chose,
-          shares the family bought itself, and a liquid-fund sweep whose class no
-          statement carries. No figure changes here; the split just stops one
+          shares the family bought itself, and lots whose asset class no report
+          in this drop carries. No figure changes here; the split just stops one
           silently flattering another, and it is cut on HOW each account is run
           rather than on what was sold — see `byBucket` above. */}
       {byBucket.length > 1 && (
@@ -346,12 +355,18 @@ export function CapitalGains() {
                                 {c.heldNote ? <> · inside {c.heldNote}</> : null}
                               </span>
                               <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                                {c.securities.join(", ")} — the cash sweep these managers run beside the equity
-                                mandate. They appear on no appraisal and no transaction statement, so nothing
-                                classifies them; "Mutual Fund" in a printed name is not a classification a
-                                statement made, so none is asserted. It keeps its own line rather than being
-                                added into the mandate above it: what the sweep realised and what the equity book
-                                realised are the two figures this card exists to stop netting together.
+                                {c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in
+                                this drop carries an asset class for {c.securities.length === 1 ? "it" : "them"},
+                                so none is asserted; "Mutual Fund" in a printed name is not a classification a
+                                statement made. It keeps its own line rather than being added into the bucket
+                                above, so the absence is not buried inside a labelled group.
+                                <br />
+                                <span className="text-slate-400">This line is not the account's cash sweep.</span>{" "}
+                                A lot's class is joined from the same security's rows elsewhere in this drop, and
+                                the other liquid-fund instruments these mandates sweep into ARE carried on other
+                                reports here — so those lots come back classified and are netted inside the bucket
+                                above. What this line separates is the lots nothing classifies, which is a smaller
+                                set than the sweep and does not measure it.
                               </div>
                             </>
                           )}

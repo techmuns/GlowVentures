@@ -24,7 +24,7 @@
 // Usage:  npm run build && npx vite preview --port 4173 &  then  npm run check:pages
 //         WIDTHS=1440,1280,1024 npm run check:pages   (responsive sweep)
 import { chromium } from "playwright-core";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
@@ -38,6 +38,69 @@ const SHOTS = process.env.SHOTS !== "0";
 // other expensive half.
 const FAST = process.env.FAST === "1";
 mkdirSync(OUT, { recursive: true });
+
+/**
+ * ── ONE ARRAY OUT OF THE GENERATED BOOK ──────────────────────────────────────
+ *
+ * `src/data/glowData.ts` is generated from `source/` and regenerates
+ * byte-identically, so reading it here is a DERIVATION, not a second source for
+ * a figure — the same reasoning as `MANDATE_PATH` being resolved from the link
+ * the monitor draws rather than typed in. What it buys is an address: the fund
+ * drill-down below has no link anywhere in the app to harvest one from, because
+ * every `/mandate/` link in `src/` is gated on `isMandateHeld`.
+ *
+ * The array is sliced at its own closing line rather than by counting brackets:
+ * a JSON string cannot contain a newline, so `\n];` is unambiguous, while a `[`
+ * inside a security name is not. The TYPE annotation is why the slice starts at
+ * `= [` — `Account[]` carries a bracket pair of its own.
+ */
+function bookArray(src, name) {
+  const i = src.indexOf(`export const ${name}`);
+  if (i < 0) return null;
+  const start = src.indexOf("= [", i);
+  if (start < 0) return null;
+  const end = src.indexOf("\n];", start);
+  if (end < 0) return null;
+  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+}
+
+/**
+ * THE FUND FOLIO WHOSE DRILL-DOWN MUST REFUSE TO DRAW A CONSTITUENT LIST.
+ *
+ * `/mandate/:accountId` serves three branches and only one of them was ever
+ * walked. The PMS branch rolls a manager's own shares up, which is legitimate
+ * because the statement reports every one of them by name. A FUND folio is one
+ * purchase of somebody else's portfolio and this book carries no look-through,
+ * so that branch must SAY the companies inside are not reported — and an empty
+ * holdings table there would read as a feed that failed, which is the one
+ * failure the whole regrouping was asked to avoid.
+ *
+ * Chosen as the fund-route account carrying the most market value, resolved on
+ * every run: a typed accountId would be a second source for a generated figure
+ * and would keep "passing" by rendering the page's not-found state. The
+ * engagement set MIRRORS `holdingRoute` in `src/lib/analytics.ts` and is the one
+ * thing here that could drift from it — which is why the invariants assert the
+ * page is the FUND branch rather than assuming it, so drift fails loudly.
+ */
+const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
+const FUND_ACCOUNT_ID = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const mv = new Map(), rows = new Map();
+    for (const p of positions) {
+      mv.set(p.accountId, (mv.get(p.accountId) ?? 0) + (Number(p.marketValue) || 0));
+      rows.set(p.accountId, (rows.get(p.accountId) ?? 0) + 1);
+    }
+    const funds = accounts
+      .filter((a) => FUND_ROUTE_ENGAGEMENTS.has(a.engagement) && (rows.get(a.accountId) ?? 0) > 0)
+      .sort((a, b) => (mv.get(b.accountId) ?? 0) - (mv.get(a.accountId) ?? 0)
+        || String(a.accountId).localeCompare(String(b.accountId)));
+    return funds[0]?.accountId ?? null;
+  } catch { return null; }
+})();
 
 const ROUTES = [
   ["cio", "/cio"],
@@ -55,6 +118,15 @@ const ROUTES = [
   // accountId here would be a second source for a generated figure, and a stale
   // one would still "pass" by rendering the page's not-found state.
   ["mandate", () => MANDATE_PATH ?? "/mandate/none-resolved-from-monitor"],
+  // ...AND THE SAME ROUTE SERVING A FUND FOLIO, which is a different branch of
+  // the same page and the one the family's request actually turns on. A PMS
+  // rollup is a real look-through; an AIF folio has none, so that branch must
+  // say the companies inside are NOT REPORTED rather than draw an empty
+  // constituent table. Nothing in the app links to it — every `/mandate/` link
+  // in `src/` is gated on `isMandateHeld` — so the address is resolved from the
+  // generated book instead (see `FUND_ACCOUNT_ID`). A book that stops carrying
+  // one fails these invariants rather than skipping them.
+  ["mandate-fund", () => (FUND_ACCOUNT_ID ? `/mandate/${encodeURIComponent(FUND_ACCOUNT_ID)}` : "/mandate/none-resolved-from-the-book")],
   ["family", "/family"],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
@@ -134,6 +206,28 @@ const cr = (m) => (m == null ? NaN : Number(String(m).replace(/,/g, "")));
 const crU = (n, unit) => cr(n) * (unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1);
 
 /**
+ * ── A THIRD OUTCOME: NOT CHECKED ─────────────────────────────────────────────
+ *
+ * An invariant returns true when the page is correct and anything falsy when it
+ * is wrong. It returns THIS when the page is neither — when the figure it is
+ * struck on is not on screen at all on this run, because the input behind it
+ * does not exist here.
+ *
+ * The alternative is what the market-cap scope check used to do: fall back to
+ * matching a sentence that renders whatever the data does, and report a pass.
+ * `golden.mjs` already refuses that shape — BLOCKED and NOT CHECKED are counted
+ * apart from both passes and failures, because "a test that passes with no
+ * input claims confidence nobody earned". Failing instead would be the opposite
+ * error: a check that is red on every offline run is a check the next session
+ * deletes, and it would be red about a page that is rendering correctly.
+ *
+ * So it is printed by name, with the CAUSE — which is the whole value of it: a
+ * reader of the report has to be able to tell "this run could not see it" from
+ * "this ran and held". It does not count towards the exit code.
+ */
+const notChecked = (why) => ({ notChecked: why });
+
+/**
  * ── THE HOLDINGS TABLE IS SECTIONED BY BUCKET, AND THE SECTIONS ARE READ HERE ──
  *
  * The family asked three times for one thing and the first two rounds answered
@@ -148,8 +242,18 @@ const crU = (n, unit) => cr(n) * (unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 
  * tab per column. Those two facts are the whole of what separates them, and both
  * come from the page's own structure rather than from a list of names.
  */
-const BUCKET_HEADINGS = ["DIRECT EQUITY", "PMS MANDATES", "COMPANY SHARES", "EQUITY", "ETF",
-  "MUTUAL FUND", "AIF", "BOND", "STRUCTURED PRODUCT", "UNLISTED", "CASH"];
+/**
+ * EVERY LABEL `holdingBucket` CAN PUT OVER A SECTION, and this list is used to
+ * find where one section ENDS — so a MISSING entry is the dangerous direction:
+ * an unrecognised heading is not a boundary, and the section above it silently
+ * swallows the rows below. "Equity — how it is held is not stated" is that case
+ * exactly: it renders for a share whose account states no engagement, of which
+ * this drop has none, which is precisely when its absence here is invisible.
+ * "COMPANY SHARES" is gone because it is retired vocabulary — round two's
+ * answer — and its return is asserted against on both monitor views.
+ */
+const BUCKET_HEADINGS = ["DIRECT EQUITY", "PMS MANDATES", "EQUITY — HOW IT IS HELD IS NOT STATED",
+  "EQUITY", "ETF", "MUTUAL FUND", "AIF", "BOND", "STRUCTURED PRODUCT", "UNLISTED", "CASH"];
 /**
  * innerText renders each flex item on its own line, so a heading is usually the
  * label alone — but that is a rendering detail, not a contract. Both forms are
@@ -663,15 +767,75 @@ const INVARIANTS = {
       if (classes.length === 0) return false;
       return classes.every((c) => !new RegExp(`(^|\n)${c}\t`, "i").test(table));
     }],
-    // The bands sit on the SAME set as the sector table above — every share in a
-    // company, however it came to be held — and the card has to say so, because
-    // the holdings table one link away now uses "Direct Equity" for the narrower
-    // half. Two surfaces using one phrase for two sets is exactly what the last
-    // two rounds of this complaint were. The figure-bearing guard is the
-    // reconstruction above; this one is the card stating its own scope.
-    ["market-cap bands state their scope: company shares, wider than Direct Equity",
-      (t) => /(struck on company shares|struck on every share in a company the family owns)/i.test(t)
-        && /direct-equity section of the holdings tables/i.test(t)],
+    /**
+     * ── THE BANDS SIT ON THE SAME SET AS THE SECTOR TABLE, AND IT IS COUNTED ──
+     *
+     * Every share in a company, however it came to be held — the holdings table
+     * one link away uses "Direct Equity" for the narrower half, and two surfaces
+     * using one phrase for two sets is exactly what the last two rounds of this
+     * complaint were.
+     *
+     * THIS CHECK COULD NOT FAIL AND THAT IS WHY IT IS REWRITTEN. It matched
+     * "struck on company shares" / "struck on every share in a company the
+     * family owns" and "direct-equity section of the holdings tables" — and
+     * BOTH branches of the card carry those words, the live one in its caption
+     * and the absent one in its `needs`. Narrowing `mcapExposure`'s input from
+     * `isCompanyShare` to `isDirectEquity` would drop ₹127 Cr of mandate-held
+     * shares out of the bands and this would still have reported clean. It is
+     * the defect the exposure block's own header records having fixed once,
+     * reintroduced on the card next door.
+     *
+     * So it is struck on the card's OWN TWO FIGURES: what carries a market cap
+     * plus what does not is the whole set the bands are drawn over, and that
+     * must reconstruct the covered total the sector caption above it prints.
+     * Narrow the input and the two sides part company by the mandate-held value.
+     *
+     * AND WHEN THE FEED DOES NOT ANSWER, THIS IS NOT CHECKED — never passed.
+     * `Position.marketCap` comes from the quote feed and from nowhere else (the
+     * book carries no such field), so in this offline harness `mcap.measured`
+     * is 0, the card renders its declared absent state and neither figure is on
+     * screen. There is nothing to compare, and reporting a pass over no input
+     * is what `golden.mjs` refuses to do with BLOCKED. It is reported NOT
+     * CHECKED with the cause named, and it binds — and fails — the moment the
+     * page is walked against a live feed:
+     *
+     *     GLOW_PASSWORD='…' node scripts/dev/live-api-proxy.mjs   # → :4174
+     *     BASE=http://127.0.0.1:4174 npm run check:pages
+     *
+     * The sector half of the same set IS guarded offline, by the mandate/own
+     * reconstruction above — so what is unchecked here is precisely a filter
+     * narrowed on the market-cap card alone.
+     */
+    ["market-cap bands cover the sector table's own company-share set, reconstructed from the card's two figures", (t) => {
+      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
+      const priced = /Of that book,\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*carries a market cap from the quote feed/i.exec(t);
+      if (!priced) {
+        // The card is in one of its two declared absent states, both of which
+        // print no figure. Say WHICH — a reader of this report has to be able
+        // to tell a feed that did not answer from a card that broke.
+        const why = /Still measuring/i.test(t)
+          ? "the quote feed had not settled when the page was read"
+          : /No company share carries a market cap/i.test(t)
+            ? "no quote resolved for any name, so the card renders its absent state and neither figure is on screen (this harness serves no /api/quotes — walk it against scripts/dev/live-api-proxy.mjs to bind this)"
+            : null;
+        // Neither absent state and no live caption either: the card rendered
+        // something this check cannot read, which IS a failure.
+        return why ? notChecked(why) : false;
+      }
+      const measured = crU(priced[1], priced[2]);
+      // The "and ₹Y does not" clause renders only when something is unpriced.
+      // Absent, the unmeasured side is zero — and if the clause were DELETED
+      // while names went unpriced, `measured` alone would fall short of the
+      // covered total and this fails, which is the guard that makes reading the
+      // absence as zero safe here.
+      const un = new RegExp(String.raw`and ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*does not \(\d+ names?`, "i").exec(t);
+      const unmeasured = un ? crU(un[1], un[2]) : 0;
+      if (![covered, measured, unmeasured].every(Number.isFinite)) return false;
+      return Math.abs(measured + unmeasured - covered) <= Math.max(0.6, covered * 0.002)
+        // ...and the card still says which set that is, so a narrowing that
+        // rewrote the caption to match is caught on the words as well.
+        && /direct-equity section of the holdings tables/i.test(t);
+    }],
     // Phase 5: the IPS is an editor now. With NO family input recorded — which is
     // this harness's state — every gap must be absent and the page must say why.
     // A gap computed against a defaulted target is a fabricated instruction.
@@ -752,7 +916,11 @@ const INVARIANTS = {
    * A PMS rollup is legitimate because the family owns each share and the
    * manager only picked it, so the statement reports every one by name. An AIF
    * folio is one purchase of somebody else's portfolio and no look-through
-   * exists — which is why nothing here asserts a constituent list for a fund.
+   * exists — so nothing here asserts a constituent list for a fund, and the
+   * `mandate-fund` block below asserts the REFUSAL instead. That branch had no
+   * test at all while the not-found branch had two, which is the wrong way
+   * round: an empty holdings table under a fund's name is the failure this
+   * whole page was built to avoid, and nothing was watching for it.
    */
   mandate: [
     ["the route resolves to a real mandate, not the not-found state",
@@ -812,6 +980,67 @@ const INVARIANTS = {
     // the table they came from. Each constituent keeps its own page.
     ["each constituent still links to its own company page",
       (t, ctx) => (ctx?.hrefs ?? []).filter((h) => /^\/stock\/./.test(h)).length > 1],
+  ],
+  /**
+   * ── THE SAME ROUTE, SERVING A FUND FOLIO ──────────────────────────────────
+   *
+   * `/mandate/:accountId` has three branches. The PMS one is walked above; the
+   * not-found one is asserted here and again in `check-family-inputs.mjs`; this
+   * one — a fund folio — had nothing, and it is the branch the family's request
+   * actually turns on. *"AIF holdings must be shown inside the respective AIF
+   * page drill down"* is answered by a page that says the underlying companies
+   * are NOT REPORTED to this book. An empty `SECURITY / SECTOR / QTY` table
+   * there would read as a feed that failed, and a fund falling through to the
+   * PMS layout would read as a look-through nobody has.
+   *
+   * The address is `FUND_ACCOUNT_ID`, resolved from the generated book on every
+   * run — nothing in `src/` links to it, because every `/mandate/` link is
+   * gated on `isMandateHeld`. If it resolves to nothing, or to an account that
+   * is not on the fund route, these fail rather than skipping.
+   */
+  "mandate-fund": [
+    ["the address resolved to a fund folio this book carries, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
+    // The page's own words for what it is — and the assertion that keeps the
+    // engagement set in `FUND_ROUTE_ENGAGEMENTS` honest: an `own`-route account
+    // renders the same heading and NOT the fund paragraph below, so drift in
+    // that mirror of `holdingRoute` fails on the next line rather than quietly
+    // testing the wrong branch.
+    ["it says plainly that this account is not a PMS mandate",
+      (t) => /This account is not a PMS mandate/i.test(t)],
+    /**
+     * THE ABSENCE NAMES ITS OWN CAUSE. Not "no data" — the fund reports one
+     * line, the companies underneath are the MANAGER'S holdings, and joining
+     * them would need that scheme's own portfolio disclosure. A reader who is
+     * told which document is missing can go and ask for it.
+     */
+    ["...and names the cause: one purchase of a manager's portfolio, its companies not reported here",
+      (t) => /no constituent list to show here/i.test(t) && /not\s+reported to this book/i.test(t)],
+    /**
+     * AND NO CONSTITUENT TABLE IS DRAWN, EMPTY OR OTHERWISE. Struck on the
+     * page's own structure — the holdings table's header row and the PMS
+     * headline — rather than on the sentences above, which is the rule the
+     * exposure card's first draft broke: a page that started rendering an empty
+     * table would keep every sentence above and still be wrong.
+     */
+    ["no constituent table is drawn for a folio with no look-through",
+      (t) => !/^SECURITY\tSECTOR\tQTY/im.test(t) && !/holdings the manager runs/i.test(t)],
+    /**
+     * WHAT THE STATEMENT DOES CARRY IS SHOWN, AND THE COUNT AGREES WITH THE
+     * ROWS. Refusing the look-through must not turn into refusing the folio:
+     * the lines the fund does report are named, each links to its own page, and
+     * the number in the sentence is checked against the links actually drawn —
+     * the "Held in 1 entity" over a two-row table failure, one page over.
+     */
+    ["the lines the statement does carry are named, counted and linked", (t, ctx) => {
+      // The dash class is permissive and the FIGURES are not: a reworded
+      // separator must not fail a page that is rendering the right numbers.
+      const m = /What the statement does carry\s*[—–-]\s*(?:(one) line|(\d+) lines),\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*in all/i.exec(t);
+      if (!m) return false;                          // no input is never a pass
+      const named = m[1] ? 1 : Number(m[2]);
+      const links = (ctx?.hrefs ?? []).filter((h) => /^\/stock\/./.test(h)).length;
+      return Number.isFinite(named) && named > 0 && named === links && Number.isFinite(crU(m[3], m[4]));
+    }],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
   // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
@@ -1123,16 +1352,25 @@ for (const theme of THEMES) {
       const overflow = await page.evaluate(OVERFLOW);
       const contrast = FAST ? [] : await page.evaluate(theme === "light" ? DARK_IN_LIGHT : LIGHT_IN_DARK);
       // Data invariants — only the primary theme/width, where innerText is real.
-      const invariants = !FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]
-        ? INVARIANTS[name].flatMap(([desc, test]) => {
-            // A CHECK THAT THREW HAS NOT PASSED, and it must not take the sweep
-            // down with it either. Reported by name with the message, so a
-            // broken matcher reads as a broken matcher rather than as a clean
-            // page — the same rule as `golden.mjs`'s BLOCKED.
-            try { return test(text, { hrefs, path }) ? [] : [desc]; }
-            catch (e) { return [`${desc} — the check itself threw: ${e.message}`]; }
-          })
-        : [];
+      // THREE OUTCOMES, NOT TWO: pass, fail, and NOT CHECKED for a check whose
+      // input is not on screen at all on this run (see `notChecked`). The third
+      // is counted apart from both, because a check that passes over no input
+      // claims confidence nobody earned and one that fails over no input is red
+      // about a page that is rendering correctly.
+      const invariants = [], notCheckedHere = [];
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]) {
+        for (const [desc, test] of INVARIANTS[name]) {
+          let r;
+          // A CHECK THAT THREW HAS NOT PASSED, and it must not take the sweep
+          // down with it either. Reported by name with the message, so a
+          // broken matcher reads as a broken matcher rather than as a clean
+          // page — the same rule as `golden.mjs`'s BLOCKED.
+          try { r = test(text, { hrefs, path }); }
+          catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
+          if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
+          else if (!r) invariants.push(desc);
+        }
+      }
       if (SHOTS && width === WIDTHS[0]) {
         await page.screenshot({ path: `${OUT}/${theme}-${name}.png`, fullPage: true });
       }
@@ -1140,7 +1378,7 @@ for (const theme of THEMES) {
         theme, width, name, path,
         errors: errors.filter((e) => !ENVIRONMENT_NOISE.test(e)),
         failed: [...new Set(failed.filter((f) => !ENVIRONMENT_NOISE.test(f)))],
-        overflow, contrast, zeros, invariants,
+        overflow, contrast, zeros, invariants, unchecked: notCheckedHere,
       });
       await ctx.close();
     }
@@ -1150,16 +1388,22 @@ await browser.close();
 writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2));
 
 let broken = 0;
+let unchecked = 0;
 for (const r of report) {
   const inv = r.invariants ?? [];
+  const nc = r.unchecked ?? [];
+  unchecked += nc.length;
+  // NOT CHECKED is deliberately outside `hard`: it is a statement about this
+  // run's inputs, not about the page.
   const hard = r.errors.length + r.failed.length + (r.overflow ? 1 : 0) + r.contrast.length + inv.length;
   if (hard) broken++;
   const tag = `${r.theme}/${r.width}`.padEnd(11);
   const ok = hard ? "✗" : "✓";
-  if (hard || (r.theme === THEMES[0] && r.width === WIDTHS[0])) {
-    console.log(`${ok} ${tag} ${r.name.padEnd(14)} err=${r.errors.length} req=${r.failed.length} overflow=${r.overflow ? r.overflow.overflow + "px" : "-"} contrast=${r.contrast.length} zeroish=${r.zeros.length}${inv.length ? ` invariant=${inv.length}` : ""}`);
+  if (hard || nc.length || (r.theme === THEMES[0] && r.width === WIDTHS[0])) {
+    console.log(`${ok} ${tag} ${r.name.padEnd(14)} err=${r.errors.length} req=${r.failed.length} overflow=${r.overflow ? r.overflow.overflow + "px" : "-"} contrast=${r.contrast.length} zeroish=${r.zeros.length}${inv.length ? ` invariant=${inv.length}` : ""}${nc.length ? ` notchecked=${nc.length}` : ""}`);
   }
   for (const i of inv) console.log(`    INVARIANT FAILED  ${i}`);
+  for (const i of nc) console.log(`    INVARIANT NOT CHECKED  ${i}`);
   for (const e of r.errors) console.log(`    ERR  ${e.slice(0, 200)}`);
   for (const f of r.failed) console.log(`    REQ  ${f.slice(0, 160)}`);
   if (r.overflow) console.log(`    OVERFLOW ${r.overflow.overflow}px — widest: ${r.overflow.worst?.where ?? "?"} (+${r.overflow.worst?.past}px)`);
@@ -1170,4 +1414,9 @@ console.log(`\n${SHOTS ? `Screenshots and ` : ""}report.json in ${OUT}/`);
 console.log(broken
   ? `✗ ${broken} of ${report.length} route/theme/width combinations have a finding`
   : `✓ ${report.length} route/theme/width combinations clean`);
+// Reported on its own line and never folded into either count above: neither a
+// pass nor a failure, the same three-way split `golden.mjs` reports.
+if (unchecked) {
+  console.log(`  ${unchecked} invariant${unchecked === 1 ? "" : "s"} NOT CHECKED — the figure it is struck on was not on screen on this run, so it is counted apart from both passes and failures`);
+}
 process.exit(broken ? 1 : 0);

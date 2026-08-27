@@ -238,6 +238,13 @@ export function MorningCIO() {
       // cell by another and land somewhere neither figure claims.
       const noCost = rows.filter((x) => x.costBasis == null);
       const withoutCostMV = sum(noCost.map((x) => x.marketValue));
+      // …AND WHAT THAT SET IS WORTH. `cost` is struck over the holdings that
+      // report one; `mv` is struck over all of them. Every ratio between the two
+      // — the return AND the money multiple — has to be struck over the costed
+      // side of both, or it divides one set of holdings by another and prints a
+      // number neither column claims. This is the same figure `costedMV` is for
+      // the whole book, one level down.
+      const costedMV = sum(rows.filter((x) => x.costBasis != null).map((x) => x.marketValue));
       /**
        * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
        *
@@ -263,6 +270,7 @@ export function MorningCIO() {
         count: rows.length, cost, mv, pnl,
         withoutCost: noCost.length,
         withoutCostMV,
+        costedMV,
         costCoversRow,
         ret: costCoversRow && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
       };
@@ -421,6 +429,13 @@ export function MorningCIO() {
       current: number;
       kind: "MOIC" | "TVPI"; metric: number | null;   // money-multiple, for the popover
       retPct: number | null;                          // total return on cost, for the popover
+      /**
+       * The market value of the holdings `invested` covers — the numerator of
+       * BOTH ratios above. It equals `current` wherever every holding reports a
+       * cost, and is smaller wherever one does not; the popover prints this
+       * figure rather than `current`, and says how many holdings it spans.
+       */
+      costedMV: number;
       distributed: number;                            // cash already returned; 0 for listed & startups
       xirr: number | null;                            // annualised money-weighted return
       xirrBasis: Basis; xirrNote: string | null;
@@ -443,6 +458,9 @@ export function MorningCIO() {
       key, color, count, invested: f.drawn, current: f.currentValue, distributed: f.distributed,
       kind: netMultipleKind(f.distributed),
       metric: netMultiple(f.drawn, f.currentValue, f.distributed),
+      // A fund's drawn capital covers the whole of it, so the multiple's
+      // numerator IS the bucket's current value.
+      costedMV: f.currentValue,
       retPct: f.drawn > 0 ? ((f.currentValue + f.distributed - f.drawn) / f.drawn) * 100 : null,
       xirr: x.pct, xirrBasis: "first-investment", xirrNote: fundBasis(x), sheet,
       // A fund's drawn capital IS its cost, on every fund in the model — there
@@ -455,9 +473,15 @@ export function MorningCIO() {
       const g = eqGroup(rowsIn(key));
       return {
         key, color: bucketColor(key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
-        metric: g.cost !== null && g.cost > 0 ? g.mv / g.cost : null,
+        // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
+        // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
+        // cost `sumOrNull` struck on part of it — which on Direct Equity is
+        // ₹12,446.1 Cr over the ₹1.22 Cr that 9 of its 38 holdings report, and
+        // renders "MOIC 10240.51×". Nothing in the book multiplied by ten
+        // thousand; two different sets of holdings were divided by each other.
+        metric: g.cost !== null && g.cost > 0 ? g.costedMV / g.cost : null,
         retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
-        withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV,
+        withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV,
       };
     };
     /**
@@ -478,7 +502,7 @@ export function MorningCIO() {
     ];
     const allBuckets: Bucket[] = [
       ...positionKeys.map(positionBucket),
-      { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0 },
+      { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -557,7 +581,17 @@ export function MorningCIO() {
     // largest single name here IS a fund folio, and narrowing to companies
     // would hide the book's real biggest exposure. What it must not do is read
     // as a stock: the tile carries the class so a fund is not mistaken for one.
-    const largestClass = largestRow?.assetClass ?? null;
+    //
+    // IT CARRIES THE BUCKET, NOT THE RAW CLASS, and it is never suppressed.
+    // The chip read `assetClass` and was hidden for the one value the reader
+    // most needs qualified: a share. Today's largest name is the family's own
+    // promoter holding, so the tile said nothing and nothing was wrong; the day
+    // the largest is a name a discretionary manager picked, an unqualified line
+    // is the exact claim of directness the family reported three times. The
+    // label comes from the one helper that chooses these words.
+    const largestBucket = largestRow
+      ? bucketLabel(holdingBucket(largestRow, engagementOf(accIdx, largestRow)))
+      : null;
     const priced = p.filter((x) => !x.costUnavailable);
     const winners = priced.filter((x) => (x.returnPct ?? 0) > 0).length;
     const losers = priced.filter((x) => (x.returnPct ?? 0) < 0).length;
@@ -588,7 +622,7 @@ export function MorningCIO() {
       // can no longer reach the screen as a yearly rate — see the note on it.
       bookMW: moneyWeightedReturn(bookXirr, xirrWindowDays),
       distinctNames: byKey.size, crossHeld, top10Pct,
-      largestName, largestKey: largest?.[0] ?? "", largestClass, largestPct, winners, losers,
+      largestName, largestKey: largest?.[0] ?? "", largestBucket, largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
     };
   }, [portfolio, convertFromBase, today]);
@@ -620,20 +654,54 @@ export function MorningCIO() {
   // money-weighted figure (de-annualised) lives once in the footer total.
   const returnCell = (b: typeof m.buckets[number]) => {
     if (b.retPct == null) {
-      // Two different absences, and a reader acts differently on each: nothing in
-      // the row reports a cost at all, or some of it does and a percentage across
-      // the two columns would divide one set of holdings by another.
-      const why = b.withoutCost === b.count
-        ? "No statement reports what these holdings cost, so there is no return to strike."
-        : `Invested covers ${b.count - b.withoutCost} of ${b.count} holdings here and Current covers all of them — ${money(b.withoutCostMV)} reports no cost. A percentage across those two would divide one set of holdings by another, so it is not shown.`;
+      /**
+       * WHICH ABSENCE THIS IS, NAMED — a reader acts differently on each, and a
+       * confidently wrong cause sends them to the wrong place.
+       *
+       * There are three, and the Cash row is why the third had to be written.
+       * The regroup moved every PMS cash sleeve onto the mandate row, leaving
+       * two fund statements that report a balance of ₹0 AGAINST A COST OF ₹0 —
+       * both figures printed, neither missing. Told "no statement reports what
+       * these cost", a reader goes looking for a statement that is already in
+       * the archive and already says so. A measured zero is not an absence; what
+       * it lacks is capital to strike a return against.
+       */
+      const why = b.invested == null
+        ? `No statement reports what ${b.count === 1 ? "this holding" : "these holdings"} cost, so there is no return to strike — the cost is absent, not zero.`
+        : b.withoutCost > 0
+          ? `Invested covers ${b.count - b.withoutCost} of ${b.count} holdings here (${money(b.costedMV)} of the ${money(b.current)} beside it) and Current covers all of them — ${money(b.withoutCostMV)} reports no cost. A percentage across those two would divide one set of holdings by another, so it is not shown.`
+          : b.invested <= 0
+            ? `The statements report a cost of ${money(b.invested)} for ${many(b.count, "holding")} here — a measured ${b.invested === 0 ? "zero" : "figure"}, not a missing one — so there is no capital to strike a return against.`
+            : b.current === 0
+              ? `Current is ${money(0)} against ${money(b.invested)} of reported cost, so this row carries no value to measure a return against and none is struck.`
+              : `No unrealised gain is reported against the ${money(b.invested)} of cost here, so the return would have to be assumed rather than measured.`;
       return <span className="text-slate-500" title={why}>{DASH}</span>;
     }
     const mult = b.metric == null ? DASH : `${b.metric.toFixed(2)}×`;
+    /**
+     * THE POPOVER STANDS ON THE SAME SET AS THE FIGURE IT EXPLAINS.
+     *
+     * It read "₹X invested is worth ₹Y now" with Y the bucket's WHOLE current
+     * value while X covered only the holdings that report a cost — the row
+     * caption's disclosure ("Invested and Return cover 9 of 38 holdings")
+     * missing from the one place the two cells are explicitly divided. It prints
+     * the costed side's own market value now, and says how many holdings that
+     * spans whenever it is fewer than all of them.
+     */
+    const covered = b.count - b.withoutCost;
+    const partial = b.withoutCost > 0
+      ? ` It covers ${covered} of ${many(b.count, "holding")}: the other ${b.withoutCost} report no cost, and their ${money(b.withoutCostMV)} stands in the Current column beside this and on neither side of this ratio.`
+      : "";
     const formula = {
       title: `${bucketLabel(b.key)} — total return to date`,
-      excel: b.distributed > 0 ? "= (Current value + Cash returned − Invested) ÷ Invested" : "= (Current value − Invested) ÷ Invested",
-      plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.current)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.`,
-      worked: `${money(b.invested)} invested → ${money(b.current)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total`,
+      // The formula names the SET as well as the fields where the two differ:
+      // "Current value" over a row whose Current column covers more holdings
+      // than its Invested one is the same widened caption, in Excel's words.
+      excel: b.distributed > 0
+        ? `= (${b.withoutCost > 0 ? "Value of the costed holdings" : "Current value"} + Cash returned − Invested) ÷ Invested`
+        : `= (${b.withoutCost > 0 ? "Value of the costed holdings" : "Current value"} − Invested) ÷ Invested`,
+      plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.costedMV)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.${partial}`,
+      worked: `${money(b.invested)} invested → ${money(b.costedMV)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total${b.withoutCost > 0 ? ` · over ${covered} of ${b.count} holdings` : ""}`,
       auditHref: bucketHref(b),
     };
     return (
@@ -1043,7 +1111,7 @@ export function MorningCIO() {
                 <span className="mono text-slate-100 truncate pl-3" title={m.largestName ?? undefined}>
                   {m.largestName == null || m.largestPct == null ? DASH
                     : <><StockLink securityKey={m.largestKey} name={m.largestName} />
-                        {m.largestClass && m.largestClass !== "Equity" && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestClass}</span>}
+                        {m.largestBucket && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestBucket}</span>}
                         {" · "}{m.largestPct.toFixed(1)}%</>}
                 </span>
               </div>

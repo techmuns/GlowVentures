@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, dedupedPositions, isCompanyShare, excludedClasses, assetClassLabel } from "@/lib/analytics";
+import { sum, dedupedPositions, isCompanyShare, isPrivateClass, excludedClasses, assetClassLabel, unpriced } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
 import { DASH, absentTile } from "@/components/Absent";
@@ -46,8 +46,80 @@ export function DataRefresh() {
   const classified = sum(sectored.map((x) => x.marketValue));
   const coverage = shareMV > 0 ? (classified / shareMV) * 100 : null;
   const notCompany = excludedClasses(deduped, isCompanyShare);
-  const costNA = new Set(p.filter((x) => x.costUnavailable).map((x) => x.security)).size;
+
+  // A RATIO ONE ROW OWNS IS A STATEMENT ABOUT THAT ROW, AND MUST SAY SO.
+  //
+  // A single unsectored holding — the family's promoter stock, reported by a
+  // depository that prints no sector — is the overwhelming majority of this
+  // ratio's denominator. So the percentage and the row count beside it point
+  // opposite ways: the count says a good share of the names are classified and
+  // the percentage says almost none of the value is, and both are true of
+  // different things. A reader cannot reconcile them from what is on the tile.
+  // So the dominant row is NAMED with its share of the denominator, and the same
+  // ratio is struck again over everything else, which is the figure a reader can
+  // actually act on. Every number here is derived; the 50% trigger is a declared
+  // convention (one row owning more than half a denominator), stated so nobody
+  // reads it as a measured threshold.
+  const dominant = shareRows.length ? shareRows.reduce((a, b) => (b.marketValue > a.marketValue ? b : a)) : null;
+  const dominantPct = dominant && shareMV > 0 ? (dominant.marketValue / shareMV) * 100 : null;
+  const restRows = dominant ? shareRows.filter((x) => x !== dominant) : [];
+  const restMV = sum(restRows.map((x) => x.marketValue));
+  const restCoverage = restMV > 0
+    ? (sum(restRows.filter((x) => x.sector !== "Unclassified").map((x) => x.marketValue)) / restMV) * 100
+    : null;
+  const dominated = dominant !== null && dominantPct !== null && dominantPct >= 50;
+  const dominationNote = dominated && dominant && dominantPct !== null
+    ? `${dominant.security} alone is ${fmtFromBase(dominant.marketValue, { compact: true })} — ${dominantPct.toFixed(1)}% of that denominator${dominant.sector === "Unclassified" ? ", and it carries no sector" : ""} — so this percentage is very largely a statement about that one holding.`
+      + (restCoverage !== null ? ` Struck over the other ${restRows.length} rows it is ${restCoverage.toFixed(1)}% of ${fmtFromBase(restMV, { compact: true })}.` : "")
+    : "";
+
+  // COUNT WHAT THE BOOK CARRIES, NOT A FLAG NOTHING WRITES.
+  //
+  // This counted `x.costUnavailable` — a field that is optional on `Position`
+  // and which the generated book has NEVER set (`grep -c costUnavailable
+  // src/data/glowData.ts` returns 0). So it was 0, and this page — whose whole
+  // job is provenance and coverage — told a reader that nothing in the book is
+  // missing a cost, on a book where a cost-based figure cannot reach most of the
+  // market value. Morning CIO and the Portfolio Monitor read the composite test
+  // and report dozens from the same book.
+  //
+  // `isPriced` in analytics.ts IS that composite — the flag AND a positive cost
+  // AND a finite P&L and return — and `unpriced()` is its complement. It is
+  // struck on the CONSOLIDATED set because this is a book-wide coverage claim
+  // and a consolidated figure counts each dedupeGroup once.
+  //
+  // And the shortfall is stated in MONEY as well as in a count. One promoter row
+  // is most of it, so a bare name count reads as a rounding error against a book
+  // it in fact covers nearly all of — the same reason the money-weighted tile
+  // says which fraction of the book it covers rather than how many accounts.
+  const noCost = unpriced(deduped);
+  const noCostNames = new Set(noCost.map((x) => x.security)).size;
+  const noCostMV = sum(noCost.map((x) => x.marketValue));
+  const noCostNote = bookIsEmpty ? ""
+    : noCost.length
+      ? `${noCostNames} name${noCostNames === 1 ? "" : "s"} — ${noCost.length} of ${deduped.length} consolidated positions, ${fmtFromBase(noCostMV, { compact: true })} of ${fmtFromBase(portfolio.totalValue, { compact: true })} — report no usable cost basis, so no P&L or return figure covers them.`
+      : "Every position in this book carries a cost basis, so no P&L figure leaves anything out.";
+
   const withIsin = p.filter((x) => !!x.isin).length;
+
+  // THE PRIVATE VALUE IS MEASURED; THE PRIVATE-INSTRUMENT REGISTER IS EMPTY FOR
+  // A COMPLETELY DIFFERENT REASON, AND ONE MUST NOT GATE THE OTHER.
+  //
+  // `hasPrivate` asks whether `portfolio.privateMarkets` carries a fund-of-funds
+  // structure with its own TVPI and DPI. No statement in this drop reports one,
+  // so all six arrays are empty — and gating the MONEY on that printed "Private
+  // —" and "Private book —" over the book's measured private value, under a
+  // comment naming the cause as "this book has no private holding at all". Every
+  // AIF folio in the book contradicts it. That is an em dash over a measured
+  // non-zero figure with the wrong reason attached: the exact inversion of the
+  // standing rule, and a reader acts on it by concluding the family holds
+  // nothing private.
+  //
+  // The money comes off the positions. `null` here means the private COLLECTION
+  // is empty — no holding in a private class at all — which is the one case that
+  // must not render as a zero.
+  const privateRows = deduped.filter(isPrivateClass);
+  const privateMV = privateRows.length ? portfolio.privateValue : null;
   const pm = portfolio.privateMarkets;
   const fundCount = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length + pm.debtFunds.length;
   const hasPrivate = fundCount + pm.closedFunds.length + pm.startups.length > 0;
@@ -102,7 +174,7 @@ export function DataRefresh() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Consolidated NAV" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.totalValue, { compact: true })}
           sub={bookIsEmpty ? "no statements ingested"
-            : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}`}
+            : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${privateMV === null ? DASH : fmtFromBase(privateMV, { compact: true })}`}
           icon={<Database className="h-4 w-4" />} />
         <StatTile label="Positions" value={p.length}
           sub={`${new Set(p.map((x) => x.securityKey)).size} names · ${new Set(p.map((x) => ownerOf(accIdx, x))).size} entities`}
@@ -119,12 +191,17 @@ export function DataRefresh() {
               shareRows.length === 0
                 ? "no company shares in this book to classify"
                 : "company shares are held but none carries a market value to weight by",
-              `${costNA} name${costNA === 1 ? "" : "s"} across the whole book report no cost.`,
+              noCostNote || undefined,
             )} />
         ) : (
           <StatTile label="Sector coverage" value={`${coverage.toFixed(1)}%`}
-            sub={`of company-share value · ${sectored.length} of ${shareRows.length} rows carry one`}
-            hint={`Company shares only — a GICS sector is a property of a company, and a fund unit, an ETF or a cash row has none. ${costNA} name${costNA === 1 ? "" : "s"} across the whole book report no cost.`}
+            sub={`of company-share value · ${sectored.length} of ${shareRows.length} rows carry one`
+              + (dominated && dominantPct !== null ? ` · one holding is ${dominantPct.toFixed(0)}% of that value` : "")}
+            hint={[
+              "Company shares only — a GICS sector is a property of a company, and a fund unit, an ETF or a cash row has none.",
+              dominationNote,
+              noCostNote,
+            ].filter(Boolean).join(" ")}
             icon={<ShieldCheck className="h-4 w-4" />} />
         )}
       </div>
@@ -174,16 +251,29 @@ export function DataRefresh() {
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card title="Coverage & quality">
           <ul className="space-y-2 text-sm">
-            <Row label="Listed book" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.listedValue, { compact: true })} />
-            {/* A private book of ₹0 claims private holdings worth nothing. This
-                book has no private holding at all, so the figure is absent. */}
-            <Row label="Private book" value={hasPrivate ? fmtFromBase(portfolio.privateValue, { compact: true }) : DASH}
-              muted={!hasPrivate} />
+            <Row label="Listed book" value={bookIsEmpty ? DASH : fmtFromBase(portfolio.listedValue, { compact: true })} />
+            {/* THE MEASURED PRIVATE VALUE, NOT THE INSTRUMENT REGISTER. A
+                private book of zero claims private holdings worth nothing; an
+                em dash over a book full of AIF folios claims there are none.
+                The second is what this row actually did, and it is the same
+                failure in the other direction. The dash is now reserved for the
+                one case that earns it: no holding here is in a private class. */}
+            <Row label="Private book"
+              value={bookIsEmpty ? DASH : privateMV === null ? "no holding here is in a private class" : fmtFromBase(privateMV, { compact: true })}
+              muted={privateMV === null} />
             <Row label="Sector classification" value={coverage === null ? "no company shares to classify yet" : `${coverage.toFixed(1)}% of company-share value`} />
             <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length} />
-            <Row label="Cost-unavailable names" value={`${costNA} (excluded from P&L)`} />
+            {/* Stated in MONEY as well as in a count. One promoter row is most
+                of the shortfall, so a bare name count reads as a rounding error
+                against a book it in fact covers nearly all of. */}
+            <Row label="No cost basis (excluded from P&L)"
+              value={bookIsEmpty ? DASH
+                : noCost.length
+                  ? `${noCostNames} names · ${noCost.length} of ${deduped.length} positions · ${fmtFromBase(noCostMV, { compact: true })}`
+                  : "none — every position carries a cost"}
+              muted={!noCost.length} />
             <Row label="Private instruments"
-              value={hasPrivate ? `${pm.startups.length} startups · ${fundCount} funds/cos` : "None in this book"}
+              value={hasPrivate ? `${pm.startups.length} startups · ${fundCount} funds/cos` : "None registered"}
               muted={!hasPrivate} />
             <Row label="NAV snapshots" value={portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"} muted={!portfolio.navHistory.length} />
           </ul>
@@ -198,6 +288,20 @@ export function DataRefresh() {
               positions. A GICS sector is a property of a company, and this book carries no look-through behind a fund,
               so {notCompany.map((c) => `${assetClassLabel(c.key)} ${fmtFromBase(c.mv, { compact: true })}`).join(" · ")} sit
               outside both sides of the ratio rather than being counted as unclassified.
+            </p>
+          )}
+          {!hasPrivate && (
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              The private-instrument register — a fund-of-funds structure carrying its own TVPI and DPI — is empty
+              because no statement in this drop reports one, not because the family holds nothing private. What they
+              do hold in private classes is carried as ordinary positions and is the Private book figure above.
+            </p>
+          )}
+          {!bookIsEmpty && noCost.length > 0 && (
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              {noCostNote} A depository reports what an account holds and not what it paid, and a fund's own account
+              statement values the folio without pricing the units, so those rows are left out of every P&amp;L rather
+              than counted at a cost of zero — which would report their whole market value as profit.
             </p>
           )}
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">

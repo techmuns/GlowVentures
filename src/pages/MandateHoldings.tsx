@@ -348,7 +348,8 @@ export function MandateHoldings() {
               <p className="text-[12.5px] leading-relaxed text-slate-400">
                 <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is the
                 family's own account — nothing in it is chosen by a discretionary manager, so there is no mandate to
-                open here. What it holds is filed on the holdings tables by what each row IS:
+                open here.
+                {ownBuckets.length > 0 ? " What it holds is filed on the holdings tables by what each row IS:" : ""}
               </p>
               {ownBuckets.length > 0 ? (
                 <ul className="mt-2 grid gap-1 text-[12.5px] text-slate-400">
@@ -374,8 +375,9 @@ export function MandateHoldings() {
                 </p>
               ) : rows.length > 0 ? (
                 <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
-                  None of it is {DIRECT_EQUITY_BUCKET}: not one row on this statement is a share in a company, so that
-                  heading does not cover this account at all. Each row is filed under its own class above.
+                  None of it is {DIRECT_EQUITY_BUCKET}: no row on this statement is a company share, so that heading
+                  does not cover this account at all. Each row sits under its own class above, which is where the
+                  holdings tables carry it.
                 </p>
               ) : null}
             </>
@@ -421,6 +423,32 @@ export function MandateHoldings() {
   const zeroValue = rows.filter((r) => r.marketValue === 0);
   const zeroPnlCash = rows.filter((r) => r.unrealizedPnL === 0 && r.assetClass === "Cash");
   const zeroPnlHeld = rows.filter((r) => r.unrealizedPnL === 0 && r.assetClass !== "Cash");
+
+  /**
+   * THE TIE-OUT, AS TWO FIGURES ON TWO BASES RATHER THAN ONE FIGURE WITH TWO
+   * CLAIMS ON IT.
+   *
+   * `stmtMV` is the sum of the rows above. `printedTotal` is what the manager
+   * printed on the document those rows came from. They differ on all ten
+   * mandates here, and the gap is NAMED as accrued income only where the same
+   * document's own accrued column reproduces it — the reconciler's rule, which
+   * is to reproduce a basis difference and never to widen a tolerance until it
+   * fits. The ₹1 band is the printing precision the reconciliation already
+   * classifies as `rounding`, not a licence: V.E.C 128005 lands ₹0.15 out on a
+   * ₹20.29 Cr total and Molecule's ₹21,451.35 misses its accrued column by
+   * ₹75,968, so the first is named and the second explicitly is not.
+   */
+  const printedTotal = source.printedTotal;
+  const printedGap = printedTotal !== null && stmtMV !== null ? printedTotal - stmtMV : null;
+  const gapIsAccrual = printedGap !== null && source.accruedIncome !== null
+    && Math.abs(printedGap - source.accruedIncome) <= 1;
+  /**
+   * AND THE DOCUMENT'S OWN DERIVED TOTAL IS THE CHECK ON THE ROWS THEMSELVES.
+   * The book is built from this document, so the two must agree; if they ever
+   * stop, the rows above are not that document's rows and the page has to say
+   * so rather than print a tie-out that does not hold.
+   */
+  const derivedGap = source.derivedTotal !== null && stmtMV !== null ? source.derivedTotal - stmtMV : null;
 
   const term = q.trim().toLowerCase();
   const shown = term
@@ -490,7 +518,7 @@ export function MandateHoldings() {
           sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on cost"}
           icon={<TrendingUp className="h-4 w-4" />} />
         <Kpi label="Holdings" value={fmtNum(rows.length)}
-          sub={`in one mandate · ${MANDATE_BUCKET.toLowerCase()}`}
+          sub={`in one mandate · ${MANDATE_BUCKET}`}
           icon={<Layers className="h-4 w-4" />} />
       </div>
 
@@ -586,33 +614,77 @@ export function MandateHoldings() {
           )}
           {stmtMV !== null && (
             <>
-              {money(stmtMV)} is <span className="text-slate-400">this account's own statement total</span>, as{" "}
-              {account.provider} printed it on {fmtDate(account.asOf)}: the shares the manager chose plus the cash
-              sleeve it runs beside them. That is why the rows above add to the account, and it is what makes this page
-              checkable against{" "}
+              {money(stmtMV)} is <span className="text-slate-400">this account's own statement total, on the basis
+              this book derives</span> — the sum of every row above{basis === "LIVE" ? " at its statement mark" : ""},
+              and not a figure copied from the statement's own total line. That is why the rows add to it, and it is
+              what makes this page checkable against{" "}
               <Link to={sourceHref} className="text-champagne-400 hover:underline">the source document</Link>.
               {basis === "LIVE" && Math.abs(mv - stmtMV) >= 1 && (
                 <> The Total shown is {money(mv)} because live prices are applied; the statement figure is unchanged.</>
               )}
-              {docKey === null && (
+              {/* THE MANAGER'S OWN PRINTED TOTAL, BESIDE IT AND NOT INSTEAD OF
+                  IT. This sentence used to attribute the figure above to the
+                  manager, and a reader who followed the link to check found a
+                  larger number with nothing explaining it. */}
+              {printedGap !== null && (
+                Math.abs(printedGap) < 1 ? (
+                  <> That document prints <span className="text-slate-400">{full(printedTotal)}</span> as this
+                    account's portfolio total, which is the same figure to the rupee.</>
+                ) : (
+                  <> That document prints <span className="text-slate-400">{full(printedTotal)}</span> as this
+                    account's portfolio total — {full(Math.abs(printedGap))}{" "}
+                    {printedGap > 0 ? "higher" : "lower"}
+                    {gapIsAccrual
+                      ? <>, because the manager totals an income-inclusive basis: the accrued income that document's
+                        rows carry in a column of their own is folded into that figure and not into this one.
+                        Reproduced from that same accrued column to the rupee, not assumed.</>
+                      : <>. What separates the two bases is not derivable from that document here, so this page does
+                        not name it — the extraction reconciliation is where that difference is classified.</>}
+                  </>
+                )
+              )}
+              {source.docLoading && (
+                <> The manager's own printed total is still being read from the archive.</>
+              )}
+              {source.docUnreadable && (
+                <> The archive answered with the manifest but not with that document, so the manager's own printed
+                  total is not shown here — the figure above is the book's sum of the rows above either way.</>
+              )}
+              {!source.docLoading && !source.docUnreadable && !!source.docKey && printedTotal === null && (
+                <> That document prints no portfolio total of its own, so there is nothing on it to check this sum
+                  against but the rows, which are the rows above.</>
+              )}
+              {derivedGap !== null && Math.abs(derivedGap) >= 1 && (
+                <> That document's own derived total is {full(source.derivedTotal)}, which this sum does not match:
+                  the book carries {full(stmtMV)} for this account, {full(Math.abs(derivedGap))} apart. The rows above
+                  are the book's, and that difference is a defect rather than a basis.</>
+              )}
+              {source.docKey === null && (
                 <> The archive did not respond, so that link opens the archive index with this account's number already
                   in the search box rather than naming a document it could not confirm.</>
               )}
-              {docKey === "" && (
+              {source.docKey === "" && (
                 <> No holdings document for this account is in the archive manifest, so that link opens the archive
                   index with this account's number already in the search box.</>
               )}
             </>
           )}
-          {(zeroValue.length > 0 || zeroPnl.length > 0) && (
+          {(zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) && (
             <>
               {" "}Every ₹0 above is a measured figure and keeps its zero:{" "}
-              {zeroPnl.length > 0 && (
-                <>{zeroPnl.length} {zeroPnl.length === 1 ? "row carries" : "rows carry"} no unrealised P&amp;L because a
-                  cash balance has none — the arithmetic, not a missing number</>
+              {zeroPnlCash.length > 0 && (
+                <>{zeroPnlCash.length} {zeroPnlCash.length === 1 ? "row carries" : "rows carry"} no unrealised
+                  P&amp;L because a cash balance has none — the arithmetic, not a missing number</>
+              )}
+              {zeroPnlHeld.length > 0 && (
+                <>{zeroPnlCash.length > 0 ? ", " : ""}{zeroPnlHeld.length}{" "}
+                  {zeroPnlHeld.length === 1 ? "holding is" : "holdings are"} marked exactly at cost
+                  ({zeroPnlHeld.map((r) => r.security).join(", ")}), so{" "}
+                  {zeroPnlHeld.length === 1 ? "its gain is" : "their gains are"} a computed zero — not a cash line
+                  and not a missing cost</>
               )}
               {zeroValue.length > 0 && (
-                <>{zeroPnl.length > 0 ? ", and " : ""}{zeroValue.length}{" "}
+                <>{(zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) ? ", and " : ""}{zeroValue.length}{" "}
                   {zeroValue.length === 1 ? "row is" : "rows are"} worth nothing on the statement
                   ({zeroValue.map((r) => r.security).join(", ")}), so {zeroValue.length === 1 ? "its" : "their"} weight
                   is a true 0.0%</>
@@ -632,7 +704,7 @@ export function MandateHoldings() {
         <p className="text-[12.5px] leading-relaxed text-slate-400">
           Every share above is ordinary listed equity — the family owns the shares, and{" "}
           <span className="font-medium text-slate-300">{account.provider}</span> decides them under a discretionary
-          mandate. That is why they are grouped here under {MANDATE_BUCKET.toLowerCase()} rather than under{" "}
+          mandate. That is why they are grouped here under {MANDATE_BUCKET} rather than under{" "}
           {DIRECT_EQUITY_BUCKET}, which on the holdings tables now means what the words say: shares the family bought
           in its own demat or broking account.
         </p>

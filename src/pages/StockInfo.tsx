@@ -6,7 +6,7 @@ import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
-  sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, assetClassLabel,
+  sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
@@ -149,6 +149,52 @@ export function StockInfo() {
       mv: r.marketValue,
     }))
     .sort((a, b) => b.mv - a.mv), [rows, accIdx]);
+  /**
+   * WHAT THE MANDATE ROWS ACTUALLY ARE — because the line above the fold and the
+   * mandate chip's tooltip each name a NOUN, and a typed noun is a claim.
+   *
+   * `holdingBucket` puts a mandate's WHOLE account in the mandate bucket, cash
+   * sleeve included, and that is deliberate: the mandate is worth what its own
+   * statement says it is worth. So 18 of this book's mandate-held rows are not
+   * shares at all — ₹9.51 Cr of `Cash` across the ten mandates, plus Cash
+   * Rec/Payable, a liquid sweep and a TDS receivable — and the mandate page
+   * links every one of them to `/stock/<securityKey>`. Arriving here from that
+   * link, a hardcoded "the family owns these shares" describes a ₹9.51 Cr
+   * balance as shares, on the same screen whose research card says in as many
+   * words that this holding is a balance and not a share in a company. Two
+   * contradictory claims about one figure, and the false one is the specific
+   * one a reader believes.
+   *
+   * So the noun is DERIVED from the rows the sentence actually covers — the
+   * mandate-held subset, not the page's first row and not its asset class,
+   * because one name could in principle be a share in one account and something
+   * else in another and the sentence speaks only for the mandates.
+   */
+  const mandateRows = useMemo(
+    () => rows.filter((r) => isMandateHeld(engagementOf(accIdx, r) || null)),
+    [rows, accIdx]);
+  const mandateAllShares = mandateRows.length > 0 && mandateRows.every(isCompanyShare);
+  const mandateNoShares = mandateRows.length > 0 && !mandateRows.some(isCompanyShare);
+  /** Where none of them is a share and they are all ONE class, the sentence can
+   *  name that class instead of reaching for a generic noun. Mixed classes fall
+   *  back to the neutral wording rather than picking one to speak for the rest. */
+  const mandateClass = mandateNoShares && new Set(mandateRows.map((r) => r.assetClass)).size === 1
+    ? assetClassLabel(mandateRows[0].assetClass)
+    : null;
+  /** The mandate bucket's tooltip, on the same derivation and for the same
+   *  reason: "Company shares, held under a discretionary mandate" is true of
+   *  Jammu & Kashmir Bank and false of the cash sleeve sitting in the same
+   *  bucket by design. */
+  const mandateBucketTip = mandateAllShares
+    ? "Company shares, held under a discretionary mandate. The holdings tables file them under the manager who chose them, not with the shares the family bought itself."
+    : mandateNoShares
+      ? `${mandateClass ?? "Not a company share"} — held inside a discretionary mandate. The holdings tables file a mandate's WHOLE account under its manager, the balances beside the shares included, so the mandate's total ties to the statement it came from. That is why this sits under ${MANDATE_BUCKET} rather than under its own class.`
+      : `Held inside a discretionary mandate. The holdings tables file a mandate's whole account under its manager — the shares it holds and the balances beside them — rather than splitting one statement across classes.`;
+  /** What one unit of this holding IS, for the Quantity tile's caption. */
+  const qtyNoun = assetClass === "Cash" ? "balance"
+    : assetClass === "Equity" || assetClass === "Unlisted" ? "shares held"
+    : assetClass ? "units held"
+    : "held";
   const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
   const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
   const NOT_A_COMPANY_LABEL: Record<string, string> = {
@@ -246,7 +292,7 @@ export function StockInfo() {
             {buckets.map(([k]) => (
               <Pill key={k} tone={k === MANDATE_BUCKET || k === DIRECT_EQUITY_BUCKET || k === UNROUTED_EQUITY_BUCKET ? "info" : "core"}>
                 <span title={k === MANDATE_BUCKET
-                  ? "Company shares, held under a discretionary mandate. The holdings tables file them under the manager who chose them, not with the shares the family bought itself."
+                  ? mandateBucketTip
                   : `How the holdings tables group this holding — ${bucketLabel(k)}.`}>{bucketLabel(k)}</span>
               </Pill>
             ))}
@@ -323,7 +369,17 @@ export function StockInfo() {
       {mandates.length > 0 && (
         <p className="mb-4 text-[12.5px] leading-relaxed text-slate-400">
           <span className="font-medium text-slate-300">Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
-          {" — the family owns these shares and the manager decides them: "}
+          {/* THE NOUN IS DERIVED, NOT TYPED — see `mandateAllShares` above. This
+              sentence renders for every mandate-held row, and a mandate's bucket
+              takes its whole account, so "these shares" was printed over the
+              cash sleeve, the liquid sweep and a TDS receivable as well as over
+              Jammu & Kashmir Bank. A mixed set gets the neutral wording rather
+              than one of its classes speaking for the rest. */}
+          {mandateAllShares
+            ? " — the family owns these shares and the manager decides them: "
+            : mandateNoShares && mandateClass
+              ? ` — this is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose: `
+              : " — the family owns these holdings and the manager runs the accounts they sit in: "}
           {mandates.map((m, i) => (
             <span key={m.accountId}>
               {i > 0 && ", "}
@@ -339,7 +395,12 @@ export function StockInfo() {
       {/* KPI strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Holding value" value={<Auditable to={ledgerHref(name)} title="Holding value — trace to the ledger">{fmtFromBase(mv, { compact: true })}</Auditable>} sub={`${weight.toFixed(1)}% of book`} icon={<Wallet className="h-4 w-4" />} />
-        <Kpi label="Quantity" value={fmtNum(qty)} sub="shares held" icon={<Layers className="h-4 w-4" />} />
+        {/* THE SAME TYPED NOUN, ONE TILE OVER. `/stock/:securityKey` serves every
+            holding, so "shares held" was printed under the quantity of an AIF
+            folio's units and under a mandate's cash balance. It comes off the
+            asset class the row carries, and an unstated class gets the noun that
+            claims nothing. */}
+        <Kpi label="Quantity" value={fmtNum(qty)} sub={qtyNoun} icon={<Layers className="h-4 w-4" />} />
         <Kpi label="Avg cost" value={<span className="mono">{price(avgCost)}</span>} sub={`invested ${money(cost)}`} icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}><Auditable to={ledgerHref(name)} title="Unrealised P&L — trace to the ledger">{fmtFromBase(pnl, { compact: true, sign: true })}</Auditable></span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this

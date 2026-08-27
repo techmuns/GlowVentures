@@ -42,7 +42,12 @@ const KEY = "glow:knowledge/v1";
 // v2 added the note-level IPS bucket and review date. A v1 export imports
 // cleanly — both default to unset, which is what a file written before the
 // fields existed actually says.
-export const SCHEMA_VERSION = 2;
+//
+// v3 reworded ONE tag: the asset class `Equity` is stored as `Company Shares`,
+// the word the holdings tables render for that class now that `Direct Equity`
+// names a narrower set beside it. A v1 or v2 export imports cleanly too, and
+// keeps the tag rather than losing it — see `RETIRED_ASSET_CLASS_TAGS`.
+export const SCHEMA_VERSION = 3;
 
 /** The bucket keys, as a plain array for `oneOf` to validate against. */
 const IPS_BUCKET_KEYS = IPS_BUCKETS.map((b) => b.key);
@@ -71,14 +76,43 @@ export const GEOGRAPHIES = ["India", "Global"] as const;
 export type Geography = (typeof GEOGRAPHIES)[number];
 
 /**
- * Kept identical to `AssetClass` in `lib/types.ts` ON PURPOSE, so a note and a
- * holding filter on the same vocabulary. PMS is absent here for the same reason
- * it is absent there: it is how an account is RUN, not what a thing IS.
+ * ONE TAG PER ASSET CLASS, in the words the holdings tables render.
+ *
+ * This mirrors `AssetClass` in `lib/types.ts` ON PURPOSE, so a note and a
+ * holding are filed against one vocabulary. PMS is absent here for the same
+ * reason it is absent there: it is how an account is RUN, not what a thing IS.
+ *
+ * `Equity` WAS THE ONE VALUE THAT COULD BE READ TWO WAYS. The holdings tables
+ * now carry two sets whose names are a word apart — `assetClassLabel("Equity")`
+ * is **Company Shares** and answers *what is this?*, `DIRECT_EQUITY_BUCKET` is
+ * **Direct Equity** and answers *who chose it?* — and a tag reading plain
+ * "Equity" sits between them naming neither. This page renders its tags as the
+ * bare stored string, so that ambiguity was on screen and not merely in the
+ * model. A note is about a KIND of asset and never about who picked it, so the
+ * tag takes the class word: a note on a company a manager holds for this family
+ * is a note about company shares exactly like one on a company they bought
+ * themselves.
+ *
+ * It is TYPED here rather than derived from `assetClassLabel`, deliberately.
+ * This is a STORED value, and a store whose vocabulary follows a screen label
+ * would silently drop every tag the next time that label is reworded — which is
+ * the failure this rename had to avoid, not repeat. A future rename adds an
+ * entry to `RETIRED_ASSET_CLASS_TAGS` below instead.
  */
 export const NOTE_ASSET_CLASSES = [
-  "Equity", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash",
+  "Company Shares", "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash",
 ] as const;
 export type NoteAssetClass = (typeof NOTE_ASSET_CLASSES)[number];
+
+/**
+ * Spellings this vocabulary has retired, mapped forward on the way in.
+ *
+ * `oneOfMany` DROPS anything outside the vocabulary, so renaming a tag without
+ * this would quietly delete it from every note the family had already written —
+ * in `localStorage` and in every export file they have ever saved. The word
+ * changed; what the tag MEANS did not, so the note keeps it.
+ */
+const RETIRED_ASSET_CLASS_TAGS: Record<string, NoteAssetClass> = { Equity: "Company Shares" };
 
 export type KnowledgeNote = {
   id: string;
@@ -166,11 +200,21 @@ export const emptyNote = (): KnowledgeNote => ({
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 
-/** Keep only values that are in the declared vocabulary, deduped and ordered. */
-function oneOfMany<T extends string>(v: unknown, allowed: readonly T[]): T[] {
+/**
+ * Keep only values that are in the declared vocabulary, deduped and ordered.
+ *
+ * `alias` maps a RETIRED spelling forward before the check, so a vocabulary that
+ * rewords a tag carries the family's existing notes across instead of silently
+ * dropping the tag from each of them.
+ */
+function oneOfMany<T extends string>(v: unknown, allowed: readonly T[], alias: Record<string, T> = {}): T[] {
   if (!Array.isArray(v)) return [];
   const seen = new Set<T>();
-  for (const x of v) if (typeof x === "string" && (allowed as readonly string[]).includes(x)) seen.add(x as T);
+  for (const x of v) {
+    if (typeof x !== "string") continue;
+    const val = (alias[x] ?? x) as T;
+    if ((allowed as readonly string[]).includes(val)) seen.add(val);
+  }
   return allowed.filter((a) => seen.has(a));
 }
 
@@ -215,7 +259,7 @@ export function coerceNote(raw: unknown): KnowledgeNote | null {
     occurredOn: isoDate(o.occurredOn),
     participants: str(o.participants),
     manager: str(o.manager),
-    assetClasses: oneOfMany(o.assetClasses, NOTE_ASSET_CLASSES),
+    assetClasses: oneOfMany(o.assetClasses, NOTE_ASSET_CLASSES, RETIRED_ASSET_CLASS_TAGS),
     geographies: oneOfMany(o.geographies, GEOGRAPHIES),
     themes: tags(o.themes),
     risk: oneOf(o.risk, RISK_LEVELS),

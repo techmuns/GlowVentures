@@ -3,8 +3,11 @@
 // through src/data/nseSymbols.json — then fans out across ALL of them (chunked,
 // see feedFetch) to the server-side proxy at /api/announcements.
 //
-// Only listed names reach this feed at all. AIF/PMS units and unlisted holdings
-// have no exchange filings and are simply absent, not shown as having none.
+// Only company shares reach this feed at all — whoever chose them. A fund unit
+// (AIF folio, mutual-fund scheme, ETF) and an unlisted holding have no exchange
+// filings of their own and are simply absent, not shown as having none. A share
+// a discretionary manager picked files with the exchange exactly like one the
+// family bought in its own demat, so both are here.
 import type { Portfolio } from "./types";
 import { symbolFor } from "./quotes";
 import { fetchFeedChunked } from "./feedFetch";
@@ -40,12 +43,17 @@ export function topHoldingsForAnnouncements(portfolio: Portfolio, n?: number): A
   const map = new Map<string, { name: string; key: string; symbol: string | null; mv: number }>();
   let total = 0;
   for (const p of portfolio.positions) {
-    // Exchange announcements are a company's own filings, so this list is
-    // direct equity — the same rule as `topHoldingsForNews`. The symbol filter
-    // below already dropped the fund units in practice (no NSE listing resolves
-    // for one), but it dropped them AFTER they had been counted into `total`,
-    // which weighed every real company against a denominator including ₹282 Cr
-    // of AIF folios it was never selected from.
+    // Exchange announcements are a COMPANY's own filings, so this list narrows on
+    // `isCompanyShare` — the class axis, and deliberately NOT the narrower
+    // `Direct Equity` bucket the holdings tables group on. A company files with
+    // the exchange whether the family or its manager bought the shares; dropping
+    // the mandate-held names here would hide the filings of most of the
+    // companies this book actually owns.
+    //
+    // The symbol filter below already dropped the fund units in practice (no NSE
+    // listing resolves for one), but it dropped them AFTER they had been counted
+    // into `total`, which weighed every real company against a denominator
+    // including the AIF folios and fund schemes it was never selected from.
     if (!isCompanyShare(p)) continue;
     total += p.marketValue;
     const e = map.get(p.securityKey)
