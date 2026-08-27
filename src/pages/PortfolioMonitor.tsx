@@ -1115,49 +1115,6 @@ export function PortfolioMonitor() {
               </tfoot>
             </table>
           </div>
-          {uncostedMV > 0 && (
-            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              <span className="font-medium text-slate-400">Invested and Unrealised P&amp;L do not add up to Market value,
-              and are not meant to.</span> They are struck over the {costedCount} of {heldCount} positions whose statement
-              reports a cost — {money(costedMV)} of the {money(totMV)} in the Market value column, and
-              {" "}{money(totCost)} and {money(totPnL, true)} make {money(costedMV)} across exactly those.
-              {/* "and … make" rather than "+ … =": `money(…, true)` already carries the
-                  sign, so a literal plus printed "₹471.9 Cr + +₹72.5 Cr", and dropping
-                  the sign instead would render a LOSS as though it were added. */}
-              The other {heldCount - costedCount} position{heldCount - costedCount === 1 ? "" : "s"},
-              worth {money(uncostedMV)}, are held through depository accounts: a depository records what is
-              held and never what was paid for it. Their cost is absent rather than zero — entered as zero it
-              would report the whole of that {money(uncostedMV)} as profit.
-            </p>
-          )}
-          {/* THE REALISED COLUMN DOES NOT ADD TO ITS OWN FOOTER, AND HERE IS BY
-              HOW MUCH. Rendered only when there is a gap to name: with no mandate
-              on screen, or none of them holding a name that realised anything,
-              the column and the footer agree and there is nothing to say. */}
-          {realisedSplit && realisedSplit.inMandates !== null && (
-            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              <span className="font-medium text-slate-400">The Realised P&amp;L column does not add up to the Realised
-              P&amp;L total, and the difference is the mandates.</span> {/* IT IS NOT THE WHOLE
-              BOOK'S REALISED GAIN, and the sentence said it was. This total sums over the
-              keys the ROWS carry, and a row exists only for a name still HELD — so every
-              name sold OUT of the book entirely is in neither the column nor the footer.
-              Capital Gains is struck on the capital-gain statements' own printed totals,
-              which is the canonical primitive; a caption asserting this figure is complete
-              sends a reader to reconcile two numbers that were never the same measurement.
-              A confidently wrong caption is worse than the un-named gap it replaced. */}
-              The total covers the names this table still shows;
-              {" "}{money(realisedSplit.inMandates, true)} of it was realised on {realisedSplit.names} name
-              {realisedSplit.names === 1 ? "" : "s"} held inside the PMS mandates above, and those rows
-              show {DASH}. A name sold out of the book entirely has no row here at all, so its realised
-              gain is in neither the column nor this total —{" "}
-              <Link to="/capital-gains" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">Capital Gains</Link>{" "}
-              is struck on the statements&rsquo; own printed totals and is the figure to trust for the book. A realised figure is reported
-              per security across the whole book, and these managers hold the same names in more than one mandate, so
-              putting a name&rsquo;s whole realised gain on one mandate row would count it twice.
-              {" "}<Link to="/capital-gains" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">Capital Gains</Link>,
-              or a mandate&rsquo;s own drill-down, carries the per-account figures.
-            </p>
-          )}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
