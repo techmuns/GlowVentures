@@ -18,10 +18,10 @@ export const BOOK_AS_OF = "2026-08-13";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-13",
-  "listedValue": 127092823491.11,
+  "listedValue": 3580403826.11,
   "privateValue": 3523475405.05,
-  "totalValue": 130616298896.16,
-  "positionsCount": 372,
+  "totalValue": 7103879231.16,
+  "positionsCount": 371,
   "entitiesCount": 6,
   "startupsCount": 0,
   "accountsCount": 49
@@ -4686,30 +4686,6 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": null,
     "marketValue": 26252050,
-    "unrealizedPnL": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null
-  },
-  {
-    "securityKey": "polycab-india-limited-eq",
-    "security": "POLYCAB INDIA LIMITED - EQ",
-    "symbol": null,
-    "isin": "INE455K01017",
-    "accountId": "icici-bank-nsdl-demat-49794950",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Equity",
-    "quantity": 13901229,
-    "avgCost": null,
-    "currentPrice": null,
-    "costBasis": null,
-    "marketValue": 123512419665,
     "unrealizedPnL": null,
     "returnPct": null,
     "stCostBasis": null,
@@ -9480,6 +9456,41 @@ export const BOOK_POSITIONS: Position[] = [
     "marketValue": 14385008,
     "unrealizedPnL": 1924802.62,
     "returnPct": 15.45,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  }
+];
+
+/**
+ * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter
+ * holding, carried in the archive but summed into NO book total, split,
+ * allocation, sector, entity or holdings table. It is deliberately ABSENT
+ * from BOOK_POSITIONS and BOOK_SUMMARY above; the `/polycab` route is its only
+ * reader. See RINGFENCED_SECURITY_KEYS in scripts/build-book.mjs and
+ * docs/BOOK-REPORT.md. Folding it back into the book is a one-line change.
+ */
+export const BOOK_POLYCAB: Position[] = [
+  {
+    "securityKey": "polycab-india-limited-eq",
+    "security": "POLYCAB INDIA LIMITED - EQ",
+    "symbol": null,
+    "isin": "INE455K01017",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "quantity": 13901229,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 123512419665,
+    "unrealizedPnL": null,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,

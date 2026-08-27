@@ -7,8 +7,8 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 1,30,61,62,98,896.16 |
-| Positions | 372 |
+| Consolidated market value | 7,10,38,79,231.16 |
+| Positions | 371 |
 | Accounts | 49 |
 | Owners | 6 |
 | Newest as-of | 2026-08-13 |
@@ -33,7 +33,7 @@ Generated — **do not edit by hand**.
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
-| 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 12 | 1,24,15,02,20,776.15 |
+| 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 11 | 63,78,01,111.15 |
 | 175962 | India SME Investments | Ajay Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 0 | 0 |
@@ -71,7 +71,7 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 22 | 178 | 1,27,00,78,14,939.55 |
+| Ajay Jaisinghani | 22 | 177 | 3,49,53,95,274.55 |
 | Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
 | Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
 | Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
@@ -96,22 +96,38 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 
 Together they carry **8,55,57,677.53** across 5 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
 
+## Ring-fenced: the promoter holding, on its own page
+
+Carried in the archive and OUT of every total above — the consolidated market
+value, the listed/private split, and every allocation, sector, entity and holdings
+table. This is the family's PROMOTER stock: the statement says the account holds
+it, so it is not dropped, but it dwarfs the managed book and the family's own
+consolidated review does not carry it, so the family asked for it on the Polycab
+page alone. `BOOK_POLYCAB` is its only reader; remove its key from
+`RINGFENCED_SECURITY_KEYS` in build-book.mjs to fold it back into the book.
+
+| Security | Holder | Account | As of | Shares | Market value |
+| --- | --- | --- | --- | ---: | ---: |
+| POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
+
+Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated market value above.
+
 ## Sector allocation
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 1,29,60,94,49,766.55 | 99.23% |
-| Financials | 25,85,86,623.95 | 0.20% |
-| Health Care | 19,08,15,090.8 | 0.15% |
-| Consumer Discretionary | 18,37,36,315.22 | 0.14% |
-| Industrials | 14,49,38,189.09 | 0.11% |
-| Cash | 11,57,87,076.72 | 0.09% |
-| Information Technology | 7,15,96,197.78 | 0.05% |
-| Materials | 2,35,59,866.25 | 0.02% |
-| Consumer Staples | 2,28,13,806.84 | 0.02% |
-| Communication Services | 1,10,42,228.2 | 0.01% |
-| Utilities | 99,62,509.52 | 0.01% |
-| Real Estate | 57,37,600 | 0.00% |
+| Unclassified | 6,09,70,30,101.55 | 85.83% |
+| Financials | 25,85,86,623.95 | 3.64% |
+| Health Care | 19,08,15,090.8 | 2.69% |
+| Consumer Discretionary | 18,37,36,315.22 | 2.59% |
+| Industrials | 14,49,38,189.09 | 2.04% |
+| Cash | 11,57,87,076.72 | 1.63% |
+| Information Technology | 7,15,96,197.78 | 1.01% |
+| Materials | 2,35,59,866.25 | 0.33% |
+| Consumer Staples | 2,28,13,806.84 | 0.32% |
+| Communication Services | 1,10,42,228.2 | 0.16% |
+| Utilities | 99,62,509.52 | 0.14% |
+| Real Estate | 57,37,600 | 0.08% |
 
 ## Unclassified sectors
 
@@ -372,8 +388,9 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: bank-book (no date) superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-unknown-bank-book`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
+- 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
 - navHistory is EMPTY: the corpus carries an opening and a closing portfolio value per account and nothing between them. Two points are not a series; interpolating between them would draw a path nothing measured.
-- unrealised short/long-term split is populated on 3 of 372 position(s), across 1 of 49 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 371 position(s), across 1 of 49 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

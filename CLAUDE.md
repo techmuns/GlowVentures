@@ -183,6 +183,11 @@ cash holding's genuinely-zero return both match, and both are correct.
   extension); `providers/*` is one reader per document family.
 - `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — undrawn capital owed
   to a drawdown fund. Not a holding, and never summed into NAV.
+- ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
+  out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
+  holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
+  directly rather than through `PortfolioContext`, so it cannot leak back into a
+  portfolio figure. See **The ring-fence**.
 
 ## The data model, and why it differs from a workbook-sourced book
 
@@ -220,8 +225,8 @@ every ZIP already at the top level.
 
 | Provider | Account | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
-| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹12,415.02 Cr\*\* |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
+| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.78 Cr\*\* |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
 | Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
 | Motilal Oswal demat | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
@@ -282,19 +287,25 @@ is one row per account, all 42 of them, sorted by value.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
-\*\* **₹12,351.24 Cr of that one row is POLYCAB INDIA**, and it is the family's
-promoter stock rather than a portfolio position — see the `august-2026-e`
-section. It arrived last, it dwarfs everything above it, and the family's own
-consolidated review does not carry it. It is in the book because the statement
-says the account holds it; whether it belongs in the same total as the managed
-mandates is a decision about the family's affairs, not a parsing rule, and
-`excludedAccounts` reverses it in one line if they say so.
+\*\* **THE FAMILY HAVE SINCE SAID SO, AND POLYCAB IS RING-FENCED.** That row used to
+read ₹12,415.02 Cr, of which **₹12,351.24 Cr was POLYCAB INDIA** — the family's
+promoter stock rather than a portfolio position. The paragraph here posed the
+question and named the reversal; the family answered it, and the answer is the
+`/polycab` page. The account keeps its other 11 holdings and its own as-of; the
+promoter row is out of this column and out of every total below it. See **The
+ring-fence** section.
 
-**Consolidated ₹13,061.63 Cr**: listed ₹12,709.28 Cr, private ₹352.35 Cr. The
+**Consolidated ₹710.39 Cr**: listed ₹358.04 Cr, private ₹352.35 Cr. The
 split is on `assetClass`, which is what a holding IS. It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
 the moment the AIF statements got a reader, at which point 62% of the book was
 being reported under a label that did not describe it.
+
+**AND THE LISTED HALF IS NOW THE SMALLER ONE — because ₹12,351.24 Cr LEFT IT.**
+Before the ring-fence this book read ₹13,061.63 Cr, listed ₹12,709.28 Cr; the
+promoter block was 95% of the whole and 97% of the listed side. Anything that
+compares this book against an older figure of its own is comparing two different
+sets, and the two are ₹12,351.24 Cr apart by construction rather than by drift.
 
 Six PMS mandates run on one reporting system (Goldstandard, Green Lantern,
 Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-III
@@ -870,14 +881,14 @@ DEPOSITORY statements for accounts this book had never seen.
 
 | File | Whose | Outcome |
 | --- | --- | --- |
-| `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` | Ajay — ICICI Bank NSDL, client 49794950 | read: 38 holdings, 12 in the book, **₹12,415.02 Cr** |
+| `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` | Ajay — ICICI Bank NSDL, client 49794950 | read: 38 holdings, 12 valued, **₹12,415.02 Cr** — 11 and ₹63.78 Cr in the book once Polycab is ring-fenced |
 | `HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` | Bharat — HDFC Bank NSDL, client 22025655 | **not read — it is a scan** |
 
 **AND ₹12,351.24 Cr OF THAT IS ONE ROW.** Polycab India, 13,901,229 shares at
 the ₹8,885.00 the depository marks them at. This is promoter stock — the family
 are Polycab's promoters — and Bharat's scanned statement carries 5,108,911 more.
-It is nineteen times the rest of the book put together, and **the family's own
-consolidated review, which totals ₹1,300 Cr, does not carry it at all.** That
+It is about seventeen times the rest of the book put together, and **the family's
+own consolidated review, which totals ₹1,300 Cr, does not carry it at all.** That
 absence is the evidence that they do not think of it as part of the portfolio
 being tracked, and it is not evidence about what the statement says.
 
@@ -885,9 +896,91 @@ So it is INGESTED, because the statement says the account holds it and refusing
 a measured holding for being inconveniently large is the fabrication rule run
 backwards. Whether it belongs in the same consolidated total as the managed
 mandates is a decision about the family's affairs, of exactly the kind §4c
-reserves for them, and one `excludedAccounts` entry reverses it. What must not
-happen is the third option: dropping it quietly and leaving the book looking
-complete.
+reserves for them. What must not happen is the third option: dropping it quietly
+and leaving the book looking complete. **The family have since made that
+decision — see the next section.**
+
+### THE RING-FENCE — Polycab is one page, and no figure anywhere else
+
+*"We will remove everything related to Polycab from the dashboard, and move that
+information as a single pager in this new Polycab page. So basically Polycab must
+not be included in any data set information and any calculation in any other part
+of the dashboard."*
+
+That is the §4c judgement above, answered. It is a decision about the family's
+affairs and NOT a parsing rule, which is exactly why it is applied at the BOOK
+layer and nowhere else:
+
+**ONE CONSTANT DECIDES IT.** `RINGFENCED_SECURITY_KEYS` in `build-book.mjs` holds
+`polycab-india-limited-eq`. Right after the positions are sorted — before the
+dedupe-for-total, the listed/private split, `positionsCount`, the emit and the
+report, which ALL read the one `positions` array — the matching rows are spliced
+out into their own array and emitted as **`BOOK_POLYCAB`**. Removing the key folds
+the holding back into every total in one line, which is the reversibility §4c
+requires of a decision that is the family's rather than the pipeline's.
+
+**KEYED ON `securityKey`, NOT ON THE ACCOUNT.** `excludedAccounts` was the
+mechanism this file named before the request arrived, and it is the wrong one
+here: the ICICI NSDL account holds ELEVEN OTHER POSITIONS worth ₹63.78 Cr, and
+excluding the account would take them out too — ₹63.78 Cr of the family's real
+book vanishing to move one row. The security is the unit of the request, and
+`securityKey` is this book's identity for a security (§1), so the fence holds
+wherever the holding is reported rather than only where it is reported today.
+
+**THE STATEMENT IS UNTOUCHED, AND SO IS THE ARCHIVE.** `source/` still holds the
+PDF, `public/audit/` still carries every extracted row, and `nsdlDemat.mjs` still
+reads all 38 holdings and still ties to the statement's own printed grand total
+of ₹1,24,79,90,00,337.69 to the rupee. Ring-fencing is a decision about which
+figures a DASHBOARD sums; deleting the extraction would be a decision to stop
+being able to check the book, and it would break the provenance the audit archive
+exists to provide. The Polycab page links straight into that document.
+
+**AND THE PAGE DERIVES EVERY FIGURE — none is typed in.** `src/pages/Polycab.tsx`
+reads `BOOK_POLYCAB` DIRECTLY rather than the portfolio context, so nothing on it
+can leak back into a portfolio total, and its share count, market value, mark and
+as-of all come from the book. The mark is DERIVED — value ÷ units, because an NSDL
+statement has no rate column (§"the value column is a mark on 14 rows and par on
+24") — and cost renders `AbsentValue` with its reason, because a depository holds
+the shares and did not buy them. A ₹0 cost would report the whole ₹12,351.24 Cr as
+profit at an infinite return.
+
+**BOTH HALVES ARE CHECKED, AND NEITHER IMPLIES THE OTHER.** `check:pages` walks
+`/polycab` and asserts the holding renders with a share count, a value, the
+statement that it is excluded from portfolio totals, an absent cost with its
+reason, and Bharat's unreadable scan as a NAMED absence. And on EVERY OTHER ROUTE
+in the sweep it asserts the page's `<main>` does not name Polycab at all. A page
+that named it everywhere would fail the second while passing the first; an empty
+`BOOK_POLYCAB` would satisfy every absence check while the page rendered nothing.
+Both were verified by REINTRODUCING THE BUG: emptying `RINGFENCED_SECURITY_KEYS`
+fires the absence check on nine routes — `cio`, `monitor`, `monitor-entity`,
+`family-entity`, `sectors`, `compare`, `exposure`, `thesis`, `upload`, which is
+the leak surface measured rather than guessed — and emptying `BOOK_POLYCAB` fires
+all four page checks while leaving the absence checks green.
+
+**THE ABSENCE CHECK IS SCOPED TO `<main>`, DELIBERATELY.** Every other invariant
+reads `document.body.innerText`, and the left nav carries a "Polycab" ENTRY on
+every page by request. Read off the body it failed all 27 routes at once, for the
+one reason that is correct — the same "a check that cannot read the figure it
+asserts on" failure this file already names once. The claim is about a page's
+CONTENT, so it is struck on the content.
+
+**WHAT DID NOT NEED CHANGING, AND WHY THAT IS THE POINT.** The Excel and deck
+exports, `dedupedPositions`, `publicPrivateSplit`, every allocation, sector,
+entity, concentration and market-cap figure, and the XIRR all read the book
+through `BOOK_POSITIONS` or the context built on it. One splice at the book layer
+moved all of them. The surfaces that needed a hand were the two that read the
+security by NAME: `review-reconcile.mjs`, which reconciles the promoter block
+against the family review and now reads `BOOK_POLYCAB` — the review carries it
+outside its own total too, so both sides are now ex-promoter and directly
+comparable — and the stale worked examples in `check-pages.mjs`.
+
+**ONE UNEXERCISED CODE PATH IS NAMED RATHER THAN DELETED.** The `CR` regex's
+thousands-separator handling exists because this book once crossed ₹1,000 Cr and
+three invariants read `₹13,061.6 Cr` as `13`. Ex-Polycab the book is ₹710.39 Cr,
+so no page currently renders a separator and nothing would fail if that handling
+were dropped. It comes straight back the first time the book grows past ₹1,000 Cr
+or the key is removed — silently, on pages computing correctly, exactly as it did
+the first time — so the comment says so.
 
 **A SCAN IS NOT A DOCUMENT WITH NO READER.** Bharat's four pages are JPEGs —
 pdfjs returns zero text items on every one — so there is no header to match and
@@ -2472,12 +2565,16 @@ before a line was written:
 
 | Section | | |
 | --- | ---: | ---: |
-| Direct Equity | 38 holdings | ₹12,446.1 Cr |
+| Direct Equity | 38 holdings | ₹12,446.1 Cr → **37 · ₹94.9 Cr** since the ring-fence |
 | PMS mandates | 10 mandates · 281 holdings | ₹138.7 Cr |
 | AIF | 14 | ₹352.3 Cr |
 | Mutual Fund | 20 | ₹99.9 Cr |
 | ETF | 3 | ₹24.6 Cr |
 | Cash | 2 | ₹0 |
+
+Only the Direct Equity row moves, and it moves by the one row: Polycab was 38th
+of 38 by count and 99.2% of that section by value. Every other section is
+untouched, which is what a fence around ONE security is supposed to look like.
 
 The by-security row count falls 215 → 86, and Jammu Kashmir Bank now sits inside
 Carnelian Bespoke Portfolio at `/mandate/<accountId>`.

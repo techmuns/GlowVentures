@@ -166,7 +166,38 @@ const PRIV_ASOF_MAX = (() => {
   } catch { return null; }
 })();
 
+/**
+ * The ring-fenced security's own key, READ FROM THE BOOK rather than typed.
+ *
+ * `/stock/<this key>` must redirect to the Polycab page, and the route four
+ * entries down already states the rule: typing a generated identifier here is a
+ * second source for it. A typed key would still fail loudly if the book's key
+ * changed — the redirect simply would not fire — but `FUND_ACCOUNT_ID` and
+ * `FAMILY_ENTITY` both derive theirs for the same reason, and the derivation is
+ * one line. A book with nothing ring-fenced yields null and the route walks a
+ * key that resolves to no holding, which fails rather than silently skipping.
+ */
+const RINGFENCED_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const fenced = bookArray(src, "BOOK_POLYCAB");
+    return Array.isArray(fenced) ? fenced[0]?.securityKey ?? null : null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
+  // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
+  // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
+  // both are asserted: this page RENDERS the holding, and every other page in this
+  // sweep is free of it (see `polycabAbsent`, applied to every other route).
+  ["polycab", "/polycab"],
+  // ...AND THE COMPANY-PAGE ADDRESS OF THE SAME SECURITY, which must REDIRECT
+  // here rather than render. With the holding out of `BOOK_POSITIONS`,
+  // `StockInfo`'s row filter comes back empty and its fully-exited branch prints
+  // "Position closed · HOLDING VALUE ₹0 · QUANTITY 0 · this name is fully exited"
+  // over 1.39 Cr shares worth ₹12,351 Cr. Walked as its own route so a
+  // regression that removes the guard is caught here rather than by the family.
+  ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
   ["cio", "/cio"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
@@ -257,6 +288,14 @@ const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\
  * correctly. That is the stale-literal failure one step abstracted: a check that
  * cannot read the figure it asserts on is worse than no check, because it fails
  * loudly on the wrong thing and sends the next session to fix the page.
+ *
+ * THE COMMA PATH IS UNEXERCISED TODAY AND MUST STAY. Ring-fencing the ₹12,351 Cr
+ * Polycab promoter block took this book back under ₹1,000 Cr (₹710.4 Cr), so no
+ * figure on any page currently carries a thousands separator and nothing here
+ * would fail if the comma handling were dropped. It comes straight back the first
+ * time the book grows past ₹1,000 Cr or Polycab is folded back in — which is one
+ * line in `build-book.mjs` — and it would come back silently, on a page computing
+ * correctly, exactly as it did the first time.
  */
 const CR = String.raw`₹([\d,]+(?:\.\d+)?)\s*Cr`;
 /**
@@ -396,6 +435,67 @@ const MANDATE_ROWS = new Map();
 let MANDATE_PATH = null;
 
 const INVARIANTS = {
+  /**
+   * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
+   * absence asserted on every other route in the sweep.
+   *
+   * Both halves are needed and neither implies the other: a page that named
+   * Polycab everywhere would fail the absence check while this one passed, and a
+   * `BOOK_POLYCAB` that came back empty would satisfy every absence check while
+   * this page rendered nothing. Struck on the FIGURES the page draws, never on
+   * its prose, which is the rule the exposure check's first draft broke — its
+   * captions rendered whatever the data did and it could not fail.
+   */
+  polycab: [
+    ["the holding is named, with a share count and a market value",
+      (t) => /Polycab/i.test(t) && /[\d,]{7,}/.test(t) && new RegExp(CR).test(t)],
+    /**
+     * THE PAGE SAYS IT IS OUT OF THE BOOK'S TOTALS. A reader who lands here from
+     * the nav has to be able to tell why this ₹12,351 Cr is not in the ₹710 Cr
+     * headline two pages over — an unexplained figure of that size reads as a
+     * contradiction, which is the "a total must tie" rule one page up.
+     */
+    ["it states that the holding is excluded from the portfolio totals",
+      (t) => /excluded from portfolio totals/i.test(t) && /ring-fenced/i.test(t)],
+    /**
+     * COST IS ABSENT AND SAYS SO. A depository holds the shares; it did not buy
+     * them, so there is no acquisition cost on the statement — and a ₹0 cost
+     * would report the whole market value as profit at an infinite return, which
+     * is the exact failure `costBasis: number | null` exists to prevent.
+     */
+    // SCOPED TO THE COST TILE'S OWN TEXT. Struck on the whole page this would
+    // fail on any unrelated ₹0 — the top bar's, another tile's — and report the
+    // cost tile as fabricating a zero when it is rendering correctly. The tile
+    // is its label, its value and its reason, so the window between the label
+    // and the reason is exactly the text this claim is about.
+    ["cost renders absent with its reason, never as a zero",
+      (t) => {
+        const tile = /COST BASIS([\s\S]{0,120}?)depository reports no acquisition cost/i.exec(t);
+        return !!tile && /—/.test(tile[1]) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(tile[1]);
+      }],
+    /**
+     * THE SECOND PROMOTER STATEMENT IS A NAMED ABSENCE, NOT A NUMBER. Bharat's
+     * HDFC NSDL statement is a SCAN with no text layer, so nothing it reports can
+     * be extracted. Naming a share count from it here would be a figure recovered
+     * from an unread document — and saying nothing at all would leave the page
+     * looking like the family's whole promoter block.
+     */
+    ["the unreadable second statement is named as an absence, with no figure claimed",
+      (t) => /could not be read/i.test(t) && /no text layer/i.test(t)],
+  ],
+  /**
+   * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
+   *
+   * Asserted on the RESULTING URL and on the figures that prove which page
+   * rendered — matching prose alone would pass on either, and the wrong one
+   * here prints a fabricated zero over the family's largest holding.
+   */
+  "polycab-stock-redirect": [
+    ["it redirects to the Polycab page", (_t, ctx) => /\/polycab$/.test(ctx?.url ?? "")],
+    ["and renders the holding, never the fully-exited ₹0 branch",
+      (t) => /excluded from portfolio totals/i.test(t)
+        && !/Position closed/i.test(t) && !/fully exited/i.test(t)],
+  ],
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
   cio: [
@@ -420,9 +520,12 @@ const INVARIANTS = {
     /**
      * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
      *
-     * After the regroup, Direct Equity reports a cost for 9 of its 38 holdings,
+     * After the regroup, Direct Equity reported a cost for 9 of its 38 holdings,
      * so a return on cost read **−18.9%** in a row printing ₹1.22 Cr invested
-     * and ₹12,446.1 Cr current. Every figure was right on its own terms and the
+     * and ₹12,446.1 Cr current. (Ring-fencing Polycab has since taken that row to
+     * 9 of 37 and ₹94.9 Cr — the coverage is still nowhere near whole, so the row
+     * still correctly refuses a return. The figures above are the ones the bug
+     * was found on.) Every figure was right on its own terms and the
      * three together were indefensible. The row uses the footer's own 0.5% test
      * now, and this asserts it on the RENDERED page rather than on the helper:
      * for every allocation row, either its three cells reconcile, or its return
@@ -652,7 +755,8 @@ const INVARIANTS = {
      * through an AIF or PMS should be shown inside that AIF/PMS drill-down."
      * The model never mixed them — every AIF folio has always been its own AIF
      * row — but ₹127 Cr of shares a discretionary manager chose sat in the same
-     * section as the ₹12,446 Cr the family bought itself, under a heading that
+     * section as the ₹12,446 Cr the family bought itself (₹94.9 Cr of it now that
+     * the Polycab promoter block is ring-fenced onto its own page), under a heading that
      * two rounds of relabelling could not make honest. Both words were true of
      * SOME of what was under them and neither was true of all of it.
      *
@@ -1560,6 +1664,37 @@ for (const theme of THEMES) {
       // claims confidence nobody earned and one that fails over no input is red
       // about a page that is rendering correctly.
       const invariants = [], notCheckedHere = [];
+      /**
+       * THE RING-FENCE, ASSERTED ON EVERY PAGE THAT IS NOT THE POLYCAB PAGE.
+       *
+       * The family asked for Polycab to be limited to its own page, so "it is
+       * gone" is a claim about EVERY OTHER ROUTE and cannot be checked one page
+       * at a time. `build-book.mjs` keeps it out of `BOOK_POSITIONS`, but a page
+       * could still name it from a caption, a preview or a hard-coded example —
+       * which is exactly the failure class this file exists to catch. So the
+       * absence is asserted where a reader would see it: the rendered text.
+       *
+       * EXEMPTED BY WHERE THE PAGE LANDED, NOT BY ROUTE NAME. Two routes in this
+       * sweep resolve to the Polycab page — `/polycab`, and the `/stock/<key>`
+       * address that redirects to it — and naming Polycab is the whole point of
+       * both. An exemption keyed on the route NAME would have to list them, and
+       * would silently stop exempting the day one is renamed; keyed on the
+       * RESOLVED URL it cannot drift, because it asks the question the rule
+       * actually asks: is this the Polycab page?
+       *
+       * SCOPED TO `<main>`, DELIBERATELY. The other invariants read
+       * `document.body.innerText`, which includes the persistent left nav — and
+       * the nav carries a "Polycab" ENTRY, by request, on every page. Read off
+       * the body this check fails on all 27 routes at once for the one reason
+       * that is correct, which is the "a check that cannot read the figure it
+       * asserts on" failure this file already names once. The claim is about a
+       * page's CONTENT, so it is struck on the content.
+       */
+      const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
+      const isPolycabPage = /\/polycab$/.test(page.url());
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
+        invariants.push("Polycab is ring-fenced to its own page, and this page names it");
+      }
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]) {
         for (const [desc, test] of INVARIANTS[name]) {
           let r;
@@ -1567,7 +1702,10 @@ for (const theme of THEMES) {
           // down with it either. Reported by name with the message, so a
           // broken matcher reads as a broken matcher rather than as a clean
           // page — the same rule as `golden.mjs`'s BLOCKED.
-          try { r = test(text, { hrefs, path }); }
+          // `path` is what was REQUESTED; `url` is where the app actually
+          // landed. A redirect invariant needs the second — asserting on the
+          // first would test the harness's own input rather than the app.
+          try { r = test(text, { hrefs, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

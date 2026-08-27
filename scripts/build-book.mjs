@@ -48,6 +48,27 @@ const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 
  * `privateValue` — a property of the HOLDING, never of the mandate it sits in.
  */
 const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
+
+/**
+ * RING-FENCED SECURITIES — carried in the archive, kept OUT of every book total.
+ *
+ * Polycab India is the family's PROMOTER stock: the ICICI NSDL statement marks
+ * 1.39 Cr shares at ₹8,885 each — ₹12,351 Cr, about seventeen times the rest of the
+ * book put together, and absent from the family's OWN consolidated review, which is the
+ * evidence they do not track it as a portfolio position. It is still INGESTED,
+ * because the statement says the account holds it and refusing a measured holding
+ * for being inconveniently large is the fabrication rule run backwards. What the
+ * family asked for is that it not be summed into the consolidated NAV, the
+ * listed/private split, any allocation / sector / entity / concentration figure or
+ * the holdings tables — it lives on ONE page of its own. So it is split off here,
+ * emitted as `BOOK_POLYCAB`, and the `/polycab` route is its only reader. This is
+ * the §4c judgement — a decision about the family's affairs, not a parsing rule —
+ * and it reverses in one line: remove the key and the holding folds back into every
+ * total. Keyed on `securityKey` (the canonical join key), so it holds wherever the
+ * security is reported, not just this one account.
+ */
+const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india-limited-eq"]);
+
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
 
@@ -1029,6 +1050,56 @@ function build(docs) {
   dropDepositoryDuplicates(positions, accounts, notes);
 
   positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
+
+  /**
+   * PEEL OFF THE RING-FENCED PROMOTER STOCK (see RINGFENCED_SECURITY_KEYS).
+   *
+   * Done after the sort, so `polycab` and `positions` are both deterministic, and
+   * before EVERYTHING that reads `positions` — dropDepositoryDuplicates has already
+   * run and does not touch it (its ISIN is not an AIF unit), and the dedupe-for-
+   * total, listed/private split, positionsCount, the emit and the report all read
+   * this one array. Removing it here is what keeps it out of every book total; the
+   * split-out rows are emitted as `BOOK_POLYCAB` for the Polycab page alone.
+   */
+  const polycab = positions.filter((p) => RINGFENCED_SECURITY_KEYS.has(p.securityKey));
+  for (let i = positions.length - 1; i >= 0; i--) {
+    if (RINGFENCED_SECURITY_KEYS.has(positions[i].securityKey)) positions.splice(i, 1);
+  }
+  /**
+   * A RING-FENCED ROW THAT WAS HALF OF A DEDUPE PAIR WOULD MISDIAGNOSE ITS PARTNER.
+   *
+   * `dedupeGroup` marks one holding reported on two members' statements. Splicing
+   * one member's row out leaves the other alone in its group, and the broken-dedupe
+   * check below then reports it as "the reconciler matched it against a row in
+   * another account that is not in the book — check the partner account's
+   * authoritative holdings issue". That sends the next reader to audit a supersede
+   * rule that is working perfectly, for a row this constant removed on purpose.
+   *
+   * No ring-fenced row carries a group today, which is exactly why this has to be
+   * written now: the first one that does would produce a confident wrong answer.
+   * Reported, never repaired — collapsing or re-tagging the partner would change a
+   * consolidated figure to keep a check quiet.
+   */
+  const fencedGroups = polycab.map((p) => p.dedupeGroup).filter(Boolean);
+  for (const g of fencedGroups) {
+    const left = positions.filter((p) => p.dedupeGroup === g);
+    if (left.length) {
+      notes.push(`ring-fenced holding in dedupe group ${g} left ${left.length} position(s) `
+        + `(${left.map((p) => `${p.security} / ${p.accountId}`).join("; ")}) alone in that group. They are NOT a broken `
+        + "dedupe: their partner is ring-fenced out of the book on purpose. Their value is counted as reported, which is "
+        + "correct — but if the partner is ever folded back in, check that the group collapses again.");
+    }
+  }
+
+  if (polycab.length) {
+    const pv = sum(polycab.map((p) => (isNum(p.marketValue) ? p.marketValue : 0)));
+    notes.push(`${polycab.length} ring-fenced holding(s) — ${polycab.map((p) => p.security).join(", ")}, `
+      + `${r2(pv).toLocaleString("en-IN")} — are carried in the archive and in BOOK_POLYCAB, and OUT of every `
+      + "consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the "
+      + "family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in "
+      + "build-book.mjs to fold it back into the book.");
+  }
+
   accounts.sort((a, b) => a.accountId.localeCompare(b.accountId));
   capitalGains.sort((a, b) => a.accountId.localeCompare(b.accountId));
 
@@ -1082,7 +1153,11 @@ function build(docs) {
     if (!p.dedupeGroup) continue;
     (groupMembers.get(p.dedupeGroup) ?? groupMembers.set(p.dedupeGroup, []).get(p.dedupeGroup)).push(p);
   }
-  const brokenGroups = [...groupMembers.entries()].filter(([, ps]) => ps.length < 2);
+  // A group whose partner was RING-FENCED is not broken, and it already has its
+  // own note with the right cause. Excluded here so the run does not carry two
+  // explanations for one fact, one of them pointing at the wrong file.
+  const fencedGroupSet = new Set(fencedGroups);
+  const brokenGroups = [...groupMembers.entries()].filter(([g, ps]) => ps.length < 2 && !fencedGroupSet.has(g));
   for (const [g, ps] of brokenGroups) {
     notes.push(`dedupe group ${g} reached the book with ONE position (${ps[0].security}, `
       + `${ps[0].accountId}) — the reconciler matched it against a row in another account that is not in `
@@ -1134,7 +1209,7 @@ function build(docs) {
   }
 
   return {
-    accounts, positions, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
+    accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
@@ -1217,6 +1292,16 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter");
+  L.push(" * holding, carried in the archive but summed into NO book total, split,");
+  L.push(" * allocation, sector, entity or holdings table. It is deliberately ABSENT");
+  L.push(" * from BOOK_POSITIONS and BOOK_SUMMARY above; the `/polycab` route is its only");
+  L.push(" * reader. See RINGFENCED_SECURITY_KEYS in scripts/build-book.mjs and");
+  L.push(" * docs/BOOK-REPORT.md. Folding it back into the book is a one-line change.");
+  L.push(" */");
+  L.push(`export const BOOK_POLYCAB: Position[] = ${j(book.polycab)};`);
   L.push("");
   L.push("/**");
   L.push(" * Empty, and deliberately so: the corpus carries an opening and a closing");
@@ -1355,6 +1440,32 @@ function report(book) {
         + `${known.length} account(s). That figure is stated so nobody has to wonder whether `
         + "the money was missed or excluded.");
     }
+  }
+  L.push("");
+  L.push("## Ring-fenced: the promoter holding, on its own page");
+  L.push("");
+  if (!book.polycab?.length) {
+    L.push("_None._");
+  } else {
+    L.push("Carried in the archive and OUT of every total above — the consolidated market");
+    L.push("value, the listed/private split, and every allocation, sector, entity and holdings");
+    L.push("table. This is the family's PROMOTER stock: the statement says the account holds");
+    L.push("it, so it is not dropped, but it dwarfs the managed book and the family's own");
+    L.push("consolidated review does not carry it, so the family asked for it on the Polycab");
+    L.push("page alone. `BOOK_POLYCAB` is its only reader; remove its key from");
+    L.push("`RINGFENCED_SECURITY_KEYS` in build-book.mjs to fold it back into the book.");
+    L.push("");
+    L.push("| Security | Holder | Account | As of | Shares | Market value |");
+    L.push("| --- | --- | --- | --- | ---: | ---: |");
+    for (const p of book.polycab) {
+      const a = book.accounts.find((x) => x.accountId === p.accountId);
+      L.push(`| ${p.security} | ${a?.owner ?? "—"} | ${a?.provider ?? "—"} ${a?.accountNo ?? ""} | ${a?.asOf ?? "—"} | `
+        + `${isNum(p.quantity) ? p.quantity.toLocaleString("en-IN") : "—"} | ${isNum(p.marketValue) ? r2(p.marketValue).toLocaleString("en-IN") : "—"} |`);
+    }
+    const pv = sum(book.polycab.map((p) => (isNum(p.marketValue) ? p.marketValue : 0)));
+    L.push("");
+    L.push(`Together **${r2(pv).toLocaleString("en-IN")}**, excluded from the `
+      + `${r2(book.summary.totalValue).toLocaleString("en-IN")} consolidated market value above.`);
   }
   L.push("");
   L.push("## Sector allocation");
