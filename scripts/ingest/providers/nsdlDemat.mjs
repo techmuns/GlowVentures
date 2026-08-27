@@ -412,7 +412,35 @@ function readHoldings(pages, text, meta, warnings) {
     // Reading order within a record: down the page, then left to right.
     const record = parts.get(anchor).sort((a, b) => b.y - a.y || 0);
     const isin = anchor.isin;
-    const name = record.flatMap((l) => inBand(l.items, bands.name)).join(" ").replace(/\s+/g, " ").trim();
+    /**
+     * A WRAPPED CELL CONTINUES AT ITS COLUMN'S OWN LEFT EDGE.
+     *
+     * The name band is wide, and the page FOOTER is drawn inside it: page 1 ends
+     * with `Tuesday, July 21, 2026 03:57 PM User Name - Ramawatar Kumbhar
+     * Ramawatar Kumbhar (355827) Page 1 of 2` at x252, which is the nearest line
+     * by y to the last record on that page. Taken as a name fragment it gave
+     * Jaro Institute of Technology a securityKey ending
+     * `-user-name-ramawatar-kumbhar-ramawatar-kumbhar-355827`, and that key is
+     * the book's join — so the holding matched nothing, on any surface, forever.
+     *
+     * The fix is geometric rather than a footer pattern: every real continuation
+     * of the scrip name is drawn at x91, the exact left edge the header's
+     * `Scrip Name` sits at, because that is what wrapping a cell does. A line
+     * starting at x252 is not a continuation of a cell that starts at x91. The
+     * ANCHOR row keeps its whole band — its name genuinely starts there — and
+     * only the continuation lines are held to the edge.
+     *
+     * Same reasoning as `splitByAlignedEdges` in `lib/layout.mjs`: a column is
+     * identified by the side its content is aligned to, and here that is the
+     * left. Found by the consolidated review, which named the company `Jaro
+     * Education` and could not be joined to it.
+     */
+    const EDGE = 2;
+    const nameFrom = (l) =>
+      l === anchor
+        ? inBand(l.items, bands.name)
+        : l.items.filter((c) => Math.abs(c.x - bands.header.name) <= EDGE).map((c) => c.text);
+    const name = record.flatMap(nameFrom).join(" ").replace(/\s+/g, " ").trim();
 
     const balances = inBand(anchor.items, bands.balance);
     const quantity = n(balances[0] ?? null);

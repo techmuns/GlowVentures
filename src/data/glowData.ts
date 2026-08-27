@@ -4648,8 +4648,8 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "jaro-institute-of-technology-management-and-research-limited-eq-user-name-ramawatar-kumbhar-ramawatar-kumbhar-355827",
-    "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ User Name - Ramawatar Kumbhar Ramawatar Kumbhar (355827)",
+    "securityKey": "jaro-institute-of-technology-management-and-research-limited-eq",
+    "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
     "symbol": null,
     "isin": "INE00YJ01010",
     "accountId": "icici-bank-nsdl-demat-49794950",
