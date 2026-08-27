@@ -549,11 +549,22 @@ export function PortfolioMonitor() {
     for (const r of rows) for (const k of r.realizedKeys) (r.kind === "mandate" ? inside : shown).add(k);
     for (const k of shown) inside.delete(k);
     const val = (k: string) => realized.get(k) ?? null;
+    const keys = [...shown, ...inside];
     return {
-      total: sumOrNull([...shown, ...inside].map(val)),
+      total: sumOrNull(keys.map(val)),
       inMandates: sumOrNull([...inside].map(val)),
       names: [...inside].filter((k) => val(k) !== null).length,
-      mandates: rows.reduce((n, r) => n + (r.kind === "mandate" ? 1 : 0), 0),
+      /**
+       * WHICH ABSENCE IT IS, because the footer used to give one reason for two.
+       *
+       * `total` is null in two situations the ROW cells already keep apart, and a
+       * reader acts differently on each: no key of any visible row appears in the
+       * realised map at all — nothing here was ever sold — or keys are present and
+       * every value is null, meaning these names WERE sold and no capital gain
+       * statement covers the accounts they were sold from. Told the second when the
+       * first is true, a reader goes hunting for statements that were never owed.
+       */
+      anySold: keys.some((k) => realized.has(k)),
     };
   })();
   // Day move across the live-priced rows only — a holding on a workbook mark has
@@ -901,7 +912,7 @@ export function PortfolioMonitor() {
                               : fmtFromBase(r.marketValue, { compact: true })
                             : <Auditable to={trace} title={!m ? "Market value — trace to the ledger"
                                 : whole ? "The whole mandate's market value, shares and cash sleeve — trace to its statements"
-                                : `The ${m.holdings.length} of ${m.accountCount} holdings matching the filters — NOT the mandate, which its statement totals at ${money(m.accountMV)}. Clear the filters, or open its drill-down, to trace that figure.`}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
+                                : `The ${m.holdings.length} of ${m.accountCount} holdings matching the filters — NOT the whole mandate, whose own total across all ${m.accountCount} is ${money(m.accountMV)} on this page's current basis. Open its drill-down to trace that against the statement.`}>{fmtFromBase(r.marketValue, { compact: true })}</Auditable>}
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? mixedBasisNote : undefined}>
                           {r.live ? `${(r.weight * 100).toFixed(1)}%`
@@ -958,9 +969,9 @@ export function PortfolioMonitor() {
                               ) : (
                                 <>
                                   The {m.holdings.length} of {m.accountCount} holdings in this mandate that match the filters
-                                  above — not the mandate as {m.manager} reports it, which is {m.accountCount} holdings worth
-                                  {" "}{money(m.accountMV)} at {fmtDate(m.asOf)}. Clear the filters, or open the drill-down
-                                  below, for the statement&rsquo;s own list.
+                                  above — not the whole mandate, whose own total across all {m.accountCount} holdings is
+                                  {" "}{money(m.accountMV)} on this page&rsquo;s current basis. Clear the filters, or open the
+                                  drill-down below, for the mandate as {m.manager} reports it.
                                 </>
                               )}{" "}
                               The family owns these shares; the manager chose
@@ -1069,7 +1080,7 @@ export function PortfolioMonitor() {
               <tfoot className="sticky bottom-0 bg-ink-800">
                 <tr className="border-t border-ink-700 font-semibold">
                   <td className="px-2 py-2.5 text-slate-200" colSpan={5}>Total · {rows.length} rows</td>
-                  <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What every listed holding cost, added together.", worked: `= ${money(totCost)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                  <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
                   <td className="px-2 py-2.5"></td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
                     title={totDayPct == null ? undefined : `${money(totDay, true)} across the live-priced book since previous close`}>
@@ -1077,7 +1088,7 @@ export function PortfolioMonitor() {
                   </td>
                   <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap" title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totMV, { compact: true })
-                              : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of every listed holding, added together.", worked: `= ${money(totMV)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
+                              : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of the holdings in this table, added together — every asset class, not the listed ones alone.", worked: `= ${money(totMV)} across ${rows.length} rows`, auditHref: auditHref(LEDGER) }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
                   </td>
                   <td className="px-2 py-2.5"></td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
@@ -1105,7 +1116,9 @@ export function PortfolioMonitor() {
                     !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
                     : realized === undefined ? <span className="text-slate-500">…</span>
                     : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
-                    : realisedSplit === null || realisedSplit.total === null ? <AbsentCell reason="no capital gain statement covers any of these names" />
+                    : realisedSplit === null || realisedSplit.total === null ? <AbsentCell reason={realisedSplit?.anySold
+                        ? "these names were sold, but no capital gain statement covers the accounts they were sold from"
+                        : "no sale of these names appears on the transaction statements in this drop"} />
                     : <span className={changeColor(realisedSplit.total)}>{fmtFromBase(realisedSplit.total, { compact: true, sign: true })}</span>
                   }</td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
@@ -1138,10 +1151,21 @@ export function PortfolioMonitor() {
           {realisedSplit && realisedSplit.inMandates !== null && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
               <span className="font-medium text-slate-400">The Realised P&amp;L column does not add up to the Realised
-              P&amp;L total, and the difference is the mandates.</span> The total is the whole book&rsquo;s realised gain;
+              P&amp;L total, and the difference is the mandates.</span> {/* IT IS NOT THE WHOLE
+              BOOK'S REALISED GAIN, and the sentence said it was. This total sums over the
+              keys the ROWS carry, and a row exists only for a name still HELD — so every
+              name sold OUT of the book entirely is in neither the column nor the footer.
+              Capital Gains is struck on the capital-gain statements' own printed totals,
+              which is the canonical primitive; a caption asserting this figure is complete
+              sends a reader to reconcile two numbers that were never the same measurement.
+              A confidently wrong caption is worse than the un-named gap it replaced. */}
+              The total covers the names this table still shows;
               {" "}{money(realisedSplit.inMandates, true)} of it was realised on {realisedSplit.names} name
-              {realisedSplit.names === 1 ? "" : "s"} held inside the {realisedSplit.mandates} PMS mandate
-              {realisedSplit.mandates === 1 ? "" : "s"} above, and those rows show {DASH}. A realised figure is reported
+              {realisedSplit.names === 1 ? "" : "s"} held inside the PMS mandates above, and those rows
+              show {DASH}. A name sold out of the book entirely has no row here at all, so its realised
+              gain is in neither the column nor this total —{" "}
+              <Link to="/capital-gains" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">Capital Gains</Link>{" "}
+              is struck on the statements&rsquo; own printed totals and is the figure to trust for the book. A realised figure is reported
               per security across the whole book, and these managers hold the same names in more than one mandate, so
               putting a name&rsquo;s whole realised gain on one mandate row would count it twice.
               {" "}<Link to="/capital-gains" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">Capital Gains</Link>,
