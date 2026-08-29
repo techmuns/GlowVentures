@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 76 series, 345,123 points
+- **Harvested:** 76 series, 345,140 points
 - **Failed:** 7
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
@@ -19,7 +19,7 @@ not have.
 | Natural Gas | Energy | 6,528 | 2000-08-30 | 2026-08-27 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 595 | 1977-01-01 | 2026-07-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 679 | 1970-01-01 | 2026-07-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 19 | 2026-08-10 | 2026-08-28 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Electricity (IEX day-ahead) | Energy | 20 | 2026-08-10 | 2026-08-29 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,522 | 2000-08-30 | 2026-08-27 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,524 | 2000-08-30 | 2026-08-27 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,550 | 1997-10-29 | 2026-08-27 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -58,25 +58,25 @@ not have.
 | Shanghai Composite | Asia | 7,064 | 1997-07-02 | 2026-08-27 | index | Yahoo Finance `000001.SS` | official-api |
 | Nifty 50 | India | 4,648 | 2007-09-17 | 2026-08-27 | index | Yahoo Finance `^NSEI` | official-api |
 | Sensex | India | 7,183 | 1997-07-01 | 2026-08-27 | index | Yahoo Finance `^BSESN` | official-api |
-| USD / INR | India | 5,900 | 2003-12-01 | 2026-08-26 | INR per USD | Yahoo Finance `INR=X` | official-api |
-| EUR / USD | Majors | 5,902 | 2003-12-01 | 2026-08-26 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
-| GBP / USD | Majors | 5,914 | 2003-12-01 | 2026-08-26 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
-| USD / JPY | Majors | 7,737 | 1996-10-30 | 2026-08-26 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
-| USD / CNY | Majors | 6,302 | 2001-06-24 | 2026-08-26 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
+| USD / INR | India | 5,901 | 2003-12-01 | 2026-08-27 | INR per USD | Yahoo Finance `INR=X` | official-api |
+| EUR / USD | Majors | 5,904 | 2003-12-01 | 2026-08-28 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
+| GBP / USD | Majors | 5,916 | 2003-12-01 | 2026-08-28 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
+| USD / JPY | Majors | 7,739 | 1996-10-30 | 2026-08-28 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
+| USD / CNY | Majors | 6,303 | 2001-06-24 | 2026-08-27 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
 | Dollar Index (DXY) | Majors | 14,131 | 1971-01-04 | 2026-08-27 | index | Yahoo Finance `DX-Y.NYB` | official-api |
 | US 10 Year Treasury | Government Bonds | 14,183 | 1970-01-02 | 2026-08-27 | % | Yahoo Finance `^TNX` | official-api |
 | US 13 Week T-Bill | Government Bonds | 14,183 | 1970-01-02 | 2026-08-27 | % | Yahoo Finance `^IRX` | official-api |
 | US 5 Year Treasury | Government Bonds | 14,183 | 1970-01-02 | 2026-08-27 | % | Yahoo Finance `^FVX` | official-api |
 | US 30 Year Treasury | Government Bonds | 12,409 | 1977-02-15 | 2026-08-27 | % | Yahoo Finance `^TYX` | official-api |
 | India 10 Year G-Sec | Government Bonds | 175 | 2011-12-01 | 2026-06-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
-| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 797 | 2023-08-11 | 2026-08-26 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
-| RBI Repo Rate | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 19 | 2026-08-10 | 2026-08-28 | % | Reserve Bank of India `SLR` | scraped-official |
+| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 798 | 2023-08-11 | 2026-08-27 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
+| RBI Repo Rate | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 20 | 2026-08-10 | 2026-08-29 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
