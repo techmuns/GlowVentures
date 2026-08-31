@@ -17,8 +17,8 @@
  "note": "The day's AVERAGE market clearing price across all 96 fifteen-minute blocks. Indian spot power swings from roughly ₹1,100 to the ₹10,000 ceiling within a single day, so no one block is 'the price'.",
  "accumulating": true,
  "first": "2026-08-10",
- "last": "2026-08-30",
- "count": 21,
- "retrievedAt": "2026-08-30T07:55:24.688Z",
+ "last": "2026-08-31",
+ "count": 22,
+ "retrievedAt": "2026-08-31T08:09:13.812Z",
  "staleSince": null
 }
