@@ -185,6 +185,30 @@ const RINGFENCED_KEY = (() => {
   } catch { return null; }
 })();
 
+/**
+ * A COMPANY SHARE THE BOOK CARRIES NO COST FOR — derived, not typed.
+ *
+ * 60 of this book's 371 positions have `costBasis: null`, and every one is
+ * genuinely absent at source: measured across the whole audit archive, not one
+ * of those (account, security) pairs carries a cost on any record type. A
+ * depository reports what shares are worth, never what they were bought for.
+ * The dash is therefore correct — and the page still has to say WHY, which is
+ * what `stock-nocost` walks. The largest such holding is picked so the route is
+ * stable, and a book where every position reports a cost yields null and the
+ * route fails loudly rather than skipping.
+ */
+const NO_COST_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const hit = positions
+      .filter((p) => p.costBasis === null && p.assetClass === "Equity")
+      .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0))[0];
+    return hit?.securityKey ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -247,6 +271,12 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
+  // are correctly a dash and must SAY SO: they used to print "invested —" (a
+  // second dash) and "on cost" (a basis the figure does not have), which is the
+  // one thing that leaves a reader unable to tell a custodian who does not
+  // report cost from a dashboard that is broken.
+  ["stock-nocost", () => (NO_COST_KEY ? `/stock/${encodeURIComponent(NO_COST_KEY)}` : "/stock/none-without-cost-in-the-book")],
   // ...AND ONE AIF REPORTED UNDER TWO MEMBERS. The drill-down for a holding two
   // family members' statements both carry is where "carry both, count once"
   // either reads correctly or contradicts itself on one screen: the pill said
@@ -489,6 +519,24 @@ const INVARIANTS = {
      */
     ["the removed second-statement card stays removed, and no figure is claimed from the scan",
       (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
+  ],
+  /**
+   * A HOLDING WITH NO COST NAMES THE CUSTODIAN THAT DOES NOT REPORT ONE.
+   *
+   * Struck on BOTH tiles, because the bug was that two of the four tiles on
+   * that strip explained themselves and two did not — and on the absence of the
+   * old text, so reverting either half fails rather than passing on prose that
+   * happens to still be there.
+   */
+  "stock-nocost": [
+    ["Avg cost and Unrealised P&L both name the statement that reports no cost",
+      (t) => (t.match(/no cost on the .+? statement for this holding/gi) ?? []).length >= 2],
+    ["neither falls back to a second dash or to a basis the figure does not have",
+      (t) => !/invested\s*—/.test(t)],
+    // The other two tiles on the same strip already did this; asserted here so a
+    // future edit cannot fix one pair by breaking the other.
+    ["realised P&L and change today still state their own reasons",
+      (t) => /no capital gain statement covers this name/i.test(t) && /no live quote|price feed/i.test(t)],
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.

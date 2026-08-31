@@ -221,6 +221,36 @@ export function StockInfo() {
   // and a zero return as break-even; neither was measured.
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
+  /**
+   * WHY THERE IS NO COST — the question the reader actually opened this page with.
+   *
+   * `costBasis` is null on 60 of this book's 371 positions and every one of them
+   * is genuinely absent at source: measured across the whole audit archive, NOT
+   * ONE of those (account, security) pairs carries a cost on any record type —
+   * a depository reports what shares are worth, never what they were bought for.
+   * So the dash is right and the page was still wrong, because it said nothing:
+   * Avg cost printed "invested —", which is a SECOND DASH rather than a reason,
+   * and Unrealised P&L printed "on cost" over a holding that has no cost, which
+   * describes a basis the figure does not have.
+   *
+   * Two tiles on the same strip already do this properly ("no capital gain
+   * statement covers this name", "no live quote"), and the difference is the
+   * whole of `Absent.tsx`'s rule: a reason is a REQUIRED argument, because "no
+   * data" tells a reader nothing about whether to go and find something. A
+   * reader who cannot tell "the custodian does not send this" from "the
+   * dashboard is broken" will assume the second.
+   *
+   * The custodian is NAMED rather than described, and the claim is scoped to
+   * THIS holding — `providerOf` reads the account registry, so nothing here
+   * infers a custodian from a security name (§2), and the sentence stays true
+   * for an account that reports cost on its other rows but not this one.
+   */
+  const costWhy = (() => {
+    const who = [...new Set(drows.map((r) => providerOf(accIdx, r)).filter(Boolean))];
+    if (who.length === 1) return `no cost on the ${who[0]} statement for this holding`;
+    if (who.length > 1) return "no statement for this holding reports a cost";
+    return "no statement in this book reports a cost for this holding";
+  })();
   const weight = bookMV > 0 ? (mv / bookMV) * 100 : 0;
   // Null, not zero, when no statement supplied the figure — see sumOrNull.
   const stCost = sumOrNull(drows.map((r) => r.stCostBasis));
@@ -400,8 +430,19 @@ export function StockInfo() {
             asset class the row carries, and an unstated class gets the noun that
             claims nothing. */}
         <Kpi label="Quantity" value={fmtNum(qty)} sub={qtyNoun} icon={<Layers className="h-4 w-4" />} />
-        <Kpi label="Avg cost" value={<span className="mono">{price(avgCost)}</span>} sub={`invested ${money(cost)}`} icon={<Coins className="h-4 w-4" />} />
-        <Kpi label="Unrealised P&L" value={<span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>} delta={ret} sub="on cost" icon={<TrendingUp className="h-4 w-4" />} />
+        {/* Both of these say WHY when they are absent — see `costWhy`. The dash
+            is correct on 60 of this book's positions and it is not the whole
+            answer: "invested —" and "on cost" told a reader nothing about
+            whether the figure was missing or the page was broken. */}
+        <Kpi label="Avg cost"
+          value={avgCost === null ? <AbsentValue /> : <span className="mono">{price(avgCost)}</span>}
+          sub={cost === null ? <span className="text-slate-500">{costWhy}</span> : `invested ${money(cost)}`}
+          icon={<Coins className="h-4 w-4" />} />
+        <Kpi label="Unrealised P&L"
+          value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
+          delta={ret}
+          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span> : "on cost"}
+          icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
             name's sells. Null is not zero: the sells may be real and what they
             realised simply never reported. */}
@@ -525,8 +566,8 @@ export function StockInfo() {
           </Card>
 
           <Card title="Tax basis & holding">
-            <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-400">Long-term cost</span><span className="mono text-slate-100">{ltCost === null ? DASH : money(ltCost)}</span></div>
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Short-term cost</span><span className="mono text-slate-100">{stCost === null ? DASH : money(stCost)}</span></div>
+            <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-400">Long-term cost</span><span className="mono text-slate-100">{ltCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — see the note below" /> : money(ltCost)}</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Short-term cost</span><span className="mono text-slate-100">{stCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — see the note below" /> : money(stCost)}</span></div>
             <div className="mt-2 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
               <div style={{ width: `${ltPct ?? 0}%`, background: "#10b981" }} />
               <div style={{ width: `${ltPct === null ? 0 : 100 - ltPct}%`, background: "rgba(245,158,11,.5)" }} />

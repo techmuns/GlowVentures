@@ -1825,6 +1825,44 @@ The genuinely actionable rows are the handful of listed COMPANIES a PMS
 statement names without an ISIN (Cosmo Films, Credit Access Grameen): those need
 either an ISIN-bearing statement or a hand-checked `OVERRIDES` entry.
 
+### The missing cost figures are MISSING, not broken — and the page must say which
+
+The family opened Fractal Analytics and saw Avg cost, Unrealised P&L, Realised
+P&L and Change today all dashed, and asked whether the data was absent or the
+dashboard was buggy. **That question is the defect.** Measured, both halves:
+
+- **The data is genuinely absent.** 60 of 371 positions carry no `costBasis`,
+  all of them in depository accounts — the Motilal Oswal CDSL demats, ICICI's
+  NSDL, one LKP row. Across the WHOLE audit archive, **not one of those (account,
+  security) pairs carries a cost on any record type** — not on a holdings row,
+  not on an open lot, not on a transaction. The demat transaction statements have
+  no price field populated at all, which is the same finding `precedence.mjs`
+  already acts on: a depository movement is not a trade. Realised is the same
+  shape — 7 of 49 accounts issue a capital gain statement, and **zero accounts
+  with a capital-gain document lack a realised figure in the book**. There is no
+  join failure in either direction; the em dashes are correct.
+- **The PAGE was wrong.** Two of those four tiles named their cause ("no capital
+  gain statement covers this name", "no live quote") and two did not: Avg cost
+  printed `invested —`, which is a SECOND DASH rather than a reason, and
+  Unrealised P&L printed `on cost` — a basis the figure does not have. Every
+  sibling surface already did this properly (`MandateHoldings`: "no row on this
+  statement reports a cost"; Morning CIO: "no statement in this book reports a
+  cost basis"), so the stock page was the one outlier, and it is the page a
+  reader opens when they want to know why.
+
+`costWhy` NAMES THE CUSTODIAN, from the account registry (`providerOf`) and never
+from the security name — "no cost on the ICICI Bank (NSDL demat) statement for
+this holding". Scoped to THIS holding, so it stays true for an account that
+reports a cost on its other rows. That is `Absent.tsx`'s rule arriving one tile
+late: a reason is a REQUIRED argument, because a reader who cannot tell "the
+custodian does not send this" from "the dashboard is broken" assumes the second.
+
+`check:pages` walks `stock-nocost` — the largest costless company share, DERIVED
+from the book rather than typed — and asserts both tiles name the statement, that
+neither falls back to `invested —`, and that the other two still carry their own
+reasons so a future edit cannot fix one pair by breaking the other. All three
+were verified by restoring the old tiles and watching two fail.
+
 ### Security names on screen — the depository furniture is stripped
 
 A demat statement prints the SERIES and FACE VALUE after the company name because
