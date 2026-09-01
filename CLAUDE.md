@@ -172,6 +172,9 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/securityKey.ts` — the join key (see below).
 - `src/lib/accounts.ts` — the account registry: owner vs provider, per-account as-of.
 - `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector / per-custodian rollups); `sumOrNull`.
+- `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
+  set, read by the page that PRINTS a figure (to build the link) and by
+  `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
 - `src/lib/ledger.ts` — the DATED record, read from `public/audit/` at runtime (see below).
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
@@ -2808,6 +2811,117 @@ footer's own 0.5% coverage test: a return appears only where the costed holdings
 account for essentially the whole row. It keeps AIF (+20.0%) and PMS mandates (+11.4%),
 and correctly refuses Direct Equity and Mutual Fund.
 
+### Stage 10n — EVERY FIGURE ON MORNING CIO OPENS THE HOLDINGS BEHIND IT
+
+*"Every row of the allocation table on Morning CIO must open the holdings behind
+it — AIF, PMS mandates, Mutual Fund, Direct Equity and ETF alike. The KPI tiles
+and the Concentration figures are the same fix. Only the mandate and
+family-entity drill-downs exist today."*
+
+Morning CIO is a screen of totals — a NAV, a capital-invested sum, six allocation
+rows, seven concentration figures — and two of those sets had an address
+(`/mandate/:accountId`, `/family?entity=`). Everything else was a number a reader
+could see and not open: ₹352.35 Cr of AIF across 19 holdings in 17 accounts, the
+60 positions Capital invested leaves out, the 128 names two members both hold.
+
+**ONE PAGE, NOT THIRTEEN, AND THE SET IS DEFINED ONCE.** A drill-down is not a
+new measurement — every figure on that screen is `Σ f(x)` over a subset of the
+same book, so what differs between them is the SUBSET and the words for it.
+`src/lib/drilldown.ts` owns both, and **both sides call it**: Morning CIO calls
+`drilldownHref` to build the link, `/holdings` calls `resolveDrilldown` to list
+the rows. Thirteen pages would be thirteen chances for a drill-down to disagree
+with the tile it opened from, which is this repo's most expensive recurring bug
+— the allocation footer on a different basis from its own column, the AIF
+section heading summing ₹3.17 Cr its own footer did not.
+
+Its predicates are DELEGATED, never paraphrased: buckets from `holdingBucket`,
+the listed/private split from `isPrivateClass`, the opening-value test from
+`accountHasOpeningValue` — which was private in `returns.ts` and had a second
+copy inside Morning CIO. It is exported now and both read it, because the tile
+states a coverage and the drill-down lists the accounts behind that coverage,
+and two copies of one regex are two chances for those to describe different
+accounts.
+
+| The figure | What opens | |
+| --- | --- | ---: |
+| Consolidated NAV · Positions · Distinct names | every holding | 369 rows · 214 names · ₹710.4 Cr |
+| Capital invested · Consolidated return | the holdings reporting a cost | 309 rows · ₹471.9 Cr · +15.4% |
+| …its coverage line | the holdings reporting none | 60 rows · ₹165.9 Cr |
+| Money-weighted return | the accounts carrying an opening value | 179 rows · 7 accounts · ₹110.4 Cr |
+| each allocation row | that bucket's holdings | AIF ₹352.3 Cr · PMS ₹138.7 Cr · MF ₹99.9 Cr · DE ₹94.9 Cr · ETF ₹24.6 Cr · Cash ₹0 |
+| Listed / Private · Top-10 · Cross-held · Winners / losers | their own sets | ₹358.0 / ₹352.3 Cr · ₹430.9 Cr · 128 names · 174 / 115 |
+| Dry powder · Distributions · Fund commitments | **`/private-market`** | not holdings — see below |
+
+**A REFUSED FIGURE STAYS REFUSED ONE CLICK DEEPER.** Three of the six allocation
+rows print an em dash for Return, because their Invested column covers a minority
+of their holdings — Mutual Fund reports a cost on 2 of 24, Direct Equity on 9 of
+37, ETF on none. A drill-down opening from that dash and printing a percentage
+would be the two screens contradicting each other on the reader's own click, and
+the specific figure they went looking for would be the wrong one. The page runs
+the SAME 0.5% coverage test the allocation row and the footer run, and names the
+cause — and `check:pages` asserts it per row, against what that row printed.
+
+**AND A COVERAGE CAPTION THAT PRINTS ONE FIGURE TWICE SAYS NOTHING.** The AIF
+drill-down first read `covers ₹352.3 Cr of ₹352.3 Cr · 4 of 19 report none`:
+the uncovered value is ₹98,742, both sides round to the same compact label, and
+the sentence reads as full coverage while announcing that four holdings are
+missing from it. It names the UNCOVERED value now — the small figure, the one
+actually in question — which is the trap `MandateHoldings` already prints its
+tie-out at full precision for.
+
+**THE BASIS IS ON THE PAGE, BECAUSE IT IS NOT THE SAME FOR EVERY SET.** Ten of
+these sets are CONSOLIDATED. The money-weighted coverage is PER-ACCOUNT and must
+not dedupe — it closes each account against the value ITS OWN statement prints,
+so collapsing a holding two accounts both report would put this page below the
+coverage its own tile states. No account carrying a duplicate publishes an
+opening portfolio value in this drop, so **the two agree today, which is exactly
+the condition under which the mistake is invisible** — reintroducing it left the
+sweep green. It is written down rather than tested for, and the page says which
+basis it is on.
+
+**COMMITMENT FIGURES DO NOT OPEN A HOLDINGS TABLE.** Undrawn capital is not a
+holding and has no row in `BOOK_POSITIONS`, so Dry powder, Distributions and the
+Capital deployment card point at `/private-market`, which carries those capital
+accounts folio by folio. A holdings drill-down could only ever be empty there —
+"a card that can NEVER be filled must not look like one that is waiting", with a
+hyperlink on it. For the same reason a fund-of-funds allocation row (all six are
+empty in this book) carries `fromPositions: false` and is deliberately NOT a
+link.
+
+**IT IS A WAY INTO THE MANDATE PAGE, NOT A REPLACEMENT FOR IT.** A set containing
+mandate-held rows summarises every mandate above the table, each linking to
+`/mandate/:accountId` — flattening 281 mandate-held shares into one
+undifferentiated list would re-commit the grouping mistake Stage 10L exists to
+fix. Every row is also individually linked to its mandate and its company page.
+
+#### Verifying by reintroducing the bug found two defects IN THE CHECKS
+
+Sixteen bugs were reintroduced one at a time, each rebuilt and swept. Thirteen
+fired immediately. The three that did not are the point of doing it:
+
+- **ONE ALLOCATION ROW WAS NOT ENOUGH.** The sweep walked the row Morning CIO
+  links first — its largest, AIF — and grouping the drill-down on `assetClass`
+  instead of `holdingBucket` is a REAL defect that would empty the PMS mandates
+  row entirely. It stayed green, because AIF is a bucket where the two groupings
+  agree. **All six rows are walked now** (`holdings-row-1..6`), each compared
+  against its own three cells, and a book with more buckets than slots fails the
+  `cio` check by name rather than quietly leaving rows unwalked.
+- **COUNTING ADDRESSES IS NOT PAIRING THEM.** "The page links to `/private-market`
+  twice" passed while the Dry powder tile pointed at the holdings drill-down,
+  because the Capital deployment card's own link kept the count up. Every
+  drill-down invariant now pairs the LABEL a reader clicks with the DESTINATION,
+  through a new `ctx.links` of `{href, text}` — the claim being asserted is
+  about what the reader experiences, not about what the page happens to contain.
+- **A REASON IN A `title` CANNOT BE READ FROM `innerText`.** `AbsentCell` puts
+  its cause in a hover, so "every dashed cell names the custodian that reports no
+  cost" was struck on text that never contains it. `ctx.titles` collects them.
+  The fix is to read the reason, not to move it on screen where it would make a
+  60-row table unreadable.
+
+`ONLY=cio,holdings-book npm run check:pages` walks a subset for exactly this
+loop; the routes that publish addresses for others (`cio`, `monitor`) are always
+kept, because a filter that silently stops checking is worse than no filter.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -3666,4 +3780,8 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and
   on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.
+  `ONLY=cio,holdings-book` walks a subset — for verifying an invariant by
+  reintroducing its bug, which is one edit, one rebuild and one sweep per check.
+  The routes that resolve addresses for others (`cio`, `monitor`) are always
+  kept, so a subset can never silently stop checking.
 - `npm run set-password -- "<password>"` sets the edge gate password.

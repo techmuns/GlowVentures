@@ -9,8 +9,17 @@ import { pooledXirr, totalReturnFromXirr } from "./bucketXirr";
 import { fyStartYear } from "./analytics";
 import { ownerDisplayName } from "./owners";
 
-/** An account carries an opening portfolio value only if a flow says so. */
-const accountHasOpening = (portfolio: Portfolio, accountId: string): boolean =>
+/**
+ * An account carries an opening portfolio value only if a flow says so.
+ *
+ * EXPORTED, because three surfaces now ask the same question and a fourth copy
+ * of this regex is a fourth chance for them to disagree. Morning CIO decides
+ * which accounts its money-weighted return covers, `/holdings` lists the
+ * holdings behind that coverage, and this file measures a return per owner —
+ * all three must draw the line in exactly the same place, or the drill-down
+ * lists a set the tile did not measure.
+ */
+export const accountHasOpeningValue = (portfolio: Portfolio, accountId: string): boolean =>
   (portfolio.accountCashFlows?.[accountId] ?? [])
     .some((f) => /^opening portfolio value/i.test(f.description ?? ""));
 
@@ -65,7 +74,7 @@ export function ownerMeasuredReturn(portfolio: Portfolio, positions: Position[],
     totalMV += accMv;
     if (accMv <= 0) continue;                                   // nothing to close against
     const flows = (portfolio.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount }));
-    if (!accountHasOpening(portfolio, a.accountId) || !flows.length) { excluded.push(a.accountNo); continue; }
+    if (!accountHasOpeningValue(portfolio, a.accountId) || !flows.length) { excluded.push(a.accountNo); continue; }
     const asOf = new Date(a.asOf);
     parts.push({ flows, terminalValue: accMv, asOf });
     measuredMV += accMv;

@@ -7,12 +7,15 @@ import { Pill } from "@/components/Pill";
 import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
+import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
+import { drilldownHref, TOP_NAMES } from "@/lib/drilldown";
+import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
@@ -332,9 +335,11 @@ export function MorningCIO() {
     //      against today while /performance closes against the report date gave
     //      the same figure two values (130.3% here, 174.3% there).
     const asOfDate = new Date(portfolio.asOf);
-    const hasOpening = (accountId: string) =>
-      (portfolio.accountCashFlows?.[accountId] ?? [])
-        .some((f) => /^opening portfolio value/i.test(f.description ?? ""));
+    // `accountHasOpeningValue`, not a copy of it: the drill-down this tile now
+    // opens lists the holdings of exactly the accounts this line selects, and
+    // two copies of the test are two chances for the coverage stated here and
+    // the set shown there to describe different accounts.
+    const hasOpening = (accountId: string) => accountHasOpeningValue(portfolio, accountId);
     const sideOf = (a: (typeof portfolio.accounts)[number]) => {
       const anyRow = p.find((x) => x.accountId === a.accountId);
       return anyRow ? managedRow(anyRow) : !isDirect(a);
@@ -404,6 +409,19 @@ export function MorningCIO() {
       distributed: number;                            // cash already returned; 0 for listed & startups
       xirr: number | null;                            // annualised money-weighted return
       xirrBasis: Basis; xirrNote: string | null;
+      /**
+       * WHETHER THIS ROW HAS HOLDINGS TO OPEN — and therefore whether it links.
+       *
+       * Most rows are POSITION buckets and every one of them drills down. The
+       * rest come from the fund-of-funds model (`privateMarkets.peFunds` and its
+       * siblings), which carries fund-level records and no per-holding rows
+       * anywhere in this book, so a link on one would open a table that could
+       * only ever be empty — "a card that can NEVER be filled must not look like
+       * one that is waiting", with a hyperlink on it. Every fund bucket is empty
+       * in this drop and therefore renders no row at all; this flag is what keeps
+       * that honest the day one does.
+       */
+      fromPositions: boolean;
       /** How many of `count` report no cost — Invested and Return cover the rest. */
       withoutCost: number;
       /** …and what they are worth, so the row can say what stands behind no cost. */
@@ -421,7 +439,7 @@ export function MorningCIO() {
       key: string, color: string, count: number, f: ReturnType<typeof fundTotals>, x: XirrResult, sheet: PrivateSheet,
     ): Bucket => ({
       key, color, count, invested: f.drawn, current: f.currentValue, distributed: f.distributed,
-      kind: netMultipleKind(f.distributed),
+      kind: netMultipleKind(f.distributed), fromPositions: false,
       metric: netMultiple(f.drawn, f.currentValue, f.distributed),
       // A fund's drawn capital covers the whole of it, so the multiple's
       // numerator IS the bucket's current value.
@@ -438,6 +456,7 @@ export function MorningCIO() {
       const g = eqGroup(rowsIn(key));
       return {
         key, color: bucketColor(key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
+        fromPositions: true,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
         // cost `sumOrNull` struck on part of it — which on Direct Equity is
@@ -467,7 +486,7 @@ export function MorningCIO() {
     ];
     const allBuckets: Bucket[] = [
       ...positionKeys.map(positionBucket),
-      { key: "Startups", color: "#6366f1", count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -525,7 +544,11 @@ export function MorningCIO() {
     }
     const crossHeld = [...ownersByKey.values()].filter((s) => s.size >= 2).length;
     const bySecurity = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
-    const top10Pct = bookMV > 0 ? (sum(bySecurity.slice(0, 10).map(([, v]) => v)) / bookMV) * 100 : null;
+    // TOP_NAMES, not a literal 10: the drill-down ranks the same list and a
+    // second copy of the cutoff is a second chance for the tile and the page it
+    // opens to cover different sets.
+    const topNames = bySecurity.slice(0, TOP_NAMES);
+    const top10Pct = bookMV > 0 ? (sum(topNames.map(([, v]) => v)) / bookMV) * 100 : null;
     const largest = bySecurity[0];
     const largestRow = largest ? p.find((x) => x.securityKey === largest[0]) ?? null : null;
     const largestName = largestRow?.security ?? null;
@@ -668,6 +691,8 @@ export function MorningCIO() {
       {/* KPI strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Consolidated NAV"
+          href={drilldownHref("book")}
+          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once"
           value={<Auditable formula={{
             title: "Consolidated NAV",
             excel: m.privateCount ? "= Σ market value of every holding + Private-markets value" : "= Σ market value of every holding",
@@ -680,7 +705,11 @@ export function MorningCIO() {
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
           sub={<>
             {m.hasPrivateClass
-              ? `Listed ${money(m.pp.listed)} · Private ${money(m.pp.private)}`
+              ? <>
+                  <Link to={drilldownHref("listed")} title="Open the listed half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Listed {money(m.pp.listed)}</Link>
+                  {" · "}
+                  <Link to={drilldownHref("private")} title="Open the private half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Private {money(m.pp.private)}</Link>
+                </>
               : `${m.p.length} listed positions · no private holdings`}
             {m.accrued !== null && (
               <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
@@ -698,6 +727,8 @@ export function MorningCIO() {
             statement carries no cost rather than entering it as zero, so the
             count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
+          href={drilldownHref("invested")}
+          hrefTitle="Open the holdings whose statement reports a cost — and, beneath them, the ones that report none and sit outside this figure"
           value={<Auditable formula={{
             title: "Capital invested — consolidated",
             excel: m.privateCount ? "= Σ cost basis of every holding + Private drawn" : "= Σ cost basis of every holding",
@@ -721,9 +752,16 @@ export function MorningCIO() {
                 direction is the same failure. */}
             cost in · {m.costedMV > 0 ? <>covers {money(m.costedMV)} of {money(m.totalValue)}</> : <>whole book</>}
             {m.noCostCount > 0 && (
-              <span className="block text-slate-500" title={`These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
+              /* THE POSITIONS THIS FIGURE LEAVES OUT ARE NOW OPENABLE, which is
+                 the other half of naming them. A reader told that 60 positions
+                 worth ₹165.9 Cr carry no cost had, until now, no way to find out
+                 WHICH — and the answer decides whether they chase a custodian
+                 for a cost statement or accept a permanent absence. */
+              <Link to={drilldownHref("no-cost")}
+                className="block text-slate-500 underline decoration-dotted decoration-slate-600/50 underline-offset-[3px] hover:text-champagne-400"
+                title={`Open them. These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
                 {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} worth {money(m.noCostMV)} carry no cost basis
-              </span>
+              </Link>
             )}
           </>}
           icon={<Wallet className="h-4 w-4" />} />
@@ -758,6 +796,8 @@ export function MorningCIO() {
             `npm run test:family` — so a change to the solver, the flow set or
             the terminal value fails rather than drifts. */}
         <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
+          href={drilldownHref("measured")}
+          hrefTitle="Open the holdings of the accounts this rate covers — the accounts whose statements carry an opening portfolio value, with every excluded account named"
           value={m.bookMW.pct == null
             ? <AbsentValue />
             : <span className={changeColor(m.bookMW.pct)}><Auditable formula={{
@@ -794,6 +834,8 @@ export function MorningCIO() {
             is a substitute for the other, which is why both are on the strip
             and each states its own scope. */}
         <Kpi label="Consolidated return"
+          href={drilldownHref("invested")}
+          hrefTitle="Open the holdings this return is struck over — the ones whose statement reports a cost"
           value={m.gainPct == null
             ? <AbsentValue />
             : <span className={changeColor(m.gainPct)}><Auditable formula={{
@@ -823,6 +865,8 @@ export function MorningCIO() {
             in the book they have no denominator — "₹0 undrawn" would assert a
             schedule that draws nothing, which is a different claim entirely. */}
         <Kpi label="Dry powder"
+          href={hasCommitments ? "/private-market" : undefined}
+          hrefTitle="Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
           value={hasCommitments
             ? <span className="text-amber-400"><Auditable formula={{ title: "Dry powder", excel: "= Σ (Committed − Called) across funds", plain: "Capital you've committed to funds that hasn't been called yet — still to be deployed.", worked: `= ${money(m.deploy.committed)} − ${money(m.deploy.drawn)} = ${money(m.deploy.unfunded)}`,  }}>{fmtFromBase(m.deploy.unfunded, { compact: true })}</Auditable></span>
             : <AbsentValue />}
@@ -832,6 +876,8 @@ export function MorningCIO() {
           icon={<Fuel className="h-4 w-4" />} />
 
         <Kpi label="Distributions"
+          href={hasCommitments ? "/private-market" : undefined}
+          hrefTitle="Open the capital accounts behind it. Cash a fund has already returned is a movement on a capital account, not a position, so it lives with those accounts on the Private Market page."
           value={hasCommitments
             ? fmtFromBase(m.deploy.distributed, { compact: true })
             : <AbsentValue />}
@@ -884,10 +930,31 @@ export function MorningCIO() {
                   {m.buckets.map((b) => (
                     <tr key={b.key} className="hover:bg-ink-700/40">
                       <td className="px-2 py-2.5">
-                        <span className="flex items-center gap-2 font-medium text-slate-100">
-                          <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                          {bucketLabel(b.key)}
-                        </span>
+                        {/* THE ROW OPENS THE HOLDINGS BEHIND IT — the whole of
+                            this change. AIF, PMS mandates, Mutual Fund, Direct
+                            Equity and ETF alike: the destination lists exactly
+                            the holdings this row's three figures are summed
+                            over, because `drilldownHref` and the page it opens
+                            both read the same bucket from `holdingBucket`.
+
+                            A row the fund-of-funds model produced carries no
+                            positions and is deliberately NOT a link (see
+                            `fromPositions`): a link to a table that could only
+                            be empty reads as a feed that failed. */}
+                        {b.fromPositions ? (
+                          <Link to={drilldownHref("bucket", b.key)}
+                            title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${bucketLabel(b.key)}`}
+                            className="flex items-center gap-2 font-medium text-slate-100 transition-colors hover:text-champagne-400">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                            <span className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px]">{bucketLabel(b.key)}</span>
+                          </Link>
+                        ) : (
+                          <span className="flex items-center gap-2 font-medium text-slate-100"
+                            title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                            {bucketLabel(b.key)}
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
@@ -898,7 +965,10 @@ export function MorningCIO() {
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-2 py-2.5 text-left text-slate-200">Total</td>
+                    <td className="px-2 py-2.5 text-left text-slate-200">
+                      <Link to={drilldownHref("book")} title="Open every holding in the book — the set this footer's Invested and Current columns are summed over"
+                        className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400">Total</Link>
+                    </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>
                     {/* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
@@ -943,8 +1013,14 @@ export function MorningCIO() {
           <Card title="Capital deployment" subtitle="Fund commitments &amp; dry powder">
             {hasCommitments ? (
               <>
+                {/* Each line is a figure off a drawdown fund's capital account.
+                    The card links ONCE rather than four times: all four come off
+                    the same accounts, and four links to one destination reads as
+                    four different destinations. */}
                 <ul className="text-sm">
-                  <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
+                  <li className="flex items-center justify-between py-2"><span className="text-slate-400">
+                    <Link to="/private-market" title="Open the capital accounts these four figures come from — committed, called and still to call, folio by folio"
+                      className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400">Fund commitments</Link></span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
                   <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
                   <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn — dry powder</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
                   <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
@@ -964,14 +1040,33 @@ export function MorningCIO() {
             )}
           </Card>
 
+          {/* EVERY FIGURE ON THIS CARD OPENS THE HOLDINGS BEHIND IT.
+              Each is a count or a share over a subset of the same consolidated
+              book, and each subset is resolved by `src/lib/drilldown.ts` — the
+              same function the destination page lists rows with, so the count
+              here and the rows there cannot describe two different sets.
+
+              Two of them share one destination on purpose: Positions counts the
+              ROWS of the whole book and Distinct names counts its NAMES, so both
+              open the same set and the page carries both counts and a toggle
+              between the two units. A second page would have been a second
+              derivation of one set. */}
           <Card title="Concentration &amp; risk">
             <div className="grid grid-cols-2 gap-x-6 text-sm">
-              <div className="flex items-center justify-between py-2"><span className="text-slate-400">Positions</span><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
-              <div className="flex items-center justify-between py-2"><span className="text-slate-400">Distinct names</span><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
-              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Cross-held</span><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
-              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Top-10 conc.</span><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
+              <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, one row per statement line — the unit this count counts">Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
+              <div className="flex items-center justify-between py-2"><ConcLink to={`${drilldownHref("book")}&view=security`} title="Open the same book grouped by security — one row per distinct name, which is the unit this count counts">Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
+              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
+              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
               <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
-                <span className="text-slate-400">Listed / Private</span>
+                {/* TWO SETS, TWO LINKS. The split is on ASSET CLASS — what a
+                    holding IS — so each half opens its own holdings rather than
+                    one link standing for both and leaving the reader to guess
+                    which half they are about to see. */}
+                <span className="text-slate-400">
+                  <ConcLink to={drilldownHref("listed")} title="Open the listed half — every holding whose class is not one an AIF, an unlisted company or a structured product">Listed</ConcLink>
+                  {" / "}
+                  <ConcLink to={drilldownHref("private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks">Private</ConcLink>
+                </span>
                 <span className="mono text-slate-100">
                   {m.hasPrivateClass
                     ? `${(m.pp.listed / m.totalValue * 100).toFixed(0)} / ${(m.pp.private / m.totalValue * 100).toFixed(0)}`
@@ -987,7 +1082,14 @@ export function MorningCIO() {
                         {" · "}{m.largestPct.toFixed(1)}%</>}
                 </span>
               </div>
-              <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Winners / losers</span><span className="mono text-slate-100"><span className="text-gain">{m.winners}</span> / <span className="text-loss">{m.losers}</span></span></div>
+              <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
+                <span className="text-slate-400">
+                  <ConcLink to={drilldownHref("winners")} title="Open the holdings showing a gain against their own cost">Winners</ConcLink>
+                  {" / "}
+                  <ConcLink to={drilldownHref("losers")} title="Open the holdings showing a loss against their own cost">losers</ConcLink>
+                </span>
+                <span className="mono text-slate-100"><span className="text-gain">{m.winners}</span> / <span className="text-loss">{m.losers}</span></span>
+              </div>
             </div>
           </Card>
         </div>
@@ -1085,5 +1187,26 @@ export function MorningCIO() {
         <p className="mt-2.5 text-[11px] text-slate-500">These activate once the live market-data feed &amp; fundamentals source are wired in. Everything above is built from the ingested statements alone.</p>
       </div>
     </div>
+  );
+}
+
+/**
+ * A CONCENTRATION LABEL THAT OPENS ITS OWN SET.
+ *
+ * The label carries the link and the FIGURE stays plain, for the same reason the
+ * KPI tiles link their label: several of these figures are one number beside
+ * another ("169 / 120", "50 / 50") and underlining a digit reads as a footnote
+ * marker on the number rather than a way into it. The label is also the part
+ * that names the set, which is what the reader is asking to see.
+ *
+ * The text is unchanged by wrapping it, which keeps every `check:pages`
+ * invariant that finds a figure by its label still able to find it.
+ */
+function ConcLink({ to, title, children }: { to: string; title: string; children: React.ReactNode }) {
+  return (
+    <Link to={to} title={title}
+      className="text-slate-400 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+      {children}
+    </Link>
   );
 }
