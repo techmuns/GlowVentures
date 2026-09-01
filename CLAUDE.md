@@ -1027,6 +1027,86 @@ E 1,761,264.629 on Ajay's; Sanshi Class E 1,211,186.597, Sky Capital's Hudle A1
 9,90,429.684 units on Bharat's. A name is a spelling; four exact unit counts
 against four different funds are not.
 
+### The Polycab page answers five asks, and the statements answer three
+
+*"Polycab page should show the holding per demat, per holder, pledges, dividends
+and splits."* Measured against the corpus rather than assumed, and the split
+between what is reported and what is not is a fact about the DOCUMENT TYPE
+rather than about the holding:
+
+- **Per demat** — `INE455K01017` appears in exactly ONE document in the whole
+  archive: the ICICI Bank NSDL `Statement of Holding`. Some thirty other files
+  match "polycab" and every one of them matches the family's own
+  **`@polycab.com` EMAIL ADDRESS** on a statement about something else. That is
+  §"a document is not what it MENTIONS" arriving through a mail domain, and it
+  is why the table is built on `securityKey` rather than on a name search.
+- **Per holder** — the statement prints `Name AJAY T JAISINGHANI`, which
+  `shared/owners.mjs` resolves. The rollup keys on the ACCOUNT and is
+  deliberately NOT deduped: a per-owner breakdown shows each statement's row as
+  printed (§"consolidated counts once, per-account does not").
+- **Pledges** — an NSDL `Statement of Holding` has five columns: ISIN Code,
+  Scrip Name, Account Description, Balance, Value. **There is no pledge,
+  lock-in, earmark or freeze column on it at all.**
+- **Dividends** — the only report type this account has ever issued is
+  `holdings`. No dividend statement and no corporate-benefits report covers it.
+- **Splits** — `BOOK_CORPORATE_ACTIONS` is real and populated: a 1:1 bonus, a
+  1:5 bonus, a five-way spin-off and two distributions, across four accounts.
+  This demat is not one of them and no row in it names this security.
+
+**AND A NIL PLEDGE IS THE MOST DANGEROUS ZERO ON THIS PAGE.** The CDSL
+statements elsewhere in this book DO print the encumbrance breakdown — `FREE
+BAL. | PLEDGED SETUP | PLEDGEE | LOCKIN + FREEZE | SAFE/PENDING DEMAT | REMAT`,
+with a measured `0.000` in each — so an unpledged balance is a figure this book
+knows how to report honestly, and an invented one would be indistinguishable
+from a measured one on screen. On a PROMOTER block, where a pledge is the fact a
+reader would act on, it is also the most consequential zero available to invent.
+The row renders `—` with the reason, and `check:pages` asserts it can never
+acquire a number that parses as zero.
+
+**THE LAST THREE ARE READ FROM THE BOOK, NOT DECLARED IN PROSE.** The card
+filters `BOOK_CORPORATE_ACTIONS` on this holding's own `securityKey` and sums
+`dividendReceived` off the position, so a drop that brings a Polycab dividend or
+bonus into the archive fills those rows with no code change — and the page grows
+a real corporate-actions table when one arrives. Until then each row states what
+is missing and which document would carry it, as **three rows in ONE card**
+rather than three dashed boxes: during an upstream outage three empty frames
+read as three failures, which is the company page's own lesson applied before it
+had to be learnt twice.
+
+**THE STATEMENT'S `Account Description` IS MEASURED AND THEN DISCARDED, and that
+is the one improvement left here.** `bandsFromHeader` in `nsdlDemat.mjs` derives
+that column's band — it has to, to place the two money columns — and
+`readHoldings` never reads it. It prints `Beneficiary` on the Polycab row,
+`Beneficiary - Pre IPO Shares/27-AUG-26` and `Pending Demat` on others: a real
+balance-TYPE field, and the closest thing this document has to a statement about
+encumbrance. Carrying it needs a re-extraction, which needs
+`GLOW_PDF_PASSWORDS`. It is named here rather than re-derived from `pages.json`
+in the browser, because a presentation layer that repairs an extraction hides
+the gap from the reconciler (§1) — the same reason `securityKey` is not patched
+on the read side.
+
+**SIX INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG.** `check:pages` walks
+`/polycab` and reconciles the rendered tables rather than matching their
+captions: the per-demat rows must account for every share the KPI strip reports
+AND the strip for every share in `BOOK_POLYCAB` (two comparisons, because
+rows-against-their-own-footer catches a total computed independently of its rows
+— the Private Market page's PM-1 — and rendered-against-the-book catches a page
+that drops the same row from both and reconciles perfectly with itself); the
+per-holder rollup must regroup the same shares over the book's own count of
+DISTINCT accounts; the share-of-block weights must sum to 100 (against the
+portfolio they read ~1,738%, and it renders as an ordinary percentage either
+way); every account number the book carries the holding in must appear; and the
+three unreported facts must each be named and must each render a dash or a real
+figure, never a zero. Verified by breaking each in turn — an off-by-one tile, a
+demat count taken from rows, a weight over consolidated NAV, an unnamed account,
+a fabricated nil, and a silently dropped row — and watching exactly the right
+check fail.
+
+**`ONLY=<route,route>` walks a subset of the sweep**, added for that
+verification: the discipline costs a build and a full 62-combination sweep per
+bug, and it is what makes reintroducing six of them practical rather than
+theoretical. The default is still every route.
+
 ### THE VALUE COLUMN IS A MARK ON 14 ROWS AND PAR ON 24
 
 `motilalDemat.mjs`'s rate column prints `100.000` on an AIF unit and that is the
