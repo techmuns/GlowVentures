@@ -2849,7 +2849,7 @@ accounts.
 | …its coverage line | the holdings reporting none | 60 rows · ₹165.9 Cr |
 | Money-weighted return | the accounts carrying an opening value | 179 rows · 7 accounts · ₹110.4 Cr |
 | each allocation row | that bucket's holdings | AIF ₹352.3 Cr · PMS ₹138.7 Cr · MF ₹99.9 Cr · DE ₹94.9 Cr · ETF ₹24.6 Cr · Cash ₹0 |
-| Listed / Private · Top-10 · Cross-held · Winners / losers | their own sets | ₹358.0 / ₹352.3 Cr · ₹430.9 Cr · 128 names · 174 / 115 |
+| Listed / Private · Top-10 · Cross-held · Winners / losers | their own sets, each walked and reconciled against the card | ₹358.0 / ₹352.3 Cr · ₹430.9 Cr · 128 names · 174 / 115 |
 | Dry powder · Distributions · Fund commitments | **`/private-market`** | not holdings — see below |
 
 **A REFUSED FIGURE STAYS REFUSED ONE CLICK DEEPER.** Three of the six allocation
@@ -2894,10 +2894,11 @@ mandate-held rows summarises every mandate above the table, each linking to
 undifferentiated list would re-commit the grouping mistake Stage 10L exists to
 fix. Every row is also individually linked to its mandate and its company page.
 
-#### Verifying by reintroducing the bug found two defects IN THE CHECKS
+#### Verifying by reintroducing the bug found five defects IN THE CHECKS
 
-Sixteen bugs were reintroduced one at a time, each rebuilt and swept. Thirteen
-fired immediately. The three that did not are the point of doing it:
+Twenty-three bugs were reintroduced one at a time, each rebuilt and swept.
+Eighteen fired immediately. **The five that did not are the point of doing it**,
+and four of them were defects in the checks rather than in the pages:
 
 - **ONE ALLOCATION ROW WAS NOT ENOUGH.** The sweep walked the row Morning CIO
   links first — its largest, AIF — and grouping the drill-down on `assetClass`
@@ -2917,6 +2918,34 @@ fired immediately. The three that did not are the point of doing it:
   cost" was struck on text that never contains it. `ctx.titles` collects them.
   The fix is to read the reason, not to move it on screen where it would make a
   60-row table unreadable.
+- **AND A CHIP THAT STOPPED RENDERING TOOK AN INVARIANT WITH IT.** "No
+  private-class holding stands as a row in the listed half" looked for an `· AIF`
+  chip among the rows — and the chip is only drawn where a set spans MORE THAN
+  ONE bucket, which the all-AIF private half does not. Inverting the split left
+  it green. It is a PARTITION check now, struck on counts both pages print: the
+  two halves must hold every position between them and none twice, which is a
+  claim neither page can make alone and which a widened or narrowed filter breaks
+  in a way a value comparison alone can miss.
+
+**AND ONE MORE THE SCREENSHOTS FOUND, WHICH NO CHECK WOULD HAVE.**
+`Drilldown.defaultView` was declared, set on the two NAME-counting scopes and
+**read by nothing** — this repo's most-repeated failure, a field carrying the
+right answer into no caller. `useViewParam` defaults every page to its first
+view, which is right where a route has one natural unit and wrong here, because
+the unit belongs to the FIGURE: Positions counts statement rows, Top-10 and
+Cross-held count names. Both now open on the by-security view, the param is
+written explicitly on every toggle (so picking the other view cannot bounce the
+reader back to the scope's default), and `check:pages` asserts it on the COLUMNS
+each page draws — not on the word "security", which appears in these pages' own
+prose and made the first draft fail a page that was landing correctly.
+
+**TWO BUGS CANNOT BE CAUGHT ON THIS BOOK, and are written down rather than tested
+for.** Deduping the per-account coverage set changes nothing, because no account
+carrying a duplicate publishes an opening portfolio value. And keying `cross-held`
+on the ACCOUNT rather than the OWNER gives the same 128, because no member holds
+one name in two of their own accounts today — the moment one does, that count
+would report a name as shared between entities when it is not. Both are recorded
+beside the code they govern.
 
 `ONLY=cio,holdings-book npm run check:pages` walks a subset for exactly this
 loop; the routes that publish addresses for others (`cio`, `monitor`) are always

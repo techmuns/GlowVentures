@@ -222,6 +222,8 @@ const NO_COST_KEY = (() => {
 })();
 
 const CIO_BUCKET_HREFS = [];
+/** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
+const DRILLDOWN_COUNTS = new Map();
 // SIX, because the book has six buckets. Spare slots are not free: each one is
 // a route that renders a page nobody sees and reports four NOT CHECKED lines
 // every run, which is the noise that trains a reader to skim the report. A
@@ -288,6 +290,21 @@ const ROUTES = [
    */
   ...BUCKET_SLOTS.map((n) => [`holdings-row-${n}`, () => CIO_BUCKET_HREFS[n - 1] ?? `/holdings?of=bucket&key=no-row-${n}-on-morning-cio`]),
   ["holdings-book", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
+  /**
+   * ...AND THE CONCENTRATION FIGURES, which until now had their LINKS asserted
+   * on the `cio` route and their DESTINATIONS asserted by nothing. A link that
+   * opens the wrong set passes a pairing check and fails a reader, so each of
+   * these compares the page's own total against the figure it opened from —
+   * exactly what `holdings-row-N` does for the allocation table.
+   *
+   * Addresses come from the links Morning CIO drew, never typed here.
+   */
+  ["holdings-crossheld", () => drilldownPath("cross-held") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-topnames", () => drilldownPath("top-names") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-listed", () => drilldownPath("listed") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-private", () => drilldownPath("private") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-winners", () => drilldownPath("winners") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-losers", () => drilldownPath("losers") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-measured", () => drilldownPath("measured") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-nocost", () => drilldownPath("no-cost") ?? "/holdings?of=none-resolved-from-cio"],
   // ...AND AN ADDRESS THAT NAMES NOTHING. A drill-down that silently falls back
@@ -609,6 +626,20 @@ function money2cr(s) {
 const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(₹[\d,.]+\s*(?:Cr|L|K)?)$`, "im").exec(t)?.[1]);
 /** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
 const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
+/**
+ * WHICH VIEW A DRILL-DOWN LANDED ON, read off the COLUMNS it drew.
+ *
+ * The by-security table carries `Held in` and no per-statement columns; the
+ * by-row one carries `Held via`, `Entity` and `Qty`. Both halves are asserted,
+ * because a page rendering neither table would satisfy an absence test alone.
+ *
+ * NOT matched on the word "security", which appears in these pages' own prose —
+ * the first draft did exactly that and failed a page that was landing correctly.
+ * `innerText` joins a header row's cells with tabs, so the header is one line
+ * and the column NAMES are what identify the view.
+ */
+const opensByName = (t) => /SECURITY\s+HELD IN\s+INVESTED/i.test(t) && !/SECURITY\s+HELD VIA/i.test(t);
+
 /** …and how many holdings and names it says it covers. */
 function drilldownCounts(t) {
   const m = /([\d,]+)\s+holdings?\s*·\s*([\d,]+)\s+names?\s*·\s*([\d,]+)\s+accounts?/i.exec(t);
@@ -1014,6 +1045,122 @@ const INVARIANTS = {
       const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ holdings\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
       if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
       return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
+    }],
+  ],
+  /**
+   * ── THE CONCENTRATION FIGURES' OWN DRILL-DOWNS ───────────────────────────
+   *
+   * Each compares the destination against the figure the reader clicked. The
+   * `cio` route already asserts the LABEL is paired with the DESTINATION; this
+   * is the other half, and neither implies the other — a correctly-labelled
+   * link to a page listing the wrong set passes the first and fails a reader.
+   */
+  "holdings-crossheld": [
+    ["its name count reproduces the Cross-held figure", (t) => {
+      const there = CIO_FIGURES.get("crossHeld"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
+      return c != null && c.names === there;
+    }],
+    // A NAME-COUNTING FIGURE OPENS ON THE UNIT IT COUNTS. `Drilldown.defaultView`
+    // says which; it was declared, set on this scope and read by nothing until a
+    // screenshot showed the page landing on a row-per-statement table for a
+    // figure that counts names. A field carrying the right answer into no caller
+    // looks exactly like a working feature.
+    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
+    // ...and every name here really is held by two or more entities, which is
+    // what distinguishes a cross-held name from a DUPLICATE the consolidated set
+    // has already collapsed.
+    ["the page separates cross-held from the duplicate policy", (t) =>
+      /counted once per member/i.test(t) && /already collapsed/i.test(t)],
+  ],
+  "holdings-topnames": [
+    ["its value reproduces the Top-10 concentration share", (t) => {
+      const pct = CIO_FIGURES.get("top10Pct"), nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (![pct, nav].every(Number.isFinite)) return notChecked("Morning CIO's Top-10 figure did not parse on this run");
+      // The card prints the share to a whole percent, so the bound is half of
+      // one — reconstructed from the two figures rather than compared to a
+      // literal, which would go stale the next drop.
+      return Number.isFinite(here) && Math.abs((here / nav) * 100 - pct) <= 0.5;
+    }],
+    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
+    ["it lists exactly the names the figure covers", (t) => {
+      const c = drilldownCounts(t);
+      const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
+      return c != null && Number.isFinite(said) && c.names === said;
+    }],
+  ],
+  /**
+   * LISTED AND PRIVATE ARE ONE SPLIT, so each half is checked against the NAV
+   * it came out of rather than against itself. Asserted from both ends: a page
+   * showing the wrong half passes a check that only looks at its own figure.
+   */
+  "holdings-listed": [
+    ["its value reproduces the listed half the NAV caption states", (t) => {
+      const there = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    ["it carries holdings, and fewer than the whole book", (t) => {
+      const c = drilldownCounts(t), pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return c != null && c.holdings > 0 && c.holdings < pos;
+    }],
+  ],
+  "holdings-private": [
+    ["its value reproduces the private half the NAV caption states", (t) => {
+      const there = CIO_FIGURES.get("private"), here = drilldownTotal(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    /**
+     * THE TWO HALVES PARTITION THE BOOK — every holding in exactly one of them.
+     *
+     * Asserted on the COUNTS as well as the values, because the two answer
+     * different failures: a widened filter that put a holding in both halves
+     * moves the counts and can leave the values looking plausible, and a
+     * narrowed one drops rows from both. Neither page can make this claim
+     * alone, which is why the listed half's own figures are carried here.
+     */
+    ["the two halves hold every position between them, and none twice", (t) => {
+      const here = drilldownCounts(t), listed = DRILLDOWN_COUNTS.get("holdings-listed");
+      const pos = CIO_FIGURES.get("positions");
+      if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
+      return here != null && here.holdings + listed.holdings === pos;
+    }],
+    ["the two halves reconstruct the NAV between them", (t) => {
+      const nav = CIO_FIGURES.get("nav"), listed = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
+      if (![nav, listed].every(Number.isFinite)) return notChecked("Morning CIO's NAV or listed figure did not parse on this run");
+      return Number.isFinite(here) && Math.abs(listed + here - nav) <= 0.3;
+    }],
+  ],
+  /**
+   * WINNERS AND LOSERS DO NOT ADD TO THE BOOK, and the pages say so. A holding
+   * exactly at cost is in neither; one whose cost the statements do not report
+   * has no return to sort on at all. Both sets are named on the page rather than
+   * left for a reader to discover by subtracting.
+   */
+  "holdings-winners": [
+    ["its count reproduces the Winners figure", (t) => {
+      const there = CIO_FIGURES.get("winners"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
+      return c != null && c.holdings === there;
+    }],
+    ["the holdings in neither count are named, not dropped", (t) =>
+      /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+  ],
+  "holdings-losers": [
+    ["its count reproduces the losers figure", (t) => {
+      const there = CIO_FIGURES.get("losers"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
+      return c != null && c.holdings === there;
+    }],
+    // AND THE TWO SETS ARE DISJOINT AND SMALLER THAN THE BOOK. Winners + losers
+    // adding to the position count would mean something was double-counted or
+    // the at-cost and uncosted holdings were swept into one side.
+    ["winners and losers together are fewer than the book's positions", (t) => {
+      const w = CIO_FIGURES.get("winners"), l = CIO_FIGURES.get("losers"), pos = CIO_FIGURES.get("positions");
+      if (![w, l, pos].every(Number.isFinite)) return notChecked("Morning CIO's concentration counts did not parse on this run");
+      return w + l < pos;
     }],
   ],
   /**
@@ -2179,6 +2326,12 @@ for (const theme of THEMES) {
        * the same two sources a reader uses. Captured on the primary theme/width
        * pass only, which is the one where `innerText` is real.
        */
+      // WHAT EACH DRILL-DOWN PRINTED, so a later one can be checked against it.
+      // The listed and private halves have to PARTITION the book, and that is a
+      // claim about the two pages together which neither can make alone.
+      if (!FAST && name.startsWith("holdings-")) {
+        DRILLDOWN_COUNTS.set(name, drilldownCounts(text));
+      }
       if (name === "cio") {
         // THE ADDRESSES ARE COLLECTED EVEN IN FAST MODE, for the reason
         // `MANDATE_PATH` is: the responsive sweep would otherwise walk each
@@ -2202,6 +2355,15 @@ for (const theme of THEMES) {
         grab("measured", new RegExp(String.raw`\d+ of \d+ accounts\s*·\s*(₹[\d,.]+\s*(?:Cr|L|K)?) of `, "i"));
         const counts = /Positions\s*\n?\s*([\d,]+)[\s\S]{0,40}?Distinct names\s*\n?\s*([\d,]+)/i.exec(text);
         if (counts) { CIO_FIGURES.set("positions", cr(counts[1])); CIO_FIGURES.set("names", cr(counts[2])); }
+        // The rest of the Concentration card, so each drill-down can be held to
+        // the figure a reader clicked rather than to a literal written here.
+        const num = (label, re) => { const v = Number(re.exec(text)?.[1] ?? NaN); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
+        num("crossHeld", /Cross-held\s*\n?\s*([\d,]+)/i);
+        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+)%/i);
+        const wl = /Winners\s*\/\s*losers\s*\n?\s*([\d,]+)\s*\/\s*([\d,]+)/i.exec(text);
+        if (wl) { CIO_FIGURES.set("winners", cr(wl[1])); CIO_FIGURES.set("losers", cr(wl[2])); }
+        grab("listed", new RegExp(String.raw`^Listed (₹[\d,.]+\s*(?:Cr|L|K)?)`, "im"));
+        grab("private", new RegExp(String.raw`Private (₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
       }
       const zeros = !FAST && theme === "light" && width === WIDTHS[0]
         ? [...text.matchAll(ZEROISH)].map((m) => {

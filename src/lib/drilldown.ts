@@ -351,6 +351,15 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
  * The owner a position resolves to, matching `ownerOf` — imported rather than
  * re-implemented so the cross-held count here and the one on Morning CIO cannot
  * key on two different notions of "entity".
+ *
+ * AND IT MUST BE THE OWNER, NOT THE ACCOUNT — which no check on this book can
+ * prove. Cross-held asks how many names more than one FAMILY MEMBER holds; keyed
+ * on `accountId` it would answer how many names sit in more than one ACCOUNT,
+ * and one member holding a name in two of their own mandates would be reported
+ * as cross-held between entities. Measured on this drop both give 128, so
+ * reintroducing the bug leaves the sweep green — the same shape as the
+ * per-account dedupe above, and recorded here for the same reason: written down
+ * rather than tested for, because the data cannot tell the two apart today.
  */
 function ownerLabel(accIdx: ReturnType<typeof accountIndex>, p: Position): string {
   return accIdx.get(p.accountId)?.owner || "Unattributed";

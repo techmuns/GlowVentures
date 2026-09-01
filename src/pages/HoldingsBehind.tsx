@@ -6,7 +6,7 @@ import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
-import { ViewToggle, useViewParam } from "@/components/ViewToggle";
+import { ViewToggle } from "@/components/ViewToggle";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
@@ -116,8 +116,7 @@ function coveredReturn(mv: number, cost: number | null, pnl: number | null, with
 
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
-  const [params] = useSearchParams();
-  const [view, setView] = useViewParam<ViewKey>(VIEWS);
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
@@ -172,6 +171,33 @@ export function HoldingsBehind() {
   const d = resolved;
   const accIdx = accountIndex(portfolio.accounts);
   const rows = d.rows;
+
+  /**
+   * WHICH VIEW THIS SET OPENS ON, AND WHY IT IS NOT `useViewParam`.
+   *
+   * That helper defaults to the first view for every page that uses it, which is
+   * right when a route has one natural unit. Here the unit belongs to the FIGURE:
+   * Positions counts statement rows, and Top-10 concentration and Cross-held
+   * count NAMES — landing those two on a row-per-statement table makes the
+   * reader do the grouping the figure already did.
+   *
+   * `Drilldown.defaultView` says which, and this is what reads it. It was
+   * declared and set and read by nothing, which is this repo's most-repeated
+   * failure in miniature: a field that carries the right answer into no caller
+   * looks exactly like a working feature.
+   *
+   * The param is written EXPLICITLY on every toggle rather than deleted for the
+   * default. `useViewParam` drops the param when you pick its first view, which
+   * here would silently bounce a reader back to the scope's own default the
+   * moment they asked for the other one.
+   */
+  const raw = params.get("view");
+  const view: ViewKey = raw === "row" || raw === "security" ? raw : d.defaultView;
+  const setView = (key: ViewKey) => {
+    const next = new URLSearchParams(params);
+    next.set("view", key);
+    setParams(next);   // push, not replace, so Back returns to the view they came from
+  };
 
   // ── The figures this page has to reconstruct ───────────────────────────────
   const mv = sum(rows.map((r) => r.marketValue));
