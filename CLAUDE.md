@@ -2808,6 +2808,50 @@ footer's own 0.5% coverage test: a return appears only where the costed holdings
 account for essentially the whole row. It keeps AIF (+20.0%) and PMS mandates (+11.4%),
 and correctly refuses Direct Equity and Mutual Fund.
 
+### Stage 10n — the pick-list is of HOLDINGS, and the money reads first
+
+*"In the portfolio monitor tab it should be all holdings, it's not all companies,
+because I'm buying multiple things."* Two changes, both to the Portfolio Monitor
+and neither to the model.
+
+**"ALL COMPANIES" WAS A CLAIM THE LIST DID NOT SUPPORT.** `securityNames` is keyed
+on `p.security` over EVERY position, so the first options the dropdown offers are
+Sanshi Fund-I, Buoyant Opportunities Strategy, the Motilal Oswal Founders Fund and
+Helios Flexi Cap — an AIF folio, a Category-III strategy and two schemes, none of
+them a company. That is Stage 10i/10j/10L one control down: a word true of SOME of
+what is under it and not of all of it, on the surface a reader picks from. It reads
+`All holdings` now, with the count and the search placeholder to match, and the
+weight caption under the table says "the holdings you picked" for the same reason.
+
+**AND THE SHARED COMPONENT WAS ASSERTING ONE CALLER'S VOCABULARY AT THE OTHERS.**
+`MultiSelectFilter`'s empty-search line hardcoded "No companies match", so the
+economic calendar's COUNTRY filter rendered it over a list of countries. It reads
+the caller's own `unit` now — the noun each of the three callers already passes.
+
+**MONEY FIRST, DESCRIPTORS LAST.** *"Reorder the columns so the money reads first
+and Sector / Entity close the table."* Sector and Entity sat between the security
+name and the first figure, so Qty, Avg cost, Invested and CMP were pushed off the
+first screen on a table whose reader is scanning for value. They are the only two
+columns on the row that describe the holding rather than measure it, and they now
+close it: **Security · Qty · Avg cost · Invested · CMP · Day · Market value ·
+Weight · Unreal. P&L · Realised P&L · Return · Sector · Entities.**
+
+**NOTHING ABOUT WHAT ANY CELL RENDERS CHANGED** — every `AbsentCell` reason, every
+`Auditable` formula, every basis note and the dedupe-aware footer are moved
+verbatim. The footer's `Total · N rows` span narrows 5 → 3 and the row gains two
+empty cells under the descriptor columns, because a column of words has no sum to
+be missing; all three regions still come to 13. The same reading order is applied
+to the two drill-downs the table opens out of (Sector last inside a mandate; the
+route last on the per-entity split, where the owning entity is the row identity)
+and to the Transactions tape, where Entity closes the row and Type stays beside
+Security — one narrow column saying what the row IS, not a block of descriptors
+standing between the name and the first figure.
+
+**The Excel export keeps its own layout** (`exportPortfolioExcel.ts` carries Class,
+Held via and Mandate columns the screen does not) and was deliberately not
+reordered: it is a different artefact with its own stated grouping, and the request
+was about the tab.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
