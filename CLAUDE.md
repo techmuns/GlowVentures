@@ -2847,10 +2847,53 @@ and to the Transactions tape, where Entity closes the row and Type stays beside
 Security — one narrow column saying what the row IS, not a block of descriptors
 standing between the name and the first figure.
 
-**The Excel export keeps its own layout** (`exportPortfolioExcel.ts` carries Class,
-Held via and Mandate columns the screen does not) and was deliberately not
-reordered: it is a different artefact with its own stated grouping, and the request
-was about the tab.
+**AND THE EXCEL EXPORT FOLLOWS, at the family's request.** It was left on its own
+layout first — a different artefact, and the ask had been about the tab — and they
+asked for it to match. `exportPortfolioExcel.ts` still carries three columns the
+screen does not (Class, Held via, Mandate: which section a row sits in, who chose
+it, and where a manager did, which mandate), and those are DESCRIPTORS too, so
+they close the sheet beside Sector and Entities:
+
+```
+Security · Qty · Avg Cost · CMP · Market Value · Weight of book · Unreal. P&L ·
+Return · Class · Held via · Mandate · Sector · Entities
+```
+
+**THE REORDER WAS THE EDIT THAT COULD NOT BE DONE BY HAND.** Every cell was
+written as `row.getCell(9), cols[8]` — a literal index paired with the spec that
+formats it, thirteen times, held together by nothing. Moving a column breaks that
+pairing SILENTLY: the header row still prints correctly and a sector lands in the
+column a reader's own `SUM()` is pointed at. The footer had the same defect twice
+over, in `set(10, totMV)` / `set(12, totPnL)` and in a totals-row alignment reading
+`col >= 7` — the boundary where money began in the OLD layout. So the order lives
+in `cols` alone now and a row arrives as a record keyed by the same strings
+(`writeRow`), with the footer's cells found by `colAt`. That is `lib/table.mjs`'s
+own rule — **match on the HEADER, never on the column index** — applied to the
+WRITING side, and it is why a future reorder is one edit rather than fourteen.
+
+**THIS FILE HAD NO COVERAGE OF ANY KIND, AND IT IS THE ONE ARTEFACT WHOSE DEFECTS
+ARE INVISIBLE.** `build`, `check:pages` and `check:family` never open the workbook
+— it is a download — so a sheet with swapped columns passes every gate in the repo
+and opens perfectly on the reader's machine.
+`src/lib/__tests__/portfolioExcel.test.ts` builds it from `BOOK_POSITIONS` and
+reads it back, anchored the way `privateMarket.test.ts` is: **the footer's Market
+Value cell, LOCATED BY ITS HEADER, equals `BOOK_SUMMARY.totalValue` to the rupee**
+— two independent paths to one figure, so it cannot go stale when the next drop
+moves the book. Each column is then checked for what it can legitimately hold (a
+money column is a number or an em dash; a descriptor column is a non-numeric
+string and never either), which is what catches the values shifting while the
+headers stay put. All three bug classes were verified by reintroducing them: the
+old order fires the header assertion, a one-column value shift fires three checks,
+and the footer back on its literal indices fires three more.
+
+`buildPortfolioWorkbook` is the seam that made it testable — the workbook without
+the `document` / `URL.createObjectURL` download around it.
+
+**And the suite runner had to move its bundle.** `test-family.mjs` built into the
+system temp dir, and `--packages=external` leaves a real dependency as a bare
+import that Node resolves by walking UP from the bundle — so `exceljs` was
+unreachable from `/tmp`. The bundle is written inside `node_modules` now, one
+level below the packages it needs, and still outside the working tree.
 
 ### Stage 10k — News & Announcements: REMOVED
 
