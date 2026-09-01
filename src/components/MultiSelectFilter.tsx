@@ -19,7 +19,7 @@ export function MultiSelectFilter({
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
   allLabel?: string;        // trigger text when nothing is selected
-  unit?: string;            // e.g. "companies" → "3 companies"
+  unit?: string;            // e.g. "holdings" → "3 holdings"
   placeholder?: string;     // search box placeholder
   className?: string;
   // How to DISPLAY an option, where the stored value is not the readable one.
@@ -57,6 +57,17 @@ export function MultiSelectFilter({
 
   const count = selected.size;
   const label = count === 0 ? allLabel : count === 1 ? show([...selected][0]) : `${count} ${unit}`;
+  /**
+   * THE NOUN FOR THE OPTION LIST, taken from `unit` — which every caller passes
+   * as a plural ("holdings", "countries", "categories").
+   *
+   * The empty-search line hardcoded "companies", so the economic calendar's
+   * country filter rendered "No companies match" over a list of COUNTRIES: one
+   * caller's vocabulary asserted at every other caller. `unit`'s own default is
+   * the count's word ("3 selected"), which is not a noun for a list, so that
+   * one case falls back to a neutral one rather than reading "No selected match".
+   */
+  const noun = unit === "selected" ? "options" : unit;
 
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
@@ -107,7 +118,7 @@ export function MultiSelectFilter({
               : <span className="text-slate-600">Pick one or more</span>}
           </div>
           <ul role="listbox" aria-multiselectable="true" className="max-h-64 overflow-auto border-t border-ink-700 py-1">
-            {filtered.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">No companies match “{q}”.</li>}
+            {filtered.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">No {noun} match “{q}”.</li>}
             {filtered.map((o) => {
               const on = selected.has(o);
               return (

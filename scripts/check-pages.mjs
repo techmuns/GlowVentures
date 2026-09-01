@@ -1138,6 +1138,61 @@ const INVARIANTS = {
       return Number.isFinite(nav) && Number.isFinite(total)
         && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
     }],
+    /**
+     * ── THE MONEY READS FIRST, AND SECTOR / ENTITY CLOSE THE TABLE ───────────
+     *
+     * "It should be all holdings, it's not all companies, because I'm buying
+     * multiple things" — and "reorder the columns so the money reads first and
+     * Sector / Entity close the table."
+     *
+     * Struck on the RENDERED ROWS, never on the header: innerText breaks a
+     * sortable header cell across lines (the sort arrow is its own flex item),
+     * so a header-order test would be reading a shape the reader never sees.
+     * A data row is one tab-joined line and is exactly what they do see.
+     */
+    ["the pick-list is of holdings, not of companies",
+      (t) => /All holdings/.test(t) && !/All compan(y|ies)/i.test(t)],
+    /**
+     * MONEY FIRST — the cell immediately after the security name is the
+     * QUANTITY. Under the old order it was the sector, so this flips on a
+     * revert rather than passing both ways. Direct Equity is the section to
+     * strike it on: every row in it is a share with a quantity, where a mandate
+     * row carries an em dash there by design.
+     */
+    ["the first cell after the security name is a figure, not a descriptor", (t) => {
+      const de = sectionOf(t, "DIRECT EQUITY");
+      if (!de || de.rows.length === 0) return false;   // no rows is never a pass
+      return de.rows.every((r) => /^[\d,]+(\.\d+)?$/.test(r.split("\t")[1]?.trim() ?? ""));
+    }],
+    /**
+     * ...AND THE SECTOR IS SECOND FROM THE END. Keyed on the app's own word for
+     * an unmapped sector — `analytics.ts` vocabulary, the same kind of literal
+     * the section headings above are matched on, not a figure copied out of the
+     * book. It sat at index 1 before; a revert puts it back there.
+     */
+    ["the sector column is second from the end of every row that renders one", (t) => {
+      const rows = t.split("\n").filter(isDataRow).filter((l) => /\bUnclassified\b/.test(l));
+      if (rows.length === 0) return false;             // nothing to check is nothing passed
+      return rows.every((r) => {
+        const cells = r.split("\t");
+        return cells[cells.length - 2]?.trim() === "Unclassified";
+      });
+    }],
+    /**
+     * AND THE FOOTER ENDS IN TWO EMPTY CELLS. A column of words has no sum to be
+     * missing, so these are empty rather than absent — and their presence is
+     * what says the two descriptor columns are past the last figure. The cell
+     * before them is the total return, which is where the money now stops.
+     */
+    ["the footer totals nothing under the two descriptor columns", (t) => {
+      const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
+      if (!foot) return false;
+      const cells = foot.split("\t");
+      return cells.length >= 3
+        && cells[cells.length - 1].trim() === ""
+        && cells[cells.length - 2].trim() === ""
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+    }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and

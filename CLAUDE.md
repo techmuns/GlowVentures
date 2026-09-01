@@ -2888,6 +2888,93 @@ footer's own 0.5% coverage test: a return appears only where the costed holdings
 account for essentially the whole row. It keeps AIF (+20.0%) and PMS mandates (+11.4%),
 and correctly refuses Direct Equity and Mutual Fund.
 
+### Stage 10n — the pick-list is of HOLDINGS, and the money reads first
+
+*"In the portfolio monitor tab it should be all holdings, it's not all companies,
+because I'm buying multiple things."* Two changes, both to the Portfolio Monitor
+and neither to the model.
+
+**"ALL COMPANIES" WAS A CLAIM THE LIST DID NOT SUPPORT.** `securityNames` is keyed
+on `p.security` over EVERY position, so the first options the dropdown offers are
+Sanshi Fund-I, Buoyant Opportunities Strategy, the Motilal Oswal Founders Fund and
+Helios Flexi Cap — an AIF folio, a Category-III strategy and two schemes, none of
+them a company. That is Stage 10i/10j/10L one control down: a word true of SOME of
+what is under it and not of all of it, on the surface a reader picks from. It reads
+`All holdings` now, with the count and the search placeholder to match, and the
+weight caption under the table says "the holdings you picked" for the same reason.
+
+**AND THE SHARED COMPONENT WAS ASSERTING ONE CALLER'S VOCABULARY AT THE OTHERS.**
+`MultiSelectFilter`'s empty-search line hardcoded "No companies match", so the
+economic calendar's COUNTRY filter rendered it over a list of countries. It reads
+the caller's own `unit` now — the noun each of the three callers already passes.
+
+**MONEY FIRST, DESCRIPTORS LAST.** *"Reorder the columns so the money reads first
+and Sector / Entity close the table."* Sector and Entity sat between the security
+name and the first figure, so Qty, Avg cost, Invested and CMP were pushed off the
+first screen on a table whose reader is scanning for value. They are the only two
+columns on the row that describe the holding rather than measure it, and they now
+close it: **Security · Qty · Avg cost · Invested · CMP · Day · Market value ·
+Weight · Unreal. P&L · Realised P&L · Return · Sector · Entities.**
+
+**NOTHING ABOUT WHAT ANY CELL RENDERS CHANGED** — every `AbsentCell` reason, every
+`Auditable` formula, every basis note and the dedupe-aware footer are moved
+verbatim. The footer's `Total · N rows` span narrows 5 → 3 and the row gains two
+empty cells under the descriptor columns, because a column of words has no sum to
+be missing; all three regions still come to 13. The same reading order is applied
+to the two drill-downs the table opens out of (Sector last inside a mandate; the
+route last on the per-entity split, where the owning entity is the row identity)
+and to the Transactions tape, where Entity closes the row and Type stays beside
+Security — one narrow column saying what the row IS, not a block of descriptors
+standing between the name and the first figure.
+
+**AND THE EXCEL EXPORT FOLLOWS, at the family's request.** It was left on its own
+layout first — a different artefact, and the ask had been about the tab — and they
+asked for it to match. `exportPortfolioExcel.ts` still carries three columns the
+screen does not (Class, Held via, Mandate: which section a row sits in, who chose
+it, and where a manager did, which mandate), and those are DESCRIPTORS too, so
+they close the sheet beside Sector and Entities:
+
+```
+Security · Qty · Avg Cost · CMP · Market Value · Weight of book · Unreal. P&L ·
+Return · Class · Held via · Mandate · Sector · Entities
+```
+
+**THE REORDER WAS THE EDIT THAT COULD NOT BE DONE BY HAND.** Every cell was
+written as `row.getCell(9), cols[8]` — a literal index paired with the spec that
+formats it, thirteen times, held together by nothing. Moving a column breaks that
+pairing SILENTLY: the header row still prints correctly and a sector lands in the
+column a reader's own `SUM()` is pointed at. The footer had the same defect twice
+over, in `set(10, totMV)` / `set(12, totPnL)` and in a totals-row alignment reading
+`col >= 7` — the boundary where money began in the OLD layout. So the order lives
+in `cols` alone now and a row arrives as a record keyed by the same strings
+(`writeRow`), with the footer's cells found by `colAt`. That is `lib/table.mjs`'s
+own rule — **match on the HEADER, never on the column index** — applied to the
+WRITING side, and it is why a future reorder is one edit rather than fourteen.
+
+**THIS FILE HAD NO COVERAGE OF ANY KIND, AND IT IS THE ONE ARTEFACT WHOSE DEFECTS
+ARE INVISIBLE.** `build`, `check:pages` and `check:family` never open the workbook
+— it is a download — so a sheet with swapped columns passes every gate in the repo
+and opens perfectly on the reader's machine.
+`src/lib/__tests__/portfolioExcel.test.ts` builds it from `BOOK_POSITIONS` and
+reads it back, anchored the way `privateMarket.test.ts` is: **the footer's Market
+Value cell, LOCATED BY ITS HEADER, equals `BOOK_SUMMARY.totalValue` to the rupee**
+— two independent paths to one figure, so it cannot go stale when the next drop
+moves the book. Each column is then checked for what it can legitimately hold (a
+money column is a number or an em dash; a descriptor column is a non-numeric
+string and never either), which is what catches the values shifting while the
+headers stay put. All three bug classes were verified by reintroducing them: the
+old order fires the header assertion, a one-column value shift fires three checks,
+and the footer back on its literal indices fires three more.
+
+`buildPortfolioWorkbook` is the seam that made it testable — the workbook without
+the `document` / `URL.createObjectURL` download around it.
+
+**And the suite runner had to move its bundle.** `test-family.mjs` built into the
+system temp dir, and `--packages=external` leaves a real dependency as a bare
+import that Node resolves by walking UP from the bundle — so `exceljs` was
+unreachable from `/tmp`. The bundle is written inside `node_modules` now, one
+level below the packages it needs, and still outside the working tree.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

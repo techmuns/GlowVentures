@@ -8,12 +8,16 @@
 // added for this: the suite is a list of equalities and a non-zero exit.
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import os from "node:os";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DIR = fs.mkdtempSync(path.join(os.tmpdir(), "glow-test-"));
+// INSIDE node_modules, not in the system temp dir. `--packages=external` leaves
+// real dependencies as bare imports, and Node resolves those by walking UP from
+// the bundle — so a bundle in /tmp cannot find `exceljs`, while one here reaches
+// the repo's own node_modules one level up. (It stays out of the working tree
+// either way: node_modules is ignored.)
+const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["family arithmetic", "src/lib/__tests__/familyMath.test.ts"],
@@ -23,6 +27,7 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["econ calendar", "src/lib/__tests__/econCalendar.test.ts"],
+  ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
 ];
 
 let failed = 0;
