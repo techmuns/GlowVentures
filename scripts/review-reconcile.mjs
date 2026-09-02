@@ -692,9 +692,84 @@ say(`no value this book may publish, and **${missing} are reported by no stateme
 say();
 
 // ── D. what the review carries and the book does not ───────────────────────
+// The book's holdings the review has no line for. Computed HERE because both
+// section D (as an upper-bound caveat on the ask) and section E (as its own
+// table) read it, and two copies would be two chances for the caveat and the
+// table to disagree about the same positions.
+const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
+const orphan = CONSOLIDATED.filter((p) => {
+  // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
+  // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
+  // can never be true and the branch was dead. Ring-fencing already keeps the
+  // holding out of this list. A dead branch with a confident purpose is how a
+  // future session "fixes" a rule that was never broken — this file names that
+  // failure elsewhere, so it does not get to keep one of its own.
+  if (!reviewNames.has(p.securityKey)) {
+    const prov = ACC.get(p.accountId)?.provider;
+    return !matchedProviders.has(prov);
+  }
+  return false;
+});
+const orphanByProvider = (prov) => orphan.reduce(
+  (e, p) => (ACC.get(p.accountId)?.provider === prov ? { n: e.n + 1, mv: e.mv + p.marketValue } : e),
+  { n: 0, mv: 0 });
+
+/**
+ * BEFORE CALLING A LINE MISSING, ASK WHETHER THE BOOK ALREADY CARRIES IT.
+ *
+ * `securityLines` — the Direct Equity and Unlisted sections — run the security
+ * matcher and then the archive matcher, and the comment on ARCHIVE_KEYS says
+ * exactly why: "telling a reader to go and find a statement that is already read
+ * would be the absent-recorded-against-the-wrong-cause failure this repo keeps
+ * meeting". `unmatchedLines` never ran either. Every line the review carries
+ * outside those two sections and outside a named manager went STRAIGHT to
+ * section D under the verdict "no statement in `source/` reports this" — a claim
+ * nothing had tested.
+ *
+ * These are the review's fund and scheme lines, and the book demonstrably holds
+ * some of them: it reads Motilal Oswal's demat statements, and those carry the
+ * mutual-fund units the review lists under MOPWM. The cost of the defect is not
+ * an arithmetic error in the bridge — the money is genuinely not in the book's
+ * matched total either way — it is that the CLIENT ASK LIST in D1 asks for
+ * documents already in hand.
+ *
+ * The same two tiers are applied here, in the same order, and a line that
+ * resolves is reported in D0 instead of being asked for.
+ */
+const alreadyHeld = [];
+const trulyAbsent = [];
+for (const l of unmatchedLines) {
+  const m = matchSecurity(l.product);
+  const b = m.key ? BY_KEY.get(m.key) : null;
+  if (b) { alreadyHeld.push({ l, b, how: m.how, where: "valued in the book" }); continue; }
+  const am = matchInArchive(l.product);
+  const a = am.key ? ARCHIVE_KEYS.get(am.key) : null;
+  if (a) { alreadyHeld.push({ l, b: null, arch: a, how: am.how, where: "read, but carries no value" }); continue; }
+  trulyAbsent.push(l);
+}
+if (alreadyHeld.length) {
+  say("### D0. Review lines this book DOES carry — tested before being asked for");
+  say();
+  say("Each of these reached the missing list untested, because a review line outside the Direct");
+  say("Equity and Unlisted sections never ran the security matcher. They are held here, so they are");
+  say("reported rather than requested.");
+  say();
+  say("| Review line | Custodian / advisor | Review MV | Book | Joined |");
+  say("| --- | --- | ---: | --- | --- |");
+  for (const h of alreadyHeld.sort((x, y) => (y.l.mv ?? 0) - (x.l.mv ?? 0))) {
+    const bookCell = h.b
+      ? `₹${cr(h.b.mv / CR)} Cr <br><sub>${h.b.security}</sub>`
+      : `— <br><sub>in the archive, ${qty(h.arch.qty)} unit(s), no value published</sub>`;
+    say(`| ${h.l.product} | ${h.l.advisor || "—"} | ₹${cr(h.l.mv)} Cr | ${bookCell} | ${h.how} |`);
+  }
+  say();
+  say(`**₹${cr(alreadyHeld.reduce((t, h) => t + (h.l.mv ?? 0), 0))} Cr of review lines were on the ask list and should not have been.**`);
+  say();
+}
+
 say("## D. What the review carries that this book does not — and what would close it");
 say();
-if (!notInBook.length && !unmatchedLines.length) {
+if (!notInBook.length && !trulyAbsent.length) {
   say("Nothing: every review line matched a manager or a security in the book.");
 } else {
   say("| Review line | Custodian / advisor | Review MV | Why it is not here |");
@@ -705,9 +780,9 @@ if (!notInBook.length && !unmatchedLines.length) {
       : /MOPWM|Motilal/i.test(adv ?? "") ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
       : /Private/i.test(adv ?? "") ? "a private holding the review carries at cost; no statement in the drop values it"
       : "no statement in `source/` reports this holding";
-  for (const l of [...notInBook, ...unmatchedLines].sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0)))
+  for (const l of [...notInBook, ...trulyAbsent].sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0)))
     say(`| ${l.product} | ${l.advisor || "—"} | ₹${cr(l.mv)} Cr | ${custodianNote(l.advisor)} |`);
-  gapNoStatement = [...notInBook, ...unmatchedLines].reduce((s, l) => s + (l.mv ?? 0), 0);
+  gapNoStatement = [...notInBook, ...trulyAbsent].reduce((s, l) => s + (l.mv ?? 0), 0);
   const gap = gapNoStatement;
   say();
   say(`**₹${cr(gap)} Cr of review lines have no counterpart in this book.**`);
@@ -721,7 +796,7 @@ if (!notInBook.length && !unmatchedLines.length) {
   say("### D1. Grouped by the one document that would close each");
   say();
   const asks = new Map();
-  for (const l of [...notInBook, ...unmatchedLines]) {
+  for (const l of [...notInBook, ...trulyAbsent]) {
     const adv = l.advisor ?? "";
     const k = /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
       : /ICICI/i.test(adv) ? "an ICICI Bank NSDL statement for the account this line sits in"
@@ -740,26 +815,48 @@ if (!notInBook.length && !unmatchedLines.length) {
   say("Every figure in that last column is the REVIEW's, not this book's — it is what the");
   say("review says those holdings are worth at 30 June, and it is the size of the ask rather");
   say("than a number this book will publish when the statements arrive.");
+  say();
+  /**
+   * AND THE MOTILAL ASK IS AN UPPER BOUND, BECAUSE THE DEPOSITORY ABBREVIATES.
+   *
+   * D0 above tests every line against the book and the archive and joins none of
+   * these — correctly, because no tier here guesses. But the book DOES hold
+   * Motilal demat fund positions the review has no match for, and the names make
+   * it obvious why neither side joins: the depository clips a scheme to
+   * `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes
+   * "WhiteOak Capital Multi Asset Allocation Fund-Direct(G)" and "ICICI Pru
+   * India Opportunities Fund". Neither string prefixes the other and no rule
+   * short of a committed alias can bridge them.
+   *
+   * So the two lists overlap by an amount nobody can yet state, and the honest
+   * thing is to say so with both figures rather than let the ask read as fully
+   * incremental. `stripDepositoryTail` already exists for exactly this family of
+   * name; what is missing is an ABBREVIATION table, which is a hand-checked
+   * artefact and not something to infer.
+   */
+  // Same precedence D1 groups on — HDFC first — or a line advised
+  // "HDFC Bank / MOPWM" is counted against both asks at once.
+  const mopwmAsk = [...notInBook, ...trulyAbsent]
+    .filter((l) => !/HDFC/i.test(l.advisor ?? "") && /MOPWM|Motilal/i.test(l.advisor ?? ""))
+    .reduce((t, l) => t + (l.mv ?? 0), 0);
+  const demat = orphanByProvider("Motilal Oswal Financial Services (demat)");
+  if (mopwmAsk > 0 && demat.mv > 0) {
+    say(`**THE MOTILAL FIGURE IS AN UPPER BOUND.** The book already carries **₹${cr(demat.mv / CR)} Cr`);
+    say(`across ${demat.n} Motilal demat positions** that no review line matches (section E), against`);
+    say(`the ₹${cr(mopwmAsk)} Cr asked for here. The two lists certainly overlap: the depository clips a`);
+    say("scheme name to `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes them out in");
+    say("full, so neither string prefixes the other and no tier above may join them. Closing that gap");
+    say("needs a hand-checked ABBREVIATION table, not another statement — and until it exists the");
+    say("incremental value of this ask is smaller than the figure printed, by an amount nobody here");
+    say("can responsibly state.");
+    say();
+  }
 }
 say();
 
 // ── E. what the book carries and the review does not ───────────────────────
 say("## E. What this book carries that the review does not");
 say();
-const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
-const orphan = CONSOLIDATED.filter((p) => {
-  // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
-  // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
-  // can never be true and the branch was dead. Ring-fencing already keeps the
-  // holding out of this list. A dead branch with a confident purpose is how a
-  // future session "fixes" a rule that was never broken — this file names that
-  // failure elsewhere, so it does not get to keep one of its own.
-  if (!reviewNames.has(p.securityKey)) {
-    const prov = ACC.get(p.accountId)?.provider;
-    return !matchedProviders.has(prov);
-  }
-  return false;
-});
 const orphanBy = new Map();
 for (const p of orphan) {
   const k = ACC.get(p.accountId)?.provider ?? "—";

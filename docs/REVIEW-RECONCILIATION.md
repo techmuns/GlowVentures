@@ -218,6 +218,16 @@ Every figure in that last column is the REVIEW's, not this book's — it is what
 review says those holdings are worth at 30 June, and it is the size of the ask rather
 than a number this book will publish when the statements arrive.
 
+**THE MOTILAL FIGURE IS AN UPPER BOUND.** The book already carries **₹102.16 Cr
+across 43 Motilal demat positions** that no review line matches (section E), against
+the ₹244.59 Cr asked for here. The two lists certainly overlap: the depository clips a
+scheme name to `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes them out in
+full, so neither string prefixes the other and no tier above may join them. Closing that gap
+needs a hand-checked ABBREVIATION table, not another statement — and until it exists the
+incremental value of this ask is smaller than the figure printed, by an amount nobody here
+can responsibly state.
+
+
 ## E. What this book carries that the review does not
 
 | Provider | Positions | Market value |
