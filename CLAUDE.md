@@ -2799,6 +2799,45 @@ and the first number in it is 21 — a parser that happens to produce A number,
 which is the exact class of wrong answer this sweep exists to catch rather than
 commit. The count is read off `data-trades` now, like `data-days` beside it.
 
+### Stage 10q — THREE ROWS OF CHROME, AND WHAT SURVIVED THE THIRD
+
+*"Remove the security/entity switch — we will show just the default view as it
+is. Also remove the review deck button, and adjust the export excel button in
+the same line as all the filters. This will give us further space to show the
+table."*
+
+With Stage 10p's headline change, that is the Portfolio Monitor down from four
+rows of chrome to two: headline + view switch, then filters + Export Excel. The
+holdings table now starts 100px higher than it did at the top of this session.
+
+**THE BASIS SWITCH IS GONE AND THE BASIS IS NOT.** `consolidate` moved from
+`useState` to `useViewParam`, so `?view=entity` still reaches the per-statement
+build. That is not a hedge: the by-entity rendering is threaded through fifteen
+sites — the row build, the footer, the dedupe gap, the realised cells, the
+Entities column header, the section subtotals — and pinning the flag to a
+literal would leave every one of those branches unreachable, which is the
+dead-code-that-looks-alive failure this file keeps naming. It is also where the
+**₹3.17 Cr subtotal bug** lived: both of this book's duplicate holdings are AIF,
+so by-entity is the ONLY view in which a class heading and the footer beneath it
+can disagree. `check:pages` walks `/monitor?view=entity` now instead of clicking
+a button that no longer exists, and its invariants are unchanged.
+
+**THE REVIEW DECK IS DELETED, NOT ORPHANED.** `src/lib/exportDeck.ts` (403
+lines) had exactly one caller, and this file's own rule is that a builder
+nothing calls is worse than no builder — the next session finds it exported and
+wires it back believing it load-bearing. So the module went with the button, and
+`pptxgenjs` came out of `package.json` with it. Both are one `git revert` away
+if the family wants the deck back.
+
+**AND THE REMOVALS ARE ASSERTED, STRUCK ON BUTTONS RATHER THAN WORDS.**
+`check:pages` counts `<button>` elements whose text is `By security` / `By
+entity` / `Review deck` and requires zero. Matching those STRINGS would fail a
+correct page: "By security" and "By entity" are still the Transactions card's
+own view controls and still appear in this page's prose. The same probe measures
+that Export Excel's box overlaps the last filter `<select>`'s — the "same line"
+claim is geometric, so it is checked on geometry, like the headline above it.
+All three verified by reintroducing their bug.
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to

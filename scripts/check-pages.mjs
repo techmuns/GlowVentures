@@ -334,7 +334,13 @@ const ROUTES = [
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
   // can disagree — which they did, by the ₹3.17 Cr the footer correctly excludes.
-  ["monitor-entity", "/monitor"],        // same route, By entity toggled
+  // ...THE BY-ENTITY BUILD, NOW REACHED BY URL. The toggle that switched to it
+  // was removed at the family's request; the view was not, because it is the
+  // only one in which a class subtotal and the footer beneath it can disagree —
+  // both of this book's duplicate holdings are AIF — and that disagreement was
+  // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
+  // multi-view route in this app uses.
+  ["monitor-entity", "/monitor?view=entity"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -1802,6 +1808,30 @@ const INVARIANTS = {
      * overlap vertically. Matching the words "Daily" and "Portfolio Monitor"
      * would pass just as happily with them stacked three rows deep.
      */
+    /**
+     * THE REMOVED CONTROLS STAY REMOVED — asserted rather than deleted with the
+     * feature, the same treatment the retired Public dashboard tab and the
+     * `/news` redirects get.
+     *
+     * The Holdings basis switch and the Review deck button both went at the
+     * family's request. Struck on the BUTTONS a reader can press, not on the
+     * words: "By security" and "By entity" still appear in the Transactions
+     * card's own controls and in this page's prose, so a text match would fail
+     * a page that is correct.
+     */
+    ["the removed Holdings basis switch and Review deck button stay removed",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.basisSwitch === 0 && HEAD.deckButton === 0;
+      }],
+
+    /** ...and the one action that is left sits on the filter row, not below it. */
+    ["Export Excel is on the filter row rather than wrapping onto its own",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.exportInline === true;
+      }],
+
     ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -2816,12 +2846,6 @@ for (const theme of THEMES) {
             .filter((r) => / @ /.test(r.cells[0]?.innerText ?? "")).length,
         }));
       }
-      if (name === "monitor-entity") {
-        // The toggle is LABELLED WITH THE VIEW IT SWITCHES TO, so the button
-        // reading "By security" is the one that leaves the by-security view.
-        const t = page.getByRole("button", { name: /^By security$/i }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
-      }
       await page.waitForTimeout(FAST ? 350 : 800);
 
       const text = FAST ? "" : await page.evaluate(() => document.body.innerText);
@@ -2969,6 +2993,7 @@ for (const theme of THEMES) {
         HEAD = await page.evaluate(() => {
           const h1 = document.querySelector("main h1");
           if (!h1) return null;
+          const btn = [...document.querySelectorAll("main button")];
           const bar = h1.parentElement;
           const eyebrow = bar?.firstElementChild;
           const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
@@ -2981,6 +3006,20 @@ for (const theme of THEMES) {
             toggleInline: overlap(r.toggle, r.h1),
             // The eyebrow reads smaller than the title it precedes.
             eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
+            // The two retired controls, counted as BUTTONS. Matching their
+            // words would hit the Transactions card's own view controls and
+            // this page's prose, and fail a page that is correct.
+            basisSwitch: btn.filter((b) => /^By (security|entity)$/i.test((b.textContent ?? "").trim())).length,
+            deckButton: btn.filter((b) => /review deck/i.test(b.textContent ?? "")).length,
+            // Export Excel shares a line with the last filter control, rather
+            // than wrapping below it — which is the space the family asked for.
+            exportInline: (() => {
+              const ex = btn.find((b) => /export excel/i.test(b.textContent ?? ""));
+              const sel = [...document.querySelectorAll("main select")].at(-1);
+              if (!ex || !sel) return false;
+              const a = ex.getBoundingClientRect(), b = sel.getBoundingClientRect();
+              return a.top < b.bottom && b.top < a.bottom;
+            })(),
           };
         });
       }
