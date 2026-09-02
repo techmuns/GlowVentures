@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Presentation } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -13,11 +13,13 @@ import {
   holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
   mandateLabel, mandateLabelWithOwner,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
+import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -99,6 +101,15 @@ type Row = {
   // null rather than 0 so nothing downstream can sum them into a total.
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; weight: number;
   costNA: boolean;
+  /**
+   * The oldest unit still held, where every lot behind this row reports one.
+   *
+   * NULL THE MOMENT ANY CONSTITUENT'S START IS UNKNOWN, and always on a mandate
+   * row — a mandate is an account holding many securities bought on many dates,
+   * and there is no single date to annualise it over. This is `sumOrNull`
+   * applied to a date: one missing input makes the answer unknown, not older.
+   */
+  heldSince: string | null;
   // Live-quote fields. `live: false` means CMP is still the workbook mark — the
   // row says so rather than letting a month-old price read as current.
   live: boolean; dayChange: number; dayChangePct: number | null;
@@ -161,7 +172,24 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
   const [view, setView] = useState<"holdings" | "transactions">("holdings");
-  const [consolidate, setConsolidate] = useState(true);
+  /**
+   * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
+   * family's request, who read the consolidated table as the one they want.
+   *
+   * The FLAG stays, held in the URL like every other view in this app
+   * (`useViewParam`, §"the active view lives in the URL"), for two reasons that
+   * are not aesthetic. The by-entity rendering is threaded through fifteen
+   * sites — the row build, the footer, the dedupe gap, the realised cells, the
+   * Entities column, the section subtotals — and pinning it to a literal would
+   * leave every one of those branches unreachable, which is the
+   * dead-code-that-looks-alive failure this file keeps naming. And it is where
+   * the ₹3.17 Cr subtotal bug lived: both of this book's duplicate holdings are
+   * AIF, so by-entity is the ONLY view in which a class heading and the footer
+   * beneath it can disagree, and `check:pages` still walks it at `?view=entity`
+   * to assert that they do not.
+   */
+  const [holdingsView] = useViewParam(HOLDINGS_VIEWS);
+  const consolidate = holdingsView === "security";
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -174,11 +202,16 @@ export function PortfolioMonitor() {
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
   const [bucket, setBucket] = useState("All");
+  /**
+   * ABSOLUTE or CAGR, and the guard is not here — see `holdingReturn`. Absolute
+   * is the default because it is the figure every row can answer; CAGR is
+   * licensed only by a measured holding period of at least a year.
+   */
+  const [returnMode, setReturnMode] = useState<ReturnMode>("absolute");
   const [sortKey, setSortKey] = useState<SortKey>("marketValue");
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
-  const [deckBusy, setDeckBusy] = useState(false);
   // Realised P&L per security (by securityKey) from the archive's sales —
   // undefined = loading, null = the archive didn't respond. A VALUE of null in
   // the map is a third thing again: the name was sold, but no capital gain
@@ -307,6 +340,9 @@ export function PortfolioMonitor() {
       return {
         kind: "mandate" as const,
         bucket: MANDATE_BUCKET,
+        // A mandate holds many securities bought on many dates. There is no one
+        // window to annualise it over, so CAGR renders absent on these rows.
+        heldSince: null,
         key: "mandate:" + accountId,
         /**
          * The mandate's own name, from `mandateLabelWithOwner` and never
@@ -385,6 +421,13 @@ export function PortfolioMonitor() {
         // A security is live only if every lot of it is — they share one quote,
         // so in practice this is all-or-nothing.
         const live = dps.every((x) => x.live);
+        // Oldest start, but only where every lot behind the row has one: a
+        // consolidated holding whose second account reports no purchase date
+        // has no measurable start, and dating it from the account that does
+        // would annualise over a window the other half never occupied.
+        const heldSince = dps.every((x) => x.heldSince)
+          ? dps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), dps[0].heldSince!)
+          : null;
         return {
           kind: "security" as const, bucket: bucketFor(accIdx, ps[0]),
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
@@ -394,6 +437,7 @@ export function PortfolioMonitor() {
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
+          heldSince,
           live,
           dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
           dayChangePct: ps[0].dayChangePct ?? null,
@@ -409,6 +453,7 @@ export function PortfolioMonitor() {
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
+        heldSince: p.heldSince,
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
         liveMV: p.live ? p.marketValue : 0,
         realizedKeys: [p.securityKey],
@@ -598,34 +643,13 @@ export function PortfolioMonitor() {
     next.has(key) ? next.delete(key) : next.add(key);
     return next;
   });
-  const setMode = (next: boolean) => { setConsolidate(next); setExpanded(new Set()); };
+  // The expanded drill-down rows are per-view: a key expanded under the
+  // by-security build has no counterpart under the by-entity one, so a change
+  // of basis clears them rather than leaving a stale row open.
+  useEffect(() => { setExpanded(new Set()); }, [holdingsView]);
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
   // styled workbook. exceljs is code-split so it only loads on demand.
-  // The review deck. `pptxgenjs` is code-split the same way exceljs is, so a
-  // megabyte of deck writer never reaches the main bundle.
-  //
-  // It is handed the DEDUPED set and the current basis, and it prints the basis
-  // on every slide: a deck built on live prices and one built on statement
-  // marks are different documents, and the reader has to be able to tell them
-  // apart weeks later with only the file in front of them.
-  const handleDeck = async () => {
-    if (deckBusy) return;
-    setDeckBusy(true);
-    try {
-      const { exportReviewDeck } = await import("@/lib/exportDeck");
-      await exportReviewDeck({
-        portfolio, consolidated, basis,
-        fmt: (inr: number) => fmtFromBase(inr, { compact: false }),
-        currency: displayCurrency,
-      });
-    } catch (e) {
-      console.error("Deck export failed", e);
-    } finally {
-      setDeckBusy(false);
-    }
-  };
-
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
@@ -665,61 +689,86 @@ export function PortfolioMonitor() {
           {view === "holdings" && <Pill tone="info">{rows.length} rows</Pill>}
         </div>} />
 
-      {/* Global filters — one selection drives both Holdings and Transactions */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected}
-          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-72 max-w-full" />
-        <select value={sector} onChange={(e) => setSector(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+      {/*
+        ONE CHROME ROW, NOT THREE. The filters, the view toggle and the two
+        export buttons each had a line of their own, so ~130px of the first
+        screen was spent on controls before a single holding was drawn — on a
+        table whose whole job is to list holdings. The view switch has since
+        moved up beside the TITLE (it names what you are looking at rather than
+        acting on it), and everything that remains shares one wrapping row at
+        `text-xs`. That is what "use the empty space more efficiently" actually
+        costs: nothing but the chrome's own generosity.
+      */}
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense
+          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full" />
+        <select value={sector} onChange={(e) => setSector(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           {sectors.map((s) => <option key={s} value={s}>{s === "All" ? "All sectors" : s}</option>)}
         </select>
-        <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+        <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
         {/* Categories, not asset classes: "PMS mandates" is a bucket rather than
             a class (§5 — a mandate is a relationship), and it is the choice a
             reader of this table is actually making. */}
-        <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+        <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           {buckets.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : bucketLabel(s)}</option>)}
         </select>
-        <div className="ml-auto flex items-center gap-2">
-          {/* The Holdings basis switch, moved off its own row into this group. */}
-          {view === "holdings" && (
-            <button onClick={() => setMode(!consolidate)}
-              className={`rounded-md border px-3 py-2 text-sm transition-colors ${consolidate ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400" : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
-              {consolidate ? "By security" : "By entity"}
-            </button>
-          )}
-          <button onClick={handleExport} disabled={exporting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
-            title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
-            <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
-          </button>
-          <button onClick={handleDeck} disabled={deckBusy}
-            className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-ink-500 disabled:opacity-60"
-            title="Download a PowerPoint review deck. Every slide carries the basis and the as-of date, because a slide travels without its deck.">
-            <Presentation className="h-4 w-4" /> {deckBusy ? "Building…" : "Review deck"}
-          </button>
-        </div>
+        {/*
+          ABSOLUTE vs CAGR. The guard lives in `holdingReturn`, not here: under a
+          year the cell falls back to the ABSOLUTE figure and labels it, and a
+          holding whose start date nobody reports renders absent. So this switch
+          can never turn a four-month gain into an annual rate.
+        */}
+        {view === "holdings" && (
+          <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5"
+            title="Absolute is return on cost over however long the holding has been held. CAGR annualises it — and only where a statement reports when the holding was bought and it has been held at least a year.">
+            {(["absolute", "cagr"] as const).map((m) => (
+              <button key={m} type="button" onClick={() => setReturnMode(m)}
+                className={`rounded px-2 py-1 text-sm font-medium transition-colors ${returnMode === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                {m === "absolute" ? "Absolute" : "CAGR"}
+              </button>
+            ))}
+          </div>
+        )}
+        {/* ONE ACTION, ON THE FILTER ROW. The basis switch and the Review deck
+            button are both gone at the family's request, so Export Excel is the
+            only control left — and it now sits with the filters rather than
+            wrapping onto a row of its own, which is a third row of chrome
+            returned to the table. */}
+        <button onClick={handleExport} disabled={exporting}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+          title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
+          <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
+        </button>
       </div>
-
 
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <tr className="border-b border-ink-700">
                   <Th onClick={sortBtn("security")}>Security</Th>
-                  <th className="label-xs px-2 py-2.5 text-right font-medium">Qty</th>
-                  <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Avg cost</th>
-                  <th className="label-xs px-2 py-2.5 text-right font-medium">Invested</th>
-                  <th className="label-xs px-2 py-2.5 text-right font-medium">CMP</th>
+                  <th className="label-xs px-2 py-1.5 text-right font-medium">Qty</th>
+                  <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Avg cost</th>
+                  <th className="label-xs px-2 py-1.5 text-right font-medium">Invested</th>
+                  <th className="label-xs px-2 py-1.5 text-right font-medium">CMP</th>
                   <Th right onClick={sortBtn("dayChange")}>Day</Th>
                   <Th right onClick={sortBtn("marketValue")}>Market value</Th>
                   <Th right onClick={sortBtn("weight")}>Weight</Th>
                   <Th right onClick={sortBtn("unrealizedPnL")}>Unreal. P&L</Th>
-                  <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
-                  <Th right onClick={sortBtn("returnPct")}>Return</Th>
+                  <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
+                  <Th right onClick={sortBtn("returnPct")}>{returnMode === "cagr" ? "Return p.a." : "Return"}</Th>
+                  {/*
+                    THE HOLDING'S OWN YEAR TO DATE — not the share's market move
+                    since January, which is a different measurement and is never
+                    substituted for it. Measurable only where the holding was
+                    OPENED during the year, because then there is no opening
+                    value to be missing; every other row renders a dash naming
+                    what it would take. See `holdingYtd`.
+                  */}
+                  <th className="label-xs px-2 py-1.5 text-right font-medium">YTD</th>
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -727,8 +776,8 @@ export function PortfolioMonitor() {
                       name and the first figure and pushed Qty, cost and value
                       off the first screen. Nothing about what they RENDER
                       changes; only where they are read. */}
-                  <th className="label-xs px-2 py-2.5 text-left font-medium">Sector</th>
-                  <th className="label-xs px-2 py-2.5 text-left font-medium">{consolidate ? "Entities" : "Entity"}</th>
+                  <th className="label-xs px-2 py-1.5 text-left font-medium">Sector</th>
+                  <th className="label-xs px-2 py-1.5 text-left font-medium">{consolidate ? "Entities" : "Entity"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
@@ -736,7 +785,7 @@ export function PortfolioMonitor() {
                   <Fragment key={grp.key}>
                     {showBucketSections && (
                       <tr className="bg-ink-900/50">
-                        <td colSpan={13} className="px-2 py-1.5">
+                        <td colSpan={14} className="px-2 py-1.5">
                           <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                             {bucketLabel(grp.key)}
                             {/* The count is of HOLDINGS, not of rows: ten mandate
@@ -820,7 +869,7 @@ export function PortfolioMonitor() {
                             statement of one fact, sitting in the one column a
                             reader scans for the security's NAME. The flag stays
                             and every dash it drives stays; only the badge is gone. */}
-                        <td className="px-2 py-2.5">
+                        <td className="min-w-[15rem] px-2 py-1.5">
                           {m ? (
                             <div className="flex flex-col gap-0.5">
                               <div className="flex flex-wrap items-center gap-1.5">
@@ -847,22 +896,22 @@ export function PortfolioMonitor() {
                             <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
                           )}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                           {r.quantity === null
                             ? <AbsentCell reason="a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing." />
                             : fmtNum(r.quantity)}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {m ? <AbsentCell reason="an average cost per unit needs one security; this row rolls up the mandate's holdings, each with a cost of its own" />
                             : r.costNA ? "—"
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
                             : fmtFromBase(r.avgCost)}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : fmtFromBase(r.costBasis, { compact: true })}</td>
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : fmtFromBase(r.costBasis, { compact: true })}</td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {m
                             ? <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />
                             : r.currentPrice === null
@@ -873,7 +922,7 @@ export function PortfolioMonitor() {
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
-                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
+                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null
                             ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} since previous close${m ? `, across the ${fmtFromBase(r.liveMV, { compact: true })} of this mandate the feed prices` : " on the position"}`
                             : undefined}>
@@ -885,7 +934,7 @@ export function PortfolioMonitor() {
                                 ? "this holding is marked at a total value, not a per-unit price, so it has no day move"
                                 : "no live quote for this security, so there is no previous close to move from"} />}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
                           {r.live
                             ? partLive
                               ? <>{fmtFromBase(r.marketValue, { compact: true })}
@@ -893,7 +942,7 @@ export function PortfolioMonitor() {
                               : fmtFromBase(r.marketValue, { compact: true })
                             : fmtFromBase(r.marketValue, { compact: true })}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? mixedBasisNote : undefined}>
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap" title={r.live ? mixedBasisNote : undefined}>
                           {r.live ? `${(r.weight * 100).toFixed(1)}%`
                                   : <Auditable formula={{
                                       title: "Weight",
@@ -902,7 +951,7 @@ export function PortfolioMonitor() {
                                       worked: `= ${money(r.marketValue)} ÷ ${money(weightBase)} × 100 = ${(r.weight * 100).toFixed(1)}%`,
                                     }}>{(r.weight * 100).toFixed(1)}%</Auditable>}
                         </td>
-                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
+                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {r.costNA ? "—"
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
                             : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
@@ -912,7 +961,7 @@ export function PortfolioMonitor() {
                             security across the book, not per mandate), the
                             per-entity view, an unreachable archive, a name never
                             sold, and a name sold under no capital gain statement. */}
-                        <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{
+                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
                           m ? <AbsentCell reason="realised gain is reported per security across the whole book, and these managers hold the same names in more than one mandate — attributing a name's whole realised figure to this mandate would count it twice. Open the mandate's drill-down, or Capital Gains, for the per-account figures." />
                           : !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
                           : realized === undefined ? <span className="text-slate-500">…</span>
@@ -921,10 +970,46 @@ export function PortfolioMonitor() {
                           : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
                           : <span className={changeColor(realized.get(r.securityKey)!)}>{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</span>
                         }</td>
-                        <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                          {r.costNA ? "—"
-                            : r.live ? fmtPct(r.returnPct, { sign: true })
-                            : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
+                        {/*
+                          ABSOLUTE, OR ANNUALISED WHERE A MEASURED YEAR LICENSES IT.
+                          `holdingReturn` decides; this cell only draws. Under a year
+                          it returns the ABSOLUTE figure and the cell marks it `abs`,
+                          so the column never passes one basis off as the other — the
+                          same discipline the mixed-basis market value already keeps.
+                        */}
+                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
+                          {r.costNA ? "—" : (() => {
+                            const ret = holdingReturn(r, returnMode, portfolio.asOf);
+                            if (ret.kind === "absent") return <AbsentCell reason={ret.reason} />;
+                            if (ret.kind === "cagr") return (
+                              <span title={`Annualised over the ${ret.heldDays} days since ${fmtDate(ret.since)}, the oldest unit still held. ${fmtPct(r.returnPct, { sign: true })} in total.`}>
+                                {fmtPct(ret.pct, { sign: true })}
+                              </span>
+                            );
+                            const body = r.live
+                              ? fmtPct(ret.pct, { sign: true })
+                              : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}>{fmtPct(ret.pct, { sign: true })}</Auditable>;
+                            if (returnMode === "absolute") return body;
+                            // CAGR mode, guard fired: the absolute figure, marked.
+                            return (
+                              <span title={ret.heldDays === null
+                                ? "Held for an unreported period, so this is the total return on cost and not an annual rate."
+                                : `Held ${ret.heldDays} days — under a year, so this is the total return on cost. Annualising it would state a rate for a year this holding has not seen.`}>
+                                {body}<span className="ml-1 text-[10px] text-amber-400/80">abs</span>
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
+                          {(() => {
+                            const y = holdingYtd(r, portfolio.asOf);
+                            return y.kind === "absent"
+                              ? <AbsentCell reason={y.reason} />
+                              : <span className={changeColor(y.pct)}
+                                  title={`Opened ${fmtDate(y.since)}, during the current year — so its year-to-date return is its whole return since purchase. It held nothing on 1 January, so no opening value is missing.`}>
+                                  {fmtPct(y.pct, { sign: true })}
+                                </span>;
+                          })()}
                         </td>
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
@@ -933,14 +1018,14 @@ export function PortfolioMonitor() {
                             is that the property does not apply: an AIF folio, a
                             mutual-fund scheme or a whole mandate is a wrapper
                             over many sectors. */}
-                        <td className="px-2 py-2.5 text-slate-400">
+                        <td className="px-2 py-1.5 text-slate-400">
                           {m
                             ? <AbsentCell reason="a mandate spans many sectors and is not one holding; expand it, or open its drill-down, for each share's own" />
                             : isFundVehicle(r)
                             ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
                             : r.sector}
                         </td>
-                        <td className="px-2 py-2.5 text-slate-400">
+                        <td className="px-2 py-1.5 text-slate-400">
                           {multi ? (
                             <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
                               title={`Held by: ${r.entities.join(", ")}`}
@@ -959,7 +1044,7 @@ export function PortfolioMonitor() {
                           family bought itself. */}
                       {m && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                          <td colSpan={14} className="px-3 pb-3 pt-1">
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                               {/* WHAT THE MANAGER REPORTS, OR WHAT THE FILTERS LEFT OF IT — never the
                                   first sentence over the second list. Filtered to one company this read
@@ -1043,7 +1128,7 @@ export function PortfolioMonitor() {
                       )}
                       {!m && multi && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                          <td colSpan={14} className="px-3 pb-3 pt-1">
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
                                 <thead>
@@ -1084,23 +1169,23 @@ export function PortfolioMonitor() {
                     })}
                   </Fragment>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={13} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={14} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
                 <tr className="border-t border-ink-700 font-semibold">
-                  <td className="px-2 py-2.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
-                  <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
-                  <td className="px-2 py-2.5"></td>
-                  <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
+                  <td className="px-2 py-1.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
+                  <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                  <td className="px-2 py-1.5"></td>
+                  <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
                     title={totDayPct == null ? undefined : `${money(totDay, true)} across the live-priced book since previous close`}>
                     {totDayPct == null ? "—" : `${totDayPct >= 0 ? "+" : ""}${totDayPct.toFixed(2)}%`}
                   </td>
-                  <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap" title={feedLive ? LIVE_CELL : undefined}>
+                  <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap" title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totMV, { compact: true })
                               : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of the holdings in this table, added together — every asset class, not the listed ones alone.", worked: `= ${money(totMV)} across ${rows.length} rows`,  }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
                   </td>
-                  <td className="px-2 py-2.5"></td>
-                  <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
+                  <td className="px-2 py-1.5"></td>
+                  <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totPnL, { compact: true, sign: true })
                               : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`,  }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
                   </td>
@@ -1121,7 +1206,7 @@ export function PortfolioMonitor() {
                       capital gain statement are three different findings, and the
                       cell used to report all three as "shown in the consolidated
                       view". */}
-                  <td className="px-2 py-2.5 text-right mono whitespace-nowrap">{
+                  <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
                     !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
                     : realized === undefined ? <span className="text-slate-500">…</span>
                     : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
@@ -1130,15 +1215,22 @@ export function PortfolioMonitor() {
                         : "no sale of these names appears on the transaction statements in this drop"} />
                     : <span className={changeColor(realisedSplit.total)}>{fmtFromBase(realisedSplit.total, { compact: true, sign: true })}</span>
                   }</td>
-                  <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
+                  <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                  </td>
+                  {/* A BOOK-WIDE YTD IS ABSENT FOR THE SAME REASON ITS ROWS ARE,
+                      and it is an ABSENT figure rather than an empty cell: a
+                      total nobody could strike is a measurement that is missing,
+                      not a column with nothing to add. */}
+                  <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
+                    <AbsentCell reason="a year-to-date return for the book needs every holding's value on 1 January, and no statement here is dated before the year began" />
                   </td>
                   {/* Sector and Entity — descriptors, so the footer has nothing
                       to total under them. Empty rather than absent: a column
                       of words has no sum to be missing. */}
-                  <td className="px-2 py-2.5"></td>
-                  <td className="px-2 py-2.5"></td>
+                  <td className="px-2 py-1.5"></td>
+                  <td className="px-2 py-1.5"></td>
                 </tr>
               </tfoot>
             </table>
@@ -1162,6 +1254,45 @@ export function PortfolioMonitor() {
               {" "}{weightBase > 0 ? ((totMV / weightBase) * 100).toFixed(1) : "0.0"}% and not to 100%.
             </p>
           )}
+          {/*
+            WHAT A CAGR COLUMN COVERS, counted rather than claimed. Annualising
+            needs a purchase date, and the managed accounts publish a
+            capital-account ledger instead of a lot register — so on this book
+            the window is measurable for very few rows. A column that silently
+            showed absolute figures under a "Return p.a." heading would be the
+            two-bases-in-one-column failure this file keeps naming.
+          */}
+          {/*
+            WHAT THE YTD COLUMN COVERS. Counted off the rows on screen, so a
+            drop that brings a within-year purchase through the lot gate moves
+            this line on its own — and a column that quietly started guessing
+            would move it the wrong way.
+          */}
+          {(() => {
+            const cov = ytdCoverage(rows, portfolio.asOf);
+            if (cov.measured === cov.total) return null;
+            return (
+              <p className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                <span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
+                {cov.measured > 0
+                  ? <>It is measurable on {cov.measured} of {cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. </>
+                  : <>No row can be measured on this drop. </>}
+                The other {cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that
+                date: the earliest statement in this book is dated after the year began, so there is no opening value to
+                measure from. One holdings statement per account dated on or before 1 January fills this column.
+              </p>
+            );
+          })()}
+          {returnMode === "cagr" && (() => {
+            const cov = returnModeCoverage(rows, "cagr", portfolio.asOf);
+            return (
+              <p className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                <span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
+                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">abs</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
+                {cov.absent > 0 && <>{cov.absent} report no purchase date at all — the managed accounts publish a capital-account ledger rather than a lot register, so there is no window to annualise over.</>}
+              </p>
+            );
+          })()}
           {dupGap > 0 && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
               The rows above show each member's statement as printed. Two holdings are reported under two members,
@@ -1213,7 +1344,7 @@ function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
 
 function Th({ children, right, onClick }: { children: React.ReactNode; right?: boolean; onClick?: () => void }) {
   return (
-    <th className={`label-xs px-2 py-2.5 font-medium ${right ? "text-right" : "text-left"}`}>
+    <th className={`label-xs px-2 py-1.5 font-medium ${right ? "text-right" : "text-left"}`}>
       <button onClick={onClick} className={`inline-flex items-center gap-1 hover:text-champagne-400 ${right ? "flex-row-reverse" : ""}`}>
         {children}<ArrowUpDown className="h-3 w-3 opacity-50" />
       </button>
@@ -1238,6 +1369,18 @@ function quarterBounds(y: number, q: number): { from: string; to: string } {
 // toggle is first opened). Holdings elsewhere are the NET result of these trades.
 // The company / sector / entity filters are global (owned by PortfolioMonitor); this
 // view adds its own Buy/Sell side toggle and a date / quarter / fiscal-year range.
+/**
+ * The Holdings table's two bases. There is no toggle for them any more — the
+ * family asked for the consolidated view and only that — but the key still
+ * lives in the URL so `?view=entity` reaches the per-statement build, which is
+ * the only view in which a class subtotal and the footer can disagree and is
+ * therefore the one `check:pages` has to be able to reach.
+ */
+const HOLDINGS_VIEWS: readonly ViewDef<"security" | "entity">[] = [
+  { key: "security", label: "By security" },
+  { key: "entity", label: "By entity" },
+];
+
 const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
 function TransactionsView({ selected, sector, entity, sectorByKey }: {
   selected: Set<string>; sector: string; entity: string; sectorByKey: Map<string, string>;
@@ -1398,7 +1541,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             className="rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-sm text-slate-200 ring-focus" />
         </div>
         <select value={preset} onChange={(e) => applyPreset(e.target.value)} title="Jump to a quarter or fiscal year"
-          className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
+          className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           <option value="all">All dates</option>
           <option value="custom" disabled>Custom range</option>
           {fyYears.map((y) => (
@@ -1607,27 +1750,27 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-ink-800">
               <tr className="border-b border-ink-700">
-                <th className="label-xs px-3 py-2.5 text-left font-medium">Date</th>
-                <th className="label-xs px-3 py-2.5 text-left font-medium">Security</th>
-                <th className="label-xs px-3 py-2.5 text-left font-medium">Type</th>
-                <th className="label-xs px-3 py-2.5 text-right font-medium">Qty</th>
-                <th className="label-xs px-3 py-2.5 text-right font-medium">Price</th>
-                <th className="label-xs px-3 py-2.5 text-right font-medium">Amount</th>
-                <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&L</th>
-                <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
+                <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
+                <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
+                <th className="label-xs px-3 py-1.5 text-left font-medium">Type</th>
+                <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
+                <th className="label-xs px-3 py-1.5 text-right font-medium">Price</th>
+                <th className="label-xs px-3 py-1.5 text-right font-medium">Amount</th>
+                <th className="label-xs px-3 py-1.5 text-right font-medium">Realized P&L</th>
+                <th className="label-xs px-3 py-1.5 text-left font-medium">Entity</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
               {shown.map((t, i) => (
                 <tr key={i} className="hover:bg-ink-700/40">
-                  <td className="whitespace-nowrap px-3 py-2 mono text-slate-400">{fmtDate(t.date)}</td>
-                  <td className="px-3 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
-                  <td className="px-3 py-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
-                  <td className="px-3 py-2 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
-                  <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
-                  <td className="px-3 py-2 text-slate-400">{t.account}</td>
+                  <td className="whitespace-nowrap px-3 py-1.5 mono text-slate-400">{fmtDate(t.date)}</td>
+                  <td className="px-3 py-1.5 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
+                  <td className="px-3 py-1.5"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
+                  <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
+                  <td className="px-3 py-1.5 text-right mono text-slate-400">{t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}</td>
+                  <td className="px-3 py-1.5 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
+                  <td className={`px-3 py-1.5 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
+                  <td className="px-3 py-1.5 text-slate-400">{t.account}</td>
                 </tr>
               ))}
               {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}

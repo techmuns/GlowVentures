@@ -241,6 +241,38 @@ const PRIV_ASOF_MAX = (() => {
  * one line. A book with nothing ring-fenced yields null and the route walks a
  * key that resolves to no holding, which fails rather than silently skipping.
  */
+/**
+ * HOW MANY HOLDINGS THE BOOK ITSELF SAYS WERE OPENED DURING ITS OWN YEAR — the
+ * only rows a year-to-date figure can legitimately appear on, since a holding
+ * already held on 1 January needs an opening value the book does not carry.
+ *
+ * READ FROM `glowData.ts`, NOT FROM THE PAGE. The YTD column and its caption are
+ * both computed by `holdingYtd`, so comparing one against the other cannot fail
+ * — they would fabricate together. This is the independent side, the same shape
+ * as the Polycab reconciliations below: two paths to one figure.
+ */
+const YTD_MEASURABLE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    const summary = /"asOf":\s*"(\d{4})-/.exec(src);
+    if (!Array.isArray(pos) || !summary) return null;
+    const yearStart = `${summary[1]}-01-01`;
+    // Consolidated by securityKey, because that is what the by-security table
+    // draws — and a row is measurable only if EVERY lot behind it has a start.
+    const bySec = new Map();
+    for (const p of pos) {
+      const g = bySec.get(p.securityKey) ?? [];
+      g.push(p); bySec.set(p.securityKey, g);
+    }
+    let n = 0;
+    for (const g of bySec.values()) {
+      if (g.every((p) => p.heldSince) && g.every((p) => p.heldSince >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+    }
+    return n;
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -357,6 +389,24 @@ const ROUTES = [
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
   ["cio", "/cio"],
+  /**
+   * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
+   *
+   * `vite preview` runs no Cloudflare Function, so on the plain `cio` walk the
+   * quote feed, the index feed and the price history all 404 and every figure
+   * they drive renders its ABSENT state. That is worth asserting on its own (the
+   * `cio` checks below do) and it means the day's-move arithmetic — the figure
+   * the family actually asked for — was checked by nothing at all.
+   *
+   * So this route serves all three from fixtures BUILT OUT OF THE BOOK (see
+   * `installLiveMocks`), priced at each holding's own statement mark × 1.10 with
+   * every index at ×0.99. Both factors are chosen so the answers are EXACTLY
+   * computable: the priced book must read +10.00%, every index −1.00%, and the
+   * gap between them 11.00 points. A tile that diluted the day's move across the
+   * whole book, averaged percentages instead of value-weighting them, or counted
+   * an unpriced holding as flat cannot produce those numbers.
+   */
+  ["cio-live", "/cio"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
@@ -375,7 +425,16 @@ const ROUTES = [
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
   // can disagree — which they did, by the ₹3.17 Cr the footer correctly excludes.
-  ["monitor-entity", "/monitor"],        // same route, By entity toggled
+  // ...THE BY-ENTITY BUILD, NOW REACHED BY URL. The toggle that switched to it
+  // was removed at the family's request; the view was not, because it is the
+  // only one in which a class subtotal and the footer beneath it can disagree —
+  // both of this book's duplicate holdings are AIF — and that disagreement was
+  // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
+  // multi-view route in this app uses.
+  ["monitor-entity", "/monitor?view=entity"],
+  // ...AND THE ANNUALISED BASIS, reached by clicking the toggle this session
+  // added. The guard that makes it safe is asserted on the figures it draws.
+  ["monitor-cagr", "/monitor"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -496,7 +555,7 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -787,6 +846,113 @@ const tableRows = (t) => {
 function drilldownCounts(t) {
   const m = /([\d,]+)\s+holdings?\s*·\s*([\d,]+)\s+names?\s*·\s*([\d,]+)\s+accounts?/i.exec(t);
   return m ? { holdings: cr(m[1]), names: cr(m[2]), accounts: cr(m[3]) } : null;
+}
+
+
+/**
+ * ── THE LIVE LAYER, FULFILLED FROM THE BOOK ─────────────────────────────────
+ *
+ * `vite preview` runs no Cloudflare Function, so `/api/quotes`, `/api/indices`
+ * and `/api/prices` all 404 in this harness and the one figure the family asked
+ * for first — the day's move, and the book set against the Nifty — was asserted
+ * by nothing. These fixtures make it assertable, and the factors are chosen so
+ * every answer is a CLOSED FORM rather than something to eyeball:
+ *
+ *   • every symbol is priced at ITS OWN statement mark × QUOTE_FACTOR, so
+ *     `applyQuotes`'s 10× sanity band (which exists to reject a mis-mapped
+ *     ticker) cannot silently discard the feed and leave the checks testing an
+ *     empty page — the same reasoning `scripts/dev/mock-quotes.mjs` states;
+ *   • prevClose is the mark itself, so EVERY position's day change is exactly
+ *     +10.00% and the value-weighted book figure is exactly +10.00% too — which
+ *     is the point: a tile that divided the rupee move by the WHOLE book, or
+ *     averaged percentages across positions of different sizes, or counted an
+ *     unpriced holding as flat, lands somewhere else;
+ *   • every index moves −1.00%, so the book-against-index gap is exactly 11.00.
+ *
+ * The index fixture carries the CORRECT `name` on each entry, because the real
+ * Function refuses an index whose upstream reports a different instrument. A
+ * fixture without the name would exercise the refusal path and quietly stop
+ * testing the strip.
+ */
+const QUOTE_FACTOR = 1.10;
+const INDEX_FACTOR = 0.99;
+const MARK_BY_SYMBOL = (() => {
+  const m = new Map();
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    for (const p of positions) {
+      const sym = p.symbol || symbols[p.securityKey];
+      if (sym && Number.isFinite(p.currentPrice) && p.currentPrice > 0 && !m.has(sym)) m.set(sym, p.currentPrice);
+    }
+  } catch { /* an unreadable book fails the route's own checks, loudly */ }
+  return m;
+})();
+
+const MOCK_INDICES = [
+  ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
+  ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
+  ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
+  ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
+];
+
+/** A linear daily ramp, so the index's return between any two dates is exact. */
+const PRICE_SLOPE = 0.0004;
+
+async function installLiveMocks(page) {
+  await page.route("**/api/quotes", async (route) => {
+    let want = [];
+    try { want = JSON.parse(route.request().postData() ?? "{}").symbols ?? []; } catch { /* empty body */ }
+    const quotes = {}, missing = [];
+    for (const s of want) {
+      const mark = MARK_BY_SYMBOL.get(s);
+      if (!mark) { missing.push(s); continue; }
+      quotes[s] = {
+        price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
+        open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+      };
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, fresh: Object.keys(quotes).length, stale: 0 }),
+    });
+  });
+  await page.route("**/api/indices*", async (route) => {
+    const indices = MOCK_INDICES.map(([id, label, symbol, name, prev]) => {
+      const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
+      return {
+        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: "NSE",
+        level, prevClose: prev, prevCloseDate: "2026-08-12",
+        change: Math.round((level - prev) * 100) / 100, changePct: (INDEX_FACTOR - 1) * 100,
+        dayHigh: level, dayLow: level, high52: prev * 1.2, low52: prev * 0.8,
+        asOf: "2026-08-13T10:00:00.000Z",
+      };
+    });
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: "2026-08-13T10:00:00.000Z", resolved: indices.length, requested: indices.length, indices }),
+    });
+  });
+  await page.route("**/api/prices*", async (route) => {
+    const t = [], v = [];
+    const start = Date.UTC(2026, 0, 1);
+    const today = new Date().toISOString().slice(0, 10);
+    for (let n = 0; n < 400; n++) {
+      const d = new Date(start + n * 86400000).toISOString().slice(0, 10);
+      if (d >= today) break;                       // settled sessions only, as the real Function does
+      t.push(d); v.push(Math.round(1000 * (1 + PRICE_SLOPE * n) * 10000) / 10000);
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true, source: "fixture", symbol: "^CRSLDX", currency: "INR", exchange: "NSE",
+        first: t[0], last: t.at(-1), count: t.length, last_value: v.at(-1),
+        returns: {}, spans: {}, high52: null, low52: null, t, v,
+      }),
+    });
+  });
 }
 
 const INVARIANTS = {
@@ -1253,6 +1419,110 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+  /**
+   * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
+   *
+   * These are on `cio` rather than `cio-live` because every one of them is
+   * driven by `BOOK_NAV_HISTORY`, which is baked into the bundle — the series
+   * renders with no feed at all, and only the Nifty 500 comparison line needs
+   * one. Each was verified by reintroducing its bug.
+   */
+  ["the NAV card renders a dated series with its date range and its coverage",
+    (t) => /Portfolio NAV vs Nifty 500/.test(t)
+      && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+      && /\d+ of \d+ accounts/.test(sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+  /**
+   * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
+   *
+   * The covered set's raw NAV runs +9.30% over this window and ₹11.24 Cr of that
+   * is a Fund Deposit into V.E.C 128005 — net of it the book earned +0.54%. A
+   * card that charted the raw NAV would show eight points of outperformance
+   * against an index that moved 1.33%, none of it earned. So: both percentages
+   * must be on screen, and they must DIFFER. A book where they happened to
+   * coincide would pass a check that only looked for one of them, which is why
+   * the gap is asserted rather than the literal — this is `accountXirr.test.ts`'s
+   * "the guard must be load-bearing" rule, on a chart.
+   */
+  ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
+    (t) => {
+      const note = sliceBetween(t, "Both lines are rebased", "The index is taken");
+      const pcts = [...note.matchAll(/([+-]\d+\.\d+)%/g)].map((m) => Number(m[1]));
+      if (pcts.length < 2) return false;
+      return Math.max(...pcts) - Math.min(...pcts) > 1;
+    }],
+  ["the NAV card names the external capital it nets out, in rupees",
+    // MONEY IN ANY SCALE. `CR` matches crore alone, and a drop whose only flow
+    // was a few lakh would fail a check about a page that was correct — the
+    // "a check that cannot read the figure it asserts on" failure this file
+    // already names twice.
+    (t) => /nets out\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+of external capital/.test(t)],
+  /**
+   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
+   *
+   * Four covered accounts publish no dated capital record and hold more than one
+   * security. Silence there would present their whole restatement as a return.
+   */
+  ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
+    (t) => /not proven to be performance/.test(t)
+      && /₹[\d,.]+\s*(?:Cr|L|K)?[\s\S]{0,80}?not proven to be performance/.test(t)
+      && /publish no dated capital record/.test(t)],
+  /**
+   * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
+   * asserted as a PARTITION rather than as a count. The three lists must account
+   * for every account the page's own coverage line says exist: a filter that
+   * widened or narrowed one list would keep printing a plausible count and only
+   * the partition catches it.
+   */
+  ["the excluded accounts are listed, and the three lists partition the book",
+    (t, ctx) => {
+      /**
+       * SCOPED TO THE CARD, BECAUSE "N of M accounts" IS NOT UNIQUE ON THIS PAGE.
+       *
+       * The first draft matched the whole page and picked up the Money-weighted
+       * return tile's own coverage line ("7 of 49 accounts") four cards higher,
+       * so it compared the XIRR's coverage against the NAV series' exclusions and
+       * failed a page that was correct. Two figures of the same SHAPE describing
+       * different sets is exactly what a page-wide regex cannot tell apart.
+       */
+      const card = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Book performance");
+      const cov = /(\d+) of (\d+) accounts/.exec(card);
+      const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
+      const parts = /(\d+) publish exactly one dated valuation/.exec(t);
+      const none = /(\d+) publish no valuation at all/.exec(t);
+      if (!cov || !ex || !parts || !none) return false;
+      // The COUNTS have to partition…
+      if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
+      if (Number(cov[1]) + Number(ex[1]) !== Number(cov[2])) return false;
+      // …and the ROWS have to be there. A summary that counted 36 over two
+      // empty lists would satisfy the arithmetic and name nobody, which is the
+      // half of the request the arithmetic cannot check.
+      return ctx.navListRows
+        && ctx.navListRows.single === Number(parts[1])
+        && ctx.navListRows.unvalued === Number(none[1]);
+    }],
+  /**
+   * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
+   *
+   * A day change needs a live price and the previous close behind it. `₹0` or
+   * `0.00%` here would be a measured flat day for a book nobody priced — the
+   * absent-vs-zero rule, on the one figure a reader compares against an index.
+   */
+  ["with no quote feed, Today's movers states the cause and prints no day change",
+    (t) => {
+      const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+      if (!/No holding in this book carries a day change/.test(card)) return false;
+      if (!/quote feed did not respond|can never have one/.test(card)) return false;
+      return !/BOOK · TODAY/i.test(card);
+    }],
+  /**
+   * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
+   * the "coming as live data lands" list; a chip for a feature already on the
+   * reader's screen is the same defect as an absence recorded against a premise
+   * that changed.
+   */
+  ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
+    (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
+
     ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
     /**
      * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
@@ -1939,7 +2209,98 @@ const INVARIANTS = {
   // literal: this line used to carry "₹335.43 Cr" and the book has moved twice
   // since — a check carrying its own copy of a generated figure is a second
   // source for it.
+/**
+   * ── THE DAY'S MOVE, WITH THE LIVE LAYER FULFILLED ─────────────────────────
+   *
+   * Every fixture is priced at its own statement mark × 1.10 with every index at
+   * ×0.99 (see `installLiveMocks`), so the right answers are closed forms:
+   * +10.00% for the book, −1.00% per index, 11.00 points of gap. None of these
+   * is a literal typed to match what the page happens to print — each is the
+   * arithmetic the fixture makes true, which is what lets them FAIL.
+   */
+  "cio-live": [
+    /**
+     * THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, NOT ON THE WHOLE BOOK.
+     *
+     * This is the check the card exists for. The feed prices about ₹200 Cr of a
+     * ₹710 Cr book, so dividing the same rupee move by the whole NAV gives ~2.8%
+     * against a true 10.00% — a real figure, on the wrong denominator, and the
+     * one a reader sets against the Nifty. Averaging the per-name percentages
+     * instead of value-weighting them, or counting an unpriced holding as flat,
+     * both land somewhere else too.
+     */
+    ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
+      (t) => {
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const m = /BOOK · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
+      }],
+    /** ...and the tile SAYS what it covers, on its face rather than in a hover. */
+    ["the day-move tile names its own coverage, in rupees and in names",
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ distinct names/.test(t)],
+    /**
+     * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
+     * four. An index that resolved but printed no level would satisfy a check
+     * that only looked for the label.
+     */
+    ["all four NSE indices render a level and a −1.00% day move",
+      (t) => ["Nifty 50", "Nifty 500", "Nifty Midcap 150", "Nifty Smallcap 250"].every((label) =>
+        new RegExp(`${label}\\s*\\n\\s*[\\d,]+\\.\\d+\\s*\\n\\s*-1\\.00%`).test(t))],
+    /**
+     * AND THE GAP IS THE SUBTRACTION, NOT A RESTATEMENT OF ONE SIDE.
+     *
+     * +10.00% against −1.00% is 11.00 points. A card printing the book's own
+     * figure here, or the index's, would read plausibly and answer a different
+     * question — which is exactly what the family asked for ("my stocks are up,
+     * Sensex is down this much").
+     */
+    ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
+      (t) => {
+        const m = /The priced book is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /The priced book is\s*([+-]\d+\.\d+)%/.exec(t);
+        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+      }],
+    /** The gainers list is populated and ranked, and every row carries both figures. */
+    ["gainers are listed with a percentage and a rupee impact each",
+      (t) => {
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const rows = [...card.matchAll(/\t\+10\.00%\t\+₹[\d,.]+\s*(?:Cr|L|K)?/g)];
+        return /\d+ GAINERS/i.test(card) && rows.length >= 3;
+      }],
+    /**
+     * NOTHING FELL IN THIS FIXTURE, AND AN EMPTY LIST HAS NO TOTAL. `₹0` beside
+     * "0 losers" is a formatter reaching an empty collection, which §2 forbids
+     * exactly as it forbids it on a tile.
+     */
+    ["an empty losers list shows a dash rather than a summed ₹0",
+      (t) => {
+        const card = sliceBetween(t, "0 LOSERS", "Allocation by asset class");
+        return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
+      }],
+    /** And with a price history in hand the NAV card draws the comparison. */
+    ["the NAV card draws the Nifty 500 line and states its return",
+      (t) => new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(
+        sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+    /**
+     * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
+     * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
+     * must read BELOW the index — while the unadjusted NAV (+9.30%) would read
+     * far above it. A card that compared the wrong curve inverts the answer,
+     * which is the whole reason the adjustment exists.
+     */
+    ["the headline compares the flow-adjusted book against the index, not the raw NAV",
+      (t) => {
+        const head = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased");
+        const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        if (!book || !idx) return false;
+        const raw = /it reads\s*([+-]\d+\.\d+)%\s*against the book/.exec(t);
+        return !!raw && Number(book[1]) !== Number(raw[1]) && Number(book[1]) < Number(idx[1]);
+      }],
+  ],
+
   monitor: [
+
     /**
      * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
      *
@@ -1950,6 +2311,30 @@ const INVARIANTS = {
      * overlap vertically. Matching the words "Daily" and "Portfolio Monitor"
      * would pass just as happily with them stacked three rows deep.
      */
+    /**
+     * THE REMOVED CONTROLS STAY REMOVED — asserted rather than deleted with the
+     * feature, the same treatment the retired Public dashboard tab and the
+     * `/news` redirects get.
+     *
+     * The Holdings basis switch and the Review deck button both went at the
+     * family's request. Struck on the BUTTONS a reader can press, not on the
+     * words: "By security" and "By entity" still appear in the Transactions
+     * card's own controls and in this page's prose, so a text match would fail
+     * a page that is correct.
+     */
+    ["the removed Holdings basis switch and Review deck button stay removed",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.basisSwitch === 0 && HEAD.deckButton === 0;
+      }],
+
+    /** ...and the one action that is left sits on the filter row, not below it. */
+    ["Export Excel is on the filter row rather than wrapping onto its own",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.exportInline === true;
+      }],
+
     ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -2140,11 +2525,138 @@ const INVARIANTS = {
       const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
       if (!foot) return false;
       const cells = foot.split("\t");
-      return cells.length >= 3
+      // …Return, YTD, Sector, Entities. The two descriptor columns stay empty;
+      // the YTD total is ABSENT rather than empty (nobody can strike it), and
+      // the last figure the footer carries is the return.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === "—"
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 4].trim());
     }],
+    /**
+     * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
+     *
+     * "Realign everything on the page so that I can see more companies at the
+     * same view — right now I cannot even see 2 companies completely."
+     *
+     * Struck on the GEOMETRY the browser reports, because that is the thing
+     * that was wrong: the page printed every row correctly and still spent its
+     * first screen on three stacked rows of chrome and a security column so
+     * narrow that "Fractal Analytics Limited" wrapped onto three lines. Ten is
+     * a floor well above the two the complaint names and well below what the
+     * page now draws, so it fails on a real regression without tracking the
+     * exact number, which moves with the viewport and the book.
+     */
+    ["at least ten holdings are fully visible without scrolling",
+      (t, ctx) => !ctx?.metrics ? { notChecked: "no geometry captured on this run" }
+        : ctx.metrics.rowsInView >= 10],
+    // ...and the table starts in the top third of the viewport. A page that got
+    // its rows back by growing the window rather than by tightening the chrome
+    // would pass the count above and fail this.
+    ["the first holding sits in the top third of the screen",
+      (t, ctx) => !ctx?.metrics ? { notChecked: "no geometry captured on this run" }
+        : ctx.metrics.firstRowTop !== null && ctx.metrics.firstRowTop < ctx.metrics.viewportH / 3],
+    /**
+     * ── THE RETURN TOGGLE EXISTS AND DEFAULTS TO ABSOLUTE ───────────────────
+     * The guard itself is asserted on the `monitor-cagr` route, which clicks it.
+     */
+    ["the return basis toggle offers Absolute and CAGR",
+      (t) => /\bAbsolute\b/.test(t) && /\bCAGR\b/.test(t)],
+    /**
+     * ── THE YTD COLUMN IS THE HOLDING'S, AND IT NEVER GUESSES ───────────────
+     *
+     * "Add YTD… for the holding itself, not just the security's market return"
+     * and "if it is not possible to show data then just show a dash."
+     *
+     * The share's market move since January IS available from `/api/prices`,
+     * which is exactly what makes this dangerous: the cheap way to fill this
+     * column is to substitute a figure that answers a different question. So
+     * the assertion is on the CELLS — every one is an em dash or a signed
+     * percentage, and never a zero, which is the shape a fabricated "no change
+     * this year" would take.
+     */
+    ["a YTD column is drawn, sitting between Return and the descriptors",
+      (t) => /\bYTD\b/.test(t)],
+    ["the YTD column shows exactly as many figures as it claims to measure", (t) => {
+      // FULL-WIDTH ROWS ONLY. `isDataRow` is a tab count, and innerText renders
+      // the sticky header with five tabs of its own, so it matches there too —
+      // a header is not a row and its cells are not in these columns.
+      const rows = t.split("\n").filter(isDataRow).filter((r) => r.split("\t").length === 14);
+      if (rows.length === 0) return false;             // nothing drawn is nothing checked
+      // ... Return, YTD, Sector, Entities — so YTD is third from the end.
+      const cell = (r) => r.split("\t")[r.split("\t").length - 3].trim();
+      const shapeOk = rows.every((r) => cell(r) === "—" || /^[+-]\d+(\.\d+)?%$/.test(cell(r)));
+      const drawn = rows.filter((r) => cell(r) !== "—").length;
+      /**
+       * AND THE COUNT MUST TIE TO THE CAPTION. Shape alone is too weak: a
+       * fabricated "+0.00%" — the exact shape a defaulted YTD would take — is a
+       * signed percentage and would sail through. The caption is computed from
+       * `ytdCoverage` over the same rows, so a column that started inventing
+       * figures disagrees with the sentence underneath it, which is the
+       * contradiction this book's own footer rule is written to catch.
+       */
+      const none = /No row can be measured on this drop/.test(t);
+      const some = /measurable on (\d+) of \d+ rows/.exec(t);
+      if (!none && !some) return false;                // no caption is not a pass
+      const claimed = none ? 0 : Number(some[1]);
+      // THE BOOK IS THE THIRD PARTY. Cells and caption both come from
+      // `holdingYtd`, so they agree even when both are wrong; `YTD_MEASURABLE`
+      // is counted off `glowData.ts` and is what makes this able to fail.
+      if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
+      return shapeOk && drawn === claimed && drawn === YTD_MEASURABLE;
+    }],
+    // ...and the column says what it covers rather than leaving a wall of
+    // dashes to be read as a broken feed.
+    ["the YTD column states what it can and cannot measure",
+      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
+        && /1 January/.test(t)],
+    ["...and the column is headed Return, not an annual rate, until CAGR is picked",
+      (t) => /\bReturn\b/.test(t) && !/Return p\.a\./.test(t)],
+  ],
+  /**
+   * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
+   *
+   * "More than one year it'll be CAGR, less than one year I'd rather see
+   * absolute… never an annualised extrapolation."
+   *
+   * The danger here is specific and this repo has met it twice: a short window
+   * compounded onto a year. Morning CIO once read +99.0% that way, and the PMS
+   * statements' own `positionIrrPct` reaches +47,695% on this book doing exactly
+   * it. So these are struck on the FIGURES the page renders, not on the caption:
+   * a page that annualised everything would keep every word of the prose.
+   */
+  "monitor-cagr": [
+    ["the column names the basis it switched to", (t) => /Return p\.a\./.test(t)],
+    /**
+     * NO TRIPLE-DIGIT ANNUAL RATE ANYWHERE IN THE TABLE. This book's longest
+     * measured hold is 527 days and its returns are tens of percent; a
+     * four-figure rate here is the extrapolation bug regressing, which is how
+     * both previous occurrences announced themselves.
+     */
+    ["no return of 100% p.a. or more appears once the basis is annualised", (t) => {
+      const rows = t.split("\n").filter(isDataRow);
+      if (rows.length === 0) return false;             // nothing drawn is nothing checked
+      return !rows.some((r) => /[+-]\s?\d{3,}(\.\d+)?%/.test(r));
+    }],
+    /**
+     * THE COVERAGE LINE IS COUNTED OFF THE BOOK, and it must reconcile: the
+     * rows it says are annualised, guarded and absent have to add to the row
+     * count the header chip prints. A caption that claimed more coverage than
+     * the column has is the failure this whole feature exists to avoid.
+     */
+    ["the coverage note partitions the rows it describes", (t) => {
+      const m = /Annualised where a year can be measured\s*—\s*(\d+) of (\d+) rows/.exec(t);
+      if (!m) return false;
+      const [, cagr, total] = m.map(Number);
+      const guarded = Number(/(\d+) rows? (?:is|are) held under a year/.exec(t)?.[1] ?? 0);
+      const absent = Number(/(\d+) report no purchase date/.exec(t)?.[1] ?? 0);
+      return cagr + guarded + absent === total && total > 0;
+    }],
+    // ...and the guard is VISIBLY firing: a sub-year row is marked, never
+    // silently annualised. Empty is not a pass — this book holds such rows.
+    ["a holding held under a year is marked as absolute rather than annualised",
+      (t) => /held under a year/.test(t) && /\babs\b/.test(t)],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and
@@ -2730,6 +3242,51 @@ const INVARIANTS = {
     ["a frequency toggle offers the coarser views the spec asks for",
       (t) => /Quarterly/.test(t) && /Year-end/.test(t)],
   ],
+  /**
+   * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
+   *
+   * `navHistory` was empty for several drops and this page's captions were
+   * written for the series it EXPECTED — "year-end listed-book snapshots, as
+   * reported by the ingested performance-history statements". The series that
+   * arrived is none of those three things: statement dates inside a five-week
+   * window, spanning every asset class the covered accounts hold, taken from
+   * each account's authoritative HOLDINGS issue. An absence's WORDING surviving
+   * the arrival of its data is the same defect as the absence itself, and it is
+   * caught by nothing unless it is asserted.
+   */
+  history: [
+    /**
+     * EVERY ONE OF THESE IS CASE-INSENSITIVE AND THE COLUMN ONES ARE STRUCK ON
+     * THE HEADER ROW, both of which were found by reintroducing their bugs.
+     *
+     * `label-xs` applies `uppercase`, and `innerText` returns the TRANSFORMED
+     * text — so restoring the old "Listed NAV" heading left a check reading
+     * `/Listed NAV/` green against a page rendering `LISTED NAV`. And renaming
+     * the capital column to "Flows" left `/Capital in/` green too, because the
+     * FOOTNOTE under the table contains that phrase: a page-wide match for a
+     * COLUMN name is satisfied by prose about the column. `innerText` joins a
+     * header row's cells with tabs, so the header is one line and is where a
+     * claim about a column has to be struck.
+     */
+    ["the page does not claim year-ends, a listed-only NAV, or performance-history statements",
+      (t) => !/year-end/i.test(t) && !/listed nav/i.test(t) && !/performance-history statements/i.test(t)],
+    ["it states its own coverage — how many accounts the series spans",
+      (t) => /\d+ of \d+ accounts/.test(t)],
+    /**
+     * AND EACH POINT SAYS HOW MUCH OF ITS STEP WAS MONEY RATHER THAN VALUE. The
+     * largest step in this series is a deposit; a table of NAV changes with no
+     * capital column presents it as performance.
+     */
+    ["each dated point carries the external capital that entered its interval, and its composition",
+      (t) => /^.*\bas of\b.*\bcapital in\b.*\bmarked on this date\b.*$/im.test(t)],
+    ["a ₹0 in the capital column has its cause on the page, not only in a hover",
+      (t) => !/₹0/.test(t) || /under capital in is measured/i.test(t)],
+    /**
+     * NOTHING HERE IS "ARCHIVED". These are statement dates and every one of
+     * them still stands; the word read as an upload log of superseded files.
+     */
+    ["no dated point is labelled Archived or Active", (t) => !/\barchived\b/i.test(t)],
+  ],
 };
 
 /**
@@ -2885,6 +3442,12 @@ for (const theme of THEMES) {
       // care about (metrics fall back to system-ui) and takes the sweep from
       // minutes to seconds.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+      // THE LIVE LAYER, ON THE ONE ROUTE THAT ASSERTS IT. Installed before the
+      // navigation so the first render already has the feed; the plain `cio`
+      // walk deliberately does NOT get them, because the absent states are
+      // themselves invariants and a harness that always mocked would stop
+      // checking them.
+      if (name === "cio-live") await installLiveMocks(page);
       const errors = [], failed = [];
       page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -2895,6 +3458,23 @@ for (const theme of THEMES) {
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-cagr") {
+        const t = page.getByRole("button", { name: /^CAGR$/ }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }      }
+      /**
+       * A COLLAPSED `<details>` IS NOT IN `innerText`, AND THE LIST INSIDE IT IS
+       * THE HALF OF THE FAMILY'S ASK THAT THE CHART CANNOT ANSWER.
+       *
+       * The NAV card folds its 36 excluded accounts behind a summary, which is
+       * right on screen and invisible to a check struck on the rendered text —
+       * the same class of failure as a reason living in a `title` attribute.
+       * Opened here, on these routes only: opening every `<details>` on every
+       * route would change the text other invariants read.
+       */
+      if (name === "cio" || name === "cio-live") {
+        await page.$$eval("main details", (ds) => ds.forEach((d) => { d.open = true; }));
+        await page.waitForTimeout(200);
       }
       if (name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /^Direct Equity$/ }).first();
@@ -2976,12 +3556,6 @@ for (const theme of THEMES) {
             .filter((r) => / @ /.test(r.cells[0]?.innerText ?? "")).length,
         }));
       }
-      if (name === "monitor-entity") {
-        // The toggle is LABELLED WITH THE VIEW IT SWITCHES TO, so the button
-        // reading "By security" is the one that leaves the by-security view.
-        const t = page.getByRole("button", { name: /^By security$/i }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
-      }
       await page.waitForTimeout(FAST ? 350 : 800);
 
       const text = FAST ? "" : await page.evaluate(() => document.body.innerText);
@@ -3010,6 +3584,17 @@ for (const theme of THEMES) {
        * a 60-row table unreadable.
        */
       const titles = FAST ? [] : await page.$$eval("main [title]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
+      /**
+       * HOW MANY ACCOUNTS THE NAV CARD ACTUALLY NAMES, counted off the DOM.
+       *
+       * The partition invariant reads counts out of prose; these are the rows
+       * behind them. Two empty lists under a summary saying "36 accounts" is
+       * arithmetic that reconciles and names nobody.
+       */
+      const navListRows = FAST ? null : await page.evaluate(() => ({
+        single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
+        unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
+      }));
       /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
@@ -3129,6 +3714,7 @@ for (const theme of THEMES) {
         HEAD = await page.evaluate(() => {
           const h1 = document.querySelector("main h1");
           if (!h1) return null;
+          const btn = [...document.querySelectorAll("main button")];
           const bar = h1.parentElement;
           const eyebrow = bar?.firstElementChild;
           const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
@@ -3141,10 +3727,43 @@ for (const theme of THEMES) {
             toggleInline: overlap(r.toggle, r.h1),
             // The eyebrow reads smaller than the title it precedes.
             eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
+            // The two retired controls, counted as BUTTONS. Matching their
+            // words would hit the Transactions card's own view controls and
+            // this page's prose, and fail a page that is correct.
+            basisSwitch: btn.filter((b) => /^By (security|entity)$/i.test((b.textContent ?? "").trim())).length,
+            deckButton: btn.filter((b) => /review deck/i.test(b.textContent ?? "")).length,
+            // Export Excel shares a line with the last filter control, rather
+            // than wrapping below it — which is the space the family asked for.
+            exportInline: (() => {
+              const ex = btn.find((b) => /export excel/i.test(b.textContent ?? ""));
+              const sel = [...document.querySelectorAll("main select")].at(-1);
+              if (!ex || !sel) return false;
+              const a = ex.getBoundingClientRect(), b = sel.getBoundingClientRect();
+              return a.top < b.bottom && b.top < a.bottom;
+            })(),
           };
         });
       }
       const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
+      /**
+       * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
+       *
+       * "Right now I cannot even see 2 companies completely, which is very
+       * inefficient presentation." That complaint is about GEOMETRY, and no
+       * amount of matching on innerText can catch it — a page can print every
+       * row correctly and still spend the first screen on chrome. So the sweep
+       * measures it in the page and hands it to the invariants, which is the
+       * only way an assertion about density can fail when density regresses.
+       */
+      const metrics = FAST ? null : await page.evaluate(() => {
+        const vh = window.innerHeight;
+        const rows = [...document.querySelectorAll("tbody tr")]
+          .map((tr) => tr.getBoundingClientRect())
+          .filter((r) => r.height > 0);
+        const inView = rows.filter((r) => r.top >= 0 && r.bottom <= vh).length;
+        const firstTop = rows.length ? Math.round(rows[0].top) : null;
+        return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh };
+      });
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
@@ -3164,7 +3783,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

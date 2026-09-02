@@ -6,6 +6,7 @@ import ExcelJS from "exceljs";
 import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
 import { displaySecurity, fmtCr, DASH } from "./format";
+import { holdingYtd } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
@@ -43,6 +44,8 @@ type HoldingRow = {
   costNone: boolean;
   qty: number; avgCost: number | null; cmp: number | null; marketValue: number;
   weight: number | null; pnl: number | null; returnPct: number | null;
+  /** The holding's own year to date, or null where the book cannot measure it. */
+  ytdPct: number | null;
 };
 
 /**
@@ -71,6 +74,14 @@ type HoldingRow = {
  */
 function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
   const idx = accountIndex(accounts);
+  /**
+   * THE BOOK'S OWN REPORT DATE, not `new Date()`. The year a "year to date"
+   * runs over is the one the FIGURES were struck in; reading today's date would
+   * roll the window over at midnight on a sheet whose marks are months old, and
+   * would make the same export answer differently on two days from one book.
+   * It is the newest account as-of, which is what `Portfolio.asOf` is (§3).
+   */
+  const bookAsOf = accounts.reduce((a, x) => (x.asOf > a ? x.asOf : a), accounts[0]?.asOf ?? "");
   // CONSOLIDATED export: each dedupeGroup counts once, so the grand total is the
   // book's true NAV and a holding reported on two members' statements appears at
   // its real value rather than 2×. A raw sum exported more than the book holds.
@@ -142,6 +153,24 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
         // in the model and was summed into the Total row below.
         pnl: costNA ? null : mv - (cost as number),
         returnPct: costNA || (cost as number) <= 0 ? null : ((mv - (cost as number)) / (cost as number)) * 100,
+        /**
+         * The HOLDING's year to date, on the same rule as the tab.
+         *
+         * `heldSince` is the oldest unit still held and only exists where the
+         * lots account for the units exactly, so the consolidated row takes it
+         * only when EVERY constituent reports one — one missing start makes the
+         * row's start unknown, not older. `holdingYtd` then answers only for a
+         * holding opened during the year; every other row is a dash here, in
+         * the sheet exactly as on screen.
+         */
+        ytdPct: (() => {
+          const since = ps.every((x) => x.heldSince)
+            ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
+            : null;
+          const ret = costNA || (cost as number) <= 0 ? null : ((mv - (cost as number)) / (cost as number)) * 100;
+          const y = holdingYtd({ returnPct: ret, heldSince: since }, bookAsOf);
+          return y.kind === "since-open" ? y.pct : null;
+        })(),
       });
     }
   }
@@ -288,6 +317,10 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "weight", header: "Weight of book", width: 14, numFmt: '0.0"%"', align: "right" },
     { key: "pnl", header: "Unreal. P&L (₹)", width: 18, numFmt: MONEY_SIGNED, align: "right", signed: true },
     { key: "returnPct", header: "Return", width: 11, numFmt: PCT, align: "right", signed: true },
+    // The HOLDING's year to date, never the share's market move — and an em
+    // dash wherever the book cannot measure it, which on this drop is every
+    // row. See `holdingYtd`; the sheet says the same thing the tab does.
+    { key: "ytdPct", header: "YTD", width: 11, numFmt: PCT, align: "right", signed: true },
     { key: "bucket", header: "Class", width: 18 },
     { key: "heldVia", header: "Held via", width: 20 },
     { key: "mandate", header: "Mandate", width: 34 },
@@ -321,6 +354,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       weight: h.weight ?? DASH,
       pnl: h.pnl ?? DASH,
       returnPct: h.returnPct ?? DASH,
+      ytdPct: h.ytdPct ?? DASH,
       bucket: bucketLabel(h.bucket),
       heldVia: h.heldVia,
       mandate: h.mandate ?? DASH,
