@@ -1,12 +1,11 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Layers, Wallet, Coins, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronRight, Layers, Wallet, Coins, TrendingUp } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
-import { ViewToggle } from "@/components/ViewToggle";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
@@ -55,57 +54,112 @@ import type { Position } from "@/lib/types";
  *      table rather than left off the page that exists to explain the first.
  */
 
-const VIEWS = [
-  { key: "row" as const, label: "By statement row", title: "One row per holding as its statement reports it — the unit the Positions count counts." },
-  { key: "security" as const, label: "By security", title: "One row per distinct name, with every account holding it — the unit the Distinct names count counts." },
-];
-type ViewKey = (typeof VIEWS)[number]["key"];
-
-/** One name, and every account whose statement carries it. */
-type NameRow = {
-  securityKey: string;
-  security: string;
+/**
+ * ── ONE ROW PER THING YOU WOULD CLICK INTO ──────────────────────────────────
+ *
+ * *"When I click on AIF or any Mutual Fund line item, it should simply show
+ * what all AIFs/PMS/Mutual Funds I'm holding, invested amount in them and so
+ * on… No need for statement/security toggle button, I do not understand the
+ * purpose of it."*
+ *
+ * Both halves of that are the same fix. The page used to open on one row per
+ * STATEMENT LINE — so the AIF drill-down listed Sanshi Fund-I Class E four
+ * times, once per family member, and answering "which funds do we hold" meant
+ * the reader grouping 19 rows into 14 by eye. The toggle was the escape hatch
+ * for that, and a MODE a reader has to understand before the table means
+ * anything is a defect in the table, not a feature.
+ *
+ * So there is no mode. A row is the unit a reader would open:
+ *
+ *   • a MANDATE, where the set holds the whole of one — its own page lists every
+ *     share the manager picked, which is the look-through that exists;
+ *   • otherwise the SECURITY — one fund, one scheme, one company, however many
+ *     statements report it.
+ *
+ * A MANDATE IS ONE ROW ONLY WHERE THIS SET HOLDS ALL OF IT, and that condition
+ * is the whole reason this is safe to do everywhere rather than on the PMS
+ * bucket alone. A bucket drill-down carries every row of the mandates in it, so
+ * the row ties to the manager's own statement. A FILTERED set — the winners, the
+ * holdings reporting no cost — carries some of a mandate's rows, and a row
+ * labelled with the manager's name over a subset of what they hold is the
+ * "caption asserts what a named counterparty reports" failure this repo has
+ * already paid for once. Those group by security instead, and the mandate stays
+ * reachable from each row's own Held-in cell.
+ *
+ * Measured on this book: AIF 19 statement rows → 14 funds, Mutual Fund 24 → 20
+ * schemes, PMS mandates 281 → 10 mandates, Direct Equity 37 → 37 companies, the
+ * whole book 369 → 84. The winners set produces no mandate row at all, which is
+ * the condition above doing its job.
+ */
+type Group = {
+  key: string;
+  kind: "mandate" | "security";
+  /** What the row is called, and where clicking it goes. */
+  label: string;
+  href: string;
+  /** The second line: whose money, or how many statements carry this name. */
   rows: Position[];
   mv: number;
   cost: number | null;
   pnl: number | null;
-  /** How many of `rows` report no cost — the return is refused where any do. */
+  /** How many of `rows` report no cost — a return is refused where any do. */
   withoutCost: number;
   /** Market value of the rows a cost DOES cover, so a ratio divides one set. */
   costedMV: number;
 };
 
-function groupByName(rows: Position[]): NameRow[] {
+function groupRows(
+  rows: Position[],
+  accIdx: ReturnType<typeof accountIndex>,
+  /** Every row the BOOK holds, for the whole-mandate test. */
+  allRows: Position[],
+): Group[] {
+  // WHICH MANDATES THIS SET HOLDS ENTIRELY — counted against the book, never
+  // against the set, or every set would trivially "hold all" of what it has.
+  const sizeInBook = new Map<string, number>();
+  for (const p of allRows) {
+    if (!isMandateHeld(engagementOf(accIdx, p))) continue;
+    sizeInBook.set(p.accountId, (sizeInBook.get(p.accountId) ?? 0) + 1);
+  }
+  const here = new Map<string, number>();
+  for (const p of rows) {
+    if (!isMandateHeld(engagementOf(accIdx, p))) continue;
+    here.set(p.accountId, (here.get(p.accountId) ?? 0) + 1);
+  }
+  const whole = new Set([...here].filter(([id, n]) => n === sizeInBook.get(id)).map(([id]) => id));
+
   const by = new Map<string, Position[]>();
   for (const r of rows) {
-    const a = by.get(r.securityKey) ?? [];
+    const asMandate = isMandateHeld(engagementOf(accIdx, r)) && whole.has(r.accountId);
+    const k = asMandate ? `M:${r.accountId}` : `S:${r.securityKey}`;
+    const a = by.get(k) ?? [];
     a.push(r);
-    by.set(r.securityKey, a);
+    by.set(k, a);
   }
   return [...by.entries()]
-    .map(([securityKey, group]) => ({
-      securityKey,
-      security: group[0].security,
-      rows: group,
-      mv: sum(group.map((x) => x.marketValue)),
-      cost: sumOrNull(group.map((x) => x.costBasis)),
-      pnl: sumOrNull(group.map((x) => x.unrealizedPnL)),
-      withoutCost: group.filter((x) => x.costBasis == null).length,
-      costedMV: sum(group.filter((x) => x.costBasis != null).map((x) => x.marketValue)),
-    }))
+    .map(([key, group]) => {
+      const kind = key.startsWith("M:") ? "mandate" as const : "security" as const;
+      const acc = accIdx.get(group[0].accountId);
+      return {
+        key,
+        kind,
+        label: kind === "mandate"
+          ? mandateLabelWithOwner(acc, ownerOf(accIdx, group[0]))
+          : group[0].security,
+        href: kind === "mandate"
+          ? `/mandate/${encodeURIComponent(group[0].accountId)}`
+          : stockHref(group[0].securityKey),
+        rows: group,
+        mv: sum(group.map((x) => x.marketValue)),
+        cost: sumOrNull(group.map((x) => x.costBasis)),
+        pnl: sumOrNull(group.map((x) => x.unrealizedPnL)),
+        withoutCost: group.filter((x) => x.costBasis == null).length,
+        costedMV: sum(group.filter((x) => x.costBasis != null).map((x) => x.marketValue)),
+      };
+    })
     .sort((a, b) => b.mv - a.mv);
 }
 
-/**
- * A RETURN, OR THE REASON THERE ISN'T ONE — the allocation table's own test.
- *
- * `sumOrNull` skips a holding whose statement reports no cost, so an Invested
- * column can cover a narrower set of holdings than the Current column beside
- * it. Dividing one by the other then produces a percentage about neither: on
- * Direct Equity that read −18.9% over ₹1.22 Cr invested against ₹94.9 Cr
- * current. The figure is struck only where the costed holdings account for
- * essentially the whole set, to the same 0.5% Morning CIO's footer uses.
- */
 function coveredReturn(mv: number, cost: number | null, pnl: number | null, withoutCostMV: number) {
   const covers = mv > 0 && withoutCostMV <= mv * 0.005;
   return {
@@ -116,8 +170,10 @@ function coveredReturn(mv: number, cost: number | null, pnl: number | null, with
 
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const [q, setQ] = useState("");
+  /** Which grouped rows are expanded to their statement lines. */
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
   const resolved = useMemo<Drilldown | null>(
@@ -172,33 +228,6 @@ export function HoldingsBehind() {
   const accIdx = accountIndex(portfolio.accounts);
   const rows = d.rows;
 
-  /**
-   * WHICH VIEW THIS SET OPENS ON, AND WHY IT IS NOT `useViewParam`.
-   *
-   * That helper defaults to the first view for every page that uses it, which is
-   * right when a route has one natural unit. Here the unit belongs to the FIGURE:
-   * Positions counts statement rows, and Top-10 concentration and Cross-held
-   * count NAMES — landing those two on a row-per-statement table makes the
-   * reader do the grouping the figure already did.
-   *
-   * `Drilldown.defaultView` says which, and this is what reads it. It was
-   * declared and set and read by nothing, which is this repo's most-repeated
-   * failure in miniature: a field that carries the right answer into no caller
-   * looks exactly like a working feature.
-   *
-   * The param is written EXPLICITLY on every toggle rather than deleted for the
-   * default. `useViewParam` drops the param when you pick its first view, which
-   * here would silently bounce a reader back to the scope's own default the
-   * moment they asked for the other one.
-   */
-  const raw = params.get("view");
-  const view: ViewKey = raw === "row" || raw === "security" ? raw : d.defaultView;
-  const setView = (key: ViewKey) => {
-    const next = new URLSearchParams(params);
-    next.set("view", key);
-    setParams(next);   // push, not replace, so Back returns to the view they came from
-  };
-
   // ── The figures this page has to reconstruct ───────────────────────────────
   const mv = sum(rows.map((r) => r.marketValue));
   const cost = sumOrNull(rows.map((r) => r.costBasis));
@@ -208,15 +237,13 @@ export function HoldingsBehind() {
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
   const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
   const names = new Set(rows.map((r) => r.securityKey));
-  // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
-  // On a bucket drill-down every row would carry the same chip — 281 repetitions
-  // of the heading above them, pushing the security name out of its column for
-  // no information. Derived from the rows rather than keyed on the scope id, so
-  // a future scope that happens to hold one class gets the same treatment
-  // without anyone remembering to add it to a list.
-  const showBucket = new Set(rows.map((r) => holdingBucket(r, engagementOf(accIdx, r)))).size > 1;
   const accounts = new Set(rows.map((r) => r.accountId));
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
+  // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
+  // On a bucket drill-down every row would carry the same chip — a repetition of
+  // the heading above them, pushing the name out of its column for no
+  // information. Derived from the rows rather than keyed on the scope id.
+  const showBucket = new Set(rows.map((r) => holdingBucket(r, engagementOf(accIdx, r)))).size > 1;
   /**
    * THE WHOLE BOOK, ON THIS PAGE'S OWN BASIS — the denominator for Share of
    * book, and never `portfolio.totalValue` on a per-account scope. Closing a set
@@ -228,28 +255,28 @@ export function HoldingsBehind() {
     ? sum(consolidated.map((x) => x.marketValue))
     : sum(portfolio.positions.map((x) => x.marketValue));
   const shareOfBook = bookMV > 0 ? (mv / bookMV) * 100 : null;
-
-  /**
-   * THE MANDATES INSIDE THIS SET, where there are any.
-   *
-   * The PMS mandates row is 281 holdings across ten accounts, and listing 281
-   * shares under one heading is exactly the flattening the family reported: the
-   * unit they think in is the MANDATE. So a set containing mandate-held rows
-   * gets a mandate summary above the table, each linking to the drill-down that
-   * already exists for it — this page is a way INTO `/mandate/:accountId`, not a
-   * replacement for it.
-   */
-  const mandates = mandatesIn(rows, accIdx);
+  const weight = (v: number) => (mv > 0 ? `${((v / mv) * 100).toFixed(1)}%` : null);
 
   const term = q.trim().toLowerCase();
   const match = (r: Position) =>
     r.security.toLowerCase().includes(term) || (r.isin ?? "").toLowerCase().includes(term);
   const shown = term ? rows.filter(match) : rows;
   const hidden = rows.length - shown.length;
-  const byRow = [...shown].sort((a, b) => b.marketValue - a.marketValue);
-  const byName = groupByName(shown);
+  /**
+   * THE WHOLE-MANDATE TEST IS STRUCK AGAINST THE BOOK, NOT AGAINST `shown`.
+   *
+   * `shown` is what survived the reader's filter, and a mandate is never whole
+   * once a filter has been typed — so grouping against it would silently drop
+   * the mandate rows the moment somebody searched. The set the page is FOR is
+   * `rows`; the filter narrows what is drawn, not what a row means.
+   */
+  const groups = groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions);
+  /** What one row of this table IS, so the header and the footer can say it. */
+  const anyMandate = groups.some((g) => g.kind === "mandate");
+  const allMandate = groups.length > 0 && groups.every((g) => g.kind === "mandate");
+  const unitWord = allMandate ? "mandate" : anyMandate ? "row" : "name";
+  const unitHeading = allMandate ? "Mandate" : anyMandate ? "Security / mandate" : "Security";
 
-  const weight = (v: number) => (mv > 0 ? `${((v / mv) * 100).toFixed(1)}%` : null);
 
   return (
     <div>
@@ -336,22 +363,6 @@ export function HoldingsBehind() {
               icon={<Layers className="h-4 w-4" />} />
           </div>
 
-          {mandates.length > 0 && (
-            <Card className="mt-5" title={`${mandates.length === 1 ? "The mandate" : `The ${mandates.length} mandates`} inside this set`}
-              subtitle="A share a discretionary manager chose belongs inside that manager's mandate, which has a drill-down of its own — every constituent, the cash sleeve, and the total its statement prints. These rows are also listed individually in the table below.">
-              <ul className="grid gap-1.5 sm:grid-cols-2">
-                {mandates.map((m) => (
-                  <li key={m.accountId} className="flex items-baseline justify-between gap-3 text-[12.5px]">
-                    <Link to={`/mandate/${encodeURIComponent(m.accountId)}`} className="min-w-0 truncate text-champagne-400 hover:underline">
-                      {m.label}
-                    </Link>
-                    <span className="mono shrink-0 text-slate-400">{money(m.mv)}<span className="text-slate-600"> · {m.count}</span></span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
           {d.excludedAccounts.length > 0 && (
             <Card className="mt-5" title={`${d.excludedAccounts.length} accounts outside this figure`}
               subtitle="Named rather than dropped. A figure that exists for some accounts is shown for those and the rest are said out loud — a reader who cannot see which accounts are missing reads the figure as covering the book.">
@@ -366,94 +377,17 @@ export function HoldingsBehind() {
             subtitle={`Weight is within this set, not within the book — ${money(mv)} is the denominator. Every figure is as the statements report it, ${d.deduped ? "with each holding two members both carry counted once" : "each statement's row as printed"}.`}
             right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
-            <div className="px-5 pt-4">
-              <ViewToggle views={VIEWS} active={view} onChange={setView} />
-            </div>
             {shown.length === 0 ? (
-              <div className="px-5 pb-5">
+              <div className="px-5 pb-5 pt-4">
                 <AbsentSection what="Nothing matches that filter"
                   needs={`The set holds ${fmtNum(rows.length)} holdings; none of their names or ISINs contains "${q.trim()}". Clear the filter to see them all.`} />
-              </div>
-            ) : view === "row" ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full whitespace-nowrap text-sm">
-                  <thead className="border-b border-ink-700">
-                    <tr>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Held via</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&amp;L</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink-700/60">
-                    {byRow.map((r) => {
-                      const acc = accIdx.get(r.accountId);
-                      const route = holdingRoute(engagementOf(accIdx, r));
-                      const w = weight(r.marketValue);
-                      return (
-                        <tr key={`${r.accountId}-${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
-                          <td className="px-4 py-2.5">
-                            <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">{r.security}</Link>
-                            {showBucket && <span className="ml-2 text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(r, engagementOf(accIdx, r)))}</span>}
-                          </td>
-                          <td className="px-4 py-2.5 text-[12px] text-slate-400">
-                            {/* A MANDATE-HELD ROW LINKS TO ITS MANDATE. That is
-                                the drill-down the family asked for three times,
-                                and reaching it from here is the whole point of
-                                this page being a way in rather than a copy. */}
-                            {isMandateHeld(engagementOf(accIdx, r)) ? (
-                              <Link to={`/mandate/${encodeURIComponent(r.accountId)}`} className="text-champagne-400 hover:underline">
-                                {mandateLabelWithOwner(acc, "")}
-                              </Link>
-                            ) : (
-                              <span title={ROUTE_NOTE[route]}>{providerOf(accIdx, r)}</span>
-                            )}
-                            <span className="ml-1.5 text-[10.5px] text-slate-600" title={ROUTE_NOTE[route]}> · {ROUTE_LABEL[route]}</span>
-                          </td>
-                          <td className="px-4 py-2.5 text-[12px] text-slate-400">{ownerOf(accIdx, r)}</td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(r.quantity, r.quantity % 1 === 0 ? 0 : 3)}</td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-400">
-                            {r.costBasis == null
-                              ? <AbsentCell reason={`No cost on the ${providerOf(accIdx, r)} statement for this holding — a depository reports what is held, never what it was paid for. Absent, not zero.`} />
-                              : money(r.costBasis)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-400">
-                            {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
-                          </td>
-                          <td className={`px-4 py-2.5 text-right mono ${r.unrealizedPnL == null ? "" : changeColor(r.unrealizedPnL)}`}>
-                            {r.unrealizedPnL == null
-                              ? <AbsentCell reason="Needs a cost this statement does not report." />
-                              : money(r.unrealizedPnL, true)}
-                          </td>
-                          <td className={`px-4 py-2.5 text-right mono ${r.returnPct == null ? "" : changeColor(r.returnPct)}`}>
-                            {r.returnPct == null
-                              ? <AbsentCell reason="Needs a cost this statement does not report." />
-                              : fmtPct(r.returnPct, { sign: true, decimals: 1 })}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <Foot cols={4} label={`${fmtNum(byRow.length)} ${byRow.length === 1 ? "holding" : "holdings"}`}
-                    hidden={hidden} money={money}
-                    mv={sum(byRow.map((r) => r.marketValue))}
-                    cost={sumOrNull(byRow.map((r) => r.costBasis))}
-                    pnl={sumOrNull(byRow.map((r) => r.unrealizedPnL))}
-                    withoutCostMV={sum(byRow.filter((r) => r.costBasis == null).map((r) => r.marketValue))} />
-                </table>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full whitespace-nowrap text-sm">
                   <thead className="border-b border-ink-700">
                     <tr>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
+                      <th className="label-xs px-4 py-2 text-left font-medium">{unitHeading}</th>
                       <th className="label-xs px-4 py-2 text-left font-medium">Held in</th>
                       <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
                       <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
@@ -463,51 +397,133 @@ export function HoldingsBehind() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
-                    {byName.map((n) => {
-                      const r = coveredReturn(n.mv, n.cost, n.pnl, n.mv - n.costedMV);
-                      const w = weight(n.mv);
-                      const entities = [...new Set(n.rows.map((x) => ownerOf(accIdx, x)))];
+                    {groups.map((g) => {
+                      const r = coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV);
+                      const w = weight(g.mv);
+                      const entities = [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))];
+                      const accounts = [...new Set(g.rows.map((x) => x.accountId))];
+                      const expandable = g.rows.length > 1;
+                      const isOpen = open.has(g.key);
                       return (
-                        <tr key={n.securityKey} className="hover:bg-ink-700/40">
-                          <td className="px-4 py-2.5">
-                            <Link to={stockHref(n.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">{n.security}</Link>
-                          </td>
-                          <td className="px-4 py-2.5 text-[12px] text-slate-400">
-                            {n.rows.length === 1
-                              ? providerOf(accIdx, n.rows[0])
-                              : <span title={n.rows.map((x) => `${providerOf(accIdx, x)} ${accIdx.get(x.accountId)?.accountNo ?? ""} · ${ownerOf(accIdx, x)}`).join("\n")}>
-                                  {n.rows.length} accounts · {entities.length} {entities.length === 1 ? "entity" : "entities"}
-                                </span>}
-                          </td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-400">
-                            {n.cost == null
-                              ? <AbsentCell reason="No statement carrying this name reports a cost for it." />
-                              : money(n.cost)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-200">{money(n.mv)}</td>
-                          <td className="px-4 py-2.5 text-right mono text-slate-400">
-                            {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck." />}
-                          </td>
-                          <td className={`px-4 py-2.5 text-right mono ${n.pnl == null ? "" : changeColor(n.pnl)}`}>
-                            {n.pnl == null ? <AbsentCell reason="Needs a cost these statements do not report." /> : money(n.pnl, true)}
-                          </td>
-                          <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "" : changeColor(r.pct)}`}>
-                            {r.pct == null
-                              ? <AbsentCell reason={n.cost == null
-                                  ? "No statement carrying this name reports a cost, so there is no return to strike."
-                                  : `A cost is reported on ${n.rows.length - n.withoutCost} of the ${n.rows.length} statements carrying this name, so Invested and Value describe different sets and a percentage across them would divide one by the other.`} />
-                              : fmtPct(r.pct, { sign: true, decimals: 1 })}
-                          </td>
-                        </tr>
+                        <Fragment key={g.key}>
+                          <tr className="hover:bg-ink-700/40">
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-1.5">
+                                {/* THE ROW OPENS THE THING IT NAMES. A mandate
+                                    goes to its own page, which lists every share
+                                    the manager picked — the look-through the
+                                    family is asking for, and the one this book
+                                    actually carries. A fund or a scheme goes to
+                                    its holding page, which states plainly that
+                                    the companies inside it are the manager's and
+                                    are not reported here. */}
+                                <Link to={g.href} className="font-medium text-slate-100 hover:text-champagne-400">
+                                  {g.label}
+                                </Link>
+                                {expandable && (
+                                  <button type="button"
+                                    onClick={() => setOpen((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(g.key)) next.delete(g.key); else next.add(g.key);
+                                      return next;
+                                    })}
+                                    aria-expanded={isOpen}
+                                    title={`${isOpen ? "Hide" : "Show"} the ${g.rows.length} statement lines this row is summed from`}
+                                    className="rounded p-0.5 text-slate-500 transition-colors hover:bg-ink-700 hover:text-slate-200">
+                                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                  </button>
+                                )}
+                                {showBucket && (
+                                  <span className="text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(g.rows[0], engagementOf(accIdx, g.rows[0])))}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                              {g.kind === "mandate" ? (
+                                <span title={ROUTE_NOTE.mandate}>{providerOf(accIdx, g.rows[0])} · {ROUTE_LABEL.mandate}</span>
+                              ) : accounts.length === 1 ? (
+                                <>
+                                  {/* A NAME HELD IN ONE MANDATE STILL REACHES IT.
+                                      In a filtered set a mandate is not a row of
+                                      its own, so this cell is the only way in. */}
+                                  {isMandateHeld(engagementOf(accIdx, g.rows[0]))
+                                    ? <Link to={`/mandate/${encodeURIComponent(g.rows[0].accountId)}`} className="text-champagne-400 hover:underline">
+                                        {mandateLabelWithOwner(accIdx.get(g.rows[0].accountId), "")}
+                                      </Link>
+                                    : providerOf(accIdx, g.rows[0])}
+                                  <span className="ml-1.5 text-[10.5px] text-slate-600"> · {ownerOf(accIdx, g.rows[0])}</span>
+                                </>
+                              ) : (
+                                <span title={g.rows.map((x) => `${providerOf(accIdx, x)} ${accIdx.get(x.accountId)?.accountNo ?? ""} · ${ownerOf(accIdx, x)}`).join("\n")}>
+                                  {accounts.length} accounts · {entities.length} {entities.length === 1 ? "entity" : "entities"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-right mono text-slate-400">
+                              {g.cost == null
+                                ? <AbsentCell reason={g.kind === "mandate"
+                                    ? `No row on the ${providerOf(accIdx, g.rows[0])} statement for this mandate reports a cost.`
+                                    : accounts.length === 1
+                                      ? `No cost on the ${providerOf(accIdx, g.rows[0])} statement for this holding — a depository reports what is held, never what it was paid for. Absent, not zero.`
+                                      : `None of the ${accounts.length} statements carrying this name reports a cost for it — a depository reports what is held, never what it was paid for. Absent, not zero.`} />
+                                : money(g.cost)}
+                            </td>
+                            <td className="px-4 py-2.5 text-right mono text-slate-200">{money(g.mv)}</td>
+                            <td className="px-4 py-2.5 text-right mono text-slate-400">
+                              {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
+                            </td>
+                            <td className={`px-4 py-2.5 text-right mono ${g.pnl == null ? "" : changeColor(g.pnl)}`}>
+                              {g.pnl == null ? <AbsentCell reason="Needs a cost these statements do not report." /> : money(g.pnl, true)}
+                            </td>
+                            <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "" : changeColor(r.pct)}`}>
+                              {r.pct == null
+                                ? <AbsentCell reason={g.cost == null
+                                    ? "No statement here reports a cost, so there is no return to strike."
+                                    : `A cost is reported on ${g.rows.length - g.withoutCost} of the ${g.rows.length} statements behind this row, so Invested and Value describe different sets and a percentage across them would divide one by the other.`} />
+                                : fmtPct(r.pct, { sign: true, decimals: 1 })}
+                            </td>
+                          </tr>
+                          {/* THE STATEMENT LINES, WHERE A READER ASKS FOR THEM.
+                              The Positions count on Morning CIO counts these, and
+                              this is where they live now that the page has no
+                              global mode — per row, opened on demand, rather than
+                              a switch that reshapes the whole table. */}
+                          {isOpen && g.rows.map((x) => (
+                            <tr key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
+                              <td className="py-1.5 pl-10 pr-4 text-slate-400">
+                                {g.kind === "mandate"
+                                  ? <Link to={stockHref(x.securityKey)} className="hover:text-champagne-400">{x.security}</Link>
+                                  : <span className="text-slate-500">as {accIdx.get(x.accountId)?.provider ?? "this platform"} reports it</span>}
+                              </td>
+                              <td className="px-4 py-1.5 text-slate-400">
+                                {providerOf(accIdx, x)} {accIdx.get(x.accountId)?.accountNo ?? ""}
+                                <span className="ml-1.5 text-slate-600"> · {ownerOf(accIdx, x)}</span>
+                              </td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-500">
+                                {x.costBasis == null
+                                  ? <AbsentCell reason={`No cost on the ${providerOf(accIdx, x)} statement for this holding.`} />
+                                  : money(x.costBasis)}
+                              </td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-400">{money(x.marketValue)}</td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-600">{fmtNum(x.quantity, x.quantity % 1 === 0 ? 0 : 3)}</td>
+                              <td className={`px-4 py-1.5 text-right mono ${x.unrealizedPnL == null ? "" : changeColor(x.unrealizedPnL)}`}>
+                                {x.unrealizedPnL == null ? <AbsentCell reason="Needs a cost this statement does not report." /> : money(x.unrealizedPnL, true)}
+                              </td>
+                              <td className={`px-4 py-1.5 text-right mono ${x.returnPct == null ? "" : changeColor(x.returnPct)}`}>
+                                {x.returnPct == null ? <AbsentCell reason="Needs a cost this statement does not report." /> : fmtPct(x.returnPct, { sign: true, decimals: 1 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </Fragment>
                       );
                     })}
                   </tbody>
-                  <Foot cols={2} label={`${fmtNum(byName.length)} ${byName.length === 1 ? "name" : "names"}`}
+                  <Foot cols={2} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
                     hidden={hidden} money={money}
-                    mv={sum(byName.map((n) => n.mv))}
-                    cost={sumOrNull(byName.map((n) => n.cost))}
-                    pnl={sumOrNull(byName.map((n) => n.pnl))}
-                    withoutCostMV={sum(byName.map((n) => n.mv - n.costedMV))} />
+                    mv={sum(groups.map((g) => g.mv))}
+                    cost={sumOrNull(groups.map((g) => g.cost))}
+                    pnl={sumOrNull(groups.map((g) => g.pnl))}
+                    withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))} />
                 </table>
               </div>
             )}
@@ -584,8 +600,8 @@ export function HoldingsBehind() {
  * only carries once.
  */
 function statementValue(statement: Position[], rows: Position[]): number {
-  const want = new Set(rows.map((r) => `${r.accountId} ${r.securityKey}`));
-  return sum(statement.filter((p) => want.has(`${p.accountId} ${p.securityKey}`)).map((p) => p.marketValue));
+  const want = new Set(rows.map((r) => `${r.accountId}\u0000${r.securityKey}`));
+  return sum(statement.filter((p) => want.has(`${p.accountId}\u0000${p.securityKey}`)).map((p) => p.marketValue));
 }
 
 /** The mandates a set contains, largest first — plain arithmetic, no hook. */

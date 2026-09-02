@@ -128,6 +128,25 @@ function bookArray(src, name) {
  * page is the FUND branch rather than assuming it, so drift fails loudly.
  */
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
+
+/**
+ * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
+ *
+ * The whole-book drill-down shows each of them as ONE ROW linking to its own
+ * page, which is the way into the only look-through this book has. Asserting
+ * that by counting links needs a number to count against, and a literal here
+ * would be a second source for a figure `build-book` generates.
+ */
+const MANDATE_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const held = new Set(positions.map((p) => p.accountId));
+    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
+  } catch { return null; }
+})();
 /**
  * THE OWNER WHOSE FAMILY DRILL-DOWN IS WALKED — resolved from the book, not typed.
  *
@@ -719,18 +738,18 @@ const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(�
 /** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
 const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
 /**
- * WHICH VIEW A DRILL-DOWN LANDED ON, read off the COLUMNS it drew.
+ * HOW MANY ROWS THE GROUPED TABLE DREW, off its own footer.
  *
- * The by-security table carries `Held in` and no per-statement columns; the
- * by-row one carries `Held via`, `Entity` and `Qty`. Both halves are asserted,
- * because a page rendering neither table would satisfy an absence test alone.
- *
- * NOT matched on the word "security", which appears in these pages' own prose —
- * the first draft did exactly that and failed a page that was landing correctly.
- * `innerText` joins a header row's cells with tabs, so the header is one line
- * and the column NAMES are what identify the view.
+ * The page has one table and no view modes now: a row is a MANDATE where the
+ * set holds the whole of one, and a SECURITY otherwise. The footer names its
+ * own unit, so this reads the count and the word together rather than assuming
+ * either — a check that assumed "holdings" would go quietly blind on the PMS
+ * bucket, which is the page the family was complaining about.
  */
-const opensByName = (t) => /SECURITY\s+HELD IN\s+INVESTED/i.test(t) && !/SECURITY\s+HELD VIA/i.test(t);
+const tableRows = (t) => {
+  const m = /Total · ([\d,]+) (mandate|name|row)s?/i.exec(t);
+  return m ? { n: cr(m[1]), unit: m[2].toLowerCase() } : null;
+};
 
 /** …and how many holdings and names it says it covers. */
 function drilldownCounts(t) {
@@ -1287,7 +1306,7 @@ const INVARIANTS = {
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
         [/^positions$/i, "/holdings?of=book"],
-        [/^distinct names$/i, "/holdings?of=book&view=security"],
+        [/^distinct names$/i, "/holdings?of=book"],
         [/^cross-held$/i, "/holdings?of=cross-held"],
         [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
         [/^listed$/i, "/holdings?of=listed"],
@@ -1434,15 +1453,27 @@ const INVARIANTS = {
      * mandate in the set is summarised and linked, and the count is checked
      * against the mandates the book actually has rather than a literal.
      */
-    ["every mandate in the book is named and linked from here", (t, ctx) => {
-      const said = Number(/The (\d+) mandates inside this set/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(said)) return false;
+    ["every mandate in the book is one row, linked to its own page", (t, ctx) => {
+      if (!Number.isFinite(MANDATE_COUNT)) return notChecked("this book carries no discretionary mandate");
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return links.size === said && said > 0;
+      return links.size === MANDATE_COUNT;
+    }],
+    /**
+     * THE WHOLE BOOK DOES form mandate rows, which is the other side of the
+     * check on the winners page — and its table is a MIX, so its footer counts
+     * rows rather than claiming either noun. Both are asserted because a page
+     * that grouped nothing would pass the winners check while failing readers
+     * here, and one that grouped everything would pass here and mislabel a
+     * filtered set there.
+     */
+    ["the whole book forms mandate rows and says its table is mixed", (t) => {
+      const table = tableRows(t), pos = CIO_FIGURES.get("positions");
+      if (!table || !Number.isFinite(pos)) return notChecked("the footer or Morning CIO's Positions count did not parse on this run");
+      return table.unit === "row" && table.n < pos;
     }],
     ["the table's footer ties to the tile above it", (t) => {
       const tile = drilldownTotal(t);
-      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ holdings\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
+      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ [a-z]+\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
       if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
       return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
     }],
@@ -1461,12 +1492,6 @@ const INVARIANTS = {
       if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
       return c != null && c.names === there;
     }],
-    // A NAME-COUNTING FIGURE OPENS ON THE UNIT IT COUNTS. `Drilldown.defaultView`
-    // says which; it was declared, set on this scope and read by nothing until a
-    // screenshot showed the page landing on a row-per-statement table for a
-    // figure that counts names. A field carrying the right answer into no caller
-    // looks exactly like a working feature.
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     // ...and every name here really is held by two or more entities, which is
     // what distinguishes a cross-held name from a DUPLICATE the consolidated set
     // has already collapsed.
@@ -1482,7 +1507,6 @@ const INVARIANTS = {
       // literal, which would go stale the next drop.
       return Number.isFinite(here) && Math.abs((here / nav) * 100 - pct) <= 0.5;
     }],
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     ["it lists exactly the names the figure covers", (t) => {
       const c = drilldownCounts(t);
       const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
@@ -1547,6 +1571,21 @@ const INVARIANTS = {
     }],
     ["the holdings in neither count are named, not dropped", (t) =>
       /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+    /**
+     * A FILTERED SET FORMS NO MANDATE ROW.
+     *
+     * A mandate is one row only where the set holds ALL of it, because a row
+     * carrying a manager's name over a subset of what they hold is the "caption
+     * asserts what a named counterparty reports" failure this repo has already
+     * paid for once — and its total would tie to no document. Winners is a
+     * filtered set by construction, so its footer must count NAMES. Struck on
+     * the footer's own noun, which the page derives from the rows it drew.
+     */
+    ["no partial mandate is drawn as a mandate row", (t) => {
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return table.unit === "name";
+    }],
   ],
   "holdings-losers": [
     ["its count reproduces the losers figure", (t) => {
@@ -1612,15 +1651,27 @@ const INVARIANTS = {
     // ...and the rows say WHICH custodian does not report a cost, per holding —
     // the fix the stock page already carries, arriving on the page that lists
     // every one of them.
-    ["each row names the statement that reports no cost", (t, ctx) => {
-      const reasons = (ctx?.titles ?? []).filter((x) => /no cost on the .+? statement for this holding/i.test(x));
-      const rows = drilldownCounts(t)?.holdings;
-      if (!Number.isFinite(rows)) return notChecked("the page's own holdings count did not parse on this run");
-      // ONE PER ROW, and each naming a CUSTODIAN rather than a generic phrase:
-      // the reason is scoped to the holding, so a single blanket sentence at the
-      // top of the page would satisfy a looser test while telling a reader
-      // nothing about the row in front of them.
-      return reasons.length >= rows && new Set(reasons).size >= 2;
+    /**
+     * EVERY DASHED COST CELL NAMES A CAUSE, AND MOST NAME A CUSTODIAN.
+     *
+     * Counted against the TABLE'S OWN ROWS, not against the caption's holdings
+     * count — the table groups a name held in several accounts into one row, so
+     * 60 holdings draw 52 rows and a check keyed on 60 reports a page that is
+     * rendering correctly as broken. It accepts both honest wordings: a row
+     * standing on one statement names that custodian, and a row spanning several
+     * says how many report none. Anything else is a bare dash, which is the one
+     * thing that leaves a reader unable to tell a custodian who does not report
+     * a cost from a dashboard that is broken.
+     */
+    ["every row's dashed cost names its cause, and the single-statement ones name the custodian", (t, ctx) => {
+      const titles = ctx?.titles ?? [];
+      const named = titles.filter((x) => /no cost on the .+? statement for this holding/i.test(x));
+      const plural = titles.filter((x) => /none of the \d+ statements carrying this name reports a cost/i.test(x));
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return named.length + plural.length >= table.n
+        && named.length > 0
+        && new Set(named).size >= 2;   // a real custodian per row, not one blanket sentence
     }],
   ],
   /**
