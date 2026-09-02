@@ -16,6 +16,10 @@
 // each failure comes back under a code the panel can turn into a sentence a
 // reader can act on. `fetch` is stubbed, so these assert THIS function's
 // behaviour and never the upstream's.
+// Typed by `functions/api/chat.d.ts` — a plain `import` of the JS function
+// fails `tsc -b` with TS7016, which is how this suite broke the build once:
+// `test:family` bundles with esbuild and does not typecheck, so nothing caught
+// it until the next full build.
 import { onRequest } from "../../../functions/api/chat.js";
 
 let fails = 0;
