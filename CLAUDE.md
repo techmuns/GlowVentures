@@ -964,15 +964,29 @@ rule, arriving through a third issuer. What they hold is one line each,
 preference share in an unlisted private company. Read as a mark it adds ₹34,700
 twice; under this book's own rules it is **quantity-only with no value**.
 
-**AND THE REGISTER IN THE SAME DELIVERY PROVES THESE ARE NOT THE TRUSTS' FILES.**
-It records every Swapeco holding the family has and none is 347 units: Bharat
-**244 equity shares** (₹50,20,300), Trust 2 and Trust 3 **2,807 Pre-Series-A CCPS
-each** at face ₹100 (₹1,35,00,875 each). So the trusts' **₹2.70 Cr of Swapeco
-CCPS still has no statement**, and Ajay and Aarti's 347-unit holding is one the
-register does not record. That is TWO asks, and neither closes by re-exporting
-these two files — the client also has to send the statements the filenames
-promised. A filename was wrong about the HOLDER four times before this; here it
-was wrong about WHICH DOCUMENT WAS SENT, which no reader could ever have caught.
+**AND THE REGISTER IN THE SAME DELIVERY CONFIRMS THESE *ARE* THE TRUSTS'
+HOLDINGS — ONCE THE WHOLE CELL IS READ.** Its `TRUST INVESTMENT` rows read
+`2807 PRE SERIRES A CCPS OF FACE VALUE RS. 100 EACH (NO OF PREFERENCE SHARE 347)`
+— **347**, once per trust, and 347 x ₹100 face = **₹34,700**, the exact Total
+Valuation both statements print. Instrument, face value and quantity all tie, so
+each file is one trust's holding and the holder line prints the **TRUSTEES**
+rather than the trust. The register also carries Bharat's own separate 244 EQUITY
+shares (₹50,20,300), for which no statement exists.
+
+**THIS PASSAGE FIRST ASSERTED THE OPPOSITE**, and the mistake is worth keeping
+because it is a new shape of an old one. The cell was read to 240 characters; the
+parenthetical carrying the unit count sits past that cut, so `2807` read as the
+quantity and nothing matched. The conclusion — "these are not the trusts' files,
+the trusts' ₹2.70 Cr has no statement, that is two asks" — was confident,
+internally consistent, and would have sent the client hunting for documents they
+had already sent. **A TRUNCATED CELL IS NOT A SHORT CELL**, and a display limit
+in a debugging script is not a fact about the source, which is the same class of
+error as reading a figure off a `title` attribute the check could not see.
+
+What survives is the mapping caution, not the ask: the statement names only the
+trustees, so a reader must resolve each account on the `DP Account No:` the page
+prints (67786547 / 67786137) and attribute it to a trust through the register.
+That is a join to establish, not a document to request.
 
 #### The register is the same decision as the review — and it was the dangerous one
 
