@@ -128,6 +128,25 @@ function bookArray(src, name) {
  * page is the FUND branch rather than assuming it, so drift fails loudly.
  */
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
+
+/**
+ * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
+ *
+ * The whole-book drill-down shows each of them as ONE ROW linking to its own
+ * page, which is the way into the only look-through this book has. Asserting
+ * that by counting links needs a number to count against, and a literal here
+ * would be a second source for a figure `build-book` generates.
+ */
+const MANDATE_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const held = new Set(positions.map((p) => p.accountId));
+    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
+  } catch { return null; }
+})();
 /**
  * THE OWNER WHOSE FAMILY DRILL-DOWN IS WALKED — resolved from the book, not typed.
  *
@@ -316,6 +335,24 @@ const ROUTES = [
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
   ["cio", "/cio"],
+  /**
+   * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
+   *
+   * `vite preview` runs no Cloudflare Function, so on the plain `cio` walk the
+   * quote feed, the index feed and the price history all 404 and every figure
+   * they drive renders its ABSENT state. That is worth asserting on its own (the
+   * `cio` checks below do) and it means the day's-move arithmetic — the figure
+   * the family actually asked for — was checked by nothing at all.
+   *
+   * So this route serves all three from fixtures BUILT OUT OF THE BOOK (see
+   * `installLiveMocks`), priced at each holding's own statement mark × 1.10 with
+   * every index at ×0.99. Both factors are chosen so the answers are EXACTLY
+   * computable: the priced book must read +10.00%, every index −1.00%, and the
+   * gap between them 11.00 points. A tile that diluted the day's move across the
+   * whole book, averaged percentages instead of value-weighting them, or counted
+   * an unpriced holding as flat cannot produce those numbers.
+   */
+  ["cio-live", "/cio"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
@@ -451,7 +488,7 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -725,23 +762,130 @@ const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(�
 /** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
 const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
 /**
- * WHICH VIEW A DRILL-DOWN LANDED ON, read off the COLUMNS it drew.
+ * HOW MANY ROWS THE GROUPED TABLE DREW, off its own footer.
  *
- * The by-security table carries `Held in` and no per-statement columns; the
- * by-row one carries `Held via`, `Entity` and `Qty`. Both halves are asserted,
- * because a page rendering neither table would satisfy an absence test alone.
- *
- * NOT matched on the word "security", which appears in these pages' own prose —
- * the first draft did exactly that and failed a page that was landing correctly.
- * `innerText` joins a header row's cells with tabs, so the header is one line
- * and the column NAMES are what identify the view.
+ * The page has one table and no view modes now: a row is a MANDATE where the
+ * set holds the whole of one, and a SECURITY otherwise. The footer names its
+ * own unit, so this reads the count and the word together rather than assuming
+ * either — a check that assumed "holdings" would go quietly blind on the PMS
+ * bucket, which is the page the family was complaining about.
  */
-const opensByName = (t) => /SECURITY\s+HELD IN\s+INVESTED/i.test(t) && !/SECURITY\s+HELD VIA/i.test(t);
+const tableRows = (t) => {
+  const m = /Total · ([\d,]+) (mandate|name|row)s?/i.exec(t);
+  return m ? { n: cr(m[1]), unit: m[2].toLowerCase() } : null;
+};
 
 /** …and how many holdings and names it says it covers. */
 function drilldownCounts(t) {
   const m = /([\d,]+)\s+holdings?\s*·\s*([\d,]+)\s+names?\s*·\s*([\d,]+)\s+accounts?/i.exec(t);
   return m ? { holdings: cr(m[1]), names: cr(m[2]), accounts: cr(m[3]) } : null;
+}
+
+
+/**
+ * ── THE LIVE LAYER, FULFILLED FROM THE BOOK ─────────────────────────────────
+ *
+ * `vite preview` runs no Cloudflare Function, so `/api/quotes`, `/api/indices`
+ * and `/api/prices` all 404 in this harness and the one figure the family asked
+ * for first — the day's move, and the book set against the Nifty — was asserted
+ * by nothing. These fixtures make it assertable, and the factors are chosen so
+ * every answer is a CLOSED FORM rather than something to eyeball:
+ *
+ *   • every symbol is priced at ITS OWN statement mark × QUOTE_FACTOR, so
+ *     `applyQuotes`'s 10× sanity band (which exists to reject a mis-mapped
+ *     ticker) cannot silently discard the feed and leave the checks testing an
+ *     empty page — the same reasoning `scripts/dev/mock-quotes.mjs` states;
+ *   • prevClose is the mark itself, so EVERY position's day change is exactly
+ *     +10.00% and the value-weighted book figure is exactly +10.00% too — which
+ *     is the point: a tile that divided the rupee move by the WHOLE book, or
+ *     averaged percentages across positions of different sizes, or counted an
+ *     unpriced holding as flat, lands somewhere else;
+ *   • every index moves −1.00%, so the book-against-index gap is exactly 11.00.
+ *
+ * The index fixture carries the CORRECT `name` on each entry, because the real
+ * Function refuses an index whose upstream reports a different instrument. A
+ * fixture without the name would exercise the refusal path and quietly stop
+ * testing the strip.
+ */
+const QUOTE_FACTOR = 1.10;
+const INDEX_FACTOR = 0.99;
+const MARK_BY_SYMBOL = (() => {
+  const m = new Map();
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    for (const p of positions) {
+      const sym = p.symbol || symbols[p.securityKey];
+      if (sym && Number.isFinite(p.currentPrice) && p.currentPrice > 0 && !m.has(sym)) m.set(sym, p.currentPrice);
+    }
+  } catch { /* an unreadable book fails the route's own checks, loudly */ }
+  return m;
+})();
+
+const MOCK_INDICES = [
+  ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
+  ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
+  ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
+  ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
+];
+
+/** A linear daily ramp, so the index's return between any two dates is exact. */
+const PRICE_SLOPE = 0.0004;
+
+async function installLiveMocks(page) {
+  await page.route("**/api/quotes", async (route) => {
+    let want = [];
+    try { want = JSON.parse(route.request().postData() ?? "{}").symbols ?? []; } catch { /* empty body */ }
+    const quotes = {}, missing = [];
+    for (const s of want) {
+      const mark = MARK_BY_SYMBOL.get(s);
+      if (!mark) { missing.push(s); continue; }
+      quotes[s] = {
+        price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
+        open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+      };
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, fresh: Object.keys(quotes).length, stale: 0 }),
+    });
+  });
+  await page.route("**/api/indices*", async (route) => {
+    const indices = MOCK_INDICES.map(([id, label, symbol, name, prev]) => {
+      const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
+      return {
+        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: "NSE",
+        level, prevClose: prev, prevCloseDate: "2026-08-12",
+        change: Math.round((level - prev) * 100) / 100, changePct: (INDEX_FACTOR - 1) * 100,
+        dayHigh: level, dayLow: level, high52: prev * 1.2, low52: prev * 0.8,
+        asOf: "2026-08-13T10:00:00.000Z",
+      };
+    });
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: "2026-08-13T10:00:00.000Z", resolved: indices.length, requested: indices.length, indices }),
+    });
+  });
+  await page.route("**/api/prices*", async (route) => {
+    const t = [], v = [];
+    const start = Date.UTC(2026, 0, 1);
+    const today = new Date().toISOString().slice(0, 10);
+    for (let n = 0; n < 400; n++) {
+      const d = new Date(start + n * 86400000).toISOString().slice(0, 10);
+      if (d >= today) break;                       // settled sessions only, as the real Function does
+      t.push(d); v.push(Math.round(1000 * (1 + PRICE_SLOPE * n) * 10000) / 10000);
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true, source: "fixture", symbol: "^CRSLDX", currency: "INR", exchange: "NSE",
+        first: t[0], last: t.at(-1), count: t.length, last_value: v.at(-1),
+        returns: {}, spans: {}, high52: null, low52: null, t, v,
+      }),
+    });
+  });
 }
 
 const INVARIANTS = {
@@ -1143,6 +1287,110 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+  /**
+   * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
+   *
+   * These are on `cio` rather than `cio-live` because every one of them is
+   * driven by `BOOK_NAV_HISTORY`, which is baked into the bundle — the series
+   * renders with no feed at all, and only the Nifty 500 comparison line needs
+   * one. Each was verified by reintroducing its bug.
+   */
+  ["the NAV card renders a dated series with its date range and its coverage",
+    (t) => /Portfolio NAV vs Nifty 500/.test(t)
+      && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+      && /\d+ of \d+ accounts/.test(sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+  /**
+   * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
+   *
+   * The covered set's raw NAV runs +9.30% over this window and ₹11.24 Cr of that
+   * is a Fund Deposit into V.E.C 128005 — net of it the book earned +0.54%. A
+   * card that charted the raw NAV would show eight points of outperformance
+   * against an index that moved 1.33%, none of it earned. So: both percentages
+   * must be on screen, and they must DIFFER. A book where they happened to
+   * coincide would pass a check that only looked for one of them, which is why
+   * the gap is asserted rather than the literal — this is `accountXirr.test.ts`'s
+   * "the guard must be load-bearing" rule, on a chart.
+   */
+  ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
+    (t) => {
+      const note = sliceBetween(t, "Both lines are rebased", "The index is taken");
+      const pcts = [...note.matchAll(/([+-]\d+\.\d+)%/g)].map((m) => Number(m[1]));
+      if (pcts.length < 2) return false;
+      return Math.max(...pcts) - Math.min(...pcts) > 1;
+    }],
+  ["the NAV card names the external capital it nets out, in rupees",
+    // MONEY IN ANY SCALE. `CR` matches crore alone, and a drop whose only flow
+    // was a few lakh would fail a check about a page that was correct — the
+    // "a check that cannot read the figure it asserts on" failure this file
+    // already names twice.
+    (t) => /nets out\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+of external capital/.test(t)],
+  /**
+   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
+   *
+   * Four covered accounts publish no dated capital record and hold more than one
+   * security. Silence there would present their whole restatement as a return.
+   */
+  ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
+    (t) => /not proven to be performance/.test(t)
+      && /₹[\d,.]+\s*(?:Cr|L|K)?[\s\S]{0,80}?not proven to be performance/.test(t)
+      && /publish no dated capital record/.test(t)],
+  /**
+   * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
+   * asserted as a PARTITION rather than as a count. The three lists must account
+   * for every account the page's own coverage line says exist: a filter that
+   * widened or narrowed one list would keep printing a plausible count and only
+   * the partition catches it.
+   */
+  ["the excluded accounts are listed, and the three lists partition the book",
+    (t, ctx) => {
+      /**
+       * SCOPED TO THE CARD, BECAUSE "N of M accounts" IS NOT UNIQUE ON THIS PAGE.
+       *
+       * The first draft matched the whole page and picked up the Money-weighted
+       * return tile's own coverage line ("7 of 49 accounts") four cards higher,
+       * so it compared the XIRR's coverage against the NAV series' exclusions and
+       * failed a page that was correct. Two figures of the same SHAPE describing
+       * different sets is exactly what a page-wide regex cannot tell apart.
+       */
+      const card = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Book performance");
+      const cov = /(\d+) of (\d+) accounts/.exec(card);
+      const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
+      const parts = /(\d+) publish exactly one dated valuation/.exec(t);
+      const none = /(\d+) publish no valuation at all/.exec(t);
+      if (!cov || !ex || !parts || !none) return false;
+      // The COUNTS have to partition…
+      if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
+      if (Number(cov[1]) + Number(ex[1]) !== Number(cov[2])) return false;
+      // …and the ROWS have to be there. A summary that counted 36 over two
+      // empty lists would satisfy the arithmetic and name nobody, which is the
+      // half of the request the arithmetic cannot check.
+      return ctx.navListRows
+        && ctx.navListRows.single === Number(parts[1])
+        && ctx.navListRows.unvalued === Number(none[1]);
+    }],
+  /**
+   * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
+   *
+   * A day change needs a live price and the previous close behind it. `₹0` or
+   * `0.00%` here would be a measured flat day for a book nobody priced — the
+   * absent-vs-zero rule, on the one figure a reader compares against an index.
+   */
+  ["with no quote feed, Today's movers states the cause and prints no day change",
+    (t) => {
+      const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+      if (!/No holding in this book carries a day change/.test(card)) return false;
+      if (!/quote feed did not respond|can never have one/.test(card)) return false;
+      return !/BOOK · TODAY/i.test(card);
+    }],
+  /**
+   * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
+   * the "coming as live data lands" list; a chip for a feature already on the
+   * reader's screen is the same defect as an absence recorded against a premise
+   * that changed.
+   */
+  ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
+    (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
+
     ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
     /**
      * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
@@ -1293,7 +1541,7 @@ const INVARIANTS = {
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
         [/^positions$/i, "/holdings?of=book"],
-        [/^distinct names$/i, "/holdings?of=book&view=security"],
+        [/^distinct names$/i, "/holdings?of=book"],
         [/^cross-held$/i, "/holdings?of=cross-held"],
         [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
         [/^listed$/i, "/holdings?of=listed"],
@@ -1440,15 +1688,27 @@ const INVARIANTS = {
      * mandate in the set is summarised and linked, and the count is checked
      * against the mandates the book actually has rather than a literal.
      */
-    ["every mandate in the book is named and linked from here", (t, ctx) => {
-      const said = Number(/The (\d+) mandates inside this set/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(said)) return false;
+    ["every mandate in the book is one row, linked to its own page", (t, ctx) => {
+      if (!Number.isFinite(MANDATE_COUNT)) return notChecked("this book carries no discretionary mandate");
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return links.size === said && said > 0;
+      return links.size === MANDATE_COUNT;
+    }],
+    /**
+     * THE WHOLE BOOK DOES form mandate rows, which is the other side of the
+     * check on the winners page — and its table is a MIX, so its footer counts
+     * rows rather than claiming either noun. Both are asserted because a page
+     * that grouped nothing would pass the winners check while failing readers
+     * here, and one that grouped everything would pass here and mislabel a
+     * filtered set there.
+     */
+    ["the whole book forms mandate rows and says its table is mixed", (t) => {
+      const table = tableRows(t), pos = CIO_FIGURES.get("positions");
+      if (!table || !Number.isFinite(pos)) return notChecked("the footer or Morning CIO's Positions count did not parse on this run");
+      return table.unit === "row" && table.n < pos;
     }],
     ["the table's footer ties to the tile above it", (t) => {
       const tile = drilldownTotal(t);
-      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ holdings\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
+      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ [a-z]+\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
       if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
       return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
     }],
@@ -1467,12 +1727,6 @@ const INVARIANTS = {
       if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
       return c != null && c.names === there;
     }],
-    // A NAME-COUNTING FIGURE OPENS ON THE UNIT IT COUNTS. `Drilldown.defaultView`
-    // says which; it was declared, set on this scope and read by nothing until a
-    // screenshot showed the page landing on a row-per-statement table for a
-    // figure that counts names. A field carrying the right answer into no caller
-    // looks exactly like a working feature.
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     // ...and every name here really is held by two or more entities, which is
     // what distinguishes a cross-held name from a DUPLICATE the consolidated set
     // has already collapsed.
@@ -1488,7 +1742,6 @@ const INVARIANTS = {
       // literal, which would go stale the next drop.
       return Number.isFinite(here) && Math.abs((here / nav) * 100 - pct) <= 0.5;
     }],
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     ["it lists exactly the names the figure covers", (t) => {
       const c = drilldownCounts(t);
       const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
@@ -1553,6 +1806,21 @@ const INVARIANTS = {
     }],
     ["the holdings in neither count are named, not dropped", (t) =>
       /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+    /**
+     * A FILTERED SET FORMS NO MANDATE ROW.
+     *
+     * A mandate is one row only where the set holds ALL of it, because a row
+     * carrying a manager's name over a subset of what they hold is the "caption
+     * asserts what a named counterparty reports" failure this repo has already
+     * paid for once — and its total would tie to no document. Winners is a
+     * filtered set by construction, so its footer must count NAMES. Struck on
+     * the footer's own noun, which the page derives from the rows it drew.
+     */
+    ["no partial mandate is drawn as a mandate row", (t) => {
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return table.unit === "name";
+    }],
   ],
   "holdings-losers": [
     ["its count reproduces the losers figure", (t) => {
@@ -1618,15 +1886,27 @@ const INVARIANTS = {
     // ...and the rows say WHICH custodian does not report a cost, per holding —
     // the fix the stock page already carries, arriving on the page that lists
     // every one of them.
-    ["each row names the statement that reports no cost", (t, ctx) => {
-      const reasons = (ctx?.titles ?? []).filter((x) => /no cost on the .+? statement for this holding/i.test(x));
-      const rows = drilldownCounts(t)?.holdings;
-      if (!Number.isFinite(rows)) return notChecked("the page's own holdings count did not parse on this run");
-      // ONE PER ROW, and each naming a CUSTODIAN rather than a generic phrase:
-      // the reason is scoped to the holding, so a single blanket sentence at the
-      // top of the page would satisfy a looser test while telling a reader
-      // nothing about the row in front of them.
-      return reasons.length >= rows && new Set(reasons).size >= 2;
+    /**
+     * EVERY DASHED COST CELL NAMES A CAUSE, AND MOST NAME A CUSTODIAN.
+     *
+     * Counted against the TABLE'S OWN ROWS, not against the caption's holdings
+     * count — the table groups a name held in several accounts into one row, so
+     * 60 holdings draw 52 rows and a check keyed on 60 reports a page that is
+     * rendering correctly as broken. It accepts both honest wordings: a row
+     * standing on one statement names that custodian, and a row spanning several
+     * says how many report none. Anything else is a bare dash, which is the one
+     * thing that leaves a reader unable to tell a custodian who does not report
+     * a cost from a dashboard that is broken.
+     */
+    ["every row's dashed cost names its cause, and the single-statement ones name the custodian", (t, ctx) => {
+      const titles = ctx?.titles ?? [];
+      const named = titles.filter((x) => /no cost on the .+? statement for this holding/i.test(x));
+      const plural = titles.filter((x) => /none of the \d+ statements carrying this name reports a cost/i.test(x));
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return named.length + plural.length >= table.n
+        && named.length > 0
+        && new Set(named).size >= 2;   // a real custodian per row, not one blanket sentence
     }],
   ],
   /**
@@ -1797,7 +2077,98 @@ const INVARIANTS = {
   // literal: this line used to carry "₹335.43 Cr" and the book has moved twice
   // since — a check carrying its own copy of a generated figure is a second
   // source for it.
+/**
+   * ── THE DAY'S MOVE, WITH THE LIVE LAYER FULFILLED ─────────────────────────
+   *
+   * Every fixture is priced at its own statement mark × 1.10 with every index at
+   * ×0.99 (see `installLiveMocks`), so the right answers are closed forms:
+   * +10.00% for the book, −1.00% per index, 11.00 points of gap. None of these
+   * is a literal typed to match what the page happens to print — each is the
+   * arithmetic the fixture makes true, which is what lets them FAIL.
+   */
+  "cio-live": [
+    /**
+     * THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, NOT ON THE WHOLE BOOK.
+     *
+     * This is the check the card exists for. The feed prices about ₹200 Cr of a
+     * ₹710 Cr book, so dividing the same rupee move by the whole NAV gives ~2.8%
+     * against a true 10.00% — a real figure, on the wrong denominator, and the
+     * one a reader sets against the Nifty. Averaging the per-name percentages
+     * instead of value-weighting them, or counting an unpriced holding as flat,
+     * both land somewhere else too.
+     */
+    ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
+      (t) => {
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const m = /BOOK · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
+      }],
+    /** ...and the tile SAYS what it covers, on its face rather than in a hover. */
+    ["the day-move tile names its own coverage, in rupees and in names",
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ distinct names/.test(t)],
+    /**
+     * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
+     * four. An index that resolved but printed no level would satisfy a check
+     * that only looked for the label.
+     */
+    ["all four NSE indices render a level and a −1.00% day move",
+      (t) => ["Nifty 50", "Nifty 500", "Nifty Midcap 150", "Nifty Smallcap 250"].every((label) =>
+        new RegExp(`${label}\\s*\\n\\s*[\\d,]+\\.\\d+\\s*\\n\\s*-1\\.00%`).test(t))],
+    /**
+     * AND THE GAP IS THE SUBTRACTION, NOT A RESTATEMENT OF ONE SIDE.
+     *
+     * +10.00% against −1.00% is 11.00 points. A card printing the book's own
+     * figure here, or the index's, would read plausibly and answer a different
+     * question — which is exactly what the family asked for ("my stocks are up,
+     * Sensex is down this much").
+     */
+    ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
+      (t) => {
+        const m = /The priced book is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /The priced book is\s*([+-]\d+\.\d+)%/.exec(t);
+        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+      }],
+    /** The gainers list is populated and ranked, and every row carries both figures. */
+    ["gainers are listed with a percentage and a rupee impact each",
+      (t) => {
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const rows = [...card.matchAll(/\t\+10\.00%\t\+₹[\d,.]+\s*(?:Cr|L|K)?/g)];
+        return /\d+ GAINERS/i.test(card) && rows.length >= 3;
+      }],
+    /**
+     * NOTHING FELL IN THIS FIXTURE, AND AN EMPTY LIST HAS NO TOTAL. `₹0` beside
+     * "0 losers" is a formatter reaching an empty collection, which §2 forbids
+     * exactly as it forbids it on a tile.
+     */
+    ["an empty losers list shows a dash rather than a summed ₹0",
+      (t) => {
+        const card = sliceBetween(t, "0 LOSERS", "Allocation by asset class");
+        return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
+      }],
+    /** And with a price history in hand the NAV card draws the comparison. */
+    ["the NAV card draws the Nifty 500 line and states its return",
+      (t) => new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(
+        sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+    /**
+     * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
+     * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
+     * must read BELOW the index — while the unadjusted NAV (+9.30%) would read
+     * far above it. A card that compared the wrong curve inverts the answer,
+     * which is the whole reason the adjustment exists.
+     */
+    ["the headline compares the flow-adjusted book against the index, not the raw NAV",
+      (t) => {
+        const head = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased");
+        const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        if (!book || !idx) return false;
+        const raw = /it reads\s*([+-]\d+\.\d+)%\s*against the book/.exec(t);
+        return !!raw && Number(book[1]) !== Number(raw[1]) && Number(book[1]) < Number(idx[1]);
+      }],
+  ],
+
   monitor: [
+
     /**
      * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
      *
@@ -2600,6 +2971,51 @@ const INVARIANTS = {
     ["a frequency toggle offers the coarser views the spec asks for",
       (t) => /Quarterly/.test(t) && /Year-end/.test(t)],
   ],
+  /**
+   * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
+   *
+   * `navHistory` was empty for several drops and this page's captions were
+   * written for the series it EXPECTED — "year-end listed-book snapshots, as
+   * reported by the ingested performance-history statements". The series that
+   * arrived is none of those three things: statement dates inside a five-week
+   * window, spanning every asset class the covered accounts hold, taken from
+   * each account's authoritative HOLDINGS issue. An absence's WORDING surviving
+   * the arrival of its data is the same defect as the absence itself, and it is
+   * caught by nothing unless it is asserted.
+   */
+  history: [
+    /**
+     * EVERY ONE OF THESE IS CASE-INSENSITIVE AND THE COLUMN ONES ARE STRUCK ON
+     * THE HEADER ROW, both of which were found by reintroducing their bugs.
+     *
+     * `label-xs` applies `uppercase`, and `innerText` returns the TRANSFORMED
+     * text — so restoring the old "Listed NAV" heading left a check reading
+     * `/Listed NAV/` green against a page rendering `LISTED NAV`. And renaming
+     * the capital column to "Flows" left `/Capital in/` green too, because the
+     * FOOTNOTE under the table contains that phrase: a page-wide match for a
+     * COLUMN name is satisfied by prose about the column. `innerText` joins a
+     * header row's cells with tabs, so the header is one line and is where a
+     * claim about a column has to be struck.
+     */
+    ["the page does not claim year-ends, a listed-only NAV, or performance-history statements",
+      (t) => !/year-end/i.test(t) && !/listed nav/i.test(t) && !/performance-history statements/i.test(t)],
+    ["it states its own coverage — how many accounts the series spans",
+      (t) => /\d+ of \d+ accounts/.test(t)],
+    /**
+     * AND EACH POINT SAYS HOW MUCH OF ITS STEP WAS MONEY RATHER THAN VALUE. The
+     * largest step in this series is a deposit; a table of NAV changes with no
+     * capital column presents it as performance.
+     */
+    ["each dated point carries the external capital that entered its interval, and its composition",
+      (t) => /^.*\bas of\b.*\bcapital in\b.*\bmarked on this date\b.*$/im.test(t)],
+    ["a ₹0 in the capital column has its cause on the page, not only in a hover",
+      (t) => !/₹0/.test(t) || /under capital in is measured/i.test(t)],
+    /**
+     * NOTHING HERE IS "ARCHIVED". These are statement dates and every one of
+     * them still stands; the word read as an upload log of superseded files.
+     */
+    ["no dated point is labelled Archived or Active", (t) => !/\barchived\b/i.test(t)],
+  ],
 };
 
 /**
@@ -2755,6 +3171,12 @@ for (const theme of THEMES) {
       // care about (metrics fall back to system-ui) and takes the sweep from
       // minutes to seconds.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+      // THE LIVE LAYER, ON THE ONE ROUTE THAT ASSERTS IT. Installed before the
+      // navigation so the first render already has the feed; the plain `cio`
+      // walk deliberately does NOT get them, because the absent states are
+      // themselves invariants and a harness that always mocked would stop
+      // checking them.
+      if (name === "cio-live") await installLiveMocks(page);
       const errors = [], failed = [];
       page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -2765,6 +3187,20 @@ for (const theme of THEMES) {
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      /**
+       * A COLLAPSED `<details>` IS NOT IN `innerText`, AND THE LIST INSIDE IT IS
+       * THE HALF OF THE FAMILY'S ASK THAT THE CHART CANNOT ANSWER.
+       *
+       * The NAV card folds its 36 excluded accounts behind a summary, which is
+       * right on screen and invisible to a check struck on the rendered text —
+       * the same class of failure as a reason living in a `title` attribute.
+       * Opened here, on these routes only: opening every `<details>` on every
+       * route would change the text other invariants read.
+       */
+      if (name === "cio" || name === "cio-live") {
+        await page.$$eval("main details", (ds) => ds.forEach((d) => { d.open = true; }));
+        await page.waitForTimeout(200);
       }
       if (name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /^Direct Equity$/ }).first();
@@ -2874,6 +3310,17 @@ for (const theme of THEMES) {
        * a 60-row table unreadable.
        */
       const titles = FAST ? [] : await page.$$eval("main [title]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
+      /**
+       * HOW MANY ACCOUNTS THE NAV CARD ACTUALLY NAMES, counted off the DOM.
+       *
+       * The partition invariant reads counts out of prose; these are the rows
+       * behind them. Two empty lists under a summary saying "36 accounts" is
+       * arithmetic that reconciles and names nobody.
+       */
+      const navListRows = FAST ? null : await page.evaluate(() => ({
+        single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
+        unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
+      }));
       /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
@@ -3043,7 +3490,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, path, url: page.url(), navListRows }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

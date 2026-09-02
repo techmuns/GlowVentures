@@ -176,6 +176,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
+- `src/lib/navSeries.ts` — the DATED NAV series' presentation half: the chained
+  flow-adjusted index, the nearest-EARLIER alignment against an index series, and
+  the coverage stats. The series itself is generated (`BOOK_NAV_HISTORY`); this
+  is what turns levels into a return the book actually earned. See Stage 10p.
+- `src/lib/indices.ts` — the four live NSE index levels (`/api/indices`), and the
+  one place `NIFTY_500_SYMBOL` is named so the strip and the NAV chart cannot
+  disagree about which index "Nifty 500" means.
 - `src/lib/ledger.ts` — the DATED record, read from `public/audit/` at runtime (see below).
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
@@ -1796,7 +1803,7 @@ written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is
 
 | Not populated | Why | What would fix it |
 | --- | --- | --- |
-| `navHistory` | Two dated portfolio values per account (opening and closing) is not a series | a monthly / quarterly valuation statement |
+| ~~`navHistory`~~ | **NOW POPULATED — see Stage 10p.** This row read "two dated portfolio values per account is not a series" for four deliveries after the archive started carrying three month-ends for some accounts. 13 of 49 accounts publish two or more dated valuations; 23 publish one and 13 publish none, and all of them are NAMED in `BOOK_NAV_COVERAGE` | a monthly valuation statement from any of the other 36 |
 | `stCostBasis` / `ltCostBasis` / `daysToLT` on 296 of 301 positions | needs per-lot purchase dates. The CAPITAL REGISTER the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS), not a lot register | a holding statement with lot-level acquisition dates, which ONE broker in this drop publishes — see below |
 | `privateMarkets.peFunds` etc. | no statement here reports a fund-of-funds structure with its own TVPI and DPI. The AIF HOLDINGS are ordinary positions with `assetClass: "AIF"`, and the undrawn COMMITMENTS are `BOOK_COMMITMENTS` | a fund-of-funds statement |
 
@@ -2138,6 +2145,12 @@ rate annualises about three months; the pages say so, because an unlabelled
 +141% reads as a sustained yearly rate.
 
 ## Stage 7 — the live layer
+
+**`/api/indices` and `/api/prices` need no token** — both read Yahoo's keyless
+chart endpoint. `indices` serves the four live NSE levels the strip carries and
+VERIFIES each symbol against the instrument name its upstream reports; `prices`
+serves one security's or index's whole daily close history. See Stage 10p and
+Stage 9b for why each is a proxy rather than a harvest entry.
 
 Eight Cloudflare Pages Functions proxy the in-house muns API, with `MUNS_TOKEN`
 held in the Cloudflare environment and never in the browser: `quotes`, `ratios`,
@@ -3289,6 +3302,69 @@ mandate-held rows summarises every mandate above the table, each linking to
 undifferentiated list would re-commit the grouping mistake Stage 10L exists to
 fix. Every row is also individually linked to its mandate and its company page.
 
+#### The drill-down has no view modes: a row is what you would click into
+
+*"When I click on AIF or any Mutual Fund line item, it should simply show what
+all AIFs/PMS/Mutual Funds I'm holding, invested amount in them and so on… and
+when I further click on one particular AIF it should take me to the drill-down
+page of that AIF that will show me what all stocks/companies that AIF/Mutual
+Fund is holding. No need for statement/security toggle button, I do not
+understand the purpose of it."*
+
+The first two are the same fix and the third is what made it necessary. The page
+opened on one row per STATEMENT LINE, so the AIF drill-down listed Sanshi Fund-I
+Class E four times — once per family member — and answering "which funds do we
+hold" meant grouping 19 rows into 14 by eye. The toggle was the escape hatch for
+that, and **a MODE a reader has to understand before the table means anything is
+a defect in the table, not a feature.**
+
+So there is no mode. A row is the unit a reader would open: a MANDATE where the
+set holds the whole of one, and otherwise the SECURITY — one fund, one scheme,
+one company, however many statements report it.
+
+| Drill-down | statement rows | rows now |
+| --- | ---: | ---: |
+| AIF | 19 | **14 funds** |
+| Mutual Fund | 24 | **20 schemes** |
+| PMS mandates | 281 | **10 mandates** |
+| Direct Equity | 37 | 37 companies |
+| ETF | 6 | 3 |
+| the whole book | 369 | 84 |
+
+**A MANDATE IS ONE ROW ONLY WHERE THE SET HOLDS ALL OF IT**, and that condition
+is why this is safe everywhere rather than special-cased to the PMS bucket. A
+bucket drill-down carries every row of the mandates in it, so the row ties to the
+manager's own statement. A FILTERED set — the winners, the holdings reporting no
+cost — carries only some of a mandate's rows, and a row under a manager's name
+over a subset of what they hold is the *"caption asserts what a named
+counterparty reports"* failure this file already records, with a total that ties
+to no document. Measured: the winners set forms **zero** mandate rows. The
+condition is struck against the BOOK, never against the filtered set — against
+the set it would be trivially true — and the reader's search filter narrows what
+is drawn without changing what a row means.
+
+**AND THE ROW'S NOUN IS WHAT THE ROW IS.** "84 holdings" over a table where ten
+rows are whole mandates of thirty-odd shares each is a caption not describing its
+own figure. All mandates → `mandates`; all securities → `names`, which is the
+count the tile above already prints; a mix → `rows`.
+
+**THE SECOND ASK IS ANSWERED ASYMMETRICALLY, AND THAT IS THE HONEST ANSWER.**
+Clicking a MANDATE opens `/mandate/:accountId`, which lists every share the
+manager picked — the look-through the family wants, and the one this book has,
+because a PMS reports every share and the family owns them. Clicking an AIF or a
+mutual fund opens its holding page, which states that the companies inside are
+the manager's and are **not reported to this book**: a fund unit is one purchase
+of somebody else's portfolio, and no statement in this drop carries a scheme
+disclosure that joins to any folio the family holds. Drawing a constituent table
+there would be the fabrication this whole book exists to prevent. The two look
+alike and are not, which is why the fund page says so in as many words rather
+than rendering an empty table.
+
+**The per-statement lines did not go away**; they moved from a global mode to a
+per-row expander, which is where a reader asks for them. Morning CIO's Positions
+count counts those lines, and the page's own caption still prints all three
+figures (`369 holdings · 214 names · 34 accounts`) above a table of 84.
+
 #### Verifying by reintroducing the bug found five defects IN THE CHECKS
 
 Twenty-three bugs were reintroduced one at a time, each rebuilt and swept.
@@ -3351,6 +3427,199 @@ for the mandate one — is pulled in when a selected route needs it. A filter th
 silently stops checking is worse than no filter, and a blanket keep would have
 thrown away main's typo guard.
 
+
+### Stage 10p — TODAY, THE INDICES, AND A NAV SERIES THAT HAD STOPPED BEING IMPOSSIBLE
+
+*"we need to see which are today's movers, which are gainers … what are my
+gainers, what are my losers. My stocks and ETFs are up, Sensex is down this
+much, Nifty — I want to see this with Nifty 500. Build a dated portfolio NAV
+series (or state the accounts that cannot supply one) and chart it against Nifty
+500. Need to see live indices levels at all time: Nifty 50, Nifty 500, Nifty
+Midcap 150, Nifty Smallcap 250 — put a persistent index strip on the dashboard
+carrying the level and the day's move for all four."*
+
+Four asks. Three of them needed a feed this repo had never called, and the fourth
+turned out to need nothing at all — the data had been in the archive for four
+deliveries behind a note saying it could not exist.
+
+**THE FIFTH ABSENCE RECORDED AGAINST A PREMISE NOBODY RECHECKED.**
+`build-book.mjs` carried `const navHistory = []` and a note reading *"the corpus
+carries an opening and a closing portfolio value per account and nothing between
+them. Two points are not a series."* That was TRUE of the nine-account corpus it
+was written against, and FALSE from `august-2026-b` onwards — the drop that first
+REISSUED a statement an account had already filed. Measured on the archive today:
+
+| | accounts | value |
+| --- | ---: | ---: |
+| publish **two or more** dated valuations — a series | **13** | ₹141.6 Cr |
+| publish exactly **one** — a level, never a change | 23 | ₹571.9 Cr |
+| publish **none** — no statement values them at all | 13 | — |
+
+FRED, the RBI, the release calendar and the ISIN tier were the first four. Each
+cost the same thing: a reader told to stop looking for something already in hand.
+
+#### The series, and the four rules that keep it from asserting a path
+
+`navHistoryFrom` in `build-book.mjs` emits `BOOK_NAV_HISTORY`,
+`BOOK_ACCOUNT_NAV_HISTORY` and `BOOK_NAV_COVERAGE`. Every rule below is a wrong
+series avoided:
+
+1. **THE COMPOSITION NEVER CHANGES INSIDE THE SERIES.** Only accounts with two or
+   more dated valuations are in it, and it starts on the date the LAST of them
+   first published — **2026-07-10**, when Goldstandard and Carnelian join the ten
+   already reporting. Starting earlier draws a line climbing ₹27 Cr → ₹142 Cr
+   because accounts ARRIVED, which a reader takes for performance.
+2. **EACH POINT IS THE BOOK AS THE STATEMENTS STOOD**, so an account is held at
+   its latest mark on or before the date — the headline NAV's own construction,
+   evaluated at earlier dates. Every point states how many accounts are marked ON
+   it and how many are carried.
+3. **EACH `dedupeGroup` IS COUNTED ONCE, AT EVERY DATE**, and the tie-break is
+   the LATER-DATED row rather than the alphabetically-first account. 360 ONE
+   Special Opportunities sits under CRN37702 and CRN60117 and BOTH are in the
+   covered set; sorting by accountId would have counted the group once (right) at
+   60117's stale 30 June mark (wrong). The series' last point is ₹140.17 Cr
+   against a per-account sum of ₹141.63 Cr, and the ₹1.4580 Cr gap is that
+   holding — asserted in `navSeries.test.ts` as a relation, never as a literal.
+4. **EXTERNAL CAPITAL IS NETTED OUT, ON THE ACCOUNT'S OWN CLOCK.**
+
+**RULE 4 IS THE WHOLE CARD, AND WITHOUT IT THE CHART IS A FABRICATION.** Over this
+window the covered set's NAV runs ₹128.25 Cr → ₹140.17 Cr, **+9.29%**, against a
+Nifty 500 that moved **+1.33%**. Eight points of outperformance, and none of it is
+performance: **₹11.24 Cr is a Fund Deposit into V.E.C 128005 on 28 and 29 July.**
+Net of it the book earned **+0.54%** — below the index. `accountXirr.test.ts`
+already gates that exact account for that exact reason (mid-window external
+capital at 182% of opening value); this is the same failure arriving through a
+chart instead of a rate.
+
+**AND THE FLOW IS ATTRIBUTED WHERE THE MARK MOVES, NOT WHERE THE MONEY LANDED.**
+V.E.C's deposit is dated 28–29 July and its next valuation is 13 August, so the
+money and the revaluation fall in DIFFERENT consolidated intervals. Subtracting
+a deposit from a NAV that has not yet been restated to include it produces a large
+false loss followed by a large false gain. Each account's flows are therefore
+attributed to the interval bounded by ITS OWN consecutive snapshots — the same
+"each account closes on its own as-of" rule `pooledXirr` is built on.
+
+**WHAT IT STILL CANNOT PROVE, STATED ON SCREEN RATHER THAN PAPERED OVER.** Ten of
+the thirteen covered accounts publish no dated capital record. Where such an
+account holds a SINGLE security whose unit count is identical at every snapshot,
+the statement itself rules out a subscription (`units-unchanged`, which is how
+both 360 ONE CRNs and the fund folios resolve). Where it does not — SVAN 8710067
+and 8710090, Molecule and the HDFC folio — it is `unreported`, and **₹28.3 Cr of
+the window's movement is named on the card as not proven to be performance**. A
+subscription inside one of those would read here as a return.
+
+**A CAPTION WRITTEN FOR AN ABSENCE OUTLIVED THE ABSENCE.** `/history` rendered the
+series the moment it existed, under headings written for the one it EXPECTED:
+"Year-end listed-book snapshots, as reported by the ingested performance-history
+statements", with each row chipped `Archived`. All four claims are false of what
+arrived — statement dates inside five weeks, every asset class the covered
+accounts hold, taken from each account's authoritative HOLDINGS issue, and nothing
+superseded. It reads `As of · Covered NAV · Change · Capital in · Marked on this
+date` now, and **the capital column is what stops the 13 August row's +8.51% from
+reading as a good month.** An absence's WORDING surviving its data is the same
+defect as the absence itself.
+
+#### The four live indices, and two traps that print plausible wrong numbers
+
+`functions/api/indices.js` serves Nifty 50, Nifty 500, Nifty Midcap 150 and Nifty
+Smallcap 250 from Yahoo's chart endpoint; `IndexStrip` renders them between the
+top bar and `<main>`, on every route, polled every 60s. It is a PROXY rather than
+a harvest entry by the same rule `/api/prices` follows: `public/series/` carries
+`nifty-50` and `sensex` as settled daily closes — right for a ten-year chart, and
+unable to answer "where is the Nifty right now", which is the whole request. Two
+of the four are not in that store at all.
+
+**1. `chartPreviousClose` IS NOT THE PREVIOUS CLOSE.** It is the close preceding
+the requested RANGE. Measured on `^NSEI` on 2026-09-02 with `range=5d` it returns
+24,090.85 — the 27 August close — while the previous SESSION closed 24,055.80 on
+1 September. Read as the previous close the day's move is −1.15% against a true
+−1.01%. The previous close is taken from the last SETTLED bar instead, which is
+the rule `/api/prices` already applies when it drops today's in-progress bar.
+
+**2. A SYMBOL THAT LOOKS RIGHT IS NOT THE INDEX.** Probed the same day:
+
+```
+NIFTYMIDCAP150.NS   → "NIFTY MIDCAP 150"   22,949.95   ← the index
+NIFTY_MIDCAP_150.NS → an unnamed instrument 7,757.15   ← not the index
+NIFTYSMLCAP250.NS   → "NIFTY SMLCAP 250"   18,166.10   ← the index
+NIFTY_SMLCAP_250.NS → an unnamed instrument 5,861.60   ← not the index
+^NSMIDCP            → "NIFTY NEXT 50"                  ← the NAME lies
+^CNX500             → delisted;  ^CRSLDX → "NIFTY 500" ← the one that works
+```
+
+Every wrong one answers **200 with a well-formed rupee figure**. So each index
+declares the name its upstream must report, the response is checked against
+`meta.longName`/`shortName`, and a mismatch returns the index UNVERIFIED with no
+level. Same rule as `lib/table.mjs`: match on the label the source prints, never
+on the shape of the key. All three decoys are refused by the running code.
+
+**AN INDEX LEVEL IS NOT MONEY AND DOES NOT CONVERT.** `fmtFromBase` is
+deliberately not used on the strip or the NAV chart's axis: running 23,090.75
+through the display-currency converter divides the Nifty 500 by the USD rate and
+prints a level of nothing.
+
+#### Today's movers — and the denominator that is the whole point
+
+**THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, AND THE TILE SAYS SO.** A day
+change needs a live price AND the previous close behind it; the AIF folios, the
+mutual-fund units, the cash sweeps and every unresolved name have neither. The
+feed prices about ₹200 Cr of a ₹710 Cr book, so dividing the same rupee move by
+the whole NAV gives roughly a quarter of the true percentage — a real figure on
+the wrong denominator, and the one a reader sets against the Nifty. A position
+with no `dayChange` never enters a sum or a ranking either: an unpriced holding
+must not appear in "today's losers" at ₹0.
+
+A name held in several accounts is ONE mover — its rupee impact adds and its
+percentage is re-derived from the combined previous close, never averaged across
+positions of different sizes. The list ranks by ₹ impact or by % move, both
+offered, because a 9% move on a ₹40 L holding is the larger mover by one and the
+smaller by the other. **An empty list shows an em dash, not a summed ₹0**: "0
+losers · ₹0" is a formatter reaching an empty collection, which §2 forbids on a
+pill exactly as it forbids it on a tile.
+
+**AND THE ROADMAP NO LONGER PROMISES WHAT SHIPPED.** "Market overview — Nifty /
+Sensex / global" and "NAV vs benchmark (dynamic)" were chips on Morning CIO's
+"coming as live data lands" list. A chip for a feature already on the reader's
+screen is the same defect as an absence recorded against a premise that changed.
+
+#### Eleven bugs reintroduced, and three of them were bugs in the CHECKS
+
+`check:pages` gained a route — **`cio-live`**, the same page with `/api/quotes`,
+`/api/indices` and `/api/prices` fulfilled from fixtures BUILT OUT OF THE BOOK
+(`installLiveMocks`). `vite preview` runs no Function, so on the plain `cio` walk
+every live figure renders its absent state — worth asserting on its own, and it
+left the day's-move arithmetic checked by nothing. Each symbol is priced at its
+own statement mark × 1.10 with every index at ×0.99, so the answers are closed
+forms: **+10.00% for the book, −1.00% per index, 11.00 points of gap.** A tile
+that diluted across the whole book, averaged percentages, or counted an unpriced
+holding as flat lands somewhere else.
+
+Every invariant was verified by reintroducing its bug. Three of the eleven
+exposed a defect in the CHECK rather than the page, which is the point of doing
+it:
+
+- **`(\d+) of (\d+) accounts` IS NOT UNIQUE ON MORNING CIO.** The partition check
+  matched page-wide and picked up the Money-weighted return tile's own coverage
+  line ("7 of 49 accounts") four cards higher, failing a page that was correct.
+  Two figures of the same SHAPE describing different sets is what a page-wide
+  regex cannot tell apart; it is scoped to the card now.
+- **`label-xs` IS `uppercase`, AND `innerText` RETURNS THE TRANSFORMED TEXT.**
+  Restoring the old "Listed NAV" heading left a check reading `/Listed NAV/`
+  green against a page rendering `LISTED NAV`.
+- **A PAGE-WIDE MATCH FOR A COLUMN NAME IS SATISFIED BY PROSE ABOUT THE COLUMN.**
+  Renaming the capital column to "Flows" left `/Capital in/` green, because the
+  footnote under the table contains the phrase. Column claims are struck on the
+  header row, which `innerText` joins with tabs.
+- **A COLLAPSED `<details>` IS NOT IN `innerText`**, and the 36 excluded accounts
+  live inside one. The sweep opens them on these routes — the same class of
+  failure as a reason living in a `title`, and the same fix: read it.
+
+`src/lib/__tests__/navSeries.test.ts` carries the arithmetic, anchored the way
+`privateMarket.test.ts` is: the series' last point against the covered accounts'
+own roll-up, two independent paths inside `navHistoryFrom` to one figure. Its
+load-bearing gate is an INEQUALITY — the unadjusted NAV move must exceed the
+adjusted return by more than 5 points — so a suite cannot pass by accident on a
+drop where no capital moved, and it fails loudly if the series ever empties.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -4194,10 +4463,14 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
-- `npm run test:family` runs the four derived-figure suites — the family-input
+- `npm run test:family` runs the derived-figure suites — the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
-  the financial-table parser, the cash-flow/calendar reader and the ratio-table
-  reader. Every one of the last three runs against a REAL saved API response
+  the financial-table parser, the cash-flow/calendar reader, the ratio-table
+  reader, the account XIRR, the private-market roll-up, the Excel export and the
+  **dated NAV series** (`navSeries.test.ts`, Stage 10p: the series' last point
+  against the covered accounts' own roll-up, and the flow adjustment asserted as
+  LOAD-BEARING rather than merely present). Every one of the API-backed three
+  runs against a REAL saved API response
   rather than an invented fixture, and the cash-flow suite needs TWO responses
   for one company because its unit check is a reconciliation between them: a
   hand-written pair would prove only that two inventions agree with each other.
@@ -4214,4 +4487,13 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   reintroducing its bug, which is one edit, one rebuild and one sweep per check.
   The routes that resolve addresses for others (`cio`, `monitor`) are always
   kept, so a subset can never silently stop checking.
+  **`cio-live` is the same page with the live layer FULFILLED** from fixtures
+  built out of the book (`installLiveMocks`): every symbol at its own statement
+  mark × 1.10 and every index at ×0.99, so the day's move is exactly +10.00%,
+  each index exactly −1.00% and the gap exactly 11.00 points. The plain `cio`
+  walk deliberately gets no mocks, because its absent states are invariants too.
+- `npm run dev:mock-quotes` serves `dist/` with `/api/quotes`, `/api/indices`,
+  `/api/prices`, `/api/fx` and the three holdings feeds mocked, for exercising
+  the live layer without a token. `INDEX_FACTOR` moves the indices independently
+  of `FACTOR`, so the book-against-index gap is never zero by construction.
 - `npm run set-password -- "<password>"` sets the edge gate password.

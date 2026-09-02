@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
+import { IndexStrip } from "@/components/IndexStrip";
 import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
 import { Polycab } from "@/pages/Polycab";
@@ -84,6 +85,14 @@ export default function App() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
+        {/* THE INDEX STRIP IS OUTSIDE `<main>`, DELIBERATELY. The family asked to
+            see the four Nifty levels "at all times", so it is mounted here rather
+            than on a page — and outside the main region because every
+            page-CONTENT invariant in `check:pages` reads `<main>`, and a strip
+            repeated on 40 routes would otherwise have to be excused from each of
+            them one at a time. That is the same scoping the Polycab absence check
+            needed for the same reason. */}
+        <IndexStrip />
         <main className="flex-1 overflow-y-auto px-6 py-6">
           <Routes>
             <Route path="/" element={<RootRedirect />} />
