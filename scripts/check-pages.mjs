@@ -325,6 +325,11 @@ const ROUTES = [
   // that collapses a series and LOSES its tranches — which reads as a tidier
   // screen, not as a fault — is caught here rather than by the family.
   ["monitor-txn-drill", "/monitor"],
+  // ...AND THE DIRECT EQUITY VIEW, which is a different SET rather than a
+  // different grouping: the tape narrowed to the accounts the family runs
+  // itself. Walked separately because a filter that silently matched nothing
+  // renders an empty table that looks like a family which does not trade.
+  ["monitor-txn-direct", "/monitor"],
   // ...and the BY-ENTITY view of the same table, where every statement's row
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
@@ -610,6 +615,10 @@ let MANDATE_PATH = null;
  * CHECKED rather than as a pass.
  */
 let DRILL = null;
+/** The same, for the Direct Equity view — see `monitor-txn-direct`. */
+let DIRECT = null;
+/** Header geometry, for the single-line headline claim — see `monitor`. */
+let HEAD = null;
 
 /**
  * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
@@ -981,6 +990,56 @@ const INVARIANTS = {
      */
     ["a group that sold nothing shows an em dash in Sold, never a zero",
       (t) => /—/.test(t) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t)],
+  ],
+
+  /**
+   * DIRECT EQUITY IS A NARROWER SET, AND IT IS NOT EMPTY.
+   *
+   * The family asked for a view holding "all direct buy and sold equity
+   * transactions" — the shares they chose themselves, as against the ones a
+   * discretionary manager chose. That is `holdingRoute === "own"`, the axis
+   * Stage 10L settled, and a filter keyed on it can fail in two directions that
+   * look nothing alike on screen: matching nothing renders an empty table that
+   * reads as "this family does not trade its own book", and matching everything
+   * renders the whole tape under a heading that denies half of it.
+   */
+  "monitor-txn-direct": [
+    ["Direct Equity renders rows, so the filter matched something",
+      () => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        return DIRECT.rows > 0 && DIRECT.footTrades > 0;
+      }],
+
+    /**
+     * ...AND IT IS A STRICT SUBSET. Compared against the header's own buy/sell
+     * counter, which is computed off the FILTERED TAPE and never touches this
+     * view — so a filter that quietly stopped filtering fails here.
+     */
+    ["...and it is a strict subset of the tape, not the whole of it",
+      (t) => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
+        if (!tape) return false;
+        const n = (x) => Number(x.replace(/,/g, ""));
+        return DIRECT.footTrades < n(tape[1]) + n(tape[2]);
+      }],
+
+    /** The footer is summed from the rows above it, as everywhere else here. */
+    ["its footer ties to the rows it renders",
+      () => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        return DIRECT.rowTrades === DIRECT.footTrades && DIRECT.rows === DIRECT.footSecurities;
+      }],
+
+    /**
+     * AND IT NAMES WHAT IT LEAVES OUT. This view is narrow for a reason the
+     * corpus states — the family's other own-account trading is in demat
+     * statements whose movements carry no price and are therefore not trades —
+     * and without that line the table reads as a measurement of how little they
+     * trade rather than of what this book can see.
+     */
+    ["...and says why it is narrow, rather than reading as a family that barely trades",
+      (t) => /own broking accounts/i.test(t) && /not trades/i.test(t)],
   ],
 
   /**
@@ -1733,6 +1792,21 @@ const INVARIANTS = {
   // since — a check carrying its own copy of a generated figure is a second
   // source for it.
   monitor: [
+    /**
+     * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
+     *
+     * *"Write daily and portfolio monitor as a single line headline, daily in
+     * smaller font … also shift the holdings/transactions toggle beside it.
+     * Will give us further space to show a bigger table."* That is a claim
+     * about GEOMETRY, so it is struck on geometry — the three boxes must
+     * overlap vertically. Matching the words "Daily" and "Portfolio Monitor"
+     * would pass just as happily with them stacked three rows deep.
+     */
+    ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.hasEyebrow && HEAD.eyebrowInline && HEAD.toggleInline && HEAD.eyebrowSmaller;
+      }],
     /**
      * ── THE THIRD ROUND: A GROUPING, NOT A WORD ──────────────────────────────
      *
@@ -2658,9 +2732,30 @@ for (const theme of THEMES) {
       page.on("response", (r) => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
 
       await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
-      if (name === "monitor-txns" || name === "monitor-txn-drill") {
+      if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-txn-direct") {
+        const t = page.getByRole("button", { name: /^Direct Equity$/ }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(900); }
+        DIRECT = await page.evaluate(() => {
+          const rows = [...document.querySelectorAll('tr[data-row="group"]')];
+          const foot = document.querySelector("tfoot tr");
+          const cell = (r, i) => (r?.cells?.[i]?.innerText ?? "").trim();
+          const n = (x) => Number((/[\d,]+/.exec(x) ?? ["0"])[0].replace(/,/g, ""));
+          return {
+            rows: rows.length,
+            // READ OFF `data-trades`, NOT OFF THE CELL. That cell renders the
+            // count and a "11B/1S" split beside it, so `innerText` is "211B/1S"
+            // and the first number in it is 21 — a parser that happens to
+            // produce a number, which is exactly the class of wrong answer this
+            // sweep exists to catch rather than commit.
+            rowTrades: rows.reduce((s, r) => s + Number(r.dataset.trades || 0), 0),
+            footTrades: n(cell(foot, 1)),
+            footSecurities: n(cell(foot, 2)),
+          };
+        });
       }
       if (name === "monitor-txn-drill") {
         /**
@@ -2861,6 +2956,34 @@ for (const theme of THEMES) {
        * asserts on" failure this file already names once. The claim is about a
        * page's CONTENT, so it is struck on the content.
        */
+      /**
+       * IS THE HEADLINE ONE LINE? Measured, not asserted in prose.
+       *
+       * The eyebrow used to sit above the title and the view switch on a
+       * toolbar row of its own — three rows to say where you are. The claim
+       * that they now share one is geometric, so it is struck on geometry: the
+       * three boxes must overlap vertically. A CSS regression that stacks them
+       * again fails here; a caption never could.
+       */
+      if (!FAST && name === "monitor" && theme === THEMES[0] && width === WIDTHS[0]) {
+        HEAD = await page.evaluate(() => {
+          const h1 = document.querySelector("main h1");
+          if (!h1) return null;
+          const bar = h1.parentElement;
+          const eyebrow = bar?.firstElementChild;
+          const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
+          const box = (el) => (el ? el.getBoundingClientRect() : null);
+          const overlap = (a, b) => !!a && !!b && a.top < b.bottom && b.top < a.bottom;
+          const r = { h1: box(h1), eyebrow: box(eyebrow), toggle: box(toggle) };
+          return {
+            hasEyebrow: !!eyebrow && eyebrow !== h1,
+            eyebrowInline: overlap(r.eyebrow, r.h1),
+            toggleInline: overlap(r.toggle, r.h1),
+            // The eyebrow reads smaller than the title it precedes.
+            eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
+          };
+        });
+      }
       const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {

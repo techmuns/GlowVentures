@@ -53,6 +53,15 @@ export const STAGGERED_MIN = 4;
 
 export type GroupBy = "manager" | "entity" | "instrument";
 
+/**
+ * What the Transactions card is showing.
+ *
+ * `direct` is NOT a fourth grouping — it is the `instrument` rollup over a
+ * FILTERED tape (the accounts the family runs itself), which is why it lives
+ * here as a view rather than as a `GroupBy`. `tape` is the raw dated rows.
+ */
+export type TxnView = GroupBy | "direct" | "tape";
+
 /** A dated row, plus the group it was filed under. */
 export type TrancheRow = Txn;
 

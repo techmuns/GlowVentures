@@ -17,7 +17,7 @@ import {
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
-import { rollup, rollupTotals, type GroupBy } from "@/lib/txnRollup";
+import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -643,7 +643,23 @@ export function PortfolioMonitor() {
   };
   return (
     <div className="flex h-full flex-col">
+      {/* THE VIEW SWITCH RIDES WITH THE TITLE. It says what the reader is
+          looking at rather than acting on it, so it belongs beside the headline
+          — and moving it here retires the toolbar row it used to sit alone on,
+          which is a row of table given back on the page whose tables are the
+          whole point. */}
       <PageHeader eyebrow="Daily" title="Portfolio Monitor"
+        beside={
+          <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+            {(["holdings", "transactions"] as const).map((m) => (
+              <button key={m} type="button" onClick={() => setView(m)}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-colors ${view === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                {m === "holdings" ? <Layers className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
+                {m === "holdings" ? "Holdings" : "Transactions"}
+              </button>
+            ))}
+          </div>
+        }
         right={<div className="flex items-center gap-2">
           <BasisPill liveText="Live prices" hint="Quantity and cost come from the statements; value, weight and return are rebuilt from live prices where a quote exists." />
           {view === "holdings" && <Pill tone="info">{rows.length} rows</Pill>}
@@ -666,6 +682,13 @@ export function PortfolioMonitor() {
           {buckets.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : bucketLabel(s)}</option>)}
         </select>
         <div className="ml-auto flex items-center gap-2">
+          {/* The Holdings basis switch, moved off its own row into this group. */}
+          {view === "holdings" && (
+            <button onClick={() => setMode(!consolidate)}
+              className={`rounded-md border px-3 py-2 text-sm transition-colors ${consolidate ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400" : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
+              {consolidate ? "By security" : "By entity"}
+            </button>
+          )}
           <button onClick={handleExport} disabled={exporting}
             className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
             title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
@@ -679,24 +702,6 @@ export function PortfolioMonitor() {
         </div>
       </div>
 
-      {/* View toggle (+ Holdings' by-security / by-entity switch) */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-          {(["holdings", "transactions"] as const).map((m) => (
-            <button key={m} type="button" onClick={() => setView(m)}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${view === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-              {m === "holdings" ? <Layers className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
-              {m === "holdings" ? "Holdings" : "Transactions"}
-            </button>
-          ))}
-        </div>
-        {view === "holdings" && (
-          <button onClick={() => setMode(!consolidate)}
-            className={`ml-auto rounded-md border px-3 py-2 text-sm transition-colors ${consolidate ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400" : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
-            {consolidate ? "By security" : "By entity"}
-          </button>
-        )}
-      </div>
 
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
@@ -1251,7 +1256,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
    * line per manager and drill down, not to read four hundred dated rows —
    * "I will only see five items … then I can drill down".
    */
-  const [groupBy, setGroupBy] = useState<GroupBy | "tape">("manager");
+  const [groupBy, setGroupBy] = useState<TxnView>("manager");
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
@@ -1319,8 +1324,32 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
    * falling back to the provider and number its own statement prints.
    */
   const accountsReg = portfolio?.accounts ?? [];
-  const groups = useMemo(() => rollup(filtered, accountsReg, groupBy === "tape" ? "manager" : groupBy),
-    [filtered, accountsReg, groupBy]);
+  /**
+   * DIRECT EQUITY IS A SET, NOT A GROUPING — and it is the app's OWN set.
+   *
+   * `holdingRoute` is the axis Stage 10L settled after the family reported the
+   * same complaint three times: a share a discretionary manager picked and a
+   * share the family bought itself are the same ASSET and a different DECISION.
+   * "Direct Equity" means the second, everywhere else in this app, so this tab
+   * filters the tape to the accounts the family runs itself (`Direct` /
+   * `Execution`) and then rolls those up per security. Re-using the word for
+   * "grouped by security" would be a fourth round of the same argument.
+   *
+   * Rows the statement classes as something other than equity are excluded, so
+   * the tab's name stays true if an own-account fund purchase ever lands on the
+   * tape. Today every own-account row is classed `Equity` by its own statement,
+   * including the liquid ETF sweep — which is the statement's classification and
+   * is not second-guessed here.
+   */
+  const ownAccounts = useMemo(() => new Set(
+    accountsReg.filter((a) => holdingRoute(a.engagement) === "own").map((a) => acctKey(a.provider, a.accountNo)),
+  ), [accountsReg]);
+  const scoped = useMemo(() => (groupBy !== "direct" ? filtered : filtered.filter((t) =>
+    ownAccounts.has(acctKey(t.provider, t.accountNo)) && (t.assetClass == null || t.assetClass === "Equity"))),
+    [filtered, groupBy, ownAccounts]);
+  const groups = useMemo(() => rollup(scoped, accountsReg,
+    groupBy === "tape" ? "manager" : groupBy === "direct" ? "instrument" : groupBy),
+    [scoped, accountsReg, groupBy]);
   const totals = useMemo(() => rollupTotals(groups), [groups]);
   const shown = filtered.slice(0, TXN_CAP);
 
@@ -1395,8 +1424,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             asked what each manager did this year. Tape is kept because a
             reconciliation against a PDF needs the printed rows in printed
             order, which no rollup can stand in for. */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="One line per manager, per family member, or per security — expand a line for what is inside it. Tape is the raw dated rows.">
-          {([["manager", "By manager"], ["entity", "By entity"], ["instrument", "By security"], ["tape", "Tape"]] as const).map(([v, label]) => (
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="One line per manager or per family member; Direct Equity narrows the tape to the shares the family bought and sold in its own broking account. Expand a line for what is inside it. Tape is the raw dated rows.">
+          {([["manager", "By manager"], ["entity", "By entity"], ["direct", "Direct Equity"], ["tape", "Tape"]] as const).map(([v, label]) => (
             <button key={v} type="button" onClick={() => setGroupBy(v)}
               className={`rounded px-3 py-1.5 font-medium transition-colors ${groupBy === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
               {label}
@@ -1414,7 +1443,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                 <tr className="border-b border-ink-700">
                   <th className="label-xs px-3 py-2.5 text-left font-medium">{groupBy === "manager" ? "Manager / account" : groupBy === "entity" ? "Family member" : "Security"}</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Trades</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">{groupBy === "instrument" ? "Sides" : "Securities"}</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">{groupBy === "direct" ? "Sides" : "Securities"}</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Bought</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Sold</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
@@ -1433,7 +1462,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                           security inside it, and picking those out of rendered
                           prose means matching a caption — which renders whatever
                           the data does and cannot fail. */}
-                      <tr data-row="group" className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenGroups, g.key)}>
+                      <tr data-row="group" data-trades={g.trades} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenGroups, g.key)}>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center gap-1.5">
                             <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""}`} />
@@ -1444,7 +1473,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtNum(g.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{g.buys}B/{g.sells}S</span></td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(groupBy === "instrument" ? g.instruments.length : g.securities)}</td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(groupBy === "direct" ? g.instruments.length : g.securities)}</td>
                         <td className="px-3 py-2.5 text-right mono text-slate-300">{g.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" /> : fmtFromBase(g.bought, { compact: true })}</td>
                         <td className="px-3 py-2.5 text-right mono text-slate-300">{g.sells === 0 ? <AbsentCell reason="nothing was sold in this group over the window" /> : g.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" /> : fmtFromBase(g.sold, { compact: true })}</td>
                         <td className="px-3 py-2.5 text-right mono text-slate-200">{net == null ? <AbsentCell reason="one side of this group reports no settled amount, so a net cannot be struck" /> : fmtFromBase(net, { compact: true, sign: true })}</td>
@@ -1554,13 +1583,23 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
               )}
             </table>
           </div>
-          <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
-            Every line is one manager's trading over the window; expand it for one line per security, and expand that for
-            each dated tranche. A realised figure covers only the sells whose account issues a capital gain statement — where
-            it does not cover them all, the count beside it says how many. The tape reads the transaction statements only: a
-            depository moves units without a price, a counterparty or a consideration, so a demat account's movements are not
-            trades and are not here.
-          </div>
+          {/*
+            THE EXPLANATORY FOOTER IS GONE, BY REQUEST — it repeated on every
+            view and said nothing a reader of the table needed. What survives is
+            ONE line, and only on Direct Equity, because that is the view where
+            the absence IS the finding: this tab is narrow because the family's
+            other own-account trading sits in demat statements whose movements
+            carry no price, no counterparty and no consideration, and are
+            therefore not trades (`precedence.mjs`). Without it the tab reads as
+            "the family barely trades its own book", which is not what the
+            corpus says.
+          */}
+          {groupBy === "direct" && (
+            <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] text-slate-500">
+              The shares the family bought and sold in its own broking accounts. Manager-run trading is under By manager;
+              demat movements carry no price or counterparty on their statements, so they are not trades and are not here.
+            </div>
+          )}
         </Card>
       ) : (
       <Card pad={false} className="flex min-h-0 flex-1 flex-col">

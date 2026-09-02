@@ -2738,6 +2738,67 @@ picks its own worst case. `data-row` attributes exist for exactly this: selectin
 these rows out of rendered prose means matching a caption, which renders whatever
 the data does and cannot fail.
 
+### Stage 10p — DIRECT EQUITY IS A SET, AND THE HEADLINE IS ONE LINE
+
+Four asks on the Transactions card, and two of them are about giving the table
+back the rows the chrome was spending.
+
+**THE EXPLANATORY FOOTER IS GONE.** It repeated under every view and told a
+reader of the table nothing they needed. What survives is ONE line, and only on
+Direct Equity, because that is the view where the absence IS the finding — see
+below.
+
+**"BY SECURITY" BECAME "DIRECT EQUITY", AND THAT IS A DIFFERENT SET RATHER THAN
+A RENAME.** *"Replace by security with direct equity, that will contain the
+transaction of all direct buy and sold equity transactions."* `holdingRoute` is
+the axis Stage 10L settled after the same complaint arrived three times: a share
+a discretionary manager picked and a share the family bought itself are the same
+ASSET and a different DECISION. "Direct Equity" means the second everywhere else
+in this app, so the tab FILTERS the tape to the accounts the family runs itself
+(`Direct` / `Execution`) and then rolls those up per security. Re-using the word
+for "grouped by security" would have been a fourth round of that argument.
+
+Measured on the tape: of the twelve accounts that issue a transaction statement,
+ten are PMS, one is Buoyant's AIF folio and **exactly one is own-account** — LKP
+Securities 98245, Bharat's broking account: **21 trades across 14 securities,
+₹84.4 L bought, ₹1.02 Cr sold**, which ties to the rupee to that account's own
+row in the By-manager view. Every one of those rows is classed `Equity` by its
+own statement, the liquid ETF sweep included, and that classification is not
+second-guessed here; rows the statement classes as something else are excluded
+so the tab's name stays true if an own-account fund purchase ever lands.
+
+**AND THE ONE-LINE NOTE ON THAT VIEW IS LOAD-BEARING.** The tab is narrow
+because the family's other own-account trading sits in the demat statements,
+whose movements carry no price, no counterparty and no consideration and are
+therefore not trades (`precedence.mjs`). Without saying so, fourteen securities
+under a heading reading "Direct Equity" is a MEASUREMENT of how little this
+family trades its own book — which is not what the corpus says. `check:pages`
+asserts the line survives.
+
+**THE HEADLINE IS ONE LINE AND THE VIEW SWITCH RIDES WITH IT.** *"Write daily
+and portfolio monitor as a single line headline, daily in smaller font — this
+will give us more space to show more data on the table. Also shift the
+holdings/transactions toggle beside it."* `PageHeader` now renders eyebrow and
+title inline on every route, and takes a `beside` slot for a control that says
+WHAT the reader is looking at rather than acting on it. The Portfolio Monitor's
+Holdings / Transactions switch moves there and its toolbar row is deleted
+outright — the Holdings basis switch that shared it joins the Export / Deck
+group. Two rows of chrome returned to the table, on top of the `--app-zoom`
+change above.
+
+**THAT CLAIM IS GEOMETRIC, SO IT IS CHECKED ON GEOMETRY.** `check:pages` reads
+the bounding boxes of the eyebrow, the `h1` and the switch and requires them to
+overlap vertically, with the eyebrow shorter than the title. Matching the words
+"Daily" and "Portfolio Monitor" would pass just as happily with them stacked
+three rows deep — which is the prose-matching failure this file already names
+twice, arriving through layout.
+
+**AND ONE CHECK PARSED A NUMBER THAT WAS NEVER THERE.** The rollup's Trades cell
+renders the count and a `11B/1S` split beside it, so `innerText` is `211B/1S`
+and the first number in it is 21 — a parser that happens to produce A number,
+which is the exact class of wrong answer this sweep exists to catch rather than
+commit. The count is read off `data-trades` now, like `data-days` beside it.
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to

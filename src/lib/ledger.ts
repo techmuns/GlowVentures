@@ -302,6 +302,10 @@ export type Txn = {
    *  the identity-in-the-presentation-layer trap this file already refuses once
    *  for `securityKey`. */
   provider: string; accountNo: string;
+  /** What the STATEMENT called this instrument, where it said. Null is "not
+   *  stated" and never a guess — a Direct Equity view narrows on it and must
+   *  not silently drop a row whose statement classified nothing. */
+  assetClass: string | null;
   side: "Buy" | "Sell"; qty: number; price: number | null; amount: number | null; realized: number | null;
   /** Why `realized` is absent on this row, when it is. */
   realizedNote?: string;
@@ -392,7 +396,8 @@ export async function loadTransactions(): Promise<TxnData | null> {
     }
     txns.push({
       date: t.date, security: displaySecurity(t.security), securityKey: t.securityKey,
-      account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId, side, qty,
+      account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId,
+      assetClass: t.assetClass ?? null, side, qty,
       // Derived only where both halves exist. `amount` is now null where the
       // statement reported none, and dividing that by a quantity would put a
       // ₹0 unit price on a trade nobody priced.

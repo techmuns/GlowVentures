@@ -30,7 +30,7 @@ const near = (name: string, a: number | null, b: number | null, tol = 0.01) =>
 // ── fixtures ────────────────────────────────────────────────────────────────
 const txn = (o: Partial<Txn>): Txn => ({
   date: "2026-04-01", security: "Acme Ltd", securityKey: "acme", account: "A · P 1",
-  provider: "Provider A", accountNo: "1", ownerId: "ajay",
+  provider: "Provider A", accountNo: "1", ownerId: "ajay", assetClass: "Equity",
   side: "Buy", qty: 10, price: 100, amount: 1000, realized: null, ...o,
 });
 const acct = (o: Partial<Account>): Account => ({
