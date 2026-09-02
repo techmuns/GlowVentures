@@ -1,0 +1,23 @@
+{
+  "schemecode": 46354,
+  "scheme": "DSP Silver ETF",
+  "classification": "Metal : ETFs",
+  "fundAumCr": 1400.61,
+  "asOf": "2026-07-31",
+  "equity": [],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Net Current Asset",
+      "pctAum": 2.03,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 0,
+    "debt": 0,
+    "cash": 1,
+    "misc": 0
+  }
+}

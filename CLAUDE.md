@@ -3733,6 +3733,87 @@ long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
 YTD earns its dash because it becomes real on the next within-year purchase;
 a 2024 column would be a dash forever.
 
+### Stage 10s — LOOK-THROUGH: what the companies inside each mutual fund are
+
+*"We should also be able to see each holding of every mutual fund. You can fetch
+this data from rupeevest by typing the name of each mutual fund scheme that we
+are holding and fetching the name of all the stocks held."*
+
+This is the one input the book has never had, and this file has said so since the
+AIF statements landed: a fund folio is ONE purchase of a manager's portfolio and
+the companies inside it are *"not reported to this book"*. That was true of the
+family's own statements, which is all the book had. **A mutual fund scheme's
+portfolio is nonetheless PUBLISHED** — SEBI requires every AMC to disclose it
+monthly — and rupeevest aggregates those disclosures.
+
+**SO THE PROVENANCE IS DIFFERENT FROM EVERYTHING ELSE IN THIS REPO, AND THE
+DIFFERENCE IS THE POINT.** Every other figure traces to the statement of the
+institution that struck it. These trace to the AMC's own disclosure as a third
+party relays it. The store keeps the source, the scheme matched and the
+portfolio's own as-of on every record; the card renders all three; and **none of
+it enters a book total, an allocation, a sector split or a concentration
+figure** — the fund's value stays whole exactly as before, because counting both
+would count the same money twice.
+
+```
+scripts/build-fund-lookthrough.mjs      npm run build-lookthrough
+   |  book ISIN -> AMFI NAVAll -> scheme name -> rupeevest -> schemecode
+   v
+public/lookthrough/index.json           securityKey -> scheme, plan, as-of
+public/lookthrough/<schemecode>.json    equity / debt / cash / misc, per sleeve
+docs/FUND-LOOKTHROUGH.md                what resolved, what did not, and why
+```
+
+**THE JOIN IS ANCHORED ON AN ISIN, BECAUSE THE NAMES CANNOT CARRY IT.**
+rupeevest's index has a scheme name, a fund house and a code — and no ISIN. The
+book's mutual-fund rows are mostly depository-clipped (`WOC MAAF D-GROW`,
+`BNDH L&MCF DP GR`, `ICICI IOPPF D-GRW`), and matching those by name is exactly
+the guess this repo refuses. They DO carry ISINs, so the chain starts there and
+only ONE hop is a name match, with both sides the same scheme's own name.
+Measured: **22 of 22 fund and ETF names resolve, ₹124.46 Cr of ₹124.46 Cr.** A
+scheme matching nothing — or more than one — is left unresolved and named in the
+report; the alias table (`ICICI Prudential` → `ICICI Pru`, `Aditya Birla Sun
+Life` → `Aditya Birla SL`, `WhiteOak Capital` → `WOC`) makes a match POSSIBLE
+and never looser, because a substitution producing two candidates still fails.
+
+**THREE FACTS THE READER IS OWED, AND THE CARD PRINTS ALL THREE:**
+
+- **A DIRECT PLAN AND A REGULAR PLAN HOLD THE SAME PORTFOLIO.** rupeevest lists
+  one entry per scheme, on Regular; the family holds Direct. They differ in
+  expense ratio and therefore NAV — not in what the fund owns, because they are
+  the same fund. That is why matching across the plan is legitimate, and the card
+  says so rather than leaving a reader to wonder.
+- **THE DATES DO NOT LINE UP.** A portfolio is disclosed monthly, a holding is
+  valued on its own statement's date — 31 Jul against 6 Aug here. Both print.
+- **THE PUBLISHED FIGURE IS A PERCENT OF THE FUND'S AUM**, not of the family's
+  money. The family's exposure is `holding value × percent`, computed ON SCREEN
+  where it is labelled DERIVED, never baked into the store as though disclosed.
+
+**AND AN AIF GETS NOTHING, WHICH IS NOW A NARROWER CLAIM THAN IT WAS.** SEBI
+requires a monthly portfolio from a mutual fund and not from a Category II or III
+alternative fund, rupeevest indexes none, and the family's AIF statements report
+the folio rather than its constituents. So `LOOKTHROUGH_CLASSES` is Mutual Fund
+and ETF, the AIF page keeps saying there is no list AND now says why the mutual
+fund beside it has one, and `check:pages` walks BOTH branches — a build that grew
+a constituent table for an AIF could only have filled it from another scheme,
+which is the fabrication this store must not enable.
+
+`newestMonth` picks the month by its own `invdate`: the endpoint returns FOUR,
+so reading them all would put one holding on screen four times at four weights,
+and a fixed index would silently go stale the first time the source changes how
+many it returns. A row the mapping does not name is dropped rather than rendered
+as "unknown" — a weight with no security against it is a number nobody can use.
+
+The ingest refuses a truncated source outright (AMFI under 1,000 ISINs,
+rupeevest under 500 schemes) rather than resolving against it, keeps a stored
+portfolio when a fetch fails, and writes **no run timestamp anywhere**, so a run
+that finds nothing new leaves the tree clean. Six bugs were reintroduced against
+the card's invariants — a look-through column on the fund's money instead of the
+family's, a dropped provenance line, one date standing for two, a plan named
+without its reason, a dropped "in no total" footer, and an AIF grown a table —
+and every one fires.
+
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -4591,6 +4672,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
+- `npm run build-lookthrough` refreshes `public/lookthrough/` and
+  `docs/FUND-LOOKTHROUGH.md` — each mutual fund and ETF scheme's own disclosed
+  portfolio. Idempotent; `--only <schemecodes>` limits it, `DRY=1` resolves and
+  reports without writing. Re-run it when a drop advances: a scheme discloses
+  monthly, and the card prints the disclosure's own as-of so staleness is
+  visible rather than silent.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and
