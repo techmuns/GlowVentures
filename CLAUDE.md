@@ -3803,85 +3803,102 @@ long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
 YTD earns its dash because it becomes real on the next within-year purchase;
 a 2024 column would be a dash forever.
 
-### Stage 10s — LOOK-THROUGH: what the companies inside each mutual fund are
+### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 
-*"We should also be able to see each holding of every mutual fund. You can fetch
-this data from rupeevest by typing the name of each mutual fund scheme that we
-are holding and fetching the name of all the stocks held."*
+*"We should also be able to see each holding of every mutual fund."* … *"For all
+the mutual funds related data you can get that from our repo — amfibeas. Mutual
+Fund NAV, direct scheme NAV, rolling return etc etc., daily Mutual Fund scheme
+NAV change… everything you can find in that repo. Do not make any changes in the
+amfibeas repo — just access relevant data points from it."*
 
-This is the one input the book has never had, and this file has said so since the
-AIF statements landed: a fund folio is ONE purchase of a manager's portfolio and
-the companies inside it are *"not reported to this book"*. That was true of the
-family's own statements, which is all the book had. **A mutual fund scheme's
-portfolio is nonetheless PUBLISHED** — SEBI requires every AMC to disclose it
-monthly — and rupeevest aggregates those disclosures.
-
-**SO THE PROVENANCE IS DIFFERENT FROM EVERYTHING ELSE IN THIS REPO, AND THE
-DIFFERENCE IS THE POINT.** Every other figure traces to the statement of the
-institution that struck it. These trace to the AMC's own disclosure as a third
-party relays it. The store keeps the source, the scheme matched and the
-portfolio's own as-of on every record; the card renders all three; and **none of
-it enters a book total, an allocation, a sector split or a concentration
-figure** — the fund's value stays whole exactly as before, because counting both
-would count the same money twice.
+**READ-ONLY, ALWAYS.** `scripts/build-fund-lookthrough.mjs` takes the checkout as
+an INPUT (`AMFIBEAS_DIR`, default `/home/user/techmuns/amfibeas`); nothing in
+this repo clones, updates or writes to it.
 
 ```
-scripts/build-fund-lookthrough.mjs      npm run build-lookthrough
-   |  book ISIN -> AMFI NAVAll -> scheme name -> rupeevest -> schemecode
+techmuns/amfibeas (read-only)            npm run build-lookthrough
+   |  book ISIN -> mf-latest-nav.json (3,439 schemes, ISIN on every one)
    v
-public/lookthrough/index.json           securityKey -> scheme, plan, as-of
-public/lookthrough/<schemecode>.json    equity / debt / cash / misc, per sleeve
-docs/FUND-LOOKTHROUGH.md                what resolved, what did not, and why
+public/lookthrough/index.json            securityKey -> scheme, plan, as-of
+public/lookthrough/<schemecode>.json     NAV + day change, returns, equity rows
+docs/FUND-LOOKTHROUGH.md                 what resolved, what did not, and why
 ```
 
-**THE JOIN IS ANCHORED ON AN ISIN, BECAUSE THE NAMES CANNOT CARRY IT.**
-rupeevest's index has a scheme name, a fund house and a code — and no ISIN. The
-book's mutual-fund rows are mostly depository-clipped (`WOC MAAF D-GROW`,
-`BNDH L&MCF DP GR`, `ICICI IOPPF D-GRW`), and matching those by name is exactly
-the guess this repo refuses. They DO carry ISINs, so the chain starts there and
-only ONE hop is a name match, with both sides the same scheme's own name.
-Measured: **22 of 22 fund and ETF names resolve, ₹124.46 Cr of ₹124.46 Cr.** A
-scheme matching nothing — or more than one — is left unresolved and named in the
-report; the alias table (`ICICI Prudential` → `ICICI Pru`, `Aditya Birla Sun
-Life` → `Aditya Birla SL`, `WhiteOak Capital` → `WOC`) makes a match POSSIBLE
-and never looser, because a substitution producing two candidates still fails.
+**THIS REPLACED A LIVE SCRAPE, AND THE JOIN IS THE REASON.** The first cut
+fetched an aggregator at build time and matched a scheme BY NAME, through AMFI's
+ISIN→name map and an AMC alias table. It worked, and every hop of it could go
+wrong. AmfiBeas carries an **ISIN on all 3,439 schemes**, so the join is an exact
+identifier lookup and the name match survives only as a fallback — the same
+tiering `build-symbols` uses, and for the reason recorded there: an identifier
+above the name tiers makes the match STRICTER, not looser. **20 of 22 join on
+ISIN alone**, and the ISIN also settles the PLAN: `INF0R8701046` resolves to
+`48299-D`, the DIRECT plan the family holds, where a name match could only ever
+reach the Regular listing.
 
-**THREE FACTS THE READER IS OWED, AND THE CARD PRINTS ALL THREE:**
+**A THIRD TIER, AND IT IS A READING RATHER THAN A GUESS.** One holding records no
+ISIN and its name matches TWO schemes — the regular and direct listings of one
+fund, which share a name and a portfolio. Its own printed name says *"- Direct
+Plan Growth Option"*. So where candidates differ ONLY by plan and the holding
+names one, the plan decides: both sides state it. Anything else stays
+unresolved. **21 of 22 · ₹123.28 Cr of ₹124.46 Cr.**
 
-- **A DIRECT PLAN AND A REGULAR PLAN HOLD THE SAME PORTFOLIO.** rupeevest lists
-  one entry per scheme, on Regular; the family holds Direct. They differ in
-  expense ratio and therefore NAV — not in what the fund owns, because they are
-  the same fund. That is why matching across the plan is legitimate, and the card
-  says so rather than leaving a reader to wonder.
-- **THE DATES DO NOT LINE UP.** A portfolio is disclosed monthly, a holding is
-  valued on its own statement's date — 31 Jul against 6 Aug here. Both print.
-- **THE PUBLISHED FIGURE IS A PERCENT OF THE FUND'S AUM**, not of the family's
-  money. The family's exposure is `holding value × percent`, computed ON SCREEN
-  where it is labelled DERIVED, never baked into the store as though disclosed.
+**THE ONE THAT DOES NOT RESOLVE IS NAMED RATHER THAN FORCED.** Liquid BeES is
+`INF732E01037` in this book — a legacy Benchmark/GS code — and AmfiBeas carries
+`INF204KC1FU1` for the Nippon scheme. Nothing available here PROVES the two are
+one security, so it is left unresolved with that reason. An ISIN alias would be
+the guess this book refuses.
 
-**AND AN AIF GETS NOTHING, WHICH IS NOW A NARROWER CLAIM THAN IT WAS.** SEBI
-requires a monthly portfolio from a mutual fund and not from a Category II or III
-alternative fund, rupeevest indexes none, and the family's AIF statements report
-the folio rather than its constituents. So `LOOKTHROUGH_CLASSES` is Mutual Fund
-and ETF, the AIF page keeps saying there is no list AND now says why the mutual
-fund beside it has one, and `check:pages` walks BOTH branches — a build that grew
-a constituent table for an AIF could only have filled it from another scheme,
-which is the fabrication this store must not enable.
+**FOUR THINGS THE BOOK COULD NOT SHOW BEFORE:**
 
-`newestMonth` picks the month by its own `invdate`: the endpoint returns FOUR,
-so reading them all would put one holding on screen four times at four weights,
-and a fixed index would silently go stale the first time the source changes how
-many it returns. A row the mapping does not name is dropped rather than rendered
-as "unknown" — a weight with no security against it is a number nobody can use.
+- **NAV, and its DAILY CHANGE.** A mutual fund resolves to no NSE symbol, so the
+  quote feed has never priced one and every fund's "Change today" was a dash. The
+  last two points of the scheme's own NAV series answer it — and the card names
+  the PREVIOUS NAV AND ITS DATE, because a fund does not publish on a
+  non-business day and "since yesterday" would be wrong across a weekend.
+- **RETURNS, taken from `mf-returns.json` rather than recomputed.** Two
+  implementations of "what is a 1-year return" is how one screen disagrees with
+  another; that file already states each period's basis (`simple` or `CAGR`).
+- **THE WINDOW EACH RETURN REALLY SPANS.** Their `1M` for Helios runs
+  **2026-06-19 → 2026-09-01**. The label is the source's; the DATES are the
+  measurement, so both print. A period label rendered alone is the one figure on
+  that card a reader could not check.
+- **THE UNDERLYING'S OWN ISIN AND SECTOR**, which the aggregator never had.
 
-The ingest refuses a truncated source outright (AMFI under 1,000 ISINs,
-rupeevest under 500 schemes) rather than resolving against it, keeps a stored
-portfolio when a fetch fails, and writes **no run timestamp anywhere**, so a run
-that finds nothing new leaves the tree clean. Six bugs were reintroduced against
-the card's invariants — a look-through column on the fund's money instead of the
-family's, a dropped provenance line, one date standing for two, a plan named
-without its reason, a dropped "in no total" footer, and an AIF grown a table —
-and every one fires.
+**HOLDINGS: THE AMC'S OWN FILING FIRST.** `holdings-direct/` is scraped from the
+fund house's own monthly disclosure page — `meta.source` is the AMC's URL — and
+carries the underlying's ISIN and sector. `holdings/` is the same data via an
+aggregator, with neither. So the filing wins, the aggregator is the fallback, and
+**which one was used is recorded per scheme and printed on screen**: one is the
+document the fund published, the other is somebody's reading of it. Measured: 14
+schemes from the AMC, 3 from the aggregator.
+
+**AND BOTH ARE EQUITY-ONLY, WHICH IS A REAL LIMIT AND A REGRESSION ON ONE POINT.**
+`meta.section` is "Equity Holdings" on every file, so a liquid, debt or commodity
+scheme resolves to ZERO rows — correctly, it holds no equity — and **its debt
+book is not in this store**. Five of this book's schemes are in that position,
+and the aggregator's live endpoint did carry their debt sleeves (224 rows for one
+liquid fund). That is a step back for those five, taken deliberately: the repo is
+the source the family named, its provenance is better everywhere else, and the
+card states the limit in words rather than drawing an empty table. Wiring the
+debt sleeve back would need a second source beside this one.
+
+**NONE OF IT ENTERS A BOOK TOTAL.** These are the only figures on the site that
+are not the family's own — the fund's value already stands for everything the
+card shows, and counting both would count the same money twice. The card says so
+on its face. The family's exposure per underlying is `holding value × published
+weight`, computed on screen where it is labelled derived.
+
+**AVAILABLE IN AmfiBeas AND NOT SURFACED YET**, recorded so the next session does
+not have to go looking: `mf-ratios.json` (standard deviation and beta with a
+category rank and percentile), `mf-rolling-ranks.json`, `mf-category-returns.json`
+(peer-group returns per period), `public/stocks/<isin>.json` and
+`public/index-history/NIFTY_500.json`.
+
+Seven bugs were reintroduced against the card's invariants — a NAV change without
+the previous NAV's date, a return label without its window, holdings that stop
+naming their document, a plan that stops naming its ISIN, a look-through column
+on the fund's money, a dropped provenance line, and an AIF grown a card — and all
+seven fire.
 
 ### Stage 10t — THE MOVERS ARE DIRECT EQUITY, AND THREE CAPTIONS GO
 
@@ -4816,11 +4833,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
-  `docs/FUND-LOOKTHROUGH.md` — each mutual fund and ETF scheme's own disclosed
-  portfolio. Idempotent; `--only <schemecodes>` limits it, `DRY=1` resolves and
-  reports without writing. Re-run it when a drop advances: a scheme discloses
-  monthly, and the card prints the disclosure's own as-of so staleness is
-  visible rather than silent.
+  `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
+  disclosed equity holdings — from a READ-ONLY checkout of `techmuns/amfibeas`
+  (`AMFIBEAS_DIR`, `DRY=1` to resolve and report without writing). Idempotent.
+  Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
+  the card prints both as-of dates so staleness is visible rather than silent.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and

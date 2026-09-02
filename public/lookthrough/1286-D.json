@@ -1,0 +1,87 @@
+{
+  "schemecode": "1286-D",
+  "scheme": "HDFC Liquid Fund(G)",
+  "amfiSchemeName": "HDFC Liquid Fund - Growth Option - Direct Plan",
+  "amc": "HDFC Mutual Fund",
+  "plan": "direct",
+  "option": "growth",
+  "classification": "Debt : Liquid",
+  "isin": "INF179KB1HP9",
+  "nav": {
+    "value": 5567.8537,
+    "date": "2026-09-01",
+    "prev": 5566.4001,
+    "prevDate": "2026-08-31",
+    "changePct": 0.026113825342878674
+  },
+  "returns": {
+    "1M": {
+      "value": 1.276,
+      "kind": "simple",
+      "startDate": "2026-06-21",
+      "endDate": "2026-09-01",
+      "startNav": 5497.7045,
+      "endNav": 5567.8537
+    },
+    "3M": {
+      "value": 1.7123,
+      "kind": "simple",
+      "startDate": "2026-06-01",
+      "endDate": "2026-09-01",
+      "startNav": 5474.1216,
+      "endNav": 5567.8537
+    },
+    "6M": {
+      "value": 3.4188,
+      "kind": "simple",
+      "startDate": "2026-03-01",
+      "endDate": "2026-09-01",
+      "startNav": 5383.7912,
+      "endNav": 5567.8537
+    },
+    "1Y": {
+      "value": 6.4653,
+      "kind": "simple",
+      "startDate": "2025-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 5229.7343,
+      "endNav": 5567.8537
+    },
+    "3Y": {
+      "value": 6.9459,
+      "kind": "cagr",
+      "startDate": "2023-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 4551.7143,
+      "endNav": 5567.8537
+    },
+    "5Y": {
+      "value": 6.3014,
+      "kind": "cagr",
+      "startDate": "2021-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 4102.155,
+      "endNav": 5567.8537
+    },
+    "10Y": {
+      "value": 6.0741,
+      "kind": "cagr",
+      "startDate": "2016-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 3087.6678,
+      "endNav": 5567.8537
+    }
+  },
+  "returnsAsOf": "2026-09-01",
+  "fundAumCr": 70372.06,
+  "holdingsAsOf": "2026-07-31",
+  "holdingsSource": {
+    "kind": "amc",
+    "url": "https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio"
+  },
+  "section": "Equity Holdings",
+  "equity": [],
+  "counts": {
+    "equity": 0
+  }
+}

@@ -1,75 +1,75 @@
 {
-  "schemecode": "11889",
+  "schemecode": "11889-D",
   "scheme": "ICICI Pru Nifty Next 50 Index Fund(G)",
-  "amfiSchemeName": "ICICI Prudential Nifty Next 50 Index Fund - Growth",
+  "amfiSchemeName": "ICICI Prudential Nifty Next 50 Index Fund - Direct Plan -  Growth",
   "amc": "ICICI Prudential Mutual Fund",
-  "plan": "regular",
+  "plan": "direct",
   "option": "growth",
   "classification": "Equity : Index Funds",
-  "isin": "INF109K01IF1",
+  "isin": "INF109K01Y80",
   "nav": {
-    "value": 64.1001,
+    "value": 67.8384,
     "date": "2026-09-01",
-    "prev": 64.878,
+    "prev": 68.661,
     "prevDate": "2026-08-31",
-    "changePct": -1.1990196985110553
+    "changePct": -1.1980600340804946
   },
   "returns": {
     "1M": {
-      "value": 0.8382,
+      "value": 0.9161,
       "kind": "simple",
       "startDate": "2026-06-19",
       "endDate": "2026-09-01",
-      "startNav": 63.5673,
-      "endNav": 64.1001
+      "startNav": 67.2226,
+      "endNav": 67.8384
     },
     "3M": {
-      "value": 4.3284,
+      "value": 4.4283,
       "kind": "simple",
       "startDate": "2026-06-01",
       "endDate": "2026-09-01",
-      "startNav": 61.4407,
-      "endNav": 64.1001
+      "startNav": 64.9617,
+      "endNav": 67.8384
     },
     "6M": {
-      "value": 4.7189,
+      "value": 4.9229,
       "kind": "simple",
       "startDate": "2026-02-27",
       "endDate": "2026-09-01",
-      "startNav": 61.2116,
-      "endNav": 64.1001
+      "startNav": 64.6555,
+      "endNav": 67.8384
     },
     "1Y": {
-      "value": 9.3073,
+      "value": 9.7213,
       "kind": "simple",
       "startDate": "2025-09-01",
       "endDate": "2026-09-01",
-      "startNav": 58.6421,
-      "endNav": 64.1001
+      "startNav": 61.8279,
+      "endNav": 67.8384
     },
     "3Y": {
-      "value": 17.5642,
+      "value": 17.9644,
       "kind": "cagr",
       "startDate": "2023-09-01",
       "endDate": "2026-09-01",
-      "startNav": 39.4444,
-      "endNav": 64.1001
+      "startNav": 41.3213,
+      "endNav": 67.8384
     },
     "5Y": {
-      "value": 11.7466,
+      "value": 12.1624,
       "kind": "cagr",
       "startDate": "2021-09-01",
       "endDate": "2026-09-01",
-      "startNav": 36.7891,
-      "endNav": 64.1001
+      "startNav": 38.2185,
+      "endNav": 67.8384
     },
     "10Y": {
-      "value": 12.3149,
+      "value": 12.7564,
       "kind": "cagr",
       "startDate": "2016-09-01",
       "endDate": "2026-09-01",
-      "startNav": 20.0703,
-      "endNav": 64.1001
+      "startNav": 20.4238,
+      "endNav": 67.8384
     }
   },
   "returnsAsOf": "2026-09-01",

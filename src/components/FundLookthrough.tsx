@@ -1,43 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { Layers } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtDate, fmtNum } from "@/lib/format";
+import { fmtDate, fmtNum, fmtPct, changeColor } from "@/lib/format";
 import {
   loadLookthrough, familyValue, disclosedWeight,
-  type LookthroughState, type LookthroughHolding,
+  type LookthroughState, type FundPortfolio,
 } from "@/lib/lookthrough";
 
 /**
- * ── WHAT THIS FUND HOLDS ────────────────────────────────────────────────────
+ * ── THE SCHEME: ITS NAV, ITS RETURNS, AND WHAT IT HOLDS ─────────────────────
  *
- * *"We should also be able to see each holding of every mutual fund."*
+ * *"We should also be able to see each holding of every mutual fund."* … *"For
+ * all the mutual funds related data you can get that from our repo — amfibeas.
+ * Mutual Fund NAV, direct scheme NAV, rolling return etc., daily NAV change."*
  *
- * This is the one thing the book could never answer, and the reason was real:
- * no statement issued to this family names the companies inside a fund. What
- * changed is not the family's paperwork but the SOURCE — a mutual fund scheme
- * publishes its portfolio monthly because SEBI requires it, and
- * `npm run build-lookthrough` commits those disclosures per scheme.
+ * These are the only figures on this site that are not the family's own. Every
+ * line of this card is written to keep that visible:
  *
- * SO THIS CARD IS THE ONE PLACE ON THE SITE SHOWING FIGURES THAT ARE NOT THE
- * FAMILY'S OWN, and every line of it is written to keep that visible:
- *
- *   • the heading names the AMC's disclosure and the scheme it was matched to,
- *     because a reader who takes these for statement figures would be wrong
- *     about where they came from and about what they can be checked against;
- *   • BOTH dates are printed — the disclosure's and the holding's — since a
- *     monthly portfolio and a statement mark almost never share a date;
- *   • the PLAN is named, with the reason matching across it is legitimate: a
- *     scheme's Direct and Regular plans hold the same portfolio and differ in
- *     expense ratio, and therefore NAV, not in what the fund owns;
- *   • the weight is the AMC's own; the family's exposure beside it is DERIVED
- *     from it and is labelled every time it appears;
- *   • and the footer states plainly that none of it is in any book total,
- *     because the fund's own value already is — adding both would count the
- *     same money twice, which is the failure the whole book is built against.
+ *   • the heading names the AMC's disclosure and the scheme matched, and the
+ *     holdings row says whether they came from the FUND HOUSE'S OWN filing or a
+ *     third party's copy of it — one is the document, the other is a reading;
+ *   • BOTH dates print, since a monthly portfolio and a statement mark almost
+ *     never share one;
+ *   • the PLAN is named, and it is the family's own plan because the ISIN
+ *     resolved it — plans differ in expense ratio, and therefore NAV, not in
+ *     what the fund owns;
+ *   • every return carries THE WINDOW IT ACTUALLY SPANS, because the source's
+ *     label and its dates do not always agree;
+ *   • the weight is the AMC's own and the family's exposure beside it is
+ *     DERIVED from it, labelled every time;
+ *   • and nothing here is in any book total, because the fund's own value
+ *     already is.
  */
 export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }: {
   securityKey: string;
@@ -50,7 +47,6 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
   const [q, setQ] = useState("");
-  const [sleeve, setSleeve] = useState<"equity" | "debt" | "cash" | "misc">("equity");
 
   useEffect(() => {
     let alive = true;
@@ -60,114 +56,193 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   }, [securityKey]);
 
   const money = (n: number) => fmtFromBase(n, { compact: true });
+  const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
 
-  const rows = useMemo<LookthroughHolding[]>(
-    () => (state.status === "ok" ? state.portfolio[sleeve] ?? [] : []),
-    [state, sleeve],
-  );
+  const rows = useMemo(() => pf?.equity ?? [], [pf]);
   const term = q.trim().toLowerCase();
-  const shown = term ? rows.filter((r) => r.name.toLowerCase().includes(term)) : rows;
+  const shown = term
+    ? rows.filter((r) => r.name.toLowerCase().includes(term) || (r.sector ?? "").toLowerCase().includes(term))
+    : rows;
 
   if (state.status === "loading") {
     return (
-      <Card className="mt-5" title="What this fund holds">
-        <p className="text-[12.5px] text-slate-500">Reading the scheme's disclosed portfolio…</p>
+      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
+        <p className="text-[12.5px] text-slate-500">Reading the scheme's NAV, returns and disclosed portfolio…</p>
       </Card>
     );
   }
 
-  // A STORE THAT DID NOT ANSWER IS A FACT ABOUT THE FETCH, worded as one. The
+  // A STORE THAT DID NOT ANSWER IS A FACT ABOUT THE FETCH, worded as one — the
   // company page has been fixed once for telling a reader their session expired
-  // over an unreachable archive; a wrong diagnosis is worse than a blank panel.
+  // over an unreachable archive.
   if (state.status === "unreachable") {
     return (
-      <Card className="mt-5" title="What this fund holds">
+      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
         <AbsentSection
-          what="The look-through store did not respond"
-          needs="This scheme's disclosed portfolio is committed under public/lookthrough/ and is read when the page opens. The request did not come back, so nothing is shown rather than a partial list — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
+          what="The fund store did not respond"
+          needs="This scheme's NAV, returns and disclosed portfolio are committed under public/lookthrough/ and read when the page opens. The request did not come back, so nothing is shown rather than a partial answer — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
       </Card>
     );
   }
 
   if (state.status === "none") {
     return (
-      <Card className="mt-5" title="What this fund holds">
+      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
         <AbsentSection
-          what={`No scheme disclosure resolves for ${name}`}
-          needs={`${state.reason ?? "This holding is not matched to a scheme in the look-through store."} A scheme is matched from its ISIN through AMFI's official scheme-name map and then to the disclosure by name; anything that matches nothing, or matches more than one scheme, is left unresolved rather than shown against a nearest guess — the companies listed would be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
+          what={`No scheme resolves for ${name}`}
+          needs={`${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
       </Card>
     );
   }
 
-  const { match, portfolio: pf } = state;
-  const totalPct = disclosedWeight(pf);
-  const sleeves = ([
-    ["equity", "Companies", pf.counts.equity],
-    ["debt", "Debt", pf.counts.debt],
-    ["cash", "Cash & equivalent", pf.counts.cash],
-    ["misc", "Other", pf.counts.misc],
-  ] as const).filter(([, , n]) => n > 0);
+  const { match } = state;
+  const p = pf!;
+  const weight = disclosedWeight(p);
+  const periods = Object.entries(p.returns);
 
   return (
     <Card className="mt-5"
-      title="What this fund holds"
-      subtitle={`The scheme's own portfolio as ${match.scheme} disclosed it${pf.asOf ? ` on ${fmtDate(pf.asOf)}` : ""} — the AMC's monthly disclosure, not a statement issued to this family.`}
-      right={<Pill tone="info"><span title="Every figure in this card comes from the scheme's published portfolio. Nothing here is in the book's totals — the fund's own value already is.">{fmtNum(pf.counts.equity + pf.counts.debt + pf.counts.cash + pf.counts.misc)} disclosed holdings</span></Pill>}>
+      title="The scheme — NAV, returns and what it holds"
+      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name}${p.amc ? ` · ${p.amc}` : ""} — AMFI's daily NAV and the AMC's own monthly disclosure, not a statement issued to this family.`}
+      right={<Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>}>
 
-      {/* THE TWO DATES AND THE PLAN, ON THE FACE OF THE CARD. A reader
-          comparing this against the holding above needs to know the two are
-          measured on different days and that the plan differs by cost and not
-          by contents. */}
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-[11.5px]">
+      {/* ── NAV, its daily change, and the plan ──────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
+          <div className="label-xs">NAV</div>
+          <div className="mono mt-1.5 text-[19px] font-semibold text-slate-100">
+            {p.nav.value == null ? DASH : fmtNum(p.nav.value, 4)}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            {p.nav.date ? fmtDate(p.nav.date) : "no NAV date"}
+          </div>
+        </div>
+        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
+          <div className="label-xs">NAV change</div>
+          <div className={`mono mt-1.5 text-[19px] font-semibold ${p.nav.changePct == null ? "text-slate-500" : changeColor(p.nav.changePct)}`}>
+            {p.nav.changePct == null ? DASH : fmtPct(p.nav.changePct, { sign: true, decimals: 2 })}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            {/* THE PREVIOUS PUBLISHED NAV, NAMED WITH ITS DATE. A fund does not
+                publish on a non-business day, so "since yesterday" would be
+                wrong across a weekend — the date says which day it is against. */}
+            {p.nav.prev == null || p.nav.prevDate == null
+              ? <span title="A change needs two published NAVs; this scheme's series carries only one.">no previous NAV in the series</span>
+              : <>since {fmtNum(p.nav.prev, 4)} on {fmtDate(p.nav.prevDate)}</>}
+          </div>
+        </div>
+        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
+          <div className="label-xs">Plan</div>
+          <div className="mt-1.5 text-[15px] font-semibold capitalize text-slate-100">
+            {p.plan ?? DASH}{p.option ? <span className="text-slate-400"> · {p.option}</span> : null}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            <span title="Resolved from this holding's own ISIN, so the NAV above is this plan's. Plans differ in expense ratio, and therefore NAV — not in what the fund owns.">
+              from this holding's ISIN
+            </span>
+          </div>
+        </div>
+        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
+          <div className="label-xs">Scheme AUM</div>
+          <div className="mono mt-1.5 text-[19px] font-semibold text-slate-100">
+            {p.fundAumCr == null ? DASH : `₹${fmtNum(p.fundAumCr, 1)} Cr`}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            <span title="The whole scheme's assets across every investor in it — not this family's holding.">
+              {p.classification ?? "the whole scheme"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── returns, each with the window it really spans ─────────────────── */}
+      {periods.length > 0 && (
+        <div className="mt-5">
+          <div className="mb-2 flex flex-wrap items-baseline gap-2">
+            <span className="label-xs">Scheme returns</span>
+            <span className="text-[11px] text-slate-500">
+              the scheme's own, on this plan{p.returnsAsOf ? ` · to ${fmtDate(p.returnsAsOf)}` : ""} — not this family's return, which depends on when they bought
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full whitespace-nowrap text-sm">
+              <thead className="border-b border-ink-700">
+                <tr>
+                  {periods.map(([k]) => <th key={k} className="label-xs px-3 py-2 text-right font-medium">{k}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {periods.map(([k, r]) => (
+                    <td key={k} className={`px-3 py-2 text-right mono ${changeColor(r.value)}`}>
+                      {fmtPct(r.value, { sign: true, decimals: 1 })}
+                      {r.kind === "CAGR" && <span className="ml-1 text-[10px] text-slate-500">p.a.</span>}
+                    </td>
+                  ))}
+                </tr>
+                {/* THE WINDOW EACH FIGURE ACTUALLY COVERS. The label above is
+                    the source's; these dates are the measurement, and on this
+                    data they do not always agree — a "1M" here can span ten
+                    weeks. Printed rather than trusted. */}
+                <tr>
+                  {periods.map(([k, r]) => (
+                    <td key={k} className="px-3 pb-2 text-right text-[10.5px] text-slate-500">
+                      {r.startDate && r.endDate
+                        ? <span title={`${r.kind === "CAGR" ? "Annualised" : "Simple"} return from NAV ${r.startNav ?? "—"} on ${r.startDate} to ${r.endNav ?? "—"} on ${r.endDate}.`}>
+                            {fmtDate(r.startDate)} → {fmtDate(r.endDate)}
+                          </span>
+                        : <AbsentCell reason="The source states no window for this period." />}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── the holdings ─────────────────────────────────────────────────── */}
+      <div className="mt-6 mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
           <span title="A scheme discloses its portfolio monthly; the family's units are valued on their own statement's date. The two rarely coincide, so both are shown rather than one standing for the other.">
-            portfolio {pf.asOf ? fmtDate(pf.asOf) : DASH} · holding {fmtDate(asOfHolding)}
+            portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · holding {fmtDate(asOfHolding)}
           </span>
         </Pill>
-        <Pill>
-          <span title="rupeevest lists one entry per scheme. A scheme's Direct and Regular plans hold the SAME portfolio — they differ in expense ratio, and therefore NAV, not in what the fund owns — so matching across the plan changes nothing about the companies below.">
-            matched on the {match.plan} plan · same portfolio, different expense ratio
-          </span>
-        </Pill>
-        {pf.classification && <Pill>{pf.classification}</Pill>}
-        {pf.fundAumCr != null && (
-          <span className="text-slate-500" title="The whole scheme's assets under management, across every investor in it — not this family's holding.">
-            scheme AUM ₹{fmtNum(pf.fundAumCr, 1)} Cr
-          </span>
+        {p.holdingsSource && (
+          <Pill tone={p.holdingsSource.kind === "amc" ? "core" : undefined}>
+            <span title={p.holdingsSource.kind === "amc"
+              ? `Read from the fund house's own monthly disclosure${p.holdingsSource.url ? ` (${p.holdingsSource.url})` : ""} — the document the AMC published.`
+              : "Read from a third-party aggregation of the AMC's disclosure, because the fund house's own file was not available for this scheme. One is the filing; the other is somebody's reading of it."}>
+              holdings from {p.holdingsSource.kind === "amc" ? "the AMC's own disclosure" : "an aggregator's copy"}
+            </span>
+          </Pill>
+        )}
+        {rows.length > 30 && (
+          <SearchInput value={q} onChange={setQ} placeholder="Filter by company or sector…" className="ml-auto w-64"
+            suggestions={[...new Set(rows.flatMap((r) => [r.name, r.sector].filter(Boolean) as string[]))].sort()} />
         )}
       </div>
 
-      {sleeves.length > 1 && (
-        <div className="mb-3 inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-          {sleeves.map(([key, label, n]) => (
-            <button key={key} type="button" onClick={() => setSleeve(key)}
-              className={`rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-                sleeve === key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-              {label} <span className="opacity-60">{n}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {rows.length > 30 && (
-        <div className="mb-3">
-          <SearchInput value={q} onChange={setQ} placeholder="Filter these holdings…" className="w-64"
-            suggestions={rows.map((r) => r.name)} />
-        </div>
-      )}
-
-      {shown.length === 0 ? (
+      {rows.length === 0 ? (
+        /* NOT AN EMPTY TABLE, AND NOT A FAILURE. The store carries the EQUITY
+           section alone, so a liquid or debt scheme has no rows — correctly, it
+           holds no equity — and its debt book is simply not here. Those are
+           different facts and a reader acts differently on each. */
         <AbsentSection
-          what={term ? "Nothing matches that filter" : "This sleeve is empty in the disclosure"}
-          needs={term
-            ? `The scheme discloses ${rows.length} holdings in this sleeve; none contains "${q.trim()}".`
-            : "The scheme's disclosure carries no holding under this heading for the month shown."} />
+          what={`${p.scheme ?? name} discloses no equity holdings`}
+          needs={`This store carries each scheme's EQUITY section${p.section ? ` (“${p.section}”)` : ""} and nothing else. A liquid, debt or commodity scheme holds no equity, so there is correctly nothing to list — and its debt book is NOT in this store rather than being empty. Its NAV, its change and its returns above are complete.`} />
+      ) : shown.length === 0 ? (
+        <AbsentSection what="Nothing matches that filter"
+          needs={`The scheme discloses ${rows.length} equity holdings; none of their names or sectors contains "${q.trim()}".`} />
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <tr>
                 <th className="label-xs px-3 py-2 text-left font-medium">Holding</th>
+                <th className="label-xs px-3 py-2 text-left font-medium">
+                  <span title="The AMC's own sector label, as its disclosure prints it — not this book's GICS taxonomy, which is why it is shown verbatim rather than mapped.">Sector (as disclosed)</span>
+                </th>
                 <th className="label-xs px-3 py-2 text-right font-medium">
                   <span title="The scheme's own disclosed weight — a share of the FUND, across every investor in it.">% of fund</span>
                 </th>
@@ -182,12 +257,18 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
             <tbody className="divide-y divide-ink-700/60">
               {shown.map((h, i) => (
                 <tr key={`${h.name}-${i}`} className="hover:bg-ink-700/40">
-                  <td className="px-3 py-2 text-slate-200">{h.name}</td>
+                  <td className="px-3 py-2 text-slate-200">
+                    {h.name}
+                    {h.isin && <span className="mono ml-2 text-[10px] text-slate-600"> {h.isin}</span>}
+                  </td>
+                  <td className="px-3 py-2 text-[12px] text-slate-400">
+                    {h.sector ?? <AbsentCell reason="This source does not print a sector for the underlying — the aggregator's copy carries none, only the AMC's own filing does." />}
+                  </td>
                   <td className="px-3 py-2 text-right mono text-slate-300">{h.pctAum.toFixed(2)}%</td>
                   <td className="px-3 py-2 text-right mono text-slate-400">{money(familyValue(holdingValue, h.pctAum))}</td>
                   <td className="px-3 py-2 text-right mono text-slate-500">
                     {h.shares == null
-                      ? <AbsentCell reason="The disclosure reports no share count for this row — debt and cash holdings are published by weight only." />
+                      ? <AbsentCell reason="The disclosure reports no share count for this row." />
                       : fmtNum(h.shares)}
                   </td>
                 </tr>
@@ -195,15 +276,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-ink-600 font-semibold">
-                <td className="px-3 py-2 text-slate-200">
-                  {fmtNum(shown.length)} of {fmtNum(rows.length)} shown
+                <td className="px-3 py-2 text-slate-200" colSpan={2}>
+                  {fmtNum(shown.length)} of {fmtNum(rows.length)} equity holdings shown
                 </td>
-                <td className="px-3 py-2 text-right mono text-slate-300">
-                  {shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%
-                </td>
-                <td className="px-3 py-2 text-right mono text-slate-300">
-                  {money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}
-                </td>
+                <td className="px-3 py-2 text-right mono text-slate-300">{shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%</td>
+                <td className="px-3 py-2 text-right mono text-slate-300">{money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>
                 <td />
               </tr>
             </tfoot>
@@ -211,17 +288,17 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         </div>
       )}
 
-      {/* THE TWO THINGS A READER MUST NOT INFER FROM THIS TABLE. */}
       <p className="mt-4 text-[11.5px] leading-relaxed text-slate-500">
         <span className="font-medium text-slate-400">None of this is in any total on this site.</span> The fund&rsquo;s
-        own value — {money(holdingValue)} — is what the book carries, and it already stands for everything below;
+        own value — {money(holdingValue)} — is what the book carries, and it already stands for everything above;
         counting both would count the same money twice. The look-through column is this holding&rsquo;s value times the
-        scheme&rsquo;s published weight, so it is an estimate of exposure and not a position the family can sell, and it
-        moves with a disclosure the AMC updates monthly.
-        {" "}The disclosed weights add to <span className="mono">{totalPct.toFixed(1)}%</span> of the scheme —
-        {Math.abs(100 - totalPct) < 0.05
-          ? " the whole of it."
-          : " the remainder is the fund's own rounding and any sleeve this disclosure does not break out, and it is left as the gap it is rather than spread across the rows above."}
+        scheme&rsquo;s published weight, so it is an estimate of exposure rather than a position the family can sell.
+        {rows.length > 0 && <>
+          {" "}The disclosed equity weights add to <span className="mono">{weight.toFixed(1)}%</span> of the scheme; the
+          rest is its cash and debt sleeves, which this store does not carry, and the fund&rsquo;s own rounding.
+        </>}
+        {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
+        family&rsquo;s own holding of it.
       </p>
     </Card>
   );

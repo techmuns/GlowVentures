@@ -1,208 +1,230 @@
 {
   "source": {
-    "portfolios": "rupeevest.com — the AMCs' own monthly SEBI portfolio disclosures, aggregated",
-    "schemeNames": "AMFI NAVAll (ISIN to scheme name)",
-    "note": "A scheme's Direct and Regular plans hold the SAME portfolio — they differ in expense ratio, and therefore NAV, not in what the fund owns."
+    "repo": "techmuns/amfibeas (read-only)",
+    "nav": "public/nav-data/mf-latest-nav.json — AMFI NAVAll daily over the mf-data base",
+    "returns": "public/nav-data/mf-returns.json — each period states its own basis and window",
+    "holdings": "public/holdings-direct (the AMC's own monthly disclosure) with public/holdings as fallback",
+    "limit": "Holdings are EQUITY ONLY; a debt or liquid scheme resolves to zero rows and its debt book is not carried.",
+    "note": "A scheme's plans differ in expense ratio, and therefore NAV, not in what the fund owns. The ISIN resolves the plan, so NAV and returns are the family's own plan."
   },
   "schemes": {
     "helios-flexi-cap-fund-direct-growth": {
-      "schemecode": 48299,
+      "schemecode": "48299-D",
       "scheme": "Helios Flexi Cap Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "Helios Flexi Cap Fund",
+      "plan": "direct",
       "isin": "INF0R8701046",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
-      "schemecode": 49517,
-      "scheme": "Motilal Oswal Active Momentum Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": null,
-      "isin": null,
-      "matchedVia": "book-name",
-      "asOf": "2026-07-31"
+      "schemecode": "49517-D",
+      "scheme": "Motilal Oswal Active Momentum Fund",
+      "plan": "direct",
+      "isin": "INF247L01EP5",
+      "matchedVia": "name+plan",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "dsp-gold-etf": {
-      "schemecode": 47938,
+      "schemecode": "47938",
       "scheme": "DSP Gold ETF",
-      "plan": "unstated",
-      "amfiName": null,
+      "plan": "regular",
       "isin": "INF740KA1SW3",
-      "matchedVia": "book-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": null,
+      "holdingsSource": null
     },
     "absl-liqf-d-growth": {
-      "schemecode": 293,
+      "schemecode": "293-D",
       "scheme": "Aditya Birla SL Liquid Fund(G)",
-      "plan": "unstated",
-      "amfiName": "Aditya Birla Sun Life Liquid Fund",
+      "plan": "direct",
       "isin": "INF209K01VA3",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "helios-fcf-d-grow": {
-      "schemecode": 48299,
+      "schemecode": "48299-D",
       "scheme": "Helios Flexi Cap Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "Helios Flexi Cap Fund",
+      "plan": "direct",
       "isin": "INF0R8701046",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "woc-maaf-d-grow": {
-      "schemecode": 47946,
+      "schemecode": "47946-D",
       "scheme": "WOC Multi Asset Allocation Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "WhiteOak Capital Multi Asset Allocation Fund",
+      "plan": "direct",
       "isin": "INF03VN01761",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-08-31",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "aggregator"
     },
     "icici-ioppf-d-grw": {
-      "schemecode": 42140,
+      "schemecode": "42140-D",
       "scheme": "ICICI Pru India Opp Fund(G)",
-      "plan": "unstated",
-      "amfiName": "ICICI Prudential India Opportunities Fund",
+      "plan": "direct",
       "isin": "INF109KC1RH9",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "aggregator"
     },
     "dsp-silver-etf": {
-      "schemecode": 46354,
+      "schemecode": "46354",
       "scheme": "DSP Silver ETF",
-      "plan": "unstated",
-      "amfiName": null,
+      "plan": "regular",
       "isin": "INF740KA1RE3",
-      "matchedVia": "book-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": null,
+      "holdingsSource": null
     },
     "bndh-l-and-mcf-dp-gr": {
-      "schemecode": 2858,
+      "schemecode": "2858-D",
       "scheme": "Bandhan Large & Mid Cap Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "Bandhan Large & Mid Cap Fund",
+      "plan": "direct",
       "isin": "INF194K01V89",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "absl-bal-adv-growth": {
-      "schemecode": 1713,
+      "schemecode": "1713",
       "scheme": "Aditya Birla SL Balanced Advantage Fund(G)",
-      "plan": "unstated",
-      "amfiName": "Aditya Birla Sun Life Balanced Advantage Fund",
+      "plan": "regular",
       "isin": "INF084M01AB8",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "hdfc-baf-r-grow": {
-      "schemecode": 1273,
+      "schemecode": "1273",
       "scheme": "HDFC Balanced Advantage Fund(G)",
-      "plan": "unstated",
-      "amfiName": "HDFC Balanced Advantage Fund",
+      "plan": "regular",
       "isin": "INF179K01830",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "kotak-mtcf-d-grow": {
-      "schemecode": 45336,
-      "scheme": "Kotak Multi Cap Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "Kotak Multi Cap Fund",
+      "schemecode": "45336-D",
+      "scheme": "Kotak Multicap Fund-Reg(G)",
+      "plan": "direct",
       "isin": "INF174KA1HV3",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "icici-pru-baf-dp-grw": {
-      "schemecode": 1470,
+      "schemecode": "1470-D",
       "scheme": "ICICI Pru Balanced Advantage Fund(G)",
-      "plan": "unstated",
-      "amfiName": "ICICI Prudential Balanced Advantage Fund",
+      "plan": "direct",
       "isin": "INF109K012B0",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
-    },
-    "nip-etnf1d-rtliqbees": {
-      "schemecode": 2155,
-      "scheme": "Nippon India ETF Nifty 1D Rate Liquid BeES",
-      "plan": "unstated",
-      "amfiName": "Nippon India ETF Nifty 1D Rate Liquid BeES",
-      "isin": "INF732E01037",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "icici-liqf-d-growth": {
-      "schemecode": 1659,
+      "schemecode": "1659-D",
       "scheme": "ICICI Pru Liquid Fund(G)",
-      "plan": "unstated",
-      "amfiName": "ICICI Prudential Liquid Fund -",
+      "plan": "direct",
       "isin": "INF109K01Q49",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "hdfc-baf-d-grow": {
-      "schemecode": 1273,
+      "schemecode": "1273-D",
       "scheme": "HDFC Balanced Advantage Fund(G)",
-      "plan": "unstated",
-      "amfiName": "HDFC Balanced Advantage Fund",
+      "plan": "direct",
       "isin": "INF179K01WA6",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "icici-nift50ind-dp-g": {
-      "schemecode": 1623,
+      "schemecode": "1623-D",
       "scheme": "ICICI Pru Nifty 50 Index Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "ICICI Prudential Nifty 50 Index Fund",
+      "plan": "direct",
       "isin": "INF109K012M7",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "aggregator"
     },
     "inves-con-r-growth": {
-      "schemecode": 2169,
+      "schemecode": "2169",
       "scheme": "Invesco India Contra Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "Invesco India Contra Fund",
+      "plan": "regular",
       "isin": "INF205K01189",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "icici-nft-nx-50-r-gr": {
-      "schemecode": 11889,
+      "schemecode": "11889",
       "scheme": "ICICI Pru Nifty Next 50 Index Fund(G)",
-      "plan": "unstated",
-      "amfiName": "ICICI Prudential Nifty Next 50 Index Fund",
+      "plan": "regular",
       "isin": "INF109K01IF1",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "icici-nft-nt-50-dp-g": {
-      "schemecode": 11889,
+      "schemecode": "11889-D",
       "scheme": "ICICI Pru Nifty Next 50 Index Fund(G)",
-      "plan": "unstated",
-      "amfiName": "ICICI Prudential Nifty Next 50 Index Fund",
+      "plan": "direct",
       "isin": "INF109K01Y80",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "hdfc-liquid-fund-direct-plan-growth-option": {
-      "schemecode": 1286,
+      "schemecode": "1286-D",
       "scheme": "HDFC Liquid Fund(G)",
-      "plan": "unstated",
-      "amfiName": "HDFC Liquid Fund",
+      "plan": "direct",
       "isin": "INF179KB1HP9",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     },
     "hdfc-small-cap-fund-direct-growth-plan": {
-      "schemecode": 4455,
+      "schemecode": "4455-D",
       "scheme": "HDFC Small Cap Fund-Reg(G)",
-      "plan": "Regular",
-      "amfiName": "HDFC Small Cap Fund",
+      "plan": "direct",
       "isin": "INF179KA1RW5",
-      "matchedVia": "isin-amfi-name",
-      "asOf": "2026-07-31"
+      "matchedVia": "isin",
+      "navDate": "2026-09-01",
+      "holdingsAsOf": "2026-07-31",
+      "holdingsSource": "amc"
     }
   },
-  "unresolved": []
+  "unresolved": [
+    {
+      "securityKey": "nip-etnf1d-rtliqbees",
+      "name": "NIP ETNF1D RTLIQBEES",
+      "isin": "INF732E01037",
+      "reason": "ISIN INF732E01037 is not in AmfiBeas's mf-latest-nav.json, and the printed name matches no scheme there"
+    }
+  ]
 }

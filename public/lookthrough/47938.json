@@ -1,29 +1,68 @@
 {
-  "schemecode": 47938,
+  "schemecode": "47938",
   "scheme": "DSP Gold ETF",
+  "amfiSchemeName": "DSP Gold ETF",
+  "amc": "DSP Mutual Fund",
+  "plan": "regular",
+  "option": "unknown",
   "classification": "Metal : ETFs",
-  "fundAumCr": 2331.86,
-  "asOf": "2026-07-31",
+  "isin": "INF740KA1SW3",
+  "nav": {
+    "value": 14.7678,
+    "date": "2026-09-01",
+    "prev": 14.9875,
+    "prevDate": "2026-08-31",
+    "changePct": -1.4658882402001756
+  },
+  "returns": {
+    "1M": {
+      "value": -89.4539,
+      "kind": "simple",
+      "startDate": "2026-06-19",
+      "endDate": "2026-09-01",
+      "startNav": 140.0309,
+      "endNav": 14.7678
+    },
+    "3M": {
+      "value": -90.1448,
+      "kind": "simple",
+      "startDate": "2026-06-01",
+      "endDate": "2026-09-01",
+      "startNav": 149.8473,
+      "endNav": 14.7678
+    },
+    "6M": {
+      "value": -90.3817,
+      "kind": "simple",
+      "startDate": "2026-02-27",
+      "endDate": "2026-09-01",
+      "startNav": 153.5391,
+      "endNav": 14.7678
+    },
+    "1Y": {
+      "value": -85.4649,
+      "kind": "simple",
+      "startDate": "2025-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 101.6008,
+      "endNav": 14.7678
+    },
+    "3Y": {
+      "value": -37.0263,
+      "kind": "cagr",
+      "startDate": "2023-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 59.1529,
+      "endNav": 14.7678
+    }
+  },
+  "returnsAsOf": "2026-09-01",
+  "fundAumCr": null,
+  "holdingsAsOf": null,
+  "holdingsSource": null,
+  "section": null,
   "equity": [],
-  "debt": [],
-  "cash": [
-    {
-      "name": "Net Current Asset",
-      "pctAum": 0.96,
-      "shares": null
-    }
-  ],
-  "misc": [
-    {
-      "name": "GOLD (Gold)",
-      "pctAum": 99.04,
-      "shares": null
-    }
-  ],
   "counts": {
-    "equity": 0,
-    "debt": 0,
-    "cash": 1,
-    "misc": 1
+    "equity": 0
   }
 }

@@ -1,0 +1,1108 @@
+{
+  "schemecode": "47946-D",
+  "scheme": "WOC Multi Asset Allocation Fund-Reg(G)",
+  "amfiSchemeName": "WhiteOak Capital Multi Asset Allocation Fund Direct Plan Growth",
+  "amc": "WhiteOak Capital Mutual Fund",
+  "plan": "direct",
+  "option": "growth",
+  "classification": "Hybrid : Multi Asset Allocation",
+  "isin": "INF03VN01761",
+  "nav": {
+    "value": 16.852,
+    "date": "2026-08-31",
+    "prev": 16.89,
+    "prevDate": "2026-08-28",
+    "changePct": -0.2249851983422158
+  },
+  "returns": {
+    "1M": {
+      "value": 3.9669,
+      "kind": "simple",
+      "startDate": "2026-06-19",
+      "endDate": "2026-08-31",
+      "startNav": 16.209,
+      "endNav": 16.852
+    },
+    "3M": {
+      "value": 4.5799,
+      "kind": "simple",
+      "startDate": "2026-05-29",
+      "endDate": "2026-08-31",
+      "startNav": 16.114,
+      "endNav": 16.852
+    },
+    "6M": {
+      "value": 4.9642,
+      "kind": "simple",
+      "startDate": "2026-02-27",
+      "endDate": "2026-08-31",
+      "startNav": 16.055,
+      "endNav": 16.852
+    },
+    "1Y": {
+      "value": 15.0857,
+      "kind": "simple",
+      "startDate": "2025-08-29",
+      "endDate": "2026-08-31",
+      "startNav": 14.643,
+      "endNav": 16.852
+    },
+    "3Y": {
+      "value": 17.3158,
+      "kind": "cagr",
+      "startDate": "2023-08-31",
+      "endDate": "2026-08-31",
+      "startNav": 10.436,
+      "endNav": 16.852
+    }
+  },
+  "returnsAsOf": "2026-08-31",
+  "fundAumCr": 8187.32,
+  "holdingsAsOf": "2026-07-31",
+  "holdingsSource": {
+    "kind": "aggregator",
+    "url": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker"
+  },
+  "section": "Equity Holdings",
+  "equity": [
+    {
+      "name": "ICICI Bank Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 2.88,
+      "shares": 1642209
+    },
+    {
+      "name": "HDFC Bank Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 1.8,
+      "shares": 1972031
+    },
+    {
+      "name": "Bharti Airtel Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 1.52,
+      "shares": 631598
+    },
+    {
+      "name": "Nestle India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 1.17,
+      "shares": 633784
+    },
+    {
+      "name": "Mahindra & Mahindra Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 1.07,
+      "shares": 257428
+    },
+    {
+      "name": "Adani Enterprises Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.96,
+      "shares": 260342
+    },
+    {
+      "name": "Coforge Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.92,
+      "shares": 437107
+    },
+    {
+      "name": "State Bank of India",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.92,
+      "shares": 731323
+    },
+    {
+      "name": "Reliance Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.83,
+      "shares": 518073
+    },
+    {
+      "name": "Eternal Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.8,
+      "shares": 2153495
+    },
+    {
+      "name": "Kotak Mahindra Bank Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.72,
+      "shares": 1516615
+    },
+    {
+      "name": "Torrent Pharmaceuticals Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.72,
+      "shares": 114574
+    },
+    {
+      "name": "Maruti Suzuki India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.68,
+      "shares": 39219
+    },
+    {
+      "name": "Titan Company Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.64,
+      "shares": 107469
+    },
+    {
+      "name": "Bharat Electronics Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.54,
+      "shares": 1132787
+    },
+    {
+      "name": "Infosys Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.43,
+      "shares": 308151
+    },
+    {
+      "name": "Tata Consultancy Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.37,
+      "shares": 127453
+    },
+    {
+      "name": "Hindalco Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.34,
+      "shares": 281858
+    },
+    {
+      "name": "Larsen & Toubro Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.33,
+      "shares": 67871
+    },
+    {
+      "name": "Max Healthcare Institute Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.32,
+      "shares": 238208
+    },
+    {
+      "name": "Bajaj Finance Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.32,
+      "shares": 231319
+    },
+    {
+      "name": "Tech Mahindra Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.32,
+      "shares": 160955
+    },
+    {
+      "name": "Persistent Systems Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.3,
+      "shares": 43942
+    },
+    {
+      "name": "Cipla Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.28,
+      "shares": 156839
+    },
+    {
+      "name": "Power Grid Corporation of India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.27,
+      "shares": 768202
+    },
+    {
+      "name": "Muthoot Finance Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.26,
+      "shares": 69235
+    },
+    {
+      "name": "Tata Steel Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.25,
+      "shares": 1099555
+    },
+    {
+      "name": "Axis Bank Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.25,
+      "shares": 168288
+    },
+    {
+      "name": "Bajaj Finserv Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.25,
+      "shares": 100555
+    },
+    {
+      "name": "Max Financial Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.24,
+      "shares": 131699
+    },
+    {
+      "name": "Aadhar Housing Finance Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.23,
+      "shares": 383159
+    },
+    {
+      "name": "NTPC Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.22,
+      "shares": 521418
+    },
+    {
+      "name": "Biocon Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.22,
+      "shares": 423500
+    },
+    {
+      "name": "Sun Pharmaceutical Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.21,
+      "shares": 85099
+    },
+    {
+      "name": "Power Finance Corporation Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.2,
+      "shares": 390699
+    },
+    {
+      "name": "Asian Paints Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.2,
+      "shares": 59853
+    },
+    {
+      "name": "Pidilite Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.2,
+      "shares": 99542
+    },
+    {
+      "name": "Info Edge (India) Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.19,
+      "shares": 124416
+    },
+    {
+      "name": "Cholamandalam Investment and Finance Company Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.19,
+      "shares": 84702
+    },
+    {
+      "name": "Lenskart Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.18,
+      "shares": 269561
+    },
+    {
+      "name": "Oil India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.18,
+      "shares": 318924
+    },
+    {
+      "name": "Billionbrains Garage Ventures Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.18,
+      "shares": 752095
+    },
+    {
+      "name": "Azad Engineering Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.17,
+      "shares": 60171
+    },
+    {
+      "name": "Vedanta Aluminium Metal Limited **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.17,
+      "shares": 304518
+    },
+    {
+      "name": "The Phoenix Mills Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.16,
+      "shares": 67331
+    },
+    {
+      "name": "India Shelter Finance Corporation Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.16,
+      "shares": 180715
+    },
+    {
+      "name": "National Aluminium Company Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.16,
+      "shares": 373496
+    },
+    {
+      "name": "Manorama Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.16,
+      "shares": 79116
+    },
+    {
+      "name": "Krishna Institute Of Medical Sciences Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 152329
+    },
+    {
+      "name": "PB Fintech Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 78021
+    },
+    {
+      "name": "Eureka Forbes Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 265641
+    },
+    {
+      "name": "Five Star Business Finance Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 227961
+    },
+    {
+      "name": "Leela Palaces Hotels & Resorts Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 240603
+    },
+    {
+      "name": "LTIMindtree Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.15,
+      "shares": 28859
+    },
+    {
+      "name": "Aditya Infotech Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.14,
+      "shares": 33617
+    },
+    {
+      "name": "Cummins India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.14,
+      "shares": 20427
+    },
+    {
+      "name": "Oil & Natural Gas Corporation Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.14,
+      "shares": 464800
+    },
+    {
+      "name": "CARE Ratings Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.14,
+      "shares": 64801
+    },
+    {
+      "name": "CG Power and Industrial Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.13,
+      "shares": 126053
+    },
+    {
+      "name": "360 One WAM Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.13,
+      "shares": 94508
+    },
+    {
+      "name": "Onemi Technology Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.13,
+      "shares": 326100
+    },
+    {
+      "name": "Manipal Health Enterprises Ltd **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.13,
+      "shares": 177975
+    },
+    {
+      "name": "KRN Heat Exchanger And Refrigeration Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.12,
+      "shares": 82256
+    },
+    {
+      "name": "Juniper Green Energy Limited **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.12,
+      "shares": 444444
+    },
+    {
+      "name": "TD Power Systems Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 83043
+    },
+    {
+      "name": "Acutaas Chemicals Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 29459
+    },
+    {
+      "name": "Indigo Paints Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 82564
+    },
+    {
+      "name": "TBO Tek Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 59031
+    },
+    {
+      "name": "Poly Medicure Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 51176
+    },
+    {
+      "name": "Ajax Engineering Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 149937
+    },
+    {
+      "name": "Solar Industries India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.11,
+      "shares": 5104
+    },
+    {
+      "name": "Vishal Mega Mart Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 751510
+    },
+    {
+      "name": "AIA Engineering Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 17000
+    },
+    {
+      "name": "Gillette India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 10486
+    },
+    {
+      "name": "Gland Pharma Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 31840
+    },
+    {
+      "name": "Dr. Lal Path Labs Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 43188
+    },
+    {
+      "name": "Firstsource Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.1,
+      "shares": 265243
+    },
+    {
+      "name": "Kirloskar Oil Engines Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.09,
+      "shares": 32473
+    },
+    {
+      "name": "PNB Housing Finance Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.09,
+      "shares": 71247
+    },
+    {
+      "name": "Computer Age Management Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.09,
+      "shares": 88865
+    },
+    {
+      "name": "ICICI Prudential Asset Management Company Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.08,
+      "shares": 20288
+    },
+    {
+      "name": "Godrej Consumer Products Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.08,
+      "shares": 62636
+    },
+    {
+      "name": "Navin Fluorine International Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.08,
+      "shares": 8333
+    },
+    {
+      "name": "SBI Funds Management Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.08,
+      "shares": 113960
+    },
+    {
+      "name": "Tenneco Clean Air India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 109845
+    },
+    {
+      "name": "Intellect Design Arena Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 83379
+    },
+    {
+      "name": "Fortis Healthcare Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 64642
+    },
+    {
+      "name": "Travel Food Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 45448
+    },
+    {
+      "name": "Dynamatic Technologies Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 5213
+    },
+    {
+      "name": "Doms Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 24335
+    },
+    {
+      "name": "Aether Industries Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 36777
+    },
+    {
+      "name": "eClerx Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.07,
+      "shares": 29700
+    },
+    {
+      "name": "GE Vernova T&D India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.06,
+      "shares": 11324
+    },
+    {
+      "name": "Mankind Pharma Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.06,
+      "shares": 20283
+    },
+    {
+      "name": "Safari Industries (India) Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.06,
+      "shares": 30321
+    },
+    {
+      "name": "Sudeep Pharma Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.06,
+      "shares": 58713
+    },
+    {
+      "name": "Rainbow Childrens Medicare Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.06,
+      "shares": 31523
+    },
+    {
+      "name": "Tube Investments of India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.05,
+      "shares": 15097
+    },
+    {
+      "name": "SBI Life Insurance Company Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.05,
+      "shares": 23709
+    },
+    {
+      "name": "Corona Remedies Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.05,
+      "shares": 18673
+    },
+    {
+      "name": "S.J.S. Enterprises Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.05,
+      "shares": 15938
+    },
+    {
+      "name": "Mastek Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.04,
+      "shares": 19533
+    },
+    {
+      "name": "Orkla India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 49391
+    },
+    {
+      "name": "Jyothy Labs Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 109366
+    },
+    {
+      "name": "Indiqube Spaces Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 138870
+    },
+    {
+      "name": "Divi's Laboratories Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 2865
+    },
+    {
+      "name": "Indo-MIM Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 29578
+    },
+    {
+      "name": "Kusumgar Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.03,
+      "shares": 38602
+    },
+    {
+      "name": "Nippon Life India Asset Management Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.02,
+      "shares": 16250
+    },
+    {
+      "name": "Vijaya Diagnostic Centre Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.02,
+      "shares": 14241
+    },
+    {
+      "name": "Neuland Laboratories Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.02,
+      "shares": 708
+    },
+    {
+      "name": "Blue Star Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.02,
+      "shares": 9160
+    },
+    {
+      "name": "Awfis Space Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 39569
+    },
+    {
+      "name": "Shilpa Medicare Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 20032
+    },
+    {
+      "name": "Newgen Software Technologies Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 17487
+    },
+    {
+      "name": "Laxmi Dental Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 35729
+    },
+    {
+      "name": "Nucleus Software Exports Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 7603
+    },
+    {
+      "name": "Ajanta Pharma Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 1972
+    },
+    {
+      "name": "Cholamandalam Financial Holdings Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.01,
+      "shares": 2727
+    },
+    {
+      "name": "REC Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 10106
+    },
+    {
+      "name": "SHIVALIK BIMETAL CONTROLS LIMITED",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 5055
+    },
+    {
+      "name": "Clean Max Enviro Energy Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 2171
+    },
+    {
+      "name": "Eicher Motors Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 93
+    },
+    {
+      "name": "Steel Authority of India Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 1900
+    },
+    {
+      "name": "Tata Motors Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 300
+    },
+    {
+      "name": "Tata Motors Passenger Vehicles Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 300
+    },
+    {
+      "name": "JB Chemicals & Pharmaceuticals Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Ambuja Cements Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Trent Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "InterGlobe Aviation Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Crompton Greaves Consumer Electricals Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Malco Energy Limited **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Talwandi Sabo Power Limited **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Vedanta Iron And Steel Limited **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Cigniti Technologies Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Bharat Bijlee Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Vedanta Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Hero MotoCorp Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Sagility Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Meesho Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Inventurus Knowledge Solutions Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Le Travenues Technology Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Adani Enterprises Limited - Partly paid up **",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Bharti Airtel Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Motilal Oswal Financial Services Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Utkarsh Small Finance Bank Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "Hindustan Zinc Limited",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    },
+    {
+      "name": "LG Electronics India Ltd",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
+    }
+  ],
+  "counts": {
+    "equity": 148
+  }
+}

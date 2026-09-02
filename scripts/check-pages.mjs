@@ -1514,61 +1514,77 @@ const INVARIANTS = {
    * present.
    */
   "stock-mf-lookthrough": [
-    ["it renders the scheme's disclosed portfolio, naming the scheme", (t) =>
-      /What this fund holds/i.test(t) && /disclosed it on/i.test(t) && /\d+ disclosed holdings/i.test(t)],
+    ["it renders the scheme card, naming the scheme and its AMC", (t) =>
+      /The scheme — NAV, returns and what it holds/i.test(t) && /matched on (ISIN|name)/i.test(t)],
     /**
-     * THE PROVENANCE IS ON THE CARD. These figures come from the AMC's monthly
-     * disclosure, not from a statement issued to this family — a reader who
-     * takes them for statement figures is wrong about what they can be checked
-     * against, and about why they are in no total.
+     * THE PROVENANCE IS ON THE CARD. These are the only figures on this site
+     * that are not the family's own — a reader who takes them for statement
+     * figures is wrong about what they can be checked against, and about why
+     * they are in no total.
      */
-    ["it says the figures are the AMC's disclosure and not this family's statement", (t) =>
+    ["it says the figures are AMFI's and the AMC's, not this family's statement", (t) =>
       /not a statement issued to this family/i.test(t)],
     /**
-     * BOTH DATES, because a monthly portfolio and a statement mark rarely
-     * coincide — the fund's disclosure is 31 Jul and the holding is valued days
-     * later. One date standing for both would misdate whichever it is not.
+     * NAV AND ITS DAILY CHANGE, which no mutual fund on this site could show
+     * before: a fund resolves to no NSE symbol, so the quote feed never priced
+     * one. The change must name the PREVIOUS NAV AND ITS DATE — a fund does not
+     * publish on a non-business day, so "since yesterday" would be wrong across
+     * a weekend.
      */
-    ["both as-of dates are printed, the portfolio's and the holding's", (t) => {
-      const m = /portfolio\s+(\d{1,2} \w{3} \d{4})\s*·\s*holding\s+(\d{1,2} \w{3} \d{4})/i.exec(t);
-      return !!m;
+    ["the NAV, its change and the previous NAV's own date all render", (t) => {
+      const i = t.search(/^NAV$/mi);
+      if (i < 0) return false;
+      const block = t.slice(i, i + 320);
+      return /\d+\.\d{2,4}/.test(block)
+        && /[+-]\d+\.\d\d%/.test(block)
+        && /since [\d,.]+ on \d{1,2} \w{3,} \d{4}/i.test(block);
     }],
-    // THE PLAN IS NAMED WITH ITS REASON. Matching a Direct holding to a Regular
-    // listing is legitimate only because the two hold the same portfolio, and
-    // that is a fact the reader is owed rather than one to assume they know.
-    ["the plan matched is named, with why matching across it is legitimate", (t) =>
-      /matched on the (Direct|Regular|unstated) plan/i.test(t) && /same portfolio, different expense ratio/i.test(t)],
+    // THE PLAN IS THE FAMILY'S OWN, resolved from the holding's ISIN — plans
+    // differ in expense ratio and therefore NAV, so a NAV from the wrong plan
+    // is the wrong number for this holding.
+    ["the plan is named and says it came from this holding's ISIN", (t) =>
+      /^(Direct|Regular)\b/mi.test(t) && /from this holding's ISIN/i.test(t)],
     /**
-     * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES.
+     * EVERY RETURN CARRIES THE WINDOW IT ACTUALLY SPANS.
      *
-     * "Your look-through" is the holding's value times the scheme's published
-     * weight. Asserted by recomputing the largest row from the holding value the
-     * page prints and the percent beside it — so a column that silently switched
-     * to some other basis (the fund's own money, say) fails here rather than
-     * looking plausible. The bound is the printing precision: both sides render
-     * compact, to one decimal.
+     * The label is the source's and the dates are the measurement, and on this
+     * data they do not always agree — Helios's "1M" runs 19 Jun to 1 Sep. A
+     * period label rendered alone is the one figure on this card a reader could
+     * not check, so the count of windows must match the count of periods.
+     */
+    ["every return period prints the window it really covers", (t) => {
+      const i = t.search(/SCHEME RETURNS/i);
+      if (i < 0) return notChecked("this scheme carries no returns in the store on this run");
+      const block = t.slice(i, i + 1200);
+      const periods = (block.match(/[+-]\d+\.\d%/g) ?? []).length;
+      const windows = (block.match(/\d{1,2} \w{3,} \d{4}\s*→\s*\d{1,2} \w{3,} \d{4}/g) ?? []).length;
+      return periods > 0 && windows === periods;
+    }],
+    // WHICH DOCUMENT THE HOLDINGS CAME FROM. The AMC's own filing and a third
+    // party's copy of it are different things and the card names which.
+    ["the holdings name the document they came from", (t) =>
+      /holdings from (the AMC's own disclosure|an aggregator's copy)/i.test(t)],
+    // Both as-of dates, since a monthly portfolio and a statement mark rarely
+    // coincide.
+    ["both as-of dates are printed, the portfolio's and the holding's", (t) =>
+      /portfolio\s+\d{1,2} \w{3,} \d{4}\s*·\s*holding\s+\d{1,2} \w{3,} \d{4}/i.test(t)],
+    /**
+     * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES — the
+     * holding's value times the scheme's published weight. A column that
+     * silently switched basis fails here rather than looking plausible.
      */
     ["the look-through column is the holding's value times the disclosed weight", (t) => {
       const hv = cr(new RegExp(String.raw`HOLDING VALUE\s*\n\s*` + CR, "i").exec(t)?.[1]);
-      const row = /\n[^\n\t]+\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
-      if (!Number.isFinite(hv) || !row) return notChecked("the holding value or the first look-through row did not parse on this run");
+      const row = /\n[^\n\t]+\t[^\t\n]*\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
+      if (!Number.isFinite(hv)) return notChecked("the holding value did not parse on this run");
+      if (!row) return notChecked("this scheme discloses no equity holdings, so there is no look-through row to reconcile");
       const pct = Number(row[1]);
       const shown = crU(/₹([\d,.]+)/.exec(row[2])?.[1], /(Cr|L|K)/.exec(row[2])?.[1]);
       const expect = (hv * pct) / 100;
       return Number.isFinite(shown) && Math.abs(shown - expect) <= Math.max(0.02, expect * 0.02);
     }],
-    /**
-     * AND IT IS IN NO TOTAL. The fund's own value is already in the NAV; adding
-     * the look-through would count the same money twice, which is the failure
-     * this whole book is built against. Said on the card, not in a tooltip.
-     */
     ["the card states none of it is in any total on the site", (t) =>
       /None of this is in any total on this site/i.test(t) && /count the same money twice/i.test(t)],
-    // The disclosed weights are printed as the sum they actually are, rather
-    // than implied to be 100% — a fund's own rounding leaves a gap and the card
-    // names it instead of spreading it across the rows.
-    ["the disclosed weights are totalled honestly", (t) =>
-      /disclosed weights add to\s*\n?\s*[\d.]+%/i.test(t)],
   ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
