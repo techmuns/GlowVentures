@@ -297,6 +297,29 @@ const BY_KEY = (() => {
  * absent-recorded-against-the-wrong-cause failure this repo keeps meeting, so
  * the archive is consulted before anything is called missing.
  */
+/**
+ * WHY AN ACCOUNT REPORTS NOTHING, IN ITS OWN STATEMENT'S WORDS.
+ *
+ * Read from the archive rather than written here, so a drop that supplies the
+ * missing statement empties section F1 by itself instead of leaving a sentence
+ * behind that has stopped being true — which is the stale-absence failure this
+ * repo has recorded five times.
+ */
+const ZERO_REASON = (() => {
+  const m = new Map();
+  let manifest;
+  try { manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8")); }
+  catch { return m; }
+  for (const d of manifest) {
+    let doc;
+    try { doc = JSON.parse(readFileSync(`public/audit/${d.docKey}/document.json`, "utf8")); }
+    catch { continue; }
+    const w = (doc.warnings ?? []).find((x) => x.detail);
+    if (w && !m.has(d.provider)) m.set(d.provider, w.detail);
+  }
+  return m;
+})();
+
 const ARCHIVE_KEYS = (() => {
   const m = new Map();
   let manifest;
@@ -520,10 +543,15 @@ say();
 say("| Review line | Review MV | Book (same manager) | Difference | Book accounts |");
 say("| --- | ---: | ---: | ---: | ---: |");
 let c1rev = 0, c1book = 0;
+const zeroedManagers = [];
 for (const [prov, e] of [...matchedProviders].sort((a, b) => b[1].review - a[1].review)) {
   const b = bookByProvider(prov);
   c1rev += e.review; c1book += b.mv / CR;
   const d = b.mv / CR - e.review;
+  // A matched manager the book values at ZERO is a missing document, not drift.
+  if (e.review > 0 && b.mv === 0) {
+    zeroedManagers.push({ product: e.lines.map((l) => l.product).join(", "), prov, reviewMV: e.review });
+  }
   say(`| ${e.lines.map((l) => l.product).join("<br>")} <br><sub>-> ${prov}</sub> | ₹${cr(e.review)} Cr | ₹${cr(b.mv / CR)} Cr | ${(d >= 0 ? "+" : "") + cr(d)} Cr | ${b.accounts} |`);
 }
 say(`| **Total matched** | **₹${cr(c1rev)} Cr** | **₹${cr(c1book)} Cr** | **${(c1book - c1rev >= 0 ? "+" : "") + cr(c1book - c1rev)} Cr** | |`);
@@ -687,9 +715,48 @@ say(`| **What the book would carry on those two adjustments alone** | | **₹${c
 say(`| **What the book actually carries (ex-promoter)** | | **₹${cr(bookExPromoter)} Cr** | |`);
 say(`| **Residual** | | **${(residual >= 0 ? "+" : "−") + "₹" + cr(Math.abs(residual))} Cr** | see below |`);
 say();
-say("**THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things this");
-say("reconciliation can name but cannot yet quantify line by line, and saying so is the honest");
-say("position — a bridge forced to zero would be a fabricated figure with a badge on it:");
+/**
+ * ONE COMPONENT OF THE RESIDUAL *CAN* BE QUANTIFIED, AND LEAVING IT INSIDE
+ * "MARKET MOVEMENT" HID A ₹52 Cr ASK.
+ *
+ * A manager matched in C1 whose book value is ZERO while the review carries real
+ * money is not drift and is not a valuation basis: it is an account whose own
+ * statement reports nothing to value. That is a MISSING DOCUMENT, and it belongs
+ * on the ask list in D1 rather than in a paragraph about six weeks of prices.
+ *
+ * 3P is the case that forced this. Its 31 July statement prints all three classes
+ * at ZERO UNITS with its own warning — "the fund reclassified them out on
+ * 31-03-2026 and prints the zero. Where the units went is not on this document" —
+ * while the depository still carries 3P units and two ICICI payment advices dated
+ * 04/08/2026 name folios 3000048 and 3000049 for ₹52.49 Cr between them. Folio
+ * 3000049 appears NOWHERE in this book: it has no account, and its only trace in
+ * the whole archive is a filename on a payment receipt.
+ *
+ * The reason is read off each account's own zero rather than typed here, so a
+ * drop that supplies the destination statement empties this row by itself.
+ */
+const zeroed = [...zeroedManagers].sort((a, b) => b.reviewMV - a.reviewMV);
+const zeroedTotal = zeroed.reduce((t, m) => t + m.reviewMV, 0);
+if (zeroed.length) {
+  say("### F1. The part of the residual that is a MISSING DOCUMENT, not a price");
+  say();
+  say("A manager matched in C1 whose book value is **zero** while the review carries real money");
+  say("is not market drift: its own statement reports nothing to value. Each of these belongs on");
+  say("the ask list, and together they are a quantified slice of the residual above.");
+  say();
+  say("| Manager | Review MV | Book | What its own statement says |");
+  say("| --- | ---: | ---: | --- |");
+  for (const m of zeroed) {
+    say(`| ${m.product} <br><sub>-> ${m.prov}</sub> | ₹${cr(m.reviewMV)} Cr | ₹0.00 Cr | ${ZERO_REASON.get(m.prov) ?? "the account reports no value at its statement date"} |`);
+  }
+  say();
+  say(`**₹${cr(zeroedTotal)} Cr of the residual is this**, and it is the most actionable part of it:`);
+  say("a price gap closes by itself next month, a missing statement never does.");
+  say();
+}
+say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things");
+say("this reconciliation can name but cannot yet quantify line by line, and saying so is the");
+say("honest position — a bridge forced to zero would be a fabricated figure with a badge on it:");
 say();
 say("1. **Six weeks of market movement.** The review is struck 30 June; most of this book's");
 say("   accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every");

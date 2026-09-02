@@ -243,9 +243,22 @@ is NAMED rather than plugged: no step below is fitted to make the arithmetic wor
 | **What the book actually carries (ex-promoter)** | | **₹710.39 Cr** | |
 | **Residual** | | **−₹254.98 Cr** | see below |
 
-**THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things this
-reconciliation can name but cannot yet quantify line by line, and saying so is the honest
-position — a bridge forced to zero would be a fabricated figure with a badge on it:
+### F1. The part of the residual that is a MISSING DOCUMENT, not a price
+
+A manager matched in C1 whose book value is **zero** while the review carries real money
+is not market drift: its own statement reports nothing to value. Each of these belongs on
+the ask list, and together they are a quantified slice of the residual above.
+
+| Manager | Review MV | Book | What its own statement says |
+| --- | ---: | ---: | --- |
+| 3P India Equity Fund 1 <br><sub>-> 3P Investment Managers</sub> | ₹52.12 Cr | ₹0.00 Cr | every class on this statement stands at zero units: the fund reclassified them out on 31-03-2026 and prints the zero. Where the units went is not on this document |
+
+**₹52.12 Cr of the residual is this**, and it is the most actionable part of it:
+a price gap closes by itself next month, a missing statement never does.
+
+**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things
+this reconciliation can name but cannot yet quantify line by line, and saying so is the
+honest position — a bridge forced to zero would be a fabricated figure with a badge on it:
 
 1. **Six weeks of market movement.** The review is struck 30 June; most of this book's
    accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every
