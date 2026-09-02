@@ -157,9 +157,29 @@ function investorwise() {
 }
 
 /** Book, per owner. A PER-OWNER figure, so it dedupes (each group once) but never across owners. */
+/**
+ * A PER-OWNER FIGURE DOES NOT DEDUPE, AND THIS ONE DID.
+ *
+ * CLAUDE.md states it plainly: "a consolidated figure counts each `dedupeGroup`
+ * ONCE; a per-account or per-owner figure does not." Reading `CONSOLIDATED` here
+ * broke that, and it broke it on the one holding in this book that makes the
+ * error visible.
+ *
+ * Transition Venture Capital Fund I — Class A1 is reported under BOTH Bharat
+ * Jaisinghani family trusts, ₹1,71,46,374.76 each, sharing one `dedupeGroup`.
+ * Deduped, whichever trust sorted second lost its ONLY position — so section B
+ * reported "Bharat Jaisinghani Family Trust III — *not in the book*" against a
+ * book that holds ₹1.71 Cr for it, and the missing row silently joined the
+ * "holders with no account in this book" step of the bridge.
+ *
+ * That is the same failure, in the same direction, that CLAUDE.md already
+ * records once: deduping a per-account breakdown emptied Bharat's 360 ONE row to
+ * `0 · ₹0 · ₹0` for an account holding ₹1.46 Cr. The consolidated TOTAL below
+ * still dedupes, because that one is consolidated.
+ */
 function bookByOwner() {
   const m = new Map();
-  for (const p of CONSOLIDATED) {
+  for (const p of POSITIONS) {
     const o = ACC.get(p.accountId)?.owner ?? "Unattributed";
     m.set(o, (m.get(o) ?? 0) + p.marketValue);
   }
@@ -305,6 +325,51 @@ const BY_KEY = (() => {
  * behind that has stopped being true — which is the stale-absence failure this
  * repo has recorded five times.
  */
+/**
+ * AN ACCOUNT AT ZERO BECAUSE IT WAS REDEEMED IS NOT A MISSING DOCUMENT.
+ *
+ * The first draft of F1 called every matched-manager zero "a missing document"
+ * and put it on the ask list. 3P is the case that shows why that is wrong, and
+ * its own statement settles it on page 2: Class B1 and B2 were reclassified INTO
+ * Class B3 on 31-03-2026, and Class B3 was then `Full Units Redemption` on
+ * 31-07-2026 for ₹31,05,82,835.17, payout to `HDFC0000084` — the exact figure
+ * and the exact bank on the ICICI advice filed as `3P_Folio 3000048.pdf`.
+ *
+ * So the book's zero is CORRECT AND COMPLETE, the extractor's warning that
+ * "where the units went is not on this document" is contradicted by page 2 of
+ * that same document, and asking 3P for a statement would close nothing. The
+ * real question is where ₹52.49 Cr of proceeds went after 04-08-2026.
+ *
+ * Read from the archive's own page text, so this row disappears by itself if a
+ * later drop supersedes the statement.
+ */
+const EXITED = (() => {
+  const m = new Map();
+  let manifest;
+  try { manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8")); }
+  catch { return m; }
+  for (const d of manifest) {
+    let text = "";
+    try {
+      const pj = JSON.parse(readFileSync(`public/audit/${d.docKey}/pages.json`, "utf8"));
+      text = (pj.pages ?? []).map((p) => p.text ?? "").join("\n");
+    } catch { continue; }
+    // "31-07-2026 Full Units Redemption - - - (31,05,82,835.17)"
+    const red = text.match(/(\d{2}-\d{2}-\d{4})\s+Full Units Redemption[^\n(]*\(([\d,]+\.\d{2})\)/);
+    if (!red) continue;
+    const amount = Number(red[2].replace(/,/g, ""));
+    if (!Number.isFinite(amount)) continue;
+    const bank = text.match(/Primary Bank Account\s*:\s*\S*\/\S*\/([A-Z][A-Z .]+?)\//)?.[1]?.trim() ?? "the registered bank account";
+    const prev = m.get(d.provider);
+    m.set(d.provider, {
+      amount: (prev?.amount ?? 0) + amount,
+      bank,
+      detail: `**fully redeemed ${red[1]}** — the statement's own transaction history closes every class to nil`,
+    });
+  }
+  return m;
+})();
+
 const ZERO_REASON = (() => {
   const m = new Map();
   let manifest;
@@ -505,6 +570,30 @@ for (const [o, v] of bo) if (!iw.some(({ holder }) => (OWNER_ALIAS.get(holder) ?
   bookSum += v / CR;
 }
 say(`| **Total** | **₹${cr(revSum)} Cr** | **₹${cr(bookSum)} Cr** | **${(bookSum - revSum >= 0 ? "+" : "") + cr(bookSum - revSum)} Cr** |`);
+say();
+/**
+ * AND THE FOOTER MUST SAY WHY IT IS NOT THE HEADLINE TOTAL.
+ *
+ * This column is PER-OWNER, so it does not dedupe (see `bookByOwner`) and it
+ * sums to the raw book. Section A's consolidated figure counts each
+ * `dedupeGroup` once. Both are right on their own basis and they differ by
+ * exactly the two duplicated holdings — a reader who adds this column and gets a
+ * third answer has found the contradiction the allocation footer already cost
+ * this book once, so the difference is stated here rather than left to be found.
+ */
+{
+  const consolidatedSum = CONSOLIDATED.reduce((t, p) => t + p.marketValue, 0) / CR;
+  const dd = bookSum - consolidatedSum;
+  if (Math.abs(dd) > 0.005) {
+    say(`This column is **per-owner and therefore does not dedupe** — each family member is shown`);
+    say(`what their own statements report. It sums to ₹${cr(bookSum)} Cr against the consolidated`);
+    say(`₹${cr(consolidatedSum)} Cr in section A, and the ₹${cr(dd)} Cr between them is the two holdings`);
+    say("reported under two members each: 360 ONE Special Opportunities under both CRNs, and");
+    say("Transition Venture Fund I under both Bharat family trusts. Counted once consolidated,");
+    say("shown to both owners here. Neither figure is wrong; they answer different questions.");
+    say();
+  }
+}
 say();
 say("Every book figure here is ex-promoter by construction: Polycab is ring-fenced into");
 say("`BOOK_POLYCAB` and reaches no per-owner total. Section A states it once, on its own.");
@@ -738,20 +827,27 @@ say();
 const zeroed = [...zeroedManagers].sort((a, b) => b.reviewMV - a.reviewMV);
 const zeroedTotal = zeroed.reduce((t, m) => t + m.reviewMV, 0);
 if (zeroed.length) {
-  say("### F1. The part of the residual that is a MISSING DOCUMENT, not a price");
+  say("### F1. The part of the residual where the money LEFT, and is not a price");
   say();
-  say("A manager matched in C1 whose book value is **zero** while the review carries real money");
-  say("is not market drift: its own statement reports nothing to value. Each of these belongs on");
-  say("the ask list, and together they are a quantified slice of the residual above.");
+  say("A manager matched in C1 whose book value is **zero** while the review carries real money is");
+  say("not market drift — its own statement reports nothing to value. But zero has two very");
+  say("different causes and they lead to opposite actions, so the statement is read for which:");
   say();
-  say("| Manager | Review MV | Book | What its own statement says |");
-  say("| --- | ---: | ---: | --- |");
+  say("| Manager | Review MV, 30 Jun | Book | What its own statement says | Action |");
+  say("| --- | ---: | ---: | --- | --- |");
   for (const m of zeroed) {
-    say(`| ${m.product} <br><sub>-> ${m.prov}</sub> | ₹${cr(m.reviewMV)} Cr | ₹0.00 Cr | ${ZERO_REASON.get(m.prov) ?? "the account reports no value at its statement date"} |`);
+    const exited = EXITED.get(m.prov);
+    const action = exited
+      ? `**follow the money, do not ask for a statement** — ₹${cr(exited.amount / CR)} Cr was paid out to ${exited.bank}`
+      : "ask the manager for a current statement";
+    say(`| ${m.product} <br><sub>-> ${m.prov}</sub> | ₹${cr(m.reviewMV)} Cr | ₹0.00 Cr | ${exited ? exited.detail : (ZERO_REASON.get(m.prov) ?? "the account reports no value at its statement date")} | ${action} |`);
   }
   say();
-  say(`**₹${cr(zeroedTotal)} Cr of the residual is this**, and it is the most actionable part of it:`);
-  say("a price gap closes by itself next month, a missing statement never does.");
+  say(`**₹${cr(zeroedTotal)} Cr of the residual is this.** Where a statement records a REDEMPTION the`);
+  say("book's zero is correct and complete, and the open question is not the manager's paperwork but");
+  say("**where the proceeds went** — cash that left one account and has to have landed in another.");
+  say("Asking the manager to re-send a statement they have already sent correctly would close");
+  say("nothing. Where no redemption is recorded, the manager's current statement is the ask.");
   say();
 }
 say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things");

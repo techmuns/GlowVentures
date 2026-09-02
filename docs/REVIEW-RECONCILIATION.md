@@ -71,13 +71,21 @@ reports, and for a depository row with no price that is no value at all.
 | --- | ---: | ---: | ---: |
 | Ajay Jaisinghani | ₹827.60 Cr | ₹349.54 Cr | -478.06 Cr |
 | Aarti Ajay Jaisinghani <br><sub>book: Aarti Jaisinghani</sub> | ₹131.59 Cr | ₹128.64 Cr | -2.96 Cr |
-| Bharat Jaisinghani | ₹105.49 Cr | ₹64.08 Cr | -41.41 Cr |
+| Bharat Jaisinghani | ₹105.49 Cr | ₹65.54 Cr | -39.95 Cr |
 | Ankita Jaisinghani | ₹212.78 Cr | ₹166.41 Cr | -46.37 Cr |
 | Hope India Trust | ₹0.39 Cr | — *not in the book* | — |
 | Bharat Jaisinghani Family Trust | ₹5.96 Cr | — *not in the book* | — |
 | Bharat Jaisinghani Family Trust II <br><sub>book: Bharat Jaisinghani Family Trust 2</sub> | ₹8.12 Cr | ₹1.71 Cr | -6.41 Cr |
-| Bharat Jaisinghani Family Trust III <br><sub>book: Bharat Jaisinghani Family Trust 3</sub> | ₹8.12 Cr | — *not in the book* | — |
-| **Total** | **₹1,300.05 Cr** | **₹710.39 Cr** | **-589.66 Cr** |
+| Bharat Jaisinghani Family Trust III <br><sub>book: Bharat Jaisinghani Family Trust 3</sub> | ₹8.12 Cr | ₹1.71 Cr | -6.41 Cr |
+| **Total** | **₹1,300.05 Cr** | **₹713.56 Cr** | **-586.49 Cr** |
+
+This column is **per-owner and therefore does not dedupe** — each family member is shown
+what their own statements report. It sums to ₹713.56 Cr against the consolidated
+₹710.39 Cr in section A, and the ₹3.17 Cr between them is the two holdings
+reported under two members each: 360 ONE Special Opportunities under both CRNs, and
+Transition Venture Fund I under both Bharat family trusts. Counted once consolidated,
+shown to both owners here. Neither figure is wrong; they answer different questions.
+
 
 Every book figure here is ex-promoter by construction: Polycab is ring-fenced into
 `BOOK_POLYCAB` and reaches no per-owner total. Section A states it once, on its own.
@@ -237,24 +245,27 @@ is NAMED rather than plugged: no step below is fitted to make the arithmetic wor
 | Step | Amount | Running | Why |
 | --- | ---: | ---: | --- |
 | Review portfolio total, 30 June 2026 | ₹1,300.05 Cr | ₹1,300.05 Cr |  |
-| less: holders with no account in this book | −₹14.47 Cr | ₹1,285.58 Cr | Hope India Trust (a separate taxpayer, held out by decision) and the Bharat Jaisinghani family trusts whose statements the drop does not carry |
-| less: lines no statement in `source/` reports | −₹320.22 Cr | ₹965.37 Cr | section D — the Motilal Oswal and HDFC Bank statements that have not been supplied |
-| **What the book would carry on those two adjustments alone** | | **₹965.37 Cr** | |
+| less: holders with no account in this book | −₹6.34 Cr | ₹1,293.71 Cr | Hope India Trust (a separate taxpayer, held out by decision) and the Bharat Jaisinghani family trusts whose statements the drop does not carry |
+| less: lines no statement in `source/` reports | −₹320.22 Cr | ₹973.49 Cr | section D — the Motilal Oswal and HDFC Bank statements that have not been supplied |
+| **What the book would carry on those two adjustments alone** | | **₹973.49 Cr** | |
 | **What the book actually carries (ex-promoter)** | | **₹710.39 Cr** | |
-| **Residual** | | **−₹254.98 Cr** | see below |
+| **Residual** | | **−₹263.10 Cr** | see below |
 
-### F1. The part of the residual that is a MISSING DOCUMENT, not a price
+### F1. The part of the residual where the money LEFT, and is not a price
 
-A manager matched in C1 whose book value is **zero** while the review carries real money
-is not market drift: its own statement reports nothing to value. Each of these belongs on
-the ask list, and together they are a quantified slice of the residual above.
+A manager matched in C1 whose book value is **zero** while the review carries real money is
+not market drift — its own statement reports nothing to value. But zero has two very
+different causes and they lead to opposite actions, so the statement is read for which:
 
-| Manager | Review MV | Book | What its own statement says |
-| --- | ---: | ---: | --- |
-| 3P India Equity Fund 1 <br><sub>-> 3P Investment Managers</sub> | ₹52.12 Cr | ₹0.00 Cr | every class on this statement stands at zero units: the fund reclassified them out on 31-03-2026 and prints the zero. Where the units went is not on this document |
+| Manager | Review MV, 30 Jun | Book | What its own statement says | Action |
+| --- | ---: | ---: | --- | --- |
+| 3P India Equity Fund 1 <br><sub>-> 3P Investment Managers</sub> | ₹52.12 Cr | ₹0.00 Cr | **fully redeemed 31-07-2026** — the statement's own transaction history closes every class to nil | **follow the money, do not ask for a statement** — ₹31.06 Cr was paid out to HDFC BANK LIMITED |
 
-**₹52.12 Cr of the residual is this**, and it is the most actionable part of it:
-a price gap closes by itself next month, a missing statement never does.
+**₹52.12 Cr of the residual is this.** Where a statement records a REDEMPTION the
+book's zero is correct and complete, and the open question is not the manager's paperwork but
+**where the proceeds went** — cash that left one account and has to have landed in another.
+Asking the manager to re-send a statement they have already sent correctly would close
+nothing. Where no redemption is recorded, the manager's current statement is the ask.
 
 **THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things
 this reconciliation can name but cannot yet quantify line by line, and saying so is the
