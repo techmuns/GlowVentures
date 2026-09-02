@@ -91,8 +91,30 @@ have to be true first, and none of them can be established from the register alo
    FACE VALUE OF 10 - DISTICTIVE FROM…"). Parsing somebody's sentence for a figure that then
    becomes a tax basis is a different risk from reading a printed column, and on the other
    353 rows there is no count to tie against at all.
-2. **The entity must match.** The register's `INVESTMENT DONE UNDER` is a first name;
-   the book's positions carry an `accountId`. A cost posted against the wrong member
+2. **The entity must resolve, and on this register it does not.** The book's positions carry
+   an `accountId`; the register carries `INVESTMENT DONE UNDER`, and on almost every row that
+   is a BARE FIRST NAME. Run through `shared/owners.mjs`, **₹827.22 Cr —
+   98% of the register — resolves to no `ownerId` at all**:
+
+   | `INVESTMENT DONE UNDER` | Resolves to | Paid |
+   | --- | --- | ---: |
+   | AJAY | **— nothing —** | ₹515.64 Cr |
+   | ANKITA | **— nothing —** | ₹174.98 Cr |
+   | BHARAT | **— nothing —** | ₹120.58 Cr |
+   | Bharat Jaisinghani Family Trust | **— nothing —** | ₹12.52 Cr |
+   | Bharat Jaisinghani Family Trust 2 | bharat-jaisinghani-family-trust-2 | ₹5.75 Cr |
+   | Bharat Jaisinghani Family Trust 3 | bharat-jaisinghani-family-trust-3 | ₹5.75 Cr |
+   | AARTI | **— nothing —** | ₹3.50 Cr |
+   | BHARAT JAISINGHANI FAMILY TRUST 2 | bharat-jaisinghani-family-trust-2 | ₹2.10 Cr |
+   | BHARAT JAISINGHANI FAMILY TRUST 3 | bharat-jaisinghani-family-trust-3 | ₹2.10 Cr |
+
+   Every alias in the registry carries a surname and the initials rule returns a one-word
+   name unchanged, so `AJAY`, `ANKITA`, `BHARAT` and `AARTI` can match nothing. Only the
+   fully-spelled trust names resolve — and `Bharat Jaisinghani Family Trust` with no numeral
+   resolves to neither trust, which is the hazard this book already names for that string.
+   Adding four aliases would fix it and is a DECISION, not a parsing rule: a bare `AJAY` is
+   unambiguous only because this family happens to have one, and the registry resolves on a
+   PAN first precisely because a name is a spelling. A cost posted against the wrong member
    moves two per-entity totals at once.
 3. **It must not double-count a cost the book already has.** Several of these names are
    also held in a PMS mandate that DOES report a cost.

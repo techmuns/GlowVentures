@@ -29,6 +29,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
+import { ownerIdFor } from "../shared/owners.mjs";
 import * as XLSX from "xlsx";
 
 const REGISTER = "source/august-2026-f/NEW INVESTMENT SHEET.xlsx";
@@ -116,6 +117,7 @@ const EXIT_SHEET = /WRITE\s*OFF|EXIT/i;
 const rows = [];
 const perSheet = [];
 let qtyRows = 0;
+const ownerRows = new Map();
 for (const name of wb.SheetNames) {
   const rr = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null, blankrows: false });
   const hdr = (rr[0] ?? []).map((c) => String(c ?? "").trim().toUpperCase());
@@ -168,7 +170,9 @@ for (const name of wb.SheetNames) {
      * "the register carries quantities".
      */
     if (/^[\d,]+(?:\.\d+)?\s*(EQUITY|SHARES?|CCPS|PREFERENCE|UNITS?|SEEDS?|SERIES)/i.test(String(r[iVal] ?? "").trim())) qtyRows++;
-    rows.push({ sheet: name, name: nm, under: String(r[iUnder] ?? "").trim(), amt });
+    const under = String(r[iUnder] ?? "").trim();
+    if (under) ownerRows.set(under, (ownerRows.get(under) ?? 0) + amt);
+    rows.push({ sheet: name, name: nm, under, amt });
   }
   perSheet.push({ name, tranches: n, subtotals, subtotalValue, sum, returned, valued, isExit: EXIT_SHEET.test(name) });
 }
@@ -194,6 +198,8 @@ const sum = (a) => a.reduce((s, x) => s + x.amt, 0);
 const gross = sum([...byName.values()]);
 const returned = perSheet.reduce((s, x) => s + x.returned, 0);
 const blindSum = gross + perSheet.reduce((s, x) => s + x.subtotalValue, 0);
+let ownerResolved = 0, ownerUnresolved = 0;
+for (const [k, v] of ownerRows) (ownerIdFor(k) ? (ownerResolved += v) : (ownerUnresolved += v));
 const valuedRows = perSheet.reduce((s, x) => s + x.valued, 0);
 
 // ── the costless positions, which is the point of the whole exercise ────────
@@ -313,8 +319,24 @@ say('   inside the free-text "VALUATION AT THE TIME OF INVESTMENT" column ("3932
 say('   FACE VALUE OF 10 - DISTICTIVE FROM…"). Parsing somebody\'s sentence for a figure that then');
 say(`   becomes a tax basis is a different risk from reading a printed column, and on the other`);
 say(`   ${rows.length - qtyRows} rows there is no count to tie against at all.`);
-say("2. **The entity must match.** The register's `INVESTMENT DONE UNDER` is a first name;");
-say("   the book's positions carry an `accountId`. A cost posted against the wrong member");
+say("2. **The entity must resolve, and on this register it does not.** The book's positions carry");
+say("   an `accountId`; the register carries `INVESTMENT DONE UNDER`, and on almost every row that");
+say(`   is a BARE FIRST NAME. Run through \`shared/owners.mjs\`, **₹${cr(ownerUnresolved)} Cr —`);
+say(`   ${Math.round(ownerUnresolved / (ownerUnresolved + ownerResolved) * 100)}% of the register — resolves to no \`ownerId\` at all**:`);
+say();
+say("   | `INVESTMENT DONE UNDER` | Resolves to | Paid |");
+say("   | --- | --- | ---: |");
+for (const [k, v] of [...ownerRows].sort((a, b) => b[1] - a[1])) {
+  say(`   | ${k} | ${ownerIdFor(k) ?? "**— nothing —**"} | ₹${cr(v)} Cr |`);
+}
+say();
+say("   Every alias in the registry carries a surname and the initials rule returns a one-word");
+say("   name unchanged, so `AJAY`, `ANKITA`, `BHARAT` and `AARTI` can match nothing. Only the");
+say("   fully-spelled trust names resolve — and `Bharat Jaisinghani Family Trust` with no numeral");
+say("   resolves to neither trust, which is the hazard this book already names for that string.");
+say("   Adding four aliases would fix it and is a DECISION, not a parsing rule: a bare `AJAY` is");
+say("   unambiguous only because this family happens to have one, and the registry resolves on a");
+say("   PAN first precisely because a name is a spelling. A cost posted against the wrong member");
 say("   moves two per-entity totals at once.");
 say("3. **It must not double-count a cost the book already has.** Several of these names are");
 say("   also held in a PMS mandate that DOES report a cost.");
