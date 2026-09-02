@@ -2917,6 +2917,83 @@ check; the one case left uncovered is named beside the code that governs it (a
 failed POLL blanking a good tile needs one success then a failure, sixty seconds
 apart).
 
+### Stage 10s — THE MUNS CHAT, AND THE ONE SURFACE THAT IS NOT A MEASUREMENT
+
+*"Replace the top search bar with our muns chat… it should be able to take data
+from the dashboard and answer the client any queries. It should understand the
+context since the dashboard data will be available to it."*
+
+**WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
+box was an `<input>` with no `value`, no `onChange` and no handler, in the most
+prominent slot in the app. Nothing was lost, which is why this is recorded as a
+replacement rather than as a removal to be asserted — but it is worth naming,
+because a control that looks alive and does nothing is the failure this file
+keeps finding in other forms.
+
+**`functions/api/chat.js` — AND THE TOKEN NEVER REACHES A BROWSER.** POST
+`https://devde.muns.io/chat/chat-muns` with `Bearer ${MUNS_TOKEN}`, the same
+arrangement the eight functions beside it use. The body is PIPED, not buffered:
+an expert-mode answer takes tens of seconds and a reader watching nothing happen
+assumes it is broken. `X-Chat-Id` and `X-Message-Id` are forwarded and named in
+`Access-Control-Expose-Headers`, because a header the browser cannot read is a
+header that does not exist. **Nothing is cached**, unlike every other function in
+that folder: an answer is not a document, and serving one from the edge would
+attach one member's chat id to another's request.
+
+**IT IS UNVERIFIED AGAINST THE LIVE API, AND SAYS SO.** `MUNS_TOKEN` exists only
+in the Cloudflare environment, so this could not be exercised end to end —
+`research.js` records the same position, and that doc has been wrong about a
+response shape more than once. What IS measured: `POST /chat/chat-muns` with no
+token answers **401**, so the host and route are real and the failure is
+authentication rather than a wrong path. What is NOT: the SSE frame format, and
+whether `DASHBOARD_INPUTS` is read at all. So `munsChat.ts` accepts the widest
+plausible frame set (JSON with any of eight delta field names, `choices[0]`, or
+a plain-text payload), IGNORES what it cannot parse rather than printing an
+envelope into the answer, and reports `NO_TEXT_IN_STREAM` when a stream yields
+nothing — which sends the next person to the field list rather than to the model.
+The context also rides in the TASK TEXT for the same reason: a context the model
+never sees is worse than none, because the answer looks fully briefed.
+
+**THE CONTEXT IS THE PRODUCT, AND `chatContext.ts` IS WHERE THE HONESTY LIVES.**
+A model asked about money it cannot see will fill the gap, so the snapshot is
+built to make guessing unnecessary: consolidated NAV and its listed/private
+split, allocation on `holdingBucket`, per-owner (NOT deduped, §"consolidated
+counts once, per-account does not"), every account with owner, engagement and
+report date, the top holdings, the undrawn commitments. Every figure derived,
+none typed — 27.7 KB, against the function's 256 KB body cap.
+
+**AND THE ABSENCES TRAVEL WITH THE FIGURES**, which is the half that matters.
+`what_this_book_does_not_carry` is derived too, and names: the blend of report
+dates (**47 of 49 accounts behind** the newest), the **60 of 371 positions
+carrying no cost** and the ₹165.9 Cr they hold, the **₹3.17 Cr reported twice
+and counted once**, the **₹12,351.24 Cr ring-fenced Polycab holding that is in
+no total above** — with an instruction never to add it — and the four questions
+this corpus structurally cannot answer. A model told the totals and not those
+five things answers confidently and wrongly, and each is a question a family
+office actually asks.
+
+**AN ANSWER IS NOT A MEASUREMENT AND MUST NOT LOOK LIKE ONE.** Every figure
+elsewhere in this app traces to a statement; this panel renders sentences that
+no document produced, and **there is no `AbsentCell` in a paragraph.** So it is
+marked `AI ANSWER · NOT A STATEMENT FIGURE` in words on the panel rather than in
+a tooltip, the empty state says what the assistant was given AND that it cannot
+reach an account, place a trade or see a figure the dashboard does not already
+show, and a failure names its own code — `NOT_CONFIGURED` (no token) and
+`UPSTREAM_ERROR` (a token the API refused) send the next person to completely
+different places, which is `upstreamStatus.ts`'s rule arriving through a chat.
+
+**THIRTY-FOUR ARITHMETIC CHECKS AND FIVE RENDERED ONES.**
+`src/lib/__tests__/chatContext.test.ts` reconciles the snapshot against the
+GENERATED book by a different path from the builder's — NAV against
+`BOOK_SUMMARY`, buckets against `dedupedPositions`, the per-owner gap against
+`doubleCountedValue`, the fence against `BOOK_POLYCAB` — and asserts the fenced
+value is NOT inside the NAV the same context reports. It also walks the whole
+payload for a non-finite number, because a `?? 0` in the builder is the
+absent-vs-zero rule failing through a JSON field instead of a table cell.
+`check:pages` walks a `chat` route that opens the panel and asks one question:
+the label, the stated snapshot, the vanished search input, and the named
+failure. All verified by reintroducing their bug.
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to

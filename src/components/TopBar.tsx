@@ -1,8 +1,9 @@
-import { Search, Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
+import { Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
+import { MunsChat } from "@/components/MunsChat";
 
 const THEME_KEY = "glow:theme";
 
@@ -110,11 +111,12 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
-      <div className="relative max-w-md flex-1">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-        <input type="text" placeholder="Search holdings, entities…"
-          className="w-full rounded-md border border-ink-700 bg-ink-800 py-2 pl-9 pr-3 text-sm text-slate-200 placeholder-slate-500 ring-focus" />
-      </div>
+      {/* THE SEARCH BOX WAS A CONTROL THAT SEARCHED NOTHING — an `<input>` with
+          no value, no onChange and no handler, sitting in the most prominent
+          slot on the app. The Muns chat takes its place: same slot, and it does
+          something. Nothing was lost, which is why this is a replacement rather
+          than a removal to be asserted. */}
+      <MunsChat />
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
         <CurrencySwitch />

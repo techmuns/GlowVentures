@@ -402,6 +402,10 @@ const ROUTES = [
   // with them held open: the figures must still be on screen from the stored
   // snapshot rather than the card starting over from nothing.
   ["cio-cached", "/cio"],
+  // ...AND THE MUNS CHAT PANEL, opened. It is the one surface in this app that
+  // renders text no statement produced, so what it SAYS ABOUT ITSELF is the
+  // invariant: an answer must never be mistakable for a measured figure.
+  ["chat", "/cio"],
   /**
    * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
    *
@@ -568,7 +572,7 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy|chat)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -742,6 +746,8 @@ let DRILL = null;
 let DIRECT = null;
 /** What the reloaded, network-less second open rendered — see `cio-cached`. */
 let CACHED = null;
+/** What the opened chat panel rendered — see the `chat` route. */
+let CHAT = null;
 /** Header geometry, for the single-line headline claim — see `monitor`. */
 let HEAD = null;
 
@@ -1303,6 +1309,75 @@ const INVARIANTS = {
    * see — a tautology found by reintroducing the bug, which is the point of
    * doing it.
    */
+  /**
+   * AN AI ANSWER IS NOT A MEASUREMENT, AND THE PANEL MUST SAY SO.
+   *
+   * Every figure elsewhere in this app traces to a statement; the chat renders
+   * SENTENCES, and there is no `AbsentCell` in a paragraph. So the invariants
+   * here are about what the surface says ABOUT ITSELF — that its output is
+   * generated, what it was given, and that it can reach nothing else. A reader
+   * who cannot tell an answer from a figure is the one failure this whole book
+   * is built to prevent, arriving through prose instead of a table.
+   */
+  chat: [
+    ["the panel opens where the search box was",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return CHAT.open === true;
+      }],
+
+    /**
+     * ...AND THE DEAD SEARCH BOX IS GONE. It was an `<input>` with no value, no
+     * onChange and no handler — a control that searched nothing, in the most
+     * prominent slot on the app. Counted as an INPUT rather than matched as
+     * text, because its placeholder could legitimately appear in prose.
+     */
+    ["...and the control it replaced, which searched nothing, is gone",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return CHAT.searchInputs === 0;
+      }],
+
+    /**
+     * THE ANSWER IS MARKED AS GENERATED, IN WORDS. Not a badge to hover: a
+     * reader scanning this panel beside a dashboard of traced figures has to
+     * be able to see, without acting, that this text is a different kind of
+     * thing.
+     */
+    ["the panel states plainly that its output is generated, not a statement figure",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /AI ANSWER/i.test(CHAT.text) && /NOT A STATEMENT FIGURE/i.test(CHAT.text);
+      }],
+
+    /**
+     * ...AND SAYS WHAT IT WAS GIVEN AND WHAT IT CANNOT REACH. An assistant that
+     * looks omniscient invites questions it will answer by inventing; one that
+     * names its snapshot invites the questions it can actually answer.
+     */
+    ["...and names its snapshot, and the limits of it",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /snapshot of this dashboard/i.test(CHAT.intro)
+          && /does not carry/i.test(CHAT.intro)
+          && /cannot reach an account/i.test(CHAT.intro);
+      }],
+
+    /**
+     * A FAILURE NAMES ITSELF RATHER THAN RENDERING AN EMPTY ANSWER.
+     *
+     * This harness runs no Pages Function, so the ask 404s — and an empty
+     * assistant bubble there reads as the model having considered the question
+     * and had nothing. THE CAUSE PICKS THE HEADLINE: it must say the function
+     * is not available here, which is a fact about the deployment.
+     */
+    ["a failed ask names the failure instead of rendering an empty answer",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /server-side function/i.test(CHAT.text) && /not available in local preview/i.test(CHAT.text);
+      }],
+  ],
+
   /**
    * REOPENING THE DASHBOARD LANDS ON FIGURES, NOT ON A SPINNER.
    *
@@ -3625,6 +3700,38 @@ for (const theme of THEMES) {
           saysLoading: !!document.querySelector('[data-testid="movers-loading"]'),
           body: document.body.innerText.includes("No holding in this book carries a day change"),
         }));
+      }
+      if (name === "chat") {
+        // Open the panel and ask one question. `/api/chat` is a Pages Function
+        // and `vite preview` runs none, so the ask lands on the FAILURE path —
+        // which is the branch worth walking anyway: a chat that cannot reach
+        // its API must say which failure it was, not render an empty answer
+        // that reads as the model having nothing to say.
+        const t = page.getByTestId("muns-chat-open");
+        if (await t.count()) { await t.click(); await page.waitForTimeout(400); }
+        // THE INTRO IS CAPTURED BEFORE THE ASK. Sending a question replaces the
+        // empty state with the conversation, so an invariant about what the
+        // panel says it was GIVEN has to be struck on the state that says it.
+        const intro = await page.evaluate(() =>
+          document.querySelector('[data-testid="muns-chat-panel"]')?.innerText ?? "");
+        const box = page.getByTestId("muns-chat-input");
+        if (await box.count()) {
+          await box.fill("What is the book worth?");
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(2500);
+        }
+        CHAT = await page.evaluate((introText) => {
+          const panel = document.querySelector('[data-testid="muns-chat-panel"]');
+          return {
+            open: !!panel,
+            intro: introText,
+            text: panel ? panel.innerText : "",
+            // The dead search box this replaced. Counted as an INPUT, because
+            // its placeholder text could legitimately appear in prose.
+            searchInputs: [...document.querySelectorAll("input")]
+              .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
+          };
+        }, intro);
       }
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
