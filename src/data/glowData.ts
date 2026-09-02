@@ -9,7 +9,7 @@
 // list and what document would supply each.
 import type {
   Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, Commitment,
-  CorporateAction, EntityCG, FundInvestment, NavPoint, Position, RealisedByClass,
+  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, RealisedByClass,
   StartupInvestment,
 } from "@/lib/types";
 
@@ -9501,11 +9501,644 @@ export const BOOK_POLYCAB: Position[] = [
 ];
 
 /**
- * Empty, and deliberately so: the corpus carries an opening and a closing
- * portfolio value per account and nothing between them. Two points are not a
- * series. A monthly valuation statement would populate this.
+ * THE CONSOLIDATED DATED NAV SERIES — one point per date on which any covered
+ * account restates, over the accounts that publish MORE THAN ONE dated
+ * valuation, each `dedupeGroup` counted once.
+ *
+ * This was `[]` for several drops with a note saying the corpus carried two
+ * points per account and nothing between them. That was true of the
+ * nine-account corpus and false from the first REISSUE onwards — the fourth
+ * absence in this repo recorded against a premise nobody rechecked. See
+ * `navHistoryFrom` in build-book.mjs for the four rules that keep the series
+ * honest: constant composition, carry-forward marks, dedupe at every date,
+ * and external capital netted out on each account's own clock.
+ *
+ * `flowIn` is the net external capital that entered since the previous point,
+ * so a reader can separate money added from value earned. `unreportedFlowValue`
+ * is the value restated in that interval by an account publishing NO capital
+ * record — the part of the move that cannot be proved to be performance.
  */
-export const BOOK_NAV_HISTORY: NavPoint[] = [];
+export const BOOK_NAV_HISTORY: NavPoint[] = [
+  {
+    "period": "2026-07-10",
+    "date": "2026-07-10",
+    "nav": 1282497077.78,
+    "accountsOnDate": 3,
+    "accountsCarried": 10,
+    "flowIn": 0,
+    "unreportedFlowValue": 0
+  },
+  {
+    "period": "2026-07-27",
+    "date": "2026-07-27",
+    "nav": 1278682507.9,
+    "accountsOnDate": 2,
+    "accountsCarried": 11,
+    "flowIn": -9559,
+    "unreportedFlowValue": 0
+  },
+  {
+    "period": "2026-07-31",
+    "date": "2026-07-31",
+    "nav": 1287047117.03,
+    "accountsOnDate": 4,
+    "accountsCarried": 9,
+    "flowIn": 0,
+    "unreportedFlowValue": 283164024.64
+  },
+  {
+    "period": "2026-08-06",
+    "date": "2026-08-06",
+    "nav": 1287047117.03,
+    "accountsOnDate": 1,
+    "accountsCarried": 12,
+    "flowIn": 0,
+    "unreportedFlowValue": 0
+  },
+  {
+    "period": "2026-08-10",
+    "date": "2026-08-10",
+    "nav": 1282278705.95,
+    "accountsOnDate": 1,
+    "accountsCarried": 12,
+    "flowIn": 0,
+    "unreportedFlowValue": 0
+  },
+  {
+    "period": "2026-08-11",
+    "date": "2026-08-11",
+    "nav": 1291777593.71,
+    "accountsOnDate": 2,
+    "accountsCarried": 11,
+    "flowIn": -65735,
+    "unreportedFlowValue": 0
+  },
+  {
+    "period": "2026-08-13",
+    "date": "2026-08-13",
+    "nav": 1401702103.89,
+    "accountsOnDate": 2,
+    "accountsCarried": 11,
+    "flowIn": 112393342,
+    "unreportedFlowValue": 0
+  }
+];
+
+/**
+ * The same series per account, whole — so one mandate can be charted alone
+ * and so the consolidated series above can be checked against its own parts.
+ */
+export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
+  "360-one-private-wealth-37702": [
+    {
+      "period": "2026-05-31",
+      "date": "2026-05-31",
+      "nav": 14408473.91
+    },
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 14580412.51
+    },
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 14668362.66
+    }
+  ],
+  "360-one-private-wealth-60117": [
+    {
+      "period": "2026-05-31",
+      "date": "2026-05-31",
+      "nav": 14408473.91
+    },
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 14580412.51
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
+    {
+      "period": "2026-07-10",
+      "date": "2026-07-10",
+      "nav": 400106027.94
+    },
+    {
+      "period": "2026-08-10",
+      "date": "2026-08-10",
+      "nav": 395337616.86
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022": [
+    {
+      "period": "2026-07-10",
+      "date": "2026-07-10",
+      "nav": 77538153.36
+    },
+    {
+      "period": "2026-08-11",
+      "date": "2026-08-11",
+      "nav": 80195236.76
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023": [
+    {
+      "period": "2026-07-10",
+      "date": "2026-07-10",
+      "nav": 181154076.83
+    },
+    {
+      "period": "2026-08-11",
+      "date": "2026-08-11",
+      "nav": 187995881.19
+    }
+  ],
+  "green-lantern-capital-llp-510854": [
+    {
+      "period": "2026-06-25",
+      "date": "2026-06-25",
+      "nav": 59248501.89
+    },
+    {
+      "period": "2026-07-27",
+      "date": "2026-07-27",
+      "nav": 57966679.22
+    }
+  ],
+  "green-lantern-capital-llp-510861": [
+    {
+      "period": "2026-06-25",
+      "date": "2026-06-25",
+      "nav": 117016830.76
+    },
+    {
+      "period": "2026-07-27",
+      "date": "2026-07-27",
+      "nav": 114484083.55
+    }
+  ],
+  "hdfc-mutual-fund-16180583": [
+    {
+      "period": "2026-07-01",
+      "date": "2026-07-01",
+      "nav": 0
+    },
+    {
+      "period": "2026-08-06",
+      "date": "2026-08-06",
+      "nav": 0
+    }
+  ],
+  "molecule-ventures-llp-7810404": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 11248248.66
+    },
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 11597496.65
+    }
+  ],
+  "svan-investment-managers-llp-8710067": [
+    {
+      "period": "2026-05-31",
+      "date": "2026-05-31",
+      "nav": 147999299.63
+    },
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 159825245.22
+    },
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 164540939.64
+    }
+  ],
+  "svan-investment-managers-llp-8710090": [
+    {
+      "period": "2026-05-31",
+      "date": "2026-05-31",
+      "nav": 96109656.08
+    },
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 103813871.78
+    },
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 107025588.35
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004": [
+    {
+      "period": "2026-07-06",
+      "date": "2026-07-06",
+      "nav": 65522325.41
+    },
+    {
+      "period": "2026-08-13",
+      "date": "2026-08-13",
+      "nav": 65010579.28
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005": [
+    {
+      "period": "2026-07-06",
+      "date": "2026-07-06",
+      "nav": 92443383.42
+    },
+    {
+      "period": "2026-08-13",
+      "date": "2026-08-13",
+      "nav": 202879639.73
+    }
+  ]
+};
+
+/**
+ * WHAT THE SERIES COVERS, AND WHAT IT CANNOT — the accounts publishing two or
+ * more dated valuations, the ones publishing exactly one, and the ones
+ * publishing none. A series over 17 of 49 accounts that does not say so is a
+ * claim about the book; this is what lets the page name every exclusion.
+ *
+ * `flowBasis` per covered account: `reported` (a dated capital record exists),
+ * `units-unchanged` (one security, identical unit count at every snapshot, so
+ * the statement itself rules out a subscription or redemption), or
+ * `unreported` (neither — a capital movement there would read as performance).
+ */
+export const BOOK_NAV_COVERAGE: NavCoverage = {
+  "covered": [
+    {
+      "accountId": "360-one-private-wealth-37702",
+      "points": 3,
+      "first": "2026-05-31",
+      "last": "2026-07-31",
+      "latestValue": 14668362.66,
+      "bookValue": 14668362.66,
+      "flowBasis": "units-unchanged"
+    },
+    {
+      "accountId": "360-one-private-wealth-60117",
+      "points": 2,
+      "first": "2026-05-31",
+      "last": "2026-06-30",
+      "latestValue": 14580412.51,
+      "bookValue": 14580412.51,
+      "flowBasis": "units-unchanged"
+    },
+    {
+      "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
+      "points": 2,
+      "first": "2026-07-10",
+      "last": "2026-08-10",
+      "latestValue": 395337616.86,
+      "bookValue": 395337616.86,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "goldstandard-wealth-private-limited-100022",
+      "points": 2,
+      "first": "2026-07-10",
+      "last": "2026-08-11",
+      "latestValue": 80195236.76,
+      "bookValue": 80195236.76,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "goldstandard-wealth-private-limited-100023",
+      "points": 2,
+      "first": "2026-07-10",
+      "last": "2026-08-11",
+      "latestValue": 187995881.19,
+      "bookValue": 187995881.19,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "green-lantern-capital-llp-510854",
+      "points": 2,
+      "first": "2026-06-25",
+      "last": "2026-07-27",
+      "latestValue": 57966679.22,
+      "bookValue": 57966679.22,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "green-lantern-capital-llp-510861",
+      "points": 2,
+      "first": "2026-06-25",
+      "last": "2026-07-27",
+      "latestValue": 114484083.55,
+      "bookValue": 114484083.55,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "hdfc-mutual-fund-16180583",
+      "points": 2,
+      "first": "2026-07-01",
+      "last": "2026-08-06",
+      "latestValue": 0,
+      "bookValue": 0,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "molecule-ventures-llp-7810404",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-07-31",
+      "latestValue": 11597496.65,
+      "bookValue": 11597496.65,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "svan-investment-managers-llp-8710067",
+      "points": 3,
+      "first": "2026-05-31",
+      "last": "2026-07-31",
+      "latestValue": 164540939.64,
+      "bookValue": 164540939.64,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "svan-investment-managers-llp-8710090",
+      "points": 3,
+      "first": "2026-05-31",
+      "last": "2026-07-31",
+      "latestValue": 107025588.35,
+      "bookValue": 107025588.35,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "v-e-c-assago-capital-management-llp-128004",
+      "points": 2,
+      "first": "2026-07-06",
+      "last": "2026-08-13",
+      "latestValue": 65010579.28,
+      "bookValue": 65010579.28,
+      "flowBasis": "reported"
+    },
+    {
+      "accountId": "v-e-c-assago-capital-management-llp-128005",
+      "points": 2,
+      "first": "2026-07-06",
+      "last": "2026-08-13",
+      "latestValue": 202879639.73,
+      "bookValue": 202879639.73,
+      "flowBasis": "reported"
+    }
+  ],
+  "single": [
+    {
+      "accountId": "3p-investment-managers-3000048",
+      "provider": "3P Investment Managers",
+      "accountNo": "3000048",
+      "date": "2026-07-31",
+      "bookValue": 0
+    },
+    {
+      "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+      "provider": "Baring Private Equity India Fund",
+      "accountNo": "AIFM_BPEPF6_0584",
+      "date": "2026-03-31",
+      "bookValue": 18842208.74
+    },
+    {
+      "accountId": "buoyant-capital-103472",
+      "provider": "Buoyant Capital",
+      "accountNo": "103472",
+      "date": "2026-07-31",
+      "bookValue": 276881535.53
+    },
+    {
+      "accountId": "buoyant-capital-103473",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "date": "2026-07-31",
+      "bookValue": 492981982.05
+    },
+    {
+      "accountId": "carnelian-bharat-amritkaal-fund-4551",
+      "provider": "Carnelian Bharat Amritkaal Fund",
+      "accountNo": "4551",
+      "date": "2026-07-31",
+      "bookValue": 163115312.43
+    },
+    {
+      "accountId": "helios-mutual-fund-10355977",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "date": "2026-08-07",
+      "bookValue": 309984500.77
+    },
+    {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "date": "2026-03-31",
+      "bookValue": 637801111.15
+    },
+    {
+      "accountId": "lkp-securities-98245",
+      "provider": "LKP Securities",
+      "accountNo": "98245",
+      "date": "2026-03-31",
+      "bookValue": 9876174.92
+    },
+    {
+      "accountId": "motilal-oswal-active-momentum-fund-904168868444",
+      "provider": "Motilal Oswal Active Momentum Fund",
+      "accountNo": "904168868444",
+      "date": "2026-08-06",
+      "bookValue": 214189290.53
+    },
+    {
+      "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+      "provider": "Motilal Oswal Delphi Equity Fund",
+      "accountNo": "9049241536",
+      "date": "2026-06-30",
+      "bookValue": 111287535.35
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838316",
+      "date": "2026-07-31",
+      "bookValue": 383837353.18
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838320",
+      "date": "2026-07-31",
+      "bookValue": 328255048.02
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012838335",
+      "date": "2026-07-31",
+      "bookValue": 309525348.31
+    },
+    {
+      "accountId": "motilal-oswal-founders-fund-90410016093",
+      "provider": "Motilal Oswal Founders Fund",
+      "accountNo": "90410016093",
+      "date": "2026-07-31",
+      "bookValue": 109900127.57
+    },
+    {
+      "accountId": "motilal-oswal-founders-fund-90410016104",
+      "provider": "Motilal Oswal Founders Fund",
+      "accountNo": "90410016104",
+      "date": "2026-07-31",
+      "bookValue": 218250873.93
+    },
+    {
+      "accountId": "neo-infra-income-opportunities-fund-9039920536",
+      "provider": "Neo Infra Income Opportunities Fund",
+      "accountNo": "9039920536",
+      "date": "2026-06-30",
+      "bookValue": 55498303.25
+    },
+    {
+      "accountId": "sanshi-fund-9039671821",
+      "provider": "Sanshi Fund",
+      "accountNo": "9039671821",
+      "date": "2026-06-30",
+      "bookValue": 976826519.91
+    },
+    {
+      "accountId": "sanshi-fund-9039671854",
+      "provider": "Sanshi Fund",
+      "accountNo": "9039671854",
+      "date": "2026-06-30",
+      "bookValue": 195688390.51
+    },
+    {
+      "accountId": "sanshi-fund-9039671912",
+      "provider": "Sanshi Fund",
+      "accountNo": "9039671912",
+      "date": "2026-06-30",
+      "bookValue": 293523824.82
+    },
+    {
+      "accountId": "sanshi-fund-9069671554",
+      "provider": "Sanshi Fund",
+      "accountNo": "9069671554",
+      "date": "2026-06-30",
+      "bookValue": 294202601.1
+    },
+    {
+      "accountId": "sanshi-fund-9069671634",
+      "provider": "Sanshi Fund",
+      "accountNo": "9069671634",
+      "date": "2026-06-30",
+      "bookValue": 284563122.95
+    },
+    {
+      "accountId": "transition-venture-capital-TVC262",
+      "provider": "Transition Venture Capital",
+      "accountNo": "TVC262",
+      "date": "2026-03-31",
+      "bookValue": 17145962.25
+    },
+    {
+      "accountId": "transition-venture-capital-TVC263",
+      "provider": "Transition Venture Capital",
+      "accountNo": "TVC263",
+      "date": "2026-03-31",
+      "bookValue": 17145962.25
+    }
+  ],
+  "unvalued": [
+    {
+      "accountId": "360-one-alternates-asset-management-1000632",
+      "provider": "360 ONE Alternates Asset Management",
+      "accountNo": "1000632",
+      "bookValue": 0
+    },
+    {
+      "accountId": "360-one-alternates-asset-management-1000633",
+      "provider": "360 ONE Alternates Asset Management",
+      "accountNo": "1000633",
+      "bookValue": 0
+    },
+    {
+      "accountId": "india-sme-investments-175962",
+      "provider": "India SME Investments",
+      "accountNo": "175962",
+      "bookValue": 0
+    },
+    {
+      "accountId": "india-sme-investments-175964",
+      "provider": "India SME Investments",
+      "accountNo": "175964",
+      "bookValue": 0
+    },
+    {
+      "accountId": "india-sme-investments-177302",
+      "provider": "India SME Investments",
+      "accountNo": "177302",
+      "bookValue": 0
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090012539150",
+      "bookValue": 0
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090037359311",
+      "bookValue": 0
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090037436848",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090037436848",
+      "bookValue": 0
+    },
+    {
+      "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+      "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
+      "accountNo": "90410014574",
+      "bookValue": 0
+    },
+    {
+      "accountId": "sky-capital-rising-titans-fund-SKY003",
+      "provider": "Sky Capital Rising Titans Fund",
+      "accountNo": "SKY003",
+      "bookValue": 0
+    },
+    {
+      "accountId": "sky-capital-rising-titans-fund-SKY022",
+      "provider": "Sky Capital Rising Titans Fund",
+      "accountNo": "SKY022",
+      "bookValue": 0
+    },
+    {
+      "accountId": "sky-capital-rising-titans-fund-SKY023",
+      "provider": "Sky Capital Rising Titans Fund",
+      "accountNo": "SKY023",
+      "bookValue": 0
+    },
+    {
+      "accountId": "sky-capital-rising-titans-fund-SKY024",
+      "provider": "Sky Capital Rising Titans Fund",
+      "accountNo": "SKY024",
+      "bookValue": 0
+    }
+  ],
+  "from": "2026-07-10",
+  "to": "2026-08-13"
+};
 
 /**
  * Realised short/long-term gains as the MANAGER split them, per account.
