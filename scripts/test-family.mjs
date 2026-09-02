@@ -28,6 +28,7 @@ const SUITES = [
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["econ calendar", "src/lib/__tests__/econCalendar.test.ts"],
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
+  ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
 ];
 
 let failed = 0;

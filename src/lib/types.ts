@@ -195,6 +195,20 @@ export type Position = {
   stCostBasis: number | null;
   ltCostBasis: number | null;
   daysToLT: number | null;  // min days for short-term lots to turn long-term
+  /**
+   * ISO date the OLDEST unit still held was bought — the holding's own start.
+   *
+   * The ONLY field in this book that can say how long a holding has been held,
+   * and therefore the only one that can license an ANNUALISED return. Populated
+   * under the same gate as the ST/LT split above (the lots must account for the
+   * units held exactly), so it is real on a few positions and NULL on the rest.
+   *
+   * NEVER DEFAULT IT. A missing date read as "today" makes every annualised
+   * return infinite; read as "long ago" it makes every one vanish. A holding
+   * whose start is unknown cannot be annualised at all — see `holdingReturn`
+   * in ./analytics, which renders it absent rather than guessing the window.
+   */
+  heldSince: string | null;
   dividendReceived: number | null; // INR, cumulative
   /** Income accrued but not yet received, carried separately from market value. */
   accruedIncome?: number | null;

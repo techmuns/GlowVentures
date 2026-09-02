@@ -3124,6 +3124,85 @@ silently stops checking is worse than no filter, and a blanket keep would have
 thrown away main's typo guard.
 
 
+### Stage 10p — density, and the guard on an annualised return
+
+Three asks on the Portfolio Monitor. Two shipped; the third is declared absent
+against a MEASUREMENT rather than a premise, which is the whole of why this
+section exists.
+
+**THE PAGE SPENT ITS FIRST SCREEN ON CHROME.** *"I cannot even see 2 companies
+completely, which is very inefficient presentation."* Measured, that was true:
+the filters, the view toggle and the two export buttons each had a row of their
+own, and the security column was narrow enough that `Fractal Analytics Limited`
+wrapped onto THREE lines, so a row stood ~70px tall. One wrapping chrome row at
+`text-xs`, `py-1.5` cells and a `min-w-[15rem]` name column put **15 holdings on
+screen at 1500x950 where 2 fitted before**.
+
+**AND DENSITY IS ASSERTED ON GEOMETRY, because no amount of matching innerText
+can see it.** A page can print every row correctly and still bury them: the
+complaint was about where things sit, not what they say. `check:pages` now
+measures `rowsInView` and `firstRowTop` IN THE PAGE and hands them to the
+invariants — at least ten rows fully visible, and the first row inside the top
+third of the viewport. The second is what stops the first being satisfied by a
+taller window instead of tighter chrome. Both were verified by putting the old
+type scale and padding back.
+
+**THE RETURN TOGGLE, AND WHY THE GUARD IS THE FEATURE.** *"More than one year
+it'll be CAGR, less than one year I'd rather see absolute… never an annualised
+extrapolation."* `holdingReturn` in `analytics.ts` is the one place that
+decides, and the page only draws:
+
+- a measured window of **≥ 365 days** → annualised, the window named in the cell;
+- **under a year** → the ABSOLUTE figure, marked `abs`, because a rate for a
+  year the holding has not seen is a claim about a year;
+- **no reported purchase date** → `AbsentCell`. Not "weaker", not silently
+  absolute: a rate over an unknown window is not a figure at all.
+
+**`positionIrrPct` LOOKS LIKE THE SOURCE FOR THIS AND IS A TRAP.** The PMS
+statements publish a per-position IRR — 75 of 371 positions carry one — and it
+is ALREADY the extrapolation being banned: it reaches **+47,695%** on this book,
+and reads 193.9% for a holding whose return on cost is 56.5%. That is a provider
+annualising a few months, the same arithmetic that put +99.0% on the Morning CIO
+strip in Stage 10g(ii). `holdingReturn` never reads it.
+
+The window can only come from `Position.heldSince`, which `build-book` emits
+under the SAME gate as the ST/LT split — the lots must account for the units held
+exactly, or Pricol's departed units would date a holding they are no longer in.
+On this drop that is **3 of 371 positions**: Crompton at 527 days annualises
+(−27.78% on cost → **−20.18% p.a.**), Transrail at 337 and Bectors at 274 hit the
+guard. The column's own caption COUNTS all three states rather than claiming
+coverage, and `check:pages` reconciles those counts against the row total.
+
+### AND YTD / CALENDAR-YEAR ON A HOLDING IS NOT MEASURABLE HERE
+
+*"Add YTD and calendar-year columns for the holding itself, not just the
+security's market return."* The distinction is exactly right — a holding's own
+return over a window is a different question from what the share did — and this
+book cannot answer it. Measured over `public/audit/`, not assumed:
+
+| | |
+| --- | --- |
+| Earliest holdings statement of any account | **2026-03-31** |
+| Transaction tape | **2026-04-01 → 2026-08-13** |
+| Valuations dated on or before 2026-01-01 | **none** |
+| Trades dated before 2026-01-01 | **0 of 839** |
+
+A holding's YTD return needs its value at 1 January and every flow since. This
+corpus begins in April, so both halves are missing for every position, and a
+calendar-YEAR return (2025, 2024) is further out of reach still — the whole
+archive is four and a half months long.
+
+**So no column was added**, and that is the point rather than an omission: two
+permanently-dashed columns would fight the density this same request asked for,
+and would read as a broken feed rather than a decided absence — the rule this
+file already states for the company page's four removed cards. **What would fix
+it is one document**: a holdings statement dated on or before 1 January, per
+account. The moment one lands, the value at the year's start is measurable and
+the column becomes ordinary work. The SECURITY's market YTD is available today
+from `/api/prices` and is deliberately not substituted: standing a market return
+in for the family's own return on the holding is the substitution this book
+refuses everywhere else.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

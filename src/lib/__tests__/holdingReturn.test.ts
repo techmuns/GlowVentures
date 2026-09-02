@@ -1,0 +1,126 @@
+// THE ABSOLUTE / CAGR GUARD.  npm run test:family
+//
+// ── WHY THIS EXISTS ─────────────────────────────────────────────────────────
+//
+// "More than one year it'll be CAGR, less than one year I'd rather see
+// absolute… a position held under a year renders absolute, never an annualised
+// extrapolation."
+//
+// This repo has already shipped that exact failure once: the Morning CIO strip
+// read +99.0% because a 132-day window was compounded onto a full year, and
+// every step of it reproduced. The same figure is sitting in the archive right
+// now — `positionIrrPct`, published per position by the PMS statements, reaches
+// **+47,695%** on this book and reads 193.9% for a holding whose return on cost
+// is 56.5%. It is a provider annualising a few months, so `holdingReturn` must
+// never reach for it, and the test below asserts the guard rather than the
+// happy path: a rule that only fires on data that happens to be long enough is
+// indistinguishable from no rule at all.
+//
+// The window can only come from `Position.heldSince`, which `build-book` emits
+// under the same gate as the ST/LT split — the lots must account for the units
+// held exactly. On this book that is 3 of 371 positions, and the assertions
+// below are written as RELATIONS against the generated book so they cannot go
+// stale when the next drop moves it.
+import { BOOK_POSITIONS, BOOK_SUMMARY } from "@/data/glowData";
+import { holdingReturn, returnModeCoverage, YEAR_DAYS, type Holdable } from "@/lib/analytics";
+
+let fails = 0;
+const ok = (name: string, pass: boolean, detail = "") => {
+  if (!pass) { fails++; console.log(`FAIL ${name}${detail ? `: ${detail}` : ""}`); }
+  else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
+};
+const near = (name: string, got: number, want: number, tol: number) =>
+  ok(name, Math.abs(got - want) <= tol, `${got.toFixed(4)} vs ${want} (±${tol})`);
+
+const ASOF = "2026-08-13";
+const h = (returnPct: number | null, heldSince: string | null): Holdable => ({ returnPct, heldSince });
+
+// ── 1. ABSOLUTE MODE NEVER ANNUALISES ANYTHING ──────────────────────────────
+for (const [label, since] of [["a long hold", "2020-01-01"], ["a short hold", "2026-07-01"], ["an unknown start", null]] as const) {
+  const r = holdingReturn(h(40, since), "absolute", ASOF);
+  ok(`absolute mode returns the figure on cost — ${label}`, r.kind === "absolute" && r.pct === 40);
+}
+
+// ── 2. THE GUARD ────────────────────────────────────────────────────────────
+// One day short of a year is still short of a year. Asserted at the boundary,
+// because a `>` written for a `>=` fails nowhere else.
+const dayBefore = new Date(Date.parse(ASOF) - (YEAR_DAYS - 1) * 86_400_000).toISOString().slice(0, 10);
+const atYear = new Date(Date.parse(ASOF) - YEAR_DAYS * 86_400_000).toISOString().slice(0, 10);
+ok("364 days is NOT annualised", holdingReturn(h(40, dayBefore), "cagr", ASOF).kind === "absolute");
+ok("365 days IS annualised", holdingReturn(h(40, atYear), "cagr", ASOF).kind === "cagr");
+{
+  const r = holdingReturn(h(40, dayBefore), "cagr", ASOF);
+  ok("...and the sub-year fallback carries the UNCHANGED absolute figure, not a scaled one",
+     r.kind === "absolute" && r.pct === 40, r.kind === "absolute" ? String(r.pct) : r.kind);
+}
+{
+  const r = holdingReturn(h(40, null), "cagr", ASOF);
+  ok("an unknown start is ABSENT, never annualised and never silently absolute", r.kind === "absent");
+  ok("...and the reason names what is missing and what to do",
+     r.kind === "absent" && /purchase date/i.test(r.reason) && /Absolute/.test(r.reason));
+}
+ok("no cost basis is absent", holdingReturn(h(null, "2020-01-01"), "cagr", ASOF).kind === "absent");
+// A holding worth nothing against its cost has no compound rate: (1 + −1)^x is 0
+// for every x, so a "rate" here would claim the loss repeats annually forever.
+ok("a total loss has no compound rate", holdingReturn(h(-100, "2020-01-01"), "cagr", ASOF).kind === "absent");
+
+// ── 3. THE ARITHMETIC, worked by hand ───────────────────────────────────────
+// Exactly two years, +21% total → 1.21^(1/2) − 1 = 10%.
+{
+  const twoYears = new Date(Date.parse(ASOF) - 730 * 86_400_000).toISOString().slice(0, 10);
+  const r = holdingReturn(h(21, twoYears), "cagr", ASOF);
+  near("+21% over two years annualises to +10%", r.kind === "cagr" ? r.pct : NaN, 10, 0.05);
+}
+// The book's own case: Crompton, −27.78% on cost over 527 days.
+// (1 − 0.2778)^(365/527) − 1 = −20.18%.
+{
+  const r = holdingReturn(h(-27.78, "2025-03-04"), "cagr", ASOF);
+  near("Crompton's real figures annualise to −20.18%", r.kind === "cagr" ? r.pct : NaN, -20.18, 0.05);
+  ok("...and an annualised LOSS is smaller in magnitude than the total loss",
+     r.kind === "cagr" && r.pct > -27.78, r.kind === "cagr" ? r.pct.toFixed(2) : r.kind);
+}
+
+// ── 4. THE GUARD IS LOAD-BEARING ON THIS BOOK ───────────────────────────────
+// The same shape as accountXirr.test.ts: prove that removing the guard would
+// MOVE figures, so this suite cannot pass by accident on a book where the two
+// happen to coincide.
+{
+  const short = BOOK_POSITIONS.filter((p) => {
+    if (!p.heldSince || p.returnPct === null) return false;
+    return Math.round((Date.parse(ASOF) - Date.parse(p.heldSince)) / 86_400_000) < YEAR_DAYS;
+  });
+  ok("the book actually contains sub-year holdings for the guard to catch", short.length > 0, `${short.length}`);
+  const wouldMove = short.filter((p) => {
+    const days = Math.round((Date.parse(ASOF) - Date.parse(p.heldSince!)) / 86_400_000);
+    const annualised = (Math.pow(1 + p.returnPct! / 100, YEAR_DAYS / days) - 1) * 100;
+    return Math.abs(annualised - p.returnPct!) > 1;
+  });
+  ok("...and annualising them would move every one by more than a point",
+     short.length > 0 && wouldMove.length === short.length, `${wouldMove.length} of ${short.length}`);
+}
+
+// ── 5. COVERAGE IS COUNTED, NOT CLAIMED ─────────────────────────────────────
+{
+  const cov = returnModeCoverage(BOOK_POSITIONS, "cagr", ASOF);
+  ok("coverage partitions the book — every position lands in exactly one state",
+     cov.cagr + cov.absolute + cov.absent === cov.total && cov.total === BOOK_POSITIONS.length,
+     `${cov.cagr} cagr / ${cov.absolute} abs / ${cov.absent} absent of ${cov.total}`);
+  // Anchored on the GENERATED book rather than a literal: heldSince is emitted
+  // by build-book under the lot-coverage gate, so the two move together.
+  const dated = BOOK_POSITIONS.filter((p) => p.heldSince).length;
+  ok("every annualised or guarded row is one the book gives a start date",
+     cov.cagr + cov.absolute <= dated, `${cov.cagr + cov.absolute} <= ${dated}`);
+  ok("most of the book has no reported purchase date, and the column says so",
+     cov.absent > cov.cagr, `${cov.absent} absent vs ${cov.cagr} annualised`);
+  // In absolute mode nothing is absent for want of a DATE — only for want of a cost.
+  const abs = returnModeCoverage(BOOK_POSITIONS, "absolute", ASOF);
+  const noCost = BOOK_POSITIONS.filter((p) => p.returnPct === null).length;
+  ok("absolute mode is absent only where there is no cost", abs.absent === noCost, `${abs.absent} vs ${noCost}`);
+  ok("...so absolute mode covers far more rows than CAGR", abs.absent < cov.absent);
+}
+
+// A generated-book sanity anchor, so a drop that drops `heldSince` is loud.
+ok("the book still carries a report date for the window to close against", !!BOOK_SUMMARY.asOf);
+
+console.log(fails ? `\n${fails} failed` : "\nall checks passed");
+process.exit(fails ? 1 : 0);
