@@ -78,10 +78,15 @@ Those 7 carry **₹27.35 Cr** of market value against
 **THE PAID FIGURE IS NOT A COST BASIS YET, AND MUST NOT BE POSTED AS ONE.** Three things
 have to be true first, and none of them can be established from the register alone:
 
-1. **The quantities must tie.** The register records a payment, not a share count. Where
-   the family bought the same name twice and sold part, the money paid is not the cost of
-   the units still held — which is the rule `costFor` already applies to LKP's opening
-   ledger, joining a cost ONLY where the quantities match exactly.
+1. **The quantities must tie**, and the register can only half support that. Its money column
+   is a payment, not a share count: where the family bought the same name twice and sold
+   part, what was paid is not the cost of the units still held. That is the rule `costFor`
+   already applies to LKP's opening ledger, joining a cost ONLY where quantities match
+   exactly. A count IS stated on **74 of the 428 money rows (17%)** — but as PROSE
+   inside the free-text "VALUATION AT THE TIME OF INVESTMENT" column ("3932 EQUITY SHARES -
+   FACE VALUE OF 10 - DISTICTIVE FROM…"). Parsing somebody's sentence for a figure that then
+   becomes a tax basis is a different risk from reading a printed column, and on the other
+   354 rows there is no count to tie against at all.
 2. **The entity must match.** The register's `INVESTMENT DONE UNDER` is a first name;
    the book's positions carry an `accountId`. A cost posted against the wrong member
    moves two per-entity totals at once.

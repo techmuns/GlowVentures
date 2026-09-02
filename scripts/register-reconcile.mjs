@@ -115,6 +115,7 @@ const wb = XLSX.read(wbBytes, { type: "buffer", cellDates: true });
 const EXIT_SHEET = /WRITE\s*OFF|EXIT/i;
 const rows = [];
 const perSheet = [];
+let qtyRows = 0;
 for (const name of wb.SheetNames) {
   const rr = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null, blankrows: false });
   const hdr = (rr[0] ?? []).map((c) => String(c ?? "").trim().toUpperCase());
@@ -122,6 +123,7 @@ for (const name of wb.SheetNames) {
   const iUnder = hdr.indexOf("INVESTMENT DONE UNDER");
   const iAmt = hdr.indexOf("INVESTMENT AMOUNT");
   const iCur = hdr.indexOf("CURRENT VALUATION");
+  const iVal = hdr.indexOf("VALUATION AT THE TIME OF INVESTMENT");
   const iRet = hdr.findIndex((h) => h.includes("LOAN RETURNED"));
   let sum = 0, n = 0, subtotals = 0, returned = 0, valued = 0;
   for (const r of rr.slice(1)) {
@@ -137,6 +139,18 @@ for (const name of wb.SheetNames) {
     const amt = typeof r[iAmt] === "number" ? r[iAmt] : null;
     if (!nm || amt == null) continue;
     sum += amt; n++;
+    /**
+     * A SHARE COUNT IS IN HERE, BUT AS PROSE AND ONLY SOMETIMES.
+     *
+     * `costFor` may only join a cost where the QUANTITIES MATCH EXACTLY, so
+     * whether this register can supply one turns on whether it states a
+     * quantity at all. It does — inside the free-text "VALUATION AT THE TIME OF
+     * INVESTMENT" column, as "3932 EQUITY SHARES - FACE VALUE OF 10 -
+     * DISTICTIVE FROM…". Counted rather than assumed, in either direction: the
+     * claim "the register records a payment, not a share count" is as wrong as
+     * "the register carries quantities".
+     */
+    if (/^[\d,]+(?:\.\d+)?\s*(EQUITY|SHARES?|CCPS|PREFERENCE|UNITS?|SEEDS?|SERIES)/i.test(String(r[iVal] ?? "").trim())) qtyRows++;
     rows.push({ sheet: name, name: nm, under: String(r[iUnder] ?? "").trim(), amt });
   }
   perSheet.push({ name, tranches: n, subtotals, sum, returned, valued, isExit: EXIT_SHEET.test(name) });
@@ -268,10 +282,15 @@ say();
 say("**THE PAID FIGURE IS NOT A COST BASIS YET, AND MUST NOT BE POSTED AS ONE.** Three things");
 say("have to be true first, and none of them can be established from the register alone:");
 say();
-say("1. **The quantities must tie.** The register records a payment, not a share count. Where");
-say("   the family bought the same name twice and sold part, the money paid is not the cost of");
-say("   the units still held — which is the rule `costFor` already applies to LKP's opening");
-say("   ledger, joining a cost ONLY where the quantities match exactly.");
+say(`1. **The quantities must tie**, and the register can only half support that. Its money column`);
+say("   is a payment, not a share count: where the family bought the same name twice and sold");
+say("   part, what was paid is not the cost of the units still held. That is the rule `costFor`");
+say("   already applies to LKP's opening ledger, joining a cost ONLY where quantities match");
+say(`   exactly. A count IS stated on **${qtyRows} of the ${rows.length} money rows (${Math.round(qtyRows / rows.length * 100)}%)** — but as PROSE`);
+say('   inside the free-text "VALUATION AT THE TIME OF INVESTMENT" column ("3932 EQUITY SHARES -');
+say('   FACE VALUE OF 10 - DISTICTIVE FROM…"). Parsing somebody\'s sentence for a figure that then');
+say(`   becomes a tax basis is a different risk from reading a printed column, and on the other`);
+say(`   ${rows.length - qtyRows} rows there is no count to tie against at all.`);
 say("2. **The entity must match.** The register's `INVESTMENT DONE UNDER` is a first name;");
 say("   the book's positions carry an `accountId`. A cost posted against the wrong member");
 say("   moves two per-entity totals at once.");
