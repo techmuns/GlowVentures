@@ -2610,6 +2610,195 @@ on the deduped private total equalling **`BOOK_SUMMARY.privateValue` to the
 rupee** — two independent paths to one figure, so it cannot go stale when the
 next drop moves the book.
 
+### Stage 10n — THE DEFAULT VIEW IS THE ZOOMED-OUT ONE
+
+*"When I do ctrl -- the view becomes better and realigned. I want the zoomed out
+view presentation without doing ctrl --."*
+
+That is a defect report, not a preference. At 100% the Portfolio Monitor's filter
+bar wraps its two buttons onto a second row, the Entity column breaks
+`AJAY JAISINGHANI · V.E.C 128005` across two lines, and a wide table loses its
+last column to the scroller. Zooming out buys CSS pixels and every one of those
+goes away — so the reader was correcting a layout that did not fit, on every
+visit.
+
+**`--app-zoom` IN `index.css`, AND NOTHING ELSE MOVES.** One custom property,
+`0.875` at ≥1024px, applied to `#root`. `zoom` is what browser zoom itself does:
+it REFLOWS at the new scale, so the filter bar genuinely fits on one row. A
+`transform: scale()` would shrink the picture and leave the layout believing it
+was still 1500px wide — the wrap would stay, just smaller. Every px size in the
+components is untouched; set the variable to 1 and the app is what it was.
+
+**TWO THINGS ABOUT `zoom` THAT WERE MEASURED RATHER THAN REASONED**, because both
+first drafts were wrong in ways that render:
+
+- The obvious `height: calc(100% / var(--app-zoom))` is a DOUBLE compensation.
+  Chrome already resolves a percentage height inside the zoomed coordinate
+  space, so `100%` of a 900px viewport is the 1028px that paints back to 900.
+  Dividing again gave `#root` a used height of 1028px against a 900px window and
+  a permanent scrollbar on pages that fit.
+- **Nothing in the zoomed subtree may be sized in `vh`.** A viewport unit is not
+  rescaled by zoom, so the shell's `h-screen` painted at 100vh × 0.875 — a 787px
+  app in a 900px window, with a dead band under it that reads as a rendering
+  fault. The shell, the sidebar and the error boundary are `h-full` now, which
+  chains off the `height: 100%` on html/body/#root. A future `min-h-screen`
+  anywhere under `#root` brings the band straight back.
+
+### Stage 10o — THE YEAR'S TRADING IS TWELVE LINES, NOT FOUR HUNDRED AND SIXTY-TWO
+
+*"Show the year's transactions as one line per entity / manager / instrument, not
+a raw tape. I will only see five items — Buoyant, VEC, Carnelian and the direct
+stocks — then I can drill down."* And, separately: *"Bandhan mutual fund
+staggered for the last seven eight months… I want to see that as one line item
+and then drill down."*
+
+Those are one request. A raw tape answers "what happened on 13 August"; a family
+office asks what each manager did this year. This book's own tape makes the
+point: Green Lantern bought The Anup Engineering on **fifty separate days across
+five months**, in two accounts — a hundred rows for one decision, and reading
+that tape a reader cannot see the decision at all. Measured over the PMS
+transaction statements, **60 (account, security, side) groups carry four or more
+dated rows.**
+
+`src/lib/txnRollup.ts` collapses it in three levels — group → instrument →
+tranche — and `TransactionsView` renders them expandable, with **By manager**
+(the default), **By entity**, **By security** and **Tape**. Tape stays because a
+reconciliation against a PDF needs the printed rows in printed order.
+
+**THE STAGGERED ASK NEEDS NO DETECTOR, AND THAT IS THE POINT.** Grouping by
+instrument collapses a series whether it was a monthly SIP, a broker working an
+order over five weeks, or two unrelated buys. A DETECTOR would have to decide
+what counts as "a series" — a cadence, a tolerance, a minimum count — and every
+one of those thresholds is a judgement the statements do not state, applied to
+real money. `staggered` is therefore a LABEL on a row that is already collapsed
+(≥4 rows on one SIDE, so four buys and four sells is two campaigns rather than
+one series of eight), never a decision about what to merge. Getting the
+threshold wrong costs a chip, not a figure.
+
+**AND THE FAMILY'S OWN EXAMPLE IS NOT IN THE BOOK — measured, and stated.** The
+Bandhan rows in this corpus are in the Motilal Oswal DEMAT transaction
+statements, and `precedence.mjs` deliberately excludes those from `transactions`
+(*"a depository movement is not a trade"*). Checked rather than assumed: the
+demat rows carry `side: "delivery"`, `unitPrice: null`, `net: null`, and the
+Bandhan entries are `positionsAsOf` **closing balances** (`opening: 0 →
+quantity: 3,371,575.697`), not dated tranches. **No statement in this book
+carries those purchases date by date.** The card's footer says so — the tape
+reads transaction statements only, because a depository moves units without a
+price, a counterparty or a consideration. What would fill it is the folio's own
+AMC account statement or a CAS.
+
+**`settledAmount` ENDED `?? 0`, AND THE ROLLUP IS WHAT MADE IT MATTER.** A row
+whose statement prints no settlement, no net and no gross reported the SAME
+figure as a trade that settled for nothing. The tape got away with it by testing
+`t.amount ? … : <AbsentCell>` at the point of render — the absent-vs-zero rule
+enforced by a falsy check in the presentation layer rather than by the model.
+The moment those amounts are SUMMED a `?? 0` blends an unreported trade into a
+total as if it had cost nothing. `Txn.amount` and `Txn.price` are
+`number | null` now, every rollup total uses `sumOrNull`, and each carries a
+COVERAGE COUNT — a realised total over 13 of a manager's 18 sells is a different
+fact from one over all 18, and on screen they are the same number.
+
+**NET INVESTED NEEDS ONE DISTINCTION TO BE HONEST.** A side with NO ROWS
+contributed a measured zero — nothing was sold, so the net is what was bought. A
+side WITH rows whose statements report no settlement contributed nothing
+measurable, and subtracting it as zero reports a net the book cannot strike. The
+two are identical under `(bought ?? 0) - (sold ?? 0)`.
+
+**THE GROUP LABEL GOES THROUGH `mandateLabel`, AND THE PROVIDER IS ALWAYS ON THE
+SECOND LINE.** Re-deriving `strategy || provider` inline is how
+`mandateLabelWithOwner` came to exist and be called by nothing while the monitor
+drew four pairs of identical rows beside it. The provider rides in the sublabel
+because a strategy name is whatever the manager printed: Molecule's is the single
+word `GROWTH`, which as a heading over a year's trading names nobody.
+
+**AND EVERY FIGURE SITS UNDER A HEADING THAT DESCRIBES IT.** The first draft drew
+the tranche rows across the group table's columns by position, which put a
+per-share price under `Bought` and the settled amount under `Sold`, and net units
+under `Securities`. A caption asserting something of a figure that is not true of
+it is the failure the Morning CIO's "cost in · listed only" tile already cost
+this book once. Quantity and unit price ride with the date now (`228 @
+₹3,086.88`); a tranche's amount lands in Bought or Sold by its own SIDE.
+
+**SEVEN INVARIANTS AND THIRTY ARITHMETIC CASES, each verified by reintroducing
+its bug.** `src/lib/__tests__/txnRollup.test.ts` runs against FIXTURES, because
+the traps are `?? 0` on inputs that are absent in ways this drop may or may not
+contain. `check:pages` walks `monitor-txns` and a new `monitor-txn-drill` route
+that expands every manager and then the LONGEST staggered series, asserting on
+DOM counts rather than prose: the footer must tie to the tape's own buy/sell
+counter (a path that never touches the rollup), the realised total must name the
+fraction of sells it covers, and the expansion must produce at least one dated
+row per trading day the collapsed line claims.
+
+**THAT LAST ONE WAS BLIND AT FIRST, AND REINTRODUCING THE BUG IS WHAT FOUND IT.**
+Expanding whichever staggered row came first, a drill-down truncated to two
+tranches still PASSED — that row spanned two trading days, so "at least one row
+per day" was satisfied by the truncation itself. The walk picks the row with the
+largest `data-days` now, chosen from the DOM rather than by name so the next drop
+picks its own worst case. `data-row` attributes exist for exactly this: selecting
+these rows out of rendered prose means matching a caption, which renders whatever
+the data does and cannot fail.
+
+### Stage 10p — DIRECT EQUITY IS A SET, AND THE HEADLINE IS ONE LINE
+
+Four asks on the Transactions card, and two of them are about giving the table
+back the rows the chrome was spending.
+
+**THE EXPLANATORY FOOTER IS GONE.** It repeated under every view and told a
+reader of the table nothing they needed. What survives is ONE line, and only on
+Direct Equity, because that is the view where the absence IS the finding — see
+below.
+
+**"BY SECURITY" BECAME "DIRECT EQUITY", AND THAT IS A DIFFERENT SET RATHER THAN
+A RENAME.** *"Replace by security with direct equity, that will contain the
+transaction of all direct buy and sold equity transactions."* `holdingRoute` is
+the axis Stage 10L settled after the same complaint arrived three times: a share
+a discretionary manager picked and a share the family bought itself are the same
+ASSET and a different DECISION. "Direct Equity" means the second everywhere else
+in this app, so the tab FILTERS the tape to the accounts the family runs itself
+(`Direct` / `Execution`) and then rolls those up per security. Re-using the word
+for "grouped by security" would have been a fourth round of that argument.
+
+Measured on the tape: of the twelve accounts that issue a transaction statement,
+ten are PMS, one is Buoyant's AIF folio and **exactly one is own-account** — LKP
+Securities 98245, Bharat's broking account: **21 trades across 14 securities,
+₹84.4 L bought, ₹1.02 Cr sold**, which ties to the rupee to that account's own
+row in the By-manager view. Every one of those rows is classed `Equity` by its
+own statement, the liquid ETF sweep included, and that classification is not
+second-guessed here; rows the statement classes as something else are excluded
+so the tab's name stays true if an own-account fund purchase ever lands.
+
+**AND THE ONE-LINE NOTE ON THAT VIEW IS LOAD-BEARING.** The tab is narrow
+because the family's other own-account trading sits in the demat statements,
+whose movements carry no price, no counterparty and no consideration and are
+therefore not trades (`precedence.mjs`). Without saying so, fourteen securities
+under a heading reading "Direct Equity" is a MEASUREMENT of how little this
+family trades its own book — which is not what the corpus says. `check:pages`
+asserts the line survives.
+
+**THE HEADLINE IS ONE LINE AND THE VIEW SWITCH RIDES WITH IT.** *"Write daily
+and portfolio monitor as a single line headline, daily in smaller font — this
+will give us more space to show more data on the table. Also shift the
+holdings/transactions toggle beside it."* `PageHeader` now renders eyebrow and
+title inline on every route, and takes a `beside` slot for a control that says
+WHAT the reader is looking at rather than acting on it. The Portfolio Monitor's
+Holdings / Transactions switch moves there and its toolbar row is deleted
+outright — the Holdings basis switch that shared it joins the Export / Deck
+group. Two rows of chrome returned to the table, on top of the `--app-zoom`
+change above.
+
+**THAT CLAIM IS GEOMETRIC, SO IT IS CHECKED ON GEOMETRY.** `check:pages` reads
+the bounding boxes of the eyebrow, the `h1` and the switch and requires them to
+overlap vertically, with the eyebrow shorter than the title. Matching the words
+"Daily" and "Portfolio Monitor" would pass just as happily with them stacked
+three rows deep — which is the prose-matching failure this file already names
+twice, arriving through layout.
+
+**AND ONE CHECK PARSED A NUMBER THAT WAS NEVER THERE.** The rollup's Trades cell
+renders the count and a `11B/1S` split beside it, so `innerText` is `211B/1S`
+and the first number in it is 21 — a parser that happens to produce A number,
+which is the exact class of wrong answer this sweep exists to catch rather than
+commit. The count is read off `data-trades` now, like `data-days` beside it.
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to
@@ -3060,6 +3249,69 @@ mandate-held rows summarises every mandate above the table, each linking to
 `/mandate/:accountId` — flattening 281 mandate-held shares into one
 undifferentiated list would re-commit the grouping mistake Stage 10L exists to
 fix. Every row is also individually linked to its mandate and its company page.
+
+#### The drill-down has no view modes: a row is what you would click into
+
+*"When I click on AIF or any Mutual Fund line item, it should simply show what
+all AIFs/PMS/Mutual Funds I'm holding, invested amount in them and so on… and
+when I further click on one particular AIF it should take me to the drill-down
+page of that AIF that will show me what all stocks/companies that AIF/Mutual
+Fund is holding. No need for statement/security toggle button, I do not
+understand the purpose of it."*
+
+The first two are the same fix and the third is what made it necessary. The page
+opened on one row per STATEMENT LINE, so the AIF drill-down listed Sanshi Fund-I
+Class E four times — once per family member — and answering "which funds do we
+hold" meant grouping 19 rows into 14 by eye. The toggle was the escape hatch for
+that, and **a MODE a reader has to understand before the table means anything is
+a defect in the table, not a feature.**
+
+So there is no mode. A row is the unit a reader would open: a MANDATE where the
+set holds the whole of one, and otherwise the SECURITY — one fund, one scheme,
+one company, however many statements report it.
+
+| Drill-down | statement rows | rows now |
+| --- | ---: | ---: |
+| AIF | 19 | **14 funds** |
+| Mutual Fund | 24 | **20 schemes** |
+| PMS mandates | 281 | **10 mandates** |
+| Direct Equity | 37 | 37 companies |
+| ETF | 6 | 3 |
+| the whole book | 369 | 84 |
+
+**A MANDATE IS ONE ROW ONLY WHERE THE SET HOLDS ALL OF IT**, and that condition
+is why this is safe everywhere rather than special-cased to the PMS bucket. A
+bucket drill-down carries every row of the mandates in it, so the row ties to the
+manager's own statement. A FILTERED set — the winners, the holdings reporting no
+cost — carries only some of a mandate's rows, and a row under a manager's name
+over a subset of what they hold is the *"caption asserts what a named
+counterparty reports"* failure this file already records, with a total that ties
+to no document. Measured: the winners set forms **zero** mandate rows. The
+condition is struck against the BOOK, never against the filtered set — against
+the set it would be trivially true — and the reader's search filter narrows what
+is drawn without changing what a row means.
+
+**AND THE ROW'S NOUN IS WHAT THE ROW IS.** "84 holdings" over a table where ten
+rows are whole mandates of thirty-odd shares each is a caption not describing its
+own figure. All mandates → `mandates`; all securities → `names`, which is the
+count the tile above already prints; a mix → `rows`.
+
+**THE SECOND ASK IS ANSWERED ASYMMETRICALLY, AND THAT IS THE HONEST ANSWER.**
+Clicking a MANDATE opens `/mandate/:accountId`, which lists every share the
+manager picked — the look-through the family wants, and the one this book has,
+because a PMS reports every share and the family owns them. Clicking an AIF or a
+mutual fund opens its holding page, which states that the companies inside are
+the manager's and are **not reported to this book**: a fund unit is one purchase
+of somebody else's portfolio, and no statement in this drop carries a scheme
+disclosure that joins to any folio the family holds. Drawing a constituent table
+there would be the fabrication this whole book exists to prevent. The two look
+alike and are not, which is why the fund page says so in as many words rather
+than rendering an empty table.
+
+**The per-statement lines did not go away**; they moved from a global mode to a
+per-row expander, which is where a reader asks for them. Morning CIO's Positions
+count counts those lines, and the page's own caption still prints all three
+figures (`369 holdings · 214 names · 34 accounts`) above a table of 84.
 
 #### Verifying by reintroducing the bug found five defects IN THE CHECKS
 

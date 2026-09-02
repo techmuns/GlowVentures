@@ -128,6 +128,25 @@ function bookArray(src, name) {
  * page is the FUND branch rather than assuming it, so drift fails loudly.
  */
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
+
+/**
+ * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
+ *
+ * The whole-book drill-down shows each of them as ONE ROW linking to its own
+ * page, which is the way into the only look-through this book has. Asserting
+ * that by counting links needs a number to count against, and a literal here
+ * would be a second source for a figure `build-book` generates.
+ */
+const MANDATE_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const held = new Set(positions.map((p) => p.accountId));
+    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
+  } catch { return null; }
+})();
 /**
  * THE OWNER WHOSE FAMILY DRILL-DOWN IS WALKED — resolved from the book, not typed.
  *
@@ -351,6 +370,17 @@ const ROUTES = [
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
+  // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
+  // collapsed line still carries every dated row underneath it, and that is only
+  // true once something expands one. Walked as its own route so a regression
+  // that collapses a series and LOSES its tranches — which reads as a tidier
+  // screen, not as a fault — is caught here rather than by the family.
+  ["monitor-txn-drill", "/monitor"],
+  // ...AND THE DIRECT EQUITY VIEW, which is a different SET rather than a
+  // different grouping: the tape narrowed to the accounts the family runs
+  // itself. Walked separately because a filter that silently matched nothing
+  // renders an empty table that looks like a family which does not trade.
+  ["monitor-txn-direct", "/monitor"],
   // ...and the BY-ENTITY view of the same table, where every statement's row
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
@@ -630,6 +660,17 @@ const MANDATE_ROWS = new Map();
  * and it would still "pass" by rendering the page's not-found state.
  */
 let MANDATE_PATH = null;
+/**
+ * What the drill-down walk actually opened, counted off the DOM rather than off
+ * the rendered text. Set during the `monitor-txn-drill` interaction and read by
+ * its invariants; null anywhere else, which those invariants report as NOT
+ * CHECKED rather than as a pass.
+ */
+let DRILL = null;
+/** The same, for the Direct Equity view — see `monitor-txn-direct`. */
+let DIRECT = null;
+/** Header geometry, for the single-line headline claim — see `monitor`. */
+let HEAD = null;
 
 /**
  * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
@@ -730,18 +771,18 @@ const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(�
 /** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
 const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
 /**
- * WHICH VIEW A DRILL-DOWN LANDED ON, read off the COLUMNS it drew.
+ * HOW MANY ROWS THE GROUPED TABLE DREW, off its own footer.
  *
- * The by-security table carries `Held in` and no per-statement columns; the
- * by-row one carries `Held via`, `Entity` and `Qty`. Both halves are asserted,
- * because a page rendering neither table would satisfy an absence test alone.
- *
- * NOT matched on the word "security", which appears in these pages' own prose —
- * the first draft did exactly that and failed a page that was landing correctly.
- * `innerText` joins a header row's cells with tabs, so the header is one line
- * and the column NAMES are what identify the view.
+ * The page has one table and no view modes now: a row is a MANDATE where the
+ * set holds the whole of one, and a SECURITY otherwise. The footer names its
+ * own unit, so this reads the count and the word together rather than assuming
+ * either — a check that assumed "holdings" would go quietly blind on the PMS
+ * bucket, which is the page the family was complaining about.
  */
-const opensByName = (t) => /SECURITY\s+HELD IN\s+INVESTED/i.test(t) && !/SECURITY\s+HELD VIA/i.test(t);
+const tableRows = (t) => {
+  const m = /Total · ([\d,]+) (mandate|name|row)s?/i.exec(t);
+  return m ? { n: cr(m[1]), unit: m[2].toLowerCase() } : null;
+};
 
 /** …and how many holdings and names it says it covers. */
 function drilldownCounts(t) {
@@ -940,6 +981,180 @@ const INVARIANTS = {
         && /Bonus, splits and spin-offs/i.test(t)],
   ],
   /**
+   * ── THE YEAR'S TRADING IS FIVE LINES, NOT FOUR HUNDRED ─────────────────────
+   *
+   * *"Show the year's transactions as one line per entity / manager /
+   * instrument, not a raw tape. I will only see five items … then I can drill
+   * down."* The rollup either collapses the tape without losing any of it, or
+   * it is a prettier screen that quietly drops trades — and a dropped trade is
+   * invisible on a page whose entire purpose is showing fewer rows.
+   */
+  "monitor-txns": [
+    /**
+     * THE DEFAULT IS THE ROLLUP. Struck on the arithmetic rather than on the
+     * heading: a tape re-labelled would satisfy any prose match, so this asserts
+     * the footer counts FEWER groups than the trades they cover.
+     */
+    ["the tape opens rolled up — far fewer lines than trades",
+      (t) => {
+        const f = /Total · ([\d,]+) accounts\t([\d,]+)\t/.exec(t);
+        if (!f) return false;
+        const groups = Number(f[1].replace(/,/g, "")), trades = Number(f[2].replace(/,/g, ""));
+        return groups > 0 && trades > groups * 3;
+      }],
+
+    /**
+     * AND IT LOSES NOTHING. The header's own buy/sell counter is computed off
+     * the FILTERED TAPE, on a path that never touches the rollup — so the
+     * footer's trade count agreeing with it is a real cross-check rather than a
+     * figure compared with its own copy. A rollup that dropped an account, a
+     * security or a side fails here and nowhere else on the page.
+     */
+    ["every trade on the tape reaches the rollup — its footer ties to the tape's own counter",
+      (t) => {
+        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
+        const foot = /Total · [\d,]+ accounts\t([\d,]+)\t/.exec(t);
+        if (!tape || !foot) return false;
+        const n = (x) => Number(x.replace(/,/g, ""));
+        return n(tape[1]) + n(tape[2]) === n(foot[1]);
+      }],
+
+    /**
+     * A REALISED TOTAL THAT COVERS SOME OF ITS SELLS SAYS SO. Sixteen of this
+     * book's accounts issue no capital gain statement, so the footer's realised
+     * figure is struck over a fraction of the sells beside it — and a fraction
+     * presented as a whole is the "shown for those and the rest are NAMED" rule
+     * failing on a total. The count is rendered next to the figure.
+     */
+    ["the realised total names the fraction of sells it covers",
+      (t) => {
+        const m = /Total · [\d,]+ accounts\t[^\n]*?([\d,]+)\/([\d,]+)/.exec(t);
+        if (!m) return false;
+        const n = (x) => Number(x.replace(/,/g, ""));
+        return n(m[1]) > 0 && n(m[1]) < n(m[2]);
+      }],
+
+    /**
+     * AND A SIDE THAT DID NOT TRADE RENDERS A DASH, NOT ₹0. An account that
+     * bought and never sold reported no proceeds; ₹0 says it sold and got
+     * nothing. The book has such an account, and this asserts one line carries
+     * the dash rather than a zero in its Sold column.
+     */
+    ["a group that sold nothing shows an em dash in Sold, never a zero",
+      (t) => /—/.test(t) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t)],
+  ],
+
+  /**
+   * DIRECT EQUITY IS A NARROWER SET, AND IT IS NOT EMPTY.
+   *
+   * The family asked for a view holding "all direct buy and sold equity
+   * transactions" — the shares they chose themselves, as against the ones a
+   * discretionary manager chose. That is `holdingRoute === "own"`, the axis
+   * Stage 10L settled, and a filter keyed on it can fail in two directions that
+   * look nothing alike on screen: matching nothing renders an empty table that
+   * reads as "this family does not trade its own book", and matching everything
+   * renders the whole tape under a heading that denies half of it.
+   */
+  "monitor-txn-direct": [
+    ["Direct Equity renders rows, so the filter matched something",
+      () => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        return DIRECT.rows > 0 && DIRECT.footTrades > 0;
+      }],
+
+    /**
+     * ...AND IT IS A STRICT SUBSET. Compared against the header's own buy/sell
+     * counter, which is computed off the FILTERED TAPE and never touches this
+     * view — so a filter that quietly stopped filtering fails here.
+     */
+    ["...and it is a strict subset of the tape, not the whole of it",
+      (t) => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
+        if (!tape) return false;
+        const n = (x) => Number(x.replace(/,/g, ""));
+        return DIRECT.footTrades < n(tape[1]) + n(tape[2]);
+      }],
+
+    /** The footer is summed from the rows above it, as everywhere else here. */
+    ["its footer ties to the rows it renders",
+      () => {
+        if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
+        return DIRECT.rowTrades === DIRECT.footTrades && DIRECT.rows === DIRECT.footSecurities;
+      }],
+
+    /**
+     * AND IT NAMES WHAT IT LEAVES OUT. This view is narrow for a reason the
+     * corpus states — the family's other own-account trading is in demat
+     * statements whose movements carry no price and are therefore not trades —
+     * and without that line the table reads as a measurement of how little they
+     * trade rather than of what this book can see.
+     */
+    ["...and says why it is narrow, rather than reading as a family that barely trades",
+      (t) => /own broking accounts/i.test(t) && /not trades/i.test(t)],
+  ],
+
+  /**
+   * THE DRILL-DOWN KEEPS EVERY TRANCHE — the other half of the collapse.
+   *
+   * *"Bandhan mutual fund staggered for the last seven eight months… I want to
+   * see that as one line item and then drill down."* A collapsed line that
+   * cannot be opened back into its dated rows is a summary, not a rollup, and
+   * the two are indistinguishable until someone clicks.
+   */
+  "monitor-txn-drill": [
+    /**
+     * THE TAPE COLLAPSES TO FAR FEWER LINES THAN IT HAS TRADES — measured on
+     * the DOM the walk actually opened, so a page that rendered every trade as
+     * its own "instrument" fails here however the captions read.
+     */
+    ["expanding every manager still yields far fewer security lines than trades",
+      (t) => {
+        if (!DRILL) return { notChecked: "the drill-down walk did not run on this pass" };
+        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
+        if (!tape) return false;
+        const n = (x) => Number(x.replace(/,/g, ""));
+        const trades = n(tape[1]) + n(tape[2]);
+        return DRILL.groups > 0 && DRILL.instruments > 0 && DRILL.instruments < trades;
+      }],
+
+    ["at least one security is a staggered series, collapsed onto one line",
+      () => {
+        if (!DRILL) return { notChecked: "the drill-down walk did not run on this pass" };
+        return DRILL.staggered > 0 && DRILL.staggered < DRILL.instruments;
+      }],
+
+    /**
+     * ...AND EXPANDS INTO AT LEAST THAT MANY DATED ROWS. The collapsed line
+     * claims a span in trading days; the expansion has to produce a row for
+     * each. Two figures from different code paths — the day count is
+     * `new Set(dates).size` in the rollup, the row count is what React drew —
+     * so a truncated expansion fails while a caption match would pass. A series
+     * that traded twice on one day legitimately shows MORE rows than days, so
+     * the test is that it is never fewer.
+     */
+    ["...and expands into at least one dated tranche per day it claims",
+      () => {
+        if (!DRILL) return { notChecked: "the drill-down walk did not run on this pass" };
+        return DRILL.openDays > 0 && DRILL.tranches >= DRILL.openDays;
+      }],
+
+    /**
+     * AND A TRANCHE STATES WHAT IT WAS: quantity AT a unit price. The first
+     * draft drew those two across the group table's own columns by position,
+     * which put a per-share price under the heading "Bought" and the settled
+     * amount under "Sold" — a caption asserting something of a figure that is
+     * not true of it, which this book has paid for once already on a Morning
+     * CIO tile. They ride with the date now.
+     */
+    ["each tranche prints its quantity at its unit price, not under another column's heading",
+      () => {
+        if (!DRILL) return { notChecked: "the drill-down walk did not run on this pass" };
+        return DRILL.tranches > 0 && DRILL.trancheWithPrice === DRILL.tranches;
+      }],
+  ],
+
+  /**
    * A HOLDING WITH NO COST NAMES THE CUSTODIAN THAT DOES NOT REPORT ONE.
    *
    * Struck on BOTH tiles, because the bug was that two of the four tiles on
@@ -1124,7 +1339,7 @@ const INVARIANTS = {
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
         [/^positions$/i, "/holdings?of=book"],
-        [/^distinct names$/i, "/holdings?of=book&view=security"],
+        [/^distinct names$/i, "/holdings?of=book"],
         [/^cross-held$/i, "/holdings?of=cross-held"],
         [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
         [/^listed$/i, "/holdings?of=listed"],
@@ -1271,15 +1486,27 @@ const INVARIANTS = {
      * mandate in the set is summarised and linked, and the count is checked
      * against the mandates the book actually has rather than a literal.
      */
-    ["every mandate in the book is named and linked from here", (t, ctx) => {
-      const said = Number(/The (\d+) mandates inside this set/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(said)) return false;
+    ["every mandate in the book is one row, linked to its own page", (t, ctx) => {
+      if (!Number.isFinite(MANDATE_COUNT)) return notChecked("this book carries no discretionary mandate");
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return links.size === said && said > 0;
+      return links.size === MANDATE_COUNT;
+    }],
+    /**
+     * THE WHOLE BOOK DOES form mandate rows, which is the other side of the
+     * check on the winners page — and its table is a MIX, so its footer counts
+     * rows rather than claiming either noun. Both are asserted because a page
+     * that grouped nothing would pass the winners check while failing readers
+     * here, and one that grouped everything would pass here and mislabel a
+     * filtered set there.
+     */
+    ["the whole book forms mandate rows and says its table is mixed", (t) => {
+      const table = tableRows(t), pos = CIO_FIGURES.get("positions");
+      if (!table || !Number.isFinite(pos)) return notChecked("the footer or Morning CIO's Positions count did not parse on this run");
+      return table.unit === "row" && table.n < pos;
     }],
     ["the table's footer ties to the tile above it", (t) => {
       const tile = drilldownTotal(t);
-      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ holdings\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
+      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ [a-z]+\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
       if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
       return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
     }],
@@ -1298,12 +1525,6 @@ const INVARIANTS = {
       if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
       return c != null && c.names === there;
     }],
-    // A NAME-COUNTING FIGURE OPENS ON THE UNIT IT COUNTS. `Drilldown.defaultView`
-    // says which; it was declared, set on this scope and read by nothing until a
-    // screenshot showed the page landing on a row-per-statement table for a
-    // figure that counts names. A field carrying the right answer into no caller
-    // looks exactly like a working feature.
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     // ...and every name here really is held by two or more entities, which is
     // what distinguishes a cross-held name from a DUPLICATE the consolidated set
     // has already collapsed.
@@ -1319,7 +1540,6 @@ const INVARIANTS = {
       // literal, which would go stale the next drop.
       return Number.isFinite(here) && Math.abs((here / nav) * 100 - pct) <= 0.5;
     }],
-    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
     ["it lists exactly the names the figure covers", (t) => {
       const c = drilldownCounts(t);
       const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
@@ -1384,6 +1604,21 @@ const INVARIANTS = {
     }],
     ["the holdings in neither count are named, not dropped", (t) =>
       /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+    /**
+     * A FILTERED SET FORMS NO MANDATE ROW.
+     *
+     * A mandate is one row only where the set holds ALL of it, because a row
+     * carrying a manager's name over a subset of what they hold is the "caption
+     * asserts what a named counterparty reports" failure this repo has already
+     * paid for once — and its total would tie to no document. Winners is a
+     * filtered set by construction, so its footer must count NAMES. Struck on
+     * the footer's own noun, which the page derives from the rows it drew.
+     */
+    ["no partial mandate is drawn as a mandate row", (t) => {
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return table.unit === "name";
+    }],
   ],
   "holdings-losers": [
     ["its count reproduces the losers figure", (t) => {
@@ -1449,15 +1684,27 @@ const INVARIANTS = {
     // ...and the rows say WHICH custodian does not report a cost, per holding —
     // the fix the stock page already carries, arriving on the page that lists
     // every one of them.
-    ["each row names the statement that reports no cost", (t, ctx) => {
-      const reasons = (ctx?.titles ?? []).filter((x) => /no cost on the .+? statement for this holding/i.test(x));
-      const rows = drilldownCounts(t)?.holdings;
-      if (!Number.isFinite(rows)) return notChecked("the page's own holdings count did not parse on this run");
-      // ONE PER ROW, and each naming a CUSTODIAN rather than a generic phrase:
-      // the reason is scoped to the holding, so a single blanket sentence at the
-      // top of the page would satisfy a looser test while telling a reader
-      // nothing about the row in front of them.
-      return reasons.length >= rows && new Set(reasons).size >= 2;
+    /**
+     * EVERY DASHED COST CELL NAMES A CAUSE, AND MOST NAME A CUSTODIAN.
+     *
+     * Counted against the TABLE'S OWN ROWS, not against the caption's holdings
+     * count — the table groups a name held in several accounts into one row, so
+     * 60 holdings draw 52 rows and a check keyed on 60 reports a page that is
+     * rendering correctly as broken. It accepts both honest wordings: a row
+     * standing on one statement names that custodian, and a row spanning several
+     * says how many report none. Anything else is a bare dash, which is the one
+     * thing that leaves a reader unable to tell a custodian who does not report
+     * a cost from a dashboard that is broken.
+     */
+    ["every row's dashed cost names its cause, and the single-statement ones name the custodian", (t, ctx) => {
+      const titles = ctx?.titles ?? [];
+      const named = titles.filter((x) => /no cost on the .+? statement for this holding/i.test(x));
+      const plural = titles.filter((x) => /none of the \d+ statements carrying this name reports a cost/i.test(x));
+      const table = tableRows(t);
+      if (!table) return notChecked("the holdings table's footer did not parse on this run");
+      return named.length + plural.length >= table.n
+        && named.length > 0
+        && new Set(named).size >= 2;   // a real custodian per row, not one blanket sentence
     }],
   ],
   /**
@@ -1629,6 +1876,21 @@ const INVARIANTS = {
   // since — a check carrying its own copy of a generated figure is a second
   // source for it.
   monitor: [
+    /**
+     * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
+     *
+     * *"Write daily and portfolio monitor as a single line headline, daily in
+     * smaller font … also shift the holdings/transactions toggle beside it.
+     * Will give us further space to show a bigger table."* That is a claim
+     * about GEOMETRY, so it is struck on geometry — the three boxes must
+     * overlap vertically. Matching the words "Daily" and "Portfolio Monitor"
+     * would pass just as happily with them stacked three rows deep.
+     */
+    ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.hasEyebrow && HEAD.eyebrowInline && HEAD.toggleInline && HEAD.eyebrowSmaller;
+      }],
     /**
      * ── THE THIRD ROUND: A GROUPING, NOT A WORD ──────────────────────────────
      *
@@ -2681,13 +2943,93 @@ for (const theme of THEMES) {
       page.on("response", (r) => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
 
       await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
-      if (name === "monitor-txns") {
+      if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
       if (name === "monitor-cagr") {
         const t = page.getByRole("button", { name: /^CAGR$/ }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-txn-direct") {
+        const t = page.getByRole("button", { name: /^Direct Equity$/ }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(900); }
+        DIRECT = await page.evaluate(() => {
+          const rows = [...document.querySelectorAll('tr[data-row="group"]')];
+          const foot = document.querySelector("tfoot tr");
+          const cell = (r, i) => (r?.cells?.[i]?.innerText ?? "").trim();
+          const n = (x) => Number((/[\d,]+/.exec(x) ?? ["0"])[0].replace(/,/g, ""));
+          return {
+            rows: rows.length,
+            // READ OFF `data-trades`, NOT OFF THE CELL. That cell renders the
+            // count and a "11B/1S" split beside it, so `innerText` is "211B/1S"
+            // and the first number in it is 21 — a parser that happens to
+            // produce a number, which is exactly the class of wrong answer this
+            // sweep exists to catch rather than commit.
+            rowTrades: rows.reduce((s, r) => s + Number(r.dataset.trades || 0), 0),
+            footTrades: n(cell(foot, 1)),
+            footSecurities: n(cell(foot, 2)),
+          };
+        });
+      }
+      if (name === "monitor-txn-drill") {
+        /**
+         * EXPAND EVERY MANAGER, THEN THE FIRST STAGGERED SECURITY.
+         *
+         * The first draft expanded only the FIRST group — Buoyant, two trades,
+         * no series in it — and every drill invariant then failed against a
+         * page that was working. Which manager happens to carry a staggered
+         * series is a fact about the current drop, so the walk opens all of
+         * them and lets the book decide, rather than typing in a name that goes
+         * stale on the next delivery.
+         *
+         * Rows are found by `data-row`, not by their rendered text: matching a
+         * caption is matching prose, which renders whatever the data does.
+         * Clicked LAST FIRST so expanding one group cannot shift the index of
+         * the ones still to be clicked.
+         */
+        const gs = page.locator('tr[data-row="group"]');
+        for (let i = (await gs.count()) - 1; i >= 0; i--) {
+          await gs.nth(i).click();
+          await page.waitForTimeout(60);
+        }
+        await page.waitForTimeout(400);
+        /**
+         * THE LONGEST SERIES, NOT THE FIRST ONE — and that distinction was
+         * found by reintroducing the bug it exists to catch.
+         *
+         * Expanding whichever staggered row came first, a drill-down truncated
+         * to two tranches still PASSED: that row spanned two trading days, so
+         * "at least one row per day" was satisfied by the truncation itself.
+         * The longest series in the book spans two dozen days, and against it a
+         * truncation cannot hide. Chosen from `data-days` rather than by name,
+         * so the next drop picks its own worst case.
+         */
+        const st = page.locator('tr[data-row="instrument"][data-staggered]');
+        const nSt = await st.count();
+        let pick = -1, best = -1;
+        for (let i = 0; i < nSt; i++) {
+          const d = Number(await st.nth(i).getAttribute("data-days")) || 0;
+          if (d > best) { best = d; pick = i; }
+        }
+        if (pick >= 0) { await st.nth(pick).click(); await page.waitForTimeout(700); }
+        DRILL = await page.evaluate(() => ({
+          groups: document.querySelectorAll('tr[data-row="group"]').length,
+          instruments: document.querySelectorAll('tr[data-row="instrument"]').length,
+          staggered: document.querySelectorAll('tr[data-row="instrument"][data-staggered]').length,
+          tranches: document.querySelectorAll('tr[data-row="tranche"]').length,
+          // The row the walk actually opened — the one immediately above the
+          // first tranche, not the first staggered row on the page.
+          openDays: Number(document.querySelector('tr[data-row="tranche"]')
+            ?.previousElementSibling?.dataset.days ?? 0),
+          // Tranche rows whose FIRST cell carries "<qty> @ <price>" — the two
+          // figures that have no column of their own on this table and so ride
+          // with the date. Counted off the cell rather than off the page text,
+          // because `innerText` puts the side pill on its own line and a
+          // whole-page regex then matches nothing while the row renders fine.
+          trancheWithPrice: [...document.querySelectorAll('tr[data-row="tranche"]')]
+            .filter((r) => / @ /.test(r.cells[0]?.innerText ?? "")).length,
+        }));
       }
       if (name === "monitor-entity") {
         // The toggle is LABELLED WITH THE VIEW IT SWITCHES TO, so the button
@@ -2829,6 +3171,34 @@ for (const theme of THEMES) {
        * asserts on" failure this file already names once. The claim is about a
        * page's CONTENT, so it is struck on the content.
        */
+      /**
+       * IS THE HEADLINE ONE LINE? Measured, not asserted in prose.
+       *
+       * The eyebrow used to sit above the title and the view switch on a
+       * toolbar row of its own — three rows to say where you are. The claim
+       * that they now share one is geometric, so it is struck on geometry: the
+       * three boxes must overlap vertically. A CSS regression that stacks them
+       * again fails here; a caption never could.
+       */
+      if (!FAST && name === "monitor" && theme === THEMES[0] && width === WIDTHS[0]) {
+        HEAD = await page.evaluate(() => {
+          const h1 = document.querySelector("main h1");
+          if (!h1) return null;
+          const bar = h1.parentElement;
+          const eyebrow = bar?.firstElementChild;
+          const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
+          const box = (el) => (el ? el.getBoundingClientRect() : null);
+          const overlap = (a, b) => !!a && !!b && a.top < b.bottom && b.top < a.bottom;
+          const r = { h1: box(h1), eyebrow: box(eyebrow), toggle: box(toggle) };
+          return {
+            hasEyebrow: !!eyebrow && eyebrow !== h1,
+            eyebrowInline: overlap(r.eyebrow, r.h1),
+            toggleInline: overlap(r.toggle, r.h1),
+            // The eyebrow reads smaller than the title it precedes.
+            eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
+          };
+        });
+      }
       const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
       /**
        * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
