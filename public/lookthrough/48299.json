@@ -1,0 +1,384 @@
+{
+  "schemecode": 48299,
+  "scheme": "Helios Flexi Cap Fund-Reg(G)",
+  "classification": "Equity : Flexi Cap",
+  "fundAumCr": 8055.3,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "Eternal Ltd.",
+      "pctAum": 4.41,
+      "shares": 11735365
+    },
+    {
+      "name": "ICICI Bank Ltd.",
+      "pctAum": 4.18,
+      "shares": 2344977
+    },
+    {
+      "name": "Adani Ports and Special Economic Zone Ltd.",
+      "pctAum": 3.67,
+      "shares": 1743402
+    },
+    {
+      "name": "HDFC Bank Ltd.",
+      "pctAum": 3.53,
+      "shares": 3798760
+    },
+    {
+      "name": "One 97 Communications Ltd.",
+      "pctAum": 3.08,
+      "shares": 1849160
+    },
+    {
+      "name": "Bajaj Finance Ltd.",
+      "pctAum": 2.94,
+      "shares": 2074495
+    },
+    {
+      "name": "Reliance Industries Ltd.",
+      "pctAum": 2.89,
+      "shares": 1777318
+    },
+    {
+      "name": "Adani Enterprises Ltd.",
+      "pctAum": 2.73,
+      "shares": 731739
+    },
+    {
+      "name": "State Bank of India",
+      "pctAum": 2.48,
+      "shares": 1941040
+    },
+    {
+      "name": "Dixon Technologies (India) Ltd.",
+      "pctAum": 2.46,
+      "shares": 141150
+    },
+    {
+      "name": "Larsen & Toubro Ltd.",
+      "pctAum": 2.25,
+      "shares": 459870
+    },
+    {
+      "name": "Bharti Airtel Ltd.",
+      "pctAum": 2.2,
+      "shares": 899525
+    },
+    {
+      "name": "Ather Energy Ltd.",
+      "pctAum": 2.12,
+      "shares": 1352485
+    },
+    {
+      "name": "Bharat Electronics Ltd.",
+      "pctAum": 2.11,
+      "shares": 4372921
+    },
+    {
+      "name": "Syrma SGS Technology Ltd.",
+      "pctAum": 2.06,
+      "shares": 1216391
+    },
+    {
+      "name": "Titan Company Ltd.",
+      "pctAum": 2.02,
+      "shares": 334144
+    },
+    {
+      "name": "Cummins India Ltd.",
+      "pctAum": 2.02,
+      "shares": 294317
+    },
+    {
+      "name": "Shriram Finance Ltd.",
+      "pctAum": 1.76,
+      "shares": 1356497
+    },
+    {
+      "name": "The Phoenix Mills Ltd.",
+      "pctAum": 1.66,
+      "shares": 706531
+    },
+    {
+      "name": "Torrent Pharmaceuticals Ltd.",
+      "pctAum": 1.64,
+      "shares": 257629
+    },
+    {
+      "name": "ICICI Prudential Asset Management Company Ltd.",
+      "pctAum": 1.6,
+      "shares": 413307
+    },
+    {
+      "name": "Delhivery Ltd.",
+      "pctAum": 1.53,
+      "shares": 2556679
+    },
+    {
+      "name": "Solar Industries India Ltd.",
+      "pctAum": 1.51,
+      "shares": 66044
+    },
+    {
+      "name": "360 ONE WAM Ltd.",
+      "pctAum": 1.49,
+      "shares": 1058734
+    },
+    {
+      "name": "PNB Housing Finance Ltd.",
+      "pctAum": 1.33,
+      "shares": 1016917
+    },
+    {
+      "name": "GMR Airports Ltd.",
+      "pctAum": 1.27,
+      "shares": 9740668
+    },
+    {
+      "name": "Cholamandalam Investment & Finance Co. Ltd.",
+      "pctAum": 1.27,
+      "shares": 553296
+    },
+    {
+      "name": "Motilal Oswal Financial Services Ltd.",
+      "pctAum": 1.23,
+      "shares": 1159078
+    },
+    {
+      "name": "Adani Energy Solutions Ltd.",
+      "pctAum": 1.2,
+      "shares": 587720
+    },
+    {
+      "name": "NBCC (India) Ltd.",
+      "pctAum": 1.19,
+      "shares": 10109782
+    },
+    {
+      "name": "CarTrade Tech Ltd.",
+      "pctAum": 1.16,
+      "shares": 345012
+    },
+    {
+      "name": "Apollo Hospitals Enterprise Ltd.",
+      "pctAum": 1.15,
+      "shares": 103730
+    },
+    {
+      "name": "Billionbrains Garage Ventures Ltd.",
+      "pctAum": 1.15,
+      "shares": 4761500
+    },
+    {
+      "name": "Fortis Healthcare Ltd.",
+      "pctAum": 1.13,
+      "shares": 966743
+    },
+    {
+      "name": "NTPC Ltd.",
+      "pctAum": 1.1,
+      "shares": 2558194
+    },
+    {
+      "name": "Power Grid Corporation of India Ltd.",
+      "pctAum": 1.08,
+      "shares": 3049717
+    },
+    {
+      "name": "Physicswallah Ltd.",
+      "pctAum": 1.07,
+      "shares": 6907289
+    },
+    {
+      "name": "ABB India Ltd.",
+      "pctAum": 1.06,
+      "shares": 116763
+    },
+    {
+      "name": "BSE Ltd.",
+      "pctAum": 1.01,
+      "shares": 222782
+    },
+    {
+      "name": "Muthoot Finance Ltd.",
+      "pctAum": 1,
+      "shares": 258826
+    },
+    {
+      "name": "Multi Commodity Exchange of India Ltd.",
+      "pctAum": 0.99,
+      "shares": 295685
+    },
+    {
+      "name": "Coal India Ltd.",
+      "pctAum": 0.97,
+      "shares": 1891611
+    },
+    {
+      "name": "Gokaldas Exports Ltd.",
+      "pctAum": 0.95,
+      "shares": 935131
+    },
+    {
+      "name": "Honasa Consumer Ltd.",
+      "pctAum": 0.95,
+      "shares": 1694177
+    },
+    {
+      "name": "Interglobe Aviation Ltd.",
+      "pctAum": 0.93,
+      "shares": 144500
+    },
+    {
+      "name": "Marico Ltd.",
+      "pctAum": 0.93,
+      "shares": 856819
+    },
+    {
+      "name": "K.P.R. Mill Ltd.",
+      "pctAum": 0.91,
+      "shares": 695456
+    },
+    {
+      "name": "Bharat Heavy Electricals Ltd.",
+      "pctAum": 0.9,
+      "shares": 1775000
+    },
+    {
+      "name": "Sedemac Mechatronics Ltd.",
+      "pctAum": 0.89,
+      "shares": 267599
+    },
+    {
+      "name": "Hitachi Energy India Ltd.",
+      "pctAum": 0.79,
+      "shares": 19847
+    },
+    {
+      "name": "DLF Ltd.",
+      "pctAum": 0.78,
+      "shares": 953859
+    },
+    {
+      "name": "Welspun Corp Ltd.",
+      "pctAum": 0.77,
+      "shares": 377900
+    },
+    {
+      "name": "SAREGAMA India Ltd.",
+      "pctAum": 0.76,
+      "shares": 1166057
+    },
+    {
+      "name": "Axis Bank Ltd.",
+      "pctAum": 0.75,
+      "shares": 492300
+    },
+    {
+      "name": "Swiggy Ltd.",
+      "pctAum": 0.74,
+      "shares": 2095000
+    },
+    {
+      "name": "Page Industries Ltd.",
+      "pctAum": 0.74,
+      "shares": 14754
+    },
+    {
+      "name": "Piramal Finance Ltd.",
+      "pctAum": 0.73,
+      "shares": 286700
+    },
+    {
+      "name": "Siemens Energy India Ltd.",
+      "pctAum": 0.73,
+      "shares": 181691
+    },
+    {
+      "name": "SBI funds Management ltd.",
+      "pctAum": 0.71,
+      "shares": 970590
+    },
+    {
+      "name": "The Indian Hotels Company Ltd.",
+      "pctAum": 0.69,
+      "shares": 756876
+    },
+    {
+      "name": "Lemon Tree Hotels Ltd.",
+      "pctAum": 0.66,
+      "shares": 4837063
+    },
+    {
+      "name": "HDFC Asset Management Co. Ltd.",
+      "pctAum": 0.62,
+      "shares": 190984
+    },
+    {
+      "name": "Indegene Ltd.",
+      "pctAum": 0.58,
+      "shares": 905712
+    },
+    {
+      "name": "Vishal Mega Mart Ltd.",
+      "pctAum": 0.57,
+      "shares": 4276011
+    },
+    {
+      "name": "Travel Food Services Ltd.",
+      "pctAum": 0.52,
+      "shares": 318913
+    },
+    {
+      "name": "Computer Age Management Services Ltd.",
+      "pctAum": 0.47,
+      "shares": 473309
+    },
+    {
+      "name": "V2 Retail Ltd.",
+      "pctAum": 0.46,
+      "shares": 1707565
+    },
+    {
+      "name": "Poonawalla Fincorp Ltd.",
+      "pctAum": 0.33,
+      "shares": 580725
+    },
+    {
+      "name": "Aadhar Housing Finance Ltd.",
+      "pctAum": 0.33,
+      "shares": 535926
+    },
+    {
+      "name": "Acutaas Chemicals Ltd.",
+      "pctAum": 0.31,
+      "shares": 81530
+    },
+    {
+      "name": "ITC Hotels Ltd.",
+      "pctAum": 0.3,
+      "shares": 1506826
+    }
+  ],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 2.37,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": -0.86,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 71,
+    "debt": 0,
+    "cash": 2,
+    "misc": 0
+  }
+}

@@ -321,6 +321,28 @@ const DRILLDOWN_COUNTS = new Map();
 // one-line diagnosis naming the fix rather than a silent gap.
 const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
 
+/**
+ * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
+ *
+ * The largest by market value, so the route is stable across drops; a book with
+ * no mutual fund yields null and the route fails loudly rather than skipping.
+ * Its expected look-through is not written here either: the invariants
+ * reconstruct it from the figures the page itself renders.
+ */
+const MF_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const by = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Mutual Fund") continue;
+      by.set(p.securityKey, (by.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
+    }
+    return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -435,6 +457,16 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  /**
+   * ...AND ONE MUTUAL FUND, WHICH NOW HAS A LOOK-THROUGH THE AIF ABOVE CANNOT.
+   *
+   * Both branches are walked because the difference between them is the whole
+   * claim: a mutual fund scheme publishes its portfolio monthly and this page
+   * renders it; an AIF publishes none and the same page must keep SAYING so.
+   * A build that showed one fund's holdings under the other's name would pass
+   * either check alone.
+   */
+  ["stock-mf-lookthrough", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}` : "/stock/no-mutual-fund-in-the-book")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -1129,6 +1161,71 @@ const INVARIANTS = {
    * old text, so reverting either half fails rather than passing on prose that
    * happens to still be there.
    */
+  /**
+   * ── THE FUND LOOK-THROUGH ────────────────────────────────────────────────
+   *
+   * The one card on this site showing figures that are NOT the family's own, so
+   * every invariant here is about the reader being able to tell that. Struck on
+   * the FIGURES and the labels the page renders, never on the card merely being
+   * present.
+   */
+  "stock-mf-lookthrough": [
+    ["it renders the scheme's disclosed portfolio, naming the scheme", (t) =>
+      /What this fund holds/i.test(t) && /disclosed it on/i.test(t) && /\d+ disclosed holdings/i.test(t)],
+    /**
+     * THE PROVENANCE IS ON THE CARD. These figures come from the AMC's monthly
+     * disclosure, not from a statement issued to this family — a reader who
+     * takes them for statement figures is wrong about what they can be checked
+     * against, and about why they are in no total.
+     */
+    ["it says the figures are the AMC's disclosure and not this family's statement", (t) =>
+      /not a statement issued to this family/i.test(t)],
+    /**
+     * BOTH DATES, because a monthly portfolio and a statement mark rarely
+     * coincide — the fund's disclosure is 31 Jul and the holding is valued days
+     * later. One date standing for both would misdate whichever it is not.
+     */
+    ["both as-of dates are printed, the portfolio's and the holding's", (t) => {
+      const m = /portfolio\s+(\d{1,2} \w{3} \d{4})\s*·\s*holding\s+(\d{1,2} \w{3} \d{4})/i.exec(t);
+      return !!m;
+    }],
+    // THE PLAN IS NAMED WITH ITS REASON. Matching a Direct holding to a Regular
+    // listing is legitimate only because the two hold the same portfolio, and
+    // that is a fact the reader is owed rather than one to assume they know.
+    ["the plan matched is named, with why matching across it is legitimate", (t) =>
+      /matched on the (Direct|Regular|unstated) plan/i.test(t) && /same portfolio, different expense ratio/i.test(t)],
+    /**
+     * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES.
+     *
+     * "Your look-through" is the holding's value times the scheme's published
+     * weight. Asserted by recomputing the largest row from the holding value the
+     * page prints and the percent beside it — so a column that silently switched
+     * to some other basis (the fund's own money, say) fails here rather than
+     * looking plausible. The bound is the printing precision: both sides render
+     * compact, to one decimal.
+     */
+    ["the look-through column is the holding's value times the disclosed weight", (t) => {
+      const hv = cr(new RegExp(String.raw`HOLDING VALUE\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      const row = /\n[^\n\t]+\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
+      if (!Number.isFinite(hv) || !row) return notChecked("the holding value or the first look-through row did not parse on this run");
+      const pct = Number(row[1]);
+      const shown = crU(/₹([\d,.]+)/.exec(row[2])?.[1], /(Cr|L|K)/.exec(row[2])?.[1]);
+      const expect = (hv * pct) / 100;
+      return Number.isFinite(shown) && Math.abs(shown - expect) <= Math.max(0.02, expect * 0.02);
+    }],
+    /**
+     * AND IT IS IN NO TOTAL. The fund's own value is already in the NAV; adding
+     * the look-through would count the same money twice, which is the failure
+     * this whole book is built against. Said on the card, not in a tooltip.
+     */
+    ["the card states none of it is in any total on the site", (t) =>
+      /None of this is in any total on this site/i.test(t) && /count the same money twice/i.test(t)],
+    // The disclosed weights are printed as the sum they actually are, rather
+    // than implied to be 100% — a fund's own rounding leaves a gap and the card
+    // names it instead of spreading it across the rows.
+    ["the disclosed weights are totalled honestly", (t) =>
+      /disclosed weights add to\s*\n?\s*[\d.]+%/i.test(t)],
+  ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
       (t) => (t.match(/no cost on the .+? statement for this holding/gi) ?? []).length >= 2],
@@ -2527,6 +2624,18 @@ const INVARIANTS = {
     // on screen as a sector nobody assigned rather than a property it lacks.
     ["a fund's missing sector is explained, not shown as Unclassified",
       (t) => /a fund holds many/i.test(t)],
+    /**
+     * AND AN AIF STILL HAS NO LOOK-THROUGH, WITH THE REASON.
+     *
+     * This is the other half of the mutual-fund claim and neither implies the
+     * other: a mutual fund scheme discloses its portfolio monthly and its page
+     * now renders it, while an AIF publishes none. A build that grew a
+     * constituent table here could only have filled it from some other scheme,
+     * which is the fabrication the look-through store must not enable.
+     */
+    ["an AIF renders no look-through table", (t) => !/What this fund holds/i.test(t)],
+    ["...and says why: an AIF publishes no monthly portfolio disclosure", (t) =>
+      /publishes no such disclosure/i.test(t) && /Category II or III/i.test(t)],
   ],
   // The AIF drill-down for a holding reported under two members. "AIF holdings
   // must be shown inside the respective AIF page drill down" — so every

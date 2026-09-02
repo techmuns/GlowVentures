@@ -1,0 +1,279 @@
+{
+  "schemecode": 1623,
+  "scheme": "ICICI Pru Nifty 50 Index Fund-Reg(G)",
+  "classification": "Equity : Index Funds",
+  "fundAumCr": 17352.99,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "HDFC Bank Ltd.",
+      "pctAum": 10.23,
+      "shares": 23735203
+    },
+    {
+      "name": "ICICI Bank Ltd.",
+      "pctAum": 9.18,
+      "shares": 11103570
+    },
+    {
+      "name": "Reliance Industries Ltd.",
+      "pctAum": 7.89,
+      "shares": 10471103
+    },
+    {
+      "name": "Bharti Airtel Ltd.",
+      "pctAum": 5.36,
+      "shares": 4713270
+    },
+    {
+      "name": "Larsen & Toubro Ltd.",
+      "pctAum": 4.12,
+      "shares": 1814147
+    },
+    {
+      "name": "State Bank Of India",
+      "pctAum": 3.79,
+      "shares": 6406759
+    },
+    {
+      "name": "Infosys Ltd.",
+      "pctAum": 3.54,
+      "shares": 5436553
+    },
+    {
+      "name": "Axis Bank Ltd.",
+      "pctAum": 3.15,
+      "shares": 4451400
+    },
+    {
+      "name": "Bajaj Finance Ltd.",
+      "pctAum": 2.73,
+      "shares": 4154287
+    },
+    {
+      "name": "Mahindra & Mahindra Ltd.",
+      "pctAum": 2.71,
+      "shares": 1383782
+    },
+    {
+      "name": "Kotak Mahindra Bank Ltd.",
+      "pctAum": 2.57,
+      "shares": 11411758
+    },
+    {
+      "name": "ITC Ltd.",
+      "pctAum": 2.42,
+      "shares": 14941298
+    },
+    {
+      "name": "Tata Consultancy Services Ltd.",
+      "pctAum": 2.16,
+      "shares": 1582488
+    },
+    {
+      "name": "Eternal Ltd.",
+      "pctAum": 1.95,
+      "shares": 11205624
+    },
+    {
+      "name": "Sun Pharmaceutical Industries Ltd.",
+      "pctAum": 1.88,
+      "shares": 1641230
+    },
+    {
+      "name": "Titan Company Ltd.",
+      "pctAum": 1.8,
+      "shares": 639927
+    },
+    {
+      "name": "Hindustan Unilever Ltd.",
+      "pctAum": 1.67,
+      "shares": 1375111
+    },
+    {
+      "name": "Maruti Suzuki India Ltd.",
+      "pctAum": 1.66,
+      "shares": 202192
+    },
+    {
+      "name": "NTPC Ltd.",
+      "pctAum": 1.47,
+      "shares": 7348208
+    },
+    {
+      "name": "Tata Steel Ltd.",
+      "pctAum": 1.4,
+      "shares": 12812262
+    },
+    {
+      "name": "Shriram Finance Ltd.",
+      "pctAum": 1.31,
+      "shares": 2170713
+    },
+    {
+      "name": "HCL Technologies Ltd.",
+      "pctAum": 1.27,
+      "shares": 1634112
+    },
+    {
+      "name": "Hindalco Industries Ltd.",
+      "pctAum": 1.26,
+      "shares": 2244208
+    },
+    {
+      "name": "Ultratech Cement Ltd.",
+      "pctAum": 1.26,
+      "shares": 183408
+    },
+    {
+      "name": "Bharat Electronics Ltd.",
+      "pctAum": 1.24,
+      "shares": 5551558
+    },
+    {
+      "name": "Power Grid Corporation Of India Ltd.",
+      "pctAum": 1.15,
+      "shares": 7019166
+    },
+    {
+      "name": "Bajaj Auto Ltd.",
+      "pctAum": 1.14,
+      "shares": 171657
+    },
+    {
+      "name": "Adani Ports and Special Economic Zone Ltd.",
+      "pctAum": 1.12,
+      "shares": 1143470
+    },
+    {
+      "name": "Asian Paints Ltd.",
+      "pctAum": 1.11,
+      "shares": 700935
+    },
+    {
+      "name": "JSW Steel Ltd.",
+      "pctAum": 1.06,
+      "shares": 1453784
+    },
+    {
+      "name": "Bajaj Finserv Ltd.",
+      "pctAum": 1.05,
+      "shares": 897307
+    },
+    {
+      "name": "Interglobe Aviation Ltd.",
+      "pctAum": 1.05,
+      "shares": 350836
+    },
+    {
+      "name": "Grasim Industries Ltd.",
+      "pctAum": 1.04,
+      "shares": 584812
+    },
+    {
+      "name": "Nestle India Ltd.",
+      "pctAum": 0.97,
+      "shares": 1111343
+    },
+    {
+      "name": "Eicher Motors Ltd.",
+      "pctAum": 0.96,
+      "shares": 213600
+    },
+    {
+      "name": "Tech Mahindra Ltd.",
+      "pctAum": 0.94,
+      "shares": 984364
+    },
+    {
+      "name": "Trent Ltd.",
+      "pctAum": 0.89,
+      "shares": 515755
+    },
+    {
+      "name": "Coal India Ltd.",
+      "pctAum": 0.89,
+      "shares": 3712669
+    },
+    {
+      "name": "Oil & Natural Gas Corporation Ltd.",
+      "pctAum": 0.84,
+      "shares": 6020889
+    },
+    {
+      "name": "Apollo Hospitals Enterprise Ltd.",
+      "pctAum": 0.82,
+      "shares": 159501
+    },
+    {
+      "name": "Adani Enterprises Ltd.",
+      "pctAum": 0.78,
+      "shares": 447266
+    },
+    {
+      "name": "SBI Life Insurance Company Ltd.",
+      "pctAum": 0.76,
+      "shares": 696428
+    },
+    {
+      "name": "Jio Financial Services Ltd",
+      "pctAum": 0.75,
+      "shares": 5085621
+    },
+    {
+      "name": "Cipla Ltd.",
+      "pctAum": 0.74,
+      "shares": 872139
+    },
+    {
+      "name": "MAX Healthcare Institute Ltd",
+      "pctAum": 0.73,
+      "shares": 1153541
+    },
+    {
+      "name": "Tata Motors Passenger Vehicles Ltd.",
+      "pctAum": 0.63,
+      "shares": 3239346
+    },
+    {
+      "name": "Tata Consumer Products Ltd.",
+      "pctAum": 0.63,
+      "shares": 1009373
+    },
+    {
+      "name": "Dr. Reddy's Laboratories Ltd.",
+      "pctAum": 0.63,
+      "shares": 944830
+    },
+    {
+      "name": "HDFC Life Insurance Company Ltd.",
+      "pctAum": 0.53,
+      "shares": 1667388
+    },
+    {
+      "name": "Wipro Ltd.",
+      "pctAum": 0.44,
+      "shares": 4198776
+    }
+  ],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Net Current Asset",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 0.11,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 50,
+    "debt": 0,
+    "cash": 2,
+    "misc": 0
+  }
+}

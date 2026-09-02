@@ -18,6 +18,8 @@ import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf, engagementOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
+import { FundLookthrough } from "@/components/FundLookthrough";
+import { canHaveLookthrough } from "@/lib/lookthrough";
 import { ReturnsTable } from "@/components/ReturnsTable";
 import { RatioTable } from "@/components/RatioTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
@@ -650,6 +652,16 @@ export function StockInfo() {
       {/* Investment tools are the family's OWN judgements — a target price or a
           review date is as meaningful against a fund as against a company — so
           they render for every holding. */}
+      {/* WHAT THE FUND HOLDS — the look-through, where a disclosure resolves.
+          Placed ABOVE the research-absence card because it answers the question
+          that card used to have to refuse: "what companies am I holding through
+          this fund". The card below still refuses the COMPANY research (a fund
+          has no PE and no concall) and now also states, for a fund with no
+          resolved disclosure, that this is why there is no list. */}
+      {fundVehicle && rows.length > 0 && canHaveLookthrough(rows[0]) && (
+        <FundLookthrough securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf} />
+      )}
+
       {notACompany ? (
         <Card className="mt-5" title={`Company research — not applicable to ${NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
           <p className="text-[12.5px] leading-relaxed text-slate-400">
@@ -663,10 +675,15 @@ export function StockInfo() {
           {fundVehicle && (
             <>
               <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                The companies inside it are the manager's holdings, not this book's. Showing them would need the scheme's
-                own portfolio disclosure joined to this folio, and no statement in this drop carries one for it — so the
-                fund's value stays whole, here and in every total, rather than being spread across sectors it was never
-                reported against.
+                The companies inside it are the manager's holdings, not this book's — no statement issued to this family
+                names them. {canHaveLookthrough(rows[0])
+                  ? <>A MUTUAL FUND scheme nonetheless discloses its portfolio monthly, and where that disclosure
+                    resolves it is shown above under its own heading. It is the AMC's document, not this family's, so
+                    the fund&rsquo;s value still stays whole here and in every total rather than being spread across the
+                    sectors of companies the family does not directly own.</>
+                  : <>An AIF publishes no such disclosure — SEBI requires a monthly portfolio from a mutual fund and not
+                    from a Category II or III alternative fund — so there is no scheme document to join to this folio,
+                    and the fund&rsquo;s value stays whole.</>}
               </p>
               {/* WHY THIS HAS TO BE SAID HERE, AND SAID AS A CONTRAST.
                   A reader who has just learnt that a share held through a PMS is
@@ -680,12 +697,14 @@ export function StockInfo() {
                   they are. So there is no list to render, and this is a decided,
                   permanent absence rather than an empty table waiting on a feed. */}
               <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                <span className="font-medium text-slate-300">And that is why this page has no list of underlying
-                companies, though a PMS mandate's page does.</span> Under a mandate the family owns each share and the
-                manager merely picks it, so every one is reported by name and the mandate's own page carries all of them.
-                A fund unit is the opposite: the fund owns the companies, this book is told only what the unit is worth,
-                and the names behind it are never reported to it. There is nothing withheld here and nothing pending —
-                the whole of what the statement says about this holding is already above.
+                <span className="font-medium text-slate-300">A mandate&rsquo;s constituents and a fund&rsquo;s are two
+                different kinds of fact, and the difference is worth keeping in view.</span> Under a mandate the family
+                owns each share and the manager merely picks it, so every one is reported BY NAME on a statement issued
+                to this family, and the mandate&rsquo;s own page carries all of them at the family&rsquo;s own cost and
+                value. A fund unit is the opposite: the fund owns the companies, and what this family is told is only
+                what the unit is worth. Anything shown above about what the scheme holds comes from the AMC&rsquo;s
+                public disclosure and carries no cost, no purchase date and no figure about this family except the one
+                derived from a published weight.
               </p>
             </>
           )}
