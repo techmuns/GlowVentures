@@ -1021,6 +1021,48 @@ way. `pipeline.test.mjs` asserts all of it, and asserts the guard is NARROW: an
 ordinary Goldstandard appraisal, which also names Aristos, still resolves to its
 own house.
 
+#### Stage 10q — THE REGISTER IS ON THE DASHBOARD, AND IN NO TOTAL ON IT
+
+*"integrate these three new files into the dashboard, make sure there's no
+duplication."* The two PDFs cannot be read by anything (see above). The register
+can, and it now has a page — built as `BOOK_POLYCAB` is, because that is the
+construction this repo has already proven for real data that must never reach a
+NAV:
+
+- **`npm run build-register`** emits `src/data/registerData.ts` from the workbook.
+  Generated, never hand-edited, and idempotent — it regenerates byte-identically.
+- **`src/pages/Register.tsx` at `/register` is its ONLY reader**, and it reads
+  that module DIRECTLY rather than through `PortfolioContext`. `usePortfolio` is
+  used for one thing — the display-currency formatter — and never for a figure.
+  So nothing on the page can leak into a total, an allocation, a sector or a NAV.
+- **`scripts/lib/registerRead.mjs` is the one reader**, used by both
+  `build-register.mjs` and `register-reconcile.mjs`. Two copies would be two
+  chances for the page and the report to state different figures about one
+  workbook — the failure `drilldown.ts` exists to stop for the book's own numbers.
+  Extracting it was verified by regenerating `docs/REGISTER-RECONCILIATION.md`
+  byte-identically.
+
+**THE PAGE LEADS WITH THE PARTITION, NOT THE TOTAL, AND THAT IS THE ANTI-DUPLICATION
+DESIGN.** ₹842.92 Cr of paid-in capital is NOT additive to a ₹710.39 Cr book:
+₹391.14 Cr of it across 31 names is already inside NAV at a statement mark. A page
+that printed only the gross would invite exactly the double count the family asked
+to be ruled out, so the four buckets — in-book-as-account ₹347.73 Cr,
+in-book-as-position ₹43.42 Cr, not-in-book ₹450.08 Cr, exited ₹1.69 Cr — are shown
+apart, each with what it means for the dashboard, and they sum to the gross.
+
+**TWO INVARIANTS, AND NEITHER IMPLIES THE OTHER**, both verified by reintroducing
+their bug. `check:pages` walks `/register` and asserts it renders the register's
+own largest not-in-book name, states these are amounts PAID rather than a
+valuation, states it is no part of the book's totals, names the double count, and
+never posts a paid figure as a cost basis. And on EVERY OTHER ROUTE it asserts that
+name does NOT appear — `REGISTER_SENTINEL`, derived from the data like
+`RINGFENCED_KEY` so the next drop picks its own. Measured: leaking the sentinel
+onto Morning CIO fires the absence check; breaking the page's own wording fires the
+page check; the full sweep is 102 combinations clean.
+
+The sentinel is a NAME and deliberately not the word "register": `capital-register`
+is a live report type in the book and the Data Audit page prints it on every walk.
+
 #### `npm run reconcile:register` — what the register can and cannot settle
 
 `scripts/register-reconcile.mjs` is to the register what `review-reconcile.mjs` is
@@ -4613,6 +4655,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
+- `npm run build-register` regenerates `src/data/registerData.ts` from the family's
+  investment register — the `/register` page's data, and NO part of the book. Its
+  only reader is `src/pages/Register.tsx`, which reads it directly so it cannot
+  reach a portfolio total.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and
   on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.

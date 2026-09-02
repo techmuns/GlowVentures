@@ -6,6 +6,7 @@ import { IndexStrip } from "@/components/IndexStrip";
 import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
 import { Polycab } from "@/pages/Polycab";
+import { Register } from "@/pages/Register";
 import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
 import { PrivateMarket } from "@/pages/PrivateMarket";
 import { FamilyEntities } from "@/pages/FamilyEntities";
@@ -102,6 +103,7 @@ export default function App() {
                 RINGFENCED_SECURITY_KEYS in build-book.mjs). Reads BOOK_POLYCAB
                 directly, never the portfolio context, so it cannot leak back in. */}
             <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
+            <Route path="/register" element={<Gate><Register /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
             {/* THE PRIVATE BOOK THIS DROP ACTUALLY CARRIES — not the

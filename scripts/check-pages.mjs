@@ -241,6 +241,39 @@ const PRIV_ASOF_MAX = (() => {
  * one line. A book with nothing ring-fenced yields null and the route walks a
  * key that resolves to no holding, which fails rather than silently skipping.
  */
+/**
+ * THE REGISTER'S OWN SENTINEL, DERIVED RATHER THAN TYPED.
+ *
+ * `src/data/registerData.ts` is generated from the family's investment register
+ * and must reach NO portfolio total. The absence check below needs a string that
+ * appears on `/register` and nowhere else, and the largest name the book does not
+ * carry is exactly that: it is in the register by construction and in the book by
+ * definition not. Taken from the data so the next drop picks its own sentinel —
+ * the same reason `RINGFENCED_KEY` is read out of `BOOK_POLYCAB`.
+ *
+ * The WORD "register" would be useless here: `capital-register` is a live report
+ * type in the book and the Data Audit page names it on every walk.
+ */
+/** How many book positions report no cost — the register page's denominator. */
+const COSTLESS_IN_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const rows = bookArray(src, "BOOK_POSITIONS");
+    return Array.isArray(rows) ? rows.filter((p) => p.costBasis == null).length : null;
+  } catch { return null; }
+})();
+
+const REGISTER_SENTINEL = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/registerData.ts", import.meta.url), "utf8");
+    const rows = bookArray(src, "REGISTER_NOT_IN_BOOK");
+    const name = Array.isArray(rows) ? rows[0]?.name ?? null : null;
+    // Only the distinctive head of the name; the tables truncate nothing but the
+    // check should not depend on punctuation the page may render differently.
+    return name ? name.split(/[\s(,-]/).filter((w) => w.length > 3)[0] ?? null : null;
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -334,6 +367,11 @@ const ROUTES = [
   // over 1.39 Cr shares worth ₹12,351 Cr. Walked as its own route so a
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
+  // THE FAMILY'S INVESTMENT REGISTER, ON ITS OWN PAGE and in NO book total. Same
+  // construction as Polycab and the same pair of obligations: this page RENDERS
+  // the register, and no consolidated figure anywhere in the sweep may move
+  // because of it. `registerAbsent` below applies to every other route.
+  ["register", "/register"],
   ["cio", "/cio"],
   /**
    * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
@@ -894,6 +932,62 @@ const INVARIANTS = {
    * its prose, which is the rule the exposure check's first draft broke — its
    * captions rendered whatever the data did and it could not fail.
    */
+  /**
+   * THE FAMILY'S INVESTMENT REGISTER — RENDERED HERE, AND IN NO PORTFOLIO TOTAL.
+   *
+   * Same pair of obligations as Polycab, and neither implies the other: this page
+   * must RENDER the register, and every other route must be free of it (the
+   * `REGISTER_SENTINEL` check in the walk). A page that rendered nothing would
+   * satisfy every absence check while showing the family none of their own data.
+   *
+   * The register is a COST record — money that left a bank account on a date —
+   * and roughly half of it is already inside the book at a statement mark. So the
+   * assertions below are about the two things a reader could get wrong: that
+   * these figures are values, and that they are additive.
+   */
+  register: [
+    ["it renders the register's own largest name, so the absence check elsewhere means something",
+      (t) => !!REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(t)],
+    /**
+     * THE FIGURES ARE COSTS AND THE PAGE SAYS SO. A reader who takes ₹842 Cr of
+     * paid-in capital for a portfolio value has misread the page by an order of
+     * magnitude against a ₹710 Cr book, which is exactly the contradiction the
+     * "a total must tie" rule exists to prevent one page over.
+     */
+    ["it states these are amounts PAID and not a valuation",
+      (t) => /money the family PAID/i.test(t) && /cash outflow/i.test(t)],
+    ["it states the register is no part of the book's totals",
+      (t) => /no part of the book/i.test(t) && /NAV/i.test(t)],
+    /**
+     * AND THE OVERLAP IS SHOWN RATHER THAN IMPLIED. The gross is NOT additive:
+     * the first bucket is already inside NAV at a manager's own mark, so a page
+     * that printed only the total would invite exactly the double count the
+     * family asked us to rule out.
+     */
+    ["it partitions the register and says the overlap must not be added twice",
+      (t) => /Already in the book/i.test(t) && /double count/i.test(t)],
+    /**
+     * NO PAID FIGURE IS PRESENTED AS A POSTED COST. The candidates table is the
+     * one place a register figure sits beside a book figure for the same
+     * holding, which is where a future edit is most likely to post one — so the
+     * refusal is asserted on the CELL, with its reason, and never as a zero.
+     */
+    ["a register figure is never posted as a cost basis, and the refusal names its reason",
+      (t, ctx) => {
+        const why = (ctx?.titles ?? []).some((x) => /quantities tie/i.test(x) && /double-count/i.test(x));
+        return why && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t);
+      }],
+    /**
+     * THE COSTLESS COUNT TIES TO THE BOOK'S OWN. The page claims to cover N of
+     * the book's costless positions; if that denominator drifted from
+     * BOOK_POSITIONS the page would be quietly describing a different book.
+     */
+    ["the costless denominator matches the book's own count of costless positions",
+      (t) => {
+        const m = /of the book's (\d+) costless positions/i.exec(t);
+        return !!m && COSTLESS_IN_BOOK != null && Number(m[1]) === COSTLESS_IN_BOOK;
+      }],
+  ],
   polycab: [
     ["the holding is named, with a share count and a market value",
       (t) => /Polycab/i.test(t) && /[\d,]{7,}/.test(t) && new RegExp(CR).test(t)],
@@ -3435,6 +3529,17 @@ for (const theme of THEMES) {
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
+      }
+      /**
+       * AND THE REGISTER REACHES NO OTHER PAGE. `registerData.ts` is a cost
+       * record the book deliberately does not carry; a name from it appearing on
+       * a page that computes a portfolio figure means the two have been mixed,
+       * which is the double count the family asked us to rule out.
+       */
+      const isRegisterPage = /\/register$/.test(page.url());
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isRegisterPage
+          && REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(mainText)) {
+        invariants.push(`the investment register is its own page, and this page names ${REGISTER_SENTINEL} from it`);
       }
       // `holdings-row-3` shares its invariant list with every other allocation
       // row: the assertions compare each page against ITS OWN row's cells, so

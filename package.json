@@ -17,6 +17,7 @@
     "reconcile:review": "node scripts/review-reconcile.mjs",
     "reconcile:register": "node scripts/register-reconcile.mjs",
     "build-book": "node scripts/build-book.mjs",
+    "build-register": "node scripts/build-register.mjs",
     "check:pages": "node scripts/check-pages.mjs",
     "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs",
     "harvest": "node scripts/harvest/run.mjs",
