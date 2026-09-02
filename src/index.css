@@ -22,6 +22,57 @@ html.dark {
 
 html, body, #root { height: 100%; }
 
+/*
+ * THE DEFAULT VIEW IS THE ZOOMED-OUT ONE.
+ *
+ * The family kept pressing Ctrl+- on this dashboard and said the result "becomes
+ * better and realigned" — and it does, for a reason that is measurable rather
+ * than aesthetic. At 100% the filter bar wraps its two buttons onto a second
+ * row, the Entity column breaks "AJAY JAISINGHANI · V.E.C 128005" across two
+ * lines, and a wide table loses its last column to the scroller. Zooming out
+ * buys CSS pixels and every one of those goes away. Asking a reader to zoom out
+ * on every visit is the same defect as asking them to scroll a table sideways
+ * to find the total.
+ *
+ * `zoom` is what browser zoom itself does: it REFLOWS at the new scale, so the
+ * filter bar genuinely fits on one row rather than being drawn smaller and
+ * still wrapped. A `transform: scale()` would shrink the picture and leave the
+ * layout believing it was still 1500px wide, which is the wrong half of the
+ * effect — the wrap would stay, just smaller.
+ *
+ * ONE NUMBER, IN ONE PLACE. `--app-zoom` is the whole control; nothing else in
+ * the app hard-codes a scale, and every px size in the components stays exactly
+ * as written. Set it to 1 and the app is what it was.
+ *
+ * NO HEIGHT COMPENSATION, AND THAT WAS MEASURED RATHER THAN REASONED. The
+ * obvious-looking `height: calc(100% / var(--app-zoom))` is WRONG on this
+ * property: Chrome's `zoom` already resolves a percentage height inside the
+ * zoomed coordinate space, so `100%` of a 900px viewport is the 1028px that
+ * paints back to 900. Dividing again gave `#root` 1175px, a used height of
+ * 1028px against a 900px viewport, and a permanent vertical scrollbar on every
+ * page — including the ones that fit. `height: 100%` is inherited from the rule
+ * above and is already correct; the full-height scroll panes the tables live in
+ * keep working untouched.
+ *
+ * AND NOTHING IN THE ZOOMED SUBTREE MAY BE SIZED IN `vh`. A viewport unit is
+ * resolved against the real viewport and is NOT rescaled by zoom, so the app
+ * shell's `h-screen` painted at 100vh x 0.875 — a 787px app in a 900px window,
+ * with a dead band under it that reads as a rendering fault. The shell, the
+ * sidebar and the error boundary are `h-full` now, which chains off the
+ * `height: 100%` on html/body/#root above and lands exactly on the viewport.
+ * A future `min-h-screen` anywhere under #root brings the band straight back.
+ *
+ * Held to >= 1024px deliberately. Below that the constraint is the reader's
+ * eyes rather than the column count: a phone has no wide table to fit and
+ * shrinking its body text buys nothing.
+ */
+:root { --app-zoom: 1; }
+
+@media (min-width: 1024px) {
+  :root { --app-zoom: 0.875; }
+  #root { zoom: var(--app-zoom); }
+}
+
 body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-feature-settings: "cv11", "ss01", "ss03";
