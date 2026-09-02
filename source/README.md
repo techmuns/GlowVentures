@@ -89,3 +89,90 @@ Sanshi Class A2 2,341,480.851 and Class E 1,761,264.629 on Ajay's, Sanshi Class 
 Opportunities Series 8 Class A3 at the same 9,90,429.684 units the two CRNs
 already report between them. A name can be a spelling; four exact unit counts
 against four different funds are not a coincidence.
+
+## `august-2026-f/` — a third way a PDF can be unreadable, and a register that is not a statement
+
+Three files, found by diffing the client's Google Drive against `source/` after
+`august-2026-e/` had landed. Every other file in that Drive folder matches a
+local file on name and byte size; these three matched nothing.
+
+| File | What it is | Outcome |
+| --- | --- | --- |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own register of what they PAID — 8 sheets, 844 tranche rows, 151 names, ₹844.94 Cr gross paid-in | READS PERFECTLY — and is **not a source**, by decision |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account 67786547 | **not read — the text is outlined to vector paths** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account 67786137 | **not read — same** |
+
+### The two statements: a third failure mode, and the filenames are wrong again
+
+`august-2026-e/` established that a SCAN is not a document with no reader. These
+two are neither. They contain **no raster image at all and no text either**: zero
+font objects, zero `BT`/`Tj` operators, and ~9,300 bezier curves — every glyph
+has been **CONVERTED TO VECTOR OUTLINES** by whatever exported the file. pdfjs's
+operator list reads 2,752 ops, 545 paths, no text ops; poppler's `pdftotext`
+returns one character. Two independent PDF engines agree there is nothing to read.
+
+`extract.mjs` reports them as **`text-outlined-to-paths`**, not `no-text-layer`,
+because the remedy differs and a confidently wrong diagnosis costs a day:
+
+- a SCAN is a raster, and its resolution is all there will ever be;
+- OUTLINED TEXT is resolution-independent, so the ask is a **re-export from the
+  issuing system with fonts embedded** — HDFC's PDF export setting is what did
+  this — rather than a re-scan of paper that was never on paper.
+
+Neither is an OCR job, for the reason `august-2026-e/` already gives.
+`lib/layout.mjs`'s `classifyInk` draws the distinction on the OPERATOR LIST, and
+it runs **only** for a document that yielded no text at all, so no ordinary
+statement pays for the second parse. It is told apart there rather than by a byte
+search for `/Font` or `/DCTDecode`, because a PDF 1.7 file keeps both inside
+compressed object streams and a raw scan finds neither.
+
+**AND THE FILENAMES NAME THE WRONG HOLDER — for the fourth time in this corpus.**
+Both files are named for a Bharat Jaisinghani family trust. Both statements print
+`AJAY T JAISINGHANI` and `AARTI AJAY JAISINGHANI` as the joint holders, at
+Ajay's own Prabhadevi address. Whoever writes a reader for these resolves the
+account on the **`DP Account No:` the page prints** — 67786547 and 67786137 —
+never on the file name, which is the rule `motilalDemat.mjs` already applies to
+three of its twelve files and `pmsStatements.mjs` to all 23 of V.E.C's.
+
+What they hold is small and would be **quantity-only** if it were read: one line
+each, `SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
+`0.01% PRE SERIES A PREF`, at a Market Rate of **100.000** — the FACE VALUE of a
+preference share in an unlisted private company, not a mark anyone struck. That
+is the rule `motilalDemat.mjs` states for an AIF unit at 100.000 and the one
+`nsdlDemat.mjs` grades into `declared`/`scheme`/`par`, arriving through a third
+document. Read as a mark it would add ₹34,700 twice to NAV.
+
+### The register: the same decision as the consolidated review, for the same reason
+
+`NEW INVESTMENT SHEET.xlsx` is the family's own record of every direct and
+private investment — angel tickets, LLP capital, pre-IPO allotments, fund
+commitments — with the date, the entity it was made under and the amount paid.
+It reads perfectly (`lib/sheet.mjs`, 8 sheets). It is still **not a source**, and
+for exactly the reason the adviser's consolidated review is not one: no
+institution struck it, its `INVESTMENT AMOUNT` column is a **cash outflow rather
+than a mark**, and `CURRENT VALUATION` is empty. Every figure in this book traces
+to the statement of the institution that struck it, and that guarantee ends on
+the first cell of an aggregation.
+
+What it is genuinely good for is the family-input layer (`src/lib/deals.ts`,
+Stage 10b) — which exists precisely because a shareholders' agreement and a cap
+table have no statement issuer and no reader — and as a second independent
+CROSS-CHECK beside the review.
+
+**IT IS MATCHED ON A HEADER NO CUSTODIAN PRINTS**, like the review before it: a
+depository tracks units, never whether the family holds the paper certificate, so
+`ORG. SHARE CERTIFICATE STATUS` is the anchor. Without that rule it was measured
+classifying as provider **Green Lantern Capital LLP**, strategy **Aristos Equity
+Portfolio**, owner **"COMMUNITY PRIVATE LIMITED BHARAT"**, accountNo
+**"EDUGORILLA"** and reportType **`capital-call`** — five fields scraped off
+PORTFOLIO COMPANY names in its own cells. Green Lantern has a reader and
+`capital-call` is a live report type, so unlike the review workbook this one
+would have been **handed to a reader** rather than merely misfiled.
+
+Adding it also exposed that the review's own protection was luck: its rule lived
+in `ISSUER_PROVIDER_RULES`, which run AFTER `match360One`/`matchGoldstandard`, so
+the workbook escaped those only because its cells spell "Green Lantern Growth
+Strategy" rather than "GREEN LANTERN CAPITAL". Both house matchers now return
+null for either signature, and `pipeline.test.mjs` asserts that a non-statement
+reaches **no report type, no account and no owner** — while an ordinary
+Goldstandard appraisal, which also names Aristos, still resolves to its own house.

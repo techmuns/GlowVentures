@@ -138,6 +138,11 @@ function fieldAfter(text, label, pattern = String.raw`([^:|]{2,80}?)`) {
  * Holdings are AIF/PMS units — no ISIN, no ticker.
  */
 function match360One(text, name) {
+  // A NON-STATEMENT NAMES 360 ONE TOO — as a manager the family pays and, in the
+  // review, as a holding. Same reasoning as the depository guard in
+  // `matchGoldstandard`: stop it here so it reaches ISSUER_PROVIDER_RULES and is
+  // labelled for what it is.
+  if (isNonStatement(text)) return null;
   /**
    * THE LETTERHEAD, NOT THE WHOLE DOCUMENT.
    *
@@ -227,6 +232,61 @@ const GOLDSTANDARD_FILE_TYPES = [
  */
 const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
 
+/**
+ * THE FAMILY'S OWN INVESTMENT REGISTER, matched on a header no custodian prints.
+ *
+ * A depository tracks units; it never tracks whether the family has the paper
+ * share certificate in hand. `ORG. SHARE CERTIFICATE STATUS` is a family
+ * record-keeping column and is the one field in
+ * `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` that no issuer would ever
+ * emit — the same kind of anchor `Absolute Gain / (Loss) Including Redeemed
+ * Funds` gives the consolidated review.
+ *
+ * It is used in TWO places (the guard below and ISSUER_PROVIDER_RULES) and is
+ * therefore defined once: two copies of a signature are two chances for the
+ * guard and the label to disagree about the same document.
+ */
+export const FAMILY_REGISTER_SIGNATURE = /ORG\.?\s*SHARE\s+CERTIFICATE\s+STATUS/i;
+
+/** The consolidated review's own anchor — a column header no issuer prints. */
+export const FAMILY_REVIEW_SIGNATURE = /Absolute\s+Gain\s*\/\s*\(Loss\)\s+Including\s+Redeemed\s+Funds/i;
+
+/**
+ * EVERY non-statement signature, tested TOGETHER by the house-rule guards.
+ *
+ * The review workbook was protected only by ISSUER_PROVIDER_RULES, which run
+ * AFTER `match360One`/`matchGoldstandard` — so it escaped them only because its
+ * cells spell "Green Lantern Growth Strategy" rather than "GREEN LANTERN
+ * CAPITAL". That is luck, not design, and the adviser writing a manager's full
+ * legal name in one cell is all it would take: the workbook would then be filed
+ * as a Green Lantern report. Both documents are guarded on both signatures.
+ */
+export const NON_STATEMENT_SIGNATURES = [FAMILY_REGISTER_SIGNATURE, FAMILY_REVIEW_SIGNATURE];
+
+/** True for a document the family or their adviser produced, not an institution. */
+export const isNonStatement = (text) => NON_STATEMENT_SIGNATURES.some((re) => re.test(text));
+
+/**
+ * THE TWO DOCUMENTS IN THIS CORPUS THAT ARE NOT STATEMENTS.
+ *
+ * Both are the family's or their adviser's own records, both name every manager
+ * in the book, and both are held out of `glowData.ts` BY DECISION rather than by
+ * omission (see the rules in ISSUER_PROVIDER_RULES). Being non-statements, they
+ * have NO report type and NO account number — those are properties of a document
+ * an institution issued about one account.
+ *
+ * This is asserted rather than left to luck. The review workbook classified as
+ * `reportType: unknown` only because its cells happen to trip no report-type
+ * keyword; the family register's cells DO ("capital commitment", "drawdown
+ * notice"), so it came back `capital-call` — a live report type — with an
+ * accountNo of "GoldStandard" scraped out of a cell. A reader is chosen by
+ * report type, so leaving that to chance is how an aggregation reaches one.
+ */
+export const NON_STATEMENT_PROVIDERS = new Set([
+  "Consolidated family review (not a statement)",
+  "Family investment register (not a statement)",
+]);
+
 function matchGoldstandard(text, name) {
   // A DEPOSITORY STATEMENT IS NEVER A PMS HOUSE REPORT, and it lists every fund
   // the family owns as a transaction row — Buoyant's among them, which the
@@ -234,6 +294,14 @@ function matchGoldstandard(text, name) {
   // on the DP's own SEBI registration line; this just stops them being taken
   // before they get there.
   if (/CDSL\s+AND\s+NSDL\s*:\s*IN-DP-/i.test(text)) return null;
+  // AND NEITHER IS THE FAMILY'S OWN INVESTMENT REGISTER, which lists every
+  // manager they have ever paid — Green Lantern, Carnelian, Aristos, V.E.C and
+  // Buoyant all appear in it as INVESTMENT NAMES, so `byText` claimed it.
+  // Measured before this guard: provider "Green Lantern Capital LLP", strategy
+  // "Aristos Equity Portfolio", owner "COMMUNITY PRIVATE LIMITED BHARAT",
+  // accountNo "EDUGORILLA", reportType "capital-call" — and Green Lantern has a
+  // reader, so it would have been handed to one rather than merely misfiled.
+  if (isNonStatement(text)) return null;
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
     || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
     || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text)
@@ -392,7 +460,31 @@ const ISSUER_PROVIDER_RULES = [
    * proper use is as an independent CROSS-CHECK of the generated book — the
    * role `golden.mjs` plays for the extractors — not as a source.
    */
-  [/Absolute\s+Gain\s*\/\s*\(Loss\)\s+Including\s+Redeemed\s+Funds/i, "Consolidated family review (not a statement)"],
+  [FAMILY_REVIEW_SIGNATURE, "Consolidated family review (not a statement)"],
+  /**
+   * AND THE FAMILY'S OWN INVESTMENT REGISTER IS THE SAME KIND OF DOCUMENT.
+   *
+   * `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` is the family's own record
+   * of what they PAID for each direct/private holding — 8 sheets, 844 tranche
+   * rows, 151 names. It is not a statement: no institution struck it, and its
+   * INVESTMENT AMOUNT column is a cash outflow rather than a mark.
+   *
+   * Unmatched, it behaves exactly as the review workbook did before the rule
+   * above. Measured: it classified as provider "Green Lantern Capital LLP",
+   * strategy "Aristos Equity Portfolio", owner "COMMUNITY PRIVATE LIMITED
+   * BHARAT", accountNo "EDUGORILLA", reportType "capital-call" — every field
+   * scraped off a PORTFOLIO COMPANY's name in one of its cells. Green Lantern
+   * has a reader and `capital-call` is a live report type, so unlike the review
+   * workbook this one would have been HANDED TO A READER rather than merely
+   * misfiled.
+   *
+   * Matched, like the review, on a column header no custodian prints: a
+   * depository tracks units, never whether the family has the paper certificate
+   * in hand. Held out of the book for the same reason and reversibly — what it
+   * carries is the family's own judgement and cash record, which belongs in the
+   * family-input layer (`src/lib/deals.ts`), never in `glowData.ts`.
+   */
+  [FAMILY_REGISTER_SIGNATURE, "Family investment register (not a statement)"],
   /**
    * A DEMAT STATEMENT IS MATCHED ON ITS DEPOSITORY REGISTRATION, and it comes
    * first because its ROWS are other people's funds.
@@ -607,6 +699,17 @@ export function classify({ fileName, text }) {
   if (seeded) return seeded;
 
   const provider = genericProvider(t);
+  // A document nobody issued has no report type, no account and no as-of. See
+  // NON_STATEMENT_PROVIDERS: without this the family register came back
+  // `capital-call` on account "GoldStandard", and a reader is chosen by report
+  // type.
+  if (NON_STATEMENT_PROVIDERS.has(provider)) {
+    return {
+      provider, ownerName: null, accountNo: null, asOfDate: null,
+      reportType: "unknown", sections: [], familyGroup: null, strategy: null,
+      confidence: "high", matchedBy: "non-statement signature",
+    };
+  }
   const reportType = genericReportType(t) || genericReportType(name.replace(/[_-]/g, " "));
   const asOfDate = genericAsOf(t) || dateFromName(name);
   const accountNo = (t.match(/(?:Account|Folio|Client\s*Code|A\/c)\s*(?:No\.?|Number|#)?\s*[:#-]\s*([A-Z0-9][A-Z0-9\/-]{3,20})/i) || [])[1] || null;

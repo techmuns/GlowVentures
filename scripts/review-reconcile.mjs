@@ -45,6 +45,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
+import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
 
 const WORKBOOK = "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx";
 const BOOK = "src/data/glowData.ts";
@@ -338,49 +339,24 @@ const SECURITY_ALIASES = new Map([
   ["m-s-grand-continent-hotels", "grand-continent-hotels-limited-eq"],
 ]);
 
-function matchSecurity(product, index = BY_KEY) {
-  const k = securityKeyOf(product);
-  if (index.has(k)) return { key: k, how: "exact" };
-  const alias = SECURITY_ALIASES.get(k);
-  if (alias && BY_KEY.has(alias)) return { key: alias, how: "committed alias" };
-  /**
-   * THE PREFIX RUNS ONE WAY ONLY, AND GETTING THAT WRONG JOINED FOUR COMPANIES
-   * TO ONE ROW.
-   *
-   * The book's names come from a depository, which appends what the scrip is
-   * ("FRACTAL ANALYTICS LIMITED - EQ", "- EQ NEW FV RS. 5/-"), so a book key
-   * legitimately EXTENDS a review key. The reverse never holds: a review name
-   * longer than a book name is a DIFFERENT, more specific security. Accepting
-   * `k.startsWith(bk)` too matched `Vedanta Aluminium Metal Ltd`, `Vedanta Power
-   * Ltd`, `Vedanta Iron & Steel Ltd` and `Vedanta Oil & Gas Ltd` all onto the one
-   * book row named `Vedanta` — four demerged companies reported against 12,909
-   * shares of their former parent, each looking like a holding this book had
-   * partly read. It had read none of them.
-   */
-  const pre = [...BY_KEY.keys()].filter((bk) => bk.startsWith(k));
-  if (pre.length === 1) return { key: pre[0], how: "prefix" };
-  if (pre.length > 1) return { key: null, how: `ambiguous (${pre.length} book names start with this)` };
-  /**
-   * SAME LETTERS, DIFFERENT SPACING — and this is not a fuzzy tier.
-   *
-   * The review writes "Smart Works" and "Yash High Voltage"; the depository
-   * writes "SMARTWORKS COWORKING SPACES" and "YASH HIGHVOLTAGE". Compared with
-   * the separators removed these are the same characters in the same order,
-   * which is a fact about where each source put a space and not a judgement
-   * about whether two names mean the same company. It is still required to be
-   * UNAMBIGUOUS — exactly one book key may match — because the moment two do,
-   * the evidence no longer identifies one company and the line is reported
-   * instead. `build-symbols` refuses a fuzzy tier for the stronger reason that
-   * a wrong symbol prices another company; here a wrong join would state a
-   * reconciliation nobody can reproduce, so the same discipline applies.
-   */
-  const flat = (x) => x.replace(/-/g, "");
-  const fk = flat(k);
-  const loose = [...index.keys()].filter((bk) => flat(bk).startsWith(fk));
-  if (loose.length === 1) return { key: loose[0], how: "same letters, different spacing" };
-  if (loose.length > 1) return { key: null, how: `ambiguous on spacing (${loose.length} book names)` };
-  return { key: null, how: "no book position carries this name" };
-}
+/**
+ * The tiers live in `shared/nameMatch.mjs` so this reconciler and
+ * `register-reconcile.mjs` cannot drift apart about whether the book carries a
+ * name. Two matchers are built because the two questions are different: does
+ * the BOOK carry it, and — if not — did we READ it and simply fail to value it?
+ *
+ * Both used to come from one function whose `index` parameter was honoured on
+ * two tiers out of four, the alias and prefix tiers reading `BY_KEY` whatever
+ * they were passed. The archive question therefore searched the book, could
+ * return a key `ARCHIVE_KEYS` does not hold, and reported a line as
+ * "no statement in `source/` reports this" when one does. That verdict is what
+ * puts a line on the section D1 ASK LIST, so the defect asks the client for
+ * documents already in hand. Measured on this corpus it changed no line — the
+ * report regenerates byte-identically — which is precisely why it had to be
+ * fixed structurally rather than left to be found by the first line that hit it.
+ */
+const matchSecurity = makeSecurityMatcher(BY_KEY, SECURITY_ALIASES);
+const matchInArchive = makeSecurityMatcher(ARCHIVE_KEYS, SECURITY_ALIASES);
 
 // ═══════════════════════════════════════════════════════════════════════════
 const L = [];
@@ -571,7 +547,7 @@ for (const l of securityLines.sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0))) {
   if (!b) {
     // Before calling anything missing, ask whether a statement we already read
     // reports it and simply could not value it.
-    const am = matchSecurity(l.product, ARCHIVE_KEYS);
+    const am = matchInArchive(l.product);
     const a = am.key ? ARCHIVE_KEYS.get(am.key) : null;
     if (a) {
       verdict = `in the archive, **not valued** — ${qty(a.qty)} unit(s)${a.faceValue != null ? ` recorded at a face value of ${a.faceValue}` : ", no price published"}`;

@@ -338,12 +338,40 @@ function noTextLayer(grid) {
    */
   if (grid?.sheets) return null;
   if (!pages.length || pages.some((p) => (p.rows ?? []).length)) return null;
+
+  const pp = `${pages.length} page(s)`;
+  const closing = "It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be "
+    + "traced back to what the document printed, which is the guarantee every other figure here keeps.";
+
+  /**
+   * AND A DOCUMENT WITH NO TEXT IS NOT ALWAYS A SCAN.
+   *
+   * `grid.inkKind` is measured in `lib/layout.mjs` (see `classifyInk`) and only
+   * for a document that yielded no text at all. Saying "SCANNED IMAGE" about
+   * the two `august-2026-f` statements would be the same class of confidently
+   * wrong answer this function's own comment above records about the review
+   * workbook — they carry no raster image anywhere, just outlined glyphs — and
+   * it sends the next person to ask HDFC for a re-scan of paper that does not
+   * exist rather than for a re-export with fonts embedded.
+   */
+  if (grid?.inkKind?.kind === "vector") {
+    return {
+      code: "text-outlined-to-paths",
+      detail: `the file is ${pp} whose TEXT HAS BEEN CONVERTED TO VECTOR OUTLINES: `
+        + `${grid.inkKind.paths} drawn path(s), no raster image and not one text item. `
+        + "This is NOT a scan and NOT a missing reader — there is no character anywhere in the file to read, "
+        + "so no regex, no column geometry and no provider reader can recover a figure from it. Because the "
+        + "glyphs are outlines rather than a photograph, the fix is a RE-EXPORT from the issuing system with "
+        + "fonts embedded (their PDF export setting is what did this), not a re-scan. " + closing,
+    };
+  }
   return {
     code: "no-text-layer",
-    detail: `the file is ${pages.length} page(s) of SCANNED IMAGE and carries no text layer, so no reader can `
+    detail: `the file is ${pp} of SCANNED IMAGE`
+      + (grid?.inkKind?.images ? ` (${grid.inkKind.images} raster image(s))` : "")
+      + " and carries no text layer, so no reader can "
       + "be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text "
-      + "items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure "
-      + "cannot be traced back to what the document printed, which is the guarantee every other figure here keeps.",
+      + "items on every page. " + closing,
   };
 }
 

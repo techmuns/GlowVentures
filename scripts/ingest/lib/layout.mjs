@@ -561,6 +561,58 @@ export async function extractLayout(bytes, opts = {}) {
   };
 }
 
+/**
+ * WHAT IS ON A PAGE THAT CARRIES NO TEXT — and why the answer is not always "a scan".
+ *
+ * `no-text-layer` was written against Bharat Jaisinghani's HDFC NSDL statement:
+ * four DCTDecode JPEGs, zero font objects, a photograph of a document. The right
+ * ask there is the issuer re-sending it as a text PDF, because OCR on a
+ * photograph produces a figure that cannot be traced to what the statement
+ * printed.
+ *
+ * `source/august-2026-f/`'s two HDFC NSDL statements are a DIFFERENT DOCUMENT and
+ * the same test would call them scans. They contain no raster image at all: zero
+ * fonts, zero `BT`/`Tj`, and ~9,300 bezier curves — every glyph CONVERTED TO
+ * VECTOR OUTLINES by whatever produced the file. Nothing was photographed and
+ * nothing is lossy.
+ *
+ * The distinction is actionable, which is the only reason it is drawn:
+ *   - a SCAN is a raster and the page's resolution is all there will ever be;
+ *   - OUTLINED TEXT is resolution-independent, so the remedy is a re-export from
+ *     the same system with fonts embedded rather than a re-scan of paper, and it
+ *     is worth telling the issuer that their export setting is what did this.
+ * Both still need the issuer, and neither is a missing reader — which is the
+ * distinction `no-extractor` gets wrong and the one that costs a day.
+ *
+ * Told apart on the OPERATOR LIST rather than on a byte search, because `/Font`
+ * and `/DCTDecode` live inside compressed object streams in a PDF 1.7 file and a
+ * raw scan of the bytes finds neither. Images are counted across every page, so
+ * one scanned page in a vector document is still reported as a scan.
+ */
+async function classifyInk(doc) {
+  const { OPS } = await pdfjs();
+  const IMAGE_OPS = new Set([
+    OPS.paintImageXObject, OPS.paintImageXObjectRepeat, OPS.paintInlineImageXObject,
+    OPS.paintInlineImageXObjectGroup, OPS.paintJpegXObject, OPS.paintImageMaskXObject,
+    OPS.paintImageMaskXObjectRepeat, OPS.paintImageMaskXObjectGroup,
+  ].filter((op) => op !== undefined));
+  let images = 0, paths = 0;
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    try {
+      const { fnArray } = await page.getOperatorList();
+      for (const fn of fnArray) {
+        if (IMAGE_OPS.has(fn)) images++;
+        else if (fn === OPS.constructPath) paths++;
+      }
+    } catch { /* a page that will not parse tells us nothing either way */ }
+    page.cleanup();
+  }
+  if (images > 0) return { kind: "raster", images, paths };
+  if (paths > 0) return { kind: "vector", images, paths };
+  return { kind: "empty", images, paths };
+}
+
 async function readOnce(data, password, opts) {
   const { getDocument } = await pdfjs();
   const pages = [];
@@ -589,7 +641,13 @@ async function readOnce(data, password, opts) {
       pages.push(pageToGrid(p, viewport, itemsFrom(tc, viewport.rotation), opts));
       page.cleanup();
     }
-    return { pages, numPages: doc.numPages, error: null, pdfError: null };
+    // Only for a document that yielded NO text anywhere. Every ordinary
+    // statement skips this entirely, which is why it costs nothing: the
+    // operator list is a second full parse of every page.
+    const inkKind = pages.length && pages.every((p) => !(p.rows ?? []).length)
+      ? await classifyInk(doc)
+      : null;
+    return { pages, numPages: doc.numPages, inkKind, error: null, pdfError: null };
   } catch (e) {
     return { pages, numPages: pages.length, error: e?.message ?? String(e), pdfError: e };
   } finally {

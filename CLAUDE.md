@@ -204,10 +204,14 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** SIX DELIVERIES, and every one stays:
+**What is actually in `source/` today.** SEVEN DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/`, `august-2026-c/`, `august-2026-d/` and `august-2026-e/` —
-statements that arrived after it. Thirty-two issuers — ICICI Bank's NSDL
+`august-2026-b/`, `august-2026-c/`, `august-2026-d/`, `august-2026-e/` and
+`august-2026-f/` — statements that arrived after it. The counts below are the SIX
+that have been through `npm run extract`; `august-2026-f/` adds three files that
+have not, and **none of them changes a figure** — two cannot be read by anything
+(see its own section) and the third is a register held out of the book by
+decision. Thirty-two issuers — ICICI Bank's NSDL
 depository is the new one — 49 accounts in the book, six holders and two family
 trusts, 50 files expanding to 229 — of which
 **261 documents** are extracted, 197 read fully, 62 partially and **exactly TWO
@@ -909,6 +913,130 @@ mandates is a decision about the family's affairs, of exactly the kind §4c
 reserves for them. What must not happen is the third option: dropping it quietly
 and leaving the book looking complete. **The family have since made that
 decision — see the next section.**
+
+### The `august-2026-f` delivery — a THIRD way a PDF is unreadable, and a register that is not a statement
+
+Three files, found by diffing the client's Google Drive against `source/` after
+every other delivery. **None of them moves a figure in the book**, and saying that
+plainly is the point of this section: two cannot be read at all, and the third
+must not be read into the book.
+
+| File | What it is | Outcome |
+| --- | --- | --- |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own record of what they PAID — 8 sheets, 428 tranche rows, 151 names, **₹844.94 Cr gross paid in** | reads perfectly, and is **not a source** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account **67786547** | **not read — text outlined to vector paths** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account **67786137** | **not read — same** |
+
+**A DOCUMENT WITH NO TEXT IS NOT ALWAYS A SCAN.** `august-2026-e` established that
+a scan is not a document with no reader. These two are neither: **no raster image
+anywhere and no text either** — zero font objects, zero `BT`/`Tj`, and ~9,300
+bezier curves, because every glyph has been CONVERTED TO VECTOR OUTLINES by
+whatever exported the file. pdfjs's operator list reads 2,752 ops / 545 paths /
+**zero text ops**; poppler's `pdftotext` returns one character. Two independent
+engines agree there is nothing to read.
+
+The old test would have called them `no-text-layer` — "**1 page(s) of SCANNED
+IMAGE**" — which is the same class of confidently wrong answer that test's own
+comment already records about the review workbook, and it sends the next person
+to ask HDFC to re-scan paper that was never on paper. They report
+**`text-outlined-to-paths`** now, and the reason names the actual remedy: a
+**re-export from the issuing system with fonts embedded**. Neither is an OCR job,
+for the reason `august-2026-e` gives.
+
+`classifyInk` in `lib/layout.mjs` draws the distinction **on the operator list**,
+because a PDF 1.7 file keeps `/Font` and `/DCTDecode` inside compressed object
+streams and a raw byte search finds neither. It runs **only** for a document that
+yielded no text at all, so no ordinary statement pays for the second parse —
+asserted in `layout.test.mjs` along with both directions of the classification,
+against PDFs generated in the test. Measured on the corpus: the two new files are
+`vector` (0 images, 545/540 paths), Bharat's HDFC scan is `raster` (**4 images**,
+0 paths — the four DCTDecode JPEGs this file already documents), and Ajay's ICICI
+statement returns 124 text rows and is never classified at all.
+
+**AND THE FILENAMES NAME THE WRONG HOLDER, FOR THE FOURTH TIME.** Both files are
+named for a Bharat Jaisinghani family trust; both statements print `AJAY T
+JAISINGHANI` and `AARTI AJAY JAISINGHANI` as joint holders at Ajay's own
+Prabhadevi address. Whoever writes the reader resolves the account on the
+`DP Account No:` the page prints, never on the file name — `motilalDemat.mjs`'s
+rule, arriving through a third issuer. What they hold is one line each,
+`SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
+`0.01% PRE SERIES A PREF` at a Market Rate of **100.000** — the FACE VALUE of a
+preference share in an unlisted private company. Read as a mark it adds ₹34,700
+twice; under this book's own rules it is **quantity-only with no value**.
+
+#### The register is the same decision as the review — and it was the dangerous one
+
+`NEW INVESTMENT SHEET.xlsx` is a CASH-OUTFLOW register: `INVESTMENT AMOUNT` is
+money that left a bank account on a date, and **`CURRENT VALUATION` is empty on
+every one of its 428 rows**. So it can speak to INVESTED CAPITAL, which is a cost,
+and it **cannot move NAV by a rupee** — a NAV gap closes with a holding
+statement, never with a payment record. That distinction is the whole of
+`docs/REGISTER-RECONCILIATION.md`.
+
+It is held out of the book for the reason the consolidated review is, and matched
+the same way — on a column header no issuer prints. A depository tracks units,
+never whether the family holds the paper certificate, so `ORG. SHARE CERTIFICATE
+STATUS` is the anchor. **Unmatched it was measured classifying as provider
+`Green Lantern Capital LLP`, strategy `Aristos Equity Portfolio`, owner
+`"COMMUNITY PRIVATE LIMITED BHARAT"`, accountNo `"EDUGORILLA"` and reportType
+`capital-call`** — five fields scraped off PORTFOLIO COMPANY names in its own
+cells. Green Lantern has a reader and `capital-call` is a live report type, so
+unlike the review workbook this one would have been **handed to a reader** rather
+than merely misfiled.
+
+**AND IT EXPOSED THAT THE REVIEW'S OWN PROTECTION WAS LUCK.** That rule lives in
+`ISSUER_PROVIDER_RULES`, which run AFTER `match360One`/`matchGoldstandard`, so the
+workbook escaped those only because its cells spell "Green Lantern Growth
+Strategy" rather than "GREEN LANTERN CAPITAL". The adviser writing a manager's
+full legal name in one cell was all it would have taken. Both house matchers now
+return null for either signature (`isNonStatement`), and a document nobody issued
+is short-circuited to **no report type, no account, no owner, no as-of** — because
+a reader is chosen BY REPORT TYPE, and the review reached `unknown` by accident
+while the register reached `capital-call` by the same accident running the other
+way. `pipeline.test.mjs` asserts all of it, and asserts the guard is NARROW: an
+ordinary Goldstandard appraisal, which also names Aristos, still resolves to its
+own house.
+
+#### `npm run reconcile:register` — what the register can and cannot settle
+
+`scripts/register-reconcile.mjs` is to the register what `review-reconcile.mjs` is
+to the review: an independent cross-check that never writes to the book.
+
+- **60 of 371 positions carry no cost**, worth ₹165.94 Cr, and **every one is in a
+  DEPOSITORY account** — 43 Motilal Oswal demat, 11 ICICI NSDL, 6 in accounts
+  holding nothing. That is not a defect: a depository holds the shares and did not
+  buy them, which is why the cell is `—` and not `₹0`.
+- **The register covers 7 of the 60** (₹27.35 Cr of market value against ₹43.42 Cr
+  paid) and **misses 53** (₹138.60 Cr), whose cost no document in this corpus
+  reports. Those need a contract note or transaction statement from Motilal Oswal
+  and ICICI Bank — not another register.
+- **113 register names have no counterpart in the book at all**, ₹450.08 Cr paid
+  in. That is a COST and the size of an ask, never a value this book will publish.
+- **₹844.94 Cr IS NOT ADDITIVE TO THE BOOK.** It is money paid since 2017 across
+  every vehicle the family has used, including mandates the book already carries
+  in full, capital already returned (₹6.60 Cr on the COMPANY sheet's own
+  `LOAN RETURNED BACK` column) and investments already written off (₹1.69 Cr).
+
+**A PAID FIGURE IS NOT A COST BASIS AND MUST NOT BE POSTED AS ONE** until the
+quantities tie, the entity resolves and it is shown not to double-count a cost the
+book already has — the rule `costFor` already applies to LKP's opening ledger,
+joining a cost ONLY where the quantities match exactly.
+
+**AND THE MATCHER IS SHARED, BECAUSE TWO COPIES WOULD DRIFT.**
+`shared/nameMatch.mjs` now holds the exact/alias/prefix/spacing tiers both
+reconcilers use. Extracting it exposed a live defect: `matchSecurity` took an
+`index` parameter and honoured it on **two tiers out of four**, the alias and
+prefix tiers reading `BY_KEY` whatever they were passed — so the second call, the
+one asking "did we READ this and simply fail to value it?", searched the BOOK for
+a name it was meant to look for in the ARCHIVE. That verdict is what puts a line
+on the section D1 ASK LIST, so the defect asks the client for documents already in
+hand. Measured on this corpus it changed no line and the report regenerates
+byte-identically, which is exactly why it had to be fixed structurally rather than
+left for the first line that hit it. **There is still no fuzzy tier**: a token
+overlap rule was tried and matched `KIRANAKART TECHNOLOGIES (Zepto)` to `TATA
+TECHNOLOGIES`, `MAN INDUSTRIES` to `Deep Industries` and `INTEGRIS HEALTH` to
+`Star Health`. Near misses are LISTED for a human to commit as an alias — among
+them a Borosil WARRANT against the Borosil EQUITY, which must never be joined.
 
 ### THE RING-FENCE — Polycab is one page, and no figure anywhere else
 
@@ -4424,6 +4552,13 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
 - `npm run test:ingest` runs the ingest test suites.
+- `npm run reconcile:review` checks the book against the adviser's consolidated
+  review; `npm run reconcile:register` checks it against the family's own
+  investment register. **Neither ever writes to the book** — both are independent
+  cross-checks, the role `golden.mjs` plays for the extractors. The register one
+  is where the costless-position gap is quantified: which of the 60 depository
+  rows the family's own record could supply a cost for, and which need a contract
+  note from the custodian.
 - `npm run test:family` runs the derived-figure suites — the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
   the financial-table parser, the cash-flow/calendar reader, the ratio-table
