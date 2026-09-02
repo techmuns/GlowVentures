@@ -3061,6 +3061,69 @@ mandate-held rows summarises every mandate above the table, each linking to
 undifferentiated list would re-commit the grouping mistake Stage 10L exists to
 fix. Every row is also individually linked to its mandate and its company page.
 
+#### The drill-down has no view modes: a row is what you would click into
+
+*"When I click on AIF or any Mutual Fund line item, it should simply show what
+all AIFs/PMS/Mutual Funds I'm holding, invested amount in them and so on… and
+when I further click on one particular AIF it should take me to the drill-down
+page of that AIF that will show me what all stocks/companies that AIF/Mutual
+Fund is holding. No need for statement/security toggle button, I do not
+understand the purpose of it."*
+
+The first two are the same fix and the third is what made it necessary. The page
+opened on one row per STATEMENT LINE, so the AIF drill-down listed Sanshi Fund-I
+Class E four times — once per family member — and answering "which funds do we
+hold" meant grouping 19 rows into 14 by eye. The toggle was the escape hatch for
+that, and **a MODE a reader has to understand before the table means anything is
+a defect in the table, not a feature.**
+
+So there is no mode. A row is the unit a reader would open: a MANDATE where the
+set holds the whole of one, and otherwise the SECURITY — one fund, one scheme,
+one company, however many statements report it.
+
+| Drill-down | statement rows | rows now |
+| --- | ---: | ---: |
+| AIF | 19 | **14 funds** |
+| Mutual Fund | 24 | **20 schemes** |
+| PMS mandates | 281 | **10 mandates** |
+| Direct Equity | 37 | 37 companies |
+| ETF | 6 | 3 |
+| the whole book | 369 | 84 |
+
+**A MANDATE IS ONE ROW ONLY WHERE THE SET HOLDS ALL OF IT**, and that condition
+is why this is safe everywhere rather than special-cased to the PMS bucket. A
+bucket drill-down carries every row of the mandates in it, so the row ties to the
+manager's own statement. A FILTERED set — the winners, the holdings reporting no
+cost — carries only some of a mandate's rows, and a row under a manager's name
+over a subset of what they hold is the *"caption asserts what a named
+counterparty reports"* failure this file already records, with a total that ties
+to no document. Measured: the winners set forms **zero** mandate rows. The
+condition is struck against the BOOK, never against the filtered set — against
+the set it would be trivially true — and the reader's search filter narrows what
+is drawn without changing what a row means.
+
+**AND THE ROW'S NOUN IS WHAT THE ROW IS.** "84 holdings" over a table where ten
+rows are whole mandates of thirty-odd shares each is a caption not describing its
+own figure. All mandates → `mandates`; all securities → `names`, which is the
+count the tile above already prints; a mix → `rows`.
+
+**THE SECOND ASK IS ANSWERED ASYMMETRICALLY, AND THAT IS THE HONEST ANSWER.**
+Clicking a MANDATE opens `/mandate/:accountId`, which lists every share the
+manager picked — the look-through the family wants, and the one this book has,
+because a PMS reports every share and the family owns them. Clicking an AIF or a
+mutual fund opens its holding page, which states that the companies inside are
+the manager's and are **not reported to this book**: a fund unit is one purchase
+of somebody else's portfolio, and no statement in this drop carries a scheme
+disclosure that joins to any folio the family holds. Drawing a constituent table
+there would be the fabrication this whole book exists to prevent. The two look
+alike and are not, which is why the fund page says so in as many words rather
+than rendering an empty table.
+
+**The per-statement lines did not go away**; they moved from a global mode to a
+per-row expander, which is where a reader asks for them. Morning CIO's Positions
+count counts those lines, and the page's own caption still prints all three
+figures (`369 holdings · 214 names · 34 accounts`) above a table of 84.
+
 #### Verifying by reintroducing the bug found five defects IN THE CHECKS
 
 Twenty-three bugs were reintroduced one at a time, each rebuilt and swept.

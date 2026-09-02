@@ -98,8 +98,6 @@ export type Drilldown = {
    * account of a holding it prints. The page states which basis it is on.
    */
   deduped: boolean;
-  /** Which unit the figure counts, so the page opens on the view that shows it. */
-  defaultView: "security" | "row";
   /**
    * The set this figure explicitly does NOT cover, where naming it is the other
    * half of the rule. Capital invested skips the positions reporting no cost;
@@ -136,7 +134,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
   const accIdx = accountIndex(portfolio.accounts);
   const base: Omit<Drilldown, "id" | "key" | "title" | "backs" | "lead" | "rows"> = {
     deduped: true,
-    defaultView: "row",
     companion: null,
     excludedAccounts: [],
     absent: null,
@@ -263,7 +260,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
       const top = new Set([...byKey.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_NAMES).map(([k]) => k));
       const rows = consolidated.filter((p) => top.has(p.securityKey));
       return {
-        ...base, id: scope.id, key: "", defaultView: "security",
+        ...base, id: scope.id, key: "",
         title: `The ${top.size} largest names`,
         backs: ["Top-10 concentration"],
         lead: `Ranked by consolidated market value across every account, so a name two members both hold is one entry at its combined size rather than two smaller ones. The percentage on Morning CIO is these names' value over the whole book.`,
@@ -285,7 +282,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
       const shared = new Set([...owners.entries()].filter(([, s]) => s.size >= 2).map(([k]) => k));
       const rows = consolidated.filter((p) => shared.has(p.securityKey));
       return {
-        ...base, id: scope.id, key: "", defaultView: "security",
+        ...base, id: scope.id, key: "",
         title: `Names held by two or more entities`,
         backs: ["Cross-held"],
         lead: "A security that appears on more than one family member's statements. This is not the duplicate policy — a cross-held name is two members each genuinely owning some of it, counted once per member; a DUPLICATE is one holding two statements both report, and the consolidated set above has already collapsed those.",
