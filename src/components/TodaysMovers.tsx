@@ -4,12 +4,13 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { accountIndex } from "@/lib/accounts";
+import { accountIndex, engagementOf } from "@/lib/accounts";
+import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { symbolCoverage } from "@/lib/quotes";
 
-// ── TODAY'S MOVERS ───────────────────────────────────────────────────────────
+// ── TODAY'S MOVERS, OVER DIRECT EQUITY ───────────────────────────────────────
 //
 // "which are today's movers, which are gainers … what are my gainers, what are
 // my losers" and "my stocks and ETFs are up, Sensex is down this much, Nifty".
@@ -17,16 +18,33 @@ import { symbolCoverage } from "@/lib/quotes";
 // first: a book up 0.4% is good news against an index down 1.1% and bad news
 // against one up 2%.
 //
-// ── THE DAY'S MOVE IS OVER THE PRICED SUBSET, AND SAYS SO ────────────────────
+// ── THE SET IS DIRECT EQUITY, BY REQUEST, AND THAT IS A DIFFERENT SET ────────
 //
-// A day change needs a LIVE price and the PREVIOUS CLOSE behind it. The AIF
-// folios, the mutual-fund units, the cash sweeps and every name the resolver
-// could not place have neither — 214 distinct securities in this book and 139
-// that can ever reach the quote feed. Summing the rest in as zero would divide a
-// real rupee move by the WHOLE book and report a fraction of the true percentage:
-// the classic "blend a missing value in as zero" failure, on the one figure a
-// reader compares against an index. So the percentage is struck on the previous
-// close of the positions that HAVE one, and the tile names what that covers.
+// *"daily movers/losers should comprise of direct equity holdings only."*
+//
+// `DIRECT_EQUITY_BUCKET` is this app's own answer to WHO CHOSE A HOLDING —
+// settled in Stage 10L after the family reported the same thing three times, and
+// applied again to the Transactions tab in Stage 10p. It means shares the family
+// bought in its own demat or broking account (`Direct` / `Execution`), never
+// shares a discretionary manager picked, and never a fund or an ETF. Measured on
+// this book that is 37 holdings worth ₹94.9 Cr, of which 33 names and ₹82.3 Cr
+// can reach the quote feed at all.
+//
+// What the narrowing LEAVES OUT is the point of the request and is therefore
+// NAMED on the card rather than dropped: 131 priceable names worth ₹124.9 Cr
+// held inside PMS mandates, and three ETFs worth ₹24.6 Cr. Before this the list
+// mixed them — Jammu Kashmir Bank (Carnelian's pick) sat beside Fractal
+// Analytics (the family's own demat) under one heading.
+//
+// ── AND THE DAY'S MOVE IS OVER THE PRICED PART OF THAT SET ───────────────────
+//
+// A day change needs a LIVE price and the PREVIOUS CLOSE behind it; four Direct
+// Equity names resolve to no NSE symbol and can never have one. Summing them in
+// as zero would divide a real rupee move by a larger base and report a fraction
+// of the true percentage — the classic "blend a missing value in as zero"
+// failure, on the one figure a reader compares against an index. So the
+// percentage is struck on the previous close of the positions that HAVE one, and
+// the tile names what that covers.
 //
 // A POSITION WITH NO DAY CHANGE IS NOT A FLAT POSITION. `dayChange` is null when
 // the feed gave no previous close, and null never enters a sum or a ranking —
@@ -59,10 +77,40 @@ export function TodaysMovers() {
   const model = useMemo(() => {
     if (!portfolio) return null;
     const accts = accountIndex(portfolio.accounts);
+    /**
+     * DIRECT EQUITY ONLY — the family's request, and the axis is the ACCOUNT's
+     * engagement, not the security. `holdingBucket` reads it through
+     * `engagementOf`, which is the one place this app decides who chose a
+     * holding; re-deriving it here would be a second definition to drift.
+     */
+    const isDirect = (p: typeof consolidated[number]) =>
+      holdingBucket(p, engagementOf(accts, p)) === DIRECT_EQUITY_BUCKET;
+    const scope = consolidated.filter(isDirect);
+    /**
+     * WHAT THE NARROWING LEAVES OUT, NAMED RATHER THAN DROPPED.
+     *
+     * Counted over the holdings that could otherwise have appeared here — the
+     * ones carrying a live day change — because that is the list the reader is
+     * looking at. A bucket with no priceable name in it never showed on this
+     * card and does not need excusing.
+     */
+    const excluded = new Map<string, { mv: number; names: Set<string> }>();
+    for (const p of consolidated) {
+      if (isDirect(p)) continue;
+      if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
+      const key = bucketLabel(holdingBucket(p, engagementOf(accts, p)));
+      const e = excluded.get(key) ?? { mv: 0, names: new Set<string>() };
+      e.mv += p.marketValue; e.names.add(p.securityKey);
+      excluded.set(key, e);
+    }
+    const excludedRows = [...excluded.entries()]
+      .map(([label, v]) => ({ label, mv: v.mv, names: v.names.size }))
+      .sort((a, b) => b.mv - a.mv);
+
     // CONSOLIDATED: each dedupeGroup once, because this is a whole-book figure.
     // One name reported under two members must move the book once.
     const byKey = new Map<string, Row>();
-    for (const p of consolidated) {
+    for (const p of scope) {
       if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
       if (typeof p.dayChangePct !== "number" || !Number.isFinite(p.dayChangePct)) continue;
       const owner = accts.get(p.accountId)?.owner ?? null;
@@ -93,8 +141,12 @@ export function TodaysMovers() {
     const prevValue = movedValue - dayChange;
     const dayPct = prevValue > 0 ? (dayChange / prevValue) * 100 : null;
 
-    const cov = symbolCoverage(consolidated);
-    const distinct = new Set(consolidated.map((p) => p.securityKey)).size;
+    // COVERAGE IS OVER THE SCOPE, NOT THE BOOK. "159 of 214 distinct names" was
+    // true of the whole book and is a claim about a set this card no longer
+    // shows; against Direct Equity the honest denominator is its own 37.
+    const cov = symbolCoverage(scope);
+    const distinct = new Set(scope.map((p) => p.securityKey)).size;
+    const scopeValue = scope.reduce((a, p) => a + p.marketValue, 0);
 
     const gainers = rows.filter((r) => r.dayChange > 0);
     const losers = rows.filter((r) => r.dayChange < 0);
@@ -103,7 +155,7 @@ export function TodaysMovers() {
       ? (a: Row, b: Row) => Math.abs(b.dayChange) - Math.abs(a.dayChange)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, dayChange, dayPct, movedValue, prevValue,
+      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
@@ -118,11 +170,14 @@ export function TodaysMovers() {
   const clock = quotesAsOf ? new Date(quotesAsOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
 
   return (
-    <Card className="lg:col-span-3" title="Today&rsquo;s movers"
-      subtitle={<>
-        The day&rsquo;s move on the holdings the feed can price, set beside the four NSE indices.
-        {clock ? ` Quotes as of ${clock}.` : ""}
-      </>}
+    /* THE SUBTITLE IS GONE AT THE FAMILY'S REQUEST, AND THE TITLE CARRIES THE
+       SCOPE INSTEAD. What that sentence did that a reader still needs is name
+       the SET — a card headed "Today's movers" over 33 of the book's 214 names
+       is a claim about the book, and Stage 10L is three rounds of the family
+       reporting exactly that kind of heading. So the scope moves into the
+       heading, where it cannot be removed as chrome, and the quote timestamp
+       moves to the tile that is actually as-of it. */
+    <Card className="lg:col-span-3" title="Today&rsquo;s movers &middot; Direct Equity"
       right={
         <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
           {(["impact", "pct"] as const).map((k) => (
@@ -141,16 +196,16 @@ export function TodaysMovers() {
 
       {model.rows.length === 0 ? (
         <AbsentSection
-          what="No holding in this book carries a day change right now"
+          what="No direct-equity holding carries a day change right now"
           needs={quotesStatus === "unavailable"
             ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every holding is showing its statement mark; nothing has been substituted. The top bar names the failure."
-            : `A day change needs a live price and a previous close. ${model.unpriceable} of ${model.distinct} distinct securities in this book can never have one — the AIF folios, the mutual-fund units, the cash sweeps and the names with no NSE listing.`} />
+            : `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities the family holds in its own demat and broking accounts resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — this card is direct equity only.`} />
       ) : (
         <>
           {/* ── The book's own move, and the four indices beside it ───────── */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs">Book · today</div>
+              <div className="label-xs">Direct Equity &middot; today</div>
               <div className={`mt-2 text-[22px] font-semibold tabular ${changeColor(model.dayChange)}`}>
                 {fmtFromBase(model.dayChange, { compact: true, sign: true })}
               </div>
@@ -161,8 +216,9 @@ export function TodaysMovers() {
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage">
-                on {fmtFromBase(model.movedValue, { compact: true })} across {model.pricedNames} of {model.distinct} distinct
+                on {fmtFromBase(model.movedValue, { compact: true })} across {model.pricedNames} of {model.distinct} direct-equity
                 names — the rest carry no live quote and are not counted either way
+                {clock ? ` · quotes ${clock}` : ""}
               </p>
             </div>
 
@@ -196,10 +252,15 @@ export function TodaysMovers() {
                 if (!n500 || n500.changePct == null) return null;
                 const gap = model.dayPct - n500.changePct;
                 return (
+                  /* "THE PRICED BOOK" WAS TRUE AND IS NOT ANY MORE. This figure
+                     is now struck over direct equity alone, and a sentence that
+                     called it the book would be the caption-that-widens failure
+                     the Capital invested tile already cost this page once. */
                   <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index">
-                    The priced book is <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
-                    Nifty 500 today. Both are one session; neither is a return over any longer window, and the book&rsquo;s
-                    figure covers {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(portfolio.totalValue, { compact: true })}.
+                    Direct equity is <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
+                    Nifty 500 today, on {fmtFromBase(model.movedValue, { compact: true })} of
+                    the {fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a
+                    return over any longer window.
                   </p>
                 );
               })()}
@@ -213,13 +274,24 @@ export function TodaysMovers() {
             <MoverList title={`${model.lossCount} losers`} tone="loss" rows={model.losers}
               total={model.lossSum} fmt={fmtFromBase} rank={rank} />
           </div>
-          <p className="mt-3 text-[11px] text-slate-500">
-            Ranked by {rank === "impact" ? "rupee impact on the book" : "percentage move"}; the other ranking is one click away
-            because they answer different questions — a 9% move on a ₹40 L holding is a bigger mover by percent and a smaller
-            one by money. {model.flat > 0 && `${model.flat} name(s) closed unchanged and are in neither list. `}
-            A name held in more than one account is one mover: its rupee impact adds and its percentage is re-derived from the
-            combined previous close, never averaged across positions of different sizes.
-          </p>
+          {/* THE EXPLANATORY FOOTER IS GONE AT THE FAMILY'S REQUEST — the ranking
+              rationale, the unchanged-name count and the multi-account rule all
+              described HOW the card works to a reader who can see it working.
+              What survives is the one thing a figure depends on and a reader
+              cannot see: this card no longer covers the whole book, and the
+              value it stops at has to be named or the narrowing is silent.
+              Rendered from the book, so a drop with no PMS-held quotes prints
+              nothing here rather than a sentence about an empty set. */}
+          {model.excludedRows.length > 0 && (
+            <p className="mt-3 text-[11px] text-slate-500" data-testid="movers-excluded">
+              Direct equity only. Also moved today and not counted here:{" "}
+              {model.excludedRows.map((e, i) => (
+                <span key={e.label}>
+                  {i > 0 ? " · " : ""}{e.names} {e.label} {fmtFromBase(e.mv, { compact: true })}
+                </span>
+              ))}.
+            </p>
+          )}
         </>
       )}
     </Card>
@@ -247,8 +319,8 @@ function MoverList({ title, tone, rows, total, fmt, rank }: {
       </div>
       {rows.length === 0 ? (
         <p className="mt-3 text-[11.5px] text-slate-500">
-          No priced holding moved this way today. That is a measurement over the names the feed prices, not a statement
-          about the whole book.
+          No priced direct-equity holding moved this way today — a measurement over the names the feed prices, not a
+          statement about the whole book.
         </p>
       ) : (
         <table className="mt-3 w-full text-[12px]">

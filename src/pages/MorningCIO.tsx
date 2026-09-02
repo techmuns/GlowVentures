@@ -901,14 +901,26 @@ export function MorningCIO() {
 
       {/* Allocation hero + right column */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* The long explanatory block that used to sit under this table is gone
-            at the family's request. What it carried that a reader still needs —
-            that every return here is cumulative rather than annualised, and that
-            all of them close on the book's own report date — is in this subtitle
-            and in each figure's popover, which is where the coverage and the
-            excluded accounts have always been stated in full. */}
+        {/* THE SUBTITLE IS GONE at the family's request, after the long
+            explanatory block beneath this table went the same way.
+
+            Two of the things it said are facts a reader ACTS on rather than
+            chrome: that every return here is CUMULATIVE rather than annualised,
+            and the DATE each figure closes at. Neither is dropped, because both
+            are ALREADY ON THIS PAGE outside this card — the Consolidated
+            return tile states "cumulative, not annualised" on its face, and the
+            header's `<BasisPill>` states the as-of and how many accounts are
+            behind it. Each figure's own popover still carries the coverage and
+            the excluded accounts in full. So nothing here is reachable only by
+            hover, and what has gone is the description of how the buckets
+            GROUP — which the rows themselves show.
+
+            AND THE PILL KEEPS THE WORD "HELD". Two other invariants read the
+            bucket count out of `N buckets held`; rewording it to `N buckets ·
+            cumulative · <date>` — the first draft of this change — made both
+            report a missing figure on a page rendering correctly. A caption is
+            chrome; a count inside it is not. */}
         <Card className="lg:col-span-2" title="Allocation by asset class &amp; mandate"
-          subtitle={`Shares chosen under a discretionary mandate roll up into that mandate; everything else groups by what it IS · invested, current value & total return to date — cumulative, not annualised · every figure closes at ${portfolio.asOf}`}
           right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
@@ -1107,50 +1119,24 @@ export function MorningCIO() {
         </div>
       </div>
 
-      {/* Book performance + NAV trajectory */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Card title="Book performance" subtitle="Listed vs private, on a like-for-like basis">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[0] }} />Listed book</div>
-              <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.listedBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.listedBook.mv)}</span> today</div>
-              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.listedBook.pnl)}`}>{money(m.listedBook.pnl, true)}</div></div>
-                <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.listedBook.ret == null ? "text-slate-500" : changeColor(m.listedBook.ret)}`}>{m.listedBook.ret == null ? DASH : fmtPct(m.listedBook.ret, { sign: true, decimals: 1 })}</div></div>
-                <div>
-                  <div className="text-[11px] text-slate-500">Return (money-wtd)</div>
-                  <div className={`mono text-[15px] font-semibold ${m.listedTotalReturn == null ? "text-slate-500" : "text-slate-100"}`}
-                    title={`Money-weighted return to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}.${m.xirrExcluded.length ? ` Covers ${money(m.measuredMV)} of ${money(m.listedBook.mv)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value.` : ""}`}>
-                    {m.listedTotalReturn == null ? DASH : fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {m.privateBook.count > 0 ? (
-              <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[1] }} />Private book <span className="text-slate-600">· AIF</span></div>
-                <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.privateBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.privateBook.mv)}</span> today</div>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                  <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.privateBook.pnl)}`}>{money(m.privateBook.pnl, true)}</div></div>
-                  <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.privateBook.ret == null ? "text-slate-500" : changeColor(m.privateBook.ret)}`}>{m.privateBook.ret == null ? DASH : fmtPct(m.privateBook.ret, { sign: true, decimals: 1 })}</div></div>
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                  AIF units marked at the fund's stated NAV. These carry no dated capital-account flows in this drop, so
-                  there is no money-weighted return or distribution schedule to show — the fund's own value already is one.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-ink-600/70 bg-ink-900/60 p-4">
-                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-ink-600" />Private book</div>
-                <div className="mt-2.5 text-[19px] font-semibold text-slate-500">{DASH}</div>
-                <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">
-                  There is no private book to compare against. Invested, gain and return all need
-                  a private holding to measure, and no statement in this drop carries one.
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
+      {/* THE BOOK PERFORMANCE CARD IS REMOVED, at the family’s request.
+
+          It sat here reading "Listed vs private, on a like-for-like basis" over
+          two tiles: the listed book invested → today with its unrealised gain,
+          return and money-weighted return, and the same for the private (AIF)
+          half. Every one of those figures is still on this page and still
+          derived — invested and current value per bucket in the allocation
+          table, the money-weighted return in its own KPI tile with its own
+          coverage line, and the listed/private split in the Consolidated NAV
+          tile and on Concentration & risk, which links each half to the
+          holdings behind it. So this is a LAYOUT removal and not a measurement
+          one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
+          `listedTotalReturn` in the model above still feed those surfaces.
+
+          `check:pages` asserts the card STAYS gone AND that the figures it
+          carried are still reachable — a removal is verified by asserting it
+          happened, never by deleting the test alongside the feature. */}
+      <div className="mt-5">
 
         {/* THE NAV SERIES REPLACES AN ABSENCE THAT HAD STOPPED BEING TRUE.
             This slot held "No valuation series in this book · each account's

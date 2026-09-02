@@ -3560,6 +3560,10 @@ prints a level of nothing.
 
 #### Today's movers — and the denominator that is the whole point
 
+*(The SET was narrowed to Direct Equity a request later — see Stage 10r. The
+denominator rule below is unchanged and is why that narrowing had to move every
+caption on the card with it.)*
+
 **THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, AND THE TILE SAYS SO.** A day
 change needs a live price AND the previous close behind it; the AIF folios, the
 mutual-fund units, the cash sweeps and every unresolved name have neither. The
@@ -3620,6 +3624,80 @@ own roll-up, two independent paths inside `navHistoryFrom` to one figure. Its
 load-bearing gate is an INEQUALITY — the unadjusted NAV move must exceed the
 adjusted return by more than 5 points — so a suite cannot pass by accident on a
 drop where no capital moved, and it fails loudly if the series ever empties.
+
+### Stage 10r — THE MOVERS ARE DIRECT EQUITY, AND THREE CAPTIONS GO
+
+*"remove the book performance section. daily movers/losers should comprise of
+direct equity holdings only. remove the highlighted text from ui."*
+
+**THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
+`DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
+Stage 10L after the family reported the same thing three times, and applied to
+the Transactions tab in Stage 10p. It means shares bought in the family's own
+demat or broking account (`Direct` / `Execution`), never shares a discretionary
+manager picked, and never a fund or an ETF. Measured on this book: **37 holdings,
+₹94.9 Cr, of which 33 names and ₹82.3 Cr can reach the quote feed at all.** Before
+this the list mixed the two — Jammu Kashmir Bank, Carnelian's pick, sat beside
+Fractal Analytics from the family's own demat under one heading.
+
+**EVERY FIGURE ON THE CARD MOVED WITH THE SET, AND THE CAPTIONS HAD TO FOLLOW.**
+The tile is `Direct Equity · today` rather than `Book · today`; its coverage line
+counts `N of 37 direct-equity names` rather than `N of 214 distinct names`; and
+the index comparison reads "Direct equity is +x% against the Nifty 500" rather
+than "the priced book is". A caption that widens a figure is the same failure as
+one that narrows it — the Capital invested tile already cost this page once.
+
+**AND WHAT THE NARROWING LEAVES OUT IS NAMED.** `130 PMS mandates ₹136.6 Cr · 3
+ETF ₹28.3 Cr · 1 Mutual Fund` also moved today and are not in either list. Counted
+over the holdings that carry a live day change — the ones that could otherwise
+have appeared — so a bucket with nothing priceable in it needs no excusing.
+
+**THE BOOK PERFORMANCE CARD IS REMOVED, AND NOT ONE OF ITS FIGURES IS.** It read
+"Listed vs private, on a like-for-like basis" over the listed book's invested →
+today with its unrealised gain, return and money-weighted return, and the same
+for the AIF half. All of it is still on the page and still derived: invested and
+current value per bucket in the allocation table, the money-weighted return in
+its own KPI tile with its own coverage line, and the listed/private split in the
+Consolidated NAV tile and on Concentration & risk, each linking to the holdings
+behind it. `publicPrivateSplit`, `listedBook`, `privateBook` and
+`listedTotalReturn` still feed those surfaces. **A layout removal, not a
+measurement one — and `check:pages` asserts BOTH halves**, because a page that
+dropped the card and the split together would pass the first check while losing a
+figure.
+
+**THREE CAPTIONS GO, AND TWO FACTS INSIDE ONE OF THEM DO NOT.** The movers footer
+(the ranking rationale, the unchanged-name count, the multi-account rule) and the
+movers subtitle described HOW the card works to a reader who can see it working.
+The allocation table's subtitle also carried two things a reader ACTS on: that
+every return there is CUMULATIVE rather than annualised, and the date the figures
+close at. Both were **already on the page outside that card** — the Consolidated
+return tile states "cumulative, not annualised" on its face and the header's
+`<BasisPill>` states the as-of — so the subtitle could go without taking a
+measurement with it, and an invariant now asserts those two survive.
+
+**THE PILL KEEPS THE WORD "HELD".** The first draft moved the basis and the date
+into it, reading `6 buckets · cumulative · 2026-08-13`. Two OTHER invariants read
+the bucket count out of `N buckets held`, and both reported a missing figure on a
+page rendering perfectly. **A caption is chrome; a count inside it is not.** The
+same pass added a `title` prop to `Pill` for a hover that then had nothing to
+carry, and it was reverted rather than left exported and uncalled.
+
+**SIX INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG — and one of them was
+in the wrong place.** The scope claim is struck on a COUNT, not on the rows: every
+`cio-live` fixture price is the mark × 1.10, so every priceable name in scope
+rises and the gainer count IS the size of the priced scope (33 here, 160-odd with
+the mandates folded back in). A rows-only check passes on any day the mandate
+names happen not to move, which is most days. The expectation is derived from the
+book on every run and the bucket is recomputed inside `check-pages.mjs` rather
+than imported — a check that imports the helper it is checking agrees with itself
+by construction.
+
+**AND A CHECK FOR REMOVED TEXT MUST RUN WHERE THAT TEXT WOULD RENDER.** The
+movers footer only exists when the card has rows, and the plain `cio` walk serves
+no feed — so "the footer stays removed" passed there whether it had been removed
+or not. Reintroducing the sentence proved it: `cio` stayed green. It is asserted
+on `cio-live` now; the allocation subtitle and the removed card render with no
+feed at all and stay on `cio`.
 
 ### Stage 10k — News & Announcements: REMOVED
 
