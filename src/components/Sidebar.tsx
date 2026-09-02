@@ -96,7 +96,7 @@ export function Sidebar() {
 
   return (
     <aside ref={asideRef} style={{ width }}
-      className="relative flex h-screen shrink-0 flex-col border-r border-ink-700 bg-ink-900">
+      className="relative flex h-full shrink-0 flex-col border-r border-ink-700 bg-ink-900">
       <div className="flex h-16 items-center gap-2.5 border-b border-ink-700 px-5">
         <div className="grid h-8 w-8 place-items-center rounded-md bg-gradient-to-br from-champagne-500 to-champagne-600 text-ink-950 shadow-glow">
           <span className="font-serif text-sm font-bold">G</span>

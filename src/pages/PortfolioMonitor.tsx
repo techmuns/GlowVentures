@@ -17,6 +17,7 @@ import {
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
+import { rollup, rollupTotals, type GroupBy } from "@/lib/txnRollup";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -33,7 +34,7 @@ import { BasisPill } from "@/components/BasisPill";
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
-import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 
 type EntityPart = {
   // Per-unit figures are nullable for the same reason they are on Position:
@@ -1236,11 +1237,25 @@ const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
 function TransactionsView({ selected, sector, entity, sectorByKey }: {
   selected: Set<string>; sector: string; entity: string; sectorByKey: Map<string, string>;
 }) {
-  const { fmtFromBase } = usePortfolio();
+  // `statementPortfolio`, for the ACCOUNT REGISTRY only — the rollup joins a
+  // trade to its mandate on provider + account number. No figure on this tape
+  // comes from the portfolio, and none may: a dated trade is a statement fact
+  // and a live price is not evidence about it.
+  const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[] | null>(null);
   const [meta, setMeta] = useState({ buys: 0, sells: 0 });
   const [side, setSide] = useState<"all" | "Buy" | "Sell">("all");
+  /**
+   * THE ROLLUP IS THE DEFAULT VIEW. The family's ask was to see the year as one
+   * line per manager and drill down, not to read four hundred dated rows —
+   * "I will only see five items … then I can drill down".
+   */
+  const [groupBy, setGroupBy] = useState<GroupBy | "tape">("manager");
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
+  const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
+    set((prev) => { const nx = new Set(prev); if (nx.has(key)) nx.delete(key); else nx.add(key); return nx; });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [preset, setPreset] = useState("all");
@@ -1293,6 +1308,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
       (!from || t.date >= from) &&
       (!to || t.date <= to));
   }, [txns, side, entity, sector, sectorByKey, selected, from, to]);
+  /**
+   * ABOVE THE EARLY RETURNS, AND THAT IS NOT STYLE. These sat below the
+   * `status === "loading"` guard at first, so the first render ran fewer hooks
+   * than the second and React tore the page down with error #310 — a blank
+   * "Something went wrong" over a tape that had loaded perfectly. A hook after
+   * a conditional return is a hook that sometimes does not run.
+   *
+   * No registry, no mandate names — the rollup still groups, each account
+   * falling back to the provider and number its own statement prints.
+   */
+  const accountsReg = portfolio?.accounts ?? [];
+  const groups = useMemo(() => rollup(filtered, accountsReg, groupBy === "tape" ? "manager" : groupBy),
+    [filtered, accountsReg, groupBy]);
+  const totals = useMemo(() => rollupTotals(groups), [groups]);
   const shown = filtered.slice(0, TXN_CAP);
 
   if (status === "loading") return <Card className="flex min-h-0 flex-1 items-center justify-center"><span className="text-sm text-slate-500">Loading transactions…</span></Card>;
@@ -1312,6 +1341,22 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
       </Card>
     );
   }
+
+  /**
+   * NET INVESTED, AND THE ONE DISTINCTION THAT MAKES IT HONEST.
+   *
+   * A side with NO ROWS contributed a measured zero — nothing was sold, so the
+   * net is what was bought. A side WITH rows whose statements report no
+   * settlement contributed nothing measurable, and subtracting it as zero would
+   * report a net the book cannot strike. The two look identical if you write
+   * `(bought ?? 0) - (sold ?? 0)`.
+   */
+  const netOf = (g: { buys: number; sells: number; bought: number | null; sold: number | null }) => {
+    const b = g.buys === 0 ? 0 : g.bought;
+    const s = g.sells === 0 ? 0 : g.sold;
+    return b == null || s == null ? null : b - s;
+  };
+  const period = (a: string, b: string) => (a && b ? (a === b ? fmtDate(a) : `${fmtDate(a)} → ${fmtDate(b)}`) : "");
 
   return (
     <>
@@ -1345,8 +1390,179 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             </button>
           ))}
         </div>
+        {/* THE DEFAULT IS THE ROLLUP, AND THE TAPE IS ONE CLICK AWAY. Four
+            hundred dated rows answer "what happened on Tuesday"; the family
+            asked what each manager did this year. Tape is kept because a
+            reconciliation against a PDF needs the printed rows in printed
+            order, which no rollup can stand in for. */}
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="One line per manager, per family member, or per security — expand a line for what is inside it. Tape is the raw dated rows.">
+          {([["manager", "By manager"], ["entity", "By entity"], ["instrument", "By security"], ["tape", "Tape"]] as const).map(([v, label]) => (
+            <button key={v} type="button" onClick={() => setGroupBy(v)}
+              className={`rounded px-3 py-1.5 font-medium transition-colors ${groupBy === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
         <span className="ml-auto text-xs text-slate-500">{filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells</span>
       </div>
+
+      {groupBy !== "tape" ? (
+        <Card pad={false} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-ink-800">
+                <tr className="border-b border-ink-700">
+                  <th className="label-xs px-3 py-2.5 text-left font-medium">{groupBy === "manager" ? "Manager / account" : groupBy === "entity" ? "Family member" : "Security"}</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">Trades</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">{groupBy === "instrument" ? "Sides" : "Securities"}</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">Bought</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">Sold</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
+                  <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&L</th>
+                  <th className="label-xs px-3 py-2.5 text-left font-medium">Period</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/70">
+                {groups.map((g) => {
+                  const open = openGroups.has(g.key);
+                  const net = netOf(g);
+                  return (
+                    <Fragment key={g.key}>
+                      {/* `data-row` is a HANDLE FOR THE CHECK, not styling. The
+                          sweep has to expand a group and then a staggered
+                          security inside it, and picking those out of rendered
+                          prose means matching a caption — which renders whatever
+                          the data does and cannot fail. */}
+                      <tr data-row="group" className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenGroups, g.key)}>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""}`} />
+                            <div>
+                              <div className="font-medium text-slate-100">{g.label}</div>
+                              {g.sublabel && <div className="text-[10.5px] text-slate-500">{g.sublabel}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtNum(g.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{g.buys}B/{g.sells}S</span></td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(groupBy === "instrument" ? g.instruments.length : g.securities)}</td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-300">{g.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" /> : fmtFromBase(g.bought, { compact: true })}</td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-300">{g.sells === 0 ? <AbsentCell reason="nothing was sold in this group over the window" /> : g.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" /> : fmtFromBase(g.sold, { compact: true })}</td>
+                        <td className="px-3 py-2.5 text-right mono text-slate-200">{net == null ? <AbsentCell reason="one side of this group reports no settled amount, so a net cannot be struck" /> : fmtFromBase(net, { compact: true, sign: true })}</td>
+                        <td className={`px-3 py-2.5 text-right mono ${g.realized == null ? "text-slate-600" : changeColor(g.realized)}`}>
+                          {g.realized == null
+                            ? <AbsentCell reason={g.sells === 0 ? "nothing was sold in this group over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
+                            : <>{fmtFromBase(g.realized, { compact: true, sign: true })}{g.realizedOf < g.sells && <span className="ml-1 text-[10.5px] text-slate-500">{g.realizedOf}/{g.sells}</span>}</>}
+                        </td>
+                        <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">{period(g.first, g.last)}</td>
+                      </tr>
+
+                      {open && g.instruments.map((ins) => {
+                        const iKey = `${g.key}::${ins.key}`;
+                        const iOpen = openRows.has(iKey);
+                        const iNet = netOf(ins);
+                        return (
+                          <Fragment key={iKey}>
+                            <tr data-row="instrument" data-staggered={ins.staggered ? "1" : undefined} data-days={ins.days} className="cursor-pointer bg-ink-800/40 hover:bg-ink-700/40" onClick={() => toggle(setOpenRows, iKey)}>
+                              <td className="py-2 pl-9 pr-3">
+                                <div className="flex items-center gap-1.5">
+                                  <ChevronRight className={`h-3 w-3 shrink-0 text-slate-600 transition-transform ${iOpen ? "rotate-90" : ""}`} />
+                                  <div>
+                                    <span className="text-slate-200">{ins.security}</span>
+                                  {/* A LABEL ON A ROW THAT IS ALREADY COLLAPSED, never a
+                                      decision about what to merge — see txnRollup.ts. */}
+                                    {ins.staggered && <span className="ml-1.5"><Pill tone="info"><span title={`Built up over ${ins.days} trading days rather than in one go — expand for every tranche and its date.`}>staggered · {ins.days} days</span></Pill></span>}
+                                    {/* NET UNITS BELONG UNDER THE NAME, NOT IN THE
+                                        "Securities" COLUMN. That column counts
+                                        securities on a group row, and a unit count
+                                        printed under it is a figure standing beneath a
+                                        heading that describes something else — the same
+                                        failure as a caption that narrows a figure it
+                                        does not narrow. */}
+                                    <div className="mono text-[10.5px] text-slate-500">{fmtNum(Math.round(ins.qtyBought - ins.qtySold))} units net</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-right mono text-slate-400">{fmtNum(ins.buys + ins.sells)}<span className="ml-1 text-[10.5px] text-slate-500">{ins.buys}B/{ins.sells}S</span></td>
+                              <td className="px-3 py-2" />
+                              <td className="px-3 py-2 text-right mono text-slate-400">{ins.bought == null ? <AbsentCell reason="no buy row for this security reports a settled amount" /> : fmtFromBase(ins.bought, { compact: true })}</td>
+                              <td className="px-3 py-2 text-right mono text-slate-400">{ins.sells === 0 ? <AbsentCell reason="this security was not sold over the window" /> : ins.sold == null ? <AbsentCell reason="no sell row for this security reports a settled amount" /> : fmtFromBase(ins.sold, { compact: true })}</td>
+                              <td className="px-3 py-2 text-right mono text-slate-300">{iNet == null ? <AbsentCell reason="one side reports no settled amount, so a net cannot be struck" /> : fmtFromBase(iNet, { compact: true, sign: true })}</td>
+                              <td className={`px-3 py-2 text-right mono ${ins.realized == null ? "text-slate-600" : changeColor(ins.realized)}`}>
+                                {ins.realized == null
+                                  ? <AbsentCell reason={ins.sells === 0 ? "this security was not sold over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
+                                  : fmtFromBase(ins.realized, { compact: true, sign: true })}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap mono text-[11px] text-slate-500">{period(ins.first, ins.last)}</td>
+                            </tr>
+
+                            {iOpen && ins.tranches.map((t, i) => (
+                              /* EVERY FIGURE UNDER A HEADING THAT DESCRIBES IT. A
+                                 tranche's settled amount goes in Bought or Sold
+                                 by its own SIDE, so the column it lands in is
+                                 true of it; quantity and unit price ride with
+                                 the date, because no header on this table means
+                                 either. Drawn across the columns by position
+                                 instead, a buy's per-share price printed under
+                                 "Bought" and its amount under "Sold". */
+                              <tr data-row="tranche" key={`${iKey}::${i}`} className="bg-ink-900/50 text-[12px]">
+                                <td className="py-1.5 pl-16 pr-3 whitespace-nowrap">
+                                  <span className="mono text-slate-400">{fmtDate(t.date)}</span>
+                                  <span className="ml-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></span>
+                                  <span className="ml-2 mono text-slate-500">
+                                    {fmtNum(Math.round(t.qty))} @ {t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-1.5" />
+                                <td className="px-3 py-1.5" />
+                                <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                  {t.side !== "Buy" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}
+                                </td>
+                                <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                  {t.side !== "Sell" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}
+                                </td>
+                                <td className="px-3 py-1.5" />
+                                <td className={`px-3 py-1.5 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
+                                <td className="px-3 py-1.5 whitespace-nowrap text-slate-500">{t.account}</td>
+                              </tr>
+                            ))}
+                          </Fragment>
+                        );
+                      })}
+                    </Fragment>
+                  );
+                })}
+                {groups.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
+              </tbody>
+              {groups.length > 0 && (
+                /* SUMMED FROM THE ROWS ABOVE, never recomputed off the tape —
+                   see `rollupTotals`. A footer derived independently of its own
+                   column can be right on its own terms while every row above it
+                   is wrong, which is exactly what shipped on the Private Market
+                   page once. */
+                <tfoot className="sticky bottom-0 border-t-2 border-ink-600 bg-ink-800 font-semibold">
+                  <tr>
+                    <td className="px-3 py-2.5 text-slate-200">Total · {fmtNum(totals.groups)} {groupBy === "manager" ? "accounts" : groupBy === "entity" ? "members" : "securities"}</td>
+                    <td className="px-3 py-2.5 text-right mono text-slate-200">{fmtNum(totals.trades)}</td>
+                    <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(totals.securities)}</td>
+                    <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.bought == null ? <AbsentValue /> : fmtFromBase(totals.bought, { compact: true })}</td>
+                    <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.sold == null ? <AbsentValue /> : fmtFromBase(totals.sold, { compact: true })}</td>
+                    <td className="px-3 py-2.5 text-right mono text-slate-100">{netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold }) == null ? <AbsentValue /> : fmtFromBase(netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold })!, { compact: true, sign: true })}</td>
+                    <td className={`px-3 py-2.5 text-right mono ${totals.realized == null ? "text-slate-600" : changeColor(totals.realized)}`}>{totals.realized == null ? <AbsentValue /> : <>{fmtFromBase(totals.realized, { compact: true, sign: true })}{totals.realizedOf < totals.sells && <span className="ml-1 text-[10.5px] font-normal text-slate-500">{totals.realizedOf}/{totals.sells}</span>}</>}</td>
+                    <td className="px-3 py-2.5" />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+          <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+            Every line is one manager's trading over the window; expand it for one line per security, and expand that for
+            each dated tranche. A realised figure covers only the sells whose account issues a capital gain statement — where
+            it does not cover them all, the count beside it says how many. The tape reads the transaction statements only: a
+            depository moves units without a price, a counterparty or a consideration, so a demat account's movements are not
+            trades and are not here.
+          </div>
+        </Card>
+      ) : (
       <Card pad={false} className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="min-w-full text-sm">
@@ -1369,8 +1585,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                   <td className="px-3 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
                   <td className="px-3 py-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
                   <td className="px-3 py-2 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? fmtFromBase(t.price) : <AbsentCell reason="this trade row reports no unit price on its statement" />}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? fmtFromBase(t.amount, { compact: true }) : <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-400">{t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
                   <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
                   <td className="px-3 py-2 text-slate-400">{t.account}</td>
                 </tr>
@@ -1380,6 +1596,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
           </table>
         </div>
       </Card>
+      )}
     </>
   );
 }

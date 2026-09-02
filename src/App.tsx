@@ -80,7 +80,7 @@ function StockRoute() {
 
 export default function App() {
   return (
-    <div className="flex h-screen bg-ink-950 text-slate-200 bg-grid">
+    <div className="flex h-full bg-ink-950 text-slate-200 bg-grid">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />

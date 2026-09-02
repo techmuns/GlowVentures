@@ -74,8 +74,20 @@ type ArchiveTxn = {
  * cross-check it was built to be, and section (a3) of the reconciliation keeps
  * comparing them. Derive what the statement does not print — not what it does.
  */
-const settledAmount = (t: ArchiveTxn): number =>
-  t.printed?.settlementAmount ?? t.net ?? t.gross ?? 0;
+/**
+ * WHAT THE TRADE SETTLED FOR — and `null` where the statement says nothing.
+ *
+ * This used to end `?? 0`, and a zero here is not a measurement: a row whose
+ * statement prints no settlement, no net and no gross reported the SAME figure
+ * as a trade that genuinely settled for nothing. The tape got away with it by
+ * testing `t.amount ? … : <AbsentCell>` at the point of render — which is the
+ * absent-vs-zero rule being enforced by a falsy check in the presentation layer
+ * rather than by the model. The moment those amounts are SUMMED, as the
+ * rollup does, a `?? 0` blends an unreported trade into a total as if it had
+ * cost nothing.
+ */
+const settledAmount = (t: ArchiveTxn): number | null =>
+  t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
 type ArchiveLot = {
   security: string; securityKey: string;
   saleDate: string | null; purchaseDate: string | null;
@@ -284,7 +296,13 @@ export type Txn = {
    *  ways across these providers — matching a filter on the label would silently
    *  empty the tape. */
   ownerId: string | null;
-  side: "Buy" | "Sell"; qty: number; price: number; amount: number; realized: number | null;
+  /** The manager's own name for the account, and the number it prints. Carried
+   *  so a rollup can join to `BOOK_ACCOUNTS` on two fields the statement itself
+   *  states — never by re-deriving an accountId slug from the label, which is
+   *  the identity-in-the-presentation-layer trap this file already refuses once
+   *  for `securityKey`. */
+  provider: string; accountNo: string;
+  side: "Buy" | "Sell"; qty: number; price: number | null; amount: number | null; realized: number | null;
   /** Why `realized` is absent on this row, when it is. */
   realizedNote?: string;
 };
@@ -374,8 +392,11 @@ export async function loadTransactions(): Promise<TxnData | null> {
     }
     txns.push({
       date: t.date, security: displaySecurity(t.security), securityKey: t.securityKey,
-      account, ownerId: d.ownerId, side, qty,
-      price: t.unitPrice ?? (qty > 0 ? amount / qty : 0),
+      account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId, side, qty,
+      // Derived only where both halves exist. `amount` is now null where the
+      // statement reported none, and dividing that by a quantity would put a
+      // ₹0 unit price on a trade nobody priced.
+      price: t.unitPrice ?? (amount != null && qty > 0 ? amount / qty : null),
       amount, realized, realizedNote,
     });
   }
@@ -650,7 +671,7 @@ export async function loadSales(): Promise<SalesData | null> {
       m.set(t.securityKey, e);
     }
     e.soldQty += t.quantity ?? 0;
-    e.proceeds += settledAmount(t);
+    e.proceeds += settledAmount(t) ?? 0;
     const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
     if (claimed.has(key)) continue;
     const r = realised.get(key);
@@ -718,7 +739,7 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
     name = displaySecurity(t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    const qty = t.quantity ?? 0, amount = settledAmount(t);
+    const qty = t.quantity ?? 0, amount = settledAmount(t) ?? 0;
     txns.push({
       date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
       rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
