@@ -3687,6 +3687,118 @@ load-bearing gate is an INEQUALITY — the unadjusted NAV move must exceed the
 adjusted return by more than 5 points — so a suite cannot pass by accident on a
 drop where no capital moved, and it fails loudly if the series ever empties.
 
+### Stage 10r — density, and the guard on an annualised return
+
+Three asks on the Portfolio Monitor. Two shipped; the third is declared absent
+against a MEASUREMENT rather than a premise, which is the whole of why this
+section exists.
+
+**THE PAGE SPENT ITS FIRST SCREEN ON CHROME.** *"I cannot even see 2 companies
+completely, which is very inefficient presentation."* Measured, that was true:
+the filters, the view toggle and the two export buttons each had a row of their
+own, and the security column was narrow enough that `Fractal Analytics Limited`
+wrapped onto THREE lines, so a row stood ~70px tall. One wrapping chrome row at
+`text-xs`, `py-1.5` cells and a `min-w-[15rem]` name column put **15 holdings on
+screen at 1500x950 where 2 fitted before**.
+
+**AND DENSITY IS ASSERTED ON GEOMETRY, because no amount of matching innerText
+can see it.** A page can print every row correctly and still bury them: the
+complaint was about where things sit, not what they say. `check:pages` now
+measures `rowsInView` and `firstRowTop` IN THE PAGE and hands them to the
+invariants — at least ten rows fully visible, and the first row inside the top
+third of the viewport. The second is what stops the first being satisfied by a
+taller window instead of tighter chrome. Both were verified by putting the old
+type scale and padding back.
+
+**THE RETURN TOGGLE, AND WHY THE GUARD IS THE FEATURE.** *"More than one year
+it'll be CAGR, less than one year I'd rather see absolute… never an annualised
+extrapolation."* `holdingReturn` in `analytics.ts` is the one place that
+decides, and the page only draws:
+
+- a measured window of **≥ 365 days** → annualised, the window named in the cell;
+- **under a year** → the ABSOLUTE figure, marked `abs`, because a rate for a
+  year the holding has not seen is a claim about a year;
+- **no reported purchase date** → `AbsentCell`. Not "weaker", not silently
+  absolute: a rate over an unknown window is not a figure at all.
+
+**`positionIrrPct` LOOKS LIKE THE SOURCE FOR THIS AND IS A TRAP.** The PMS
+statements publish a per-position IRR — 75 of 371 positions carry one — and it
+is ALREADY the extrapolation being banned: it reaches **+47,695%** on this book,
+and reads 193.9% for a holding whose return on cost is 56.5%. That is a provider
+annualising a few months, the same arithmetic that put +99.0% on the Morning CIO
+strip in Stage 10g(ii). `holdingReturn` never reads it.
+
+The window can only come from `Position.heldSince`, which `build-book` emits
+under the SAME gate as the ST/LT split — the lots must account for the units held
+exactly, or Pricol's departed units would date a holding they are no longer in.
+On this drop that is **3 of 371 positions**: Crompton at 527 days annualises
+(−27.78% on cost → **−20.18% p.a.**), Transrail at 337 and Bectors at 274 hit the
+guard. The column's own caption COUNTS all three states rather than claiming
+coverage, and `check:pages` reconciles those counts against the row total.
+
+### AND YTD / CALENDAR-YEAR ON A HOLDING IS NOT MEASURABLE HERE
+
+*"Add YTD and calendar-year columns for the holding itself, not just the
+security's market return."* The distinction is exactly right — a holding's own
+return over a window is a different question from what the share did — and this
+book cannot answer it. Measured over `public/audit/`, not assumed:
+
+| | |
+| --- | --- |
+| Earliest holdings statement of any account | **2026-03-31** |
+| Transaction tape | **2026-04-01 → 2026-08-13** |
+| Valuations dated on or before 2026-01-01 | **none** |
+| Trades dated before 2026-01-01 | **0 of 839** |
+
+A holding's YTD return needs its value at 1 January and every flow since. This
+corpus begins in April, so both halves are missing for every position, and a
+calendar-YEAR return (2025, 2024) is further out of reach still — the whole
+archive is four and a half months long.
+
+**THE COLUMN IS BUILT AND IT SHOWS A DASH** — *"if it is not possible to show
+data then just show a dash."* It was first left out on the grounds that a
+permanently-dashed column reads as a broken feed; the family asked for it
+anyway, and they are right that a column naming its own absence is worth more
+than a gap nobody can see. It renders `AbsentCell` on every row it cannot
+measure, and the caption underneath COUNTS what it covers rather than leaving a
+wall of dashes to be interpreted.
+
+**ONE CASE IS GENUINELY MEASURABLE, which is why `holdingYtd` is a function and
+not a constant dash.** A holding OPENED DURING THE YEAR did not exist on 1
+January, so it has no opening value to be missing: its year-to-date return
+simply IS its return since purchase. That needs `heldSince` and therefore the
+same lot-coverage gate as everything else here. On this drop it fires for **no
+position** — all three dated holdings were opened in 2025 — and it will fire on
+its own the first time a drop brings a within-year purchase through the gate,
+moving the caption with it.
+
+**The SECURITY's market YTD is available today from `/api/prices` and is
+deliberately not substituted.** It is the cheap way to fill this column and it
+answers a different question: a position bought in March did not earn the
+market's January-to-March move. Standing one in for the other is the substitution
+this book refuses everywhere else.
+
+**AND THE CHECK ON IT IS ANCHORED OFF THE BOOK, because the obvious version
+could not fail.** The column and its caption are both computed by `holdingYtd`,
+so reconciling one against the other passes even when both fabricate — this
+file's own "a check that compares a figure with its own copy cannot fail",
+arriving through a caption instead of a footer. `YTD_MEASURABLE` in
+`check-pages.mjs` counts the qualifying rows out of `glowData.ts` directly, and
+the invariant requires the RENDERED figures, the caption's claim and that count
+to agree. Verified by fabricating a YTD on the holdings already held on 1
+January: the caption-only version passed, the book-anchored one fails.
+
+**What would fill it properly is one document**: a holdings statement dated on
+or before 1 January, per account. The moment one lands, the value at the year's
+start is measurable for every position in that account and the column becomes
+ordinary work.
+
+**CALENDAR-YEAR COLUMNS (2025, 2024) ARE NOT BUILT**, and unlike YTD they have
+no fill path at all on this corpus: the whole archive is four and a half months
+long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
+YTD earns its dash because it becomes real on the next within-year purchase;
+a 2024 column would be a dash forever.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

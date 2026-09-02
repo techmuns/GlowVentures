@@ -13,6 +13,7 @@ export function MultiSelectFilter({
   unit = "selected",
   placeholder = "Search…",
   className = "w-72",
+  dense = false,
   render,
 }: {
   options: string[];
@@ -22,6 +23,8 @@ export function MultiSelectFilter({
   unit?: string;            // e.g. "holdings" → "3 holdings"
   placeholder?: string;     // search box placeholder
   className?: string;
+  /** Tighter type and padding, to sit in a dense filter bar. */
+  dense?: boolean;
   // How to DISPLAY an option, where the stored value is not the readable one.
   // The economic calendar stores ISO country codes ("IN") and must show
   // "India"; searching still runs over both, so typing either finds the row.
@@ -76,9 +79,9 @@ export function MultiSelectFilter({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex w-full items-center gap-2 rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm ring-focus"
+        className={`flex w-full items-center gap-2 rounded-md border border-ink-700 bg-ink-800 ring-focus ${dense ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm"}`}
       >
-        <Search className="h-4 w-4 shrink-0 text-slate-500" />
+        <Search className={`shrink-0 text-slate-500 ${dense ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
         <span className={`truncate ${count === 0 ? "text-slate-400" : "text-slate-100"}`}>{label}</span>
         <span className="ml-auto flex items-center gap-1">
           {count > 0 && (
