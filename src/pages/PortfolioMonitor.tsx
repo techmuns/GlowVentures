@@ -13,7 +13,7 @@ import {
   holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
   mandateLabel, mandateLabelWithOwner,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  holdingReturn, returnModeCoverage, type ReturnMode,
+  holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
@@ -762,6 +762,15 @@ export function PortfolioMonitor() {
                   <Th right onClick={sortBtn("unrealizedPnL")}>Unreal. P&L</Th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
                   <Th right onClick={sortBtn("returnPct")}>{returnMode === "cagr" ? "Return p.a." : "Return"}</Th>
+                  {/*
+                    THE HOLDING'S OWN YEAR TO DATE — not the share's market move
+                    since January, which is a different measurement and is never
+                    substituted for it. Measurable only where the holding was
+                    OPENED during the year, because then there is no opening
+                    value to be missing; every other row renders a dash naming
+                    what it would take. See `holdingYtd`.
+                  */}
+                  <th className="label-xs px-2 py-1.5 text-right font-medium">YTD</th>
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -778,7 +787,7 @@ export function PortfolioMonitor() {
                   <Fragment key={grp.key}>
                     {showBucketSections && (
                       <tr className="bg-ink-900/50">
-                        <td colSpan={13} className="px-2 py-1.5">
+                        <td colSpan={14} className="px-2 py-1.5">
                           <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                             {bucketLabel(grp.key)}
                             {/* The count is of HOLDINGS, not of rows: ten mandate
@@ -993,6 +1002,17 @@ export function PortfolioMonitor() {
                             );
                           })()}
                         </td>
+                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
+                          {(() => {
+                            const y = holdingYtd(r, portfolio.asOf);
+                            return y.kind === "absent"
+                              ? <AbsentCell reason={y.reason} />
+                              : <span className={changeColor(y.pct)}
+                                  title={`Opened ${fmtDate(y.since)}, during the current year — so its year-to-date return is its whole return since purchase. It held nothing on 1 January, so no opening value is missing.`}>
+                                  {fmtPct(y.pct, { sign: true })}
+                                </span>;
+                          })()}
+                        </td>
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
                             failed to map — the same cell a directly-held share
@@ -1026,7 +1046,7 @@ export function PortfolioMonitor() {
                           family bought itself. */}
                       {m && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                          <td colSpan={14} className="px-3 pb-3 pt-1">
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                               {/* WHAT THE MANAGER REPORTS, OR WHAT THE FILTERS LEFT OF IT — never the
                                   first sentence over the second list. Filtered to one company this read
@@ -1110,7 +1130,7 @@ export function PortfolioMonitor() {
                       )}
                       {!m && multi && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                          <td colSpan={14} className="px-3 pb-3 pt-1">
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
                                 <thead>
@@ -1151,7 +1171,7 @@ export function PortfolioMonitor() {
                     })}
                   </Fragment>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={13} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={14} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
                 <tr className="border-t border-ink-700 font-semibold">
@@ -1201,6 +1221,13 @@ export function PortfolioMonitor() {
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                   </td>
+                  {/* A BOOK-WIDE YTD IS ABSENT FOR THE SAME REASON ITS ROWS ARE,
+                      and it is an ABSENT figure rather than an empty cell: a
+                      total nobody could strike is a measurement that is missing,
+                      not a column with nothing to add. */}
+                  <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
+                    <AbsentCell reason="a year-to-date return for the book needs every holding's value on 1 January, and no statement here is dated before the year began" />
+                  </td>
                   {/* Sector and Entity — descriptors, so the footer has nothing
                       to total under them. Empty rather than absent: a column
                       of words has no sum to be missing. */}
@@ -1237,6 +1264,27 @@ export function PortfolioMonitor() {
             showed absolute figures under a "Return p.a." heading would be the
             two-bases-in-one-column failure this file keeps naming.
           */}
+          {/*
+            WHAT THE YTD COLUMN COVERS. Counted off the rows on screen, so a
+            drop that brings a within-year purchase through the lot gate moves
+            this line on its own — and a column that quietly started guessing
+            would move it the wrong way.
+          */}
+          {(() => {
+            const cov = ytdCoverage(rows, portfolio.asOf);
+            if (cov.measured === cov.total) return null;
+            return (
+              <p className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                <span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
+                {cov.measured > 0
+                  ? <>It is measurable on {cov.measured} of {cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. </>
+                  : <>No row can be measured on this drop. </>}
+                The other {cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that
+                date: the earliest statement in this book is dated after the year began, so there is no opening value to
+                measure from. One holdings statement per account dated on or before 1 January fills this column.
+              </p>
+            );
+          })()}
           {returnMode === "cagr" && (() => {
             const cov = returnModeCoverage(rows, "cagr", portfolio.asOf);
             return (

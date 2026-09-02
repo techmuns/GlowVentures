@@ -583,3 +583,72 @@ export function returnModeCoverage(positions: Holdable[], mode: ReturnMode, asOf
   }
   return { cagr, absolute, absent, total: positions.length };
 }
+
+// ── YEAR-TO-DATE ON THE HOLDING ITSELF ──────────────────────────────────────
+//
+// "Add YTD and calendar-year columns for the holding itself, not just the
+// security's market return… if it is not possible to show data then just show
+// a dash."
+//
+// THE DISTINCTION IN THAT SENTENCE IS THE WHOLE PROBLEM. What a SHARE did since
+// 1 January is a market fact and `/api/prices` serves it. What THIS FAMILY's
+// holding did over the same window is a different measurement: it needs the
+// holding's own value on 1 January and every purchase and sale since, because a
+// position bought in March did not earn the market's Jan–Mar move.
+//
+// MEASURED OVER `public/audit/`, the book carries neither for a holding that
+// predates the year: the earliest holdings statement of any account is dated
+// 2026-03-31 and the transaction tape runs 2026-04-01 onward, with zero trades
+// and zero valuations on or before 1 January. `BOOK_POSITIONS` is one dated
+// snapshot per account, so there is no opening value to measure a year from.
+//
+// ONE CASE IS GENUINELY MEASURABLE and is the reason this is a function rather
+// than a constant dash: a holding OPENED DURING THE YEAR did not exist on 1
+// January, so it has no opening value to be missing — its year-to-date return
+// simply IS its return since purchase. That needs `heldSince`, which carries the
+// same lot-coverage gate as everything else here. On this drop it fires for no
+// position (all three dated holdings were opened in 2025), and it will fire on
+// its own the first time a drop brings a within-year purchase through the gate.
+
+export type HoldingYtd =
+  /** Opened during the year: its whole return IS its year to date. */
+  | { kind: "since-open"; pct: number; since: string }
+  | { kind: "absent"; reason: string };
+
+/**
+ * The holding's own year-to-date return, or the reason there isn't one.
+ *
+ * `asOf` is the book's report date, so the "year" is the calendar year that
+ * date falls in — never `new Date()`, which would roll the window over at
+ * midnight on a page showing figures struck in August.
+ */
+export function holdingYtd(p: Holdable, asOf: string): HoldingYtd {
+  const yearStart = `${asOf.slice(0, 4)}-01-01`;
+  if (!p.heldSince) {
+    return {
+      kind: "absent",
+      reason: "a year-to-date return on the holding needs its value on 1 January, and no statement covering it reports "
+        + "when it was bought or what it was worth then — the book carries one dated snapshot per account and none predates the year.",
+    };
+  }
+  if (p.heldSince < yearStart) {
+    return {
+      kind: "absent",
+      reason: `this holding was already held on 1 January (since ${p.heldSince}), so its year-to-date return needs its value on that date. `
+        + "No statement in this book is dated before the year began, so there is no opening value to measure from — "
+        + "the share's own market move since January is a different figure and is not shown in its place.",
+    };
+  }
+  if (p.returnPct === null || p.returnPct === undefined) {
+    return { kind: "absent", reason: "this holding was opened during the year, but no statement reports a cost for it, so there is nothing to measure a return against" };
+  }
+  // Opened this year: no opening value is MISSING, because there was none.
+  return { kind: "since-open", pct: p.returnPct, since: p.heldSince };
+}
+
+/** How many rows the YTD column can and cannot answer, for its caption. */
+export function ytdCoverage(positions: Holdable[], asOf: string) {
+  let measured = 0;
+  for (const p of positions) if (holdingYtd(p, asOf).kind === "since-open") measured++;
+  return { measured, absent: positions.length - measured, total: positions.length };
+}

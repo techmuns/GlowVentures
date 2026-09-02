@@ -122,5 +122,62 @@ ok("a total loss has no compound rate", holdingReturn(h(-100, "2020-01-01"), "ca
 // A generated-book sanity anchor, so a drop that drops `heldSince` is loud.
 ok("the book still carries a report date for the window to close against", !!BOOK_SUMMARY.asOf);
 
+
+// ── 6. YEAR TO DATE ON THE HOLDING ──────────────────────────────────────────
+// "Build YTD return as well; if it is not possible to show data then just show
+// a dash." The dash is the common case here and the suite asserts WHY, so a
+// future change that starts filling the column has to change these too.
+{
+  const { holdingYtd, ytdCoverage } = await import("@/lib/analytics");
+
+  // Held since before the year began → absent. The share's own market move
+  // since January exists and is deliberately NOT substituted for it.
+  {
+    const y = holdingYtd(h(30, "2025-06-01"), ASOF);
+    ok("a holding already held on 1 January has no measurable YTD", y.kind === "absent");
+    ok("...and the reason names the missing opening value, not a vague 'no data'",
+       y.kind === "absent" && /1 January/.test(y.reason) && /opening value/.test(y.reason));
+  }
+  // No start date at all → absent, for a different stated reason.
+  {
+    const y = holdingYtd(h(30, null), ASOF);
+    ok("an unknown start has no measurable YTD either", y.kind === "absent");
+    ok("...and says so differently from a holding whose start IS known",
+       y.kind === "absent" && /when it was bought/.test(y.reason));
+  }
+  // THE ONE MEASURABLE CASE: opened during the year, so nothing is missing.
+  {
+    const y = holdingYtd(h(12.5, "2026-03-02"), ASOF);
+    ok("a holding OPENED during the year has a measurable YTD", y.kind === "since-open");
+    ok("...and it is the whole return since purchase, unscaled",
+       y.kind === "since-open" && y.pct === 12.5, y.kind === "since-open" ? String(y.pct) : y.kind);
+  }
+  // The boundary: 1 January itself counts as within the year.
+  ok("1 January is inside the year", holdingYtd(h(5, "2026-01-01"), ASOF).kind === "since-open");
+  ok("31 December is not", holdingYtd(h(5, "2025-12-31"), ASOF).kind === "absent");
+  // Opened this year but no cost reported → absent for want of a cost, not a date.
+  {
+    const y = holdingYtd(h(null, "2026-03-02"), ASOF);
+    ok("opened this year with no cost is absent for want of a COST", y.kind === "absent" && /cost/.test(y.reason));
+  }
+  // THE WINDOW IS THE BOOK'S YEAR, NOT TODAY'S. Same holding, same figures, a
+  // book struck in a different year gives a different answer — which is the
+  // whole reason `asOf` is threaded through instead of calling new Date().
+  ok("the year comes from the book's as-of, not the wall clock",
+     holdingYtd(h(9, "2026-03-02"), "2027-01-05").kind === "absent"
+     && holdingYtd(h(9, "2026-03-02"), "2026-08-13").kind === "since-open");
+
+  // On THIS book: every row is a dash, and the coverage helper says so rather
+  // than the column quietly implying otherwise. Written as a relation to the
+  // generated book so a drop that brings a within-year purchase through the lot
+  // gate flips it without editing the test.
+  const cov = ytdCoverage(BOOK_POSITIONS, ASOF);
+  ok("YTD coverage partitions the book", cov.measured + cov.absent === cov.total && cov.total === BOOK_POSITIONS.length,
+     `${cov.measured} measured / ${cov.absent} absent`);
+  const openedThisYear = BOOK_POSITIONS.filter((p) => p.heldSince && p.heldSince >= "2026-01-01").length;
+  ok("...and measures exactly the holdings opened during the year", cov.measured === openedThisYear,
+     `${cov.measured} vs ${openedThisYear}`);
+}
+
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
 process.exit(fails ? 1 : 0);

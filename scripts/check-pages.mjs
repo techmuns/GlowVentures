@@ -222,6 +222,38 @@ const PRIV_ASOF_MAX = (() => {
  * one line. A book with nothing ring-fenced yields null and the route walks a
  * key that resolves to no holding, which fails rather than silently skipping.
  */
+/**
+ * HOW MANY HOLDINGS THE BOOK ITSELF SAYS WERE OPENED DURING ITS OWN YEAR — the
+ * only rows a year-to-date figure can legitimately appear on, since a holding
+ * already held on 1 January needs an opening value the book does not carry.
+ *
+ * READ FROM `glowData.ts`, NOT FROM THE PAGE. The YTD column and its caption are
+ * both computed by `holdingYtd`, so comparing one against the other cannot fail
+ * — they would fabricate together. This is the independent side, the same shape
+ * as the Polycab reconciliations below: two paths to one figure.
+ */
+const YTD_MEASURABLE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    const summary = /"asOf":\s*"(\d{4})-/.exec(src);
+    if (!Array.isArray(pos) || !summary) return null;
+    const yearStart = `${summary[1]}-01-01`;
+    // Consolidated by securityKey, because that is what the by-security table
+    // draws — and a row is measurable only if EVERY lot behind it has a start.
+    const bySec = new Map();
+    for (const p of pos) {
+      const g = bySec.get(p.securityKey) ?? [];
+      g.push(p); bySec.set(p.securityKey, g);
+    }
+    let n = 0;
+    for (const g of bySec.values()) {
+      if (g.every((p) => p.heldSince) && g.every((p) => p.heldSince >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+    }
+    return n;
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -1782,10 +1814,14 @@ const INVARIANTS = {
       const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
       if (!foot) return false;
       const cells = foot.split("\t");
-      return cells.length >= 3
+      // …Return, YTD, Sector, Entities. The two descriptor columns stay empty;
+      // the YTD total is ABSENT rather than empty (nobody can strike it), and
+      // the last figure the footer carries is the return.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === "—"
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 4].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -1816,6 +1852,54 @@ const INVARIANTS = {
      */
     ["the return basis toggle offers Absolute and CAGR",
       (t) => /\bAbsolute\b/.test(t) && /\bCAGR\b/.test(t)],
+    /**
+     * ── THE YTD COLUMN IS THE HOLDING'S, AND IT NEVER GUESSES ───────────────
+     *
+     * "Add YTD… for the holding itself, not just the security's market return"
+     * and "if it is not possible to show data then just show a dash."
+     *
+     * The share's market move since January IS available from `/api/prices`,
+     * which is exactly what makes this dangerous: the cheap way to fill this
+     * column is to substitute a figure that answers a different question. So
+     * the assertion is on the CELLS — every one is an em dash or a signed
+     * percentage, and never a zero, which is the shape a fabricated "no change
+     * this year" would take.
+     */
+    ["a YTD column is drawn, sitting between Return and the descriptors",
+      (t) => /\bYTD\b/.test(t)],
+    ["the YTD column shows exactly as many figures as it claims to measure", (t) => {
+      // FULL-WIDTH ROWS ONLY. `isDataRow` is a tab count, and innerText renders
+      // the sticky header with five tabs of its own, so it matches there too —
+      // a header is not a row and its cells are not in these columns.
+      const rows = t.split("\n").filter(isDataRow).filter((r) => r.split("\t").length === 14);
+      if (rows.length === 0) return false;             // nothing drawn is nothing checked
+      // ... Return, YTD, Sector, Entities — so YTD is third from the end.
+      const cell = (r) => r.split("\t")[r.split("\t").length - 3].trim();
+      const shapeOk = rows.every((r) => cell(r) === "—" || /^[+-]\d+(\.\d+)?%$/.test(cell(r)));
+      const drawn = rows.filter((r) => cell(r) !== "—").length;
+      /**
+       * AND THE COUNT MUST TIE TO THE CAPTION. Shape alone is too weak: a
+       * fabricated "+0.00%" — the exact shape a defaulted YTD would take — is a
+       * signed percentage and would sail through. The caption is computed from
+       * `ytdCoverage` over the same rows, so a column that started inventing
+       * figures disagrees with the sentence underneath it, which is the
+       * contradiction this book's own footer rule is written to catch.
+       */
+      const none = /No row can be measured on this drop/.test(t);
+      const some = /measurable on (\d+) of \d+ rows/.exec(t);
+      if (!none && !some) return false;                // no caption is not a pass
+      const claimed = none ? 0 : Number(some[1]);
+      // THE BOOK IS THE THIRD PARTY. Cells and caption both come from
+      // `holdingYtd`, so they agree even when both are wrong; `YTD_MEASURABLE`
+      // is counted off `glowData.ts` and is what makes this able to fail.
+      if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
+      return shapeOk && drawn === claimed && drawn === YTD_MEASURABLE;
+    }],
+    // ...and the column says what it covers rather than leaving a wall of
+    // dashes to be read as a broken feed.
+    ["the YTD column states what it can and cannot measure",
+      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
+        && /1 January/.test(t)],
     ["...and the column is headed Return, not an annual rate, until CAGR is picked",
       (t) => /\bReturn\b/.test(t) && !/Return p\.a\./.test(t)],
   ],

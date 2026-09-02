@@ -3192,16 +3192,49 @@ corpus begins in April, so both halves are missing for every position, and a
 calendar-YEAR return (2025, 2024) is further out of reach still — the whole
 archive is four and a half months long.
 
-**So no column was added**, and that is the point rather than an omission: two
-permanently-dashed columns would fight the density this same request asked for,
-and would read as a broken feed rather than a decided absence — the rule this
-file already states for the company page's four removed cards. **What would fix
-it is one document**: a holdings statement dated on or before 1 January, per
-account. The moment one lands, the value at the year's start is measurable and
-the column becomes ordinary work. The SECURITY's market YTD is available today
-from `/api/prices` and is deliberately not substituted: standing a market return
-in for the family's own return on the holding is the substitution this book
-refuses everywhere else.
+**THE COLUMN IS BUILT AND IT SHOWS A DASH** — *"if it is not possible to show
+data then just show a dash."* It was first left out on the grounds that a
+permanently-dashed column reads as a broken feed; the family asked for it
+anyway, and they are right that a column naming its own absence is worth more
+than a gap nobody can see. It renders `AbsentCell` on every row it cannot
+measure, and the caption underneath COUNTS what it covers rather than leaving a
+wall of dashes to be interpreted.
+
+**ONE CASE IS GENUINELY MEASURABLE, which is why `holdingYtd` is a function and
+not a constant dash.** A holding OPENED DURING THE YEAR did not exist on 1
+January, so it has no opening value to be missing: its year-to-date return
+simply IS its return since purchase. That needs `heldSince` and therefore the
+same lot-coverage gate as everything else here. On this drop it fires for **no
+position** — all three dated holdings were opened in 2025 — and it will fire on
+its own the first time a drop brings a within-year purchase through the gate,
+moving the caption with it.
+
+**The SECURITY's market YTD is available today from `/api/prices` and is
+deliberately not substituted.** It is the cheap way to fill this column and it
+answers a different question: a position bought in March did not earn the
+market's January-to-March move. Standing one in for the other is the substitution
+this book refuses everywhere else.
+
+**AND THE CHECK ON IT IS ANCHORED OFF THE BOOK, because the obvious version
+could not fail.** The column and its caption are both computed by `holdingYtd`,
+so reconciling one against the other passes even when both fabricate — this
+file's own "a check that compares a figure with its own copy cannot fail",
+arriving through a caption instead of a footer. `YTD_MEASURABLE` in
+`check-pages.mjs` counts the qualifying rows out of `glowData.ts` directly, and
+the invariant requires the RENDERED figures, the caption's claim and that count
+to agree. Verified by fabricating a YTD on the holdings already held on 1
+January: the caption-only version passed, the book-anchored one fails.
+
+**What would fill it properly is one document**: a holdings statement dated on
+or before 1 January, per account. The moment one lands, the value at the year's
+start is measurable for every position in that account and the column becomes
+ordinary work.
+
+**CALENDAR-YEAR COLUMNS (2025, 2024) ARE NOT BUILT**, and unlike YTD they have
+no fill path at all on this corpus: the whole archive is four and a half months
+long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
+YTD earns its dash because it becomes real on the next within-year purchase;
+a 2024 column would be a dash forever.
 
 ### Stage 10k — News & Announcements: REMOVED
 
