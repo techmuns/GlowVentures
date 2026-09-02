@@ -277,6 +277,36 @@ book's zero is correct and complete, and the open question is not the manager's 
 Asking the manager to re-send a statement they have already sent correctly would close
 nothing. Where no redemption is recorded, the manager's current statement is the ask.
 
+### F2. The part of the residual that was never examined
+
+Section C matches line by line against the review's **Equity tab only**. Three tabs are never
+reached, so nothing in them can appear in the matched total OR in section D — every rupee of
+them lands in the residual untested:
+
+| Review tab | Its own printed total |
+| --- | ---: |
+| Debt | ₹45.89 Cr |
+| Alternate | ₹223.73 Cr |
+| Cash | ₹5.44 Cr |
+| **Never line-matched** | **₹275.05 Cr** |
+
+So the bridge derives its line-level gaps from ₹1,025.00 Cr of the review and then
+subtracts them from the full ₹1,300.05 Cr — a structural mismatch of **₹275.05 Cr**.
+
+**That is NOT ₹275.05 Cr of the residual**, and the difference matters. The book holds much
+of this block already — the arbitrage and liquid funds on Debt and Cash, the AIF folios on
+Alternate — and those holdings ARE inside the book total, so they offset rather than accumulate.
+What reaches the residual is only the part the book does NOT hold, which this reconciliation
+has not measured. The honest statement is its SIZE: a ₹275.05 Cr block sits unexamined beside
+a ₹263.10 Cr residual, so it is large enough to explain most of it, all of it, or little of
+it — and until the tabs are read line by line nobody here can say which.
+
+Closing it needs a per-tab heading rule: these tabs nest section subtotals with no investor
+column to tell a heading from a holding (`Alternate` prints "Private Equity" at ₹136.16 Cr on
+two consecutive rows, then "PE Funds" at ₹32.71 Cr, then the funds themselves). A reader that
+summed them blind would read the tab at several times its own total, which is why the
+half-written helper for it was deleted rather than wired.
+
 **THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things
 this reconciliation can name but cannot yet quantify line by line, and saying so is the
 honest position — a bridge forced to zero would be a fabricated figure with a badge on it:

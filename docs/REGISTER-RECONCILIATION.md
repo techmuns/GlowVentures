@@ -41,7 +41,7 @@ carries ₹2.03 Cr and does not contain the word TOTAL at all — what marks it 
 no serial number and no `INVESTMENT DONE UNDER`, because it is not an investment anybody
 made on a date.
 
-**AND GROSS IS NOT NET.** ₹6.60 Cr of the COMPANY sheet's rows have already been
+**AND GROSS IS NOT NET.** ₹3.30 Cr of the COMPANY sheet's rows have already been
 repaid (its own `LOAN RETURNED BACK` column), and the `WRITE OFF - EXIT` sheet carries
 ₹1.69 Cr the family no longer holds. Neither belongs in live invested capital.
 

@@ -128,10 +128,22 @@ for (const name of wb.SheetNames) {
   const iCur = hdr.indexOf("CURRENT VALUATION");
   const iVal = hdr.indexOf("VALUATION AT THE TIME OF INVESTMENT");
   const iRet = hdr.findIndex((h) => h.includes("LOAN RETURNED"));
+  const iDate = hdr.lastIndexOf("DATE");
   let sum = 0, n = 0, subtotals = 0, returned = 0, valued = 0, subtotalValue = 0;
   for (const r of rr.slice(1)) {
     const nm = String(r[iName] ?? "").trim();
-    if (iRet >= 0 && typeof r[iRet] === "number") returned += r[iRet];
+    /**
+     * THE LOAN COLUMN HAS ITS OWN SUBTOTALS, AND THEY ARE KEYED IN A DIFFERENT
+     * COLUMN FROM THE ONE THE ROW RULE READS.
+     *
+     * `LOAN RETURNED BACK` runs alongside a second `DATE` column, and three rows
+     * carry the word TOTAL in THAT date cell rather than in the investment name:
+     * ₹58,00,000, ₹2,67,65,000 and ₹4,25,000. The subtotal rule above reads the
+     * NAME, so it never sees them and the column summed to ₹6.5980 Cr — exactly
+     * twice the truth. The three subtotals sum to ₹3.2990 Cr and so do the 25
+     * dated cells, which is a self-proving partition rather than a tolerance.
+     */
+    if (iRet >= 0 && typeof r[iRet] === "number" && !/\bTOTAL\b/i.test(String(r[iDate] ?? ""))) returned += r[iRet];
     if (iCur >= 0 && typeof r[iCur] === "number") valued++;
     const amt = typeof r[iAmt] === "number" ? r[iAmt] : null;
     if (!nm || amt == null) continue;

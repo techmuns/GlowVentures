@@ -229,21 +229,29 @@ function equityLines() {
   return out;
 }
 
-function simpleSheetLines(name, { productCol = 1, qtyCol = null, costCol, mvCol }) {
-  const rows = sheet(name);
-  const out = [];
-  rows.forEach((r, i) => {
-    const c = r.map((x) => String(x ?? "").trim());
-    const product = c[productCol];
-    if (!product || /^(Product|Total|from Live|Note|Refer)/i.test(product)) return;
-    out.push({
-      row: i + 1, sheet: name, product,
-      qty: qtyCol == null ? null : num(c[qtyCol]),
-      cost: num(c[costCol]), mv: num(c[mvCol]),
-    });
-  });
-  return out;
-}
+/**
+ * `simpleSheetLines` USED TO SIT HERE, DEFINED AND CALLED BY NOTHING.
+ *
+ * It read a non-Equity tab by column index and was never wired, so section C has
+ * only ever examined the Equity tab. That is this repo's most-repeated failure —
+ * a helper that returns the right answer into no caller looks exactly like a
+ * working feature — and CLAUDE.md's own remedy is to DELETE rather than leave it
+ * exported and uncalled, so the next session does not wire it back believing it
+ * load-bearing.
+ *
+ * It is deleted rather than wired because wiring it NAIVELY would be worse than
+ * the gap it closes. These tabs carry nested section subtotals with no investor
+ * column to tell a heading from a holding: `Alternate` prints "Private Equity"
+ * at ₹136.1593 Cr on TWO consecutive rows, then "PE Funds" at ₹32.7133 Cr, then
+ * the individual funds under it. `simpleSheetLines` skipped only rows starting
+ * "Product|Total|from Live|Note|Refer", so it would have counted every level and
+ * read the tab at several times its own total — the exact failure `equityLines`
+ * carries a long comment about avoiding.
+ *
+ * What the gap costs is stated in section F instead, with the three tabs' own
+ * printed totals. Closing it properly needs a per-tab heading rule, which is a
+ * measurement somebody has to make against each tab's layout.
+ */
 
 // ── matching the review's names to the book ─────────────────────────────────
 /**
@@ -946,6 +954,65 @@ if (zeroed.length) {
   say("Asking the manager to re-send a statement they have already sent correctly would close");
   say("nothing. Where no redemption is recorded, the manager's current statement is the ask.");
   say();
+}
+/**
+ * A NAMED PART OF THE RESIDUAL IS SIMPLY NOT EXAMINED, AND SAYING SO IS THE
+ * POINT OF A BRIDGE THAT DOES NOT PLUG.
+ *
+ * Section C matches line by line against the EQUITY tab only. The review's Debt,
+ * Alternate and Cash tabs are never reached, so their holdings can appear in
+ * neither the matched total nor section D — they fall straight into the
+ * residual. Read from each tab's OWN printed Total row rather than re-derived,
+ * which is the same rule `amfi.mjs` follows for a headline row.
+ */
+{
+  const tabTotal = (name) => {
+    const rows = sheet(name) ?? [];
+    let mvCol = -1;
+    for (const r of rows) {
+      const c = r.map((x) => String(x ?? "").trim());
+      const j = c.findIndex((x) => /^Market Value$/i.test(x));
+      if (j >= 0) { mvCol = j; break; }
+    }
+    if (mvCol < 0) return null;
+    for (const r of rows) {
+      const c = r.map((x) => String(x ?? "").trim());
+      if (/^Total$/i.test(c[1] ?? "")) return num(c[mvCol]);
+    }
+    return null;
+  };
+  const tabs = ["Debt", "Alternate", "Cash"].map((n) => [n, tabTotal(n)]).filter(([, v]) => v != null);
+  const unexamined = tabs.reduce((t, [, v]) => t + v, 0);
+  if (unexamined > 0) {
+    say("### F2. The part of the residual that was never examined");
+    say();
+    say("Section C matches line by line against the review's **Equity tab only**. Three tabs are never");
+    say("reached, so nothing in them can appear in the matched total OR in section D — every rupee of");
+    say("them lands in the residual untested:");
+    say();
+    say("| Review tab | Its own printed total |");
+    say("| --- | ---: |");
+    for (const [n, v] of tabs) say(`| ${n} | ₹${cr(v)} Cr |`);
+    say(`| **Never line-matched** | **₹${cr(unexamined)} Cr** |`);
+    say();
+    say(`So the bridge derives its line-level gaps from ₹${cr(reviewTotal - unexamined)} Cr of the review and then`);
+    say(`subtracts them from the full ₹${cr(reviewTotal)} Cr — a structural mismatch of **₹${cr(unexamined)} Cr**.`);
+    say();
+    say("**That is NOT ₹" + cr(unexamined) + " Cr of the residual**, and the difference matters. The book holds much");
+    say("of this block already — the arbitrage and liquid funds on Debt and Cash, the AIF folios on");
+    say("Alternate — and those holdings ARE inside the book total, so they offset rather than accumulate.");
+    say(`What reaches the residual is only the part the book does NOT hold, which this reconciliation`);
+    say(`has not measured. The honest statement is its SIZE: a ₹${cr(unexamined)} Cr block sits unexamined beside`);
+    say(`a ₹${cr(Math.abs(residual))} Cr residual, so it is large enough to explain most of it, all of it, or little of`);
+    say("it — and until the tabs are read line by line nobody here can say which.");
+    say();
+    say("Closing it needs a per-tab heading rule: these tabs nest section subtotals with no investor");
+    say("column to tell a heading from a holding (`Alternate` prints \"Private Equity\" at ₹136.16 Cr on");
+    say("two consecutive rows, then \"PE Funds\" at ₹32.71 Cr, then the funds themselves). A reader that");
+    say("summed them blind would read the tab at several times its own total, which is why the");
+    say("half-written helper for it was deleted rather than wired.");
+    say();
+  }
 }
 say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things");
 say("this reconciliation can name but cannot yet quantify line by line, and saying so is the");
