@@ -238,7 +238,66 @@ export type Position = {
   quoteAgeS?: number;         // seconds since the quote was pulled upstream
 };
 
-export type NavPoint = { period: string; date: string; nav: number };
+/**
+ * One dated portfolio valuation.
+ *
+ * The optional fields exist because a CONSOLIDATED point is a blend and has to
+ * say so. `accountsOnDate` / `accountsCarried` split the point's composition
+ * between accounts marked ON that date and accounts held at an earlier mark —
+ * the same "N accounts behind" fact `<BasisPill>` states for the headline NAV,
+ * carried per point so a reader can see which steps are real restatements.
+ *
+ * `flowIn` is NET EXTERNAL CAPITAL since the previous point, in base currency,
+ * positive for money in. It is not optional decoration: one ₹11.24 Cr deposit
+ * into V.E.C 128005 is an +8% step in this book's covered set with no market
+ * movement behind it, so a series charted against an index MUST subtract it.
+ *
+ * `unreportedFlowValue` is the value restated in that interval by an account
+ * that publishes no dated capital record — the part of the step that cannot be
+ * shown to be performance rather than a subscription. Stated, never assumed nil.
+ */
+export type NavPoint = {
+  period: string;
+  date: string;
+  nav: number;
+  accountsOnDate?: number;
+  accountsCarried?: number;
+  flowIn?: number;
+  unreportedFlowValue?: number;
+};
+
+/**
+ * WHAT A DATED NAV SERIES COVERS, AND WHAT IT LEAVES OUT — by account, by name.
+ *
+ * A series over 17 of 49 accounts is a real measurement and a claim about a
+ * fifth of the book. The two are only distinguishable if the page can name the
+ * accounts it does not cover, which is what `single` and `unvalued` are for:
+ * `single` publishes exactly ONE dated valuation (a level, never a change),
+ * `unvalued` publishes none at all.
+ */
+export type NavCoverage = {
+  covered: {
+    accountId: string;
+    points: number;
+    first: string;
+    last: string;
+    /** The series' own last point for this account — what the chart is built on. */
+    latestValue: number;
+    /**
+     * The same account as the BOOK carries it, which is not always the same
+     * figure: the archive's own row sum runs before the depository-duplicate
+     * drop and the ring-fence. Both are emitted so a page can check one against
+     * the other rather than trusting either alone.
+     */
+    bookValue: number;
+    /** `reported` | `units-unchanged` | `unreported` — see BOOK_NAV_COVERAGE. */
+    flowBasis: string;
+  }[];
+  single: { accountId: string; provider: string; accountNo: string; date: string; bookValue: number }[];
+  unvalued: { accountId: string; provider: string; accountNo: string; bookValue: number }[];
+  from: string | null;
+  to: string | null;
+};
 
 /**
  * One time-weighted return series exactly as a manager publishes it.

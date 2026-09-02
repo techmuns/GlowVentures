@@ -241,6 +241,288 @@ function datedRowsAcross(allIssues, kept, notes, label) {
   return out;
 }
 
+
+/**
+ * ── DATED NAV HISTORY, AND THE PREMISE THAT STOPPED BEING TRUE ──────────────
+ *
+ * This function's predecessor was three lines: `const navHistory = []` and a
+ * note reading "the corpus carries an opening and a closing portfolio value per
+ * account and nothing between them. Two points are not a series." That was TRUE
+ * when it was written, against a nine-account corpus, and it has been FALSE
+ * since `august-2026-b` — the drop that first reissued a statement an account
+ * had already filed. Five deliveries later the archive carries THREE month-ends
+ * for both SVAN accounts and for 360 ONE CRN37702, and TWO for fourteen more.
+ *
+ * That is the fourth absence in this repo recorded against a premise nobody
+ * rechecked, after FRED, the RBI and the ISIN tier — and it is the same cost
+ * every time: a reader is told to stop looking for something that is already in
+ * the archive. So the series is MEASURED here, and what cannot supply one is
+ * named rather than folded in.
+ *
+ * FOUR RULES, each of which is a wrong series avoided:
+ *
+ * 1. THE COMPOSITION NEVER CHANGES INSIDE THE SERIES. Only accounts publishing
+ *    at least TWO dated valuations can carry one, and the series starts at the
+ *    date the LAST of them first published (2026-07-10 on this archive, when
+ *    Goldstandard and Carnelian join the ten already reporting). Starting
+ *    earlier would draw a line that climbs from ₹27 Cr to ₹142 Cr because
+ *    accounts ARRIVED, and a reader would take that for performance.
+ *
+ * 2. EACH POINT IS THE BOOK AS THE STATEMENTS STOOD, WHICH MEANS CARRY-FORWARD.
+ *    An account is held at its most recent valuation at or before the date —
+ *    exactly the construction of the headline consolidated NAV, evaluated at
+ *    earlier dates rather than only today. Every point therefore states how many
+ *    of its accounts are marked ON that date and how many are carried.
+ *
+ * 3. EACH `dedupeGroup` IS COUNTED ONCE, at every date. Both of this book's
+ *    duplicated holdings are private, and ONE of them — 360 ONE Special
+ *    Opportunities under CRN37702 and CRN60117 — sits inside the covered set
+ *    with both CRNs publishing three and two dated valuations. Summing the
+ *    accounts naively would put ₹1.46 Cr into every point twice.
+ *
+ * 4. AND EXTERNAL CAPITAL IS NETTED OUT OF THE INDEX, ON THE ACCOUNT'S OWN
+ *    CLOCK. V.E.C 128005 took ₹11.24 Cr of Fund Deposits on 28 and 29 July —
+ *    182% of its own opening value — and its next valuation is 13 August. Left
+ *    in, that one deposit is a +8% step in a ₹142 Cr book with no market
+ *    movement behind it, which is precisely the comparison-against-an-index
+ *    failure `accountXirr.test.ts` already gates for. The flow is attributed to
+ *    the interval in which THAT ACCOUNT's mark moves — not the interval the
+ *    money arrived in — because a carried-forward account's flows and its marks
+ *    run on different clocks. Same reasoning as `pooledXirr`: each account
+ *    closes on its own as-of.
+ *
+ * WHAT THIS STILL CANNOT DO, stated rather than papered over: ten of the
+ * seventeen covered accounts publish NO dated capital record, so a subscription
+ * or redemption inside one of them would read as performance. Where such an
+ * account holds a SINGLE security whose unit count is identical at every
+ * snapshot, the statement itself rules that out and the account is marked
+ * `units-unchanged`; where it does not, the account is `unreported` and is NAMED
+ * on screen with its share of the covered value.
+ */
+function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashFlows, positions, notes) {
+  /**
+   * EVERY ACCOUNT'S VALUE COMES FROM THE BOOK, NOT FROM THE ARCHIVE ROW SUM.
+   *
+   * The two are not the same and the gap is real: the ICICI NSDL account's own
+   * statement values 14 rows at ₹119.26 Cr, and the BOOK carries it at ₹63.78 Cr
+   * because `dropDepositoryDuplicates` removes two Sanshi Fund rows the fund
+   * itself already reports (₹55.5 Cr) and the ring-fence removes Polycab. A
+   * coverage block quoting the archive would put ₹55 Cr of double-counted value
+   * into the figure that tells a reader how much of the book the series misses.
+   * One source, and it is the book — the same reason `check:pages` resolves its
+   * addresses from the page rather than typing them.
+   */
+  const bookValueOf = new Map();
+  for (const p of positions) {
+    if (!isNum(p.marketValue)) continue;
+    bookValueOf.set(p.accountId, (bookValueOf.get(p.accountId) ?? 0) + p.marketValue);
+  }
+  /** Every dated, VALUED snapshot of one account: date → {mv, holdings}. */
+  const snapshotsByAccount = new Map();
+  const single = [];
+  const unvalued = [];
+
+  for (const [key, allIssues] of [...byAccount.entries()].sort()) {
+    const sample = allIssues.find((d) => d.reportType === "appraisal") ?? allIssues[0];
+    const provider = sample.provider;
+    const accountId = accountIdOf(provider, sample.accountNo);
+    if (!keptAccountIds.has(accountId)) continue;   // excluded from the book entirely
+
+    const rule = sourceFor(provider, "holdings");
+    const rts = rule ? rule.reportTypes : [];
+    // One document per as-of: the first report type precedence names, so the
+    // series is struck on the SAME basis the book's own positions are. Ties
+    // break on docKey, so the emitted file stays byte-identical across runs.
+    const pick = new Map();
+    for (const d of allIssues) {
+      if (!d.asOf || d.asOf === "unknown") continue;
+      const rank = rts.indexOf(d.reportType);
+      if (rank < 0) continue;
+      const cur = pick.get(d.asOf);
+      if (!cur || rank < cur.rank || (rank === cur.rank && d.docKey < cur.d.docKey)) pick.set(d.asOf, { rank, d });
+    }
+
+    const snaps = [];
+    for (const [asOf, { d }] of [...pick.entries()].sort()) {
+      // THE RING-FENCE APPLIES HERE TOO. Polycab is out of every book total by
+      // the family's decision, and a NAV SERIES is a book total per date. Reading
+      // the holdings straight off the archive is exactly where that fence would
+      // be missed, because the splice that enforces it elsewhere happens on
+      // `positions` and this does not go through them.
+      const hs = (d.holdings ?? []).filter((h) => h.securityKey && !RINGFENCED_SECURITY_KEYS.has(h.securityKey));
+      const valued = hs.filter((h) => isNum(h.marketValue));
+      if (!valued.length) continue;
+      snaps.push({
+        date: asOf,
+        docKey: d.docKey,
+        reportType: d.reportType,
+        marketValue: sum(valued.map((h) => h.marketValue)),
+        // Kept for the dedupe: a group counted under one account must not be
+        // counted again under the other at the same date.
+        rows: valued.map((h) => ({
+          securityKey: h.securityKey,
+          quantity: isNum(h.quantity) ? h.quantity : null,
+          marketValue: h.marketValue,
+          dedupeGroup: h.dedupeGroup ?? dedupeByAcctSec.get(`${key}|${h.securityKey}`)?.dedupeGroup ?? null,
+        })),
+      });
+    }
+
+    if (snaps.length >= 2) snapshotsByAccount.set(accountId, { provider, accountNo: sample.accountNo, snaps });
+    else if (snaps.length === 1) single.push({ accountId, provider, accountNo: sample.accountNo, date: snaps[0].date });
+    else unvalued.push({ accountId, provider, accountNo: sample.accountNo });
+  }
+
+  /** Per-account series, emitted whole — a page can chart one account alone. */
+  const accountNavHistory = {};
+  for (const [accountId, { snaps }] of snapshotsByAccount) {
+    accountNavHistory[accountId] = snaps.map((s) => ({ period: s.date, date: s.date, nav: r2(s.marketValue) }));
+  }
+
+  const covered = [...snapshotsByAccount.keys()].sort();
+  if (covered.length < 2) {
+    notes.push("navHistory is EMPTY: fewer than two accounts in this archive publish more than one dated valuation, "
+      + "so there is no set over which a consolidated series holds its composition constant.");
+    return {
+      navHistory: [], accountNavHistory,
+      coverage: {
+        covered: [],
+        single: single.map((x) => ({ ...x, bookValue: r2(bookValueOf.get(x.accountId) ?? 0) })),
+        unvalued: unvalued.map((u) => ({ ...u, bookValue: r2(bookValueOf.get(u.accountId) ?? 0) })),
+        from: null, to: null,
+      },
+    };
+  }
+
+  // Rule 1 — the series starts where the composition is COMPLETE.
+  const firstOf = (id) => snapshotsByAccount.get(id).snaps[0].date;
+  const start = covered.map(firstOf).sort().at(-1);
+  const dates = [...new Set(covered.flatMap((id) => snapshotsByAccount.get(id).snaps.map((s) => s.date)))]
+    .filter((d) => d >= start).sort();
+
+  /** The account's latest snapshot at or before `d`. */
+  const at = (id, d) => {
+    const snaps = snapshotsByAccount.get(id).snaps;
+    let hit = null;
+    for (const s of snaps) if (s.date <= d) hit = s; else break;
+    return hit;
+  };
+
+  // Rule 4 — the flow basis per account, measured rather than assumed.
+  const flowBasis = {};
+  for (const id of covered) {
+    const flows = accountCashFlows[id] ?? [];
+    // The opening-portfolio-value entry is a STAKE, not a movement: it is how
+    // `accountCashFlows` states the window's starting position for the XIRR, and
+    // netting it out of a NAV interval would remove the account's whole value.
+    const movements = flows.filter((f) => !/^Opening portfolio value/i.test(f.description ?? ""));
+    if (flows.length) { flowBasis[id] = { basis: "reported", movements: movements.length }; continue; }
+    // No capital record. If the account holds ONE security and its unit count is
+    // identical at every snapshot, no units were subscribed or redeemed and the
+    // whole change is the fund's own mark — which the statement PROVES rather
+    // than the pipeline assuming.
+    const snaps = snapshotsByAccount.get(id).snaps;
+    const oneRow = snaps.every((s) => s.rows.length === 1 && s.rows[0].quantity !== null);
+    const sameQty = oneRow && snaps.every((s) => Math.abs(s.rows[0].quantity - snaps[0].rows[0].quantity) < 1e-6);
+    flowBasis[id] = { basis: sameQty ? "units-unchanged" : "unreported", movements: 0 };
+  }
+
+  const navHistory = [];
+  let prevPoint = null;
+  for (const d of dates) {
+    let nav = 0;
+    let onDate = 0;
+    /** Net external capital IN, attributed on each account's own clock (rule 4). */
+    let flowIn = 0;
+    let flowUnknownValue = 0;
+    /**
+     * RULE 3, AND THE TIE-BREAK IS NOT ALPHABETICAL.
+     *
+     * 360 ONE Special Opportunities is reported under CRN37702 and CRN60117, and
+     * both CRNs are in the covered set. Counting whichever account sorted first
+     * would have taken 60117's 30 June mark on every date after 31 July, when
+     * 37702 has restated — the group would be counted once (right) at a stale
+     * figure (wrong). The group is held at its LATEST-DATED row, which is the
+     * same "a snapshot supersedes" rule `newestPerReportType` applies one layer
+     * up; the accountId breaks a genuine tie so the file stays byte-identical.
+     */
+    const best = new Map();
+    for (const id of covered) {
+      const snap = at(id, d);
+      if (!snap) continue;                       // cannot happen after `start`, by construction
+      if (snap.date === d) onDate++;
+      for (const row of snap.rows) {
+        if (!row.dedupeGroup) { nav += row.marketValue; continue; }
+        const cur = best.get(row.dedupeGroup);
+        if (!cur || snap.date > cur.date || (snap.date === cur.date && id < cur.id)) {
+          best.set(row.dedupeGroup, { date: snap.date, id, marketValue: row.marketValue });
+        }
+      }
+      if (prevPoint) {
+        const was = at(id, prevPoint.date);
+        // This account's mark MOVED in this interval — so its own flows since
+        // that earlier snapshot are what this interval's change contains.
+        if (was && was.date !== snap.date) {
+          const flows = (accountCashFlows[id] ?? []).filter((f) =>
+            !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date);
+          // `CashFlow.amount` is NEGATIVE for capital in (see types.ts), so
+          // capital in is the negated sum.
+          flowIn += -sum(flows.map((f) => f.amount));
+          if (flowBasis[id].basis === "unreported") flowUnknownValue += snap.marketValue;
+        }
+      }
+    }
+    for (const g of best.values()) nav += g.marketValue;
+    const point = {
+      period: d,
+      date: d,
+      nav: r2(nav),
+      accountsOnDate: onDate,
+      accountsCarried: covered.length - onDate,
+      /** Net external capital in since the previous point, on each account's own clock. */
+      flowIn: prevPoint ? r2(flowIn) : 0,
+      /** Value restated in this interval by an account with no capital record. */
+      unreportedFlowValue: prevPoint ? r2(flowUnknownValue) : 0,
+    };
+    navHistory.push(point);
+    prevPoint = { date: d };
+  }
+
+  notes.push(`navHistory: ${navHistory.length} dated point(s) from ${dates[0]} to ${dates.at(-1)}, `
+    + `over the ${covered.length} account(s) that publish MORE THAN ONE dated valuation `
+    + `(₹${(navHistory.at(-1).nav / 1e7).toFixed(2)} Cr at the last point, each dedupeGroup counted once). `
+    + `${single.length} account(s) publish exactly one dated valuation and ${unvalued.length} publish none — `
+    + "both are named in the coverage block rather than carried into the series as a flat line, "
+    + "which would drag its return towards a figure nothing measured. "
+    + "The series starts where the composition is complete: an earlier start would climb because accounts ARRIVED.");
+  const unreported = covered.filter((id) => flowBasis[id].basis === "unreported");
+  if (unreported.length) {
+    notes.push(`navHistory: ${unreported.length} covered account(s) publish no dated capital record and hold more than `
+      + `one security, so a subscription or redemption inside them would read as performance: ${unreported.join(", ")}. `
+      + "Named on screen with their share of the covered value.");
+  }
+
+  return {
+    navHistory,
+    accountNavHistory,
+    coverage: {
+      covered: covered.map((id) => ({
+        accountId: id,
+        points: snapshotsByAccount.get(id).snaps.length,
+        first: snapshotsByAccount.get(id).snaps[0].date,
+        last: snapshotsByAccount.get(id).snaps.at(-1).date,
+        latestValue: r2(snapshotsByAccount.get(id).snaps.at(-1).marketValue),
+        bookValue: r2(bookValueOf.get(id) ?? 0),
+        flowBasis: flowBasis[id].basis,
+      })),
+      single: single.map((s) => ({ ...s, bookValue: r2(bookValueOf.get(s.accountId) ?? 0) })),
+      unvalued: unvalued.map((u) => ({ ...u, bookValue: r2(bookValueOf.get(u.accountId) ?? 0) })),
+      from: dates[0],
+      to: dates.at(-1),
+    },
+  };
+}
+
 // ── Build ────────────────────────────────────────────────────────────────────
 
 function build(docs) {
@@ -1192,18 +1474,18 @@ function build(docs) {
   const asOf = accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) ?? "";
 
   /**
-   * NAV HISTORY — deliberately empty.
+   * NAV HISTORY — MEASURED from the archive's own reissues.
    *
-   * A NAV series needs dated portfolio values. This corpus carries exactly two
-   * per account: the opening market value on the performance summary and the
-   * closing one. Two points are not a series, and drawing a line between them
-   * would assert a path through the period that nothing measured. Left empty,
-   * and the reason is in the build report.
+   * This used to be `[]` with a note reading "the corpus carries an opening and
+   * a closing portfolio value per account and nothing between them". True of the
+   * nine-account corpus it was written against; false since `august-2026-b`
+   * brought the first REISSUE of a statement an account had already filed. See
+   * `navHistoryFrom` for what the archive actually carries and for the four
+   * rules that keep the series from asserting a path nothing measured.
    */
-  const navHistory = [];
-  notes.push("navHistory is EMPTY: the corpus carries an opening and a closing "
-    + "portfolio value per account and nothing between them. Two points are not a "
-    + "series; interpolating between them would draw a path nothing measured.");
+  const { navHistory, accountNavHistory, coverage: navCoverage } = navHistoryFrom(
+    byAccount, new Set(accounts.map((a) => a.accountId)), dedupeByAcctSec, accountCashFlows, positions, notes,
+  );
   // The short/long split is produced wherever a lot register exists and left
   // NULL everywhere else — counted rather than asserted, so this note cannot go
   // stale the way its predecessor did (it claimed the split was impossible on
@@ -1230,7 +1512,8 @@ function build(docs) {
   }
 
   return {
-    accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows, navHistory,
+    accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
+    navHistory, accountNavHistory, navCoverage,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
@@ -1297,7 +1580,7 @@ function emit(book) {
   L.push("// list and what document would supply each.");
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, Commitment,");
-  L.push("  CorporateAction, EntityCG, FundInvestment, NavPoint, Position, RealisedByClass,");
+  L.push("  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, RealisedByClass,");
   L.push("  StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
@@ -1325,11 +1608,43 @@ function emit(book) {
   L.push(`export const BOOK_POLYCAB: Position[] = ${j(book.polycab)};`);
   L.push("");
   L.push("/**");
-  L.push(" * Empty, and deliberately so: the corpus carries an opening and a closing");
-  L.push(" * portfolio value per account and nothing between them. Two points are not a");
-  L.push(" * series. A monthly valuation statement would populate this.");
+  L.push(" * THE CONSOLIDATED DATED NAV SERIES — one point per date on which any covered");
+  L.push(" * account restates, over the accounts that publish MORE THAN ONE dated");
+  L.push(" * valuation, each `dedupeGroup` counted once.");
+  L.push(" *");
+  L.push(" * This was `[]` for several drops with a note saying the corpus carried two");
+  L.push(" * points per account and nothing between them. That was true of the");
+  L.push(" * nine-account corpus and false from the first REISSUE onwards — the fourth");
+  L.push(" * absence in this repo recorded against a premise nobody rechecked. See");
+  L.push(" * `navHistoryFrom` in build-book.mjs for the four rules that keep the series");
+  L.push(" * honest: constant composition, carry-forward marks, dedupe at every date,");
+  L.push(" * and external capital netted out on each account's own clock.");
+  L.push(" *");
+  L.push(" * `flowIn` is the net external capital that entered since the previous point,");
+  L.push(" * so a reader can separate money added from value earned. `unreportedFlowValue`");
+  L.push(" * is the value restated in that interval by an account publishing NO capital");
+  L.push(" * record — the part of the move that cannot be proved to be performance.");
   L.push(" */");
   L.push(`export const BOOK_NAV_HISTORY: NavPoint[] = ${j(book.navHistory)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * The same series per account, whole — so one mandate can be charted alone");
+  L.push(" * and so the consolidated series above can be checked against its own parts.");
+  L.push(" */");
+  L.push(`export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = ${j(book.accountNavHistory)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * WHAT THE SERIES COVERS, AND WHAT IT CANNOT — the accounts publishing two or");
+  L.push(" * more dated valuations, the ones publishing exactly one, and the ones");
+  L.push(" * publishing none. A series over 17 of 49 accounts that does not say so is a");
+  L.push(" * claim about the book; this is what lets the page name every exclusion.");
+  L.push(" *");
+  L.push(" * `flowBasis` per covered account: `reported` (a dated capital record exists),");
+  L.push(" * `units-unchanged` (one security, identical unit count at every snapshot, so");
+  L.push(" * the statement itself rules out a subscription or redemption), or");
+  L.push(" * `unreported` (neither — a capital movement there would read as performance).");
+  L.push(" */");
+  L.push(`export const BOOK_NAV_COVERAGE: NavCoverage = ${j(book.navCoverage)};`);
   L.push("");
   L.push("/**");
   L.push(" * Realised short/long-term gains as the MANAGER split them, per account.");

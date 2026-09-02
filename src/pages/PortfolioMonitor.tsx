@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet, Presentation } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -19,6 +19,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
+import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -171,7 +172,24 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
   const [view, setView] = useState<"holdings" | "transactions">("holdings");
-  const [consolidate, setConsolidate] = useState(true);
+  /**
+   * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
+   * family's request, who read the consolidated table as the one they want.
+   *
+   * The FLAG stays, held in the URL like every other view in this app
+   * (`useViewParam`, §"the active view lives in the URL"), for two reasons that
+   * are not aesthetic. The by-entity rendering is threaded through fifteen
+   * sites — the row build, the footer, the dedupe gap, the realised cells, the
+   * Entities column, the section subtotals — and pinning it to a literal would
+   * leave every one of those branches unreachable, which is the
+   * dead-code-that-looks-alive failure this file keeps naming. And it is where
+   * the ₹3.17 Cr subtotal bug lived: both of this book's duplicate holdings are
+   * AIF, so by-entity is the ONLY view in which a class heading and the footer
+   * beneath it can disagree, and `check:pages` still walks it at `?view=entity`
+   * to assert that they do not.
+   */
+  const [holdingsView] = useViewParam(HOLDINGS_VIEWS);
+  const consolidate = holdingsView === "security";
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -194,7 +212,6 @@ export function PortfolioMonitor() {
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState(false);
-  const [deckBusy, setDeckBusy] = useState(false);
   // Realised P&L per security (by securityKey) from the archive's sales —
   // undefined = loading, null = the archive didn't respond. A VALUE of null in
   // the map is a third thing again: the name was sold, but no capital gain
@@ -626,34 +643,13 @@ export function PortfolioMonitor() {
     next.has(key) ? next.delete(key) : next.add(key);
     return next;
   });
-  const setMode = (next: boolean) => { setConsolidate(next); setExpanded(new Set()); };
+  // The expanded drill-down rows are per-view: a key expanded under the
+  // by-security build has no counterpart under the by-entity one, so a change
+  // of basis clears them rather than leaving a stale row open.
+  useEffect(() => { setExpanded(new Set()); }, [holdingsView]);
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
   // styled workbook. exceljs is code-split so it only loads on demand.
-  // The review deck. `pptxgenjs` is code-split the same way exceljs is, so a
-  // megabyte of deck writer never reaches the main bundle.
-  //
-  // It is handed the DEDUPED set and the current basis, and it prints the basis
-  // on every slide: a deck built on live prices and one built on statement
-  // marks are different documents, and the reader has to be able to tell them
-  // apart weeks later with only the file in front of them.
-  const handleDeck = async () => {
-    if (deckBusy) return;
-    setDeckBusy(true);
-    try {
-      const { exportReviewDeck } = await import("@/lib/exportDeck");
-      await exportReviewDeck({
-        portfolio, consolidated, basis,
-        fmt: (inr: number) => fmtFromBase(inr, { compact: false }),
-        currency: displayCurrency,
-      });
-    } catch (e) {
-      console.error("Deck export failed", e);
-    } finally {
-      setDeckBusy(false);
-    }
-  };
-
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
@@ -729,31 +725,22 @@ export function PortfolioMonitor() {
             title="Absolute is return on cost over however long the holding has been held. CAGR annualises it — and only where a statement reports when the holding was bought and it has been held at least a year.">
             {(["absolute", "cagr"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setReturnMode(m)}
-                className={`rounded px-2 py-1 text-xs font-medium transition-colors ${returnMode === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                className={`rounded px-2 py-1 text-sm font-medium transition-colors ${returnMode === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
                 {m === "absolute" ? "Absolute" : "CAGR"}
               </button>
             ))}
           </div>
         )}
-        <div className="ml-auto flex items-center gap-1.5">
-          {/* The Holdings basis switch, moved off its own row into this group. */}
-          {view === "holdings" && (
-            <button onClick={() => setMode(!consolidate)}
-              className={`rounded-md border px-2 py-1 text-xs transition-colors ${consolidate ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400" : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
-              {consolidate ? "By security" : "By entity"}
-            </button>
-          )}
-          <button onClick={handleExport} disabled={exporting}
-            className="inline-flex items-center gap-1 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-2 py-1 text-xs font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
-            title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
-            <FileSpreadsheet className="h-3.5 w-3.5" /> {exporting ? "Exporting…" : "Export Excel"}
-          </button>
-          <button onClick={handleDeck} disabled={deckBusy}
-            className="inline-flex items-center gap-1 rounded-md border border-ink-600 px-2 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-ink-500 disabled:opacity-60"
-            title="Download a PowerPoint review deck. Every slide carries the basis and the as-of date, because a slide travels without its deck.">
-            <Presentation className="h-3.5 w-3.5" /> {deckBusy ? "Building…" : "Review deck"}
-          </button>
-        </div>
+        {/* ONE ACTION, ON THE FILTER ROW. The basis switch and the Review deck
+            button are both gone at the family's request, so Export Excel is the
+            only control left — and it now sits with the filters rather than
+            wrapping onto a row of its own, which is a third row of chrome
+            returned to the table. */}
+        <button onClick={handleExport} disabled={exporting}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+          title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
+          <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
+        </button>
       </div>
 
       {view === "holdings" ? (
@@ -1382,6 +1369,18 @@ function quarterBounds(y: number, q: number): { from: string; to: string } {
 // toggle is first opened). Holdings elsewhere are the NET result of these trades.
 // The company / sector / entity filters are global (owned by PortfolioMonitor); this
 // view adds its own Buy/Sell side toggle and a date / quarter / fiscal-year range.
+/**
+ * The Holdings table's two bases. There is no toggle for them any more — the
+ * family asked for the consolidated view and only that — but the key still
+ * lives in the URL so `?view=entity` reaches the per-statement build, which is
+ * the only view in which a class subtotal and the footer can disagree and is
+ * therefore the one `check:pages` has to be able to reach.
+ */
+const HOLDINGS_VIEWS: readonly ViewDef<"security" | "entity">[] = [
+  { key: "security", label: "By security" },
+  { key: "entity", label: "By entity" },
+];
+
 const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
 function TransactionsView({ selected, sector, entity, sectorByKey }: {
   selected: Set<string>; sector: string; entity: string; sectorByKey: Map<string, string>;
