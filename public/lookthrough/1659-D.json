@@ -1,0 +1,87 @@
+{
+  "schemecode": "1659-D",
+  "scheme": "ICICI Pru Liquid Fund(G)",
+  "amfiSchemeName": "ICICI Prudential Liquid Fund - Direct Plan - Growth",
+  "amc": "ICICI Prudential Mutual Fund",
+  "plan": "direct",
+  "option": "growth",
+  "classification": "Debt : Liquid",
+  "isin": "INF109K01Q49",
+  "nav": {
+    "value": 419.6119,
+    "date": "2026-09-01",
+    "prev": 419.5075,
+    "prevDate": "2026-08-31",
+    "changePct": 0.024886325035904787
+  },
+  "returns": {
+    "1M": {
+      "value": 1.2855,
+      "kind": "simple",
+      "startDate": "2026-06-21",
+      "endDate": "2026-09-01",
+      "startNav": 414.2863,
+      "endNav": 419.6119
+    },
+    "3M": {
+      "value": 1.7275,
+      "kind": "simple",
+      "startDate": "2026-06-01",
+      "endDate": "2026-09-01",
+      "startNav": 412.4864,
+      "endNav": 419.6119
+    },
+    "6M": {
+      "value": 3.4245,
+      "kind": "simple",
+      "startDate": "2026-03-01",
+      "endDate": "2026-09-01",
+      "startNav": 405.7179,
+      "endNav": 419.6119
+    },
+    "1Y": {
+      "value": 6.4596,
+      "kind": "simple",
+      "startDate": "2025-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 394.1514,
+      "endNav": 419.6119
+    },
+    "3Y": {
+      "value": 6.9612,
+      "kind": "cagr",
+      "startDate": "2023-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 342.8853,
+      "endNav": 419.6119
+    },
+    "5Y": {
+      "value": 6.3095,
+      "kind": "cagr",
+      "startDate": "2021-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 309.0336,
+      "endNav": 419.6119
+    },
+    "10Y": {
+      "value": 6.1244,
+      "kind": "cagr",
+      "startDate": "2016-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 231.5948,
+      "endNav": 419.6119
+    }
+  },
+  "returnsAsOf": "2026-09-01",
+  "fundAumCr": 62854.56,
+  "holdingsAsOf": "2026-07-31",
+  "holdingsSource": {
+    "kind": "amc",
+    "url": "https://www.icicipruamc.com/blob/downloads/Files/Monthly%20Portfolio%20Disclosures/2026/July/Monthly-Portfolio-Disclosure-July-2026.zip"
+  },
+  "section": "Equity Holdings",
+  "equity": [],
+  "counts": {
+    "equity": 0
+  }
+}

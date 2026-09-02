@@ -1,279 +1,445 @@
 {
-  "schemecode": 1623,
+  "schemecode": "1623-D",
   "scheme": "ICICI Pru Nifty 50 Index Fund-Reg(G)",
+  "amfiSchemeName": "ICICI Prudential Nifty 50 Index Fund - Direct Plan Cumulative Option",
+  "amc": "ICICI Prudential Mutual Fund",
+  "plan": "direct",
+  "option": "growth",
   "classification": "Equity : Index Funds",
+  "isin": "INF109K012M7",
+  "nav": {
+    "value": 254.6,
+    "date": "2026-09-01",
+    "prev": 254.8618,
+    "prevDate": "2026-08-31",
+    "changePct": -0.10272233814561217
+  },
+  "returns": {
+    "1M": {
+      "value": 0.47,
+      "kind": "simple",
+      "startDate": "2026-06-19",
+      "endDate": "2026-09-01",
+      "startNav": 253.4091,
+      "endNav": 254.6
+    },
+    "3M": {
+      "value": 3.4431,
+      "kind": "simple",
+      "startDate": "2026-06-01",
+      "endDate": "2026-09-01",
+      "startNav": 246.1257,
+      "endNav": 254.6
+    },
+    "6M": {
+      "value": -3.7972,
+      "kind": "simple",
+      "startDate": "2026-02-27",
+      "endDate": "2026-09-01",
+      "startNav": 264.6492,
+      "endNav": 254.6
+    },
+    "1Y": {
+      "value": -1.4747,
+      "kind": "simple",
+      "startDate": "2025-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 258.4109,
+      "endNav": 254.6
+    },
+    "3Y": {
+      "value": 8.3305,
+      "kind": "cagr",
+      "startDate": "2023-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 200.2545,
+      "endNav": 254.6
+    },
+    "5Y": {
+      "value": 8.0919,
+      "kind": "cagr",
+      "startDate": "2021-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 172.5501,
+      "endNav": 254.6
+    },
+    "10Y": {
+      "value": 11.5301,
+      "kind": "cagr",
+      "startDate": "2016-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 85.507,
+      "endNav": 254.6
+    }
+  },
+  "returnsAsOf": "2026-09-01",
   "fundAumCr": 17352.99,
-  "asOf": "2026-07-31",
+  "holdingsAsOf": "2026-07-31",
+  "holdingsSource": {
+    "kind": "aggregator",
+    "url": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker"
+  },
+  "section": "Equity Holdings",
   "equity": [
     {
       "name": "HDFC Bank Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 10.23,
       "shares": 23735203
     },
     {
       "name": "ICICI Bank Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 9.18,
       "shares": 11103570
     },
     {
       "name": "Reliance Industries Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 7.89,
       "shares": 10471103
     },
     {
       "name": "Bharti Airtel Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 5.36,
       "shares": 4713270
     },
     {
       "name": "Larsen & Toubro Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 4.12,
       "shares": 1814147
     },
     {
       "name": "State Bank Of India",
+      "isin": null,
+      "sector": null,
       "pctAum": 3.79,
       "shares": 6406759
     },
     {
       "name": "Infosys Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 3.54,
       "shares": 5436553
     },
     {
       "name": "Axis Bank Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 3.15,
       "shares": 4451400
     },
     {
       "name": "Bajaj Finance Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 2.73,
       "shares": 4154287
     },
     {
       "name": "Mahindra & Mahindra Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 2.71,
       "shares": 1383782
     },
     {
       "name": "Kotak Mahindra Bank Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 2.57,
       "shares": 11411758
     },
     {
       "name": "ITC Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 2.42,
       "shares": 14941298
     },
     {
       "name": "Tata Consultancy Services Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 2.16,
       "shares": 1582488
     },
     {
       "name": "Eternal Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.95,
       "shares": 11205624
     },
     {
       "name": "Sun Pharmaceutical Industries Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.88,
       "shares": 1641230
     },
     {
       "name": "Titan Company Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.8,
       "shares": 639927
     },
     {
       "name": "Hindustan Unilever Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.67,
       "shares": 1375111
     },
     {
       "name": "Maruti Suzuki India Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.66,
       "shares": 202192
     },
     {
       "name": "NTPC Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.47,
       "shares": 7348208
     },
     {
       "name": "Tata Steel Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.4,
       "shares": 12812262
     },
     {
       "name": "Shriram Finance Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.31,
       "shares": 2170713
     },
     {
       "name": "HCL Technologies Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.27,
       "shares": 1634112
     },
     {
       "name": "Hindalco Industries Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.26,
       "shares": 2244208
     },
     {
       "name": "Ultratech Cement Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.26,
       "shares": 183408
     },
     {
       "name": "Bharat Electronics Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.24,
       "shares": 5551558
     },
     {
       "name": "Power Grid Corporation Of India Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.15,
       "shares": 7019166
     },
     {
       "name": "Bajaj Auto Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.14,
       "shares": 171657
     },
     {
       "name": "Adani Ports and Special Economic Zone Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.12,
       "shares": 1143470
     },
     {
       "name": "Asian Paints Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.11,
       "shares": 700935
     },
     {
       "name": "JSW Steel Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.06,
       "shares": 1453784
     },
     {
-      "name": "Bajaj Finserv Ltd.",
-      "pctAum": 1.05,
-      "shares": 897307
-    },
-    {
       "name": "Interglobe Aviation Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.05,
       "shares": 350836
     },
     {
+      "name": "Bajaj Finserv Ltd.",
+      "isin": null,
+      "sector": null,
+      "pctAum": 1.05,
+      "shares": 897307
+    },
+    {
       "name": "Grasim Industries Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 1.04,
       "shares": 584812
     },
     {
       "name": "Nestle India Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.97,
       "shares": 1111343
     },
     {
       "name": "Eicher Motors Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.96,
       "shares": 213600
     },
     {
       "name": "Tech Mahindra Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.94,
       "shares": 984364
     },
     {
       "name": "Trent Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.89,
       "shares": 515755
     },
     {
       "name": "Coal India Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.89,
       "shares": 3712669
     },
     {
       "name": "Oil & Natural Gas Corporation Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.84,
       "shares": 6020889
     },
     {
       "name": "Apollo Hospitals Enterprise Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.82,
       "shares": 159501
     },
     {
       "name": "Adani Enterprises Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.78,
       "shares": 447266
     },
     {
       "name": "SBI Life Insurance Company Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.76,
       "shares": 696428
     },
     {
       "name": "Jio Financial Services Ltd",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.75,
       "shares": 5085621
     },
     {
       "name": "Cipla Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.74,
       "shares": 872139
     },
     {
       "name": "MAX Healthcare Institute Ltd",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.73,
       "shares": 1153541
     },
     {
+      "name": "Dr. Reddy's Laboratories Ltd.",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0.63,
+      "shares": 944830
+    },
+    {
       "name": "Tata Motors Passenger Vehicles Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.63,
       "shares": 3239346
     },
     {
       "name": "Tata Consumer Products Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.63,
       "shares": 1009373
     },
     {
-      "name": "Dr. Reddy's Laboratories Ltd.",
-      "pctAum": 0.63,
-      "shares": 944830
-    },
-    {
       "name": "HDFC Life Insurance Company Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.53,
       "shares": 1667388
     },
     {
       "name": "Wipro Ltd.",
+      "isin": null,
+      "sector": null,
       "pctAum": 0.44,
       "shares": 4198776
-    }
-  ],
-  "debt": [],
-  "cash": [
-    {
-      "name": "Net Current Asset",
-      "pctAum": 0.23,
-      "shares": null
     },
     {
-      "name": "Tri-Party Repo (TREPS)",
-      "pctAum": 0.11,
-      "shares": null
+      "name": "Kwality Walls India Ltd.",
+      "isin": null,
+      "sector": null,
+      "pctAum": 0,
+      "shares": 0
     }
   ],
-  "misc": [],
   "counts": {
-    "equity": 50,
-    "debt": 0,
-    "cash": 2,
-    "misc": 0
+    "equity": 51
   }
 }

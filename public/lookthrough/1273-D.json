@@ -1,75 +1,75 @@
 {
-  "schemecode": "1273",
+  "schemecode": "1273-D",
   "scheme": "HDFC Balanced Advantage Fund(G)",
-  "amfiSchemeName": "HDFC Balanced Advantage Fund - Growth Plan",
+  "amfiSchemeName": "HDFC Balanced Advantage Fund - Growth Plan - Direct Plan",
   "amc": "HDFC Mutual Fund",
-  "plan": "regular",
+  "plan": "direct",
   "option": "growth",
   "classification": "Hybrid : Dynamic Asset Allocation",
-  "isin": "INF179K01830",
+  "isin": "INF179K01WA6",
   "nav": {
-    "value": 524.183,
+    "value": 570.199,
     "date": "2026-09-01",
-    "prev": 525.843,
+    "prev": 571.997,
     "prevDate": "2026-08-31",
-    "changePct": -0.3156835785586132
+    "changePct": -0.31433731295793543
   },
   "returns": {
     "1M": {
-      "value": 0.8649,
+      "value": 0.9725,
       "kind": "simple",
       "startDate": "2026-06-19",
       "endDate": "2026-09-01",
-      "startNav": 519.688,
-      "endNav": 524.183
+      "startNav": 564.707,
+      "endNav": 570.199
     },
     "3M": {
-      "value": 3.8216,
+      "value": 3.9595,
       "kind": "simple",
       "startDate": "2026-06-01",
       "endDate": "2026-09-01",
-      "startNav": 504.888,
-      "endNav": 524.183
+      "startNav": 548.482,
+      "endNav": 570.199
     },
     "6M": {
-      "value": -0.7505,
+      "value": -0.4742,
       "kind": "simple",
       "startDate": "2026-02-27",
       "endDate": "2026-09-01",
-      "startNav": 528.147,
-      "endNav": 524.183
+      "startNav": 572.916,
+      "endNav": 570.199
     },
     "1Y": {
-      "value": 2.6244,
+      "value": 3.2146,
       "kind": "simple",
       "startDate": "2025-09-01",
       "endDate": "2026-09-01",
-      "startNav": 510.778,
-      "endNav": 524.183
+      "startNav": 552.44,
+      "endNav": 570.199
     },
     "3Y": {
-      "value": 12.0036,
+      "value": 12.6728,
       "kind": "cagr",
       "startDate": "2023-09-01",
       "endDate": "2026-09-01",
-      "startNav": 373.038,
-      "endNav": 524.183
+      "startNav": 398.597,
+      "endNav": 570.199
     },
     "5Y": {
-      "value": 14.5595,
+      "value": 15.2671,
       "kind": "cagr",
       "startDate": "2021-09-01",
       "endDate": "2026-09-01",
-      "startNav": 265.686,
-      "endNav": 524.183
+      "startNav": 280.247,
+      "endNav": 570.199
     },
     "10Y": {
-      "value": 13.609,
+      "value": 14.3577,
       "kind": "cagr",
       "startDate": "2016-09-01",
       "endDate": "2026-09-01",
-      "startNav": 146.363,
-      "endNav": 524.183
+      "startNav": 149.091,
+      "endNav": 570.199
     }
   },
   "returnsAsOf": "2026-09-01",

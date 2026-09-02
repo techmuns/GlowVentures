@@ -1,5 +1,6 @@
-// WHAT THE COMPANIES INSIDE A FUND ARE — read at runtime from the committed
-// store that `npm run build-lookthrough` writes.
+// MUTUAL FUND DATA — NAV, its daily change, returns and what the scheme holds —
+// read at runtime from the committed store `npm run build-lookthrough` writes
+// out of a READ-ONLY checkout of the family's own `techmuns/amfibeas` repo.
 //
 // It is fetched rather than bundled for the same reason `ledger.ts` fetches the
 // audit archive: it is ~300 KB across 20 schemes and only one of them is ever
@@ -26,39 +27,97 @@ export type LookthroughHolding = {
   name: string;
   /** Percent of the FUND's AUM, as the AMC disclosed it. */
   pctAum: number;
-  /** Shares the FUND holds — not the family's. Null on debt and cash rows. */
+  /** Shares the FUND holds — not the family's. */
   shares: number | null;
+  /** The underlying's own ISIN, where the AMC's filing gives one. */
+  isin: string | null;
+  /** The AMC's own sector label — not this book's GICS taxonomy. */
+  sector: string | null;
+};
+
+/** The scheme's NAV and the move since the previous published one. */
+export type FundNav = {
+  value: number | null;
+  date: string | null;
+  prev: number | null;
+  prevDate: string | null;
+  changePct: number | null;
+};
+
+/**
+ * ONE PERIOD'S RETURN, WITH THE WINDOW IT ACTUALLY SPANS.
+ *
+ * The label is the SOURCE's (`1M`, `3Y`) and the dates are the MEASUREMENT —
+ * and on this data they do not always agree: Helios's `1M` runs 2026-06-19 to
+ * 2026-09-01. So both travel together and the screen prints both, because a
+ * period label rendered alone is the one figure here a reader could not check.
+ * `kind` is the source's own basis: `simple` over a short window, `CAGR` where
+ * it annualises.
+ */
+export type FundReturn = {
+  value: number;
+  kind: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  startNav: number | null;
+  endNav: number | null;
 };
 
 export type FundPortfolio = {
-  schemecode: number;
+  schemecode: string;
   scheme: string | null;
+  /** AMFI's full scheme name, which states the plan in words. */
+  amfiSchemeName: string | null;
+  amc: string | null;
+  plan: string | null;
+  option: string | null;
   classification: string | null;
+  isin: string | null;
+  nav: FundNav;
+  returns: Record<string, FundReturn>;
+  returnsAsOf: string | null;
   fundAumCr: number | null;
   /** The disclosure's own date — NOT the family's statement date. */
-  asOf: string | null;
+  holdingsAsOf: string | null;
+  /**
+   * WHICH DOCUMENT THE HOLDINGS CAME FROM. `amc` is the fund house's own
+   * monthly disclosure page; `aggregator` is a third party's copy of it. One is
+   * the filing and the other is somebody's reading of the filing, so the card
+   * names which.
+   */
+  holdingsSource: { kind: "amc" | "aggregator"; url: string | null } | null;
+  /**
+   * The section the source file covers. It is "Equity Holdings" on every one,
+   * which is why a debt or liquid scheme has no rows: it holds no equity, and
+   * its debt book is not in this store. The card says that rather than drawing
+   * an empty table.
+   */
+  section: string | null;
   equity: LookthroughHolding[];
-  debt: LookthroughHolding[];
-  cash: LookthroughHolding[];
-  misc: LookthroughHolding[];
-  counts: { equity: number; debt: number; cash: number; misc: number };
+  counts: { equity: number };
 };
 
 export type SchemeMatch = {
-  schemecode: number;
+  schemecode: string;
   scheme: string;
-  /** Which plan rupeevest lists. A scheme's plans hold the SAME portfolio. */
+  /**
+   * The plan this holding's own ISIN resolves to — so NAV and returns are the
+   * family's plan, not a near neighbour's. Plans differ in expense ratio, and
+   * therefore NAV, not in what the fund owns.
+   */
   plan: string;
-  amfiName: string | null;
   isin: string | null;
+  /** `isin` · `name` · `name+plan` — see the ingest's tiers. */
   matchedVia: string;
-  asOf: string | null;
+  navDate: string | null;
+  holdingsAsOf: string | null;
+  holdingsSource: "amc" | "aggregator" | null;
 };
 
 type Index = {
   source: Record<string, string>;
   schemes: Record<string, SchemeMatch>;
-  unresolved: { securityKey: string; name: string; isin: string | null; amfiName: string | null; reason: string }[];
+  unresolved: { securityKey: string; name: string; isin: string | null; reason: string }[];
 };
 
 /** `undefined` = still loading · `null` = the store did not respond. */
@@ -124,12 +183,15 @@ export const familyValue = (holdingValue: number, pctAum: number): number =>
   (holdingValue * pctAum) / 100;
 
 /**
- * Sum of the disclosed weights. Published percentages do not add to exactly 100
- * — a fund's own rounding, plus sleeves this store does not carry — so the page
- * prints the total rather than implying completeness.
+ * Sum of the disclosed EQUITY weights.
+ *
+ * It does not reach 100% and is not meant to: the store carries the equity
+ * section alone, so a fund's cash and debt sleeves are outside it, as is its own
+ * rounding. The card prints this total and names what the remainder is, rather
+ * than implying the rows account for the whole scheme.
  */
 export const disclosedWeight = (pf: FundPortfolio): number =>
-  [...pf.equity, ...pf.debt, ...pf.cash, ...pf.misc].reduce((a, h) => a + (h.pctAum ?? 0), 0);
+  pf.equity.reduce((a, h) => a + (h.pctAum ?? 0), 0);
 
 /** Whether a holding could ever have a look-through — mirrors the ingest. */
 export const canHaveLookthrough = (p: Position): boolean =>
