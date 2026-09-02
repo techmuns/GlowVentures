@@ -91,7 +91,7 @@ const columnUnder = (ws: ExcelJS.Worksheet, header: string, lastRow: number): un
 // close the sheet with them.
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
   "Security", "Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)",
-  "Weight of book", "Unreal. P&L (₹)", "Return",
+  "Weight of book", "Unreal. P&L (₹)", "Return", "YTD",
   "Class", "Held via", "Mandate", "Sector", "Entities",
 ]);
 eq("Transactions columns: Entity closes the row", headersOf(txnSheet), [
@@ -139,7 +139,7 @@ ok("the footer's Unreal. P&L is a signed number under its own header",
 // legitimately contain — a money column is a number or an em dash, a descriptor
 // column is a non-numeric string and never either.
 const numericOrDash = (v: unknown) => typeof v === "number" || v === DASH;
-for (const h of ["Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)", "Weight of book", "Unreal. P&L (₹)", "Return"]) {
+for (const h of ["Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)", "Weight of book", "Unreal. P&L (₹)", "Return", "YTD"]) {
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a figure or an em dash`,
      cells.length > 0 && cells.every(numericOrDash),
