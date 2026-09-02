@@ -1,0 +1,33 @@
+{
+  "schemecode": 2155,
+  "scheme": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+  "classification": "Debt : ETFs",
+  "fundAumCr": 11614.28,
+  "asOf": "2026-07-31",
+  "equity": [],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 99.46,
+      "shares": null
+    },
+    {
+      "name": "Cash & Cash Equivalent",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": -0.06,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 0,
+    "debt": 0,
+    "cash": 3,
+    "misc": 0
+  }
+}

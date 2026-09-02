@@ -98,7 +98,7 @@ export function NavVsIndex() {
   // the accounts that cannot supply one either way.
   if (rows.length < 2) {
     return (
-      <Card className="flex flex-col lg:col-span-2" title="Portfolio NAV vs Nifty 500"
+      <Card className="flex flex-col" title="Portfolio NAV vs Nifty 500"
         subtitle="Dated portfolio values from the statements, against the index">
         <AbsentSection
           what="No account in this book publishes more than one dated valuation"
@@ -109,7 +109,7 @@ export function NavVsIndex() {
   }
 
   return (
-    <Card className="flex flex-col lg:col-span-2"
+    <Card className="flex flex-col"
       title="Portfolio NAV vs Nifty 500"
       subtitle={<>
         {rows.length} dated points, {cov.from} → {cov.to}, over the{" "}

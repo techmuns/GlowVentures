@@ -1,0 +1,29 @@
+{
+  "schemecode": 47938,
+  "scheme": "DSP Gold ETF",
+  "classification": "Metal : ETFs",
+  "fundAumCr": 2331.86,
+  "asOf": "2026-07-31",
+  "equity": [],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Net Current Asset",
+      "pctAum": 0.96,
+      "shares": null
+    }
+  ],
+  "misc": [
+    {
+      "name": "GOLD (Gold)",
+      "pctAum": 99.04,
+      "shares": null
+    }
+  ],
+  "counts": {
+    "equity": 0,
+    "debt": 0,
+    "cash": 1,
+    "misc": 1
+  }
+}

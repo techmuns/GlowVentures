@@ -353,6 +353,28 @@ const DRILLDOWN_COUNTS = new Map();
 // one-line diagnosis naming the fix rather than a silent gap.
 const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
 
+/**
+ * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
+ *
+ * The largest by market value, so the route is stable across drops; a book with
+ * no mutual fund yields null and the route fails loudly rather than skipping.
+ * Its expected look-through is not written here either: the invariants
+ * reconstruct it from the figures the page itself renders.
+ */
+const MF_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const by = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Mutual Fund") continue;
+      by.set(p.securityKey, (by.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
+    }
+    return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -367,6 +389,19 @@ const ROUTES = [
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
   ["cio", "/cio"],
+  // ...AND THE SAME PAGE WITH THE FEEDS STILL IN FLIGHT. A card that renders an
+  // absence while it is loading tells the reader their book cannot be priced;
+  // the window is milliseconds against a real feed, so it is held open here.
+  ["cio-loading", "/cio"],
+  // ...AND THE MIRROR CASE: quotes answered, indices still in flight. The index
+  // tile only exists once the card has priced rows, so it cannot be reached on
+  // the walk above — the two feeds have to be in different states to see it.
+  ["cio-index-loading", "/cio"],
+  // ...AND THE SNAPSHOT CACHE, which is what stops a reader ever meeting the
+  // loading state twice. Loaded once with the feeds answering, then RELOADED
+  // with them held open: the figures must still be on screen from the stored
+  // snapshot rather than the card starting over from nothing.
+  ["cio-cached", "/cio"],
   /**
    * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
    *
@@ -494,6 +529,16 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  /**
+   * ...AND ONE MUTUAL FUND, WHICH NOW HAS A LOOK-THROUGH THE AIF ABOVE CANNOT.
+   *
+   * Both branches are walked because the difference between them is the whole
+   * claim: a mutual fund scheme publishes its portfolio monthly and this page
+   * renders it; an AIF publishes none and the same page must keep SAYING so.
+   * A build that showed one fund's holdings under the other's name would pass
+   * either check alone.
+   */
+  ["stock-mf-lookthrough", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}` : "/stock/no-mutual-fund-in-the-book")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -708,6 +753,8 @@ let MANDATE_PATH = null;
 let DRILL = null;
 /** The same, for the Direct Equity view — see `monitor-txn-direct`. */
 let DIRECT = null;
+/** What the reloaded, network-less second open rendered — see `cio-cached`. */
+let CACHED = null;
 /** Header geometry, for the single-line headline claim — see `monitor`. */
 let HEAD = null;
 
@@ -871,6 +918,44 @@ const MARK_BY_SYMBOL = (() => {
   return m;
 })();
 
+/**
+ * HOW MANY DIRECT-EQUITY NAMES THE MOCKED FEED CAN PRICE — the exact number of
+ * gainers the movers card must show on the `cio-live` walk.
+ *
+ * *"daily movers/losers should comprise of direct equity holdings only."* That
+ * claim cannot be checked on the ROWS: the card lists six, and on any day the
+ * mandate names happen not to move a rows-only assertion passes over a broken
+ * filter. It can be checked on the COUNT. Every fixture price is the mark × 1.10,
+ * so every priceable name rises and the gainer count is exactly the size of the
+ * priced scope — 33 here. Fold the PMS mandates back in and it is 160-odd; fold
+ * the ETFs in and it moves too. Derived from the book on every run rather than
+ * typed, so the next drop brings its own expectation.
+ *
+ * The bucket is recomputed here from `assetClass` + the ACCOUNT's engagement,
+ * deliberately duplicating `holdingBucket` rather than importing it: this file
+ * is the independent check, and a check that imports the helper it is checking
+ * agrees with itself by construction.
+ */
+const DIRECT_EQUITY_PRICED_NAMES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const names = new Set();
+    for (const p of positions) {
+      const e = engagement.get(p.accountId);
+      if (p.assetClass !== "Equity") continue;
+      if (e !== "Direct" && e !== "Execution") continue;      // a mandate is not direct
+      const sym = p.symbol || symbols[p.securityKey];
+      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;         // the fixture cannot price it
+      names.add(p.securityKey);
+    }
+    return names.size;
+  } catch { return null; }
+})();
+
 const MOCK_INDICES = [
   ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
   ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
@@ -880,6 +965,45 @@ const MOCK_INDICES = [
 
 /** A linear daily ramp, so the index's return between any two dates is exact. */
 const PRICE_SLOPE = 0.0004;
+
+/**
+ * A FEED THAT NEVER ANSWERS, so the LOADING state is what renders.
+ *
+ * The defect this exists for is a card that asserts an absence while the
+ * request is still in flight — "No holding in this book carries a day change
+ * right now", printed on the first paint of every cold open. That window is
+ * milliseconds against a real feed and cannot be caught by walking the page
+ * normally: the plain `cio` walk 404s immediately and lands on the FAILED
+ * branch, which is a different (and correct) state.
+ *
+ * So the quote and index routes are held open for the length of the walk. The
+ * page is then in exactly the state a reader sees on a slow connection, and the
+ * assertion is that it says it is loading and makes no claim about the book.
+ */
+async function installStalledFeeds(page) {
+  const hold = (route) => new Promise(() => { void route; });
+  await page.route("**/api/quotes", hold);
+  await page.route("**/api/indices*", hold);
+  // The snapshot cache would legitimately fill this card from a previous
+  // session and skip the loading state entirely — which is the feature, and
+  // exactly what must not be allowed to hide the branch under test.
+  await page.addInitScript(() => { try { localStorage.removeItem("glow.quotes.v1"); } catch { /* no storage */ } });
+}
+
+/**
+ * QUOTES ANSWER, INDICES DO NOT — the movers card's OTHER loading state.
+ *
+ * The index tile lives inside the branch that only renders once there are
+ * priced rows, so on a cold open with the quote feed stalled there is no tile
+ * to assert anything about. Exercising it needs the two feeds in DIFFERENT
+ * states, which is what this does: the quote mocks fulfil, the index route is
+ * held open. Registered after the mocks because Playwright matches routes
+ * newest-first, so this override wins for `/api/indices`.
+ */
+async function installStalledIndices(page) {
+  await installLiveMocks(page);
+  await page.route("**/api/indices*", (route) => new Promise(() => { void route; }));
+}
 
 async function installLiveMocks(page) {
   await page.route("**/api/quotes", async (route) => {
@@ -1191,6 +1315,92 @@ const INVARIANTS = {
   ],
 
   /**
+   * A CARD STILL FETCHING SAYS SO — IT DOES NOT REPORT AN ABSENCE.
+   *
+   * "No holding in this book carries a day change right now" is a claim about
+   * the BOOK, and it used to render on the first paint of every cold open while
+   * the quote feed was still in flight. A reader who sees it either believes
+   * their book cannot be priced or reloads until it goes away — the same defect
+   * this repo already records on the company page, where a panel still fetching
+   * asserted the security has no live quote. THE CAUSE PICKS THE HEADLINE.
+   */
+  "cio-loading": [
+    ["the movers card says it is fetching",
+      (t) => /Fetching prices…/.test(t)],
+
+    /**
+     * ...AND MAKES NO CLAIM ABOUT THE BOOK WHILE IT DOES. Both the settled
+     * absence and the feed-failure wording are assertions this page has not
+     * earned yet, and either one on a loading card is the bug.
+     */
+    /**
+     * THE WORDING MOVED WITH THE CARD'S SCOPE, AND SO DOES THIS.
+     *
+     * The settled-absence line reads "No DIRECT-EQUITY holding carries a day
+     * change right now" since the movers card was narrowed to direct equity.
+     * Matching the old sentence here would pass because the STRING is gone
+     * rather than because the CLAIM is — a check that has quietly stopped
+     * checking. Both spellings are matched so this cannot silently lapse again
+     * if the scope word changes once more.
+     */
+    ["...and asserts neither an empty book nor a failed feed while it is in flight",
+      (t) => !/No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(t)
+        && !/did not respond/i.test(t)],
+
+  ],
+
+  /**
+   * THE INDEX TILE INSIDE THE CARD IS HELD TO THE SAME BAR.
+   *
+   * It printed "Index levels unavailable — the feed did not respond" whenever
+   * its feed was null — true before the first response as well as after a
+   * failed one. Asserted with the QUOTES answering, because the tile only
+   * exists once the card has priced rows.
+   *
+   * AND STRUCK ON THE CARD'S OWN TEXT, NOT THE PAGE'S. The first draft matched
+   * "Fetching index levels…" page-wide and passed against a broken tile: the
+   * IndexStrip at the top of every route prints that exact phrase while IT
+   * loads. Removing the tile's loading branch changed nothing the check could
+   * see — a tautology found by reintroducing the bug, which is the point of
+   * doing it.
+   */
+  /**
+   * REOPENING THE DASHBOARD LANDS ON FIGURES, NOT ON A SPINNER.
+   *
+   * *"It should show data from the beginning… it can show a small loading
+   * written text but never empty."* The loading state above makes a cold open
+   * honest; this makes a reopen unnecessary. The walk loads once with the feeds
+   * answering, then reloads with them held open, so anything on screen came out
+   * of `localStorage`.
+   *
+   * Nothing is fabricated by that: every stored quote was pulled from the feed
+   * at a stated instant, its `ageS` is re-derived on read, and a snapshot older
+   * than the session is discarded rather than shown — a day change is struck
+   * against the PREVIOUS CLOSE, so yesterday's snapshot would print yesterday's
+   * move under a heading reading "Today".
+   */
+  "cio-cached": [
+    ["a reopen with no network renders the day's figures from the stored snapshot",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        return CACHED.hasFigures === true;
+      }],
+    ["...and never the empty-book claim, nor a spinner where figures should be",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        return CACHED.body === false && CACHED.saysLoading === false;
+      }],
+  ],
+
+  "cio-index-loading": [
+    ["the movers card's index tile says it is fetching rather than reporting the feed down",
+      (t) => {
+        const card = sliceBetween(t, "NSE INDICES · TODAY", "GAINERS");
+        return /Fetching index levels…/.test(card) && !/did not respond/.test(card);
+      }],
+  ],
+
+  /**
    * DIRECT EQUITY IS A NARROWER SET, AND IT IS NOT EMPTY.
    *
    * The family asked for a view holding "all direct buy and sold equity
@@ -1308,6 +1518,71 @@ const INVARIANTS = {
    * old text, so reverting either half fails rather than passing on prose that
    * happens to still be there.
    */
+  /**
+   * ── THE FUND LOOK-THROUGH ────────────────────────────────────────────────
+   *
+   * The one card on this site showing figures that are NOT the family's own, so
+   * every invariant here is about the reader being able to tell that. Struck on
+   * the FIGURES and the labels the page renders, never on the card merely being
+   * present.
+   */
+  "stock-mf-lookthrough": [
+    ["it renders the scheme's disclosed portfolio, naming the scheme", (t) =>
+      /What this fund holds/i.test(t) && /disclosed it on/i.test(t) && /\d+ disclosed holdings/i.test(t)],
+    /**
+     * THE PROVENANCE IS ON THE CARD. These figures come from the AMC's monthly
+     * disclosure, not from a statement issued to this family — a reader who
+     * takes them for statement figures is wrong about what they can be checked
+     * against, and about why they are in no total.
+     */
+    ["it says the figures are the AMC's disclosure and not this family's statement", (t) =>
+      /not a statement issued to this family/i.test(t)],
+    /**
+     * BOTH DATES, because a monthly portfolio and a statement mark rarely
+     * coincide — the fund's disclosure is 31 Jul and the holding is valued days
+     * later. One date standing for both would misdate whichever it is not.
+     */
+    ["both as-of dates are printed, the portfolio's and the holding's", (t) => {
+      const m = /portfolio\s+(\d{1,2} \w{3} \d{4})\s*·\s*holding\s+(\d{1,2} \w{3} \d{4})/i.exec(t);
+      return !!m;
+    }],
+    // THE PLAN IS NAMED WITH ITS REASON. Matching a Direct holding to a Regular
+    // listing is legitimate only because the two hold the same portfolio, and
+    // that is a fact the reader is owed rather than one to assume they know.
+    ["the plan matched is named, with why matching across it is legitimate", (t) =>
+      /matched on the (Direct|Regular|unstated) plan/i.test(t) && /same portfolio, different expense ratio/i.test(t)],
+    /**
+     * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES.
+     *
+     * "Your look-through" is the holding's value times the scheme's published
+     * weight. Asserted by recomputing the largest row from the holding value the
+     * page prints and the percent beside it — so a column that silently switched
+     * to some other basis (the fund's own money, say) fails here rather than
+     * looking plausible. The bound is the printing precision: both sides render
+     * compact, to one decimal.
+     */
+    ["the look-through column is the holding's value times the disclosed weight", (t) => {
+      const hv = cr(new RegExp(String.raw`HOLDING VALUE\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      const row = /\n[^\n\t]+\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
+      if (!Number.isFinite(hv) || !row) return notChecked("the holding value or the first look-through row did not parse on this run");
+      const pct = Number(row[1]);
+      const shown = crU(/₹([\d,.]+)/.exec(row[2])?.[1], /(Cr|L|K)/.exec(row[2])?.[1]);
+      const expect = (hv * pct) / 100;
+      return Number.isFinite(shown) && Math.abs(shown - expect) <= Math.max(0.02, expect * 0.02);
+    }],
+    /**
+     * AND IT IS IN NO TOTAL. The fund's own value is already in the NAV; adding
+     * the look-through would count the same money twice, which is the failure
+     * this whole book is built against. Said on the card, not in a tooltip.
+     */
+    ["the card states none of it is in any total on the site", (t) =>
+      /None of this is in any total on this site/i.test(t) && /count the same money twice/i.test(t)],
+    // The disclosed weights are printed as the sum they actually are, rather
+    // than implied to be 100% — a fund's own rounding leaves a gap and the card
+    // names it instead of spreading it across the rows.
+    ["the disclosed weights are totalled honestly", (t) =>
+      /disclosed weights add to\s*\n?\s*[\d.]+%/i.test(t)],
+  ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
       (t) => (t.match(/no cost on the .+? statement for this holding/gi) ?? []).length >= 2],
@@ -1426,10 +1701,68 @@ const INVARIANTS = {
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t) => {
       const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-      if (!/No holding in this book carries a day change/.test(card)) return false;
+      if (!/No direct-equity holding carries a day change/.test(card)) return false;
       if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/BOOK · TODAY/i.test(card);
+      return !/DIRECT EQUITY · TODAY/i.test(card);
     }],
+  /**
+   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
+   *
+   * *"daily movers/losers should comprise of direct equity holdings only."* The
+   * scope is asserted on the HEADING and the TILE rather than on the rows,
+   * because a rows-only check passes on any day the mandate names happen not to
+   * move — and that is most days for a book whose PMS half is 131 names.
+   */
+  ["Today's movers names its scope in the heading and on the tile",
+    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
+      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
+  /**
+   * ── THREE CAPTION BLOCKS THE FAMILY ASKED TO REMOVE ───────────────────────
+   *
+   * The movers footer that explained the ranking, the movers subtitle, and the
+   * allocation table's subtitle. Asserted as ABSENCES so a future edit cannot
+   * quietly restore them, and paired below with the facts they carried that a
+   * reader still acts on — a removal that also removes a load-bearing figure is
+   * not the removal that was asked for.
+   */
+  /**
+   * SPLIT ACROSS TWO ROUTES, because half of this text only exists when the feed
+   * does. With no quotes the movers card renders its absent state and its footer
+   * is never drawn — so a check for that footer's ABSENCE passes here whether the
+   * paragraph was removed or not. Reintroducing it proved exactly that: the
+   * sentence came back and this route stayed green. The movers half is asserted
+   * on `cio-live`, where the card actually renders; the allocation subtitle and
+   * the removed card render with no feed at all and stay here.
+   */
+  ["the removed allocation caption stays removed",
+    (t) => !/Shares chosen under a discretionary mandate roll up/.test(t)
+      && !/The day’s move on the holdings the feed can price/.test(t)],
+  /**
+   * ...AND THE TWO FACTS THAT SUBTITLE CARRIED ARE STILL ON THE PAGE.
+   *
+   * That every return here is CUMULATIVE rather than annualised, and the DATE
+   * the figures close at. Both were already stated outside the card — on the
+   * Consolidated return tile and on the header's basis pill — which is why the
+   * subtitle could go without taking a measurement with it. Asserted so a later
+   * tidy-up of either of those cannot leave the table's basis unstated.
+   */
+  ["...and the basis and as-of that subtitle carried are still on the page",
+    (t) => /cumulative, not annualised/i.test(t) && /as of \d{4}-\d{2}-\d{2}/i.test(t)],
+  /**
+   * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
+   *
+   * Both halves, because neither implies the other: a page that dropped the card
+   * AND the listed/private split would pass the first check while losing a
+   * measurement, and a page that merely renamed the card would pass the second.
+   * Stage 10f's rule — a removal is verified by asserting it happened.
+   */
+  ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
+    && !/Listed vs private, on a like-for-like basis/i.test(t)],
+  ["...and the listed/private split it carried is still on the page, with both figures",
+    (t) => /Listed\s*₹[\d,.]+\s*(?:Cr|L|K)?\s*·\s*Private\s*₹[\d,.]+\s*(?:Cr|L|K)?/.test(t)
+      && /Listed \/ Private/i.test(t)],
+  ["...and the money-weighted return it carried still has its own tile and coverage",
+    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN/i.test(t) && /\d+ of \d+ accounts/.test(t)],
   /**
    * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
    * the "coming as live data lands" list; a chip for a feature already on the
@@ -2148,12 +2481,12 @@ const INVARIANTS = {
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
       (t) => {
         const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-        const m = /BOOK · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
         return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
       }],
     /** ...and the tile SAYS what it covers, on its face rather than in a hover. */
     ["the day-move tile names its own coverage, in rupees and in names",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ distinct names/.test(t)],
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ direct-equity names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -2172,10 +2505,51 @@ const INVARIANTS = {
      */
     ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
       (t) => {
-        const m = /The priced book is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /The priced book is\s*([+-]\d+\.\d+)%/.exec(t);
+        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
         return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
       }],
+    /**
+     * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
+     *
+     * Every fixture price is the mark × 1.10, so every priceable name in scope
+     * rises: the gainer count IS the size of the priced scope. Widening the
+     * filter back to the whole book takes it from 33 to 160-odd, and narrowing
+     * it further drops it — neither can pass. The expectation is derived from
+     * the book on every run (see `DIRECT_EQUITY_PRICED_NAMES`), never typed.
+     */
+    ["the gainers are exactly the priced DIRECT-EQUITY names, not the whole book",
+      (t) => {
+        if (DIRECT_EQUITY_PRICED_NAMES == null) {
+          return { notChecked: "the book could not be read, so the expected count could not be derived" };
+        }
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const g = /(\d+)\s+GAINERS/i.exec(card);
+        const l = /(\d+)\s+LOSERS/i.exec(card);
+        if (!g || !l) return false;
+        // Every priced name rose in this fixture, so losers must be nil and the
+        // gainers must account for the whole priced scope.
+        return Number(l[1]) === 0 && Number(g[1]) === DIRECT_EQUITY_PRICED_NAMES;
+      }],
+    /**
+     * ...AND WHAT THE NARROWING LEFT OUT IS NAMED, not silently dropped. The PMS
+     * mandates are the bulk of the book's priceable value; a card that stopped
+     * covering them without saying so is a scope change a reader cannot see.
+     */
+    ["the card names the buckets it no longer covers, with their value",
+      (t) => /Direct equity only\. Also moved today and not counted here:/.test(t)
+        && /\d+ PMS mandates ₹[\d,.]+/.test(t)],
+    /**
+     * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
+     *
+     * Asserted HERE rather than on `cio` because it is only drawn when the card
+     * has rows, and `cio` serves no feed — a check for its absence there passes
+     * over a page that would print it the moment a quote arrived.
+     */
+    ["the removed movers footer stays removed",
+      (t) => !/the other ranking is one click away/.test(t)
+        && !/closed unchanged and are in neither list/.test(t)
+        && !/never averaged across positions of different sizes/.test(t)],
     /** The gainers list is populated and ranked, and every row carries both figures. */
     ["gainers are listed with a percentage and a rupee impact each",
       (t) => {
@@ -3105,6 +3479,18 @@ const INVARIANTS = {
     // on screen as a sector nobody assigned rather than a property it lacks.
     ["a fund's missing sector is explained, not shown as Unclassified",
       (t) => /a fund holds many/i.test(t)],
+    /**
+     * AND AN AIF STILL HAS NO LOOK-THROUGH, WITH THE REASON.
+     *
+     * This is the other half of the mutual-fund claim and neither implies the
+     * other: a mutual fund scheme discloses its portfolio monthly and its page
+     * now renders it, while an AIF publishes none. A build that grew a
+     * constituent table here could only have filled it from some other scheme,
+     * which is the fabrication the look-through store must not enable.
+     */
+    ["an AIF renders no look-through table", (t) => !/What this fund holds/i.test(t)],
+    ["...and says why: an AIF publishes no monthly portfolio disclosure", (t) =>
+      /publishes no such disclosure/i.test(t) && /Category II or III/i.test(t)],
   ],
   // The AIF drill-down for a holding reported under two members. "AIF holdings
   // must be shown inside the respective AIF page drill down" — so every
@@ -3405,13 +3791,58 @@ for (const theme of THEMES) {
       // themselves invariants and a harness that always mocked would stop
       // checking them.
       if (name === "cio-live") await installLiveMocks(page);
+      if (name === "cio-loading") await installStalledFeeds(page);
+      if (name === "cio-index-loading") await installStalledIndices(page);
+      // The first load answers, so the snapshot is written; the reload below
+      // then has to render from it.
+      if (name === "cio-cached") await installLiveMocks(page);
       const errors = [], failed = [];
       page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
       page.on("requestfailed", (r) => failed.push(`${r.url()} ${r.failure()?.errorText ?? ""}`));
       page.on("response", (r) => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
 
-      await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
+      /**
+       * `networkidle` CANNOT BE REACHED WHILE A REQUEST IS DELIBERATELY HELD.
+       *
+       * `cio-loading` keeps the quote and index calls open for the length of
+       * the walk — that is the whole point of it — so waiting for the network
+       * to go quiet times out against a page that is rendering exactly as
+       * intended. It waits for `load` instead, which is the state its
+       * invariants are about: the page painted, the feeds still in flight.
+       */
+      const settle = (name === "cio-loading" || name === "cio-index-loading")
+        ? "load" : (FAST ? "load" : "networkidle");
+      await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
+      if (name === "cio-cached") {
+        /**
+         * THE SECOND OPEN MUST NOT START FROM NOTHING.
+         *
+         * The first load answered and wrote the snapshot. The feeds are now
+         * held open — a cold network — and the page is reloaded. Whatever it
+         * renders comes from `localStorage` alone, which is exactly the state a
+         * reader is in when they reopen the dashboard: figures immediately,
+         * refined when the live rounds land.
+         *
+         * `unrouteAll` first, because the mocks installed before navigation
+         * would otherwise still fulfil and this would test nothing.
+         */
+        await page.waitForSelector('[data-testid="movers-coverage"]', { timeout: 20000 }).catch(() => {});
+        await page.unrouteAll({ behavior: "ignoreErrors" });
+        await page.route("**/api/quotes", (r) => new Promise(() => { void r; }));
+        await page.route("**/api/indices*", (r) => new Promise(() => { void r; }));
+        await page.reload({ waitUntil: "load", timeout: 45000 });
+        await page.waitForTimeout(600);
+        CACHED = await page.evaluate(() => ({
+          hasFigures: !!document.querySelector('[data-testid="movers-coverage"]'),
+          saysLoading: !!document.querySelector('[data-testid="movers-loading"]'),
+          // Matched on both spellings for the reason given on the `cio-loading`
+          // invariant above: the card's absent-state wording narrowed with its
+          // scope, and a probe pinned to the old sentence reports "no claim on
+          // screen" whether or not one is there.
+          body: /No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(document.body.innerText),
+        }));
+      }
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }

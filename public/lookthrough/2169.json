@@ -1,0 +1,410 @@
+{
+  "schemecode": 2169,
+  "scheme": "Invesco India Contra Fund-Reg(G)",
+  "classification": "Equity : Value / Contra",
+  "fundAumCr": 20100.5,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "ICICI Bank Limited",
+      "pctAum": 6.43,
+      "shares": 9009584
+    },
+    {
+      "name": "Larsen & Toubro Limited",
+      "pctAum": 4.86,
+      "shares": 2477814
+    },
+    {
+      "name": "Mahindra & Mahindra Limited",
+      "pctAum": 3.56,
+      "shares": 2103846
+    },
+    {
+      "name": "State Bank of India",
+      "pctAum": 2.91,
+      "shares": 5693852
+    },
+    {
+      "name": "Cholamandalam Investment and Finance Company Limited",
+      "pctAum": 2.68,
+      "shares": 2912482
+    },
+    {
+      "name": "Infosys Limited",
+      "pctAum": 2.62,
+      "shares": 4653551
+    },
+    {
+      "name": "Bharti Airtel Limited",
+      "pctAum": 2.58,
+      "shares": 2628845
+    },
+    {
+      "name": "Axis Bank Limited",
+      "pctAum": 2.51,
+      "shares": 4105355
+    },
+    {
+      "name": "FSN E-Commerce Ventures Limited",
+      "pctAum": 2.49,
+      "shares": 14973071
+    },
+    {
+      "name": "Coforge Limited",
+      "pctAum": 2.36,
+      "shares": 2758558
+    },
+    {
+      "name": "The Federal Bank  Limited",
+      "pctAum": 2.3,
+      "shares": 12908524
+    },
+    {
+      "name": "Apollo Hospitals Enterprise Limited",
+      "pctAum": 2.16,
+      "shares": 484749
+    },
+    {
+      "name": "IndusInd Bank Limited ^^^",
+      "pctAum": 2,
+      "shares": 3976618
+    },
+    {
+      "name": "Reliance Industries Limited",
+      "pctAum": 2,
+      "shares": 3067571
+    },
+    {
+      "name": "Prestige Estates Projects Limited",
+      "pctAum": 1.95,
+      "shares": 2429334
+    },
+    {
+      "name": "Glenmark Pharmaceuticals Limited",
+      "pctAum": 1.89,
+      "shares": 1701870
+    },
+    {
+      "name": "Tata Motors Ltd",
+      "pctAum": 1.81,
+      "shares": 8336768
+    },
+    {
+      "name": "TVS Motor Company Limited",
+      "pctAum": 1.76,
+      "shares": 821079
+    },
+    {
+      "name": "Delhivery Limited",
+      "pctAum": 1.74,
+      "shares": 7249306
+    },
+    {
+      "name": "Tech Mahindra Limited",
+      "pctAum": 1.71,
+      "shares": 2077282
+    },
+    {
+      "name": "Shyam Metalics and Energy Limited",
+      "pctAum": 1.67,
+      "shares": 3255398
+    },
+    {
+      "name": "Bharat Electronics Limited",
+      "pctAum": 1.65,
+      "shares": 8563853
+    },
+    {
+      "name": "KEI Industries Limited",
+      "pctAum": 1.63,
+      "shares": 653418
+    },
+    {
+      "name": "Lupin Limited",
+      "pctAum": 1.56,
+      "shares": 1300802
+    },
+    {
+      "name": "BSE Limited",
+      "pctAum": 1.55,
+      "shares": 854073
+    },
+    {
+      "name": "Global Health Limited",
+      "pctAum": 1.47,
+      "shares": 2102004
+    },
+    {
+      "name": "Samvardhana Motherson International Limited",
+      "pctAum": 1.39,
+      "shares": 18486516
+    },
+    {
+      "name": "Divi's Laboratories Limited",
+      "pctAum": 1.37,
+      "shares": 341543
+    },
+    {
+      "name": "Meesho Ltd",
+      "pctAum": 1.34,
+      "shares": 14741671
+    },
+    {
+      "name": "Jubilant Foodworks Limited ‡",
+      "pctAum": 1.32,
+      "shares": 6064834
+    },
+    {
+      "name": "Tata Consultancy Services Limited",
+      "pctAum": 1.31,
+      "shares": 1113655
+    },
+    {
+      "name": "Kotak Mahindra Bank Ltd",
+      "pctAum": 1.28,
+      "shares": 6604243
+    },
+    {
+      "name": "RBL Bank Limited",
+      "pctAum": 1.26,
+      "shares": 6762732
+    },
+    {
+      "name": "Shriram Finance Limited",
+      "pctAum": 1.25,
+      "shares": 2403374
+    },
+    {
+      "name": "Craftsman Automation Limited",
+      "pctAum": 1.23,
+      "shares": 249584
+    },
+    {
+      "name": "Varun Beverages Ltd",
+      "pctAum": 1.19,
+      "shares": 5385676
+    },
+    {
+      "name": "Adani Enterprises Limited",
+      "pctAum": 1.18,
+      "shares": 790248
+    },
+    {
+      "name": "Bank of Baroda",
+      "pctAum": 1.12,
+      "shares": 9316469
+    },
+    {
+      "name": "Swiggy Limited",
+      "pctAum": 1.12,
+      "shares": 7925143
+    },
+    {
+      "name": "Multi Commodity Exchange of India Limited",
+      "pctAum": 1.03,
+      "shares": 772404
+    },
+    {
+      "name": "UltraTech Cement Limited",
+      "pctAum": 1.01,
+      "shares": 170427
+    },
+    {
+      "name": "Aditya Birla Sun Life AMC Limited",
+      "pctAum": 1.01,
+      "shares": 2002866
+    },
+    {
+      "name": "InterGlobe Aviation Limited",
+      "pctAum": 0.98,
+      "shares": 380211
+    },
+    {
+      "name": "Entero Healthcare Solutions Ltd",
+      "pctAum": 0.98,
+      "shares": 1577379
+    },
+    {
+      "name": "Hindustan Petroleum Corporation Limited",
+      "pctAum": 0.98,
+      "shares": 5032550
+    },
+    {
+      "name": "ICICI Lombard General Insurance Company Limited",
+      "pctAum": 0.95,
+      "shares": 1175814
+    },
+    {
+      "name": "Honeywell Automation India Limited",
+      "pctAum": 0.93,
+      "shares": 48973
+    },
+    {
+      "name": "Ambuja Cements Limited",
+      "pctAum": 0.89,
+      "shares": 4127441
+    },
+    {
+      "name": "MphasiS Limited",
+      "pctAum": 0.89,
+      "shares": 764536
+    },
+    {
+      "name": "Hindalco Industries Limited",
+      "pctAum": 0.86,
+      "shares": 1764666
+    },
+    {
+      "name": "Cohance Lifesciences Limited",
+      "pctAum": 0.85,
+      "shares": 4013973
+    },
+    {
+      "name": "Aditya Birla Real Estate Limited",
+      "pctAum": 0.84,
+      "shares": 1190100
+    },
+    {
+      "name": "Jyoti CNC Automation Ltd",
+      "pctAum": 0.81,
+      "shares": 2006690
+    },
+    {
+      "name": "SBI Life Insurance Company Limited",
+      "pctAum": 0.8,
+      "shares": 856436
+    },
+    {
+      "name": "Torrent Pharmaceuticals Limited",
+      "pctAum": 0.78,
+      "shares": 305328
+    },
+    {
+      "name": "Aadhar Housing Finance Limited",
+      "pctAum": 0.77,
+      "shares": 3115367
+    },
+    {
+      "name": "Timken India Limited",
+      "pctAum": 0.75,
+      "shares": 480033
+    },
+    {
+      "name": "Wockhardt Limited",
+      "pctAum": 0.64,
+      "shares": 657574
+    },
+    {
+      "name": "Black Buck Ltd",
+      "pctAum": 0.6,
+      "shares": 2217371
+    },
+    {
+      "name": "KNR Constructions Limited",
+      "pctAum": 0.55,
+      "shares": 9033252
+    },
+    {
+      "name": "Sonata Software Limited",
+      "pctAum": 0.5,
+      "shares": 3091799
+    },
+    {
+      "name": "Orchid Pharma Limited",
+      "pctAum": 0.49,
+      "shares": 990763
+    },
+    {
+      "name": "V-Mart Retail Limited",
+      "pctAum": 0.48,
+      "shares": 1235108
+    },
+    {
+      "name": "Britannia Industries Limited",
+      "pctAum": 0.47,
+      "shares": 174964
+    },
+    {
+      "name": "Central Mine Planning & Design Institute Limited",
+      "pctAum": 0.45,
+      "shares": 3754583
+    },
+    {
+      "name": "MedPlus Health Services Limited",
+      "pctAum": 0.38,
+      "shares": 1094617
+    },
+    {
+      "name": "Oil & Natural Gas Corporation Limited",
+      "pctAum": 0.3,
+      "shares": 2468341
+    },
+    {
+      "name": "Afcons Infrastructure Limited",
+      "pctAum": 0.29,
+      "shares": 2182960
+    },
+    {
+      "name": "Crompton Greaves Consumer Electricals Limited",
+      "pctAum": 0.04,
+      "shares": 273050
+    }
+  ],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 1.36,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": -0.86,
+      "shares": null
+    }
+  ],
+  "misc": [
+    {
+      "name": "FSN E-Commerce Ventures Limited May 2026 Future (Derivatives-Futures)",
+      "pctAum": 2.49,
+      "shares": null
+    },
+    {
+      "name": "Tech Mahindra Limited August 2026 Future (Derivatives-Futures)",
+      "pctAum": 1.71,
+      "shares": null
+    },
+    {
+      "name": "Lupin Limited May 2026 Future (Derivatives-Futures)",
+      "pctAum": 1.56,
+      "shares": null
+    },
+    {
+      "name": "Jubilant Foodworks Limited May 2026 Future (Derivatives-Futures)",
+      "pctAum": 1.32,
+      "shares": null
+    },
+    {
+      "name": "Mphasis Limited May 2026 Future (Derivatives-Futures)",
+      "pctAum": 0.89,
+      "shares": null
+    },
+    {
+      "name": "Crompton Greaves Consumer Electricals Limited May 2026 Future (Derivatives-Futures)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "TVS Motor Company Limited ^^ (Preference Shares)",
+      "pctAum": 0.02,
+      "shares": null
+    }
+  ],
+  "counts": {
+    "equity": 69,
+    "debt": 0,
+    "cash": 2,
+    "misc": 7
+  }
+}
