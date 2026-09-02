@@ -691,10 +691,15 @@ export function MorningCIO() {
         right={<BasisPill liveText="Consolidated · listed live" hint="Listed holdings are priced live where a quote exists; anything the quote feed could not supply keeps its statement mark and is flagged as not-live." />} />
 
       {/* KPI strip */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {/* ONE LINK PER TILE, ASSERTED ON THE DOM. `check:pages` counts the
+          anchors inside each card here and requires at most one — a claim about
+          what a reader can click, which no amount of matching innerText can
+          make. See the `cio` invariant "each KPI tile offers exactly one
+          destination". */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
         <Kpi label="Consolidated NAV"
           href={drilldownHref("book")}
-          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once"
+          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page."
           value={<Auditable formula={{
             title: "Consolidated NAV",
             excel: m.privateCount ? "= Σ market value of every holding + Private-markets value" : "= Σ market value of every holding",
@@ -706,12 +711,13 @@ export function MorningCIO() {
               : `= ${money(m.bookMV)} across ${m.p.length} positions in ${m.accountCount} accounts`,
           }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
           sub={<>
+            {/* THE TWO HALVES ARE FIGURES, NOT LINKS. They had an address each,
+                so this one tile offered three destinations — and the reader had
+                to know which of them answered their question. Both halves are
+                now a TOGGLE inside the tile's own drill-down, which is where a
+                reader who wants one of them can also see the other. */}
             {m.hasPrivateClass
-              ? <>
-                  <Link to={drilldownHref("listed")} title="Open the listed half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Listed {money(m.pp.listed)}</Link>
-                  {" · "}
-                  <Link to={drilldownHref("private")} title="Open the private half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Private {money(m.pp.private)}</Link>
-                </>
+              ? `Listed ${money(m.pp.listed)} · Private ${money(m.pp.private)}`
               : `${m.p.length} listed positions · no private holdings`}
             {m.accrued !== null && (
               <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
@@ -730,7 +736,7 @@ export function MorningCIO() {
             count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
           href={drilldownHref("invested")}
-          hrefTitle="Open the holdings whose statement reports a cost — and, beneath them, the ones that report none and sit outside this figure"
+          hrefTitle="Open the holdings whose statement reports a cost — with the ones that report none, and sit outside this figure, a toggle away on the same page."
           value={<Auditable formula={{
             title: "Capital invested — consolidated",
             excel: m.privateCount ? "= Σ cost basis of every holding + Private drawn" : "= Σ cost basis of every holding",
@@ -754,16 +760,17 @@ export function MorningCIO() {
                 direction is the same failure. */}
             cost in · {m.costedMV > 0 ? <>covers {money(m.costedMV)} of {money(m.totalValue)}</> : <>whole book</>}
             {m.noCostCount > 0 && (
-              /* THE POSITIONS THIS FIGURE LEAVES OUT ARE NOW OPENABLE, which is
-                 the other half of naming them. A reader told that 60 positions
-                 worth ₹165.9 Cr carry no cost had, until now, no way to find out
-                 WHICH — and the answer decides whether they chase a custodian
-                 for a cost statement or accept a permanent absence. */
-              <Link to={drilldownHref("no-cost")}
-                className="block text-slate-500 underline decoration-dotted decoration-slate-600/50 underline-offset-[3px] hover:text-champagne-400"
-                title={`Open them. These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
+              /* NAMED HERE, OPENED BY THE TILE. A reader told that 60 positions
+                 worth ₹165.9 Cr carry no cost needs to find out WHICH — the
+                 answer decides whether they chase a custodian for a cost
+                 statement or accept a permanent absence. That set had its own
+                 address and its own link inside this tile; it is a TOGGLE on
+                 the tile's drill-down now, beside the rows that do report a
+                 cost, so the two halves of one figure sit on one page. */
+              <span className="block text-slate-500"
+                title="These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero. Open this tile to see them beside the holdings that do report one.">
                 {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} worth {money(m.noCostMV)} carry no cost basis
-              </Link>
+              </span>
             )}
           </>}
           icon={<Wallet className="h-4 w-4" />} />
@@ -799,7 +806,7 @@ export function MorningCIO() {
             the terminal value fails rather than drifts. */}
         <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
           href={drilldownHref("measured")}
-          hrefTitle="Open the holdings of the accounts this rate covers — the accounts whose statements carry an opening portfolio value, with every excluded account named"
+          hrefTitle="Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page."
           value={m.bookMW.pct == null
             ? <AbsentValue />
             : <span className={changeColor(m.bookMW.pct)}><Auditable formula={{
@@ -1087,9 +1094,9 @@ export function MorningCIO() {
                     one link standing for both and leaving the reader to guess
                     which half they are about to see. */}
                 <span className="text-slate-400">
-                  <ConcLink to={drilldownHref("listed")} title="Open the listed half — every holding whose class is not one an AIF, an unlisted company or a structured product">Listed</ConcLink>
+                  <ConcLink to={drilldownHref("book", undefined, "listed")} title="Open the listed half — every holding whose class is not an AIF, an unlisted company or a structured product. It opens the book\u2019s own drill-down with that half selected; the private half is one toggle away.">Listed</ConcLink>
                   {" / "}
-                  <ConcLink to={drilldownHref("private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks">Private</ConcLink>
+                  <ConcLink to={drilldownHref("book", undefined, "private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks. It opens the book\u2019s own drill-down with that half selected; the listed half is one toggle away.">Private</ConcLink>
                 </span>
                 <span className="mono text-slate-100">
                   {m.hasPrivateClass

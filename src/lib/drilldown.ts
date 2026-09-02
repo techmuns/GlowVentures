@@ -45,36 +45,83 @@ export const TOP_NAMES = 10;
 export type DrilldownId =
   | "book"        // every holding — Consolidated NAV, Positions, Distinct names
   | "bucket"      // one allocation row
-  | "invested"    // holdings whose statement reports a cost
-  | "no-cost"     // holdings whose statement reports none
-  | "measured"    // holdings in the accounts the money-weighted return covers
-  | "listed"
-  | "private"
+  | "invested"    // Capital invested and the Consolidated return struck on it
+  | "measured"    // the accounts the money-weighted return covers
   | "top-names"
   | "cross-held"
   | "winners"
   | "losers";
 
 const IDS = new Set<DrilldownId>([
-  "book", "bucket", "invested", "no-cost", "measured",
-  "listed", "private", "top-names", "cross-held", "winners", "losers",
+  "book", "bucket", "invested", "measured", "top-names", "cross-held", "winners", "losers",
 ]);
+
+/**
+ * ── ONE ADDRESS PER TILE, AND THE SUB-SETS ARE FACETS OF IT ─────────────────
+ *
+ * *"there are multiple links on these KPI tiles… suppose for consolidated NAV,
+ * the listed/private book links and pages should not exist separately — just
+ * give the toggle option inside the Consolidated NAV link page."*
+ *
+ * Three scopes used to be their own addresses, reached from a SECOND link
+ * inside a tile whose headline already linked somewhere else: `listed` and
+ * `private` off the NAV tile's caption, `no-cost` off Capital invested's. A
+ * reader had to know which of two links in one tile answered their question,
+ * and landed on a page with no way back to the other half of the same figure.
+ *
+ * They are FACETS now — one page per tile, with a toggle across the sets that
+ * figure is made of. The old ids still RESOLVE (`LEGACY` below) rather than
+ * 404ing a bookmark: they were live addresses, and an address that silently
+ * stops working is worse than one that redirects to the same rows.
+ *
+ * A facet is not a filter the reader invents. Each one is a set the TILE itself
+ * already names — the listed and private halves are in the NAV's own caption,
+ * the cost-less positions in Capital invested's — so the toggle shows exactly
+ * the sets the figure was described in terms of, and nothing else.
+ */
+export type Facet = {
+  key: string;
+  /** The toggle's label. */
+  label: string;
+  /** What this set IS, rendered when it is the active one. */
+  note: string;
+  rows: Position[];
+};
 
 /** URL params. `view` is left to `useViewParam`, so the scope takes its own. */
 export const SCOPE_PARAM = "of";
 export const KEY_PARAM = "key";
+export const FACET_PARAM = "facet";
 
-export function drilldownHref(id: DrilldownId, key?: string): string {
+/**
+ * Addresses that were their own scope before the tiles were consolidated. Kept
+ * so a bookmark or a stale screenshot still lands on the same rows — now as a
+ * facet of the tile they belonged to.
+ */
+const LEGACY: Record<string, { id: DrilldownId; facet: string }> = {
+  listed: { id: "book", facet: "listed" },
+  private: { id: "book", facet: "private" },
+  "no-cost": { id: "invested", facet: "no-cost" },
+};
+
+export function drilldownHref(id: DrilldownId, key?: string, facet?: string): string {
   const q = new URLSearchParams({ [SCOPE_PARAM]: id });
   if (key) q.set(KEY_PARAM, key);
+  if (facet) q.set(FACET_PARAM, facet);
   return `${DRILLDOWN_PATH}?${q.toString()}`;
 }
 
 /** Parse an address back. An unrecognised id is `null`, never a silent default. */
-export function parseDrilldown(params: URLSearchParams): { id: DrilldownId; key: string } | null {
+export function parseDrilldown(params: URLSearchParams): { id: DrilldownId; key: string; facet: string } | null {
   const raw = params.get(SCOPE_PARAM) ?? "";
+  const legacy = LEGACY[raw];
+  if (legacy) return { id: legacy.id, key: "", facet: legacy.facet };
   if (!IDS.has(raw as DrilldownId)) return null;
-  return { id: raw as DrilldownId, key: params.get(KEY_PARAM) ?? "" };
+  return {
+    id: raw as DrilldownId,
+    key: params.get(KEY_PARAM) ?? "",
+    facet: params.get(FACET_PARAM) ?? "",
+  };
 }
 
 export type Drilldown = {
@@ -99,12 +146,18 @@ export type Drilldown = {
    */
   deduped: boolean;
   /**
-   * The set this figure explicitly does NOT cover, where naming it is the other
-   * half of the rule. Capital invested skips the positions reporting no cost;
-   * saying so on the tile and then hiding them behind the drill-down would be
-   * the same omission one click deeper.
+   * THE SETS THIS FIGURE IS MADE OF, as a toggle across one page.
+   *
+   * Empty where the figure has only one set. Where it has more, the first entry
+   * is what the tile's headline figure is struck on and the rest are the sets
+   * the tile's own caption names — the listed and private halves, the positions
+   * reporting no cost, the accounts a rate cannot cover. Naming them on the tile
+   * and then hiding them would be the same omission one click deeper, and giving
+   * each its own page was what put two competing links inside one tile.
    */
-  companion: { title: string; note: string; rows: Position[] } | null;
+  facets: Facet[];
+  /** Which facet `rows` currently holds. Empty where the scope has none. */
+  activeFacet: string;
   /** Accounts outside the set, by number — the money-weighted figure names them. */
   excludedAccounts: string[];
   /**
@@ -129,14 +182,32 @@ type Ctx = {
  * to mirror the page character for character, and `check:pages` asserts the two
  * agree on the RENDERED figures rather than on the source.
  */
-export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: Ctx): Drilldown {
+export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: string }, ctx: Ctx): Drilldown {
   const { portfolio, consolidated } = ctx;
   const accIdx = accountIndex(portfolio.accounts);
   const base: Omit<Drilldown, "id" | "key" | "title" | "backs" | "lead" | "rows"> = {
     deduped: true,
-    companion: null,
+    facets: [],
+    activeFacet: "",
     excludedAccounts: [],
     absent: null,
+  };
+
+  /**
+   * PICK THE FACET THE ADDRESS ASKED FOR, and fall back to the first.
+   *
+   * An unrecognised facet resolves to the headline set rather than to an empty
+   * table: the id is what names the figure, and a stale `facet=` in a bookmark
+   * should still show the reader the figure they clicked. A wrong SCOPE is a
+   * different matter and still refuses (`parseDrilldown` returns null), because
+   * there the page could not say which figure it was answering for.
+   */
+  const withFacets = (
+    d: Omit<Drilldown, "rows" | "facets" | "activeFacet">,
+    facets: Facet[],
+  ): Drilldown => {
+    const active = facets.find((f) => f.key === scope.facet) ?? facets[0];
+    return { ...d, facets, activeFacet: active?.key ?? "", rows: active?.rows ?? [] };
   };
 
   switch (scope.id) {
@@ -162,39 +233,29 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
       // figure covers a narrower set than the NAV beside it — and this is that
       // narrower set, with the remainder carried as a companion rather than
       // dropped.
-      const rows = consolidated.filter((p) => p.costBasis != null);
+      const costed = consolidated.filter((p) => p.costBasis != null);
       const without = consolidated.filter((p) => p.costBasis == null);
-      return {
+      return withFacets({
         ...base, id: scope.id, key: "",
-        title: "Holdings that report a cost",
+        title: "Capital invested",
         backs: ["Capital invested", "Consolidated return"],
-        lead: "The holdings whose statement prints what they cost. Both figures on Morning CIO that divide by capital — Capital invested and the Consolidated return struck on it — are summed over exactly these rows: `sumOrNull` skips a missing cost rather than entering it as zero, which would understate the basis and overstate the return on everything else.",
-        rows,
-        companion: without.length ? {
-          title: "…and the holdings that report none",
-          note: "These are in the NAV and in neither figure above. A depository reports what is held, never what it was bought for, so their cost is absent rather than zero — and a zero would report the whole of their market value as profit at an infinite return.",
-          rows: without,
-        } : null,
-        absent: rows.length ? null : {
+        lead: "Both figures on Morning CIO that divide by capital — Capital invested and the Consolidated return struck on it — are summed over the holdings whose statement prints what they cost. `sumOrNull` skips a missing cost rather than entering it as zero, which would understate the basis and overstate the return on everything else, so the tile's own caption names the remainder. Both sets are here.",
+        absent: costed.length ? null : {
           what: "No holding in this book reports a cost",
           needs: "Every statement in the drop prints a holding without a basis. Capital invested and the Consolidated return are absent rather than zero until one carries a cost column.",
         },
-      };
-    }
-
-    case "no-cost": {
-      const rows = consolidated.filter((p) => p.costBasis == null);
-      return {
-        ...base, id: scope.id, key: "",
-        title: "Holdings whose statement reports no cost",
-        backs: ["the coverage line under Capital invested"],
-        lead: "Each of these is in the consolidated NAV and in no invested figure anywhere on the site. A depository holds shares; it did not buy them, so it knows the quantity and the mark and not the price paid. The absence is at source — measured across the whole audit archive, not one of these (account, security) pairs carries a cost on any record type.",
-        rows,
-        absent: rows.length ? null : {
-          what: "Every holding in this book reports a cost",
-          needs: "Nothing is missing a basis, so this set is empty by measurement. Capital invested therefore covers the whole book and its coverage line does not render.",
+      }, [
+        {
+          key: "costed", label: "Reports a cost",
+          note: "The rows both capital figures are summed over.",
+          rows: costed,
         },
-      };
+        ...(without.length ? [{
+          key: "no-cost", label: "Reports none",
+          note: "In the NAV and in neither capital figure. A depository reports what is held, never what it was bought for, so their cost is absent rather than zero — and a zero would report the whole of their market value as profit at an infinite return. Measured across the whole audit archive, not one of these (account, security) pairs carries a cost on any record type.",
+          rows: without,
+        }] : []),
+      ]);
     }
 
     case "measured": {
@@ -218,37 +279,30 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
       const excluded = portfolio.accounts
         .filter((a) => !keep.has(a.accountId))
         .map((a) => a.accountNo);
-      return {
+      const outside = portfolio.positions.filter((p) => !keep.has(p.accountId));
+      return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
-        title: "Holdings the money-weighted return covers",
+        title: "Money-weighted return",
         backs: ["the coverage the Money-weighted return states"],
-        lead: `An XIRR needs a stake to measure against, so it can only be struck on an account whose statements carry an opening portfolio value. These are the holdings of the ${ids.length} account${ids.length === 1 ? "" : "s"} that do — their market value is the coverage figure the tile prints beside the rate. Every other account is named below and sits outside the rate on BOTH sides: closing a market value against a stake nobody stated would overstate the return rather than approximate it.`,
-        rows,
+        lead: `An XIRR needs a stake to measure against, so it can only be struck on an account whose statements carry an opening portfolio value. ${ids.length} account${ids.length === 1 ? " does" : "s do"}, and their market value is the coverage figure the tile prints beside the rate. The rest sit outside it on BOTH sides — closing a market value against a stake nobody stated would overstate the return rather than approximate it — and are the second set here rather than a number the tile mentions and hides.`,
         excludedAccounts: excluded,
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
           needs: "A money-weighted return needs the window's opening valuation as its first flow. No statement in the drop publishes one, so the rate is absent rather than struck on a stake nobody stated.",
         },
-      };
-    }
-
-    case "listed":
-    case "private": {
-      const wantPrivate = scope.id === "private";
-      const rows = consolidated.filter((p) => isPrivateClass(p) === wantPrivate);
-      const word = wantPrivate ? "private" : "listed";
-      return {
-        ...base, id: scope.id, key: "",
-        title: wantPrivate ? "The private half of the book" : "The listed half of the book",
-        backs: ["the Listed / Private split", "the NAV caption"],
-        lead: `The split is on ASSET CLASS — what a holding IS — and not on how its account is run: an AIF folio is marked by its manager rather than by an exchange whether the family reached it through a wealth platform or bought it directly. ${wantPrivate ? "AIF, Unlisted and Structured Product are the private classes" : "Everything the private classes do not name is here"}, which is the same rule \`BOOK_SUMMARY\` splits on.`,
-        rows,
-        absent: rows.length ? null : {
-          what: `No ${word} holding in this book`,
-          needs: `Every position in the drop falls on the other side of the class split, so the ${word} share is absent rather than 0%.`,
+      }, [
+        {
+          key: "covered", label: "Covered by the rate",
+          note: `The holdings of the ${ids.length} account${ids.length === 1 ? "" : "s"} whose statements carry an opening portfolio value.`,
+          rows,
         },
-      };
+        ...(outside.length ? [{
+          key: "not-covered", label: "Not covered",
+          note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the consolidated NAV — they are outside this rate, not outside the book.",
+          rows: outside,
+        }] : []),
+      ]);
     }
 
     case "top-names": {
@@ -308,38 +362,68 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string }, ctx: C
       const flat = priced.filter((p) => (p.returnPct ?? 0) === 0);
       const unmeasured = consolidated.filter((p) => p.costUnavailable);
       const other = [...flat, ...unmeasured];
-      return {
+      return withFacets({
         ...base, id: scope.id, key: "",
         title: wantWin ? "Holdings showing a gain" : "Holdings showing a loss",
         backs: ["Winners / losers"],
         lead: `Every holding whose return against its own cost is ${wantWin ? "above" : "below"} zero on the basis the page is showing — live where a quote resolved, the statement mark where it did not. The two counts do not add to the book: a holding exactly at cost is in neither, and one whose cost the statements do not report has no return to sort on at all.`,
-        rows,
-        companion: other.length ? {
-          title: "…and the holdings in neither count",
-          note: "A return of exactly zero is a measurement and belongs under neither heading; a holding whose cost is unavailable has no return to measure. Both are here so the two counts on Morning CIO can be reconciled against the book rather than assumed to cover it.",
-          rows: other,
-        } : null,
         absent: rows.length ? null : {
           what: wantWin ? "No holding is showing a gain" : "No holding is showing a loss",
           needs: "This is a measured zero rather than a missing figure: every priced holding in the book falls on the other side or exactly at cost.",
         },
-      };
+      }, [
+        { key: wantWin ? "winners" : "losers", label: wantWin ? "Showing a gain" : "Showing a loss", note: "", rows },
+        ...(other.length ? [{
+          key: "neither", label: "In neither count",
+          note: "A return of exactly zero is a measurement and belongs under neither heading; a holding whose cost is unavailable has no return to measure. Both are here so the two counts on Morning CIO can be reconciled against the book rather than assumed to cover it.",
+          rows: other,
+        }] : []),
+      ]);
     }
 
     case "book":
     default: {
-      const rows = consolidated;
-      return {
+      /**
+       * THE LISTED AND PRIVATE HALVES ARE FACETS OF THE NAV, NOT PAGES OF THEIR
+       * OWN — the change the family asked for by name. The NAV tile's caption
+       * states both halves, so they are the sets this figure is described in
+       * terms of; giving each its own address is what put three links inside
+       * one tile.
+       *
+       * The split is on ASSET CLASS — what a holding IS — and not on how its
+       * account is run: an AIF folio is marked by its manager rather than by an
+       * exchange whether the family reached it through a wealth platform or
+       * bought it directly. That is the same rule `BOOK_SUMMARY` splits on.
+       *
+       * Offered ONLY where the book has both halves. A toggle with an empty side
+       * invites a reader to click into a table that can only be empty, and the
+       * absence belongs on the tile that states the split rather than here.
+       */
+      const listed = consolidated.filter((p) => !isPrivateClass(p));
+      const priv = consolidated.filter((p) => isPrivateClass(p));
+      const split = listed.length > 0 && priv.length > 0;
+      return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
         backs: ["Consolidated NAV", "Positions", "Distinct names"],
         lead: `The whole book across ${portfolio.accounts.length} accounts, consolidated — each holding two statements both report counted once. Both concentration counts are read off this one set: the row count is Positions, the name count is Distinct names.`,
-        rows,
-        absent: rows.length ? null : {
+        absent: consolidated.length ? null : {
           what: "The book carries no holding",
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",
         },
-      };
+      }, split ? [
+        { key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated },
+        {
+          key: "listed", label: "Listed",
+          note: "Everything the private classes do not name — marked by an exchange rather than by a manager.",
+          rows: listed,
+        },
+        {
+          key: "private", label: "Private",
+          note: "AIF, Unlisted and Structured Product: the classes a manager marks rather than an exchange.",
+          rows: priv,
+        },
+      ] : [{ key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated }]);
     }
   }
 }
