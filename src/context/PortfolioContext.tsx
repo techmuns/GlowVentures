@@ -11,6 +11,7 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit } from "@/lib/analytics";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, type QuoteFeed } from "@/lib/quotes";
+import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency, displaySecurity } from "@/lib/format";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
@@ -191,7 +192,26 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // the feed exists. A cold fetch takes ~25s upstream, so the page renders on the
   // statement marks first and the live prices swap in when they land — never a
   // blank screen waiting on the network.
-  const [quotes, setQuotes] = useState<QuoteFeed | null>(null);
+  /**
+   * THE APP OPENS ON THE LAST SNAPSHOT, NOT ON NOTHING.
+   *
+   * The upstream prices only part of the book per call, so a cold open took
+   * several rounds to fill in — and Today's movers, having no priced row yet,
+   * rendered "No holding in this book carries a day change right now". That is
+   * a claim about the BOOK made while the feed was still in flight.
+   *
+   * `readCachedQuotes` returns the previous snapshot with every quote's `ageS`
+   * RE-DERIVED, and null for anything older than the session — a day change is
+   * struck against the previous close, so serving yesterday's snapshot would
+   * print yesterday's move under a heading reading "Today". A cold open on a
+   * new session therefore still starts empty, and the cards say they are
+   * loading rather than asserting an absence.
+   *
+   * `quotesStatus` stays "loading" until a live round lands, whatever the cache
+   * held: the figures on screen are real and dated, and the top bar is telling
+   * the truth when it says prices are still being fetched.
+   */
+  const [quotes, setQuotes] = useState<QuoteFeed | null>(readCachedQuotes);
   const [quotesStatus, setQuotesStatus] = useState<QuotesStatus>("loading");
   const inFlight = useRef(false);
 
@@ -199,7 +219,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // the book per call, so a later round that returns fewer names must not wipe
   // out prices an earlier round already established.
   const mergeFeed = useCallback((feed: QuoteFeed) => {
-    setQuotes((prev) => (prev ? { ...feed, quotes: { ...prev.quotes, ...feed.quotes } } : feed));
+    setQuotes((prev) => {
+      const next = prev ? { ...feed, quotes: { ...prev.quotes, ...feed.quotes } } : feed;
+      // Kept for the next open. Written from the MERGED feed rather than the
+      // round, so a snapshot holds the whole book rather than whichever slice
+      // the last call happened to price.
+      writeCachedQuotes(next);
+      return next;
+    });
   }, []);
 
   const loadQuotes = useCallback(async (refresh = false) => {
