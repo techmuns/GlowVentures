@@ -10,7 +10,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   render() {
     if (this.state.error) {
       return (
-        <div className="grid h-screen place-items-center bg-ink-950 p-6 text-center">
+        <div className="grid h-full place-items-center bg-ink-950 p-6 text-center">
           <div className="max-w-md">
             <h1 className="text-lg font-semibold text-slate-100">Something went wrong</h1>
             <p className="mt-2 text-sm text-slate-400">{this.state.error.message}</p>

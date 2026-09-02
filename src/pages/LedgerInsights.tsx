@@ -132,8 +132,20 @@ export function LedgerInsights() {
 function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | null }) {
   const { fmtFromBase } = usePortfolio();
   const win = window(data.periodFrom, data.periodTo);
-  const bought = data.txns.filter((t) => t.side === "Buy").reduce((s, t) => s + t.amount, 0);
-  const sold = data.txns.filter((t) => t.side === "Sell").reduce((s, t) => s + t.amount, 0);
+  /**
+   * `Txn.amount` is `number | null` — a trade whose statement prints no
+   * settlement, net or gross reported nothing, which is not the same as a trade
+   * that settled for nothing. These skip the nulls rather than adding them as
+   * zero, which is `sumOrNull`'s rule applied to a running total, and the tiles
+   * say how many rows each figure covers.
+   */
+  const buys = data.txns.filter((t) => t.side === "Buy");
+  const sells = data.txns.filter((t) => t.side === "Sell");
+  const bought = buys.reduce((s, t) => s + (t.amount ?? 0), 0);
+  const sold = sells.reduce((s, t) => s + (t.amount ?? 0), 0);
+  const boughtOf = buys.filter((t) => t.amount != null).length;
+  const soldOf = sells.filter((t) => t.amount != null).length;
+  const coverage = (n: number, of: number) => (n === of ? "" : ` · ${n} of ${of} rows report one`);
 
   if (!data.txns.length) {
     return (
@@ -147,10 +159,10 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Transactions" value={fmtNum(data.txns.length)}
           sub={`${fmtNum(data.buys)} buys · ${fmtNum(data.sells)} sells`} icon={<ArrowLeftRight className="h-4 w-4" />} />
-        <StatTile label="Bought" value={fmtFromBase(bought, { compact: true })} sub="settled cost, over the window" />
+        <StatTile label="Bought" value={fmtFromBase(bought, { compact: true })} sub={`settled cost, over the window${coverage(boughtOf, buys.length)}`} />
         <StatTile label="Sold"
           {...(data.sells
-            ? { value: fmtFromBase(sold, { compact: true }), sub: "settled proceeds, over the window" }
+            ? { value: fmtFromBase(sold, { compact: true }), sub: `settled proceeds, over the window${coverage(soldOf, sells.length)}` }
             : absentTile("no sells over this window", "Every transaction on these statements is a purchase."))} />
         {/* THE STATEMENT FIGURE IS THE HEADLINE. It is the printed primitive —
             what the managers determined and what Capital Gains shows. The
