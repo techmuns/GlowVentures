@@ -923,7 +923,7 @@ must not be read into the book.
 
 | File | What it is | Outcome |
 | --- | --- | --- |
-| `NEW INVESTMENT SHEET.xlsx` | the family's own record of what they PAID — 8 sheets, 428 tranche rows, 151 names, **₹844.94 Cr gross paid in** | reads perfectly, and is **not a source** |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own record of what they PAID — 8 sheets, 427 tranche rows, 151 names, **₹842.92 Cr gross paid in** | reads perfectly, and is **not a source** |
 | `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account **67786547** | **not read — text outlined to vector paths** |
 | `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account **67786137** | **not read — same** |
 
@@ -992,7 +992,7 @@ That is a join to establish, not a document to request.
 
 `NEW INVESTMENT SHEET.xlsx` is a CASH-OUTFLOW register: `INVESTMENT AMOUNT` is
 money that left a bank account on a date, and **`CURRENT VALUATION` is empty on
-every one of its 428 rows**. So it can speak to INVESTED CAPITAL, which is a cost,
+every one of its 427 rows**. So it can speak to INVESTED CAPITAL, which is a cost,
 and it **cannot move NAV by a rupee** — a NAV gap closes with a holding
 statement, never with a payment record. That distinction is the whole of
 `docs/REGISTER-RECONCILIATION.md`.
@@ -1036,7 +1036,20 @@ to the review: an independent cross-check that never writes to the book.
   and ICICI Bank — not another register.
 - **113 register names have no counterpart in the book at all**, ₹450.08 Cr paid
   in. That is a COST and the size of an ask, never a value this book will publish.
-- **₹844.94 Cr IS NOT ADDITIVE TO THE BOOK.** It is money paid since 2017 across
+**AND ONE SUBTOTAL DOES NOT SAY "TOTAL".** The register repeats each multi-tranche
+investment as its own row, and summing the amount column blind reads **₹1,274.79 Cr**
+— ₹431.88 Cr of double count, 51% too high. Matching the WORD finds 63 of them.
+It misses a 64th: `FUND HOUSE` repeats `BARING PRIVATE EQUITY INDIA FUND 6` under
+its own four tranches at ₹2,02,50,000, exactly 65 + 50 + 25 + 62.5 lakh, with no
+"TOTAL" anywhere in it. What gives it away is its SHAPE — a subtotal carries no
+serial number and no `INVESTMENT DONE UNDER`, because it is not an investment
+anybody made on a date. Measured, that structural test catches exactly that one
+row and no data row. This is `dataGovIn.mjs` and `amfi.mjs`'s own rule one layer
+up — **a headline row is NAMED, never summed** — meeting a workbook that forgot to
+name one, and the first count published here (₹844.94 Cr over 428 rows) was wrong
+by that row.
+
+- **₹842.92 Cr IS NOT ADDITIVE TO THE BOOK.** It is money paid since 2017 across
   every vehicle the family has used, including mandates the book already carries
   in full, capital already returned (₹6.60 Cr on the COMPANY sheet's own
   `LOAN RETURNED BACK` column) and investments already written off (₹1.69 Cr).

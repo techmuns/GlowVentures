@@ -119,25 +119,42 @@ let qtyRows = 0;
 for (const name of wb.SheetNames) {
   const rr = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null, blankrows: false });
   const hdr = (rr[0] ?? []).map((c) => String(c ?? "").trim().toUpperCase());
+  const iSr = hdr.indexOf("SR. NO.");
   const iName = hdr.indexOf("INVESTMENT NAME");
   const iUnder = hdr.indexOf("INVESTMENT DONE UNDER");
   const iAmt = hdr.indexOf("INVESTMENT AMOUNT");
   const iCur = hdr.indexOf("CURRENT VALUATION");
   const iVal = hdr.indexOf("VALUATION AT THE TIME OF INVESTMENT");
   const iRet = hdr.findIndex((h) => h.includes("LOAN RETURNED"));
-  let sum = 0, n = 0, subtotals = 0, returned = 0, valued = 0;
+  let sum = 0, n = 0, subtotals = 0, returned = 0, valued = 0, subtotalValue = 0;
   for (const r of rr.slice(1)) {
     const nm = String(r[iName] ?? "").trim();
     if (iRet >= 0 && typeof r[iRet] === "number") returned += r[iRet];
     if (iCur >= 0 && typeof r[iCur] === "number") valued++;
-    /**
-     * A SUBTOTAL ROW IS NOT A TRANCHE. The register prints "<NAME> - TOTAL"
-     * under each multi-tranche investment; summing the column blind counts
-     * every one of those twice. 61 such rows carry ₹340.06 Cr between them.
-     */
-    if (/\bTOTAL\b/i.test(nm)) { subtotals++; continue; }
     const amt = typeof r[iAmt] === "number" ? r[iAmt] : null;
     if (!nm || amt == null) continue;
+    /**
+     * A SUBTOTAL ROW IS NOT A TRANCHE, AND ONE OF THEM DOES NOT SAY "TOTAL".
+     *
+     * The register prints "<NAME> - TOTAL" under each multi-tranche investment,
+     * and summing the column blind counts every one of those twice. Matching the
+     * WORD alone finds 63 of them, carrying ₹429.85 Cr.
+     *
+     * It misses a 64th. `FUND HOUSE` repeats "BARING PRIVATE EQUITY INDIA FUND 6"
+     * under its own four tranches with ₹2,02,50,000 — exactly 65 + 50 + 25 +
+     * 62.5 lakh — and no "TOTAL" anywhere in it. What gives it away is its
+     * SHAPE: a subtotal carries no serial number and no `INVESTMENT DONE UNDER`,
+     * because it is not an investment anybody made on a date. Measured, that
+     * structural test finds exactly this one row and no data row, so the two
+     * rules together are strictly safer than the word alone.
+     *
+     * This is the rule `dataGovIn.mjs` and `amfi.mjs` already state one layer
+     * down — a headline row is NAMED, never summed — meeting a workbook that
+     * forgot to name one.
+     */
+    const isSubtotal = /\bTOTAL\b/i.test(nm)
+      || (!String(r[iSr] ?? "").trim() && !String(r[iUnder] ?? "").trim());
+    if (isSubtotal) { subtotals++; subtotalValue += amt; continue; }
     sum += amt; n++;
     /**
      * A SHARE COUNT IS IN HERE, BUT AS PROSE AND ONLY SOMETIMES.
@@ -153,7 +170,7 @@ for (const name of wb.SheetNames) {
     if (/^[\d,]+(?:\.\d+)?\s*(EQUITY|SHARES?|CCPS|PREFERENCE|UNITS?|SEEDS?|SERIES)/i.test(String(r[iVal] ?? "").trim())) qtyRows++;
     rows.push({ sheet: name, name: nm, under: String(r[iUnder] ?? "").trim(), amt });
   }
-  perSheet.push({ name, tranches: n, subtotals, sum, returned, valued, isExit: EXIT_SHEET.test(name) });
+  perSheet.push({ name, tranches: n, subtotals, subtotalValue, sum, returned, valued, isExit: EXIT_SHEET.test(name) });
 }
 
 const byName = new Map();
@@ -176,6 +193,7 @@ for (const g of byName.values()) {
 const sum = (a) => a.reduce((s, x) => s + x.amt, 0);
 const gross = sum([...byName.values()]);
 const returned = perSheet.reduce((s, x) => s + x.returned, 0);
+const blindSum = gross + perSheet.reduce((s, x) => s + x.subtotalValue, 0);
 const valuedRows = perSheet.reduce((s, x) => s + x.valued, 0);
 
 // ── the costless positions, which is the point of the whole exercise ────────
@@ -239,9 +257,13 @@ say("| --- | ---: | ---: | ---: |");
 for (const s of perSheet) say(`| ${s.name.trim()}${s.isExit ? " *(exits)*" : ""} | ${s.tranches} | ${s.subtotals} | ₹${cr(s.sum)} Cr |`);
 say(`| **Total** | **${rows.length}** | **${perSheet.reduce((a, s) => a + s.subtotals, 0)}** | **₹${cr(gross)} Cr** |`);
 say();
-say("**THE SUBTOTAL ROWS ARE THE FIRST TRAP.** The register prints a `<NAME> - TOTAL` row");
-say(`under each multi-tranche investment. Summing the amount column blind reads ₹${cr(gross + perSheet.reduce((a, s) => a + 0, 0))} Cr`);
-say("plus every one of those again. They are excluded here by name.");
+say("**THE SUBTOTAL ROWS ARE THE FIRST TRAP.** The register repeats each multi-tranche");
+say(`investment as its own row. Summing the amount column blind reads **₹${cr(blindSum)} Cr** —`);
+say(`₹${cr(blindSum - gross)} Cr of double count, ${Math.round((blindSum / gross - 1) * 100)}% too high. They are excluded here by name`);
+say("AND by shape: one of them, `BARING PRIVATE EQUITY INDIA FUND 6` on the FUND HOUSE sheet,");
+say("carries ₹2.03 Cr and does not contain the word TOTAL at all — what marks it is that it has");
+say("no serial number and no `INVESTMENT DONE UNDER`, because it is not an investment anybody");
+say("made on a date.");
 say();
 say(`**AND GROSS IS NOT NET.** ₹${cr(returned)} Cr of the COMPANY sheet's rows have already been`);
 say("repaid (its own `LOAN RETURNED BACK` column), and the `WRITE OFF - EXIT` sheet carries");

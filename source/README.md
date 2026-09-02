@@ -98,7 +98,7 @@ local file on name and byte size; these three matched nothing.
 
 | File | What it is | Outcome |
 | --- | --- | --- |
-| `NEW INVESTMENT SHEET.xlsx` | the family's own register of what they PAID — 8 sheets, 844 tranche rows, 151 names, ₹844.94 Cr gross paid-in | READS PERFECTLY — and is **not a source**, by decision |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own register of what they PAID — 8 sheets, 427 tranche rows, 151 names, ₹842.92 Cr gross paid-in | READS PERFECTLY — and is **not a source**, by decision |
 | `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account 67786547 | **not read — the text is outlined to vector paths** |
 | `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account 67786137 | **not read — same** |
 
