@@ -36,10 +36,26 @@ const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linu
  * and a plain `npm run check:pages` are unchanged — this exists because
  * verifying an invariant by REINTRODUCING ITS BUG (the discipline every
  * invariant here is held to) costs a build and a full sweep per bug, and the
- * sweep is 62 combinations. A name that matches no route yields an empty walk,
+ * sweep is 94 combinations. A name that matches no route yields an empty walk,
  * which the summary reports as zero combinations rather than as a clean run.
+ *
+ * A ROUTE THAT RESOLVES ADDRESSES FOR OTHERS IS KEPT WHEN ONE OF THOSE OTHERS
+ * IS ASKED FOR. `monitor` resolves the mandate drill-down's address and `cio`
+ * resolves every holdings drill-down's, so `ONLY=holdings-book` without `cio`
+ * would walk a not-found page and report NOT CHECKED — a filter that silently
+ * stops checking is worse than no filter. It is a DEPENDENCY, not a blanket
+ * keep: a name matching nothing still yields the empty walk above, because no
+ * selected route needs a publisher.
  */
 const ONLY = (process.env.ONLY ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+const PUBLISHERS = [
+  ["monitor", (n) => n === "mandate" || n === "mandate-fund"],
+  ["cio", (n) => n.startsWith("holdings-")],
+];
+const walked = (name) =>
+  !ONLY.length
+  || ONLY.includes(name)
+  || PUBLISHERS.some(([pub, needs]) => pub === name && ONLY.some(needs));
 
 const THEMES = (process.env.THEMES ?? "light,dark").split(",");
 const WIDTHS = (process.env.WIDTHS ?? "1500").split(",").map(Number);
@@ -275,6 +291,17 @@ const NO_COST_KEY = (() => {
   } catch { return null; }
 })();
 
+const CIO_BUCKET_HREFS = [];
+/** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
+const DRILLDOWN_COUNTS = new Map();
+// SIX, because the book has six buckets. Spare slots are not free: each one is
+// a route that renders a page nobody sees and reports four NOT CHECKED lines
+// every run, which is the noise that trains a reader to skim the report. A
+// SEVENTH bucket does not go unwalked either — the `cio` invariant below fails
+// when the table has more rows than this sweep has addresses for, which is a
+// one-line diagnosis naming the fix rather than a silent gap.
+const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -313,6 +340,47 @@ const ROUTES = [
   // generated book instead (see `FUND_ACCOUNT_ID`). A book that stops carrying
   // one fails these invariants rather than skipping them.
   ["mandate-fund", () => (FUND_ACCOUNT_ID ? `/mandate/${encodeURIComponent(FUND_ACCOUNT_ID)}` : "/mandate/none-resolved-from-the-book")],
+  /**
+   * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
+   *
+   * Walked AFTER `cio`, because each address is the one that page drew (see
+   * `CIO_DRILLDOWNS`) and each invariant compares the destination against the
+   * figure the reader clicked. A typed address would be a second source for a
+   * generated bucket key, and a page walked before the figures were captured
+   * would silently check nothing.
+   *
+   * FOUR OF THEM, chosen because each is a DIFFERENT branch of the same page
+   * and one route would exercise only the easiest:
+   *   • an allocation ROW, which is the request itself;
+   *   • the whole BOOK, whose two counts are the concentration figures and
+   *     whose return must be REFUSED (its Invested covers 309 of 369 rows);
+   *   • the money-weighted COVERAGE, the one scope that must NOT dedupe;
+   *   • the holdings reporting NO COST, which is the companion set the Capital
+   *     invested tile names and which must render absent rather than ₹0.
+   */
+  ...BUCKET_SLOTS.map((n) => [`holdings-row-${n}`, () => CIO_BUCKET_HREFS[n - 1] ?? `/holdings?of=bucket&key=no-row-${n}-on-morning-cio`]),
+  ["holdings-book", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
+  /**
+   * ...AND THE CONCENTRATION FIGURES, which until now had their LINKS asserted
+   * on the `cio` route and their DESTINATIONS asserted by nothing. A link that
+   * opens the wrong set passes a pairing check and fails a reader, so each of
+   * these compares the page's own total against the figure it opened from —
+   * exactly what `holdings-row-N` does for the allocation table.
+   *
+   * Addresses come from the links Morning CIO drew, never typed here.
+   */
+  ["holdings-crossheld", () => drilldownPath("cross-held") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-topnames", () => drilldownPath("top-names") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-listed", () => drilldownPath("listed") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-private", () => drilldownPath("private") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-winners", () => drilldownPath("winners") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-losers", () => drilldownPath("losers") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-measured", () => drilldownPath("measured") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-nocost", () => drilldownPath("no-cost") ?? "/holdings?of=none-resolved-from-cio"],
+  // ...AND AN ADDRESS THAT NAMES NOTHING. A drill-down that silently falls back
+  // to "everything" would answer a question it was not asked with a figure that
+  // looks like the one the reader clicked, which is worse than saying so.
+  ["holdings-unknown", "/holdings?of=a-set-this-book-does-not-define"],
   ["family", "/family"],
   // ...AND ONE ENTITY'S DRILL-DOWN, which is where the family's own complaint lands:
   // open a member and see, per row, whether they chose a holding or a manager did.
@@ -529,6 +597,124 @@ const MANDATE_ROWS = new Map();
  * and it would still "pass" by rendering the page's not-found state.
  */
 let MANDATE_PATH = null;
+
+/**
+ * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
+ *
+ * "Every row of the allocation table on Morning CIO must open the holdings
+ * behind it." The claim being asserted has TWO halves and neither implies the
+ * other, so both are captured on the `cio` route and both are checked:
+ *
+ *   • Every row IS a link (read off the DOM, never off a caption — a sentence
+ *     saying a drill-down exists is not a route to it).
+ *   • The page it opens lists THE SAME SET the row is summed over, which is
+ *     checked by comparing the destination's own total against the cell the
+ *     reader clicked. A drill-down that shows a different set is the failure
+ *     this whole change exists to avoid, and it looks identical to a working
+ *     one from either page alone.
+ *
+ * Every address here is DERIVED FROM THE PAGE'S OWN LINK, the same discipline
+ * `MANDATE_PATH` follows: typing `?of=bucket&key=AIF` in this file would be a
+ * second source for a bucket key the book generates, and a stale one would keep
+ * "passing" by rendering the drill-down's own not-found state.
+ */
+const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew it
+/**
+ * EVERY allocation row's address, in the order Morning CIO drew them.
+ *
+ * One row was not enough, and reintroducing the bug is what proved it: a
+ * drill-down grouping on `assetClass` instead of `holdingBucket` is a real
+ * defect — mandate-held shares would leave the PMS mandates row entirely — and
+ * the sweep stayed green, because the single row it walked was AIF, where the
+ * two groupings happen to agree. The discriminating rows are the ones the
+ * regroup created, so all of them are walked.
+ *
+ * `BUCKET_SLOTS` is how many rows this sweep has addresses for. A book with
+ * more buckets than slots would silently leave the extras unwalked, so the
+ * `cio` invariants assert the count fits — a check that quietly stops checking
+ * is the failure this file exists to prevent.
+ */
+/** What Morning CIO printed for each allocation row: label -> {invested, current, weight}. */
+const CIO_ALLOCATION = new Map();
+/** The KPI figures the drill-downs have to reproduce, in ₹ Cr. */
+const CIO_FIGURES = new Map();
+
+/** The first drill-down href whose `of=` matches, or null. */
+const drilldownPath = (id) => CIO_DRILLDOWNS.get(id) ?? null;
+
+/** A literal for use inside a RegExp — bucket keys carry `/`, `&` and `—`. */
+const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The bucket a `holdings-row-N` route actually opened, read off the address it
+ * was given rather than a label stored beside it. The address IS the fact —
+ * a stored label could name a different row than the one walked, which is the
+ * two-sources-for-one-figure failure this whole change is written against.
+ */
+const bucketKeyOf = (ctx) => {
+  const q = String(ctx?.path ?? "").split("?")[1] ?? "";
+  const key = new URLSearchParams(q).get("key");
+  return key && !/^no-row-\d+-on-morning-cio$/.test(key) ? key : null;
+};
+
+/**
+ * Morning CIO's allocation rows, read out of the rendered table.
+ *
+ * innerText joins a row's cells with tabs, so a row is
+ * `Label \t ₹Invested \t ₹Current \t Return \t Weight` — and Invested is an
+ * em dash on the rows whose statements report no cost, which is data rather
+ * than a parse failure and must not drop the row.
+ */
+function cioAllocationRows(text) {
+  const out = [];
+  const money = String.raw`(—|₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?)`;
+  const re = new RegExp(String.raw`^([^\t\n]+)\n?\t` + money + String.raw`\t` + money + String.raw`\t(.*?)\t([\d.]+)%$`, "gm");
+  for (const m of text.matchAll(re)) {
+    // `ret` is the cell VERBATIM — a signed percentage on the rows whose cost
+    // covers them and an em dash on the rest. Kept as printed rather than parsed
+    // to a number, because "it printed no percentage" is the half of this the
+    // drill-down has to reproduce and `NaN` cannot say it.
+    out.push({ label: m[1].trim(), invested: m[2], current: m[3], ret: m[4].trim(), weight: Number(m[5]) });
+  }
+  return out;
+}
+
+/** `₹352.3 Cr` / `₹68.3 L` / `—` -> a number in ₹ Cr, or NaN for an em dash. */
+function money2cr(s) {
+  const m = /₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(s ?? "");
+  return m ? crU(m[1], m[2]) : NaN;
+}
+
+/**
+ * A drill-down's own headline total, in ₹ Cr — the figure directly under the
+ * page title, which the page sums FROM the rows it lists.
+ *
+ * Read off `Market value`'s tile rather than the header chip, because the tile
+ * is the one the table's footer also ties to, and comparing the header would
+ * leave the table itself unchecked.
+ */
+const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(₹[\d,.]+\s*(?:Cr|L|K)?)$`, "im").exec(t)?.[1]);
+/** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
+const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
+/**
+ * WHICH VIEW A DRILL-DOWN LANDED ON, read off the COLUMNS it drew.
+ *
+ * The by-security table carries `Held in` and no per-statement columns; the
+ * by-row one carries `Held via`, `Entity` and `Qty`. Both halves are asserted,
+ * because a page rendering neither table would satisfy an absence test alone.
+ *
+ * NOT matched on the word "security", which appears in these pages' own prose —
+ * the first draft did exactly that and failed a page that was landing correctly.
+ * `innerText` joins a header row's cells with tabs, so the header is one line
+ * and the column NAMES are what identify the view.
+ */
+const opensByName = (t) => /SECURITY\s+HELD IN\s+INVESTED/i.test(t) && !/SECURITY\s+HELD VIA/i.test(t);
+
+/** …and how many holdings and names it says it covers. */
+function drilldownCounts(t) {
+  const m = /([\d,]+)\s+holdings?\s*·\s*([\d,]+)\s+names?\s*·\s*([\d,]+)\s+accounts?/i.exec(t);
+  return m ? { holdings: cr(m[1]), names: cr(m[2]), accounts: cr(m[3]) } : null;
+}
 
 const INVARIANTS = {
   /**
@@ -849,6 +1035,93 @@ const INVARIANTS = {
       const strip = t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
       return !/[+-]\s?\d{3,}(\.\d+)?\s*%/.test(strip);
     }],
+    /**
+     * ── EVERY ALLOCATION ROW OPENS THE HOLDINGS BEHIND IT ────────────────────
+     *
+     * "Every row of the allocation table on Morning CIO must open the holdings
+     * behind it — AIF, PMS mandates, Mutual Fund, Direct Equity and ETF alike."
+     *
+     * Struck on the LINKS THE PAGE DRAWS, read off the DOM. A sentence saying a
+     * drill-down exists is not a route to it, and this file already records a
+     * check that matched static prose and therefore could not fail. It counts
+     * against the table's OWN row count — the `N buckets held` pill, which the
+     * page derives from the book — so a drop that gains a bucket has to gain a
+     * link with it rather than passing on a literal written today.
+     */
+    ["every allocation row links to its own holdings", (t, ctx) => {
+      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
+      if (!Number.isFinite(held)) return false;
+      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
+      return rows.length === held;
+    }],
+    // ...AND THE SWEEP HAS AN ADDRESS FOR EVERY ONE OF THEM. `holdings-row-N`
+    // walks the Nth allocation row; a book with more buckets than slots would
+    // leave the extras unwalked and the sweep would go on reporting clean about
+    // rows nothing looked at. A check that quietly stops checking is the
+    // failure this file exists to prevent, so it says so instead.
+    ["every allocation row is walked by this sweep", (t) => {
+      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
+      return Number.isFinite(held) && held <= BUCKET_SLOTS.length;
+    }],
+    // ...AND EACH ONE NAMES A DIFFERENT SET. Six links to one address would
+    // satisfy the count above while opening the same holdings six times.
+    ["each allocation row opens a different set", (t, ctx) => {
+      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
+      return rows.length > 0 && new Set(rows).size === rows.length;
+    }],
+    /**
+     * THE KPI TILES AND THE CONCENTRATION FIGURES ARE THE SAME FIX, so they are
+     * asserted the same way — by the SETS that must be reachable from this page.
+     *
+     * Named individually rather than counted: a count passes when six links to
+     * the wrong six sets are drawn, and the whole point is that the reader can
+     * reach the holdings behind THIS figure. `no-cost` is in the list because
+     * the tile that names those 60 positions is exactly the one where a reader
+     * cannot otherwise find out WHICH — the answer decides whether they chase a
+     * custodian or accept a permanent absence.
+     */
+    ["every KPI tile and concentration figure opens ITS OWN set", (t, ctx) => {
+      // PAIRED, label to destination. "The page links to `of=book` somewhere"
+      // is satisfied by any one tile and says nothing about the other twelve;
+      // this asserts that the figure a reader clicks opens the set that figure
+      // is summed over. Each entry is [what the reader clicks, where it goes].
+      const want = [
+        [/^consolidated nav$/i, "/holdings?of=book"],
+        [/^capital invested$/i, "/holdings?of=invested"],
+        [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
+        [/^consolidated return$/i, "/holdings?of=invested"],
+        [/^positions$/i, "/holdings?of=book"],
+        [/^distinct names$/i, "/holdings?of=book&view=security"],
+        [/^cross-held$/i, "/holdings?of=cross-held"],
+        [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
+        [/^listed$/i, "/holdings?of=listed"],
+        [/^private$/i, "/holdings?of=private"],
+        [/^winners$/i, "/holdings?of=winners"],
+        [/^losers$/i, "/holdings?of=losers"],
+        // …and the holdings the Capital invested tile leaves out, which is the
+        // one set a reader has no other route to.
+        [/carry no cost basis$/i, "/holdings?of=no-cost"],
+      ];
+      const links = ctx?.links ?? [];
+      return want.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
+    }],
+    /**
+     * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
+     *
+     * Undrawn capital is not a holding — it has no row in `BOOK_POSITIONS` — so
+     * a holdings drill-down structurally cannot contain it and would open a
+     * table that could only ever be empty. Asserted by PAIRING the tile with its
+     * destination: an earlier draft counted `/private-market` links instead and
+     * passed while the Dry powder tile pointed at the holdings page, because the
+     * Capital deployment card's own link kept the count up. Reintroducing that
+     * bug is what found it.
+     */
+    ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
+      if (!/DRY POWDER[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
+      const links = ctx?.links ?? [];
+      return [/^dry powder$/i, /^distributions$/i, /^fund commitments$/i]
+        .every((label) => links.some((l) => label.test(l.text) && l.href === "/private-market"));
+    }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
     // so Invested and Current printed one answer and the Total cell another.
@@ -858,6 +1131,326 @@ const INVARIANTS = {
       const [, inv, cur, sign, pct] = row;
       const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
       return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
+    }],
+  ],
+  /**
+   * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
+   *
+   * The address is the link Morning CIO drew for its largest bucket, and every
+   * assertion here compares this page against WHAT THAT ROW PRINTED. That
+   * comparison is the whole value of the route: each page is internally
+   * consistent whichever set it shows, so a drill-down listing the wrong
+   * holdings is invisible from either screen alone and obvious from both.
+   */
+  "holdings-row": [
+    ["it opened the row Morning CIO linked, and says which figure it stands behind", (t, ctx) => {
+      const key = bucketKeyOf(ctx);
+      if (!key) return notChecked("Morning CIO drew no allocation link for this slot — the book has fewer buckets than the sweep has slots");
+      return new RegExp(`behind the ${esc(key)} row`, "i").test(t) && new RegExp(`^${esc(key)}$`, "m").test(t);
+    }],
+    /**
+     * ITS TOTAL IS THE CELL THE READER CLICKED. Bounded at the printing
+     * precision — both figures render to one decimal in Cr, so they can differ
+     * by rounding and by nothing else. A fraction-of-the-book bound would allow
+     * crores of drift and swallow the exact error it exists to catch.
+     */
+    ["its market value reproduces that row's Current cell", (t, ctx) => {
+      const key = bucketKeyOf(ctx);
+      const row = key && CIO_ALLOCATION.get(key);
+      if (!row) return notChecked(key ? `Morning CIO's "${key}" row did not parse on this run` : "the book has fewer buckets than the sweep has slots");
+      const here = drilldownTotal(t), there = money2cr(row.current);
+      return [here, there].every(Number.isFinite) && Math.abs(here - there) <= 0.15;
+    }],
+    ["...and its Invested cell, or both are absent together", (t, ctx) => {
+      const key = bucketKeyOf(ctx);
+      const row = key && CIO_ALLOCATION.get(key);
+      if (!row) return notChecked(key ? `Morning CIO's "${key}" row did not parse on this run` : "the book has fewer buckets than the sweep has slots");
+      const there = money2cr(row.invested);
+      const here = money2cr(tileValue(t, "INVESTED"));
+      // AN EM DASH ON ONE SIDE AND A FIGURE ON THE OTHER IS THE FAILURE. A row
+      // whose statements report no cost must not acquire one by being opened.
+      if (!Number.isFinite(there)) return !Number.isFinite(here);
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    /**
+     * AND THE RETURN IS REFUSED ON EXACTLY THE ROWS MORNING CIO REFUSES IT ON.
+     *
+     * This is the invariant the page most needs. Three of six allocation rows
+     * print an em dash because their Invested column covers a minority of their
+     * holdings; a drill-down opening from that dash and printing a percentage
+     * would be the two screens contradicting each other on the reader's own
+     * click, with the specific figure — the one they went looking for — being
+     * the wrong one.
+     */
+    ["the return is struck here only where that row struck one", (t, ctx) => {
+      const key = bucketKeyOf(ctx);
+      const row = key && CIO_ALLOCATION.get(key);
+      if (!row) return notChecked(key ? `Morning CIO's "${key}" row did not parse on this run` : "the book has fewer buckets than the sweep has slots");
+      const rowPct = /([+-]\d+\.\d)%/.exec(row.ret ?? "")?.[1];
+      const herePct = /([+-]\d+\.\d)%/.exec(tileValue(t, "RETURN ON COST") ?? "")?.[1];
+      if (rowPct == null) return herePct == null;
+      return herePct != null && Math.abs(Number(herePct) - Number(rowPct)) <= 0.15;
+    }],
+    // A REFUSED FIGURE STILL HAS TO SAY WHY. An em dash with no cause is the
+    // "second dash" failure the stock page was fixed for.
+    ["a refused return names its cause", (t) =>
+      tileValue(t, "RETURN ON COST") !== "—"
+      || /(divide one set of holdings by another|nothing to strike a return against|measured figure, not a missing one|no unrealised gain)/i.test(t)],
+  ],
+  /**
+   * ── THE WHOLE BOOK, WHICH IS THREE CONCENTRATION FIGURES AT ONCE ─────────
+   *
+   * Consolidated NAV, Positions and Distinct names are one set counted three
+   * ways, so this page has to reproduce all three — and REFUSE a whole-book
+   * return, because its Invested column covers 309 of 369 rows. That refusal is
+   * the same one Morning CIO's own allocation footer makes, and a drill-down
+   * that printed a percentage there would contradict the footer it opened from.
+   */
+  "holdings-book": [
+    ["its market value reproduces the Consolidated NAV", (t) => {
+      const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      return Number.isFinite(here) && Math.abs(here - nav) <= 0.15;
+    }],
+    ["its two counts reproduce Positions and Distinct names", (t) => {
+      const c = drilldownCounts(t);
+      const pos = CIO_FIGURES.get("positions"), names = CIO_FIGURES.get("names");
+      if (!Number.isFinite(pos) || !Number.isFinite(names)) return notChecked("Morning CIO's concentration counts did not parse on this run");
+      return c != null && c.holdings === pos && c.names === names;
+    }],
+    // THE WHOLE-BOOK RETURN STAYS REFUSED. 60 positions are in Value and in no
+    // Invested, so a percentage across the two columns would divide one set of
+    // holdings by another — which is the contradiction the allocation footer
+    // was fixed for, arriving one click deeper.
+    ["no whole-book return is struck where the cost side does not cover it", (t) =>
+      tileValue(t, "RETURN ON COST") === "—" && /divide one set of holdings by another/i.test(t)],
+    // Its footer is summed FROM its rows, so the two must agree. A footer
+    // computed beside its table rather than from it is the tautology this repo
+    // found on the Private Market page, where the rows carried a double count
+    // the footer correctly did not and no check could see it.
+    /**
+     * IT IS A WAY INTO THE MANDATE DRILL-DOWN, NOT A REPLACEMENT FOR IT.
+     *
+     * A share a discretionary manager chose belongs inside that manager's
+     * mandate — the page the family asked for three times — so a drill-down
+     * that flattened 281 mandate-held shares into one undifferentiated list
+     * would be re-committing the grouping mistake one screen over. Every
+     * mandate in the set is summarised and linked, and the count is checked
+     * against the mandates the book actually has rather than a literal.
+     */
+    ["every mandate in the book is named and linked from here", (t, ctx) => {
+      const said = Number(/The (\d+) mandates inside this set/i.exec(t)?.[1] ?? NaN);
+      if (!Number.isFinite(said)) return false;
+      const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
+      return links.size === said && said > 0;
+    }],
+    ["the table's footer ties to the tile above it", (t) => {
+      const tile = drilldownTotal(t);
+      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ holdings\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
+      if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
+      return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
+    }],
+  ],
+  /**
+   * ── THE CONCENTRATION FIGURES' OWN DRILL-DOWNS ───────────────────────────
+   *
+   * Each compares the destination against the figure the reader clicked. The
+   * `cio` route already asserts the LABEL is paired with the DESTINATION; this
+   * is the other half, and neither implies the other — a correctly-labelled
+   * link to a page listing the wrong set passes the first and fails a reader.
+   */
+  "holdings-crossheld": [
+    ["its name count reproduces the Cross-held figure", (t) => {
+      const there = CIO_FIGURES.get("crossHeld"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
+      return c != null && c.names === there;
+    }],
+    // A NAME-COUNTING FIGURE OPENS ON THE UNIT IT COUNTS. `Drilldown.defaultView`
+    // says which; it was declared, set on this scope and read by nothing until a
+    // screenshot showed the page landing on a row-per-statement table for a
+    // figure that counts names. A field carrying the right answer into no caller
+    // looks exactly like a working feature.
+    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
+    // ...and every name here really is held by two or more entities, which is
+    // what distinguishes a cross-held name from a DUPLICATE the consolidated set
+    // has already collapsed.
+    ["the page separates cross-held from the duplicate policy", (t) =>
+      /counted once per member/i.test(t) && /already collapsed/i.test(t)],
+  ],
+  "holdings-topnames": [
+    ["its value reproduces the Top-10 concentration share", (t) => {
+      const pct = CIO_FIGURES.get("top10Pct"), nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (![pct, nav].every(Number.isFinite)) return notChecked("Morning CIO's Top-10 figure did not parse on this run");
+      // The card prints the share to a whole percent, so the bound is half of
+      // one — reconstructed from the two figures rather than compared to a
+      // literal, which would go stale the next drop.
+      return Number.isFinite(here) && Math.abs((here / nav) * 100 - pct) <= 0.5;
+    }],
+    ["it opens on the by-security view, which is the unit it counts", (t) => opensByName(t)],
+    ["it lists exactly the names the figure covers", (t) => {
+      const c = drilldownCounts(t);
+      const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
+      return c != null && Number.isFinite(said) && c.names === said;
+    }],
+  ],
+  /**
+   * LISTED AND PRIVATE ARE ONE SPLIT, so each half is checked against the NAV
+   * it came out of rather than against itself. Asserted from both ends: a page
+   * showing the wrong half passes a check that only looks at its own figure.
+   */
+  "holdings-listed": [
+    ["its value reproduces the listed half the NAV caption states", (t) => {
+      const there = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    ["it carries holdings, and fewer than the whole book", (t) => {
+      const c = drilldownCounts(t), pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return c != null && c.holdings > 0 && c.holdings < pos;
+    }],
+  ],
+  "holdings-private": [
+    ["its value reproduces the private half the NAV caption states", (t) => {
+      const there = CIO_FIGURES.get("private"), here = drilldownTotal(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    /**
+     * THE TWO HALVES PARTITION THE BOOK — every holding in exactly one of them.
+     *
+     * Asserted on the COUNTS as well as the values, because the two answer
+     * different failures: a widened filter that put a holding in both halves
+     * moves the counts and can leave the values looking plausible, and a
+     * narrowed one drops rows from both. Neither page can make this claim
+     * alone, which is why the listed half's own figures are carried here.
+     */
+    ["the two halves hold every position between them, and none twice", (t) => {
+      const here = drilldownCounts(t), listed = DRILLDOWN_COUNTS.get("holdings-listed");
+      const pos = CIO_FIGURES.get("positions");
+      if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
+      return here != null && here.holdings + listed.holdings === pos;
+    }],
+    ["the two halves reconstruct the NAV between them", (t) => {
+      const nav = CIO_FIGURES.get("nav"), listed = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
+      if (![nav, listed].every(Number.isFinite)) return notChecked("Morning CIO's NAV or listed figure did not parse on this run");
+      return Number.isFinite(here) && Math.abs(listed + here - nav) <= 0.3;
+    }],
+  ],
+  /**
+   * WINNERS AND LOSERS DO NOT ADD TO THE BOOK, and the pages say so. A holding
+   * exactly at cost is in neither; one whose cost the statements do not report
+   * has no return to sort on at all. Both sets are named on the page rather than
+   * left for a reader to discover by subtracting.
+   */
+  "holdings-winners": [
+    ["its count reproduces the Winners figure", (t) => {
+      const there = CIO_FIGURES.get("winners"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
+      return c != null && c.holdings === there;
+    }],
+    ["the holdings in neither count are named, not dropped", (t) =>
+      /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+  ],
+  "holdings-losers": [
+    ["its count reproduces the losers figure", (t) => {
+      const there = CIO_FIGURES.get("losers"), c = drilldownCounts(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
+      return c != null && c.holdings === there;
+    }],
+    // AND THE TWO SETS ARE DISJOINT AND SMALLER THAN THE BOOK. Winners + losers
+    // adding to the position count would mean something was double-counted or
+    // the at-cost and uncosted holdings were swept into one side.
+    ["winners and losers together are fewer than the book's positions", (t) => {
+      const w = CIO_FIGURES.get("winners"), l = CIO_FIGURES.get("losers"), pos = CIO_FIGURES.get("positions");
+      if (![w, l, pos].every(Number.isFinite)) return notChecked("Morning CIO's concentration counts did not parse on this run");
+      return w + l < pos;
+    }],
+  ],
+  /**
+   * ── THE ONE SCOPE THAT MUST NOT DEDUPE ───────────────────────────────────
+   *
+   * The money-weighted return closes each account against the market value ITS
+   * OWN STATEMENT prints, so its coverage is a PER-ACCOUNT figure. Collapsing a
+   * holding two accounts both report would take it off whichever lost the
+   * collapse and put this page below the coverage its own tile states. No
+   * account carrying a duplicate publishes an opening portfolio value in this
+   * drop, so the two agree today — which is exactly the condition under which
+   * the mistake is invisible, and why the page says which basis it is on.
+   */
+  "holdings-measured": [
+    ["its market value reproduces the coverage the money-weighted tile states", (t) => {
+      const cov = CIO_FIGURES.get("measured"), here = drilldownTotal(t);
+      if (!Number.isFinite(cov)) return notChecked("Morning CIO's money-weighted tile states no coverage on this run");
+      return Number.isFinite(here) && Math.abs(here - cov) <= 0.15;
+    }],
+    ["it states that it is per-account and not consolidated", (t) => /as printed\s*·\s*per account/i.test(t)],
+    // AND IT NAMES WHAT IT LEAVES OUT. A figure that exists for some accounts is
+    // shown for those and the rest are named — the coverage line on the tile is
+    // only half of that rule if the drill-down then hides them.
+    ["the accounts outside the figure are named, not dropped", (t) =>
+      /\d+ accounts outside this figure/i.test(t) && /\d{4,}/.test(t)],
+  ],
+  /**
+   * ── THE 60 POSITIONS THE CAPITAL INVESTED TILE LEAVES OUT ────────────────
+   *
+   * Reachable at last, which is the other half of naming them: a reader told
+   * that 60 positions worth ₹165.9 Cr carry no cost had no way to find out
+   * WHICH, and the answer decides whether they chase a custodian for a cost
+   * statement or accept a permanent absence.
+   */
+  "holdings-nocost": [
+    ["its market value reproduces the figure the tile's coverage line names", (t) => {
+      const there = CIO_FIGURES.get("no-cost"), here = drilldownTotal(t);
+      if (!Number.isFinite(there)) return notChecked("Morning CIO reports no position without a cost on this run");
+      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    }],
+    // EVERY MONETARY FIGURE ABOUT COST IS ABSENT HERE, NOT ZERO. This is the
+    // page where a ₹0 would be worst: it would report the whole of ₹165.9 Cr as
+    // profit at an infinite return, which is the exact failure `costBasis:
+    // number | null` exists to prevent.
+    ["invested, P&L and return are all absent with reasons — never ₹0", (t) =>
+      ["INVESTED", "UNREALISED P&L", "RETURN ON COST"].every((l) => tileValue(t, l) === "—")
+      && /absent, not zero/i.test(t)
+      && /nothing to strike a return against/i.test(t)],
+    // ...and the rows say WHICH custodian does not report a cost, per holding —
+    // the fix the stock page already carries, arriving on the page that lists
+    // every one of them.
+    ["each row names the statement that reports no cost", (t, ctx) => {
+      const reasons = (ctx?.titles ?? []).filter((x) => /no cost on the .+? statement for this holding/i.test(x));
+      const rows = drilldownCounts(t)?.holdings;
+      if (!Number.isFinite(rows)) return notChecked("the page's own holdings count did not parse on this run");
+      // ONE PER ROW, and each naming a CUSTODIAN rather than a generic phrase:
+      // the reason is scoped to the holding, so a single blanket sentence at the
+      // top of the page would satisfy a looser test while telling a reader
+      // nothing about the row in front of them.
+      return reasons.length >= rows && new Set(reasons).size >= 2;
+    }],
+  ],
+  /**
+   * ── AN ADDRESS THAT NAMES NO SET SAYS SO ─────────────────────────────────
+   *
+   * The dangerous failure here is a silent fallback to "everything": the page
+   * would answer a question it was not asked, with a total that looks exactly
+   * like the one the reader clicked. So the assertion is on the FIGURES being
+   * absent, not just on the words — matching prose alone would pass on a page
+   * that rendered the whole book under an apology.
+   */
+  "holdings-unknown": [
+    ["it says the address names no set, and lists the ones it can show", (t) =>
+      /does not name a set of holdings/i.test(t) && /Every holding in the book/i.test(t)],
+    ["it does not silently fall back to showing the whole book", (t, ctx) => {
+      const nav = CIO_FIGURES.get("nav");
+      const main = ctx?.main ?? "";
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      if (!main) return notChecked("this run did not capture the page's own content");
+      // No holdings total in the page's own content, and specifically not the
+      // NAV. Read off `<main>` because the top bar carries the book's value on
+      // every route, so a body-scoped test matches the chrome and fails a page
+      // that is behaving correctly.
+      return !/MARKET VALUE/i.test(main)
+        && !/holdings\s*·\s*[\d,]+\s*names/i.test(main)
+        && !new RegExp(String.raw`₹\s*${nav.toFixed(1)}\s*Cr`).test(main);
     }],
   ],
   // "why are 70% holdings in unclassified" — and then, after the private book
@@ -1898,7 +2491,7 @@ const report = [];
 for (const theme of THEMES) {
   for (const width of WIDTHS) {
     for (const [name, route] of ROUTES) {
-      if (ONLY.length && !ONLY.includes(name)) continue;
+      if (!walked(name)) continue;
       // A route may resolve its own address from what an earlier route rendered
       // (the mandate drill-down does). Resolved at navigation time, so it sees
       // this sweep's monitor rather than a previous run's.
@@ -1954,11 +2547,82 @@ for (const theme of THEMES) {
       // sweep would otherwise walk the mandate route's not-found page at every
       // width — measuring the layout of a screen nobody sees.
       const hrefs = await page.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href") ?? ""));
+      /**
+       * THE `title` ATTRIBUTES INSIDE `<main>`, for the same reason as `hrefs`.
+       *
+       * `AbsentCell` puts its REASON in a title — an em dash a reader hovers —
+       * so a rule like "every dashed cell names the custodian that reports no
+       * cost" is unreadable from `innerText` and a check struck on the text can
+       * only ever report that it is missing. A check that cannot read the thing
+       * it asserts on is the failure this file already names twice; the fix is
+       * to read it, not to move the reason onto the screen where it would make
+       * a 60-row table unreadable.
+       */
+      const titles = FAST ? [] : await page.$$eval("main [title]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
+      /**
+       * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
+       * X" is a weaker claim than "the figure the reader clicks opens X" — and
+       * the weaker one passed a bug that was really there. Reintroducing it
+       * proved it: pointing the Dry powder tile at the holdings drill-down left
+       * the sweep green, because another link elsewhere on the page still
+       * satisfied a check that only counted addresses. A drill-down invariant
+       * has to pair the LABEL with the DESTINATION or it is not asserting the
+       * thing a reader experiences.
+       */
+      const links = FAST ? [] : await page.$$eval("main a[href]", (as) =>
+        as.map((a) => ({ href: a.getAttribute("href") ?? "", text: (a.innerText ?? "").replace(/\s+/g, " ").trim() })));
       // What the monitor printed about each mandate, so the drill-down can be
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
         for (const m of mandateRowsIn(text)) MANDATE_ROWS.set(m.accountNo, m);
+      }
+      /**
+       * WHAT MORNING CIO DREW, so the drill-downs below can be checked against
+       * it rather than against a figure typed into this file.
+       *
+       * The addresses come off the DOM and the figures off the rendered text —
+       * the same two sources a reader uses. Captured on the primary theme/width
+       * pass only, which is the one where `innerText` is real.
+       */
+      // WHAT EACH DRILL-DOWN PRINTED, so a later one can be checked against it.
+      // The listed and private halves have to PARTITION the book, and that is a
+      // claim about the two pages together which neither can make alone.
+      if (!FAST && name.startsWith("holdings-")) {
+        DRILLDOWN_COUNTS.set(name, drilldownCounts(text));
+      }
+      if (name === "cio") {
+        // THE ADDRESSES ARE COLLECTED EVEN IN FAST MODE, for the reason
+        // `MANDATE_PATH` is: the responsive sweep would otherwise walk each
+        // drill-down's not-found page at every width, measuring the layout of a
+        // screen nobody sees. The FIGURES below need real `innerText` and are
+        // gated; the invariants that read them are gated the same way.
+        for (const h of hrefs) {
+          const m = /^\/holdings\?of=([a-z-]+)/.exec(h);
+          // FIRST WINS, so the row captured is the allocation table's largest —
+          // stable across drops in a way "whichever sorted last" is not.
+          if (m && !CIO_DRILLDOWNS.has(m[1])) CIO_DRILLDOWNS.set(m[1], h);
+          if (/^\/holdings\?of=bucket&key=./.test(h) && !CIO_BUCKET_HREFS.includes(h)) CIO_BUCKET_HREFS.push(h);
+        }
+      }
+      if (name === "cio" && !FAST) {
+        for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
+        const grab = (label, re) => { const v = money2cr(re.exec(text)?.[1]); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
+        grab("nav", new RegExp(String.raw`CONSOLIDATED NAV\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        grab("invested", new RegExp(String.raw`CAPITAL INVESTED\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        grab("no-cost", new RegExp(String.raw`positions? worth (₹[\d,.]+\s*(?:Cr|L|K)?) carry no cost`, "i"));
+        grab("measured", new RegExp(String.raw`\d+ of \d+ accounts\s*·\s*(₹[\d,.]+\s*(?:Cr|L|K)?) of `, "i"));
+        const counts = /Positions\s*\n?\s*([\d,]+)[\s\S]{0,40}?Distinct names\s*\n?\s*([\d,]+)/i.exec(text);
+        if (counts) { CIO_FIGURES.set("positions", cr(counts[1])); CIO_FIGURES.set("names", cr(counts[2])); }
+        // The rest of the Concentration card, so each drill-down can be held to
+        // the figure a reader clicked rather than to a literal written here.
+        const num = (label, re) => { const v = Number(re.exec(text)?.[1] ?? NaN); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
+        num("crossHeld", /Cross-held\s*\n?\s*([\d,]+)/i);
+        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+)%/i);
+        const wl = /Winners\s*\/\s*losers\s*\n?\s*([\d,]+)\s*\/\s*([\d,]+)/i.exec(text);
+        if (wl) { CIO_FIGURES.set("winners", cr(wl[1])); CIO_FIGURES.set("losers", cr(wl[2])); }
+        grab("listed", new RegExp(String.raw`^Listed (₹[\d,.]+\s*(?:Cr|L|K)?)`, "im"));
+        grab("private", new RegExp(String.raw`Private (₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
       }
       const zeros = !FAST && theme === "light" && width === WIDTHS[0]
         ? [...text.matchAll(ZEROISH)].map((m) => {
@@ -2006,8 +2670,13 @@ for (const theme of THEMES) {
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
       }
-      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && INVARIANTS[name]) {
-        for (const [desc, test] of INVARIANTS[name]) {
+      // `holdings-row-3` shares its invariant list with every other allocation
+      // row: the assertions compare each page against ITS OWN row's cells, so
+      // one list serves all of them and a per-row copy would be eight places to
+      // drift apart.
+      const checks = INVARIANTS[name] ?? INVARIANTS[name.replace(/-\d+$/, "")];
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && checks) {
+        for (const [desc, test] of checks) {
           let r;
           // A CHECK THAT THREW HAS NOT PASSED, and it must not take the sweep
           // down with it either. Reported by name with the message, so a
@@ -2016,7 +2685,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

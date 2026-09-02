@@ -18,6 +18,7 @@ import { DataAudit } from "@/pages/DataAudit";
 import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
 import { MandateHoldings } from "@/pages/MandateHoldings";
+import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { CompareCompanies } from "@/pages/CompareCompanies";
 import { Watchlist } from "@/pages/Watchlist";
 // FOOS-spec preview pages — each implements a spec layer whose live data source
@@ -111,6 +112,21 @@ export default function App() {
                 has its own strategy, its own as-of and its own statement total
                 to tie to. */}
             <Route path="/mandate/:accountId" element={<Gate><MandateHoldings /></Gate>} />
+            {/* WHAT IS BEHIND A FIGURE — the drill-down every total on Morning
+                CIO now opens into: each allocation row, each KPI tile and each
+                concentration figure. The SET lives in the address (`?of=`, plus
+                `?key=` for one allocation row) rather than in component state,
+                so a figure's drill-down can be linked, bookmarked and — the
+                reason it matters here — WALKED BY `check:pages`, which is what
+                lets an invariant assert that the drill-down's own total
+                reconstructs the tile it opened from.
+
+                One route rather than one per figure: a drill-down is not a new
+                measurement, it is the same book over a different subset, and
+                thirteen pages would be thirteen chances to disagree with the
+                screen they were reached from. `src/lib/drilldown.ts` owns the
+                subsets and is called by BOTH sides. */}
+            <Route path="/holdings" element={<Gate><HoldingsBehind /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
             <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
