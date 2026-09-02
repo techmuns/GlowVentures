@@ -3974,6 +3974,62 @@ or not. Reintroducing the sentence proved it: `cio` stayed green. It is asserted
 on `cio-live` now; the allocation subtitle and the removed card render with no
 feed at all and stay on `cio`.
 
+### Stage 10u — A MANDATE ROW IS ITS NAME, AND THE CHECKS STOPPED READING PROSE
+
+*"Do not write the entity along with the PMS name, entity name is already a
+separate column. Other details in smaller text can be shown after we open the
+full drill down page of individual PMS page. Remove the smaller text details
+from the front table so it is a clean row."*
+
+A mandate row printed three lines: the name with the owner appended, a "PMS
+mandate" pill, and a grey sub-line reading `<manager> · account <no> · N
+holdings`. It is one line now — name and pill — and rows on screen went **18 →
+21** because a third of each mandate row was chrome.
+
+**THE OWNER LEFT THE NAME BECAUSE THE COLUMN THAT HOLDS IT NOW EXISTS.**
+`mandateLabelWithOwner` was written for a real defect: FOUR of this book's ten
+mandates share a strategy name with another — Goldstandard's Aristos, SVAN's
+Velocity, Green Lantern's GLC Growth, V.E.C's Small and Mid-Cap, each run for
+two members — so on strategy alone the section drew four pairs of
+identically-named rows with nothing to tell them apart. That reason EXPIRED when
+Sector and Entity moved to the end of the row: a mandate row populates
+`entities`, so the pairs are separated by the column that exists for it. The
+helper stays for callers with no such column (the Excel export, the holdings
+drill-down), and **`check:pages` asserts the pairs are still distinguishable**,
+because this is the one thing the change could break.
+
+**THE DETAILS MOVED TO THE PAGE THAT ALREADY PRINTED THEM.**
+`/mandate/:accountId` has always shown `provider · accountNo · owner` under its
+title. Nothing was lost: the row's link carries manager, account and count in
+its hover `title`, and the row carries them as `data-*`.
+
+**ONE THING IS NOT A DETAIL AND STAYS, CONDITIONALLY.** Under a filter a mandate
+row's figures cover PART of the account, and a reader who is not told reads a
+subset as the whole. That line renders only when `holdings.length <
+accountCount` — nothing in the unfiltered view, which is the clean row that was
+asked for.
+
+**AND SIX INVARIANTS WERE READING THAT SUB-LINE.** `MANDATE_SUBLINE` parsed the
+manager, the account and the constituent count out of the rendered text, and
+`check:family` parsed the same string again. Deleting the line would have
+retired all of them **silently**: a regex that matches nothing yields an empty
+list, and an empty list passes `.every()` and satisfies a length comparison
+against itself. So the row carries `data-mandate`, `data-manager`,
+`data-account`, `data-holdings`, `data-account-holdings` and `data-bucket`, the
+sweep collects them from the DOM into `ctx.tableRows` / `ctx.mandateRows`, and
+every one of those checks reads structure instead. Same contract `data-row` and
+`data-days` already carry on the transactions rollup, and the same rule: **a
+structural claim must not depend on prose a redesign is free to delete.** A run
+that captures no rows reports NOT CHECKED rather than passing.
+
+**THE FIRST DRAFT OF THE NEW CHECK COULD NOT FAIL, AND REINTRODUCING THE BUG IS
+WHAT FOUND IT.** "The name does not carry the owner" was struck on
+`data-mandate` — which is `MandateInfo.name`, a DIFFERENT field from the
+`Row.security` the cell actually renders. Putting the owner back into the
+rendered name left the attribute untouched and the invariant green. It reads the
+rendered first cell now. Both new invariants were then verified by reintroducing
+their bug: the owner back in the name, and the sub-line back under it.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

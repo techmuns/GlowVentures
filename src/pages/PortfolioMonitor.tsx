@@ -11,7 +11,7 @@ import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
   holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
-  mandateLabel, mandateLabelWithOwner,
+  mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
   holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
 } from "@/lib/analytics";
@@ -68,10 +68,10 @@ type MandateHolding = {
 type MandateInfo = {
   accountId: string;
   /**
-   * The mandate's name WITHOUT the owner qualifier — `mandateLabel`. `Row.security`
-   * carries the qualified one (`mandateLabelWithOwner`) because four of the ten
-   * mandates share a strategy name with another; inside this row's own expansion
-   * there is nothing to disambiguate against, so the prose uses the short name.
+   * The mandate's name — `mandateLabel`, the same one `Row.security` now shows.
+   * They were different while the row's name carried the owner inside it to tell
+   * apart the four mandates that share a strategy name; the Entities column does
+   * that job now, so both are the short name and this field has one meaning.
    */
   name: string;
   manager: string; accountNo: string; asOf: string;
@@ -345,17 +345,23 @@ export function PortfolioMonitor() {
         heldSince: null,
         key: "mandate:" + accountId,
         /**
-         * The mandate's own name, from `mandateLabelWithOwner` and never
-         * re-derived here. FOUR OF THIS BOOK'S TEN MANDATES SHARE A STRATEGY
-         * NAME with another one — the same strategy run for two members
-         * (Goldstandard's Aristos, SVAN's Velocity, Green Lantern's GLC Growth,
-         * V.E.C's Small and Mid-Cap) — so listed on strategy alone this section
-         * draws four pairs of identically-named rows and a reader cannot tell
-         * which is whose. The helper qualifies the name with the owner for
-         * exactly that, and falls back to the house, then to a stated absence,
-         * rather than to the raw accountId slug the inline version printed.
+         * THE MANDATE'S NAME ALONE — the owner rides in the Entities column.
+         *
+         * This carried `mandateLabelWithOwner` because FOUR OF THIS BOOK'S TEN
+         * MANDATES SHARE A STRATEGY NAME with another (Goldstandard's Aristos,
+         * SVAN's Velocity, Green Lantern's GLC Growth, V.E.C's Small and
+         * Mid-Cap — the same strategy run for two members), and on strategy
+         * alone the section drew four pairs of identically-named rows with
+         * nothing to tell them apart.
+         *
+         * THAT REASON EXPIRED WHEN THE COLUMNS WERE REORDERED. Entities now
+         * closes every row and a mandate row populates it (just below), so the
+         * pairs are distinguished by the column that exists for exactly this
+         * rather than by a name carrying a second field inside it. The helper
+         * stays for callers that render a mandate OUTSIDE this table, where
+         * there is no Entities column to lean on.
          */
-        security: mandateLabelWithOwner(acc, ownerOf(accIdx, ps[0])),
+        security: mandateLabel(acc),
         securityKey: "", sector: "", assetClass: "",
         entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
         parts: [],
@@ -861,7 +867,15 @@ export function PortfolioMonitor() {
                     : LIVE_CELL;
                   return (
                     <Fragment key={r.key}>
-                      <tr className="hover:bg-ink-700/40">
+                      <tr className="hover:bg-ink-700/40"
+                        data-bucket={r.bucket}
+                        {...(m ? {
+                          "data-mandate": m.name,
+                          "data-manager": m.manager,
+                          "data-account": m.accountNo,
+                          "data-holdings": String(m.holdings.length),
+                          "data-account-holdings": String(m.accountCount),
+                        } : {})}>
                         {/* NO "cost n/a" BADGE BESIDE THE NAME. The row already
                             says it four times over — Avg cost, Invested,
                             Unrealised P&L and Return each render an em dash off
@@ -869,6 +883,22 @@ export function PortfolioMonitor() {
                             statement of one fact, sitting in the one column a
                             reader scans for the security's NAME. The flag stays
                             and every dash it drives stays; only the badge is gone. */}
+                        {/*
+                          ONE LINE: the mandate's name and what it is. The manager,
+                          the account number and the constituent count used to ride
+                          underneath in small text, and they belong on the mandate's
+                          own page — which already prints all three — rather than
+                          under every row of a table a reader is scanning for value.
+                          They stay reachable: the link's `title` carries them on
+                          hover, and the row's `data-*` attributes carry them for the
+                          checks, which must not depend on prose a redesign deletes.
+
+                          THE ONE THING THAT IS NOT A DETAIL STAYS, and only when it
+                          is true: under a filter this row's figures cover PART of
+                          the mandate, and a reader who is not told that will read a
+                          subset as the account. It renders nothing in the unfiltered
+                          view, which is the clean row that was asked for.
+                        */}
                         <td className="min-w-[15rem] px-2 py-1.5">
                           {m ? (
                             <div className="flex flex-col gap-0.5">
@@ -879,18 +909,17 @@ export function PortfolioMonitor() {
                                   <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                                 </button>
                                 <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
-                                  title={`${m.manager} — account ${m.accountNo}. Open the mandate drill-down.`}
+                                  title={`${m.manager} — account ${m.accountNo}, ${m.accountCount} holdings. Open the mandate drill-down.`}
                                   className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
                                   {r.security}
                                 </Link>
                                 <Pill tone="core">PMS mandate</Pill>
                               </div>
-                              <span className="pl-5 text-[11px] text-slate-500">
-                                {m.manager} · account {m.accountNo} ·{" "}
-                                {m.holdings.length < m.accountCount
-                                  ? <>{m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}</>
-                                  : <>{m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"}</>}
-                              </span>
+                              {m.holdings.length < m.accountCount && (
+                                <span className="pl-5 text-[11px] text-amber-400/80">
+                                  {m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}
+                                </span>
+                              )}
                             </div>
                           ) : (
                             <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
