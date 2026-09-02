@@ -51,6 +51,16 @@ function failureText(code: string | null | undefined, detail?: string | null): s
     case "UPSTREAM_UNREACHABLE":
     case "UNREACHABLE":
       return "The assistant's API could not be reached. This is the service, not your question.";
+    // `MUNS_TOKEN` is a SERVICE token, so the chat endpoint — the only
+    // user-scoped one this dashboard calls — needs `user_index` to know whose
+    // conversation this is. Named as configuration rather than dressed up as a
+    // model failure, because those send the reader to different places.
+    case "USER_INDEX_REQUIRED":
+      return "The assistant is not fully configured: its API needs a user index alongside the service token, and "
+        + "MUNS_USER_INDEX is not set in the Cloudflare environment. Nothing was asked.";
+    case "USER_INDEX_REJECTED":
+      return `The assistant's API rejected the configured user index${detail ? ` — ${detail}` : ""}. `
+        + "This is MUNS_USER_INDEX in the Cloudflare environment, not your question.";
     case "UPSTREAM_ERROR":
       return `The assistant's API refused the request${detail ? ` — ${detail}` : ""}.`;
     case "NO_TEXT_IN_STREAM":

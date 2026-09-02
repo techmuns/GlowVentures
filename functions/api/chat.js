@@ -21,6 +21,31 @@
 // serving one from cache would attach one family member's chat id to another's
 // request. `cache-control: no-store` on the way out, and no `caches.default`.
 //
+// ── `user_index`, AND WHY THE DOC'S EXAMPLE DID NOT WORK HERE ───────────────
+//
+// The first live request came back:
+//
+//   400 — "user_index is required in the request body for service token requests"
+//
+// That is a TOKEN CLASS mismatch, not a wrong path. The endpoint's doc shows
+// `Authorization: Bearer <YOUR_SESSION_TOKEN>` — a USER session token, where
+// the acting user is implicit in the credential. `MUNS_TOKEN` is a SERVICE
+// token, so the user is not implicit and the API asks the caller to name one.
+//
+// This is the first USER-SCOPED muns endpoint this dashboard calls. The other
+// seven are stateless lookups — a quote, a filing, a ratio table — and none of
+// them has an owner, a session or a history, which is exactly why none of them
+// ever needed this field and why the omission surfaced only here.
+//
+// ── AND THE VALUE IS CONFIGURED, NEVER GUESSED ──────────────────────────────
+//
+// `MUNS_USER_INDEX` sits beside `MUNS_TOKEN` in the Cloudflare environment. It
+// is not defaulted and not inferred: a wrong user index would file this
+// family's conversation under somebody else's account, which is a worse outcome
+// than the 400 it replaces. Unset, the function says so by name
+// (`USER_INDEX_REQUIRED`) and names the variable to set, rather than sending a
+// value nobody chose.
+//
 // ── UNVERIFIED AGAINST THE LIVE API ─────────────────────────────────────────
 //
 // `MUNS_TOKEN` exists only in the Cloudflare environment, so this could not be
@@ -41,6 +66,35 @@ const UPSTREAM = "https://devde.muns.io/chat/chat-muns";
 const UPSTREAM_TIMEOUT_MS = 120000;   // expert mode is slow; a stream, not a fetch
 const MAX_BODY_BYTES = 256 * 1024;    // the dashboard context is a few KB
 
+/**
+ * The upstream's own words, out of whatever envelope it wrapped them in.
+ *
+ * A NestJS error nests as `{ message: { message, error, statusCode } }`, and the
+ * first cut printed that whole JSON blob at the reader — machine noise where a
+ * sentence belongs. The deepest `message` string is the part a human wrote.
+ */
+function upstreamMessage(raw) {
+  if (!raw) return null;
+  let v;
+  try { v = JSON.parse(raw); } catch { return String(raw).slice(0, 300); }
+  for (let i = 0; i < 5; i++) {
+    if (typeof v === "string") return v.slice(0, 300);
+    if (v && typeof v === "object" && "message" in v) { v = v.message; continue; }
+    break;
+  }
+  return typeof v === "string" ? v.slice(0, 300) : String(raw).slice(0, 300);
+}
+
+/**
+ * `user_index` as the API wants it.
+ *
+ * "index" reads as a number and the value is configured as a string, so an
+ * all-digit value is sent as a NUMBER and anything else verbatim. Stated rather
+ * than silently coerced: if the upstream turns out to want the string form, the
+ * probe below shows it in one call.
+ */
+const asUserIndex = (v) => (/^\d+$/.test(String(v).trim()) ? Number(String(v).trim()) : v);
+
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
     status,
@@ -50,20 +104,53 @@ const json = (obj, status = 200) =>
 export async function onRequest(context) {
   const { request, env } = context;
   const token = env && env.MUNS_TOKEN;
+  const userIndex = env && env.MUNS_USER_INDEX;
   const meta = {
     version: VERSION,
     deploymentId: (env && (env.CF_PAGES_COMMIT_SHA || env.CF_PAGES_BRANCH)) || null,
     colo: request.cf && request.cf.colo ? request.cf.colo : null,
     tokenPresent: !!token,
+    // The PRESENCE and the SHAPE, never the value — the same discipline the
+    // token itself is held to. `sent` is what the body would carry, so a
+    // mis-typed index shows up here rather than needing a redeploy to find.
+    userIndexPresent: !!userIndex,
+    userIndexSent: userIndex ? asUserIndex(userIndex) : null,
   };
 
-  if (request.method === "GET") return json({ ok: !!token, upstream: UPSTREAM, ...meta });
+  // GET /api/chat            — configuration, no upstream call.
+  // GET /api/chat?probe=1    — ONE live round trip, diagnostics only. This is
+  //                            how the `user_index` value gets confirmed on the
+  //                            deployment, since the token exists nowhere else.
+  if (request.method === "GET") {
+    const probe = new URL(request.url).searchParams.get("probe");
+    if (!probe) return json({ ok: !!token && !!userIndex, upstream: UPSTREAM, ...meta });
+    if (!token) return json({ ok: false, failureCode: "NOT_CONFIGURED", ...meta });
+    try {
+      const r = await fetch(UPSTREAM, {
+        method: "POST",
+        headers: { accept: "text/event-stream", authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          tasks: ["Reply with the single word: ok"],
+          query_context: { chatHistory: [], mode: "fast" },
+          ...(userIndex ? { user_index: asUserIndex(userIndex) } : {}),
+        }),
+      });
+      const text = (await r.text()).slice(0, 600);
+      return json({ ok: r.ok, upstreamStatus: r.status, upstreamMessage: upstreamMessage(text), body: text, ...meta });
+    } catch (e) {
+      return json({ ok: false, failureCode: "UPSTREAM_UNREACHABLE", detail: String((e && e.message) || e), ...meta });
+    }
+  }
   if (request.method !== "POST") return json({ ok: false, failureCode: "METHOD_NOT_ALLOWED", ...meta }, 405);
 
   // A MISSING TOKEN IS A CONFIGURATION FACT, NOT AN EMPTY ANSWER. It is named
   // as such so the panel can say the assistant is not configured rather than
   // implying the question had no answer.
   if (!token) return json({ ok: false, failureCode: "NOT_CONFIGURED", ...meta }, 503);
+  // NAMED BEFORE THE CALL, not discovered from a 400. The upstream's own message
+  // is accurate and unreadable; this says which variable is missing and where it
+  // lives, which is what the next person actually needs.
+  if (!userIndex) return json({ ok: false, failureCode: "USER_INDEX_REQUIRED", ...meta }, 503);
 
   let body;
   try {
@@ -96,6 +183,10 @@ export async function onRequest(context) {
       body: JSON.stringify({
         tasks: body.tasks,
         query_context,
+        // Required because MUNS_TOKEN is a SERVICE token — see the note at the
+        // top. Never taken from the request: the browser does not get to say
+        // whose account a question is filed under.
+        user_index: asUserIndex(userIndex),
         ...(body.chat_id ? { chat_id: body.chat_id } : {}),
       }),
       signal: ctl.signal,
@@ -112,9 +203,15 @@ export async function onRequest(context) {
     // The upstream's own words, truncated. A status alone sends the next reader
     // to guess; 401 and 403 mean different things about the token.
     let preview = null;
-    try { preview = (await upstream.text()).slice(0, 400); } catch { /* body already gone */ }
-    return json({ ok: false, failureCode: "UPSTREAM_ERROR", upstreamStatus: upstream.status, detail: preview, ...meta },
-      upstream.status === 401 || upstream.status === 403 ? 502 : 502);
+    try { preview = (await upstream.text()).slice(0, 600); } catch { /* body already gone */ }
+    const message = upstreamMessage(preview);
+    // A 400 NAMING `user_index` MEANS THE CONFIGURED VALUE IS WRONG, not that
+    // the question was. Reported as its own code so the panel sends the reader
+    // to the environment rather than to the model.
+    const code = upstream.status === 400 && /user_index/i.test(message ?? "")
+      ? "USER_INDEX_REJECTED"
+      : "UPSTREAM_ERROR";
+    return json({ ok: false, failureCode: code, upstreamStatus: upstream.status, detail: message, ...meta }, 502);
   }
 
   // Clear the abort timer once the stream is flowing: it bounds how long we wait

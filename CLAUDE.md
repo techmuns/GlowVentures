@@ -2982,6 +2982,36 @@ show, and a failure names its own code — `NOT_CONFIGURED` (no token) and
 `UPSTREAM_ERROR` (a token the API refused) send the next person to completely
 different places, which is `upstreamStatus.ts`'s rule arriving through a chat.
 
+**`user_index` — AND WHY THE ENDPOINT'S OWN DOC DID NOT WORK HERE.** The first
+live request came back `400 — "user_index is required in the request body for
+service token requests"`. That is a TOKEN CLASS mismatch, not a wrong path. The
+doc specifies `Authorization: Bearer <YOUR_SESSION_TOKEN>` — a USER session
+token, where the acting user is implicit in the credential. `MUNS_TOKEN` is a
+SERVICE token, so the user is not implicit and the API asks the caller to name
+one. **This is the first USER-SCOPED muns endpoint this dashboard calls**: the
+other seven are stateless lookups — a quote, a filing, a ratio table — with no
+owner, session or history between them, which is exactly why none of them ever
+needed the field and why the omission could only surface here.
+
+**THE VALUE IS CONFIGURED, NEVER GUESSED.** `MUNS_USER_INDEX` sits beside
+`MUNS_TOKEN` in the Cloudflare environment; it is not defaulted and not
+inferred, because a wrong index would file this family's conversation under
+somebody else's account — a worse outcome than the 400 it replaces. Unset, the
+function refuses BEFORE calling the upstream and names the variable
+(`USER_INDEX_REQUIRED`); rejected, it comes back as `USER_INDEX_REJECTED`
+rather than as a model failure, because those two send a reader to completely
+different places. A `user_index` in the REQUEST is ignored — the browser does
+not get to say whose account a question is filed under. `GET /api/chat?probe=1`
+makes one live round trip so the value can be confirmed on the deployment
+without a redeploy cycle, and the diagnostics report the index's PRESENCE and
+SHAPE, never the token.
+
+**AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
+error as `{ message: { message, error, statusCode } }`, and the first cut
+rendered that JSON blob into the chat — machine noise where a sentence belongs.
+`upstreamMessage` unwraps to the deepest string; anything that is not JSON is
+passed through truncated rather than swallowed.
+
 **THIRTY-FOUR ARITHMETIC CHECKS AND FIVE RENDERED ONES.**
 `src/lib/__tests__/chatContext.test.ts` reconciles the snapshot against the
 GENERATED book by a different path from the builder's — NAV against
@@ -2993,6 +3023,14 @@ absent-vs-zero rule failing through a JSON field instead of a table cell.
 `check:pages` walks a `chat` route that opens the panel and asks one question:
 the label, the stated snapshot, the vanished search input, and the named
 failure. All verified by reintroducing their bug.
+
+**AND TWENTY-TWO MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+against a STUBBED upstream — the token exists only in Cloudflare, so the real
+API is out of reach from a test, but every branch around it is not: that
+`user_index` is sent at the top level, as a number when it reads as one and
+verbatim when it does not, that a request-supplied one is ignored, that no
+call is made at all when it is unconfigured, and that the deployment's exact
+400 envelope comes back as one readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
