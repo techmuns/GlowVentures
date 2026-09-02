@@ -255,17 +255,28 @@ if (await catSelect.count()) {
   await catSelect.selectOption({ label: "PMS mandates" });
   await page.waitForTimeout(800);
   text = await page.locator("body").innerText();
-  const subLines = [...text.matchAll(/·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?/g)];
+  /**
+   * READ OFF THE ROWS' OWN ATTRIBUTES, not off a printed sub-line.
+   *
+   * These two used to parse "· account <no> · N holdings" out of the rendered
+   * text. That line was removed at the family's request — the entity has its own
+   * column and the rest belongs on the mandate's page — and BOTH checks would
+   * then have matched nothing, which is not a failure but an empty list, and an
+   * empty list quietly satisfies a length comparison against itself. The row
+   * carries `data-mandate` / `data-holdings` for exactly this.
+   */
+  const mandateRows = await page.$$eval("tbody tr[data-mandate]", (trs) =>
+    trs.map((tr) => ({ accountNo: tr.getAttribute("data-account"), holdings: Number(tr.getAttribute("data-holdings")) })));
   const rowsPill = Number(/(\d+)\s+rows/.exec(text)?.[1] ?? NaN);
   const links = await page.locator('a[href^="/mandate/"]').count();
   check("filtering to PMS mandates lists mandates, one row each",
-    subLines.length >= 2 && rowsPill === subLines.length && links === subLines.length,
-    `${subLines.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
+    mandateRows.length >= 2 && rowsPill === mandateRows.length && links === mandateRows.length,
+    `${mandateRows.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
   // ...and each stands for more shares than it draws, which is what a roll-up is.
-  const constituents = subLines.reduce((n, m) => n + Number(m[2]), 0);
+  const constituents = mandateRows.reduce((n, m) => n + m.holdings, 0);
   check("each mandate row stands for the shares inside it",
-    subLines.length > 0 && constituents > subLines.length,
-    `${constituents} constituent holdings across ${subLines.length} mandates`);
+    mandateRows.length > 0 && constituents > mandateRows.length,
+    `${constituents} constituent holdings across ${mandateRows.length} mandates`);
   await catSelect.selectOption({ label: "All categories" });
   await page.waitForTimeout(600);
 } else {

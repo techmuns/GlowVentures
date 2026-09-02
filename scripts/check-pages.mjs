@@ -657,16 +657,29 @@ function headingCount(head) {
   return m ? { holdings: cr(m[1]), mv: crU(m[2], m[3]) } : null;
 }
 /**
- * A MANDATE ROW, which is an ACCOUNT and not a security. Its sub-line is the
- * one the manager, the account number and the constituent count are printed on,
- * and it is the line the row's figures hang off — so finding it is how the
- * checks tell a rolled-up mandate from a share that leaked in beside one.
+ * A MANDATE ROW, which is an ACCOUNT and not a security — read off the ROW'S OWN
+ * ATTRIBUTES rather than out of the rendered text.
+ *
+ * These facts used to be parsed from a sub-line the row printed under its name
+ * ("<manager> · account <no> · N holdings"). The family asked for that line to
+ * go — the entity has its own column and the rest belongs on the mandate's own
+ * page — and every one of the six invariants below would have gone with it,
+ * silently, because a regex that matches nothing yields an empty list and an
+ * empty list passes an `.every()`.
+ *
+ * So the row carries `data-mandate`, `data-manager`, `data-account`,
+ * `data-holdings`, `data-account-holdings` and `data-bucket`, and these read
+ * those. It is the same contract `data-row` / `data-days` already carry on the
+ * transactions rollup, and for the same reason: a STRUCTURAL claim must not
+ * depend on prose a redesign is free to delete.
  */
-const MANDATE_SUBLINE = /^(.+?)\s+·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?\b/;
-const mandateRowsIn = (body) => (body ?? "").split("\n")
-  .map((l) => MANDATE_SUBLINE.exec(l))
-  .filter(Boolean)
-  .map((m) => ({ manager: m[1].trim(), accountNo: m[2], holdings: Number(m[3]) }));
+const MANDATE_BUCKET = "PMS mandates";
+const DIRECT_EQUITY_BUCKET = "Direct Equity";
+const mandatesIn = (mandates, bucket) =>
+  (mandates ?? []).filter((m) => bucket === undefined || m.bucket === bucket);
+/** A check needs its input: no rows captured is NOT CHECKED, never a pass. */
+const needRows = (rows) => rows === null || rows === undefined
+  ? { notChecked: "no table rows captured on this run" } : null;
 
 /**
  * WHAT `/monitor` PRINTED ABOUT EACH MANDATE, so the drill-down can be checked
@@ -2287,16 +2300,24 @@ const INVARIANTS = {
      * names are harvested FROM THE PMS SECTION rather than typed here, so this
      * cannot go stale when a manager arrives or leaves.
      */
-    ["no mandate row stands inside the Direct Equity section", (t) => {
+    ["no mandate row stands inside the Direct Equity section", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
       const de = sectionOf(t, "DIRECT EQUITY");
       if (!de) return false;                          // heading gone → nothing checked is nothing passed
-      return mandateRowsIn(de.body).length === 0 && !/\bPMS mandate\b/.test(de.body);
+      // Both halves: no row CARRIES the mandate attributes under that bucket,
+      // and the pill a mandate draws appears nowhere in its text either.
+      return mandatesIn(ctx.mandateRows, DIRECT_EQUITY_BUCKET).length === 0
+        && !/\bPMS mandate\b/.test(de.body);
     }],
-    ["no manager named in the PMS section appears under Direct Equity", (t) => {
+    ["no manager named in the PMS section appears under Direct Equity", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
       const de = sectionOf(t, "DIRECT EQUITY");
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!de || !pms) return false;
-      const managers = [...new Set(mandateRowsIn(pms.body).map((m) => m.manager))];
+      if (!de) return false;
+      // Harvested from the ROWS rather than typed here, so this cannot go stale
+      // when a manager arrives or leaves.
+      const managers = [...new Set(mandatesIn(ctx.mandateRows, MANDATE_BUCKET).map((m) => m.manager))];
       if (managers.length === 0) return false;        // the PMS section drew no mandate row
       return managers.every((m) => !de.body.includes(m));
     }],
@@ -2320,29 +2341,72 @@ const INVARIANTS = {
      * mandate silently dropped its constituents, the sum falls short of the
      * heading. Neither number is written here — both are read off the page.
      */
-    ["every row in the PMS section is a mandate, not a share", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!pms) return false;
-      const rows = mandateRowsIn(pms.body);
-      return rows.length >= 2 && rows.length === pms.rows.length;
+    ["every row in the PMS section is a mandate, not a share", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      // EVERY row filed under the bucket carries the mandate attributes: a
+      // constituent share drawn back out as its own row would not.
+      const inBucket = ctx.tableRows.filter((r) => r.bucket === MANDATE_BUCKET);
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      return rows.length >= 2 && rows.length === inBucket.length;
     }],
-    ["the PMS heading's holding count is the sum of its mandates' own counts", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      const head = headingCount(pms?.head);
-      if (!pms || !head) return false;
-      const rows = mandateRowsIn(pms.body);
+    ["the PMS heading's holding count is the sum of its mandates' own counts", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const head = headingCount(sectionOf(t, "PMS MANDATES")?.head);
+      if (!head) return false;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
       if (rows.length === 0) return false;
       const constituents = rows.reduce((n, r) => n + r.holdings, 0);
       // A roll-up that stands for no more than it draws is not a roll-up. Today
       // it is 281 shares across 10 rows; the relation is asserted, not the pair.
       return constituents === head.holdings && constituents > rows.length;
     }],
+    /**
+     * ── THE ROW IS THE NAME AND WHAT IT IS, AND NOTHING ELSE ────────────────
+     *
+     * "Do not write the entity along with the PMS name… remove the smaller text
+     * details from the front table so it is a clean row."
+     *
+     * The manager, the account number and the constituent count used to print
+     * under every mandate's name. They are on the mandate's own page, and the
+     * row now carries them only as `data-*` and in the link's hover title.
+     */
+    ["a mandate row prints no manager-and-account sub-line", (t) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      if (!pms) return false;
+      return !/·\s+account\s+\S+\s+·\s+\d+\s+holdings?/.test(pms.body);
+    }],
+    /**
+     * ...AND THE OWNER IS NOT INSIDE THE NAME EITHER — but it must still be on
+     * the row, in its own column. THIS IS THE RISK THE CHANGE INTRODUCES and the
+     * reason it is checked rather than assumed: FOUR of this book's ten mandates
+     * share a strategy name with another (the same strategy run for two members),
+     * and the owner was inside the name precisely so those pairs could be told
+     * apart. Dropping it is safe ONLY because Entities closes every row. If a
+     * future change empties that cell for mandates, two rows become
+     * indistinguishable and this fails — which is the whole point.
+     */
+    ["no two mandate rows are indistinguishable once the owner leaves the name", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      if (rows.length < 2) return false;
+      // The name must not carry the owner inside it — read off the CELL, since
+      // that is the text on screen; the `data-mandate` attribute is a different
+      // field and stayed clean while the rendered name carried the owner again.
+      if (rows.some((r) => / · /.test((r.nameCell ?? "").replace(" PMS mandate", "")))) return false;
+      // ...and name + account must be unique, which is what a reader sees once
+      // the Entities column separates the pairs.
+      const seen = new Set(rows.map((r) => `${r.mandate}@@${r.accountNo}`));
+      return seen.size === rows.length;
+    }],
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
     ["every mandate row links to its own drill-down", (t, ctx) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!pms) return false;
-      const rows = mandateRowsIn(pms.body);
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
       return rows.length > 0 && links.size === rows.length;
     }],
@@ -2572,12 +2636,14 @@ const INVARIANTS = {
     // reported it — must leave the mandates rolled up exactly as they were.
     // This is where a "show every statement's row" switch would most plausibly
     // unroll them, so it is asserted on the view where the risk lives.
-    ["the mandates stay rolled up when every statement's row is shown", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      const head = headingCount(pms?.head);
-      if (!pms || !head) return false;
-      const rows = mandateRowsIn(pms.body);
-      return rows.length >= 2 && rows.length === pms.rows.length
+    ["the mandates stay rolled up when every statement's row is shown", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const head = headingCount(sectionOf(t, "PMS MANDATES")?.head);
+      if (!head) return false;
+      const inBucket = ctx.tableRows.filter((r) => r.bucket === MANDATE_BUCKET);
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      return rows.length >= 2 && rows.length === inBucket.length
         && rows.reduce((n, r) => n + r.holdings, 0) === head.holdings;
     }],
     ["'Company Shares' appears nowhere on this page either", (t) => !/company\s+shares/i.test(t)],
@@ -3487,6 +3553,24 @@ for (const theme of THEMES) {
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
       }));
       /**
+       * EVERY ROW OF THE HOLDINGS TABLE, BY WHAT IT IS rather than by what it
+       * prints. `bucket` is on every row and the mandate fields only on the
+       * rows that are mandates, which is exactly the distinction the invariants
+       * below need and the one the rendered text no longer carries.
+       */
+      const tableRows = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tbody tr[data-bucket]")].map((tr) => ({
+          bucket: tr.getAttribute("data-bucket"),
+          // The rendered first cell, which is what the reader actually reads.
+          nameCell: (tr.cells[0]?.innerText ?? "").replace(/\s+/g, " ").trim(),
+          mandate: tr.getAttribute("data-mandate"),
+          manager: tr.getAttribute("data-manager"),
+          accountNo: tr.getAttribute("data-account"),
+          holdings: Number(tr.getAttribute("data-holdings")),
+          accountHoldings: Number(tr.getAttribute("data-account-holdings")),
+        })));
+      const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
+      /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
        * the weaker one passed a bug that was really there. Reintroducing it
@@ -3502,7 +3586,7 @@ for (const theme of THEMES) {
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
-        for (const m of mandateRowsIn(text)) MANDATE_ROWS.set(m.accountNo, m);
+        for (const m of mandateRows ?? []) MANDATE_ROWS.set(m.accountNo, m);
       }
       /**
        * WHAT MORNING CIO DREW, so the drill-downs below can be checked against
@@ -3674,7 +3758,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
