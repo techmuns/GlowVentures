@@ -29,6 +29,34 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
 const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+/**
+ * ONE ROUTE, when a change is being iterated on.
+ *
+ * `ONLY=polycab,monitor` walks just those. The default is every route, so CI
+ * and a plain `npm run check:pages` are unchanged — this exists because
+ * verifying an invariant by REINTRODUCING ITS BUG (the discipline every
+ * invariant here is held to) costs a build and a full sweep per bug, and the
+ * sweep is 94 combinations. A name that matches no route yields an empty walk,
+ * which the summary reports as zero combinations rather than as a clean run.
+ *
+ * A ROUTE THAT RESOLVES ADDRESSES FOR OTHERS IS KEPT WHEN ONE OF THOSE OTHERS
+ * IS ASKED FOR. `monitor` resolves the mandate drill-down's address and `cio`
+ * resolves every holdings drill-down's, so `ONLY=holdings-book` without `cio`
+ * would walk a not-found page and report NOT CHECKED — a filter that silently
+ * stops checking is worse than no filter. It is a DEPENDENCY, not a blanket
+ * keep: a name matching nothing still yields the empty walk above, because no
+ * selected route needs a publisher.
+ */
+const ONLY = (process.env.ONLY ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+const PUBLISHERS = [
+  ["monitor", (n) => n === "mandate" || n === "mandate-fund"],
+  ["cio", (n) => n.startsWith("holdings-")],
+];
+const walked = (name) =>
+  !ONLY.length
+  || ONLY.includes(name)
+  || PUBLISHERS.some(([pub, needs]) => pub === name && ONLY.some(needs));
+
 const THEMES = (process.env.THEMES ?? "light,dark").split(",");
 const WIDTHS = (process.env.WIDTHS ?? "1500").split(",").map(Number);
 const SHOTS = process.env.SHOTS !== "0";
@@ -37,18 +65,6 @@ const SHOTS = process.env.SHOTS !== "0";
 // settles on load instead and skips the per-element contrast walk, which is the
 // other expensive half.
 const FAST = process.env.FAST === "1";
-/**
- * `ONLY=cio,holdings-book` walks a subset — for verifying an invariant by
- * REINTRODUCING ITS BUG, which means one edit, one rebuild and one sweep per
- * check and is unaffordable over all 27 routes.
- *
- * THE PUBLISHER ROUTES ARE ALWAYS KEPT. `monitor` resolves the mandate
- * drill-down's address and `cio` resolves every holdings drill-down's, so a
- * subset that dropped them would walk those routes' not-found pages and report
- * NOT CHECKED — a filter that silently stops checking is worse than no filter.
- * Unset, every route is walked exactly as before.
- */
-const ONLY = process.env.ONLY ? new Set([...process.env.ONLY.split(","), "cio", "monitor"]) : null;
 mkdirSync(OUT, { recursive: true });
 
 /**
@@ -66,6 +82,23 @@ mkdirSync(OUT, { recursive: true });
  * inside a security name is not. The TYPE annotation is why the slice starts at
  * `= [` — `Account[]` carries a bracket pair of its own.
  */
+/**
+ * The rendered text between two landmarks, for an invariant that must read ONE
+ * table on a page carrying several.
+ *
+ * Every figure check here is struck on `document.body.innerText`, and a page
+ * with three tables of share counts on it will satisfy a naive whole-page match
+ * from the wrong one. `from` is inclusive and `to` exclusive; a landmark that
+ * is not found yields "" rather than the rest of the page, so a renamed heading
+ * fails its invariant instead of quietly widening it to everything below.
+ */
+function sliceBetween(text, from, to) {
+  const i = text.indexOf(from);
+  if (i < 0) return "";
+  const j = to ? text.indexOf(to, i) : -1;
+  return text.slice(i, j < 0 ? text.length : j);
+}
+
 function bookArray(src, name) {
   const i = src.indexOf(`export const ${name}`);
   if (i < 0) return null;
@@ -194,6 +227,43 @@ const RINGFENCED_KEY = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const fenced = bookArray(src, "BOOK_POLYCAB");
     return Array.isArray(fenced) ? fenced[0]?.securityKey ?? null : null;
+  } catch { return null; }
+})();
+
+/**
+ * THE RING-FENCED BLOCK'S OWN FIGURES, READ FROM THE BOOK — the independent
+ * side of the Polycab page's reconciliations.
+ *
+ * The family asked that page to show the holding "per demat, per holder,
+ * pledges, dividends and splits". The first two are TABLES, and a table that
+ * silently loses a row looks exactly like a book with one fewer demat in it —
+ * which is the failure `dedupedPositions` sat on for a drop and a half. So the
+ * page's rendered rows are reconciled against each other AND against this,
+ * derived straight from `BOOK_POLYCAB` and `BOOK_ACCOUNTS`.
+ *
+ * Two comparisons, because neither implies the other and both have shipped
+ * broken before in this repo: rows-against-their-own-footer catches a total
+ * computed independently of the rows above it (the Private Market page's PM-1),
+ * and rendered-against-the-book catches a page that drops rows consistently
+ * everywhere and reconciles perfectly with itself.
+ */
+const FENCED = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const fenced = bookArray(src, "BOOK_POLYCAB");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(fenced) || !fenced.length || !Array.isArray(accounts)) return null;
+    const byId = new Map(accounts.map((a) => [a.accountId, a]));
+    const demats = [...new Set(fenced.map((p) => p.accountId))];
+    return {
+      // `quantity` is the primitive the depository prints; a row without one
+      // contributes nothing rather than a zero, exactly as `sumOrNull` does on
+      // the page, so the two sides stay comparable when a statement is silent.
+      shares: fenced.reduce((t, p) => t + (Number.isFinite(p.quantity) ? p.quantity : 0), 0),
+      demats: demats.length,
+      holders: new Set(demats.map((id) => byId.get(id)?.owner).filter(Boolean)).size,
+      accountNos: demats.map((id) => byId.get(id)?.accountNo).filter(Boolean),
+    };
   } catch { return null; }
 })();
 
@@ -701,6 +771,140 @@ const INVARIANTS = {
      */
     ["the removed second-statement card stays removed, and no figure is claimed from the scan",
       (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
+
+    /**
+     * ── THE FIVE THINGS THE FAMILY ASKED THIS PAGE FOR ──────────────────────
+     *
+     * "Per demat, per holder, pledges, dividends and splits." Three of those
+     * are reported by the statements behind this holding and two are not, and
+     * the checks below hold each to the standard its own evidence allows:
+     * the tables are RECONCILED, and the absences are asserted to stay
+     * absences rather than acquiring a zero.
+     */
+
+    /**
+     * THE PER-DEMAT TABLE ACCOUNTS FOR EVERY SHARE THE STRIP REPORTS.
+     *
+     * Struck twice over, and the second half is the one that matters. Summing
+     * the rendered rows against the rendered tile catches a tile computed
+     * independently of the table under it — the Private Market page shipped
+     * exactly that, its footer printing a deduped total while every row above
+     * carried the double count, each correct on its own terms and no check able
+     * to see it. Comparing the tile against `BOOK_POLYCAB` then catches the
+     * case that reconciliation cannot: a page that drops the same row from both
+     * and agrees with itself perfectly.
+     */
+    ["the per-demat rows account for every share the strip reports, and the strip for every share in the book",
+      (t) => {
+        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+        const tile = /SHARES HELD\s*\n\s*([\d,]+)/.exec(t);
+        if (!tile) return false;
+        const strip = Number(tile[1].replace(/,/g, ""));
+        const section = sliceBetween(t, "SECURITY\tHOLDER\tDEPOSITORY ACCOUNT", "Per holder");
+        const rows = [...section.matchAll(/\t([\d,]{4,})\t(?:₹[^\t\n]+|—)\t(?:₹[^\t\n]+|—)/g)];
+        if (!rows.length) return false;
+        const summed = rows.reduce((s, m) => s + Number(m[1].replace(/,/g, "")), 0);
+        return summed === strip && strip === FENCED.shares;
+      }],
+
+    /**
+     * ...AND SO DOES THE PER-HOLDER ROLLUP, over the same shares regrouped.
+     *
+     * A rollup keyed on the wrong field is wrong in one of two directions and
+     * both are silent: keyed on the POSITION it reports one member twice for a
+     * member holding the block in two demats, and deduped — which a per-owner
+     * breakdown must never be (§"consolidated counts once, per-account does
+     * not") — it drops a member's row entirely. Reconciling the column against
+     * the same total the demat table ties to catches both, and the demat COUNT
+     * is compared against the book's distinct accounts so a rollup that reports
+     * rows rather than accounts fails here rather than the first time a member
+     * holds promoter stock in two places.
+     */
+    ["the per-holder rollup regroups the same shares, over the book's own count of demats",
+      (t) => {
+        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+        const section = sliceBetween(t, "SHARE OF THE BLOCK", "Pledges, dividends");
+        const rows = [...section.matchAll(/\n([^\t\n]+)\t([\d,]+)\t([\d,]+|—)\t([^\t\n]+)\t(?:[\d.]+%|—)/g)];
+        if (!rows.length) return false;
+        const shares = rows.reduce((s, m) => s + (m[3] === "—" ? 0 : Number(m[3].replace(/,/g, ""))), 0);
+        const demats = rows.reduce((s, m) => s + Number(m[2].replace(/,/g, "")), 0);
+        return shares === FENCED.shares && demats === FENCED.demats && rows.length === FENCED.holders;
+      }],
+
+    /**
+     * THE SHARE-OF-BLOCK COLUMN IS AGAINST THE BLOCK, NOT THE PORTFOLIO.
+     *
+     * This holding is ring-fenced OUT of the portfolio, so a weight struck
+     * against consolidated NAV would be arithmetic on two sets that were
+     * deliberately separated — and it renders as an ordinary percentage either
+     * way. On this book the wrong denominator reads about 1,738%, so the
+     * column summing to 100 is what says which figure it is. Rendered weights
+     * only: a row whose value is absent renders `—` and must not be counted as
+     * a zero, which would make a broken column sum correctly by shrinking.
+     */
+    ["the share-of-block column is a share OF THE BLOCK — its rendered weights sum to 100%",
+      (t) => {
+        const section = sliceBetween(t, "SHARE OF THE BLOCK", "Pledges, dividends");
+        const weights = [...section.matchAll(/\t([\d.]+)%(?:\n|$)/g)].map((m) => Number(m[1]));
+        return weights.length > 0 && Math.abs(weights.reduce((a, b) => a + b, 0) - 100) < 0.1;
+      }],
+
+    /**
+     * EVERY DEMAT THE BOOK CARRIES THE HOLDING IN IS NAMED ON THE PAGE.
+     *
+     * "Per demat" is only answered if a reader can tell WHICH demat. The
+     * account numbers come from the registry rather than being typed here, so
+     * a drop that adds a second promoter statement extends this check by
+     * itself; a page rendering one row per account without ever naming one
+     * would pass every reconciliation above and answer nothing.
+     */
+    ["every demat account the book reports the holding in is named on the page",
+      (t) => {
+        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+        const section = sliceBetween(t, "SECURITY\tHOLDER\tDEPOSITORY ACCOUNT", "Per holder");
+        return FENCED.accountNos.length > 0 && FENCED.accountNos.every((no) => section.includes(no));
+      }],
+
+    /**
+     * PLEDGES, DIVIDENDS AND CORPORATE ACTIONS ARE ABSENT — AND NEVER A ZERO.
+     *
+     * This is the assertion the whole card exists for. An NSDL holding
+     * statement prints no pledge, lock-in, earmark or freeze column, and no
+     * dividend statement or corporate-benefits report has ever been issued for
+     * this demat — so all three are UNREPORTED. The CDSL statements elsewhere
+     * in this book do print an encumbrance breakdown, with a measured `0.000`
+     * in each column, which is precisely what makes a nil here dangerous: it is
+     * a figure this book knows how to report honestly, so an invented one would
+     * be indistinguishable from a measured one. On a promoter block "nil
+     * pledged" is also the single most consequential zero available to invent.
+     *
+     * Struck on the REPORTED column's own cells rather than on the card's
+     * prose, which renders whatever the data does. Each cell must be an em dash
+     * or a real figure; a zero in any of them fails. The check does not require
+     * the dash — a drop that finally supplies a dividend fills the cell and
+     * still passes — because the claim is "never a fabricated zero", not "always
+     * empty".
+     */
+    ["pledges, dividends and corporate actions each render absent or a real figure, never a fabricated zero",
+      (t) => {
+        const section = sliceBetween(t, "WHICH DOCUMENT CARRIES IT", "These three are absent");
+        const reported = [...section.matchAll(/\n\t([^\t\n]*)\t/g)].map((m) => m[1].trim());
+        if (reported.length !== 3) return false;
+        return reported.every((c) => c !== "" && !/^(?:₹|Rs\.?\s?)?0(?:[.,]0+)?$/.test(c));
+      }],
+
+    /**
+     * ...and all three are actually ASKED. The labels are prose and prose
+     * cannot fail on its own — which is why this sits beside the cell check
+     * above rather than instead of it. What it adds is that the three rows the
+     * family named are the three rows rendered: a card that quietly dropped
+     * "pledges" would satisfy every figure check on this page by having one
+     * fewer figure to get wrong.
+     */
+    ["the three unreported facts are each named rather than silently omitted",
+      (t) => /Pledged, locked-in or earmarked/i.test(t)
+        && /Dividends received/i.test(t)
+        && /Bonus, splits and spin-offs/i.test(t)],
   ],
   /**
    * A HOLDING WITH NO COST NAMES THE CUSTODIAN THAT DOES NOT REPORT ONE.
@@ -1527,6 +1731,61 @@ const INVARIANTS = {
       return Number.isFinite(nav) && Number.isFinite(total)
         && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
     }],
+    /**
+     * ── THE MONEY READS FIRST, AND SECTOR / ENTITY CLOSE THE TABLE ───────────
+     *
+     * "It should be all holdings, it's not all companies, because I'm buying
+     * multiple things" — and "reorder the columns so the money reads first and
+     * Sector / Entity close the table."
+     *
+     * Struck on the RENDERED ROWS, never on the header: innerText breaks a
+     * sortable header cell across lines (the sort arrow is its own flex item),
+     * so a header-order test would be reading a shape the reader never sees.
+     * A data row is one tab-joined line and is exactly what they do see.
+     */
+    ["the pick-list is of holdings, not of companies",
+      (t) => /All holdings/.test(t) && !/All compan(y|ies)/i.test(t)],
+    /**
+     * MONEY FIRST — the cell immediately after the security name is the
+     * QUANTITY. Under the old order it was the sector, so this flips on a
+     * revert rather than passing both ways. Direct Equity is the section to
+     * strike it on: every row in it is a share with a quantity, where a mandate
+     * row carries an em dash there by design.
+     */
+    ["the first cell after the security name is a figure, not a descriptor", (t) => {
+      const de = sectionOf(t, "DIRECT EQUITY");
+      if (!de || de.rows.length === 0) return false;   // no rows is never a pass
+      return de.rows.every((r) => /^[\d,]+(\.\d+)?$/.test(r.split("\t")[1]?.trim() ?? ""));
+    }],
+    /**
+     * ...AND THE SECTOR IS SECOND FROM THE END. Keyed on the app's own word for
+     * an unmapped sector — `analytics.ts` vocabulary, the same kind of literal
+     * the section headings above are matched on, not a figure copied out of the
+     * book. It sat at index 1 before; a revert puts it back there.
+     */
+    ["the sector column is second from the end of every row that renders one", (t) => {
+      const rows = t.split("\n").filter(isDataRow).filter((l) => /\bUnclassified\b/.test(l));
+      if (rows.length === 0) return false;             // nothing to check is nothing passed
+      return rows.every((r) => {
+        const cells = r.split("\t");
+        return cells[cells.length - 2]?.trim() === "Unclassified";
+      });
+    }],
+    /**
+     * AND THE FOOTER ENDS IN TWO EMPTY CELLS. A column of words has no sum to be
+     * missing, so these are empty rather than absent — and their presence is
+     * what says the two descriptor columns are past the last figure. The cell
+     * before them is the total return, which is where the money now stops.
+     */
+    ["the footer totals nothing under the two descriptor columns", (t) => {
+      const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
+      if (!foot) return false;
+      const cells = foot.split("\t");
+      return cells.length >= 3
+        && cells[cells.length - 1].trim() === ""
+        && cells[cells.length - 2].trim() === ""
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+    }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and
@@ -2232,7 +2491,7 @@ const report = [];
 for (const theme of THEMES) {
   for (const width of WIDTHS) {
     for (const [name, route] of ROUTES) {
-      if (ONLY && !ONLY.has(name)) continue;
+      if (!walked(name)) continue;
       // A route may resolve its own address from what an earlier route rendered
       // (the mandate drill-down does). Resolved at navigation time, so it sees
       // this sweep's monitor rather than a previous run's.

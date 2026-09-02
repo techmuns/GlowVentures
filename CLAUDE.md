@@ -1030,6 +1030,86 @@ E 1,761,264.629 on Ajay's; Sanshi Class E 1,211,186.597, Sky Capital's Hudle A1
 9,90,429.684 units on Bharat's. A name is a spelling; four exact unit counts
 against four different funds are not.
 
+### The Polycab page answers five asks, and the statements answer three
+
+*"Polycab page should show the holding per demat, per holder, pledges, dividends
+and splits."* Measured against the corpus rather than assumed, and the split
+between what is reported and what is not is a fact about the DOCUMENT TYPE
+rather than about the holding:
+
+- **Per demat** — `INE455K01017` appears in exactly ONE document in the whole
+  archive: the ICICI Bank NSDL `Statement of Holding`. Some thirty other files
+  match "polycab" and every one of them matches the family's own
+  **`@polycab.com` EMAIL ADDRESS** on a statement about something else. That is
+  §"a document is not what it MENTIONS" arriving through a mail domain, and it
+  is why the table is built on `securityKey` rather than on a name search.
+- **Per holder** — the statement prints `Name AJAY T JAISINGHANI`, which
+  `shared/owners.mjs` resolves. The rollup keys on the ACCOUNT and is
+  deliberately NOT deduped: a per-owner breakdown shows each statement's row as
+  printed (§"consolidated counts once, per-account does not").
+- **Pledges** — an NSDL `Statement of Holding` has five columns: ISIN Code,
+  Scrip Name, Account Description, Balance, Value. **There is no pledge,
+  lock-in, earmark or freeze column on it at all.**
+- **Dividends** — the only report type this account has ever issued is
+  `holdings`. No dividend statement and no corporate-benefits report covers it.
+- **Splits** — `BOOK_CORPORATE_ACTIONS` is real and populated: a 1:1 bonus, a
+  1:5 bonus, a five-way spin-off and two distributions, across four accounts.
+  This demat is not one of them and no row in it names this security.
+
+**AND A NIL PLEDGE IS THE MOST DANGEROUS ZERO ON THIS PAGE.** The CDSL
+statements elsewhere in this book DO print the encumbrance breakdown — `FREE
+BAL. | PLEDGED SETUP | PLEDGEE | LOCKIN + FREEZE | SAFE/PENDING DEMAT | REMAT`,
+with a measured `0.000` in each — so an unpledged balance is a figure this book
+knows how to report honestly, and an invented one would be indistinguishable
+from a measured one on screen. On a PROMOTER block, where a pledge is the fact a
+reader would act on, it is also the most consequential zero available to invent.
+The row renders `—` with the reason, and `check:pages` asserts it can never
+acquire a number that parses as zero.
+
+**THE LAST THREE ARE READ FROM THE BOOK, NOT DECLARED IN PROSE.** The card
+filters `BOOK_CORPORATE_ACTIONS` on this holding's own `securityKey` and sums
+`dividendReceived` off the position, so a drop that brings a Polycab dividend or
+bonus into the archive fills those rows with no code change — and the page grows
+a real corporate-actions table when one arrives. Until then each row states what
+is missing and which document would carry it, as **three rows in ONE card**
+rather than three dashed boxes: during an upstream outage three empty frames
+read as three failures, which is the company page's own lesson applied before it
+had to be learnt twice.
+
+**THE STATEMENT'S `Account Description` IS MEASURED AND THEN DISCARDED, and that
+is the one improvement left here.** `bandsFromHeader` in `nsdlDemat.mjs` derives
+that column's band — it has to, to place the two money columns — and
+`readHoldings` never reads it. It prints `Beneficiary` on the Polycab row,
+`Beneficiary - Pre IPO Shares/27-AUG-26` and `Pending Demat` on others: a real
+balance-TYPE field, and the closest thing this document has to a statement about
+encumbrance. Carrying it needs a re-extraction, which needs
+`GLOW_PDF_PASSWORDS`. It is named here rather than re-derived from `pages.json`
+in the browser, because a presentation layer that repairs an extraction hides
+the gap from the reconciler (§1) — the same reason `securityKey` is not patched
+on the read side.
+
+**SIX INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG.** `check:pages` walks
+`/polycab` and reconciles the rendered tables rather than matching their
+captions: the per-demat rows must account for every share the KPI strip reports
+AND the strip for every share in `BOOK_POLYCAB` (two comparisons, because
+rows-against-their-own-footer catches a total computed independently of its rows
+— the Private Market page's PM-1 — and rendered-against-the-book catches a page
+that drops the same row from both and reconciles perfectly with itself); the
+per-holder rollup must regroup the same shares over the book's own count of
+DISTINCT accounts; the share-of-block weights must sum to 100 (against the
+portfolio they read ~1,738%, and it renders as an ordinary percentage either
+way); every account number the book carries the holding in must appear; and the
+three unreported facts must each be named and must each render a dash or a real
+figure, never a zero. Verified by breaking each in turn — an off-by-one tile, a
+demat count taken from rows, a weight over consolidated NAV, an unnamed account,
+a fabricated nil, and a silently dropped row — and watching exactly the right
+check fail.
+
+**`ONLY=<route,route>` walks a subset of the sweep**, added for that
+verification: the discipline costs a build and a full 62-combination sweep per
+bug, and it is what makes reintroducing six of them practical rather than
+theoretical. The default is still every route.
+
 ### THE VALUE COLUMN IS A MARK ON 14 ROWS AND PAR ON 24
 
 `motilalDemat.mjs`'s rate column prints `100.000` on an AIF unit and that is the
@@ -2811,7 +2891,94 @@ footer's own 0.5% coverage test: a return appears only where the costed holdings
 account for essentially the whole row. It keeps AIF (+20.0%) and PMS mandates (+11.4%),
 and correctly refuses Direct Equity and Mutual Fund.
 
-### Stage 10n — EVERY FIGURE ON MORNING CIO OPENS THE HOLDINGS BEHIND IT
+### Stage 10n — the pick-list is of HOLDINGS, and the money reads first
+
+*"In the portfolio monitor tab it should be all holdings, it's not all companies,
+because I'm buying multiple things."* Two changes, both to the Portfolio Monitor
+and neither to the model.
+
+**"ALL COMPANIES" WAS A CLAIM THE LIST DID NOT SUPPORT.** `securityNames` is keyed
+on `p.security` over EVERY position, so the first options the dropdown offers are
+Sanshi Fund-I, Buoyant Opportunities Strategy, the Motilal Oswal Founders Fund and
+Helios Flexi Cap — an AIF folio, a Category-III strategy and two schemes, none of
+them a company. That is Stage 10i/10j/10L one control down: a word true of SOME of
+what is under it and not of all of it, on the surface a reader picks from. It reads
+`All holdings` now, with the count and the search placeholder to match, and the
+weight caption under the table says "the holdings you picked" for the same reason.
+
+**AND THE SHARED COMPONENT WAS ASSERTING ONE CALLER'S VOCABULARY AT THE OTHERS.**
+`MultiSelectFilter`'s empty-search line hardcoded "No companies match", so the
+economic calendar's COUNTRY filter rendered it over a list of countries. It reads
+the caller's own `unit` now — the noun each of the three callers already passes.
+
+**MONEY FIRST, DESCRIPTORS LAST.** *"Reorder the columns so the money reads first
+and Sector / Entity close the table."* Sector and Entity sat between the security
+name and the first figure, so Qty, Avg cost, Invested and CMP were pushed off the
+first screen on a table whose reader is scanning for value. They are the only two
+columns on the row that describe the holding rather than measure it, and they now
+close it: **Security · Qty · Avg cost · Invested · CMP · Day · Market value ·
+Weight · Unreal. P&L · Realised P&L · Return · Sector · Entities.**
+
+**NOTHING ABOUT WHAT ANY CELL RENDERS CHANGED** — every `AbsentCell` reason, every
+`Auditable` formula, every basis note and the dedupe-aware footer are moved
+verbatim. The footer's `Total · N rows` span narrows 5 → 3 and the row gains two
+empty cells under the descriptor columns, because a column of words has no sum to
+be missing; all three regions still come to 13. The same reading order is applied
+to the two drill-downs the table opens out of (Sector last inside a mandate; the
+route last on the per-entity split, where the owning entity is the row identity)
+and to the Transactions tape, where Entity closes the row and Type stays beside
+Security — one narrow column saying what the row IS, not a block of descriptors
+standing between the name and the first figure.
+
+**AND THE EXCEL EXPORT FOLLOWS, at the family's request.** It was left on its own
+layout first — a different artefact, and the ask had been about the tab — and they
+asked for it to match. `exportPortfolioExcel.ts` still carries three columns the
+screen does not (Class, Held via, Mandate: which section a row sits in, who chose
+it, and where a manager did, which mandate), and those are DESCRIPTORS too, so
+they close the sheet beside Sector and Entities:
+
+```
+Security · Qty · Avg Cost · CMP · Market Value · Weight of book · Unreal. P&L ·
+Return · Class · Held via · Mandate · Sector · Entities
+```
+
+**THE REORDER WAS THE EDIT THAT COULD NOT BE DONE BY HAND.** Every cell was
+written as `row.getCell(9), cols[8]` — a literal index paired with the spec that
+formats it, thirteen times, held together by nothing. Moving a column breaks that
+pairing SILENTLY: the header row still prints correctly and a sector lands in the
+column a reader's own `SUM()` is pointed at. The footer had the same defect twice
+over, in `set(10, totMV)` / `set(12, totPnL)` and in a totals-row alignment reading
+`col >= 7` — the boundary where money began in the OLD layout. So the order lives
+in `cols` alone now and a row arrives as a record keyed by the same strings
+(`writeRow`), with the footer's cells found by `colAt`. That is `lib/table.mjs`'s
+own rule — **match on the HEADER, never on the column index** — applied to the
+WRITING side, and it is why a future reorder is one edit rather than fourteen.
+
+**THIS FILE HAD NO COVERAGE OF ANY KIND, AND IT IS THE ONE ARTEFACT WHOSE DEFECTS
+ARE INVISIBLE.** `build`, `check:pages` and `check:family` never open the workbook
+— it is a download — so a sheet with swapped columns passes every gate in the repo
+and opens perfectly on the reader's machine.
+`src/lib/__tests__/portfolioExcel.test.ts` builds it from `BOOK_POSITIONS` and
+reads it back, anchored the way `privateMarket.test.ts` is: **the footer's Market
+Value cell, LOCATED BY ITS HEADER, equals `BOOK_SUMMARY.totalValue` to the rupee**
+— two independent paths to one figure, so it cannot go stale when the next drop
+moves the book. Each column is then checked for what it can legitimately hold (a
+money column is a number or an em dash; a descriptor column is a non-numeric
+string and never either), which is what catches the values shifting while the
+headers stay put. All three bug classes were verified by reintroducing them: the
+old order fires the header assertion, a one-column value shift fires three checks,
+and the footer back on its literal indices fires three more.
+
+`buildPortfolioWorkbook` is the seam that made it testable — the workbook without
+the `document` / `URL.createObjectURL` download around it.
+
+**And the suite runner had to move its bundle.** `test-family.mjs` built into the
+system temp dir, and `--packages=external` leaves a real dependency as a bare
+import that Node resolves by walking UP from the bundle — so `exceljs` was
+unreachable from `/tmp`. The bundle is written inside `node_modules` now, one
+level below the packages it needs, and still outside the working tree.
+
+### Stage 10o — EVERY FIGURE ON MORNING CIO OPENS THE HOLDINGS BEHIND IT
 
 *"Every row of the allocation table on Morning CIO must open the holdings behind
 it — AIF, PMS mandates, Mutual Fund, Direct Equity and ETF alike. The KPI tiles
@@ -2947,9 +3114,15 @@ one name in two of their own accounts today — the moment one does, that count
 would report a name as shared between entities when it is not. Both are recorded
 beside the code they govern.
 
-`ONLY=cio,holdings-book npm run check:pages` walks a subset for exactly this
-loop; the routes that publish addresses for others (`cio`, `monitor`) are always
-kept, because a filter that silently stops checking is worse than no filter.
+`ONLY=holdings-book npm run check:pages` walks a subset for exactly this loop.
+main added the same flag independently and the two were reconciled rather than
+one replacing the other: a name matching no route still yields an EMPTY walk (so
+a typo reads as zero combinations rather than as a clean run), and a route that
+resolves addresses for others — `cio` for every holdings drill-down, `monitor`
+for the mandate one — is pulled in when a selected route needs it. A filter that
+silently stops checking is worse than no filter, and a blanket keep would have
+thrown away main's typo guard.
+
 
 ### Stage 10k — News & Announcements: REMOVED
 

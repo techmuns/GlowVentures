@@ -215,7 +215,17 @@ export function PortfolioMonitor() {
     }
     return m;
   }, [positions, accIdx]);
-  // Company pick-list, biggest holding first (matches the table's default sort).
+  /**
+   * THE PICK-LIST IS OF HOLDINGS, NOT OF COMPANIES — biggest first, which
+   * matches the table's default sort.
+   *
+   * It is keyed on `p.security` over EVERY position, so what it offers is every
+   * AIF folio, mutual-fund scheme, ETF, cash sleeve and PMS mandate in the book
+   * beside the company shares. Labelling it "companies" made a claim about the
+   * set that its own first three options contradict, and it is the same failure
+   * `assetClassLabel` was written to stop one heading over: a word that is true
+   * of SOME of what is under it and not of all of it.
+   */
   const securityNames = useMemo(() => {
     const mv = new Map<string, number>();
     for (const p of positions) mv.set(p.security, (mv.get(p.security) ?? 0) + p.marketValue);
@@ -641,7 +651,7 @@ export function PortfolioMonitor() {
       {/* Global filters — one selection drives both Holdings and Transactions */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected}
-          allLabel="All companies" unit="companies" placeholder="Search companies…" className="w-72 max-w-full" />
+          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-72 max-w-full" />
         <select value={sector} onChange={(e) => setSector(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-focus">
           {sectors.map((s) => <option key={s} value={s}>{s === "All" ? "All sectors" : s}</option>)}
         </select>
@@ -694,8 +704,6 @@ export function PortfolioMonitor() {
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <tr className="border-b border-ink-700">
                   <Th onClick={sortBtn("security")}>Security</Th>
-                  <th className="label-xs px-2 py-2.5 text-left font-medium">Sector</th>
-                  <th className="label-xs px-2 py-2.5 text-left font-medium">{consolidate ? "Entities" : "Entity"}</th>
                   <th className="label-xs px-2 py-2.5 text-right font-medium">Qty</th>
                   <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Avg cost</th>
                   <th className="label-xs px-2 py-2.5 text-right font-medium">Invested</th>
@@ -706,6 +714,15 @@ export function PortfolioMonitor() {
                   <Th right onClick={sortBtn("unrealizedPnL")}>Unreal. P&L</Th>
                   <th className="label-xs px-2 py-2.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
                   <Th right onClick={sortBtn("returnPct")}>Return</Th>
+                  {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
+                      the money to read first, and these two are the only
+                      columns on the row that are not money. They describe the
+                      holding rather than measure it, so they sat between the
+                      name and the first figure and pushed Qty, cost and value
+                      off the first screen. Nothing about what they RENDER
+                      changes; only where they are read. */}
+                  <th className="label-xs px-2 py-2.5 text-left font-medium">Sector</th>
+                  <th className="label-xs px-2 py-2.5 text-left font-medium">{consolidate ? "Entities" : "Entity"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
@@ -824,32 +841,6 @@ export function PortfolioMonitor() {
                             <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
                           )}
                         </td>
-                        {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
-                            WAY TO SAY SO. It reads as a sector the pipeline
-                            failed to map — the same cell a directly-held share
-                            gets when its statement printed none — when the truth
-                            is that the property does not apply: an AIF folio, a
-                            mutual-fund scheme or a whole mandate is a wrapper
-                            over many sectors. */}
-                        <td className="px-2 py-2.5 text-slate-400">
-                          {m
-                            ? <AbsentCell reason="a mandate spans many sectors and is not one holding; expand it, or open its drill-down, for each share's own" />
-                            : isFundVehicle(r)
-                            ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
-                            : r.sector}
-                        </td>
-                        <td className="px-2 py-2.5 text-slate-400">
-                          {multi ? (
-                            <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
-                              title={`Held by: ${r.entities.join(", ")}`}
-                              className="pill cursor-pointer whitespace-nowrap transition-colors hover:border-champagne-500/40 hover:text-champagne-400 ring-focus">
-                              <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                              {r.entities.length}&nbsp;entities
-                            </button>
-                          ) : (
-                            <span className="text-[12px]">{r.entities[0]}</span>
-                          )}
-                        </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
                           {r.quantity === null
                             ? <AbsentCell reason="a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing." />
@@ -929,6 +920,32 @@ export function PortfolioMonitor() {
                             : r.live ? fmtPct(r.returnPct, { sign: true })
                             : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}>{fmtPct(r.returnPct, { sign: true })}</Auditable>}
                         </td>
+                        {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
+                            WAY TO SAY SO. It reads as a sector the pipeline
+                            failed to map — the same cell a directly-held share
+                            gets when its statement printed none — when the truth
+                            is that the property does not apply: an AIF folio, a
+                            mutual-fund scheme or a whole mandate is a wrapper
+                            over many sectors. */}
+                        <td className="px-2 py-2.5 text-slate-400">
+                          {m
+                            ? <AbsentCell reason="a mandate spans many sectors and is not one holding; expand it, or open its drill-down, for each share's own" />
+                            : isFundVehicle(r)
+                            ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
+                            : r.sector}
+                        </td>
+                        <td className="px-2 py-2.5 text-slate-400">
+                          {multi ? (
+                            <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
+                              title={`Held by: ${r.entities.join(", ")}`}
+                              className="pill cursor-pointer whitespace-nowrap transition-colors hover:border-champagne-500/40 hover:text-champagne-400 ring-focus">
+                              <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              {r.entities.length}&nbsp;entities
+                            </button>
+                          ) : (
+                            <span className="text-[12px]">{r.entities[0]}</span>
+                          )}
+                        </td>
                       </tr>
                       {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
                           asked for, in place. Each share appears here and in the
@@ -965,7 +982,6 @@ export function PortfolioMonitor() {
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
-                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Sector</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Avg cost</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Invested</th>
@@ -975,13 +991,15 @@ export function PortfolioMonitor() {
                                         title={`Each holding's share of the mandate's own total — ${money(m.accountMV)} across ${m.accountCount} holdings, struck before this page's filters.`}>% of mandate</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
+                                    {/* Sector last here too, so the drill-down reads
+                                        in the same order as the row it opens out of. */}
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Sector</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-ink-700/50">
                                   {m.holdings.map((h) => (
                                     <tr key={h.securityKey || h.security}>
                                       <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
-                                      <td className="px-3 py-1.5 text-slate-400">{h.sector}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(h.quantity)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : h.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(h.avgCost)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : fmtFromBase(h.costBasis, { compact: true })}</td>
@@ -1001,6 +1019,7 @@ export function PortfolioMonitor() {
                                       </td>
                                       <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.unrealizedPnL)}`}>{h.costNA ? "—" : fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</td>
                                       <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.returnPct)}`}>{h.costNA ? "—" : fmtPct(h.returnPct, { sign: true })}</td>
+                                      <td className="px-3 py-1.5 text-slate-400">{h.sector}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1024,26 +1043,28 @@ export function PortfolioMonitor() {
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Owning entity</th>
-                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Avg cost</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">% of holding</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
                                     <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
+                                    {/* The route is a descriptor, not a figure — the
+                                        owning entity is this table's row identity. */}
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-ink-700/50">
                                   {r.parts.map((pt) => (
                                     <tr key={pt.entity}>
                                       <td className="px-3 py-1.5"><span className="text-slate-200">{pt.entity}</span></td>
-                                      <td className="px-3 py-1.5 text-slate-400">{pt.routes.join(" + ")}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(pt.quantity)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{pt.costNA ? "—" : pt.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(pt.avgCost)}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-100">{fmtFromBase(pt.marketValue, { compact: true })}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400">{r.marketValue > 0 ? ((pt.marketValue / r.marketValue) * 100).toFixed(1) : "0.0"}%</td>
                                       <td className={`px-3 py-1.5 text-right mono ${pt.costNA ? "text-slate-500" : changeColor(pt.unrealizedPnL)}`}>{pt.costNA ? "—" : fmtFromBase(pt.unrealizedPnL, { compact: true, sign: true })}</td>
                                       <td className={`px-3 py-1.5 text-right mono ${pt.costNA ? "text-slate-500" : changeColor(pt.returnPct)}`}>{pt.costNA ? "—" : fmtPct(pt.returnPct, { sign: true })}</td>
+                                      <td className="px-3 py-1.5 text-slate-400">{pt.routes.join(" + ")}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1061,7 +1082,7 @@ export function PortfolioMonitor() {
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
                 <tr className="border-t border-ink-700 font-semibold">
-                  <td className="px-2 py-2.5 text-slate-200" colSpan={5}>Total · {rows.length} rows</td>
+                  <td className="px-2 py-2.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
                   <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
                   <td className="px-2 py-2.5"></td>
                   <td className={`px-2 py-2.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
@@ -1107,6 +1128,11 @@ export function PortfolioMonitor() {
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                   </td>
+                  {/* Sector and Entity — descriptors, so the footer has nothing
+                      to total under them. Empty rather than absent: a column
+                      of words has no sum to be missing. */}
+                  <td className="px-2 py-2.5"></td>
+                  <td className="px-2 py-2.5"></td>
                 </tr>
               </tfoot>
             </table>
@@ -1123,7 +1149,7 @@ export function PortfolioMonitor() {
               describe, so the picked rows are a part of it by design. */}
           {weightGap > 0 && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              <span className="font-medium text-slate-400">Weight is a share of the book, not of the companies you
+              <span className="font-medium text-slate-400">Weight is a share of the book, not of the holdings you
               picked.</span> The column divides by {money(weightBase)} across {weightCount} positions — the book the
               entity, sector and category filters describe — so a picked name keeps the weight it has on the
               unfiltered table. The rows on screen are {money(totMV)} of that, which is why the column adds to
@@ -1328,12 +1354,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
               <tr className="border-b border-ink-700">
                 <th className="label-xs px-3 py-2.5 text-left font-medium">Date</th>
                 <th className="label-xs px-3 py-2.5 text-left font-medium">Security</th>
-                <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
                 <th className="label-xs px-3 py-2.5 text-left font-medium">Type</th>
                 <th className="label-xs px-3 py-2.5 text-right font-medium">Qty</th>
                 <th className="label-xs px-3 py-2.5 text-right font-medium">Price</th>
                 <th className="label-xs px-3 py-2.5 text-right font-medium">Amount</th>
                 <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&L</th>
+                <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
@@ -1341,12 +1367,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                 <tr key={i} className="hover:bg-ink-700/40">
                   <td className="whitespace-nowrap px-3 py-2 mono text-slate-400">{fmtDate(t.date)}</td>
                   <td className="px-3 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
-                  <td className="px-3 py-2 text-slate-400">{t.account}</td>
                   <td className="px-3 py-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
                   <td className="px-3 py-2 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
                   <td className="px-3 py-2 text-right mono text-slate-400">{t.price ? fmtFromBase(t.price) : <AbsentCell reason="this trade row reports no unit price on its statement" />}</td>
                   <td className="px-3 py-2 text-right mono text-slate-200">{t.amount ? fmtFromBase(t.amount, { compact: true }) : <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />}</td>
                   <td className={`px-3 py-2 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
+                  <td className="px-3 py-2 text-slate-400">{t.account}</td>
                 </tr>
               ))}
               {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
