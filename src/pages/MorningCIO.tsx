@@ -22,6 +22,8 @@ import { Auditable } from "@/components/Auditable";
 import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { NavVsIndex } from "@/components/NavVsIndex";
+import { TodaysMovers } from "@/components/TodaysMovers";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
@@ -887,6 +889,16 @@ export function MorningCIO() {
           icon={<Coins className="h-4 w-4" />} />
       </div>
 
+      {/* TODAY'S MOVERS — the first thing the family asked for, and the first
+          card under the strip for that reason. It is the only figure on this
+          page that is about ONE SESSION rather than the book to date, which is
+          why it carries its own coverage line rather than borrowing the page's:
+          every other total here spans 369 positions, and a day change spans the
+          ones the quote feed can price. */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+        <TodaysMovers />
+      </div>
+
       {/* Allocation hero + right column */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         {/* The long explanatory block that used to sit under this table is gone
@@ -1140,47 +1152,29 @@ export function MorningCIO() {
           </div>
         </Card>
 
-        <Card className="flex flex-col" title="Listed NAV trajectory" subtitle="Listed book, financial year-ends"
-          right={m.navFirst && m.navGrowth != null
-            ? <Pill tone="info">{m.navGrowth >= 0 ? "+" : ""}{m.navGrowth.toFixed(0)}% since {fmtFyPeriod(m.navFirst.period)}</Pill>
-            : <Pill>{DASH} no history yet</Pill>}>
-          {m.navSeries.length < 2 ? (
-            <div className="flex-1">
-              <AbsentSection
-                what="No valuation series in this book"
-                needs="A trajectory needs a dated series of portfolio values. Each account's statements carry exactly two — the
-                  opening figure on the performance summary and the closing one — and two points are not a curve. A line
-                  between them would assert a path nothing measured, so nothing is drawn. Periodic (monthly or quarterly)
-                  valuation statements per account are what this needs." />
-            </div>
-          ) : (
-          <div className="min-h-[14rem] flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={m.navSeries} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="navv2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d9c48f" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#d9c48f" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="period" stroke="#6b6880" fontSize={11} tickFormatter={fmtFyPeriod} />
-                <YAxis stroke="#6b6880" fontSize={11} tickFormatter={axisFmt} width={84} />
-                <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "NAV"]} />
-                <Area type="monotone" dataKey="value" stroke="#d9c48f" strokeWidth={2} fill="url(#navv2)" name="NAV" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          )}
-        </Card>
+        {/* THE NAV SERIES REPLACES AN ABSENCE THAT HAD STOPPED BEING TRUE.
+            This slot held "No valuation series in this book · each account's
+            statements carry exactly two points, and two points are not a curve".
+            Correct against the nine-account corpus; false since the first drop
+            REISSUED a statement. Thirteen accounts publish two or more dated
+            valuations today, so the series is measured and the accounts that
+            cannot supply one are NAMED — which is the rest of the same request.
+            See `navHistoryFrom` in build-book.mjs and `NavVsIndex`. */}
+        <NavVsIndex />
       </div>
 
       {/* Roadmap — deferred live-data panels */}
       <div className="mt-5 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 p-4">
         <div className="text-[12.5px] font-semibold text-slate-400">Coming as live data lands — the rest of the CIO vision</div>
         <div className="mt-3 flex flex-wrap gap-2.5">
-          {["Market overview — Nifty / Sensex / global", "NAV vs benchmark (dynamic)", "Consensus & target prices", ">10% weekly-drop risk flags", "Technical & concall scanners", "Earnings hub & catalyst tracker"].map((c) => (
+          {/* "Market overview — Nifty / Sensex / global" and "NAV vs benchmark
+              (dynamic)" WERE ON THIS LIST and have been removed, because both now
+              exist: the persistent index strip carries four live NSE levels on
+              every route, and the card above charts the book's dated NAV against
+              the Nifty 500. A roadmap chip promising a feature that shipped is the
+              same defect as an absence recorded against a premise that changed —
+              it tells a reader to wait for something already on their screen. */}
+          {["Consensus & target prices", ">10% weekly-drop risk flags", "Technical & concall scanners", "Earnings hub & catalyst tracker"].map((c) => (
             <span key={c} className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-[11.5px] text-slate-400">◷ {c}</span>
           ))}
         </div>
