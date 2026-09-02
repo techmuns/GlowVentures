@@ -530,7 +530,6 @@ const ROUTES = [
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
-  ["watchlist", "/watchlist"],
   // FOOS-spec preview pages — illustrative placeholders for spec layers whose
   // live source does not exist yet. Walked so their light-mode remaps, overflow
   // and any stray ₹0 are held to the same bar as every real page.

@@ -2220,7 +2220,7 @@ feature that is broken instead of one that was never possible.
 | **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
 | **Ratio analysis, 7 year-ends** | company page | `ratio_source` → `web-reader` — see Stage 10e |
 | Consensus / street estimates | company page | `street_estimates` |
-| Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
+| Personal watchlist, target price, fair value, entry / exit price, price alerts | company page (the `/watchlist` page is REMOVED, see Stage 10w) | **nothing** — these are the family's own judgements |
 | Insider trades, corporate announcements | company page | `insider_trades`, `corp_announcements` — the `/news` page is REMOVED, see Stage 10k |
 
 ### Two limits that are load-bearing, and are stated on screen
@@ -2243,6 +2243,10 @@ that mapping is how a figure nobody can trace enters a dashboard whose entire
 claim is that every figure traces to a source.
 
 ### Investment tools are the ONE thing a reader writes to
+
+**AND THE PAGE THAT ROLLED THEM UP IS GONE — see Stage 10w.** `/watchlist`
+redirects and `src/pages/Watchlist.tsx` is deleted. Everything below is about the
+STORE, which is untouched and is still written on every company page.
 
 `src/lib/watchlist.ts` is the only store in the app that takes user input, and it
 is deliberately nowhere near the book. `glowData.ts` is generated from `source/`
@@ -4249,6 +4253,48 @@ private facet, the no-cost sentence dropped from the tile, Dry powder pointed at
 a holdings table, the toggle deleted, the toggle defaulted to a half, and the
 chips printing the active set's count instead of their own. Two of them fired
 checks that had to be rewritten first, which is the whole reason for doing it.
+
+### Stage 10w — Watchlist & Targets: REMOVED, and the store is not
+
+*"remove this tab"* — the sidebar entry, pointed at.
+
+`/watchlist` redirects to `/compare`, the nav entry is gone and
+`src/pages/Watchlist.tsx` is deleted. The redirect goes to Compare Companies
+rather than the monitor because that is the surviving surface in the SAME nav
+group that still renders a watched name's target and its upside; leaving it
+pointed somewhere with none of those figures while `/compare` sits one link away
+is the stale routing decision Stage 9d removed the day the calendar was wired.
+
+**`src/lib/watchlist.ts` IS UNTOUCHED, AND THAT IS THE HALF A REMOVAL LIKE THIS
+BREAKS SILENTLY.** Every target price, fair value, entry and exit level, price
+alert, valuation method, FV reference year, target weight and "why we own it"
+note the family typed is still stored and still read and written by
+`InvestmentTools` on a name's own company page — and `CompareCompanies` still
+reads the target and the upside. Nothing anyone entered was deleted. With its
+most VISIBLE reader gone the store looks dead, which is how a future session
+deletes it and takes the family's own judgements with it: the same trap
+`announcements.ts` was in when `/news` went, and the same reason `deals.ts` and
+`household.ts` stayed in Stage 10f when their pages were removed.
+
+So the check does not merely assert the tab is gone. `check:family` asserts
+BOTH halves, and only the second one can fail quietly:
+
+- the nav entry is absent and `/watchlist` REDIRECTS rather than 404s, because a
+  bookmark is a promise the app made;
+- a company page reached from the monitor still carries the Investment tools
+  panel with Target price, Fair value and Valuation method on it — the address
+  taken off the rendered page rather than typed, like every other route that
+  suite follows.
+
+`check:pages` no longer walks `/watchlist`: there is no page there to hold to
+the light-mode, overflow and stray-₹0 bar. **A removal is verified by asserting
+it happened, never by deleting the test alongside the feature.**
+
+Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
+`upsidePct`, `parseWeightPct` and `VALUATION_METHODS` all have their caller in
+`InvestmentTools`, and `readWatchlist` keeps its one in `CompareCompanies` —
+so nothing was left exported and dead, which is the failure this file keeps
+naming.
 
 ### Stage 10k — News & Announcements: REMOVED
 

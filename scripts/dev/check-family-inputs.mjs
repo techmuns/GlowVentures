@@ -144,6 +144,11 @@ for (const [from, to] of [
   ["/funds", "/private-market"],
   ["/value-creation", "/private-market"],
   ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+  // WATCHLIST & TARGETS was removed at the family's request. It forwards to
+  // Compare Companies rather than the monitor because that is the surviving
+  // surface in the same nav group that still renders a watched name's target
+  // and its upside — the stale-routing rule Stage 9d applied to the calendar.
+  ["/watchlist", "/compare"],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -210,6 +215,11 @@ await page.waitForTimeout(600);
 const nav = await page.locator("body").innerText();
 check("the News & Announcements nav entry is gone", !/News & Announcements/i.test(nav));
 check("the holdings-news bell is gone with it", !/Latest holdings news/i.test(nav));
+// Watchlist & Targets went the same way: the tab, the nav entry and the page.
+// What must NOT have gone with it is the store — the family's own targets,
+// fair values and levels are still written and read on a name's own company
+// page, and that half is asserted below on the company page itself.
+check("the Watchlist & Targets nav entry is gone", !/Watchlist\s*&\s*Targets/i.test(nav));
 
 check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
 check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));
@@ -332,6 +342,33 @@ check("an unknown mandate address renders a named absence, not an empty table",
     && !/holdings the manager runs/.test(text));
 check("...and names the mandates this book does carry",
   (await page.locator('a[href^="/mandate/"]').count()) > 1);
+
+// ── THE WATCHLIST STORE SURVIVED THE PAGE THAT SHOWED IT ───────────────────
+//
+// Watchlist & Targets was removed at the family's request — the tab, its nav
+// entry and `src/pages/Watchlist.tsx`. `src/lib/watchlist.ts` was NOT, and this
+// is the half a removal like that breaks SILENTLY: with its most visible reader
+// gone the store looks dead, and the next session deletes it along with every
+// target price, fair value, level, valuation method and target weight the family
+// typed. The same treatment `deals.ts` and `household.ts` got in Stage 10f, and
+// the same reason `announcements.ts` stayed when `/news` went.
+//
+// So the surviving surface is asserted here: a name's own company page still
+// writes to the store. The address is taken off the monitor rather than typed,
+// like every other route this suite follows.
+await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+const watched = page.locator('a[href^="/stock/"]').first();
+if (await watched.count()) {
+  await watched.click();
+  await page.waitForTimeout(1200);
+  text = await page.locator("body").innerText();
+  check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
+  check("...with the judgement fields the watchlist store holds",
+    /target price/i.test(text) && /fair value/i.test(text) && /valuation method/i.test(text));
+} else {
+  check("a company page still carries the Investment tools panel", false, "no /stock/ link on Portfolio Monitor");
+}
 
 await browser.close();
 
