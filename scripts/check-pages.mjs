@@ -51,6 +51,11 @@ const ONLY = (process.env.ONLY ?? "").split(",").map((x) => x.trim()).filter(Boo
 const PUBLISHERS = [
   ["monitor", (n) => n === "mandate" || n === "mandate-fund"],
   ["cio", (n) => n.startsWith("holdings-")],
+  // The cost-less set is a FACET of the Capital invested page, so its address is
+  // drawn by that page's toggle and by nothing else. `ONLY=holdings-nocost`
+  // without it would walk a not-found page and report NOT CHECKED — a filter
+  // that silently stops checking, which is what this list exists to prevent.
+  ["holdings-invested", (n) => n === "holdings-nocost"],
 ];
 const walked = (name) =>
   !ONLY.length
@@ -499,12 +504,20 @@ const ROUTES = [
    */
   ["holdings-crossheld", () => drilldownPath("cross-held") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-topnames", () => drilldownPath("top-names") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-listed", () => drilldownPath("listed") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-private", () => drilldownPath("private") ?? "/holdings?of=none-resolved-from-cio"],
+  // THE TWO HALVES ARE FACETS OF THE NAV'S OWN PAGE NOW, and their addresses
+  // come from the Concentration card, which still links each half directly.
+  ["holdings-listed", () => drilldownPath("book#listed") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-private", () => drilldownPath("book#private") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-winners", () => drilldownPath("winners") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-losers", () => drilldownPath("losers") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-measured", () => drilldownPath("measured") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-nocost", () => drilldownPath("no-cost") ?? "/holdings?of=none-resolved-from-cio"],
+  // ...AND THE CAPITAL INVESTED PAGE, which was never walked: only its no-cost
+  // half was, back when that half was a scope of its own. It has to be walked
+  // FIRST now, because the cost-less set is reachable only from the toggle it
+  // draws — an address that comes from the page under test rather than from a
+  // literal here, like every other drill-down in this sweep.
+  ["holdings-invested", () => drilldownPath("invested") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-nocost", () => drilldownPath("invested#no-cost") ?? "/holdings?of=none-resolved-from-invested"],
   // ...AND AN ADDRESS THAT NAMES NOTHING. A drill-down that silently falls back
   // to "everything" would answer a question it was not asked with a figure that
   // looks like the one the reader clicked, which is worse than saying so.
@@ -1065,6 +1078,28 @@ async function installLiveMocks(page) {
     });
   });
 }
+
+/**
+ * ── A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION ────────────────────────
+ *
+ * The first draft of every facet invariant below returned `notChecked` when the
+ * page drew no toggle — and deleting the toggle outright, which is precisely the
+ * arrangement the family asked to be rid of, then reported the whole sweep
+ * CLEAN with seven unchecked lines. That is `golden.mjs`'s rule arriving through
+ * a control: a check that passes over no input claims confidence nobody earned.
+ *
+ * So abstention is allowed only where the BOOK genuinely has one side. The
+ * evidence is the book's own, read off Morning CIO — the NAV caption printing
+ * both halves, the Capital invested tile naming a cost-less set — never a
+ * literal here, so a drop that really does hold nothing private abstains and a
+ * drop like this one fails.
+ */
+const facetsOr = (ctx, evidence, why) =>
+  ctx?.facets ? null : (evidence ? false : notChecked(why));
+
+const BOOK_HAS_BOTH_HALVES = () =>
+  [CIO_FIGURES.get("listed"), CIO_FIGURES.get("private")].every((v) => Number.isFinite(v) && v > 0);
+const TILE_NAMES_COSTLESS = () => Number.isFinite(CIO_FIGURES.get("no-cost"));
 
 const INVARIANTS = {
   /**
@@ -1860,6 +1895,49 @@ const INVARIANTS = {
    * reader's screen is the same defect as an absence recorded against a premise
    * that changed.
    */
+  /**
+   * ── ONE DESTINATION PER KPI TILE ──────────────────────────────────────────
+   *
+   * *"there are multiple links on these KPI tiles. Make these KPI tiles
+   * clickable and remove all the other links."* The NAV tile carried three
+   * addresses — its label, and the listed and private halves in its caption —
+   * and Capital invested carried two. A reader had to know which of them
+   * answered their question, and the largest target on the tile, the figure
+   * itself, went nowhere.
+   *
+   * Struck on the ANCHORS INSIDE EACH TILE rather than on the page's link list:
+   * a page-wide count cannot tell a tile with two links from two tiles with one
+   * each, which is exactly the distinction being asserted.
+   */
+  ["each KPI tile offers exactly one destination", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.links.length <= 1);
+  }],
+  /**
+   * ...AND THE TILES THAT HAVE A SET STILL OPEN IT. The rule above is satisfied
+   * by a strip with no links at all, which would answer the request by removing
+   * the feature — so the destinations are asserted too, by the figure they
+   * belong to rather than by a count.
+   */
+  ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
+    return /of=book\b/.test(at(/consolidated nav/i))
+      && /of=invested\b/.test(at(/capital invested/i))
+      && /of=measured\b/.test(at(/money-weighted|xirr/i));
+  }],
+  /**
+   * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
+   * `?of=private` and `?of=no-cost` still RESOLVE, deliberately, so a bookmark
+   * keeps working — which is precisely why their absence from the strip has to
+   * be asserted rather than assumed: nothing would break if one came back.
+   */
+  ["no KPI tile links at a scope that is now a facet", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) =>
+      tile.links.every((h) => !/[?&]of=(listed|private|no-cost)\b/.test(h)));
+  }],
   ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
     (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
 
@@ -1997,36 +2075,62 @@ const INVARIANTS = {
      *
      * Named individually rather than counted: a count passes when six links to
      * the wrong six sets are drawn, and the whole point is that the reader can
-     * reach the holdings behind THIS figure. `no-cost` is in the list because
-     * the tile that names those 60 positions is exactly the one where a reader
-     * cannot otherwise find out WHICH — the answer decides whether they chase a
-     * custodian or accept a permanent absence.
+     * reach the holdings behind THIS figure.
+     *
+     * ── IT IS STRUCK IN TWO PLACES BECAUSE THE PAIRING MOVED, NOT BECAUSE THE
+     *    CLAIM DID ─────────────────────────────────────────────────────────
+     *
+     * A KPI tile's target is now the WHOLE CARD — a stretched overlay anchor
+     * with no inner text — so `ctx.links` yields an empty label for all six and
+     * a label-to-href pairing read off the link list can no longer see them. It
+     * would have gone on "passing" only by being unable to fail. The pairing for
+     * those six lives in `ctx.kpiTiles`, which pairs each tile's own label with
+     * the one anchor inside it; the concentration and allocation figures are
+     * still text links and are still paired off the link list.
+     *
+     * AND THE TWO HALVES OF THE BOOK MOVED TO A FACET ADDRESS. `?of=listed` and
+     * `?of=private` still resolve for a bookmark, so asserting the OLD address
+     * here would keep passing against a page that had lost the toggle entirely.
      */
     ["every KPI tile and concentration figure opens ITS OWN set", (t, ctx) => {
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
       // PAIRED, label to destination. "The page links to `of=book` somewhere"
       // is satisfied by any one tile and says nothing about the other twelve;
       // this asserts that the figure a reader clicks opens the set that figure
       // is summed over. Each entry is [what the reader clicks, where it goes].
-      const want = [
+      const tiles = [
         [/^consolidated nav$/i, "/holdings?of=book"],
         [/^capital invested$/i, "/holdings?of=invested"],
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
+      ];
+      const texts = [
         [/^positions$/i, "/holdings?of=book"],
         [/^distinct names$/i, "/holdings?of=book"],
         [/^cross-held$/i, "/holdings?of=cross-held"],
         [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
-        [/^listed$/i, "/holdings?of=listed"],
-        [/^private$/i, "/holdings?of=private"],
+        [/^listed$/i, "/holdings?of=book&facet=listed"],
+        [/^private$/i, "/holdings?of=book&facet=private"],
         [/^winners$/i, "/holdings?of=winners"],
         [/^losers$/i, "/holdings?of=losers"],
-        // …and the holdings the Capital invested tile leaves out, which is the
-        // one set a reader has no other route to.
-        [/carry no cost basis$/i, "/holdings?of=no-cost"],
       ];
       const links = ctx?.links ?? [];
-      return want.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
+      return tiles.every(([label, href]) =>
+        ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href))
+        && texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
     }],
+    /**
+     * ...AND THE 60 POSITIONS WITH NO COST ARE STILL NAMED ON THE TILE THAT
+     * LEAVES THEM OUT. They used to be a SECOND link inside Capital invested and
+     * are a facet of that tile's own page now — which is the whole request — so
+     * what has to survive here is the SENTENCE, not the anchor. Without it the
+     * reader is never told the set exists, and no toggle three clicks away tells
+     * them: the answer decides whether they chase a custodian for a cost
+     * statement or accept a permanent absence. That the facet itself resolves is
+     * asserted where `holdings-invested` is walked.
+     */
+    ["the Capital invested tile still names the positions reporting no cost", (t) =>
+      /positions? worth ₹[\d,.]+\s*(?:Cr|L|K)? carry no cost/i.test(t)],
     /**
      * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
      *
@@ -2040,9 +2144,15 @@ const INVARIANTS = {
      */
     ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
       if (!/DRY POWDER[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
       const links = ctx?.links ?? [];
-      return [/^dry powder$/i, /^distributions$/i, /^fund commitments$/i]
-        .every((label) => links.some((l) => label.test(l.text) && l.href === "/private-market"));
+      // Two of the three are KPI TILES, whose target is the whole card and whose
+      // anchor therefore carries no text — see the invariant above. Fund
+      // commitments sits on the Capital deployment card and is still a text
+      // link, so the same claim is struck in the two places the pairing lives.
+      return [/^dry powder$/i, /^distributions$/i]
+        .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"))
+        && links.some((l) => /^fund commitments$/i.test(l.text) && l.href === "/private-market");
     }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
@@ -2129,6 +2239,51 @@ const INVARIANTS = {
    * that printed a percentage there would contradict the footer it opened from.
    */
   "holdings-book": [
+    /**
+     * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────
+     *
+     * *"the listed/private book links and pages should not exist separately…
+     * just give the toggle option inside the Consolidated NAV link page."* Every
+     * other invariant on this page and on the two halves is a FIGURE check, and
+     * every one of them passed while the halves were separate scopes reached
+     * from two extra links inside the NAV tile — so none of them can see the
+     * thing that was asked for. This is struck on the control.
+     */
+    ["the listed and private halves are a toggle on this page", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets.length === 3
+        && /whole book|every holding|all holdings/i.test(ctx.facets[0].label)
+        && ctx.facets.some((f) => /^listed/i.test(f.label))
+        && ctx.facets.some((f) => /^private/i.test(f.label));
+    }],
+    /**
+     * ...AND IT OPENS ON THE WHOLE BOOK. A toggle defaulting to a half would
+     * put a NARROWED figure under a tile that reads Consolidated NAV — the
+     * caption-that-does-not-describe-its-figure failure, arriving through a
+     * control's initial state. The value checks below cannot see it: they would
+     * simply reproduce the half and compare it against the wrong figure.
+     */
+    ["it opens on the whole book, not on a half", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets[0]?.active === true && ctx.facets.filter((f) => f.active).length === 1;
+    }],
+    /**
+     * ...AND THE COUNTS ON THE TOGGLE PARTITION THE BOOK. The halves' own pages
+     * already assert this against each other; this asserts it on the numbers
+     * printed BEFORE a reader clicks, which is where they choose. A toggle whose
+     * counts disagree with the pages behind it is the two-figures-for-one-set
+     * contradiction this repo keeps paying for.
+     */
+    ["the toggle's own counts partition the book", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const [whole, ...halves] = ctx.facets;
+      if (!whole || !Number.isFinite(whole.rows)) return false;
+      return halves.every((f) => Number.isFinite(f.rows))
+        && halves.reduce((a, f) => a + f.rows, 0) === whole.rows;
+    }],
     ["its market value reproduces the Consolidated NAV", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -2236,6 +2391,30 @@ const INVARIANTS = {
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
       return c != null && c.holdings > 0 && c.holdings < pos;
     }],
+    /**
+     * THE OTHER HALF IS ONE CLICK AWAY FROM HERE, AND SO IS THE WHOLE BOOK.
+     *
+     * This is the half of the request the figures cannot see. A reader who
+     * opened the listed half and wants the private one must not have to go back
+     * to Morning CIO to find it — that is the "two pages that exist separately"
+     * arrangement, with the toggle merely drawn somewhere else. Struck on the
+     * toggle this page draws, with THIS half current so the control also says
+     * where the reader is.
+     */
+    ["the private half and the whole book are one click away from here", (t, ctx) => {
+      // This route resolves ONLY from a `facet=listed` address the book drew, so
+      // reaching it at all is the evidence that both halves exist.
+      const g = facetsOr(ctx, true, "");
+      if (g !== null) return g;
+      const here = ctx.facets.find((f) => f.active);
+      return !!here && /^listed/i.test(here.label)
+        && ctx.facets.some((f) => /^private/i.test(f.label) && /facet=private/.test(f.href))
+        // ...and back to the undivided book. Identified by the facet it names,
+        // never by the SHAPE of its address: the whole-book half is written
+        // `facet=all` rather than as a bare scope, and a check keyed on that
+        // spelling asserts a URL convention instead of the reader's route.
+        && ctx.facets.some((f) => !f.active && /whole book|every holding|all holdings/i.test(f.label));
+    }],
   ],
   "holdings-private": [
     ["its value reproduces the private half the NAV caption states", (t) => {
@@ -2276,8 +2455,23 @@ const INVARIANTS = {
       if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
       return c != null && c.holdings === there;
     }],
-    ["the holdings in neither count are named, not dropped", (t) =>
-      /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+    /**
+     * THE HOLDINGS IN NEITHER COUNT ARE NAMED, NOT DROPPED — and they are named
+     * on the TOGGLE now rather than in a companion table below the rows, so the
+     * check moved with them. It used to match the companion's prose, which is
+     * the weaker claim: a page can print that sentence over an empty table. This
+     * reads the facet's own row count, so the set has to actually be reachable.
+     *
+     * A holding exactly at cost and one whose cost the statements do not report
+     * are both here, which is what lets Morning CIO's two counts be reconciled
+     * against the book instead of assumed to cover it.
+     */
+    ["the holdings in neither count are named, not dropped", (t, ctx) => {
+      if (!ctx?.facets) return false;
+      const neither = ctx.facets.find((f) => /in neither count/i.test(f.label));
+      if (!neither) return notChecked("every priced holding in this book falls on one side or the other, so there is no third set");
+      return Number.isFinite(neither.rows) && neither.rows > 0 && /facet=neither/.test(neither.href);
+    }],
     /**
      * A FILTERED SET FORMS NO MANDATE ROW.
      *
@@ -2332,6 +2526,58 @@ const INVARIANTS = {
     // only half of that rule if the drill-down then hides them.
     ["the accounts outside the figure are named, not dropped", (t) =>
       /\d+ accounts outside this figure/i.test(t) && /\d{4,}/.test(t)],
+  ],
+  /**
+   * ── THE CAPITAL INVESTED PAGE, WHICH WAS NEVER WALKED ────────────────────
+   *
+   * Only its cost-less half was, back when that half was a scope of its own —
+   * so the set the tile's own figure is summed over had no page under test at
+   * all, and the toggle that now reaches the other half is the only route to it.
+   */
+  "holdings-invested": [
+    ["its market value covers the holdings that report a cost", (t) => {
+      const c = drilldownCounts(t);
+      return c != null && c.holdings > 0;
+    }],
+    /**
+     * IT OPENS ON THE COSTED SET, because the tile it opens from reads Capital
+     * invested. A toggle defaulting to the other half would put the holdings
+     * that report NO cost under that heading — the whole of the figure's
+     * complement, under the figure's own name.
+     */
+    ["it opens on the holdings that report a cost", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets[0]?.active === true && /reports a cost/i.test(ctx.facets[0].label);
+    }],
+    /**
+     * ...AND THE COST-LESS SET IS A TOGGLE HERE. This is the assertion the
+     * Morning CIO invariant defers to: that tile no longer carries a second
+     * link, so if this toggle went the 60 positions would be named on screen
+     * and reachable from nowhere in the app.
+     */
+    ["the holdings reporting no cost are one click away, with their count", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const none = ctx.facets.find((f) => /reports none/i.test(f.label));
+      if (!none) return notChecked("every holding in this book reports a cost, so there is no second facet");
+      return /facet=no-cost/.test(none.href) && Number.isFinite(none.rows) && none.rows > 0;
+    }],
+    /**
+     * ...AND THE TWO SIDES PARTITION THE BOOK. `sumOrNull` skips a missing cost
+     * rather than entering it as zero, so costed + cost-less is every holding —
+     * and the toggle's own printed counts are where a reader sees it. Held
+     * against Morning CIO's Positions count so the two pages cannot drift into
+     * agreeing with each other about a set neither has right.
+     */
+    ["the two sides of the toggle account for every position", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return ctx.facets.every((f) => Number.isFinite(f.rows))
+        && ctx.facets.reduce((a, f) => a + f.rows, 0) === pos;
+    }],
   ],
   /**
    * ── THE 60 POSITIONS THE CAPITAL INVESTED TILE LEAVES OUT ────────────────
@@ -4102,6 +4348,45 @@ for (const theme of THEMES) {
        * behind them. Two empty lists under a summary saying "36 accounts" is
        * arithmetic that reconciles and names nobody.
        */
+      /**
+       * ONE LINK PER KPI TILE, COUNTED OFF THE DOM.
+       *
+       * *"there are multiple links on these KPI tiles. Make these KPI tiles
+       * clickable and remove all the other links."* That is a claim about what a
+       * reader can click, and no amount of matching `innerText` can see it: the
+       * captions that used to be links render identical text either way. So the
+       * anchors inside each tile are counted where they are.
+       */
+      const kpiTiles = FAST ? null : await page.evaluate(() => {
+        const strip = document.querySelector('[data-testid="kpi-strip"]');
+        if (!strip) return null;
+        return [...strip.querySelectorAll(".card")].map((c) => ({
+          label: (c.querySelector(".label-xs")?.textContent ?? "").trim(),
+          links: [...c.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
+        }));
+      });
+      /**
+       * ── THE FACET TOGGLE, READ OFF THE TOGGLE ITSELF ─────────────────────
+       *
+       * *"the listed/private book links and pages should not exist separately…
+       * just give the toggle option inside the Consolidated NAV link page."*
+       * That is a claim about a CONTROL, and every figure on these pages
+       * renders identically whether the halves are reached by a toggle here or
+       * by two links on the page before — the value and partition invariants
+       * below all passed while the halves were separate scopes. So the toggle's
+       * own buttons are read: each one's label, the count it prints, its
+       * address, and which is current.
+       */
+      const facets = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="drilldown-facets"]');
+        if (!box) return null;
+        return [...box.querySelectorAll("a[href]")].map((a) => ({
+          label: (a.textContent ?? "").replace(/[\d,]+\s*$/, "").replace(/\s+/g, " ").trim(),
+          rows: Number(((a.textContent ?? "").match(/([\d,]+)\s*$/)?.[1] ?? "").replace(/,/g, "")),
+          href: a.getAttribute("href") ?? "",
+          active: a.getAttribute("aria-current") === "true",
+        }));
+      });
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
@@ -4169,6 +4454,22 @@ for (const theme of THEMES) {
           if (m && !CIO_DRILLDOWNS.has(m[1])) CIO_DRILLDOWNS.set(m[1], h);
           if (/^\/holdings\?of=bucket&key=./.test(h) && !CIO_BUCKET_HREFS.includes(h)) CIO_BUCKET_HREFS.push(h);
         }
+      }
+      /**
+       * ── FACET ADDRESSES, KEYED `scope#facet` ─────────────────────────────
+       *
+       * The listed half, the private half and the cost-less positions were each
+       * their own scope, linked from a SECOND link inside a KPI tile. They are
+       * facets of their tile's own drill-down now, so their addresses come from
+       * two places: the Concentration card still links the two halves directly,
+       * and the no-cost set is reachable only from the toggle on the Capital
+       * invested page. Collected from EVERY route that draws one, so a walk that
+       * loses a publisher fails by resolving no address rather than by silently
+       * checking a different page.
+       */
+      for (const h of hrefs) {
+        const m = /^\/holdings\?of=([a-z-]+)(?:&key=[^&]*)?&facet=([a-z-]+)/.exec(h);
+        if (m && !CIO_DRILLDOWNS.has(`${m[1]}#${m[2]}`)) CIO_DRILLDOWNS.set(`${m[1]}#${m[2]}`, h);
       }
       if (name === "cio" && !FAST) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
@@ -4312,7 +4613,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -3403,6 +3403,14 @@ accounts.
 | Listed / Private · Top-10 · Cross-held · Winners / losers | their own sets, each walked and reconciled against the card | ₹358.0 / ₹352.3 Cr · ₹430.9 Cr · 128 names · 174 / 115 |
 | Dry powder · Distributions · Fund commitments | **`/private-market`** | not holdings — see below |
 
+**THREE OF THOSE ROWS ARE NOW REACHED DIFFERENTLY — see Stage 10v.** The SETS are
+unchanged and every figure above still holds; what moved is the route. The
+cost-less holdings, the listed half and the private half were each an address of
+their own, linked from a SECOND link inside a KPI tile; they are FACETS of the
+tile's own drill-down now, selected by a toggle above the table, because a tile
+offering three destinations made the reader choose between them before they knew
+what any of them held. The old addresses still resolve.
+
 **A REFUSED FIGURE STAYS REFUSED ONE CLICK DEEPER.** Three of the six allocation
 rows print an em dash for Return, because their Invested column covers a minority
 of their holdings — Mutual Fund reports a cost on 2 of 24, Direct Equity on 9 of
@@ -4106,6 +4114,103 @@ WHAT FOUND IT.** "The name does not carry the owner" was struck on
 rendered name left the attribute untouched and the invariant green. It reads the
 rendered first cell now. Both new invariants were then verified by reintroducing
 their bug: the owner back in the name, and the sub-line back under it.
+### Stage 10v — ONE TILE, ONE DESTINATION, AND THE HALVES BECOME A TOGGLE
+
+*"there are multiple links on these KPI tiles. Make these KPI tiles clickable and
+remove all the other links. suppose for consolidated NAV KPI tile, the
+listed/private book links and pages should not exist separately… just give the
+toggle option inside the Consolidated NAV link page. Do the same for all the
+other KPI tiles as well."*
+
+Stage 10o gave every figure on Morning CIO an address and gave several tiles
+MORE THAN ONE. The NAV tile carried three — its label, and the listed and
+private halves in its own caption; Capital invested carried two, the second
+being the 60 cost-less positions. A reader had to work out which of them
+answered their question, and the largest target on the tile, the figure itself,
+went nowhere.
+
+**THE TARGET IS THE WHOLE CARD, AND IT IS A STRETCHED OVERLAY RATHER THAN A
+WRAPPER.** The value carries an `<Auditable>` popover, which is a `<button>`,
+and a button inside an anchor is invalid markup that browsers disagree about.
+So `Kpi.tsx` renders the anchor as an absolutely-positioned sibling covering the
+card with the interactive children lifted above it: the arithmetic stays
+clickable where it is, the rest of the tile navigates, and the markup stays
+valid. Six tiles, six destinations, and every competing link inside one is gone.
+
+**AND THE SUB-SCOPES BECAME FACETS OF THE TILE'S OWN PAGE.** `listed`, `private`
+and `no-cost` were `DrilldownId`s of their own. They are `Facet`s now — a set
+plus a label plus its note, carried on the drill-down the TILE opens — and
+`/holdings` renders them as a toggle above the table, each chip printing its own
+row count. `?facet=` selects one; the first is the default. The heading and the
+lead follow the active facet, so a narrowed page never sits under the whole
+set's caption.
+
+| The tile | opens | with facets |
+| --- | --- | --- |
+| Consolidated NAV | `?of=book` | All holdings 369 · Listed 350 · Private 19 |
+| Capital invested | `?of=invested` | Reports a cost 309 · Reports none 60 |
+| Consolidated return | `?of=invested` | the same page — both figures divide by the same capital |
+| Money-weighted return | `?of=measured` | Covered · Not covered |
+| Winners / losers | `?of=winners` / `losers` | Showing a gain · In neither count |
+| Dry powder · Distributions | `/private-market` | not holdings — no facet, and no holdings table |
+
+**THE OLD ADDRESSES STILL RESOLVE, DELIBERATELY.** `?of=listed`, `?of=private`
+and `?of=no-cost` map to their scope plus facet, so a bookmark keeps working —
+which is exactly why their ABSENCE from the strip has to be asserted rather than
+assumed: nothing would break if one came back.
+
+**THE CHECKS HAD TO MOVE, AND ONE OF THEM COULD NO LONGER FAIL.** *"every KPI
+tile and concentration figure opens ITS OWN set"* pairs a link's TEXT with its
+href, read off `main a[href]`. A whole-card overlay anchor has no inner text, so
+all six tiles arrived with an empty label and the pairing could not see them —
+it would have gone on "passing" by being unable to fail. The six tiles are
+struck on `ctx.kpiTiles` now, which pairs each card's own label with the one
+anchor inside it; the concentration figures are still text links and are still
+struck on the link list. Same claim, struck where the pairing lives.
+
+**AND `kpiTiles` WAS CAPTURED INTO NO CALLER.** It was evaluated in the page and
+left out of the ctx literal handed to the invariants, so all three new
+KPI-strip checks reported NOT CHECKED — this repo's most-repeated failure,
+arriving in the harness this time. They said `notChecked` rather than passing,
+which is the only reason it was visible at all.
+
+**A MISSING TOGGLE MUST BE A FINDING, NOT AN ABSTENTION.** Every facet invariant
+first returned `notChecked` when a page drew no toggle — and deleting the toggle
+outright, which is precisely the arrangement the family asked to be rid of, then
+reported the whole sweep CLEAN with seven unchecked lines. That is `golden.mjs`'s
+rule arriving through a control. Abstention is allowed only where the BOOK
+genuinely has one side, evidenced by Morning CIO's own figures
+(`BOOK_HAS_BOTH_HALVES`, `TILE_NAMES_COSTLESS`) rather than by a literal — so a
+drop with nothing private abstains and this one fails.
+
+**THE VALUE CHECKS COULD NOT SEE ANY OF IT.** Every figure on these pages renders
+identically whether the halves are reached by a toggle here or by two links on
+the page before, and all of them passed while the halves were separate scopes. So
+the toggle is asserted on the CONTROL: that it exists, that it opens on the whole
+set rather than a half, that its printed counts partition the scope, and — on the
+listed half — that the private half and the undivided book are one click away
+FROM THERE. That last one is the half of the request the figures cannot see: a
+reader who opened one half must not have to go back to Morning CIO to reach the
+other.
+
+**IDENTIFIED BY THE FACET IT NAMES, NEVER BY THE SHAPE OF ITS ADDRESS.** The
+whole-book chip is written `facet=all` rather than as a bare scope, and the first
+draft of that check tested for the ABSENCE of a `facet=` param — asserting a URL
+convention instead of the reader's route, and failing a page that was landing
+correctly.
+
+**AND THE WINNERS PAGE'S THIRD SET MOVED WITH THEM.** "The holdings in neither
+count are named, not dropped" matched the companion table's PROSE, which a page
+can print above an empty table. Those rows are a facet now, and the check reads
+the chip's own row count — the stronger claim, and the one that survives the
+wording changing again.
+
+**ELEVEN BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: a second link inside a
+tile, the NAV tile pointed at the wrong set, the Listed half pointed at the
+private facet, the no-cost sentence dropped from the tile, Dry powder pointed at
+a holdings table, the toggle deleted, the toggle defaulted to a half, and the
+chips printing the active set's count instead of their own. Two of them fired
+checks that had to be rewritten first, which is the whole reason for doing it.
 
 ### Stage 10k — News & Announcements: REMOVED
 
