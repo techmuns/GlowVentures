@@ -964,6 +964,16 @@ rule, arriving through a third issuer. What they hold is one line each,
 preference share in an unlisted private company. Read as a mark it adds ₹34,700
 twice; under this book's own rules it is **quantity-only with no value**.
 
+**AND THE REGISTER IN THE SAME DELIVERY PROVES THESE ARE NOT THE TRUSTS' FILES.**
+It records every Swapeco holding the family has and none is 347 units: Bharat
+**244 equity shares** (₹50,20,300), Trust 2 and Trust 3 **2,807 Pre-Series-A CCPS
+each** at face ₹100 (₹1,35,00,875 each). So the trusts' **₹2.70 Cr of Swapeco
+CCPS still has no statement**, and Ajay and Aarti's 347-unit holding is one the
+register does not record. That is TWO asks, and neither closes by re-exporting
+these two files — the client also has to send the statements the filenames
+promised. A filename was wrong about the HOLDER four times before this; here it
+was wrong about WHICH DOCUMENT WAS SENT, which no reader could ever have caught.
+
 #### The register is the same decision as the review — and it was the dangerous one
 
 `NEW INVESTMENT SHEET.xlsx` is a CASH-OUTFLOW register: `INVESTMENT AMOUNT` is

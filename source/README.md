@@ -137,7 +137,24 @@ three of its twelve files and `pmsStatements.mjs` to all 23 of V.E.C's.
 What they hold is small and would be **quantity-only** if it were read: one line
 each, `SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
 `0.01% PRE SERIES A PREF`, at a Market Rate of **100.000** — the FACE VALUE of a
-preference share in an unlisted private company, not a mark anyone struck. That
+preference share in an unlisted private company, not a mark anyone struck.
+
+**AND THE REGISTER PROVES THESE ARE NOT THE TRUSTS' STATEMENTS AT ALL.** The same
+delivery's `NEW INVESTMENT SHEET.xlsx` records every Swapeco holding the family
+has, and there are three — none of them 347 units:
+
+| Holder | What the register says | Paid |
+| --- | --- | ---: |
+| Bharat Jaisinghani | 244 EQUITY shares (2.08% holding), Aug 2023 | ₹50,20,300 |
+| Bharat Jaisinghani Family Trust **2** | **2,807** Pre-Series-A **CCPS**, face ₹100, Aug 2025 | ₹1,35,00,875 |
+| Bharat Jaisinghani Family Trust **3** | **2,807** Pre-Series-A **CCPS**, face ₹100, Aug 2025 | ₹1,35,00,875 |
+
+So the two files named for Trust 2 and Trust 3 are the statements of two OTHER
+accounts — Ajay's and Aarti's joint demats — holding a different instrument in a
+different quantity. **The trusts' ₹2.70 Cr of Swapeco CCPS still has no statement
+in this corpus**, and Ajay and Aarti's 347-unit holding is one the register does
+not record either. Two asks, not one, and neither is closed by re-exporting these
+two files: the client also has to send the statements the filenames promised. That
 is the rule `motilalDemat.mjs` states for an AIF unit at 100.000 and the one
 `nsdlDemat.mjs` grades into `declared`/`scheme`/`par`, arriving through a third
 document. Read as a mark it would add ₹34,700 twice to NAV.
