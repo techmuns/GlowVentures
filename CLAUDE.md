@@ -2851,6 +2851,72 @@ that Export Excel's box overlaps the last filter `<select>`'s — the "same line
 claim is geometric, so it is checked on geometry, like the headline above it.
 All three verified by reintroducing their bug.
 
+### Stage 10r — A CARD THAT IS LOADING SAYS SO, AND OPENS ON THE LAST SNAPSHOT
+
+*"This section first shows empty and then starts showing data after some time.
+It should show data from the beginning… it can show a small loading written text
+but never empty and that data is not there."*
+
+Today's movers rendered **"No holding in this book carries a day change right
+now"** on the first paint of every cold open. That is a claim ABOUT THE BOOK,
+made while the quote feed was still in flight — the same defect this file
+already records on the company page, where a panel still fetching asserted the
+security has no live quote. THE CAUSE PICKS THE HEADLINE, and there were three
+causes collapsed into one branch.
+
+**THE THREE STATES ARE SEPARATED NOW.** Still fetching says so. A feed that
+answered and failed names the feed. Only a SETTLED feed that priced nothing
+makes the claim about the book — and by then the claim is true. The index tile
+inside the same card had the identical bug one layer down: it printed "Index
+levels unavailable — the feed did not respond" whenever its feed was null, which
+is true before the first response as well as after a failed one. `IndexStrip`
+had already got this right with a three-state machine; the tile now matches it.
+
+**AND THE APP OPENS ON THE LAST SNAPSHOT, SO THE FIRST STATE IS RARELY SEEN.**
+`src/lib/quoteCache.ts` keeps the merged `QuoteFeed` in `localStorage` and
+`PortfolioContext` seeds from it, so a reopen renders the day's figures
+immediately and the live rounds refine them. That matters because the upstream
+prices only PART of the book per call — the fill was several rounds deep, which
+is why the card sat empty long enough to be reported.
+
+Three rules keep a served snapshot honest, and the third is load-bearing:
+
+- **`ageS` is RE-DERIVED on read**, never restored as written. It is what the
+  top bar and the company page read to decide whether a price is fresh; restored
+  verbatim it would say "0 seconds" about a snapshot hours old.
+- **`quotesStatus` stays `loading` until a live round lands**, whatever the
+  cache held. The figures are real and dated; the top bar is telling the truth
+  when it says prices are still being fetched.
+- **A SNAPSHOT OLDER THAN THE SESSION IS DISCARDED, NOT SHOWN.** A day change is
+  `price − prevClose`, and `prevClose` is the PREVIOUS SESSION's close. Serving
+  yesterday's snapshot would print yesterday's move under a heading reading
+  "Today" — a real figure against the wrong day, which is the worst kind of
+  wrong because it is plausible. Twelve hours: long enough to cover a trading
+  day, short enough that a snapshot can never survive into the next session.
+
+**THREE ROUTES, BECAUSE THE STATES NEED THE FEEDS IN DIFFERENT CONDITIONS.**
+`cio-loading` holds both feeds open for the length of the walk — that window is
+milliseconds against a real feed and cannot be caught by walking normally, since
+the plain `cio` walk 404s immediately and lands on the FAILED branch, which is a
+different and correct state. `cio-index-loading` fulfils the quotes and holds
+only the indices, because the index tile lives inside the branch that renders
+once there are priced rows and cannot be reached with the quote feed stalled.
+`cio-cached` loads once with both answering, then RELOADS with them held open,
+so whatever is on screen came out of storage alone.
+
+**`networkidle` CANNOT BE REACHED WHILE A REQUEST IS HELD**, so those routes
+navigate on `load` instead — waiting for the network to go quiet times out
+against a page rendering exactly as intended.
+
+**AND ONE CHECK WAS A TAUTOLOGY, FOUND BY REINTRODUCING ITS BUG.** "The index
+tile says it is fetching" was matched page-wide, and the `IndexStrip` at the top
+of every route prints that exact phrase while IT loads — so deleting the tile's
+loading branch changed nothing the check could see. It is struck on the card's
+own slice now. Six bugs were reintroduced in total and each fired the right
+check; the one case left uncovered is named beside the code that governs it (a
+failed POLL blanking a good tile needs one success then a failure, sixty seconds
+apart).
+
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
 The family asked for Embedded gain to be replaced by an XIRR. Two things had to
