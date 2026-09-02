@@ -1,0 +1,155 @@
+{
+  "schemecode": 49517,
+  "scheme": "Motilal Oswal Active Momentum Fund-Reg(G)",
+  "classification": "Equity : Thematic",
+  "fundAumCr": 942.4,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "Diamond Power Infrastructure Ltd.",
+      "pctAum": 8.2,
+      "shares": 2386152
+    },
+    {
+      "name": "Cemindia Projects Ltd",
+      "pctAum": 6.39,
+      "shares": 440096
+    },
+    {
+      "name": "One 97 Communications Limited",
+      "pctAum": 5.33,
+      "shares": 373870
+    },
+    {
+      "name": "Garware Hi-Tech Films Limited",
+      "pctAum": 4.88,
+      "shares": 64320
+    },
+    {
+      "name": "InterGlobe Aviation Limited",
+      "pctAum": 4.74,
+      "shares": 86344
+    },
+    {
+      "name": "Ola Electric Mobility Ltd",
+      "pctAum": 4.58,
+      "shares": 11160178
+    },
+    {
+      "name": "Adani Enterprises Limited",
+      "pctAum": 4.43,
+      "shares": 138744
+    },
+    {
+      "name": "Sterlite Technologies Limited",
+      "pctAum": 4.29,
+      "shares": 726417
+    },
+    {
+      "name": "Data Patterns (India) Limited",
+      "pctAum": 4.16,
+      "shares": 91682
+    },
+    {
+      "name": "Aditya Infotech Limited",
+      "pctAum": 4.14,
+      "shares": 115164
+    },
+    {
+      "name": "Shaily Engineering Plastics Limited",
+      "pctAum": 4.03,
+      "shares": 123906
+    },
+    {
+      "name": "S.J.S. Enterprises Limited",
+      "pctAum": 3.82,
+      "shares": 150338
+    },
+    {
+      "name": "Bluestone Jewellery And Lifestyle Limited",
+      "pctAum": 3.78,
+      "shares": 436376
+    },
+    {
+      "name": "Anand Rathi Wealth Limited",
+      "pctAum": 3.77,
+      "shares": 171443
+    },
+    {
+      "name": "Navin Fluorine International Limited",
+      "pctAum": 3.62,
+      "shares": 45067
+    },
+    {
+      "name": "Acutaas Chemicals Limited",
+      "pctAum": 3.59,
+      "shares": 108899
+    },
+    {
+      "name": "Manipal Health Enterprises Ltd",
+      "pctAum": 3.51,
+      "shares": 560325
+    },
+    {
+      "name": "Nippon Life India Asset Management Limited",
+      "pctAum": 2.95,
+      "shares": 239234
+    },
+    {
+      "name": "Shriram Finance Limited",
+      "pctAum": 2.78,
+      "shares": 250465
+    },
+    {
+      "name": "Solar Industries India Limited",
+      "pctAum": 2.65,
+      "shares": 13571
+    },
+    {
+      "name": "Syrma SGS Technology Ltd",
+      "pctAum": 2.54,
+      "shares": 175276
+    },
+    {
+      "name": "GE Vernova T&D India Limited",
+      "pctAum": 2.53,
+      "shares": 55236
+    },
+    {
+      "name": "Onesource Specialty Pharma Limited",
+      "pctAum": 2.15,
+      "shares": 124894
+    },
+    {
+      "name": "Premier Energies Limited",
+      "pctAum": 1.54,
+      "shares": 141621
+    }
+  ],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 5.31,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": 0.29,
+      "shares": null
+    }
+  ],
+  "misc": [
+    {
+      "name": "TVS Motor Company Limited (Preference Shares)",
+      "pctAum": 0.01,
+      "shares": null
+    }
+  ],
+  "counts": {
+    "equity": 24,
+    "debt": 0,
+    "cash": 2,
+    "misc": 1
+  }
+}

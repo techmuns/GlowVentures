@@ -1,0 +1,279 @@
+{
+  "schemecode": 11889,
+  "scheme": "ICICI Pru Nifty Next 50 Index Fund(G)",
+  "classification": "Equity : Index Funds",
+  "fundAumCr": 9934.95,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "Divi's Laboratories Ltd.",
+      "pctAum": 4.04,
+      "shares": 497827
+    },
+    {
+      "name": "TVS Motor Company Ltd.",
+      "pctAum": 3.99,
+      "shares": 920184
+    },
+    {
+      "name": "Tata Motors Ltd.",
+      "pctAum": 3.6,
+      "shares": 8181302
+    },
+    {
+      "name": "Hindustan Aeronautics Ltd.",
+      "pctAum": 3.48,
+      "shares": 743121
+    },
+    {
+      "name": "Adani Power Ltd.",
+      "pctAum": 3.46,
+      "shares": 16254017
+    },
+    {
+      "name": "Cholamandalam Investment And Finance Company Ltd.",
+      "pctAum": 3.16,
+      "shares": 1694668
+    },
+    {
+      "name": "Torrent Pharmaceuticals Ltd.",
+      "pctAum": 2.96,
+      "shares": 574610
+    },
+    {
+      "name": "Cummins India Ltd.",
+      "pctAum": 2.94,
+      "shares": 529139
+    },
+    {
+      "name": "Samvardhana Motherson International Ltd.",
+      "pctAum": 2.63,
+      "shares": 17305615
+    },
+    {
+      "name": "The Indian Hotels Company Ltd.",
+      "pctAum": 2.56,
+      "shares": 3439851
+    },
+    {
+      "name": "Bharat Petroleum Corporation Ltd.",
+      "pctAum": 2.56,
+      "shares": 7938972
+    },
+    {
+      "name": "Britannia Industries Ltd.",
+      "pctAum": 2.52,
+      "shares": 461419
+    },
+    {
+      "name": "Tata Power Company Ltd.",
+      "pctAum": 2.5,
+      "shares": 6533622
+    },
+    {
+      "name": "Avenue Supermarts Ltd.",
+      "pctAum": 2.49,
+      "shares": 631232
+    },
+    {
+      "name": "Power Finance Corporation Ltd.",
+      "pctAum": 2.44,
+      "shares": 5703849
+    },
+    {
+      "name": "Varun Beverages Ltd.",
+      "pctAum": 2.38,
+      "shares": 5355936
+    },
+    {
+      "name": "CG Power and Industrial Solutions Ltd.",
+      "pctAum": 2.33,
+      "shares": 2685986
+    },
+    {
+      "name": "Adani Energy Solutions Ltd.",
+      "pctAum": 2.13,
+      "shares": 1286448
+    },
+    {
+      "name": "HDFC Asset Management Company Ltd.",
+      "pctAum": 2.1,
+      "shares": 798645
+    },
+    {
+      "name": "Indian Oil Corporation Ltd.",
+      "pctAum": 2.06,
+      "shares": 14635855
+    },
+    {
+      "name": "Pidilite Industries Ltd.",
+      "pctAum": 1.97,
+      "shares": 1213819
+    },
+    {
+      "name": "Bajaj Holdings & Investment Ltd.",
+      "pctAum": 1.94,
+      "shares": 169599
+    },
+    {
+      "name": "GAIL (India) Ltd.",
+      "pctAum": 1.93,
+      "shares": 10566268
+    },
+    {
+      "name": "Rural Electrification Corporation Ltd.",
+      "pctAum": 1.84,
+      "shares": 4892851
+    },
+    {
+      "name": "Adani Green Energy Ltd.",
+      "pctAum": 1.83,
+      "shares": 1313279
+    },
+    {
+      "name": "Bank Of Baroda",
+      "pctAum": 1.77,
+      "shares": 7267353
+    },
+    {
+      "name": "Vedanta Ltd.",
+      "pctAum": 1.77,
+      "shares": 6642699
+    },
+    {
+      "name": "Solar Industries India Ltd.",
+      "pctAum": 1.77,
+      "shares": 95417
+    },
+    {
+      "name": "United Spirits Ltd.",
+      "pctAum": 1.77,
+      "shares": 1157145
+    },
+    {
+      "name": "Godrej Consumer Products Ltd.",
+      "pctAum": 1.7,
+      "shares": 1574263
+    },
+    {
+      "name": "DLF Ltd.",
+      "pctAum": 1.67,
+      "shares": 2512953
+    },
+    {
+      "name": "Canara Bank",
+      "pctAum": 1.66,
+      "shares": 13165447
+    },
+    {
+      "name": "Jindal Steel Ltd.",
+      "pctAum": 1.61,
+      "shares": 1451047
+    },
+    {
+      "name": "LTIMindtree Ltd.",
+      "pctAum": 1.6,
+      "shares": 363801
+    },
+    {
+      "name": "Punjab National Bank",
+      "pctAum": 1.53,
+      "shares": 13490996
+    },
+    {
+      "name": "ABB India Ltd.",
+      "pctAum": 1.51,
+      "shares": 205562
+    },
+    {
+      "name": "Bosch Ltd.",
+      "pctAum": 1.4,
+      "shares": 33973
+    },
+    {
+      "name": "Shree Cements Ltd.",
+      "pctAum": 1.37,
+      "shares": 52387
+    },
+    {
+      "name": "Lodha Developers Ltd",
+      "pctAum": 1.36,
+      "shares": 1086717
+    },
+    {
+      "name": "Muthoot Finance Ltd.",
+      "pctAum": 1.32,
+      "shares": 420081
+    },
+    {
+      "name": "Siemens Ltd.",
+      "pctAum": 1.31,
+      "shares": 346269
+    },
+    {
+      "name": "Union Bank Of India",
+      "pctAum": 1.3,
+      "shares": 7569195
+    },
+    {
+      "name": "Hyundai Motor India Ltd.",
+      "pctAum": 1.23,
+      "shares": 558537
+    },
+    {
+      "name": "SIEMENS ENERGY INDIA LTD",
+      "pctAum": 1.13,
+      "shares": 346437
+    },
+    {
+      "name": "Zydus Lifesciences Ltd.",
+      "pctAum": 1.11,
+      "shares": 980030
+    },
+    {
+      "name": "Ambuja Cements Ltd.",
+      "pctAum": 1.06,
+      "shares": 2442217
+    },
+    {
+      "name": "Hindustan Zinc Ltd.",
+      "pctAum": 1.02,
+      "shares": 1883807
+    },
+    {
+      "name": "Tata Capital Ltd",
+      "pctAum": 0.73,
+      "shares": 1971809
+    },
+    {
+      "name": "Mazagon Dock Shipbuilders Ltd",
+      "pctAum": 0.71,
+      "shares": 297588
+    },
+    {
+      "name": "Indian Railway Finance Corporation Ltd.",
+      "pctAum": 0.71,
+      "shares": 7879402
+    }
+  ],
+  "debt": [],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 0.24,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": -0.16,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 50,
+    "debt": 0,
+    "cash": 2,
+    "misc": 0
+  }
+}

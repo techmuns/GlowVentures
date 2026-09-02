@@ -1,0 +1,774 @@
+{
+  "schemecode": 1286,
+  "scheme": "HDFC Liquid Fund(G)",
+  "classification": "Debt : Liquid",
+  "fundAumCr": 65870.42,
+  "asOf": "2026-07-31",
+  "equity": [],
+  "debt": [
+    {
+      "name": "6.97% GOI MAT 060926 (Government Securities)",
+      "pctAum": 6.16,
+      "shares": null
+    },
+    {
+      "name": "91 Days TBILL MAT 030926^ (Treasury Bills)",
+      "pctAum": 5.36,
+      "shares": null
+    },
+    {
+      "name": "Reliance Retail ventures Ltd.^ (Commercial Paper)",
+      "pctAum": 3.01,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda^ (Certificate of Deposit)",
+      "pctAum": 2.56,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda^ (Certificate of Deposit)",
+      "pctAum": 2.26,
+      "shares": null
+    },
+    {
+      "name": "Export - Import Bank of India^ (Commercial Paper)",
+      "pctAum": 2.26,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India^ (Certificate of Deposit)",
+      "pctAum": 2.25,
+      "shares": null
+    },
+    {
+      "name": "91 Days TBill Mat 151026^ (Treasury Bills)",
+      "pctAum": 2.25,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank^ (Commercial Paper)",
+      "pctAum": 2.19,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India^ (Certificate of Deposit)",
+      "pctAum": 1.88,
+      "shares": null
+    },
+    {
+      "name": "Reliance Retail ventures Ltd.^ (Commercial Paper)",
+      "pctAum": 1.88,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 1.81,
+      "shares": null
+    },
+    {
+      "name": "ICICI Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India^ (Certificate of Deposit)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India^ (Certificate of Deposit)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "Reliance Retail ventures Ltd.^ (Commercial Paper)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "Export - Import Bank of India^ (Commercial Paper)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "Reliance Retail ventures Ltd.^ (Commercial Paper)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "91 Days TBill ISD 250626 Mat 240926 (Treasury Bills)",
+      "pctAum": 1.51,
+      "shares": null
+    },
+    {
+      "name": "IDFC First Bank Limited^ (Certificate of Deposit)",
+      "pctAum": 1.5,
+      "shares": null
+    },
+    {
+      "name": "IDFC First Bank Limited^ (Certificate of Deposit)",
+      "pctAum": 1.5,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank^ (Certificate of Deposit)",
+      "pctAum": 1.5,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (Certificate of Deposit)",
+      "pctAum": 1.5,
+      "shares": null
+    },
+    {
+      "name": "91 Days TBill Mat 221026 (Treasury Bills)",
+      "pctAum": 1.5,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank^ (Commercial Paper)",
+      "pctAum": 1.49,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd^ (Commercial Paper)",
+      "pctAum": 1.28,
+      "shares": null
+    },
+    {
+      "name": "Bank of India^ (Certificate of Deposit)",
+      "pctAum": 1.2,
+      "shares": null
+    },
+    {
+      "name": "Kotak Securities Ltd.^ (Commercial Paper)",
+      "pctAum": 1.14,
+      "shares": null
+    },
+    {
+      "name": "ICICI Bank Ltd. (Certificate of Deposit)",
+      "pctAum": 1.13,
+      "shares": null
+    },
+    {
+      "name": "L&T Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 1.12,
+      "shares": null
+    },
+    {
+      "name": "Kotak Securities Ltd.^ (Commercial Paper)",
+      "pctAum": 1.06,
+      "shares": null
+    },
+    {
+      "name": "Bank of India^ (Certificate of Deposit)",
+      "pctAum": 1.05,
+      "shares": null
+    },
+    {
+      "name": "Punjab & Sind Bank^ (Certificate of Deposit)",
+      "pctAum": 0.98,
+      "shares": null
+    },
+    {
+      "name": "Hindustan Petroleum Corp. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.98,
+      "shares": null
+    },
+    {
+      "name": "7.95% HDFC Bank Ltd.£ (Corporate Debt)",
+      "pctAum": 0.97,
+      "shares": null
+    },
+    {
+      "name": "REC Limited.^ (Commercial Paper)",
+      "pctAum": 0.97,
+      "shares": null
+    },
+    {
+      "name": "TMF Holdings Ltd.^ (Corporate Debt)",
+      "pctAum": 0.94,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 0.9,
+      "shares": null
+    },
+    {
+      "name": "Poonawalla Fincorp Ltd^ (Commercial Paper)",
+      "pctAum": 0.9,
+      "shares": null
+    },
+    {
+      "name": "Kotak Mahindra Investments Ltd.^ (Commercial Paper)",
+      "pctAum": 0.76,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Housing Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.76,
+      "shares": null
+    },
+    {
+      "name": "TATA Capital Housing Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.76,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Canara Bank^ (Certificate of Deposit)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "DBS BANK INDIA LIMITED^ (Certificate of Deposit)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "The Tata Power Company Ltd.^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Aditya Birla Housing Finance Ltd^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "Bharti Telecom Limited^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "The Tata Power Company Ltd.^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "ICICI SECURITIES PRIMARY DEALERSHIP^ (Commercial Paper)",
+      "pctAum": 0.75,
+      "shares": null
+    },
+    {
+      "name": "91 Days TBILL MAT 170926 (Treasury Bills)",
+      "pctAum": 0.72,
+      "shares": null
+    },
+    {
+      "name": "IDFC First Bank Limited^ (Certificate of Deposit)",
+      "pctAum": 0.68,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.68,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank^ (Certificate of Deposit)",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "IDFC First Bank Limited^ (Certificate of Deposit)",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Auto Credit Limited^ (Commercial Paper)",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "LIC Housing Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "6.4% Jamnagar Utilities & Power Pvt. Limited^ (Corporate Debt)",
+      "pctAum": 0.57,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.57,
+      "shares": null
+    },
+    {
+      "name": "7.865% LIC Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.54,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.53,
+      "shares": null
+    },
+    {
+      "name": "Mindspace Business Parks REIT^ (Commercial Paper)",
+      "pctAum": 0.51,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank^ (Certificate of Deposit)",
+      "pctAum": 0.49,
+      "shares": null
+    },
+    {
+      "name": "Canara Bank (Certificate of Deposit)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev. (Commercial Paper)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "Nuvoco Vistas Corporation Ltd.^ (Commercial Paper)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "Cholamandalam Investment & Finance Co. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "Avenue Supermarts Ltd.^ (Commercial Paper)",
+      "pctAum": 0.45,
+      "shares": null
+    },
+    {
+      "name": "Kotak Mahindra Bank Limited (Certificate of Deposit)",
+      "pctAum": 0.41,
+      "shares": null
+    },
+    {
+      "name": "Tata Teleservices (Maharashtra) Ltd.^ (Commercial Paper)",
+      "pctAum": 0.41,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda^ (Certificate of Deposit)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "Indian Overseas Bank^ (Certificate of Deposit)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "Tata Communications Limited^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "Export - Import Bank of India^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "ICICI Home Finance Ltd^ (Commercial Paper)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "NTPC Limited^ (Commercial Paper)",
+      "pctAum": 0.37,
+      "shares": null
+    },
+    {
+      "name": "Aditya Birla Capital ltd.^ (Commercial Paper)",
+      "pctAum": 0.37,
+      "shares": null
+    },
+    {
+      "name": "Julius Baer Capital (India) Pvt. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.37,
+      "shares": null
+    },
+    {
+      "name": "7.43% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.34,
+      "shares": null
+    },
+    {
+      "name": "IDBI Bank Limited^ (Certificate of Deposit)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "AXIS Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Jamnagar Utilities & Power Pvt. Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Private Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Julius Baer Capital (India) Pvt. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Network 18 Media & Investments Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Bharti Telecom Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "SBICap Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Mirae Asset Capital Markets (India) Pvt Ltd.^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "Sharekhan Limited^ (Commercial Paper)",
+      "pctAum": 0.3,
+      "shares": null
+    },
+    {
+      "name": "7.55% Small Industries Development Bank (Corporate Debt)",
+      "pctAum": 0.27,
+      "shares": null
+    },
+    {
+      "name": "182 Days TBILL MAT 180926^ (Treasury Bills)",
+      "pctAum": 0.26,
+      "shares": null
+    },
+    {
+      "name": "Au Small Finance Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Godrej Properties Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Hindustan Petroleum Corp. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Godrej Properties Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Godrej Properties Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Kotak Securities Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "IGH Holdings Private Limited^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Birla Group Holdings Pvt. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Aarti Industries Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Aarti Industries Ltd.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agri & Rural Dev.^ (Commercial Paper)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "8.07% ICICI Home Finance Ltd^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "Aditya Birla Money Limited^ (Commercial Paper)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "Aditya Birla Money Limited^ (Commercial Paper)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.77% REC Limited. (Corporate Debt)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Kotak Mahindra Bank Limited (Certificate of Deposit)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Kotak Securities Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Fedbank Financial Services Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Infina Finance Pvt. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Nuvoco Vistas Corporation Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "SBICap Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Nu Vista Limited^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "SBICap Securities Limited^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Goldman Sachs (India) Finance Pvt. Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Sikka Port and Terminal Ltd.^ (Commercial Paper)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "182 Days TBILL MAT 100926^ (Treasury Bills)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "Canara Bank^ (Certificate of Deposit)",
+      "pctAum": 0.11,
+      "shares": null
+    },
+    {
+      "name": "7.64% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.44% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.28% SMFG India Credit Company Ltd^ (Corporate Debt)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank^ (Certificate of Deposit)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "Tata Steel Ltd.^ (Commercial Paper)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "Kotak Mahindra Prime Ltd.^ (Commercial Paper)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "Aditya Birla Money Limited^ (Commercial Paper)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "Grasim Industries Ltd.^ (Commercial Paper)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "364 Days TBILL MAT 170926^ (Treasury Bills)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "7.5% National Bank for Agri & Rural Dev.^ (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank (Certificate of Deposit)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "Muthoot Finance Ltd.^ (Commercial Paper)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "Indusind Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "182 Days TBILL MAT 130826^ (Treasury Bills)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "7.49% 7.49% Gujarat SDL Mat 280926^ (Government Securities)",
+      "pctAum": 0.01,
+      "shares": null
+    },
+    {
+      "name": "6.09% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.01,
+      "shares": null
+    }
+  ],
+  "cash": [
+    {
+      "name": "Reverse Repo",
+      "pctAum": 1.89,
+      "shares": null
+    },
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": -8.76,
+      "shares": null
+    }
+  ],
+  "misc": [],
+  "counts": {
+    "equity": 0,
+    "debt": 148,
+    "cash": 3,
+    "misc": 0
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -65,10 +66,32 @@ export function TodaysMovers() {
   const { portfolio, consolidated, quotesStatus, quotesAsOf, fmtFromBase } = usePortfolio();
   const [rank, setRank] = useState<"impact" | "pct">("impact");
   const [indices, setIndices] = useState<IndexFeed | null>(null);
+  /**
+   * THREE STATES, NOT TWO — the same rule `IndexStrip` already follows.
+   *
+   * This tile printed "Index levels unavailable — the feed did not respond"
+   * whenever `indices` was null, which is true on the FIRST PAINT of every
+   * open. A reader was told the feed had failed while the request was still in
+   * flight. A failed POLL must not blank a good tile either: the last good
+   * levels stay until a fresh set replaces them, and only a first load that
+   * never succeeded reports the feed as down.
+   */
+  const [indexState, setIndexState] = useState<"loading" | "ok" | "down">("loading");
 
   useEffect(() => {
     let alive = true;
-    const load = () => fetchIndices().then((f) => { if (alive && f?.ok) setIndices(f); });
+    let seen = false;
+    const load = async () => {
+      const f = await fetchIndices();
+      if (!alive) return;
+      if (f?.ok) { seen = true; setIndices(f); setIndexState("ok"); }
+      // A FAILED POLL MUST NOT BLANK A GOOD TILE — only a first load that never
+      // succeeded reports the feed as down. NOT COVERED BY `check:pages`, and
+      // recorded here rather than left to look tested: reaching it needs one
+      // successful response followed by a failure, and the poll is 60s apart.
+      // It is the same guard `IndexStrip` carries for the same reason.
+      else if (!seen) setIndexState("down");
+    };
     load();
     const id = window.setInterval(() => { if (!document.hidden) load(); }, 60_000);
     return () => { alive = false; window.clearInterval(id); };
@@ -190,11 +213,40 @@ export function TodaysMovers() {
         </div>
       }>
 
-      {quotesStatus === "loading" && (
-        <p className="mb-4 text-[11.5px] text-slate-500">Fetching prices — the day&rsquo;s move is not struck until they settle.</p>
+      {quotesStatus === "loading" && model.rows.length > 0 && (
+        <p className="mb-4 text-[11.5px] text-slate-500">Fetching prices — figures are the last snapshot until they settle.</p>
       )}
 
-      {model.rows.length === 0 ? (
+      {/*
+        AN EMPTY CARD MID-FETCH IS NOT AN ABSENCE, AND MUST NOT SAY IT IS.
+
+        "No holding in this book carries a day change right now" is a claim
+        ABOUT THE BOOK, and it used to render whenever there were no priced rows
+        — including on the first paint of every cold open, while the feed was
+        still in flight. A reader who sees it either believes their book cannot
+        be priced or reloads until it goes away. That is the same defect this
+        repo already records on the company page, where a panel still fetching
+        asserted the security has no live quote: THE CAUSE PICKS THE HEADLINE.
+
+        So the three states are separated. Still fetching says so. The feed
+        having failed names the feed. Only a settled feed that priced nothing
+        makes the claim about the book — and by then the claim is true.
+
+        With the snapshot cache behind it (`quoteCache.ts`) the first branch is
+        reached only on a genuinely cold open: a reload inside the session
+        renders the previous figures immediately and never passes through here.
+      */}
+      {model.rows.length === 0 && quotesStatus === "loading" ? (
+        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center"
+             data-testid="movers-loading">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
+          <div className="text-sm font-medium text-slate-300">Fetching prices…</div>
+          <p className="max-w-xl text-xs leading-relaxed text-slate-500">
+            The day&rsquo;s move needs a live price and the previous close behind it. Nothing is shown until they land —
+            no figure here has been estimated or carried over from another day.
+          </p>
+        </div>
+      ) : model.rows.length === 0 ? (
         <AbsentSection
           what="No direct-equity holding carries a day change right now"
           needs={quotesStatus === "unavailable"
@@ -224,7 +276,9 @@ export function TodaysMovers() {
 
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4 sm:col-span-1 lg:col-span-2">
               <div className="label-xs">NSE indices · today</div>
-              {!indices ? (
+              {!indices && indexState === "loading" ? (
+                <p className="mt-2 text-[11.5px] text-slate-500">Fetching index levels…</p>
+              ) : !indices ? (
                 <p className="mt-2 text-[11.5px] text-slate-500">
                   Index levels unavailable — the feed did not respond. Nothing has been substituted for a level.
                 </p>

@@ -1,0 +1,1671 @@
+{
+  "schemecode": 1273,
+  "scheme": "HDFC Balanced Advantage Fund(G)",
+  "classification": "Hybrid : Dynamic Asset Allocation",
+  "fundAumCr": 107765.65,
+  "asOf": "2026-07-31",
+  "equity": [
+    {
+      "name": "ICICI Bank Ltd.",
+      "pctAum": 5.23,
+      "shares": 39244463
+    },
+    {
+      "name": "HDFC Bank Ltd.",
+      "pctAum": 4.34,
+      "shares": 62464555
+    },
+    {
+      "name": "Reliance Industries Ltd.",
+      "pctAum": 3.81,
+      "shares": 31400311
+    },
+    {
+      "name": "State Bank of India",
+      "pctAum": 3.34,
+      "shares": 35000000
+    },
+    {
+      "name": "Bharti Airtel Ltd.",
+      "pctAum": 3.17,
+      "shares": 17323283
+    },
+    {
+      "name": "Axis Bank Ltd.",
+      "pctAum": 2.52,
+      "shares": 22125438
+    },
+    {
+      "name": "Larsen and Toubro Ltd.",
+      "pctAum": 2.51,
+      "shares": 6879083
+    },
+    {
+      "name": "NTPC Limited",
+      "pctAum": 2.05,
+      "shares": 63500000
+    },
+    {
+      "name": "Coal India Ltd.",
+      "pctAum": 1.64,
+      "shares": 42800000
+    },
+    {
+      "name": "Infosys Limited",
+      "pctAum": 1.57,
+      "shares": 15000000
+    },
+    {
+      "name": "Sun Pharmaceutical Industries Ltd.",
+      "pctAum": 1.54,
+      "shares": 8346339
+    },
+    {
+      "name": "Eternal Limited",
+      "pctAum": 1.51,
+      "shares": 53965593
+    },
+    {
+      "name": "Maruti Suzuki India Limited",
+      "pctAum": 1.5,
+      "shares": 1138626
+    },
+    {
+      "name": "Kotak Mahindra Bank Limited",
+      "pctAum": 1.41,
+      "shares": 38967751
+    },
+    {
+      "name": "Lupin Ltd.",
+      "pctAum": 1.27,
+      "shares": 5686457
+    },
+    {
+      "name": "HCL Technologies Ltd.",
+      "pctAum": 1.26,
+      "shares": 10104420
+    },
+    {
+      "name": "Tata Consultancy Services Ltd.",
+      "pctAum": 1.18,
+      "shares": 5377541
+    },
+    {
+      "name": "InterGlobe Aviation Ltd.",
+      "pctAum": 1.16,
+      "shares": 2422827
+    },
+    {
+      "name": "ITC LIMITED",
+      "pctAum": 1.12,
+      "shares": 42854974
+    },
+    {
+      "name": "SBI Life Insurance Company Ltd.",
+      "pctAum": 0.93,
+      "shares": 5333809
+    },
+    {
+      "name": "Mahindra & Mahindra Ltd.",
+      "pctAum": 0.9,
+      "shares": 2858563
+    },
+    {
+      "name": "GAIL (India) Ltd.",
+      "pctAum": 0.83,
+      "shares": 49063637
+    },
+    {
+      "name": "Hyundai Motor India Limited",
+      "pctAum": 0.8,
+      "shares": 3973073
+    },
+    {
+      "name": "Power Finance Corporation Ltd.",
+      "pctAum": 0.73,
+      "shares": 18500000
+    },
+    {
+      "name": "Bank of Baroda",
+      "pctAum": 0.68,
+      "shares": 30000000
+    },
+    {
+      "name": "Tata Steel Ltd.",
+      "pctAum": 0.67,
+      "shares": 37885014
+    },
+    {
+      "name": "Divis Laboratories Ltd.",
+      "pctAum": 0.66,
+      "shares": 888857
+    },
+    {
+      "name": "Apar Industries Limited",
+      "pctAum": 0.64,
+      "shares": 481307
+    },
+    {
+      "name": "Hindustan Petroleum Corp. Ltd.",
+      "pctAum": 0.64,
+      "shares": 17635176
+    },
+    {
+      "name": "Bharat Petroleum Corporation Ltd.",
+      "pctAum": 0.62,
+      "shares": 20733638
+    },
+    {
+      "name": "Indusind Bank Ltd.",
+      "pctAum": 0.61,
+      "shares": 6500000
+    },
+    {
+      "name": "REC Limited.",
+      "pctAum": 0.59,
+      "shares": 17000000
+    },
+    {
+      "name": "JSW Infrastructure Limited",
+      "pctAum": 0.5,
+      "shares": 17275875
+    },
+    {
+      "name": "Au Small Finance Bank Ltd.",
+      "pctAum": 0.48,
+      "shares": 4904394
+    },
+    {
+      "name": "Cholamandalam Investment & Finance Co. Ltd.",
+      "pctAum": 0.46,
+      "shares": 2692272
+    },
+    {
+      "name": "Jindal Steel Limited.",
+      "pctAum": 0.43,
+      "shares": 4228806
+    },
+    {
+      "name": "Hindustan Aeronautics Limited",
+      "pctAum": 0.42,
+      "shares": 983882
+    },
+    {
+      "name": "WeWork India Management Limited",
+      "pctAum": 0.42,
+      "shares": 6053340
+    },
+    {
+      "name": "KAYNES TECHNOLOGY INDIA LIMITED",
+      "pctAum": 0.41,
+      "shares": 1148036
+    },
+    {
+      "name": "Aurobindo Pharma Ltd.",
+      "pctAum": 0.4,
+      "shares": 2700437
+    },
+    {
+      "name": "Bajaj Auto Limited",
+      "pctAum": 0.4,
+      "shares": 377629
+    },
+    {
+      "name": "Britannia Industries Ltd.",
+      "pctAum": 0.4,
+      "shares": 800928
+    },
+    {
+      "name": "CANARA HSBC LIFE INSURANCE COMPANY LIMITED",
+      "pctAum": 0.4,
+      "shares": 29777670
+    },
+    {
+      "name": "Ipca Laboratories Ltd.",
+      "pctAum": 0.4,
+      "shares": 2497123
+    },
+    {
+      "name": "Techno Electric & Engin. Co. Ltd.",
+      "pctAum": 0.39,
+      "shares": 4254456
+    },
+    {
+      "name": "Bajaj Finserv Ltd.",
+      "pctAum": 0.38,
+      "shares": 2000000
+    },
+    {
+      "name": "Bharat Forge Ltd.",
+      "pctAum": 0.38,
+      "shares": 1869073
+    },
+    {
+      "name": "Vishal Mega Mart Limited",
+      "pctAum": 0.38,
+      "shares": 37905983
+    },
+    {
+      "name": "Apollo Tyres Ltd.",
+      "pctAum": 0.36,
+      "shares": 9000000
+    },
+    {
+      "name": "BEML Limited",
+      "pctAum": 0.35,
+      "shares": 2143066
+    },
+    {
+      "name": "Five-Star Business Finance Limited",
+      "pctAum": 0.34,
+      "shares": 6682615
+    },
+    {
+      "name": "Ambuja Cements Ltd.",
+      "pctAum": 0.33,
+      "shares": 8174656
+    },
+    {
+      "name": "Dynamatic Technologies Ltd.",
+      "pctAum": 0.33,
+      "shares": 347714
+    },
+    {
+      "name": "Hindustan Unilever Ltd.",
+      "pctAum": 0.33,
+      "shares": 1717714
+    },
+    {
+      "name": "Gujarat Pipavav Port Ltd.",
+      "pctAum": 0.32,
+      "shares": 23000000
+    },
+    {
+      "name": "Titagarh Wagons Limited",
+      "pctAum": 0.32,
+      "shares": 4200000
+    },
+    {
+      "name": "United Spirits Limited",
+      "pctAum": 0.3,
+      "shares": 2115857
+    },
+    {
+      "name": "Oil & Natural Gas Corporation Ltd.",
+      "pctAum": 0.29,
+      "shares": 13070826
+    },
+    {
+      "name": "Hexaware Technologies Ltd.",
+      "pctAum": 0.28,
+      "shares": 5433175
+    },
+    {
+      "name": "MphasiS Limited.",
+      "pctAum": 0.27,
+      "shares": 1257231
+    },
+    {
+      "name": "Aavas Financiers Ltd.",
+      "pctAum": 0.25,
+      "shares": 2005198
+    },
+    {
+      "name": "Bosch Limited",
+      "pctAum": 0.25,
+      "shares": 65972
+    },
+    {
+      "name": "Savita Oil Technologies Ltd.",
+      "pctAum": 0.25,
+      "shares": 4486192
+    },
+    {
+      "name": "Alkem Laboratories Ltd.",
+      "pctAum": 0.24,
+      "shares": 458965
+    },
+    {
+      "name": "Bharat Dynamics Limited",
+      "pctAum": 0.24,
+      "shares": 2100000
+    },
+    {
+      "name": "Godrej Properties Ltd.",
+      "pctAum": 0.24,
+      "shares": 1250000
+    },
+    {
+      "name": "Mishra Dhatu Nigam Ltd.",
+      "pctAum": 0.24,
+      "shares": 6450000
+    },
+    {
+      "name": "Kalpataru Projects International Ltd",
+      "pctAum": 0.23,
+      "shares": 1946606
+    },
+    {
+      "name": "Time Technoplast Limited",
+      "pctAum": 0.23,
+      "shares": 12000000
+    },
+    {
+      "name": "J.Kumar Infraprojects Ltd.",
+      "pctAum": 0.22,
+      "shares": 4957308
+    },
+    {
+      "name": "NHPC Ltd.",
+      "pctAum": 0.22,
+      "shares": 29879361
+    },
+    {
+      "name": "Trent Ltd.",
+      "pctAum": 0.22,
+      "shares": 789690
+    },
+    {
+      "name": "LMW Limited",
+      "pctAum": 0.21,
+      "shares": 137268
+    },
+    {
+      "name": "Billionbrains Garage Ventures Limited (Groww)",
+      "pctAum": 0.2,
+      "shares": 11028289
+    },
+    {
+      "name": "CESC Ltd.",
+      "pctAum": 0.2,
+      "shares": 12780789
+    },
+    {
+      "name": "PCBL Chemical Limited",
+      "pctAum": 0.19,
+      "shares": 6278237
+    },
+    {
+      "name": "Tech Mahindra Ltd.",
+      "pctAum": 0.19,
+      "shares": 1238484
+    },
+    {
+      "name": "Crompton Greaves Consumer Elec. Ltd.",
+      "pctAum": 0.18,
+      "shares": 7400000
+    },
+    {
+      "name": "Glenmark Pharmaceuticals Ltd.",
+      "pctAum": 0.18,
+      "shares": 885046
+    },
+    {
+      "name": "Ashoka Buildcon Ltd.",
+      "pctAum": 0.17,
+      "shares": 14834080
+    },
+    {
+      "name": "Life Insurance Corporation of India",
+      "pctAum": 0.17,
+      "shares": 4214970
+    },
+    {
+      "name": "TEGA INDUSTRIES LIMITED",
+      "pctAum": 0.17,
+      "shares": 1230913
+    },
+    {
+      "name": "Ashok Leyland  Ltd",
+      "pctAum": 0.16,
+      "shares": 10629062
+    },
+    {
+      "name": "Asian Paints Limited",
+      "pctAum": 0.16,
+      "shares": 643542
+    },
+    {
+      "name": "Cohance Lifesciences Limited",
+      "pctAum": 0.16,
+      "shares": 4143548
+    },
+    {
+      "name": "Tata Motors Limited",
+      "pctAum": 0.16,
+      "shares": 3904156
+    },
+    {
+      "name": "Cipla Ltd.",
+      "pctAum": 0.15,
+      "shares": 1060783
+    },
+    {
+      "name": "Garden Reach Shipbuilders & Engineers Limited",
+      "pctAum": 0.15,
+      "shares": 636090
+    },
+    {
+      "name": "CG Power and Industrial Solutions Ltd.",
+      "pctAum": 0.14,
+      "shares": 1691759
+    },
+    {
+      "name": "HDFC Life Insurance Company Limited",
+      "pctAum": 0.13,
+      "shares": 2610766
+    },
+    {
+      "name": "Shriram Finance Ltd.",
+      "pctAum": 0.13,
+      "shares": 1375000
+    },
+    {
+      "name": "Bandhan Bank Ltd.",
+      "pctAum": 0.12,
+      "shares": 7407260
+    },
+    {
+      "name": "DLF LIMITED",
+      "pctAum": 0.12,
+      "shares": 2000000
+    },
+    {
+      "name": "Jio Financial Services Limited",
+      "pctAum": 0.12,
+      "shares": 4980933
+    },
+    {
+      "name": "SBI CARDS AND PAYMENT SERVICES LIMITED",
+      "pctAum": 0.12,
+      "shares": 1877975
+    },
+    {
+      "name": "Tata Motors Passenger Vehicles Limited",
+      "pctAum": 0.12,
+      "shares": 3904156
+    },
+    {
+      "name": "Aditya Birla Sun Life AMC Limited",
+      "pctAum": 0.11,
+      "shares": 1197585
+    },
+    {
+      "name": "Blue Dart Express Ltd.",
+      "pctAum": 0.11,
+      "shares": 227052
+    },
+    {
+      "name": "Dr Reddys Laboratories Ltd.",
+      "pctAum": 0.11,
+      "shares": 1000000
+    },
+    {
+      "name": "INFO EDGE (INDIA) LIMITED",
+      "pctAum": 0.11,
+      "shares": 936220
+    },
+    {
+      "name": "Swiggy Limited",
+      "pctAum": 0.11,
+      "shares": 4000000
+    },
+    {
+      "name": "Whirlpool of India Ltd.",
+      "pctAum": 0.11,
+      "shares": 1430972
+    },
+    {
+      "name": "Avenue Supermarts Ltd.",
+      "pctAum": 0.1,
+      "shares": 287665
+    },
+    {
+      "name": "JSW Energy Ltd.",
+      "pctAum": 0.1,
+      "shares": 1978533
+    },
+    {
+      "name": "Gujarat Industries Power Co. Ltd.",
+      "pctAum": 0.09,
+      "shares": 6327000
+    },
+    {
+      "name": "Indraprastha Gas Ltd.",
+      "pctAum": 0.09,
+      "shares": 6502880
+    },
+    {
+      "name": "LG Electronics India Limited",
+      "pctAum": 0.09,
+      "shares": 667057
+    },
+    {
+      "name": "Zee Entertainment Enterprises Ltd.",
+      "pctAum": 0.09,
+      "shares": 8160030
+    },
+    {
+      "name": "Aegis Vopak Terminals Limited",
+      "pctAum": 0.08,
+      "shares": 2933343
+    },
+    {
+      "name": "Jubilant Foodworks Limited",
+      "pctAum": 0.08,
+      "shares": 2009652
+    },
+    {
+      "name": "Texmaco Rail & Engineering Ltd.",
+      "pctAum": 0.08,
+      "shares": 7313200
+    },
+    {
+      "name": "UTI Asset Management Company Ltd",
+      "pctAum": 0.08,
+      "shares": 999852
+    },
+    {
+      "name": "Home First Finance Company India Ltd",
+      "pctAum": 0.07,
+      "shares": 618556
+    },
+    {
+      "name": "Nuvoco Vistas Corporation Ltd.",
+      "pctAum": 0.07,
+      "shares": 2112854
+    },
+    {
+      "name": "Housing and Urban Development Corporation Ltd.",
+      "pctAum": 0.06,
+      "shares": 3300000
+    },
+    {
+      "name": "ITC Hotels Limited",
+      "pctAum": 0.06,
+      "shares": 4147692
+    },
+    {
+      "name": "Torrent Power Ltd.",
+      "pctAum": 0.06,
+      "shares": 484632
+    },
+    {
+      "name": "360 ONE WAM LIMITED",
+      "pctAum": 0.05,
+      "shares": 509588
+    },
+    {
+      "name": "Bharti Hexacom Limited",
+      "pctAum": 0.05,
+      "shares": 345102
+    },
+    {
+      "name": "PB Fintech Limited",
+      "pctAum": 0.05,
+      "shares": 359723
+    },
+    {
+      "name": "Persistent Systems Limited",
+      "pctAum": 0.05,
+      "shares": 100000
+    },
+    {
+      "name": "VODAFONE IDEA LIMITED",
+      "pctAum": 0.05,
+      "shares": 44528169
+    },
+    {
+      "name": "Ceigall India Limited",
+      "pctAum": 0.04,
+      "shares": 1213502
+    },
+    {
+      "name": "Colgate-Palmolive ( I ) Ltd.",
+      "pctAum": 0.04,
+      "shares": 200000
+    },
+    {
+      "name": "Fortis Healthcare Limited",
+      "pctAum": 0.04,
+      "shares": 500000
+    },
+    {
+      "name": "ICICI PRUDENTIAL ASSET MANAGEMENT COMPANY LIMITED",
+      "pctAum": 0.04,
+      "shares": 134574
+    },
+    {
+      "name": "TENNECO CLEAN AIR INDIA LIMITED",
+      "pctAum": 0.04,
+      "shares": 782673
+    },
+    {
+      "name": "Westlife Foodworld Limited",
+      "pctAum": 0.04,
+      "shares": 937597
+    },
+    {
+      "name": "Adani Ports & Special Economic Zone",
+      "pctAum": 0.03,
+      "shares": 215231
+    },
+    {
+      "name": "Chambal Fertilizers & Chemicals Ltd.",
+      "pctAum": 0.03,
+      "shares": 620921
+    },
+    {
+      "name": "Devyani International Ltd",
+      "pctAum": 0.03,
+      "shares": 2967752
+    },
+    {
+      "name": "Medi Assist Healthcare Services Limited",
+      "pctAum": 0.03,
+      "shares": 952417
+    },
+    {
+      "name": "Ramco Systems Ltd.",
+      "pctAum": 0.03,
+      "shares": 569833
+    },
+    {
+      "name": "RHI MAGNESITA INDIA Limited",
+      "pctAum": 0.03,
+      "shares": 969882
+    },
+    {
+      "name": "SBI Funds Management Limited",
+      "pctAum": 0.03,
+      "shares": 607230
+    },
+    {
+      "name": "Aditya Infotech Limited",
+      "pctAum": 0.02,
+      "shares": 60161
+    },
+    {
+      "name": "Bajaj Housing Finance Ltd.",
+      "pctAum": 0.02,
+      "shares": 1950124
+    },
+    {
+      "name": "BEML Land Assets Limited",
+      "pctAum": 0.02,
+      "shares": 1113681
+    },
+    {
+      "name": "Coromandel International Limited",
+      "pctAum": 0.02,
+      "shares": 122164
+    },
+    {
+      "name": "Fusion Finance Limited",
+      "pctAum": 0.02,
+      "shares": 912850
+    },
+    {
+      "name": "L&T Finance Ltd.",
+      "pctAum": 0.02,
+      "shares": 611641
+    },
+    {
+      "name": "TruAlt Bioenergy Limited",
+      "pctAum": 0.02,
+      "shares": 504030
+    },
+    {
+      "name": "Varun Beverages Ltd",
+      "pctAum": 0.02,
+      "shares": 389122
+    },
+    {
+      "name": "Aster DM Healthcare Limited",
+      "pctAum": 0.01,
+      "shares": 92791
+    },
+    {
+      "name": "Campus Activewear Limited",
+      "pctAum": 0.01,
+      "shares": 458949
+    },
+    {
+      "name": "Emcure Pharmaceuticals Limited",
+      "pctAum": 0.01,
+      "shares": 81119
+    },
+    {
+      "name": "JNK India Limited",
+      "pctAum": 0.01,
+      "shares": 220323
+    },
+    {
+      "name": "Paradeep Phosphates Limited",
+      "pctAum": 0.01,
+      "shares": 900000
+    },
+    {
+      "name": "RITES Limited",
+      "pctAum": 0.01,
+      "shares": 600000
+    },
+    {
+      "name": "Star Health and Allied Insurance Company Ltd",
+      "pctAum": 0.01,
+      "shares": 225476
+    },
+    {
+      "name": "Tamilnadu Newsprint & Papers Ltd.",
+      "pctAum": 0.01,
+      "shares": 564812
+    },
+    {
+      "name": "Tata Chemicals Ltd.",
+      "pctAum": 0.01,
+      "shares": 220000
+    },
+    {
+      "name": "Union Bank of India",
+      "pctAum": 0.01,
+      "shares": 704503
+    },
+    {
+      "name": "UPL Ltd.",
+      "pctAum": 0.01,
+      "shares": 170402
+    },
+    {
+      "name": "AGS Transact Technologies Limited",
+      "pctAum": 0,
+      "shares": 4587241
+    },
+    {
+      "name": "CMR Green Technologies Limited",
+      "pctAum": 0,
+      "shares": 32201
+    },
+    {
+      "name": "Indus Towers Limited",
+      "pctAum": 0,
+      "shares": 5342
+    },
+    {
+      "name": "Kwality Wall’s (India) Limited",
+      "pctAum": 0,
+      "shares": 1120219
+    },
+    {
+      "name": "MEP Infrastructure Developers Ltd.",
+      "pctAum": 0,
+      "shares": 8083148
+    },
+    {
+      "name": "S Chand and Company Ltd.",
+      "pctAum": 0,
+      "shares": 102953
+    },
+    {
+      "name": "Tata Consumer Products Limited",
+      "pctAum": 0,
+      "shares": 4556
+    }
+  ],
+  "debt": [
+    {
+      "name": "7.18% GOI MAT 140833 (Government Securities)",
+      "pctAum": 1.99,
+      "shares": null
+    },
+    {
+      "name": "7.18% GOI MAT 240737 (Government Securities)",
+      "pctAum": 0.93,
+      "shares": null
+    },
+    {
+      "name": "7.34% GOI MAT 220464 (Government Securities)",
+      "pctAum": 0.71,
+      "shares": null
+    },
+    {
+      "name": "7.1% GOI MAT 080434 (Government Securities)",
+      "pctAum": 0.7,
+      "shares": null
+    },
+    {
+      "name": "7.57% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.6,
+      "shares": null
+    },
+    {
+      "name": "7.33% State Bank of India (Tier 2 - Basel III)^ (Corporate Debt)",
+      "pctAum": 0.57,
+      "shares": null
+    },
+    {
+      "name": "6.9% GOI MAT 150465 (Government Securities)",
+      "pctAum": 0.53,
+      "shares": null
+    },
+    {
+      "name": "7.42% State Bank of India (Tier 2 - Basel III)^ (Corporate Debt)",
+      "pctAum": 0.51,
+      "shares": null
+    },
+    {
+      "name": "7.96% Pipeline Infrastructure Pvt. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.48,
+      "shares": null
+    },
+    {
+      "name": "8.2% Torrent Power Ltd.^ (Corporate Debt)",
+      "pctAum": 0.41,
+      "shares": null
+    },
+    {
+      "name": "7.26% GOI MAT 220832 (Government Securities)",
+      "pctAum": 0.38,
+      "shares": null
+    },
+    {
+      "name": "6.9% REC Limited.^ (Corporate Debt)",
+      "pctAum": 0.37,
+      "shares": null
+    },
+    {
+      "name": "7.42% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.37,
+      "shares": null
+    },
+    {
+      "name": "7.83% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.35,
+      "shares": null
+    },
+    {
+      "name": "7.26% GOI MAT 060233 (Government Securities)",
+      "pctAum": 0.34,
+      "shares": null
+    },
+    {
+      "name": "7.8% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.33,
+      "shares": null
+    },
+    {
+      "name": "7.44% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.33,
+      "shares": null
+    },
+    {
+      "name": "7.27% Gujarat SDL ISD 171225 MAT 171234^ (Government Securities)",
+      "pctAum": 0.32,
+      "shares": null
+    },
+    {
+      "name": "7.55% Bajaj Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.32,
+      "shares": null
+    },
+    {
+      "name": "7.29% Housing and Urban Development Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.32,
+      "shares": null
+    },
+    {
+      "name": "7.82% Bajaj Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.28,
+      "shares": null
+    },
+    {
+      "name": "7.75% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.28,
+      "shares": null
+    },
+    {
+      "name": "7.9% Jamnagar Utilities & Power Pvt. Limited^ (Corporate Debt)",
+      "pctAum": 0.27,
+      "shares": null
+    },
+    {
+      "name": "7.57% Bajaj Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.66% Bajaj Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.89% Bajaj Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.75% Bank of Baroda (Tier 2 - Basel III)^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.988% HDB Financial Services Ltd.^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.73% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.53% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.34% Punjab National Bank^ (Corporate Debt)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda^ (Certificate of Deposit)",
+      "pctAum": 0.23,
+      "shares": null
+    },
+    {
+      "name": "7.35% National Housing Bank^ (Corporate Debt)",
+      "pctAum": 0.21,
+      "shares": null
+    },
+    {
+      "name": "India Universal Trust AL2 (Originator - HDFC Bank Limited)£ (PTC & Securitized Debt)",
+      "pctAum": 0.21,
+      "shares": null
+    },
+    {
+      "name": "9.1% Cholamandalam Investment & Finance Co. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.57% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.65% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.4% National Bank for Agri & Rural Dev.^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.49% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.59% National Housing Bank^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.81% State Bank of India (Tier 2 - Basel III)^ (Corporate Debt)",
+      "pctAum": 0.19,
+      "shares": null
+    },
+    {
+      "name": "7.22% Madhya Pradesh SDL ISD 060825 Mat 060843^ (Government Securities)",
+      "pctAum": 0.18,
+      "shares": null
+    },
+    {
+      "name": "7.8% Mahanagar Telephone Nigam  Ltd.^ (Corporate Debt)",
+      "pctAum": 0.18,
+      "shares": null
+    },
+    {
+      "name": "7.24% Sundaram Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.18,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank^ (Certificate of Deposit)",
+      "pctAum": 0.18,
+      "shares": null
+    },
+    {
+      "name": "8.88% Cholamandalam Investment & Finance Co. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.16,
+      "shares": null
+    },
+    {
+      "name": "7.39% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.16,
+      "shares": null
+    },
+    {
+      "name": "7.22% Madhya Pradesh ISD 060825 MAT 060848^ (Government Securities)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "7.8% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "7.35% REC Limited.^ (Corporate Debt)",
+      "pctAum": 0.15,
+      "shares": null
+    },
+    {
+      "name": "7.835% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "7.66% LIC Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "8.58% Muthoot Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "7.62% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "7.12% Power Grid Corporation of India Ltd.^ (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "7.79% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "India Universal Trust AL2 (Originator - HDFC Bank Limited)£^ (PTC & Securitized Debt)",
+      "pctAum": 0.14,
+      "shares": null
+    },
+    {
+      "name": "7.28% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.13,
+      "shares": null
+    },
+    {
+      "name": "7.45% Sundaram Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.13,
+      "shares": null
+    },
+    {
+      "name": "Yes Bank Ltd.^ (Certificate of Deposit)",
+      "pctAum": 0.13,
+      "shares": null
+    },
+    {
+      "name": "7.09% GOI MAT 050854 (Government Securities)",
+      "pctAum": 0.12,
+      "shares": null
+    },
+    {
+      "name": "7.37% Housing and Urban Development Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.12,
+      "shares": null
+    },
+    {
+      "name": "7.43% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.12,
+      "shares": null
+    },
+    {
+      "name": "7.8% TATA Capital Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.12,
+      "shares": null
+    },
+    {
+      "name": "7.24% GOI MAT 180855 (Government Securities)",
+      "pctAum": 0.11,
+      "shares": null
+    },
+    {
+      "name": "7.5% Bajaj Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.11,
+      "shares": null
+    },
+    {
+      "name": "7.43% Jamnagar Utilities & Power Pvt. Limited^ (Corporate Debt)",
+      "pctAum": 0.11,
+      "shares": null
+    },
+    {
+      "name": "7.96% Pipeline Infrastructure Pvt. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.11,
+      "shares": null
+    },
+    {
+      "name": "7.3% GOI MAT 190653 (Government Securities)",
+      "pctAum": 0.1,
+      "shares": null
+    },
+    {
+      "name": "8.75% LIC Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.1,
+      "shares": null
+    },
+    {
+      "name": "7.38% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.1,
+      "shares": null
+    },
+    {
+      "name": "7.96% REC Limited.^ (Corporate Debt)",
+      "pctAum": 0.1,
+      "shares": null
+    },
+    {
+      "name": "6.99% Madhya Pradesh SDL Mat 171141^ (Government Securities)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.48% Madhya Pradesh MAT 011045^ (Government Securities)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.63% Andhra Pradesh SDL ISD 030925 MAT 030937^ (Government Securities)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.71% GOI MAT 180566 (Government Securities)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.08% Bajaj Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.7% Bajaj Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.12% Cholamandalam Investment & Finance Co. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "6.64% Housing and Urban Development Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.37% Indian Railways Finance Corp. Ltd. (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.1084% Kotak Mahindra Investments Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.1929% Kotak Mahindra Investments Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "6.4% LIC Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.87% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.7% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.75% LIC Housing Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.45% Muthoot Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.44% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.5% National Bank for Agri & Rural Dev.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.37% National Bank for Agri & Rural Dev.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.59% National Housing Bank^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.51% National Housing Bank^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.4% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.64% Power Finance Corporation Ltd. (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.44% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "6.92% Power Finance Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.61% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.44% Small Industries Development Bank (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.79% Small Industries Development Bank (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.42% Tata Capital Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "8.15% Toyota Financial Services India Ltd.^ (Corporate Debt)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (Certificate of Deposit)",
+      "pctAum": 0.09,
+      "shares": null
+    },
+    {
+      "name": "7.07% Gujarat SDL ISD 240925 MAT 261133^ (Government Securities)",
+      "pctAum": 0.08,
+      "shares": null
+    },
+    {
+      "name": "7.48% Andhra Pradesh SDL ISD 030925 MAT 030933^ (Government Securities)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.46% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.49% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.55% L&T Metro Rail (Hyderabad) Ltd (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.53% REC Limited.^ (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.22% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.07,
+      "shares": null
+    },
+    {
+      "name": "7.29% Rajasthan SDL ISD 191125 Mat 191137^ (Government Securities)",
+      "pctAum": 0.06,
+      "shares": null
+    },
+    {
+      "name": "7.48% Andhra Pradesh SDL ISD 030925 MAT 030934^ (Government Securities)",
+      "pctAum": 0.06,
+      "shares": null
+    },
+    {
+      "name": "7.62% Andhra Pradesh SDL ISD 030925 MAT 030936^ (Government Securities)",
+      "pctAum": 0.06,
+      "shares": null
+    },
+    {
+      "name": "7.20% Maharashtra SDL MAT 231036^ (Government Securities)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.39% TAMIL NADU SDL - Mat 150734^ (Government Securities)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.64% Gujarat SDL ISD 170124 MAT 170133^ (Government Securities)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.72% Bihar SDL - MAT 250241^ (Government Securities)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.85% Bharti Telecom Limited^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.75% Bharti Telecom Limited (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.5% Grasim Industries Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.63% Grasim Industries Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.8% HDFC Bank Ltd.£ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.7% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "6.83% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "6.9% Housing and Urban Development Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.25% Indian Oil Corporation Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.45% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.41% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.9% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.83% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "6.8% National Housing Bank^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.3% Power Grid Corporation of India Ltd. (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.48% Small Industries Development Bank^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.34% Small Industries Development Bank (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.55% Small Industries Development Bank (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.81% Sundaram Home Finance Limited (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "9.5% Union Bank of India (Perpetual) (AT1) (Basel III)^ (Corporate Debt)",
+      "pctAum": 0.05,
+      "shares": null
+    },
+    {
+      "name": "7.63% Gujarat SDL ISD 240124 Mat 240133^ (Government Securities)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "7.64% % Gujarat SDL ISD 170124 Mat 170134^ (Government Securities)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "7.67% Haryana SDL MAT 250241 (Government Securities)",
+      "pctAum": 0.04,
+      "shares": null
+    },
+    {
+      "name": "6.79% GOI MAT 071034 (Government Securities)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.25% GOI MAT 120663 (Government Securities)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.48% Uttar Pradesh SDL ISD 200324 Mat 200336^ (Government Securities)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.63% Gujarat SDL - MAT 100637^ (Government Securities)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.63% Gujarat SDL ISD 240124 Mat 240134^ (Government Securities)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.4% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.1% HDFC Bank Ltd.£^ (Corporate Debt)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.58% LIC Housing Finance Ltd.^ (Corporate Debt)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.7% National Bank for Agri & Rural Dev.^ (Corporate Debt)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "8.7% REC Limited.^ (Corporate Debt)",
+      "pctAum": 0.03,
+      "shares": null
+    },
+    {
+      "name": "7.23% GOI MAT 150439^ (Government Securities)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "7.45% Maharashtra ISD 220324 Mat 220339^ (Government Securities)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "GOI STRIPS - Mat 170628^ (Government Securities)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "7.7% Axis Finance Ltd. (Corporate Debt)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "7.75% Indian Railways Finance Corp. Ltd.^ (Corporate Debt)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "7.64% National Bank for Agri & Rural Dev. (Corporate Debt)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "Sansar Trust July 2023 II (Originator - Shriram Finance Limited)^ (PTC & Securitized Debt)",
+      "pctAum": 0.02,
+      "shares": null
+    },
+    {
+      "name": "7.63% Maharashtra SDL Mat 310135^ (Government Securities)",
+      "pctAum": 0.01,
+      "shares": null
+    },
+    {
+      "name": "6.67% GOI MAT 171250 (Government Securities)",
+      "pctAum": 0,
+      "shares": null
+    },
+    {
+      "name": "6.99% GOI MAT 151251 (Government Securities)",
+      "pctAum": 0,
+      "shares": null
+    },
+    {
+      "name": "7.17% GOI MAT 170430 (Government Securities)",
+      "pctAum": 0,
+      "shares": null
+    },
+    {
+      "name": "7.47% Chhattisgarh SDL ISD 200324 MAT 200334^ (Government Securities)",
+      "pctAum": 0,
+      "shares": null
+    }
+  ],
+  "cash": [
+    {
+      "name": "Tri-Party Repo (TREPS)",
+      "pctAum": 1.04,
+      "shares": null
+    },
+    {
+      "name": "Net Current Asset",
+      "pctAum": 0.81,
+      "shares": null
+    }
+  ],
+  "misc": [
+    {
+      "name": "Embassy Office Parks REIT (REITs & InvITs)",
+      "pctAum": 0.79,
+      "shares": null
+    },
+    {
+      "name": "BROOKFIELD INDIA REAL ESTATE TRUST (REITs & InvITs)",
+      "pctAum": 0.49,
+      "shares": null
+    },
+    {
+      "name": "POWERGRID Infrastructure Investment Trust (REITs & InvITs)",
+      "pctAum": 0.29,
+      "shares": null
+    },
+    {
+      "name": "RAAJMARG INFRA INVESTMENT TRUST (REITs & InvITs)",
+      "pctAum": 0.01,
+      "shares": null
+    }
+  ],
+  "counts": {
+    "equity": 161,
+    "debt": 163,
+    "cash": 2,
+    "misc": 4
+  }
+}
