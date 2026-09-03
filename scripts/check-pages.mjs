@@ -625,8 +625,18 @@ const CR = String.raw`₹([\d,]+(?:\.\d+)?)\s*Cr`;
  * input claims confidence nobody earned.
  */
 const cr = (m) => (m == null ? NaN : Number(String(m).replace(/,/g, "")));
-/** The same figure when `fmtFromBase` chose a smaller suffix. NaN in, NaN out. */
-const crU = (n, unit) => cr(n) * (unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1);
+/**
+ * The same figure when `fmtFromBase` chose a smaller suffix. NaN in, NaN out.
+ *
+ * AND NO SUFFIX AT ALL IS RUPEES, NOT CRORE. `fmtFromBase` drops the suffix
+ * below a lakh, so a real figure arrives as `−₹26,209` — read as crore that is
+ * −₹2,620.9 Cr, four times this whole book, and it looks exactly like a number.
+ * Found by summing the Mutual Fund category's unrealised P&L against its own
+ * footer: the categories came to −₹26,136 Cr against a printed +₹72.5 Cr, which
+ * is the plausible-wrong-number failure this file exists to catch, arriving in
+ * the checker rather than in the page.
+ */
+const crU = (n, unit) => cr(n) * (unit === "Cr" ? 1 : unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1e-7);
 
 /**
  * ── A THIRD OUTCOME: NOT CHECKED ─────────────────────────────────────────────
@@ -693,6 +703,27 @@ const isAnyHeading = (line) => BUCKET_HEADINGS.some((h) => headingIs(line, h));
 /** A rendered table row: one tab per column boundary, and this table has 13. */
 const isDataRow = (line) => (line.match(/\t/g) ?? []).length >= 5;
 /**
+ * ── AND ONE OF THOSE ROWS IS NOT A HOLDING ──────────────────────────────────
+ *
+ * "Show aggregate totals for every metric for each category." Every section now
+ * closes with a row that totals its own columns, and that row is a table row by
+ * every structural test above: it has a cell per column and therefore a tab per
+ * boundary.
+ *
+ * IT MUST NOT BE COUNTED AS A HOLDING, and the reason is not tidiness. Six
+ * invariants read `sectionOf(...).rows` as "the holdings drawn in this section"
+ * — the first cell after the name is a quantity, every row in the PMS section is
+ * a mandate, no fund unit stands under Direct Equity. A subtotal row satisfies
+ * none of those and should not have to: its Qty cell is an em dash BY DESIGN,
+ * because shares of one company and units of a fund do not add.
+ *
+ * Matched on the label's own trailing "· total", which is what the reader sees
+ * and what the row is for. The `data-category-total` attribute is the stronger
+ * handle and `ctx.categoryTotals` reads it — but `sectionOf` works on innerText,
+ * where there are no attributes, so the text is what has to carry it here.
+ */
+const isCategoryTotalRow = (line) => /^[^\t]*·\s*total\t/i.test(line);
+/**
  * One section of the holdings table: its heading block, its body, and the data
  * rows drawn inside it. `null` when the heading is not on the page at all —
  * which every caller treats as a FAILURE, never as nothing to check.
@@ -709,7 +740,11 @@ function sectionOf(text, label) {
     // measured nil or a collapsed duplicate) — never a data row.
     head: block.filter((l) => !isDataRow(l)).slice(0, 5).join("\n"),
     body: block.join("\n"),
-    rows: block.filter(isDataRow),
+    // THE HOLDINGS, which is what every caller means by "rows" — the category's
+    // own totals row is a table row and is not one of them.
+    rows: block.filter((l) => isDataRow(l) && !isCategoryTotalRow(l)),
+    /** The category's totals row as rendered, or undefined where none is drawn. */
+    total: block.find(isCategoryTotalRow),
   };
 }
 /** `· N holdings · ₹X` off a section heading, in crore. */
@@ -1099,6 +1134,209 @@ const facetsOr = (ctx, evidence, why) =>
 const BOOK_HAS_BOTH_HALVES = () =>
   [CIO_FIGURES.get("listed"), CIO_FIGURES.get("private")].every((v) => Number.isFinite(v) && v > 0);
 const TILE_NAMES_COSTLESS = () => Number.isFinite(CIO_FIGURES.get("no-cost"));
+
+/**
+ * ── EVERY METRIC, TOTALLED FOR EACH CATEGORY ──────────────────────────────────
+ *
+ * "Show aggregate totals for every metric for each category investments."
+ *
+ * The section headings have always carried a holding count and a market value.
+ * Everything else a reader compares categories on — what they cost, what they
+ * are up, how much of the book they are, what moved today — had to be added by
+ * eye down a column, which on a 84-row table is not something a reader does.
+ *
+ * Each section now closes with a row that totals its own columns. The claims
+ * worth checking are not that the row EXISTS — it renders whatever the data does
+ * — but that it ADDS UP and that every metric a category cannot answer says why:
+ *
+ *   1. the categories reconstruct the Total row, column by column;
+ *   2. a return is refused wherever the cost side does not cover the category,
+ *      which is the same test Morning CIO's allocation row runs on the same
+ *      buckets (`costCoversSet`);
+ *   3. no cell is blank without a reason a reader can read.
+ *
+ * They are struck on the RENDERED CELLS, by column, because a subtotal's whole
+ * job is to sit under the column it totals. A page that printed the right
+ * figures in the wrong columns passes every value comparison and is wrong in the
+ * one way this row can be wrong.
+ */
+/** Column indices of the holdings table, which is what the cells are read by. */
+const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, weight: 7, pnl: 8, realised: 9, ret: 10, ytd: 11, sector: 12, entity: 13 };
+/**
+ * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
+ * is a different answer from an unparseable one; NaN for anything else, so a
+ * caller guarding on `Number.isFinite` cannot mistake "could not read it" for a
+ * measurement of zero (the `Number("")` trap this file already records).
+ */
+const moneyCell = (s) => {
+  const t = String(s ?? "").trim();
+  if (t === "—" || t === "") return null;
+  // `[+\-−]`, with the hyphen ESCAPED. Unescaped it is a RANGE from "+" (U+002B)
+  // to "−" (U+2212), which swallows every digit and the rupee sign with them:
+  // `pctCell` read "13.4%" as 3.4 and "100.0%" as 0, and a weight column summing
+  // to 30.1 against a printed 0 was the only sign of it.
+  const m = /^([+\-−]?)₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(t.replace(/\s+/g, " "));
+  return m ? crU(m[2], m[3]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : NaN;
+};
+/** A percentage cell, same three outcomes. */
+const pctCell = (s) => {
+  const t = String(s ?? "").trim();
+  if (t === "—" || t === "") return null;
+  const m = /^([+\-−]?)(\d+(?:\.\d+)?)%/.exec(t);
+  return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : NaN;
+};
+/**
+ * Add one column across the categories and set it against the footer's own cell.
+ *
+ * The tolerance is the PRINTING PRECISION, not a fudge: `fmtFromBase` renders
+ * compact to one decimal, so each of N categories and the total carry up to
+ * ±0.05 Cr of rounding and the sum of N of them carries N times that. A figure
+ * wrong by a holding is orders of magnitude outside it — the ₹3.17 Cr this
+ * table's own headings once summed above their footer is 60 times the allowance
+ * on a six-category book.
+ */
+const columnTies = (ct, col) => {
+  const parts = ct.rows.map((r) => moneyCell(r.text[col]));
+  const total = moneyCell(ct.footer.text[col]);
+  if (total === null) return parts.every((p) => p === null);   // absent must stay absent
+  const known = parts.filter((p) => p !== null);
+  if (!known.length || known.some((p) => !Number.isFinite(p))) return false;
+  return Math.abs(known.reduce((a, b) => a + b, 0) - total) <= Math.max(0.15, parts.length * 0.06);
+};
+/** Nothing captured means NOT CHECKED, never a pass. */
+const needTotals = (ct) => (ct?.rows?.length ? (ct.footer ? null : notChecked("the footer row carries no data-footer-total handle")) : notChecked("no per-category totals row was captured — the table drew a single category, or the handle is gone"));
+const CATEGORY_TOTALS = [
+  /**
+   * ONE TOTALS ROW PER SECTION, AND NEITHER MORE NOR FEWER. Read against the
+   * headings the page itself drew, so a book with a different set of categories
+   * checks its own — and a section that quietly stops totalling fails rather
+   * than reducing the count on both sides of an equality with itself.
+   */
+  ["every category the table sections on closes with its own totals row", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    if (gate) return gate;
+    const headings = BUCKET_HEADINGS.filter((h) => !!sectionOf(t, h));
+    return headings.length > 1 && headings.length === ctx.categoryTotals.rows.length;
+  }],
+  /**
+   * ── THE CATEGORIES ADD TO THE TOTAL ROW, COLUMN BY COLUMN ─────────────────
+   *
+   * Market value already had to: the headings have carried a subtotal since the
+   * regroup, and the ₹3.17 Cr the AIF heading once summed above its own footer
+   * is why. Invested and Unrealised P&L are the new exposure — and what these
+   * catch, verified by reintroducing it, is a partition that skips the dedupe.
+   *
+   * WHAT THEY CANNOT CATCH IS NAMED IN THE PAGE BESIDE THE CODE: summing the
+   * ROWS rather than the positions differs only where a security is consolidated
+   * from a costed lot and an uncosted one, and this book has none of those (0 of
+   * 216 groups). The wrong construction would tie here. The right one was
+   * chosen anyway; this pair is what holds it once a drop makes it visible.
+   */
+  ["the category totals add to the footer's market value", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    return gate || columnTies(ctx.categoryTotals, COL.mv);
+  }],
+  ["the category totals add to the footer's invested and unrealised P&L", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    return gate || (columnTies(ctx.categoryTotals, COL.invested) && columnTies(ctx.categoryTotals, COL.pnl));
+  }],
+  /**
+   * ...AND THE WEIGHT COLUMN HAS A TOTAL TO ADD TO. It was an empty cell, which
+   * leaves a column of shares a reader cannot check by adding. Both halves are
+   * asserted here because either alone passes a page missing the other: the
+   * footer must print one, and the categories must reconstruct it.
+   */
+  ["the category weights add to the footer's own weight", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    if (gate) return gate;
+    const total = pctCell(ctx.categoryTotals.footer.text[COL.weight]);
+    const parts = ctx.categoryTotals.rows.map((r) => pctCell(r.text[COL.weight]));
+    if (!Number.isFinite(total) || parts.some((p) => !Number.isFinite(p))) return false;
+    return Math.abs(parts.reduce((a, b) => a + b, 0) - total) <= Math.max(0.2, parts.length * 0.05);
+  }],
+  /**
+   * ── A RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT COVER DIFFERENT SETS ─
+   *
+   * `sumOrNull` skips a holding whose statement reports no cost, so Invested
+   * covers a narrower set than Market value — and Direct Equity reports a cost
+   * on 9 of its 37 holdings. A return on cost there sits between a printed
+   * ₹1.2 Cr invested and a printed ₹94.9 Cr current and describes neither.
+   *
+   * THE UNCOVERED VALUE IS DERIVED FROM THE ROW'S OWN PRINTED CELLS —
+   * `mv − (invested + P&L)` — which is exactly the arithmetic a reader does, and
+   * is the reason this cannot pass by agreeing with a copy of itself. Two bands
+   * with a gap between them: a category the cost side barely covers must show a
+   * return, one it plainly does not must refuse. Compact printing rounds each
+   * figure to a tenth of a crore, so the undecided middle is left undecided
+   * rather than asserted through the noise.
+   */
+  ["a category whose cost side does not cover it refuses a return on cost", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    if (gate) return gate;
+    let asserted = 0;
+    for (const r of ctx.categoryTotals.rows) {
+      const mv = moneyCell(r.text[COL.mv]);
+      const cost = moneyCell(r.text[COL.invested]);
+      const pnl = moneyCell(r.text[COL.pnl]);
+      const ret = pctCell(r.text[COL.ret]);
+      if (!Number.isFinite(mv)) return false;
+      // A CATEGORY MEASURED AT NIL IS DECIDABLE, and this book has one: Cash is
+      // ₹0 because every statement behind it reports a nil balance. There is
+      // nothing to divide, so the return must be refused — and the first draft
+      // treated it as unreadable and failed a page that was right.
+      if (mv <= 0) { if (ret !== null) return false; asserted++; continue; }
+      // No cost at all is the unambiguous case and is asserted outright.
+      if (cost === null) { if (ret !== null) return false; asserted++; continue; }
+      if (!Number.isFinite(cost) || !Number.isFinite(pnl)) return false;
+      const uncovered = mv - (cost + pnl);
+      if (uncovered > mv * 0.01) { if (ret !== null) return false; asserted++; }
+      else if (uncovered < mv * 0.001) { if (ret === null || !Number.isFinite(ret)) return false; asserted++; }
+    }
+    // A run that decided nothing has checked nothing.
+    return asserted > 1;
+  }],
+  /**
+   * ── AND EVERY DASH ON THAT ROW NAMES ITS OWN ABSENCE ──────────────────────
+   *
+   * Four of the fourteen columns can never have a category total: quantities of
+   * different securities do not add, an average cost and a price are per unit,
+   * and a year-to-date return needs an opening value no statement in this book
+   * is dated early enough to carry. Those are DECIDED absences and must read as
+   * such — a reader who scans an empty cell learns nothing about whether a
+   * figure was withheld or never existed, which is this book's founding rule
+   * arriving one row below the footer that already keeps it.
+   *
+   * Struck on the `title`, because that is where `AbsentCell` puts the reason
+   * and innerText cannot see it — the same blindness that left the cost-reason
+   * invariant on /holdings reading text that never contained it.
+   */
+  ["every metric a category cannot total renders a dash with a reason", (t, ctx) => {
+    const gate = needTotals(ctx?.categoryTotals);
+    if (gate) return gate;
+    const never = [COL.qty, COL.avgCost, COL.cmp, COL.ytd];
+    const money = [COL.invested, COL.day, COL.mv, COL.weight, COL.pnl, COL.realised, COL.ret];
+    return ctx.categoryTotals.rows.every((r) =>
+      never.every((c) => r.text[c] === "—" && r.title[c].length > 20)
+      // A figure may be absent here — several are — but never silently, and
+      // never as an empty cell where a measurement belongs.
+      && money.every((c) => r.text[c] !== "" && (r.text[c] !== "—" || r.title[c].length > 20)));
+  }],
+  /**
+   * ...AND THE ROW IS NOT A HOLDING. It is a table row by every structural test
+   * the section reader applies, so `sectionOf` has to keep it out of `rows` or
+   * six invariants that mean "the holdings drawn here" start reading a subtotal:
+   * its Qty cell is an em dash by design and the first of them fails on it.
+   * Asserted against the rows the DOM says are holdings, not against a count of
+   * itself.
+   */
+  ["a category's totals row is not counted among its holdings", (t, ctx) => {
+    const gate = needRows(ctx?.tableRows);
+    if (gate) return gate;
+    const de = sectionOf(t, "DIRECT EQUITY");
+    if (!de || !de.total) return false;
+    return de.rows.length === ctx.tableRows.filter((r) => r.bucket === DIRECT_EQUITY_BUCKET).length;
+  }],
+];
 
 const INVARIANTS = {
   /**
@@ -2959,6 +3197,7 @@ const INVARIANTS = {
   ],
 
   monitor: [
+    ...CATEGORY_TOTALS,
 
     /**
      * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
@@ -3372,6 +3611,7 @@ const INVARIANTS = {
   // printed here, so this is where "carry both, count once" is visible — and
   // where the class heading above the rows must still be on the footer's basis.
   "monitor-entity": [
+    ...CATEGORY_TOTALS,
     ["the by-entity view still sections into Direct Equity, PMS mandates and the wrappers",
       (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES") && !!sectionOf(t, "AIF")],
     // A mandate row is one account's statement already, so the by-entity toggle
@@ -4452,6 +4692,47 @@ for (const theme of THEMES) {
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
+       * ── THE PER-CATEGORY TOTALS ROW, READ OFF ITS CELLS ─────────────────────
+       *
+       * "Show aggregate totals for every metric for each category." The claim is
+       * that each category's figures add to the Total row beneath them, and that
+       * a metric a category cannot answer says WHY rather than sitting blank —
+       * so the check needs the cells, in order, and the `title` on each.
+       *
+       * The reasons are the half that innerText cannot see: `AbsentCell` puts its
+       * cause in a hover, which is right on a table this dense and is exactly how
+       * the cost-reason invariant on `/holdings` came to be struck on text that
+       * never contained it. So the titles are collected alongside the text and
+       * the invariants read whichever the claim is actually about.
+       */
+      const categoryTotals = FAST ? null : await page.evaluate(() => {
+        /**
+         * A row read BY COLUMN, not by cell.
+         *
+         * The footer's label spans three columns and a category's does not, so
+         * `cells[4]` is a different measurement on each — and an invariant that
+         * adds the categories up against the footer is comparing exactly those.
+         * Accumulating `colSpan` puts both on the table's own 14 columns, which
+         * is the only basis on which the comparison means anything.
+         */
+        const byColumn = (tr) => {
+          const text = [], title = [];
+          for (const td of tr.cells) {
+            const t = (td.innerText ?? "").replace(/\s+/g, " ").trim();
+            const h = td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? "";
+            for (let i = 0; i < (td.colSpan || 1); i++) { text.push(i === 0 ? t : ""); title.push(i === 0 ? h : ""); }
+          }
+          return { text, title };
+        };
+        const foot = document.querySelector("tfoot tr[data-footer-total]");
+        return {
+          rows: [...document.querySelectorAll("tbody tr[data-category-total]")].map((tr) => ({
+            key: tr.getAttribute("data-category-total"), ...byColumn(tr),
+          })),
+          footer: foot ? byColumn(foot) : null,
+        };
+      });
+      /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
        * the weaker one passed a bug that was really there. Reintroducing it
@@ -4655,7 +4936,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, categoryTotals, kpiTiles, facets, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

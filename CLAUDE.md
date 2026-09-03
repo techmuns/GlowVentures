@@ -4403,6 +4403,130 @@ reintroduced — the page restored at its address, its route un-redirected, its
 nav entry put back, the group heading with it, and `ReturnsTable` dropped from
 the company page — and each fired exactly its own check.
 
+### Stage 10y — EVERY METRIC, TOTALLED FOR EACH CATEGORY
+
+*"Show aggregate totals for every metric for each category investments."*
+
+The Portfolio Monitor sections its holdings by CATEGORY — `holdingBucket`, the
+grouping Stage 10L settled after the family reported the same thing three times
+— and each section heading has carried a holding count and a market value ever
+since. Everything else a reader compares categories on is a COLUMN, and the only
+way to compare six categories on it was to add 85 rows by eye.
+
+**EACH SECTION NOW CLOSES WITH A ROW THAT TOTALS ITS OWN COLUMNS.** Measured on
+this book, and every figure derived rather than typed:
+
+| Category | Invested | Market value | Weight | Unreal. P&L | Realised | Return |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct Equity | ₹1.22 Cr\* | ₹94.9 Cr | 13.4% | −₹22.9 L\* | +₹7 L | **refused** |
+| PMS mandates | ₹124.6 Cr | ₹138.7 Cr | 19.5% | +₹14.1 Cr | +₹1.32 Cr | +11.36% |
+| ETF | — | ₹24.6 Cr | 3.5% | — | — | — |
+| Mutual Fund | ₹52.4 Cr\* | ₹99.9 Cr | 14.1% | −₹26,209\* | — | **refused** |
+| AIF | ₹293.7 Cr\* | ₹352.3 Cr | 49.6% | +₹58.6 Cr\* | — | +19.95% |
+| Cash | ₹0 | ₹0 | 0.0% | ₹0 | — | — |
+| **Total** | **₹471.9 Cr** | **₹710.4 Cr** | **100.0%** | **+₹72.5 Cr** | **+₹1.39 Cr** | **+15.37%** |
+
+\* struck over the holdings that report a cost — 9 of 37, 2 of 24, 15 of 19 —
+with the uncovered value named in the cell's own hover.
+
+**IT IS A ROW OF CELLS, NOT A WIDENED HEADING, AND THAT IS THE WHOLE DESIGN.** A
+total belongs UNDER THE COLUMN IT TOTALS. This book has already paid twice for a
+figure printed under a heading that describes something else — the allocation
+footer carrying a money-weighted return in a column of returns-on-cost, and the
+Morning CIO tile captioned "cost in · listed only" over a whole-book sum. The
+heading keeps its name, count and size; the metrics sit where their column is.
+
+**THE PARTITION IS OF THE POSITIONS THE FOOTER ITSELF SUMS**, so the categories
+add to the Total row BY CONSTRUCTION rather than by a tolerance. Summing the
+ROWS instead would tie for market value and could miss for the other two: a
+consolidated row carries `mv − cost` as its P&L while the footer sums the lots'
+own, and those differ the moment one security is consolidated from a costed lot
+and an uncosted one. **Measured, that condition is 0 of 216 groups on this book**
+— the wrong construction would tie here and no check could catch it — so it is
+written down beside the code rather than tested for, and the right construction
+was chosen before a drop makes the difference visible instead of after.
+
+**A RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT COVER DIFFERENT SETS.**
+`sumOrNull` skips a holding whose statement reports no cost, so Invested covers a
+narrower set than Market value — and Direct Equity reports a cost on 9 of its 37
+holdings. A return on cost there would sit between a printed ₹1.22 Cr invested
+and a printed ₹94.9 Cr current and describe neither. That is the failure Morning
+CIO's allocation row was already fixed for, so **the test is now
+`costCoversSet` in `analytics.ts` and BOTH screens call it**: the two print a
+return per bucket over the same buckets, and a test copied into each is two
+chances for one screen to show a figure the other refuses for the category a
+reader is comparing them on. Same reasoning as `holdingBucket` itself being one
+function rather than a per-page reflex.
+
+**AND THE HEADING'S SUBTOTAL IS NOW THE SAME FIELD THE ROW PRINTS.** It used to
+walk the rows collapsing repeated `dedupeGroup`s — a correct computation, and a
+SECOND SOURCE for a figure that now appears twice in one section. The two agreed
+except in the by-entity view, where they would have picked different members of
+the ₹1.46 Cr pair and printed marks ₹87,950 apart under one heading. One figure,
+computed once, printed twice. `collapsed` is now derived as the gap between the
+rows on screen and that printed subtotal, which is what its note has always
+claimed.
+
+**THE FOOTER'S WEIGHT CELL WAS EMPTY AND IS NOT ANY MORE.** A column of shares
+with no total is a set of figures a reader cannot check by adding. It reads
+100.0% unfiltered — the denominator IS this table's book — and less under a
+company filter, which is the gap the caption below already explains.
+
+**FOUR COLUMNS CAN NEVER HAVE A CATEGORY TOTAL, AND EACH SAYS SO.** Quantity —
+shares of one company plus units of a fund is a number with no unit; average cost
+and CMP — both per-unit, and a category has no unit; YTD — the same absence its
+own rows carry, since no statement in this book is dated before the year began.
+All four render `AbsentCell` WITH A REASON rather than sitting blank: a reader
+who scans an empty cell learns nothing about whether a figure was withheld or
+never existed, which is this book's founding rule arriving one row above the
+footer that already keeps it.
+
+**REALISED IS CLAIMED BY ONE CATEGORY, NEVER SPLIT.** A name's realised gain is
+reported PER SECURITY across the whole book, so the categories claim each key
+once, in reading order, and the sum is the footer's own union total. A name held
+both directly and inside a mandate is the case that makes the rule necessary and
+the case this book does not contain (zero of 175 distinct equity names); when one
+arrives the cell says the figure was ATTRIBUTED rather than divided, because
+there is no per-category split on any statement to divide it by.
+
+**EIGHT INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG.** `check:pages` reads
+the totals rows and the footer BY COLUMN — accumulating `colSpan`, because the
+footer's label spans three columns and a category's spans one, and cell-for-cell
+the two rows are different measurements. Six bugs were put back one at a time and
+each fired exactly its own check: a partition that skips the dedupe (three
+checks), the coverage test dropped so a return prints beside two columns covering
+different sets, a dash with no reason, the footer's Weight cell emptied again, a
+category that quietly stops drawing its row, and the section reader counting the
+totals row among the holdings.
+
+**THAT LAST ONE WOULD HAVE BROKEN SIX EXISTING CHECKS SILENTLY.** The totals row
+is a table row by every structural test `sectionOf` applies — a cell per column
+and therefore a tab per boundary — and six invariants read `sectionOf(...).rows`
+as "the holdings drawn in this section". Its Qty cell is an em dash BY DESIGN, so
+"the first cell after the security name is a figure" fails on it. `sectionOf`
+keeps it out of `rows` and exposes it as `total`, and a new invariant asserts the
+exclusion against the rows the DOM says are holdings rather than against a count
+of itself.
+
+**AND TWO BUGS WERE IN THE CHECKER, BOTH FOUND BY THE FIGURES NOT ADDING UP.**
+
+- **`crU` read a suffix-less figure as CRORE.** `fmtFromBase` drops the suffix
+  below a lakh, so `−₹26,209` — Mutual Fund's real unrealised loss — came back as
+  −₹2,620.9 Cr, four times this whole book, and the categories summed to
+  −₹26,136 Cr against a printed +₹72.5 Cr. It is the plausible-wrong-number
+  failure this file exists to catch, arriving in the checker rather than in the
+  page. Fixed at `crU`, so every caller that allows an optional unit gets it.
+- **`[+-−]` IS A RANGE, NOT THREE CHARACTERS.** Unescaped, the hyphen makes a
+  range from `+` (U+002B) to `−` (U+2212) that swallows every digit and the rupee
+  sign with them: the percent parser read `13.4%` as 3.4 and `100.0%` as 0, and a
+  weight column summing to 30.1 against a printed 0 was the only sign of it.
+
+**WHAT IS DELIBERATELY UNCHANGED.** Selecting a single category hides the
+sections and the FOOTER is that category's total, which is complete and needs no
+second row. The Excel export keeps its own footer and no per-category subtotals —
+the ask was about the tab, and Stage 10n's record of the column reorder is that
+the export follows when the family asks it to.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

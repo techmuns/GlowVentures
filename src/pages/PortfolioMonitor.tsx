@@ -14,6 +14,7 @@ import {
   mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
   holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
+  costCoversSet,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
@@ -139,6 +140,26 @@ type Row = {
   mandate?: MandateInfo;
 };
 type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "weight" | "dayChange";
+
+/**
+ * One category's aggregate of every money metric, struck over the POSITIONS the
+ * footer sums rather than over the rows drawn above it — see the memo.
+ *
+ * `cost` and `pnl` are nullable for the reason every cost figure in this book is:
+ * a depository holding statement reports a value and never a cost, so a category
+ * made entirely of them has no invested figure to print and must not print a
+ * zero. `costedMV` is what the cost side actually stands behind, and it is what
+ * decides whether a RETURN may be shown beside a market value struck over more
+ * holdings than the cost is (`costCoversSet`).
+ */
+type BucketTotals = {
+  mv: number;
+  cost: number | null;
+  pnl: number | null;
+  costedMV: number;
+  costedCount: number;
+  heldCount: number;
+};
 
 /**
  * WHICH SECTION A HOLDING BELONGS IN. `holdingBucket` decides; this only supplies
@@ -271,7 +292,7 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
-  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount, weightBase, weightCount } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount, weightBase, weightCount, bucketTotals } = useMemo(() => {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
@@ -498,6 +519,45 @@ export function PortfolioMonitor() {
      * three are what the caption needs to say so.
      */
     const costed = db.filter((x) => x.costBasis != null);
+    /**
+     * ── EVERY METRIC, PER CATEGORY — STRUCK OVER THE FOOTER'S OWN SET ────────
+     *
+     * "Show aggregate totals for every metric for each category." The section
+     * heading has always carried a holding count and a market value; a reader
+     * comparing categories on anything else — what they cost, what they are up,
+     * how much of the book they are — had to add a column by eye.
+     *
+     * THE PARTITION IS OF `db`, THE POSITIONS THE FOOTER ITSELF SUMS, so the
+     * categories add to the Total row BY CONSTRUCTION rather than by a tolerance.
+     *
+     * Summing the ROWS instead would tie for market value and could miss for the
+     * other two: a consolidated row carries `mv − cost` as its P&L while the
+     * footer sums the lots' own, and those differ the moment ONE security is
+     * consolidated from a costed lot and an uncosted one — right on both sides,
+     * and different, so the categories would land beside a Total they do not add
+     * to. MEASURED ON THIS BOOK THAT CONDITION IS ZERO: none of the 216
+     * consolidated groups mixes the two, so the wrong construction would tie
+     * here and no check could catch it. It is written down rather than tested
+     * for, which is what this file does with a hazard the corpus cannot yet
+     * exercise, and it is why the right construction was worth choosing before a
+     * drop makes the difference visible instead of after.
+     *
+     * `bucketFor` is the same function the ROW build keys its section on, so the
+     * partition here and the sections on screen cannot describe different sets.
+     */
+    const bucketTotals = new Map<string, BucketTotals>();
+    for (const x of db) {
+      const k = bucketFor(accIdx, x);
+      let t = bucketTotals.get(k);
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0 }));
+      t.mv += x.marketValue;
+      t.heldCount += 1;
+      // `sumOrNull` semantics, accumulated: a statement that reports no cost
+      // contributes NOTHING rather than a zero, and a category where none of
+      // them does stays null and renders an em dash with its reason.
+      if (x.costBasis != null) { t.cost = (t.cost ?? 0) + x.costBasis; t.costedMV += x.marketValue; t.costedCount += 1; }
+      if (x.unrealizedPnL != null) t.pnl = (t.pnl ?? 0) + x.unrealizedPnL;
+    }
     return {
       rows: out, totMV: totalMV,
       totCost: sumOrNull(db.map((x) => x.costBasis)),
@@ -506,7 +566,7 @@ export function PortfolioMonitor() {
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
       heldCount: db.length,
-      weightBase, weightCount,
+      weightBase, weightCount, bucketTotals,
     };
   }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, sortKey, asc]);
   /**
@@ -537,26 +597,55 @@ export function PortfolioMonitor() {
          * once. What is collapsed is named in the heading, so the difference
          * between the rows on screen and the subtotal above them is stated
          * rather than left for the reader to discover by adding them up.
+         *
+         * AND IT IS `bucketTotals`, NOT A SECOND DEDUPE OF ITS OWN. The heading
+         * used to walk the rows collapsing repeated groups, which is a correct
+         * computation and was a SECOND SOURCE for a figure the totals row now
+         * also prints, a few pixels below it. The two agreed except in the
+         * by-entity view, where they would have picked different members of the
+         * ₹1.46 Cr pair and printed marks ₹87,950 apart under one heading. One
+         * figure, computed once, printed twice.
          */
-        const seen = new Set<string>();
-        let subtotal = 0;
-        let collapsed = 0;
-        for (const r of rs) {
-          if (r.dedupeGroup) {
-            if (seen.has(r.dedupeGroup)) { collapsed += r.marketValue; continue; }
-            seen.add(r.dedupeGroup);
-          }
-          subtotal += r.marketValue;
-        }
+        const totals = bucketTotals.get(key) ?? null;
+        const raw = sum(rs.map((r) => r.marketValue));
+        const subtotal = totals ? totals.mv : raw;
+        // The gap between the rows ON SCREEN and the subtotal above them, which
+        // is what the note claims — derived from the printed figure rather than
+        // accumulated beside it, so the two cannot drift.
+        const collapsed = raw - subtotal;
         // HOW MANY HOLDINGS THE SECTION STANDS FOR, which is not how many rows it
         // draws: a mandate row stands for every share inside it, so the PMS
         // heading counts 281 across 10 rows. Counting rows there would report the
         // section as ten holdings and quietly retire 271 of them from the page.
         const holdings = rs.reduce((n, r) => n + (r.mandate ? r.mandate.holdings.length : 1), 0);
-        return { key, rows: rs, subtotal, collapsed, holdings };
+        /**
+         * THE DAY MOVE IS THE ONE METRIC STRUCK OVER ROWS, and deliberately.
+         *
+         * Every other figure in the totals row comes from `bucketTotals`, the
+         * partition of the positions the footer sums. The footer's own day move
+         * does not: it is summed over the ROWS the feed actually priced
+         * (`liveRows`), because a mandate's move is struck over the constituents
+         * that carry a quote and its cash sleeve never will. Striking the
+         * category's move over positions instead would tie to nothing — the two
+         * sets differ by every partly-quoted row — so it is summed here exactly
+         * as the footer sums it, one category at a time.
+         *
+         * `liveMV` and not `marketValue`, for the same reason: the denominator
+         * is what the feed repriced, or a category holding one quoted share
+         * beside a folio nobody prices would report a tenth of its own move.
+         */
+        const live = rs.filter((r) => r.live && r.dayChangePct != null);
+        const day = sum(live.map((r) => r.dayChange));
+        const dayBase = sum(live.map((r) => r.liveMV));
+        return {
+          key, rows: rs, subtotal, collapsed, holdings,
+          day, dayBase, liveRows: live.length,
+          dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
+          totals,
+        };
       })
       .sort((a, b) => bucketOrd(a.key) - bucketOrd(b.key));
-  }, [rows]);
+  }, [rows, bucketTotals]);
   const showBucketSections = bucket === "All" && bucketGroups.length > 1;
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
@@ -629,6 +718,58 @@ export function PortfolioMonitor() {
       anySold: keys.some((k) => realized.has(k)),
     };
   })();
+  /**
+   * ── THE REALISED COLUMN, SPLIT ACROSS THE CATEGORIES THAT MADE IT ──────────
+   *
+   * The footer sums realised gain over the UNION of every row's securityKeys,
+   * because a name's realised figure is reported PER SECURITY across the whole
+   * book and rolling 281 shares into ten mandate rows must not empty it. The
+   * per-category totals have to add to that, so they are struck the same way and
+   * a key is CLAIMED BY EXACTLY ONE CATEGORY — the first in reading order that
+   * holds the name.
+   *
+   * A name held both directly and inside a mandate is the case that makes the
+   * claiming rule necessary, and it is the case this book does not contain
+   * (measured: zero of 175 distinct equity names). Counted per category without
+   * it, such a name's gain would be added under both and the categories would
+   * sum above their own Total row. `shared` is how many names it fired on, so
+   * the cell can SAY the figure was attributed rather than divided — there is no
+   * per-category split to divide it by, and inventing one would be the
+   * fabrication this book exists to prevent.
+   */
+  const realisedByBucket = useMemo(() => {
+    const claimed = new Map<string, string>();      // securityKey -> bucket
+    const shared = new Map<string, number>();       // bucket -> names it also appears under
+    const keysOf = new Map<string, string[]>();     // bucket -> the keys it claimed
+    // Reading order, so the claim is deterministic rather than dependent on the
+    // sort the reader happens to have applied.
+    for (const grp of bucketGroups) {
+      const mine: string[] = [];
+      // DISTINCT NAMES on both counts. A key reached twice inside one category —
+      // two rows of one mandate's constituents, or a name in two mandates — is
+      // one name, and counting occurrences would report a category as sharing
+      // more names than it holds.
+      const elsewhere = new Set<string>();
+      for (const r of grp.rows) for (const k of r.realizedKeys) {
+        const owner = claimed.get(k);
+        if (owner === undefined) { claimed.set(k, grp.key); mine.push(k); }
+        else if (owner !== grp.key) elsewhere.add(k);
+      }
+      keysOf.set(grp.key, mine);
+      if (elsewhere.size) shared.set(grp.key, elsewhere.size);
+    }
+    return { keysOf, shared };
+  }, [bucketGroups]);
+  /**
+   * One category's realised total, on exactly the footer's basis: `sumOrNull`
+   * over the keys it claimed, so a name that was never sold contributes nothing
+   * rather than a zero that would report a sale nobody made.
+   */
+  const realisedFor = (key: string) => {
+    if (!realized) return null;
+    const keys = realisedByBucket.keysOf.get(key) ?? [];
+    return { total: sumOrNull(keys.map((k) => realized.get(k) ?? null)), anySold: keys.some((k) => realized.has(k)) };
+  };
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   //
@@ -1196,12 +1337,172 @@ export function PortfolioMonitor() {
                     </Fragment>
                   );
                     })}
+                    {/*
+                      ── EVERY METRIC, TOTALLED FOR THE CATEGORY ABOVE IT ──────
+                      "Show aggregate totals for every metric for each category."
+                      The heading names the category and its size; this row is the
+                      rest of the table's columns, added up over the same set.
+
+                      IT IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is the
+                      whole design: a total belongs UNDER THE COLUMN IT TOTALS.
+                      This book has already paid twice for a figure printed under
+                      a heading that describes something else — the allocation
+                      footer on a different basis from its own column, and the
+                      Capital invested tile captioned "listed only" over a
+                      whole-book sum.
+
+                      EVERY CELL A CATEGORY CANNOT ANSWER RENDERS `AbsentCell`
+                      WITH ITS REASON rather than being left blank. Quantity and
+                      the two per-unit columns are the ones that matter: shares of
+                      one company plus units of a fund is not a quantity, and the
+                      reader who scans across an empty cell learns nothing about
+                      whether a figure was withheld or never existed.
+                    */}
+                    {showBucketSections && (() => {
+                      const tot = grp.totals;
+                      // Struck over the positions, so it cannot disagree with the
+                      // rows drawn above it — but a category with no partition
+                      // entry has nothing to total and says so rather than
+                      // printing zeros for a row it cannot see.
+                      if (!tot) return null;
+                      const weight = weightBase > 0 ? (tot.mv / weightBase) * 100 : null;
+                      const uncostedMV = tot.mv - tot.costedMV;
+                      /**
+                       * THE RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT
+                       * DESCRIBE DIFFERENT SETS OF HOLDINGS — `costCoversSet`,
+                       * the same test Morning CIO's allocation row runs on the
+                       * same buckets. Direct Equity reports a cost on 9 of 37
+                       * holdings, so a return on cost would sit between a printed
+                       * ₹1.22 Cr invested and a printed ₹94.9 Cr current and
+                       * describe neither. A reader who divides one printed cell
+                       * by another and gets a third answer has found a
+                       * contradiction, and this is the row they would find it on.
+                       */
+                      const label = bucketLabel(grp.key);
+                      const covered = costCoversSet(tot.mv, uncostedMV);
+                      const ret = covered && tot.cost !== null && tot.pnl !== null && tot.cost > 0
+                        ? (tot.pnl / tot.cost) * 100 : null;
+                      /**
+                       * AND A REFUSED RETURN NAMES THE FAILURE IT ACTUALLY HAD.
+                       *
+                       * Four different things stop this cell, and the first cut
+                       * gave the coverage reason for all of them — so Cash, whose
+                       * every statement reports a nil balance, read "₹0 of this
+                       * category's ₹0 is held in accounts that report no cost",
+                       * which is a confident diagnosis of something that is not
+                       * happening. A wrong message sends the next reader to look
+                       * for statements nobody owes, which this book already
+                       * records as worse than a blank cell.
+                       */
+                      const retWhy =
+                        tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
+                        : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
+                        : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
+                        : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
+                        : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
+                      const realised = realisedFor(grp.key);
+                      const sharedNames = realisedByBucket.shared.get(grp.key) ?? 0;
+                      const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
+                      return (
+                        <tr className="border-t border-ink-700 bg-ink-900/40 font-semibold"
+                          data-category-total={grp.key}>
+                          <td className="px-2 py-1.5 text-slate-200">
+                            {label} <span className="font-normal text-slate-500">· total</span>
+                          </td>
+                          {/* NOT A BLANK CELL AND NOT A SUM. Adding 1,80,185
+                              shares of one company to 3,416,657 units of a fund
+                              produces a number with no unit, and it would sit in
+                              a column of real quantities looking like one. */}
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="quantities of different securities cannot be added: shares of one company and units of a fund are not the same thing, and their sum has no unit." />
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="an average cost per unit needs one security; this category holds many, each with a cost of its own. Invested beside it is the money." />
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
+                            {tot.cost === null
+                              ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
+                              : <span title={uncostedMV > 1 ? costCover : undefined}>
+                                  {fmtFromBase(tot.cost, { compact: true })}
+                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
+                                </span>}
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="a price is per unit and belongs to one security; a category has no price. Its market value is in the column that measures money." />
+                          </td>
+                          {/* The category's move over the part of it the feed
+                              actually repriced — never over its whole value,
+                              which would dilute the move by every folio and cash
+                              sleeve that has no quote and no previous close. */}
+                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${grp.dayPct == null ? "text-slate-600" : changeColor(grp.dayPct)}`}
+                            title={grp.dayPct == null ? undefined
+                              : `${fmtFromBase(grp.day, { compact: true, sign: true })} since previous close, across the ${fmtFromBase(grp.dayBase, { compact: true })} of ${label} the feed prices.`}>
+                            {grp.dayPct == null
+                              ? <AbsentCell reason={`no holding in ${label} carries a live quote, so there is no previous close to move from`} />
+                              : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
+                          </td>
+                          {/* `grp.subtotal` IS `tot.mv` — the heading prints the
+                              same field, so the two figures a reader sees three
+                              lines apart are one computation and cannot differ. */}
+                          <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
+                            {fmtFromBase(grp.subtotal, { compact: true })}
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
+                            title={`${label} as a share of ${weightScope ? `the ${weightScope} book` : "the whole book"} — the same denominator every Weight cell above divides by, so the categories add to the Total row.`}>
+                            {weight === null ? <AbsentCell reason="the book this weight would divide by is empty" /> : `${weight.toFixed(1)}%`}
+                          </td>
+                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${tot.pnl === null ? "text-slate-500" : changeColor(tot.pnl)}`}>
+                            {tot.pnl === null
+                              ? <AbsentCell reason={`an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
+                              : <span title={uncostedMV > 1 ? costCover : undefined}>
+                                  {fmtFromBase(tot.pnl, { compact: true, sign: true })}
+                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
+                                </span>}
+                          </td>
+                          {/* Realised is reported PER SECURITY across the whole
+                              book, so the categories claim each name once and the
+                              rows inside a mandate show none of it — the same
+                              split the footer already names in the caption. */}
+                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
+                            !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
+                            : realized === undefined ? <span className="font-normal text-slate-500">…</span>
+                            : realised === null || realised.total === null ? <AbsentCell reason={realised?.anySold
+                                ? `these names were sold, but no capital gain statement covers the accounts they were sold from`
+                                : `no sale of a name held in ${label} appears on the transaction statements in this drop`} />
+                            : <span className={changeColor(realised.total)}
+                                title={sharedNames > 0
+                                  ? `${sharedNames} of these names are also held in another category. A name's realised gain is reported once for the whole book, so it is counted under the first category that holds it rather than split between them — there is no per-category split on any statement to divide it by.`
+                                  : undefined}>
+                                {fmtFromBase(realised.total, { compact: true, sign: true })}
+                              </span>
+                          }</td>
+                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${ret === null ? "text-slate-500" : changeColor(ret)}`}>
+                            {ret === null
+                              ? <AbsentCell reason={retWhy} />
+                              : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised.`}>
+                                  {fmtPct(ret, { sign: true })}
+                                </span>}
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="a year-to-date return for a category needs every holding's value on 1 January, and no statement here is dated before the year began" />
+                          </td>
+                          {/* Sector and Entity describe a holding; a category has
+                              no sum of words. Empty, exactly as in the footer. */}
+                          <td className="px-2 py-1.5"></td>
+                          <td className="px-2 py-1.5"></td>
+                        </tr>
+                      );
+                    })()}
                   </Fragment>
                 ))}
                 {rows.length === 0 && <tr><td colSpan={14} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
-                <tr className="border-t border-ink-700 font-semibold">
+                {/* `data-footer-total` is the handle the sweep adds the category
+                    totals up against. Read by COLUMN rather than by cell: this
+                    row's label spans three of them and a category's spans one,
+                    so cell-for-cell the two rows are different measurements. */}
+                <tr className="border-t border-ink-700 font-semibold" data-footer-total="">
                   <td className="px-2 py-1.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
                   <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
                   <td className="px-2 py-1.5"></td>
@@ -1213,7 +1514,21 @@ export function PortfolioMonitor() {
                     {feedLive ? fmtFromBase(totMV, { compact: true })
                               : <Auditable formula={{ title: "Total market value", excel: "= Σ Market value of all holdings", plain: "The market value of the holdings in this table, added together — every asset class, not the listed ones alone.", worked: `= ${money(totMV)} across ${rows.length} rows`,  }}>{fmtFromBase(totMV, { compact: true })}</Auditable>}
                   </td>
-                  <td className="px-2 py-1.5"></td>
+                  {/* THE WEIGHT COLUMN HAS A TOTAL NOW, and it is not decoration.
+                      Each category above prints its own share of the book, and a
+                      column of shares with no total is a set of figures a reader
+                      cannot check by adding. It reads 100.0% unfiltered — the
+                      denominator IS this table's book — and less than that under
+                      a company filter, which is the gap the caption below already
+                      explains. Absent rather than 0.0% on an empty book: a weight
+                      of nothing divided by nothing is not a measurement. */}
+                  <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"
+                    title={weightGap > 1
+                      ? `The picked companies are ${fmtFromBase(totMV, { compact: true })} of the ${fmtFromBase(weightBase, { compact: true })} book every Weight cell divides by, which is why this column no longer adds to 100%.`
+                      : "Every weight above is struck over this table's own book, so the column adds to 100%."}>
+                    {weightBase > 0 ? `${((totMV / weightBase) * 100).toFixed(1)}%`
+                      : <AbsentCell reason="the book this weight would divide by is empty" />}
+                  </td>
                   <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtFromBase(totPnL, { compact: true, sign: true })
                               : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`,  }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}

@@ -286,6 +286,37 @@ export function holdingBucket(p: { assetClass: string }, engagement: string | nu
   return p.assetClass;
 }
 
+/**
+ * ── WHEN A RETURN ON COST MAY BE PRINTED BESIDE THE VALUE IT IS STRUCK OVER ──
+ *
+ * `sumOrNull` skips a holding whose statement reports no cost rather than
+ * entering it as zero, which is right — and it leaves Invested covering a
+ * NARROWER SET of holdings than Market value in the same row. A return divides
+ * one by the other, so where the two sets differ materially the printed figure
+ * describes neither column beside it: Direct Equity reports a cost on 9 of its
+ * 37 holdings, and a return on cost read −18.9% in a row printing ₹1.22 Cr
+ * invested against ₹94.9 Cr current. Every figure was right on its own terms.
+ *
+ * So a return is struck only where the costed holdings account for essentially
+ * the whole set, to half a percent of its market value. Measured on this book
+ * that keeps AIF (₹98,742 uncovered of ₹352.3 Cr) and the PMS mandates (fully
+ * costed), and refuses Direct Equity, Mutual Fund and ETF.
+ *
+ * IT LIVES HERE BECAUSE TWO SCREENS ASK IT OF THE SAME BUCKETS. Morning CIO's
+ * allocation table and the Portfolio Monitor's per-category totals row both
+ * print a return per bucket, and a test copied into each is two chances for one
+ * screen to show a figure the other refuses for the same category — this book's
+ * most expensive recurring bug, and the reason `holdingBucket` itself is a
+ * single function rather than a per-page reflex.
+ */
+const COST_COVERAGE_TOLERANCE = 0.005;   // not exported: nothing outside reads it, and an uncalled export is the dead-builder failure this book keeps naming
+/**
+ * `mv` is the set's whole market value; `uncostedMV` the part of it whose
+ * holdings report no cost. An empty set never licenses a return.
+ */
+export const costCoversSet = (mv: number, uncostedMV: number) =>
+  mv > 0 && uncostedMV <= mv * COST_COVERAGE_TOLERANCE;
+
 /** The screen label for a bucket. Class keys fall through to `assetClassLabel`. */
 export const bucketLabel = (key: string) => (key === MANDATE_BUCKET ? MANDATE_BUCKET : assetClassLabel(key));
 
