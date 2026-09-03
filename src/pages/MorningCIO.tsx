@@ -18,7 +18,6 @@ import { drilldownHref, TOP_NAMES } from "@/lib/drilldown";
 import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
-import { Auditable } from "@/components/Auditable";
 import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -663,24 +662,23 @@ export function MorningCIO() {
      * the costed side's own market value now, and says how many holdings that
      * spans whenever it is fewer than all of them.
      */
-    const covered = b.count - b.withoutCost;
-    const partial = b.withoutCost > 0
-      ? ` It covers ${covered} of ${many(b.count, "holding")}: the other ${b.withoutCost} report no cost, and their ${money(b.withoutCostMV)} stands in the Current column beside this and on neither side of this ratio.`
-      : "";
-    const formula = {
-      title: `${bucketLabel(b.key)} — total return to date`,
-      // The formula names the SET as well as the fields where the two differ:
-      // "Current value" over a row whose Current column covers more holdings
-      // than its Invested one is the same widened caption, in Excel's words.
-      excel: b.distributed > 0
-        ? `= (${b.withoutCost > 0 ? "Value of the costed holdings" : "Current value"} + Cash returned − Invested) ÷ Invested`
-        : `= (${b.withoutCost > 0 ? "Value of the costed holdings" : "Current value"} − Invested) ÷ Invested`,
-      plain: `The total return this bucket has produced to date on the capital in it — the cumulative gain, NOT an annualised rate. ${money(b.invested)} invested is worth ${money(b.costedMV)} now${b.distributed > 0 ? `, plus ${money(b.distributed)} already returned` : ""}.${partial}`,
-      worked: `${money(b.invested)} invested → ${money(b.costedMV)} today${b.distributed > 0 ? ` + ${money(b.distributed)} returned` : ""} · ${b.kind} ${mult} · ${fmtPct(b.retPct, { sign: true, decimals: 1 })} total${b.withoutCost > 0 ? ` · over ${covered} of ${b.count} holdings` : ""}`,
-    };
+    /**
+     * NO POPOVER, AND THEREFORE NO DASHED UNDERLINE. *"remove the underlines
+     * from the allocation table too."* The dashed underline WAS the popover's
+     * affordance, so removing only the decoration would leave a click target
+     * nobody could see — which is why this is the same change the KPI tiles
+     * took: the arithmetic moves to the page the row already opens.
+     *
+     * Everything the popover said is on that page and was checked before this
+     * was deleted: `?of=bucket&key=<b>` prints the bucket's Invested, its
+     * Current value and its Return on cost as tiles, states "cumulative, not
+     * annualised" on the return, names the holdings reporting no cost, and
+     * REFUSES the return on exactly the buckets this cell refuses it on. Its
+     * formula card carries the same worked example.
+     */
     return (
       <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.retPct)}`}>
-        <Auditable formula={formula}>{fmtPct(b.retPct, { sign: true, decimals: 1 })}</Auditable>
+        {fmtPct(b.retPct, { sign: true, decimals: 1 })}
       </span>
     );
   };
@@ -906,7 +904,7 @@ export function MorningCIO() {
                             title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${bucketLabel(b.key)}`}
                             className="flex items-center gap-2 font-medium text-slate-100 transition-colors hover:text-champagne-400">
                             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                            <span className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px]">{bucketLabel(b.key)}</span>
+                            {bucketLabel(b.key)}
                           </Link>
                         ) : (
                           <span className="flex items-center gap-2 font-medium text-slate-100"
@@ -927,7 +925,7 @@ export function MorningCIO() {
                   <tr className="border-t-2 border-ink-600 font-semibold">
                     <td className="px-2 py-2.5 text-left text-slate-200">
                       <Link to={drilldownHref("book")} title="Open every holding in the book — the set this footer's Invested and Current columns are summed over"
-                        className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400">Total</Link>
+                        className="transition-colors hover:text-champagne-400">Total</Link>
                     </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>
                     <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>
@@ -945,21 +943,21 @@ export function MorningCIO() {
                         the popover and on the Book performance card, each
                         stating the fraction of the book it covers. */}
                     <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
-                      {m.footerPct == null ? DASH : (
-                        <Auditable formula={{
-                          title: "Whole-book return to date",
-                          excel: "= (Current − Invested) ÷ Invested",
-                          plain: `The cumulative return the whole book has produced on the capital in it, on the same basis as every row above — market value against cost, not annualised.${
-                            m.noCostCount ? ` The ${m.noCostCount} position${m.noCostCount === 1 ? "" : "s"} whose statement reports no cost are in neither column.` : ""
-                          }${
-                            m.bookTotalReturn != null
-                              ? ` A MONEY-WEIGHTED return — Excel's XIRR() over each account's dated capital movements, closed against its own report date and de-annualised to the window — answers a different question and can only be struck where a statement carries an opening portfolio value. On that basis the book is ${fmtPct(m.bookTotalReturn, { sign: true, decimals: 1 })} to date over ${m.xirrWindowDays ?? "the measured"} days${m.bookXirr != null ? ` (${fmtPct(m.bookXirr, { sign: true, decimals: 1 })} p.a. annualised)` : ""}, covering ${money(m.measuredMV)} of ${money(m.totalValue)}${m.xirrExcluded.length ? `; accounts ${m.xirrExcluded.join(", ")} publish no opening value and sit outside it on both sides` : ""}.`
-                              : ""
-                          }`,
-                          worked: `= (${money(m.totalValue)} − ${money(m.totalInvested)}) ÷ ${money(m.totalInvested)} = ${fmtPct(m.footerPct, { sign: true, decimals: 1 })}, closed at ${portfolio.asOf}`,
-                          
-                        }}>{fmtPct(m.footerPct, { sign: true, decimals: 1 })}</Auditable>
-                      )}
+                      {/* AND NO POPOVER HERE EITHER. Its own arithmetic —
+                          (Current − Invested) ÷ Invested over the whole book,
+                          cumulative rather than annualised — is on `?of=invested`,
+                          which is the page the Consolidated return tile opens and
+                          where the same division is worked out in full.
+
+                          THE ONE THING IT CARRIED THAT NOTHING ELSE DID was the
+                          reconciliation against the MONEY-WEIGHTED return: two
+                          different measurements over two different sets, which a
+                          reader seeing both figures needs to be told apart. That
+                          moved to `?of=measured`, where both bases are on screen
+                          for the SAME accounts — a sharper comparison than the
+                          one this popover made, which set a whole-book figure
+                          against a seven-account one. */}
+                      {m.footerPct == null ? DASH : fmtPct(m.footerPct, { sign: true, decimals: 1 })}
                     </td>
                     <td className="px-2 py-2.5 text-right mono text-slate-300">100%</td>
                   </tr>

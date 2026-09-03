@@ -2818,12 +2818,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
-  figure still opens the arithmetic behind it, which is an explanation rather
-  than a hyperlink. The six KPI tiles are the exception, at the family's
-  request: their whole card is the click target, so a dashed figure inside one
-  was a second affordance for a different action, and the arithmetic is rendered
-  on the page the tile opens instead. See Stage 10y. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO** — a dashed figure still
+  opens the arithmetic behind it elsewhere in the app, which is an explanation
+  rather than a hyperlink. Morning CIO has none left, at the family's request:
+  the KPI tiles went in Stage 10y and the allocation table's rows and footer in
+  Stage 10ab, and in both cases the arithmetic is rendered on the page the
+  figure opens instead. Nothing on that page is underlined. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2881,12 +2881,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
-  figure still opens the arithmetic behind it, which is an explanation rather
-  than a hyperlink. The six KPI tiles are the exception, at the family's
-  request: their whole card is the click target, so a dashed figure inside one
-  was a second affordance for a different action, and the arithmetic is rendered
-  on the page the tile opens instead. See Stage 10y. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO** — a dashed figure still
+  opens the arithmetic behind it elsewhere in the app, which is an explanation
+  rather than a hyperlink. Morning CIO has none left, at the family's request:
+  the KPI tiles went in Stage 10y and the allocation table's rows and footer in
+  Stage 10ab, and in both cases the arithmetic is rendered on the page the
+  figure opens instead. Nothing on that page is underlined. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -5171,6 +5171,59 @@ still names why" required two lines, which is exactly what an unexplained
 Five bugs reintroduced in total, each firing its own check: a caption back on a
 tile, the accrued disclosure deleted, the window deleted, the private half
 widened to the whole book, and an absent tile stripped of its reason.
+
+### Stage 10ab — THE ALLOCATION TABLE LOSES ITS UNDERLINES TOO
+
+*"remove the underlines from the allocation table too."*
+
+Stage 10y scoped the underline removal to the KPI strip and named the allocation
+table as deliberately untouched, because its footer popover was the last place
+reconciling the money-weighted whole-book figure against a column of
+return-on-cost cells. The family have now asked for it, so that reconciliation
+had to find a home before the popover could go — which is this section.
+
+**TWO KINDS OF UNDERLINE, AND ONLY ONE OF THEM WAS A LINK.** The row labels and
+`Total` were dotted-underlined `<Link>`s; the return chips were dashed-underlined
+popover TRIGGERS. Removing the decoration alone would have left the second as a
+click target nobody can see, so the chips lost their popovers and the labels kept
+their links: **the rows are still clickable, and `check:pages` asserts both
+halves** — no decoration and no `<button>` in the table, and a link on every row
+that has a set behind it.
+
+**WHERE EACH POPOVER'S CONTENT WENT.** Both were checked against their
+destination before being deleted:
+
+- **The per-bucket return** is on `?of=bucket&key=<b>`, whose formula card now
+  carries the same worked example — invested, current, the return, and the
+  coverage caveat — beside the very holdings it is struck over.
+- **The footer's whole-book return** is on `?of=invested`, which is the page the
+  Consolidated return tile opens and where that division is already worked out.
+- **The money-weighted reconciliation** is on `?of=measured`, and the move made
+  it SHARPER rather than merely relocating it: the footer set a whole-book
+  cost-basis figure against a seven-account money-weighted one, where that page
+  carries both bases for the SAME accounts — its own Return on cost tile and the
+  rate the reader clicked. The sentence now names what the gap between them is,
+  which is the timing of the flows and nothing else.
+
+**AND THE FIRST DRAFT PUT A FORBIDDEN FIGURE ON SCREEN.** The bucket formula
+simply divided, so Mutual Fund's card read **`−0.0% over 2 of 24`** on a page
+whose own Return on cost tile correctly showed an em dash, under an allocation
+row that showed one too. That is *"a refused figure stays refused one click
+deeper"* failing between two surfaces of the same page. `coveredReturn` — the
+0.5%-coverage test — moved out of `HoldingsBehind` into `drilldown.ts`, and both
+surfaces call it: it was a private helper for as long as one page ran it, and the
+moment a second surface stated a return, a second copy would have been a second
+definition of "covered enough".
+
+**THE CHECK FOR THAT COULD NOT FAIL EITHER, AND REINTRODUCING THE BUG IS WHAT
+FOUND IT.** It tested the worked line for `[+-]\d+\.\d%` — an ASCII hyphen —
+and the line renders a real **U+2212 MINUS**, so `= −0.0%` matched nothing and
+the check read a page printing a forbidden return as one printing none. It
+passed, twice, on exactly the two rows it exists for.
+
+Three bugs reintroduced, each firing its own check: an underline back on a row
+label, the rows stripped of their links, and the formula dividing regardless of
+coverage.
 
 ### Stage 10k — News & Announcements: REMOVED
 

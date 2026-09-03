@@ -10,7 +10,7 @@ import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absen
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
-import { parseDrilldown, resolveDrilldown, drilldownHref, drilldownFormula, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { parseDrilldown, resolveDrilldown, drilldownHref, drilldownFormula, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -158,14 +158,6 @@ function groupRows(
       };
     })
     .sort((a, b) => b.mv - a.mv);
-}
-
-function coveredReturn(mv: number, cost: number | null, pnl: number | null, withoutCostMV: number) {
-  const covers = mv > 0 && withoutCostMV <= mv * 0.005;
-  return {
-    covers,
-    pct: covers && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
-  };
 }
 
 export function HoldingsBehind() {
