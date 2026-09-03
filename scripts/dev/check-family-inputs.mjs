@@ -122,7 +122,25 @@ check("Exposure & IPS reads the family's bucket mapping",
 check("the classes mapped to no bucket are named with their value",
   /mapped to no bucket/.test(text) && /(AIF|Mutual Fund)/.test(text),
   /₹[\d.]+ Cr \(\d+% of the book\) sits in [^,.]+/.exec(text.replace(/\s+/g, " "))?.[0]);
-check("the whole store can still be exported from here", /export/i.test(text));
+// ── AND THESE TWO CHECKS ARE NOW WHAT KEEP THE REMOVED PAGES' DATA REACHABLE ─
+//
+// Thesis & Triggers and Alerts have been removed (Stage 10y). The family's
+// theses and alert rules were NOT: they are still in `familyInputs.ts` and they
+// still travel in this page's one export file. With both editors gone, THIS is
+// the only surface that reaches them — so the check above (the bucket roll-up,
+// which is `bucketActuals`/`bucketWeightPct`, the half of `alertEngine.ts` that
+// survived its page) and the one below are what stop a future session deleting
+// either as dead.
+//
+// AND THE EXPORT CHECK COULD NOT FAIL, which is why it is rewritten. It read
+// `/export/i` over the whole page text — and the paragraph beneath the buttons
+// explains what "Export" does, so deleting the button outright left it green.
+// It is struck on the BUTTONS now: both of them, because an export with no
+// import back is a one-way door out of the family's own record.
+const exportBtn = await page.locator("button", { hasText: /^\s*Export\s*$/ }).count();
+const importBtn = await page.locator("button", { hasText: /^\s*Import\s*$/ }).count();
+check("the whole store can still be exported from here — and imported back",
+  exportBtn > 0 && importBtn > 0, `${exportBtn} export · ${importBtn} import`);
 
 // ── The removed routes redirect rather than 404 ────────────────────────────
 //
@@ -160,6 +178,14 @@ for (const [from, to] of [
   // chain is a fact about the route table, so it is fixed there and named in
   // `App.tsx` — not asserted here by a check that would have to pass either way.
   ["/knowledge", "/cio"], ["/macro", "/cio"], ["/economy", "/cio"], ["/industry", "/cio"],
+  // THESIS & TRIGGERS and ALERTS were removed at the family's request, and both
+  // forward to Exposure & IPS rather than to the dashboard home. All three were
+  // the family-input layer — a thesis, an alert rule and an IPS target are things
+  // the family TYPES — and Exposure & IPS is the one that survives, holding the
+  // IPS targets, the bucket mapping and the Export/Import that round-trips the
+  // WHOLE store. It is now the only way to reach a stored thesis or alert rule,
+  // which is what makes it the honest destination rather than a near-enough one.
+  ["/thesis", "/exposure"], ["/alerts", "/exposure"],
   // WATCHLIST & TARGETS was removed at the family's request. It forwards to
   // Compare Companies rather than the monitor because that is the surviving
   // surface in the same nav group that still renders a watched name's target
@@ -206,6 +232,18 @@ for (const [from, label, pattern] of [
   ["/knowledge", "Knowledge & Memory", /capture the first note|search the family's notes|notes captured/i],
   ["/macro", "Macro Research", /returns table[\s\S]{0,400}52-week|series store did not respond|observations/i],
   ["/economy", "Economy & Macro", /data release calendar|surprise vs consensus/i],
+  // Both of these land on Exposure & IPS, so the text read is that page's. The
+  // phrases below belong to the removed editors and to nothing that survives —
+  // checked rather than assumed, because "Thesis" and "Alerts" as WORDS do
+  // appear in Exposure & IPS's own export tooltip, which is why neither page is
+  // matched on its title.
+  ["/thesis", "Thesis & Triggers", /of \d+ recorded|not recorded|no schedule|exit triggers/i],
+  // `alert rules` was in this pattern and FAILED a correct page: Exposure & IPS's
+  // export tooltip lists what the file carries, "theses, alert rules" among them
+  // — legitimately, because the export does carry them. A phrase the DESTINATION
+  // prints is not distinctive to the page that was removed, which is the trap the
+  // comment above names and the first draft walked into anyway.
+  ["/alerts", "Alerts", /no rules yet|need a source, not a threshold/i],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
@@ -254,6 +292,13 @@ check("the Economy & Macro nav entry is gone", !/Economy\s*&\s*Macro/i.test(nav)
 // ...and RESEARCH, which lost two of its three, keeps the one that survived.
 check("the Research group survives with Compare Companies in it",
   /Compare Companies/i.test(nav));
+// Thesis & Triggers and Alerts went the same way, and between them they were the
+// WHOLE of the MONITOR group — so its heading must go with both entries, exactly
+// as the KNOWLEDGE heading went with its one.
+check("the Thesis & Triggers nav entry is gone", !/Thesis\s*&\s*Triggers/i.test(nav));
+check("the Alerts nav entry is gone", !/(^|\n)\s*Alerts\s*(\n|$)/.test(nav));
+check("...and the now-empty Monitor group heading with them",
+  !/(^|\n)\s*MONITOR\s*(\n|$)/.test(nav));
 
 check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
 check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));

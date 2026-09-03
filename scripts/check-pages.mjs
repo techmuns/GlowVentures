@@ -537,8 +537,11 @@ const ROUTES = [
   // is verified by asserting it happened, never by deleting the test alongside
   // the feature.
   ["exposure", "/exposure"],
-  ["thesis", "/thesis"],
-  ["alerts", "/alerts"],
+  // Thesis & Triggers and Alerts were REMOVED at the family's request, so
+  // neither is walked — there is no page at either address. The removal itself
+  // is asserted in `check-family-inputs.mjs`, alongside the half that would
+  // break silently: that Exposure & IPS still reaches the store both pages
+  // wrote to.
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
   // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
   // has no price history, no PE, no filings and no insider trades, so the five
@@ -3633,22 +3636,6 @@ const INVARIANTS = {
     // A gap computed against a defaulted target is a fabricated instruction.
     ["IPS is recordable and the gap stays absent until a target is set",
       (t) => /IPS buckets/i.test(t) && /No target weights recorded yet/i.test(t)],
-  ],
-  // Phase 5: alerts evaluate real rules. With no rules recorded the page must say
-  // so plainly — never render an empty list that reads as "nothing is wrong".
-  alerts: [
-    ["no-rules state is explicit, not an empty all-clear", (t) => /No rules yet/i.test(t) || /firing|clear|cannot be evaluated/i.test(t)],
-    ["alerts needing a source are named, not shown as silent rules", (t) => /need a source, not a threshold/i.test(t)],
-  ],
-  // Phase 5: the thesis record is an editor over the book's holdings, and an
-  // expected return is never inferred from the actual sitting beside it.
-  thesis: [
-    // Asserts the DEFAULT (collapsed) state — the per-row editor fields only
-    // exist once a row is expanded, so testing for them here tested nothing.
-    ["thesis is an editor over real holdings, with a recorded count",
-      (t) => /\d+ of \d+ recorded/i.test(t) && /Thesis/i.test(t) && /Review/i.test(t)],
-    ["an expected return is never inferred from the actual beside it",
-      (t) => /Expected/i.test(t) && /Return \(actual\)/i.test(t)],
   ],
   // Phase 3: the company page draws a real price chart and a returns table from
   // /api/prices. In this headless run the edge function does not exist, so the

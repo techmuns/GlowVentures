@@ -2300,8 +2300,11 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   actuals are in the book; the DESIRED allocations are a family decision nobody
   has supplied, and inventing a target weight would fabricate the entire gap.
 - **Layer 4 — thesis monitoring** and **Layer 5 — alerts** beyond price levels.
-  Both need a store plus a rules engine; only the price-level half of Layer 5 is
-  possible today, and that is what shipped.
+  Both need a store plus a rules engine; only the price-level half of Layer 5 was
+  ever possible, and both pages that shipped it have since been REMOVED at the
+  family's request — see Stage 10y. The STORE is untouched: every thesis and
+  alert rule they entered is still held in `familyInputs.ts` and still exports
+  from Exposure & IPS. Nothing evaluates a rule today.
 - **PDF and PowerPoint export.** Excel export exists (`exportPortfolioExcel.ts`).
 
 ## Conventions
@@ -4349,6 +4352,70 @@ Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
 so nothing was left exported and dead, which is the failure this file keeps
 naming.
 
+### Stage 10y — Thesis & Triggers and Alerts: REMOVED, and the store is not
+
+*"remove both the pages from the dashboard ui"* — the two nav entries, pointed
+at.
+
+`/thesis` and `/alerts` redirect, both nav entries are gone, and
+`ThesisMonitor.tsx` and `Alerts.tsx` are deleted. Between them they were the
+WHOLE of the **MONITOR** nav group, so its heading goes with them, exactly as
+the KNOWLEDGE heading went with its one entry at Stage 10x.
+
+**BOTH FORWARD TO EXPOSURE & IPS, and that is the surviving surface nearest
+their purpose rather than a neutral fallback.** All three pages were the
+family-input layer — a thesis, an alert rule and an IPS target are things the
+family TYPES, not figures a statement reports. Exposure & IPS is the one that
+stays, it holds the IPS targets and the bucket mapping, and the part that
+decides it: **it carries the Export/Import that round-trips the WHOLE store in
+one file, theses and alert rules included.** With both editors gone it is the
+only surface that reaches a stored thesis or alert rule, which makes it the
+honest destination for a bookmark rather than a near-enough one. Contrast
+Stage 10x, where nothing survived that held notes or macro series and all three
+addresses correctly went to the dashboard home.
+
+**`src/lib/familyInputs.ts` IS UNTOUCHED.** Every thesis, expected return, exit
+trigger, review schedule and alert rule the family entered is still stored,
+still coerced on import and still travels in that one export file — the
+treatment `deals.ts` and `household.ts` got at Stage 10f and `watchlist.ts` at
+Stage 10w. `emptyThesis` is the one export left with no caller; it says so at
+its own definition rather than sitting as a silent orphan, because this store is
+deliberately kept whole and a future editor calls it again unchanged.
+
+**`alertEngine.ts` LOST TWO THIRDS OF ITSELF AND STAYS.** Exposure & IPS reads
+`bucketActuals` and `bucketWeightPct` from it — the bucket roll-up was never
+about alerts, it answers "what fraction of the book sits in each IPS bucket" —
+so those stay. `evaluateAlerts` and `ALERT_KIND_LABEL` had exactly one caller
+between them and went with the page: **229 lines to 68.** No arithmetic
+assertion was lost with them, checked rather than assumed —
+`familyMath.test.ts` covers `deals`, `household`, `watchlist` and `marketCap`
+and never touched the evaluator. What the evaluator ENFORCED is worth keeping in
+view and is recorded in the section below rather than in dead code: *a rule
+whose inputs are incomplete does not fire and does not pass either.*
+
+**AND THE CHECK THAT WAS MEANT TO GUARD THE STORE COULD NOT FAIL.**
+`check:family` already asserted "the whole store can still be exported from
+here" as `/export/i` over the page text — and the paragraph BENEATH the buttons
+explains what Export does, so deleting the button outright left it green. That
+check is now struck on the BUTTONS, both of them, because an export with no
+import back is a one-way door out of the family's own record. Reintroducing the
+bug proved the rewrite: with the button gone and its prose intact it reports
+`0 export · 1 import` and fails.
+
+**AND A NEW CHECK FAILED A CORRECT PAGE, for the reason its own comment had just
+named.** The removed pages are asserted to render none of their own content at
+their old addresses, struck on each page's distinctive phrases. `alert rules`
+was one of them — and it is in Exposure & IPS's export tooltip, legitimately,
+because the export does carry them. A phrase the DESTINATION prints is not
+distinctive to the page that was removed. Narrowed to `no rules yet` and `need a
+source, not a threshold`, which only that page ever printed.
+
+`check:pages` no longer walks either route and the `thesis` and `alerts`
+invariant blocks went with the pages they described. Five bugs were
+reintroduced — the page restored at its address, its route un-redirected, its
+nav entry put back, the Monitor heading with it, and the Export button deleted
+while its explanatory prose stayed — and each fired exactly its own check.
+
 ### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
 
 *"remove all three pages from the dashboard UI"* — the three nav entries,
@@ -4842,15 +4909,23 @@ carries the measurement beside the entry so it cannot go stale silently.
 
 ### The alert engine — silence is read as all-clear
 
-`alertEngine.ts` evaluates the family's rules against the book. Its governing
-rule: **a rule whose inputs are incomplete does not fire, and does not pass
-either** — it reports UNMEASURABLE with the reason, counted apart from the clear.
-A price rule on a security with no live quote must never look like one that was
-checked and held; a month-old statement mark cannot answer whether a level was
-crossed today. That is the absent-vs-zero rule applied to a boolean.
+**THE EVALUATOR HAS BEEN REMOVED WITH ITS PAGE — see Stage 10y.** `alertEngine.ts`
+still exists and still serves Exposure & IPS's IPS-bucket roll-up
+(`bucketActuals`, `bucketWeightPct`); what went is `evaluateAlerts` and
+`ALERT_KIND_LABEL`, which had no caller once `/alerts` was removed at the
+family's request. The family's alert RULES are untouched in `familyInputs.ts`
+and still export; nothing evaluates them today.
+
+The rule it enforced is kept here because it is the reason a future rules engine
+must not be written naively, and because it generalises past alerts: **a rule
+whose inputs are incomplete does not fire, and does not pass either** — it
+reports UNMEASURABLE with the reason, counted apart from the clear. A price rule
+on a security with no live quote must never look like one that was checked and
+held; a month-old statement mark cannot answer whether a level was crossed
+today. That is the absent-vs-zero rule applied to a boolean.
 
 Alerts the spec asks for that need a SOURCE rather than a threshold — manager
-resignation and style drift, liquidity coverage, capital-call dates — are named
+resignation and style drift, liquidity coverage, capital-call dates — were named
 on the page rather than shipped as rules that would sit permanently silent.
 
 ## Stage 9d — the economic release calendar (`/api/econ-calendar`)
