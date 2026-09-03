@@ -207,22 +207,38 @@ spreadsheet. Four things follow, and they are load-bearing:
 **What is actually in `source/` today.** SEVEN DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
 `august-2026-b/`, `august-2026-c/`, `august-2026-d/`, `august-2026-e/` and
-`august-2026-f/` — statements that arrived after it. The counts below are the SIX
-that have been through `npm run extract`; `august-2026-f/` adds three files that
-have not, and **none of them changes a figure** — two cannot be read by anything
-(see its own section) and the third is a register held out of the book by
-decision. Thirty-two issuers — ICICI Bank's NSDL
-depository is the new one — 49 accounts in the book, six holders and two family
-trusts, 50 files expanding to 229 — of which
-**261 documents** are extracted, 197 read fully, 62 partially and **exactly TWO
-not at all**, for two different reasons that must not be conflated:
+`august-2026-f/` — statements that arrived after it. **ALL SEVEN have now been
+through `npm run extract`**, `august-2026-f/` included: its two outlined-text
+statements are read by rendering their glyphs (see its own section) and its third
+file is a register held out of the book by decision. 35 provider names in the
+archive, of which **31 are issuing institutions** — HDFC Bank's NSDL depository is
+the new one — **51 accounts** in the book, six holders and two family trusts, 53
+delivered files expanding to **318 leaf files** — of which **264 documents** are
+extracted, 199 read fully, 62 partially and **exactly ONE not at all**:
 
-- the adviser's consolidated review workbook, held out BY DECISION, which is not
-  a statement;
-- Bharat's HDFC NSDL holding statement, which is a SCAN — four JPEG pages with
-  no text layer, so there is nothing for any reader to read. Reported as
-  `no-text-layer`, never as a missing reader, because those two send the next
-  person to do completely different things and only one of them is possible.
+- Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
+  four JPEG pages of photographed paper, so there is nothing any reader or any
+  renderer can recover. Reported as `no-text-layer`, never as a missing reader,
+  because those two send the next person to do completely different things and
+  only one of them is possible.
+
+Two more documents are `failed` in the archive and are NOT that: the adviser's
+consolidated review workbook and the family's investment register are both read
+perfectly and are **held out BY DECISION**, because neither is a statement. The
+archive records the decision so a future session cannot mistake it for a gap.
+
+**AND `npm run coverage:source` PROVES THERE IS NO OTHER GAP.** The extraction
+report answers *did the documents we read tie out?*; that question presupposes a
+prior one nobody could answer without reading a directory listing by hand — *is
+there a file in `source/` whose data never reached anything?* `scripts/source-coverage.mjs`
+accounts for every leaf file in exactly one class and **exits non-zero if any is
+`unread`**, so a delivery that lands a file nobody reads cannot pass silently.
+Measured today: 252 read, 4 read via a byte-identical twin, 2 held out by
+decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
+header, never assumed from the path), 2 password notes excluded by policy, and
+**0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
+them rather than edited to taste.
 
 Every encrypted statement opens, every issuer whose statements carry text has a
 reader, and `source/README.md` carries the rule for adding the next delivery.
@@ -273,17 +289,19 @@ every ZIP already at the top level.
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
 | Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
-| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (no NAV published) |
-| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (no NAV published) |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 |
+| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| HDFC Bank (NSDL demat) | 67786137 | Ajay Jaisinghani | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
+| HDFC Bank (NSDL demat) | 67786547 | Ajay Jaisinghani | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
 | Motilal Oswal demat | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
-| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (both rows are AIF units their funds report) |
-| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (`NO HOLDING IS AVAILABLE`) |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (redeemed to nil) |
+| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
+| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | — (no NAV published) |
@@ -297,7 +315,9 @@ cells and gets a different answer has found one, and no prose rescues it. The
 column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
 TIME rather than patched: hand-merging rows to keep it short is what let eight
 accounts go unlisted, and a row added by hand is a figure copied into prose. It
-is one row per account, all 42 of them, sorted by value.
+is one row per account, all 51 of them, sorted by value — and the words in the
+right-hand cell are `Account.noPositionsReason`, routed rather than written, so
+an account that changes WHY it is empty changes this table on the next run.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
@@ -398,13 +418,17 @@ Two things changed, and the second is the one that speaks up next time:
 
 **What this still cannot catch, stated rather than papered over:** a pair whose
 figures never coincide at ANY as-of forms no group on any issue, so there is no
-tag to carry. Widening detection to match on quantity alone is the wrong trade —
-India SME's three folios print coincidentally equal units — so the residual risk
-is named here instead. `duplicateAifEarnings` covers the income-only side of the
-same folio pair, which is how this one was visible in the archive at all.
+tag to carry. Widening detection to match on quantity alone is the wrong trade,
+and that is measured rather than feared: it produced THREE false duplicates on
+this corpus, each refuted by a document already in hand (see "…and then it was
+flagging THREE pairs" below). So the residual risk is named here instead.
+`duplicateAifEarnings` covers the income-only side of the same folio pair, which
+is how this one was visible in the archive at all.
 
-**Every issuer has a reader.** Getting there took four of them, and each earned
-its own file because the layouts share nothing:
+**Every issuer whose statements carry recoverable text has a reader.** Each earned
+its own file because the layouts share nothing. The one issuer without one is HDFC
+Bank's `august-2026-e` statement, and that is not a missing reader — it is four
+JPEG pages with nothing on them to read (see the ring-fence section):
 
 | Reader | Documents | What it reads |
 | --- | ---: | --- |
@@ -419,6 +443,7 @@ its own file because the layouts share nothing:
 | `providers/mutualFundFolio.mjs` | 5 | folio statements, three different layouts behind one reader |
 | `providers/motilalDemat.mjs` | 12 | the family's own CDSL demat accounts — SEVEN of them, keyed on the `Client ID:` the page prints because three of the twelve FILE NAMES name the wrong member |
 | `providers/nsdlDemat.mjs` | 1 | the family's NSDL account at ICICI Bank — the mirror image of the CDSL reader, with NO RATE COLUMN, so value is the primitive and the price would be the derived thing |
+| `providers/hdfcNsdl.mjs` | 2 | the two trusts' NSDL accounts at HDFC Bank — the only reader in this book working on text recovered by RENDERING, and the only one that REFUSES its document unless the rows reproduce the statement's own printed total to the paisa |
 | `providers/bankAdvice.mjs` | 2 | ICICI payment receipts — read in full, attributed to nothing, because a receipt names no holder and no security |
 | `providers/schemePortfolio.mjs` | 1 | a fund's own SEBI portfolio disclosure — archived for look-through, worth nothing to the book |
 
@@ -917,15 +942,23 @@ decision — see the next section.**
 ### The `august-2026-f` delivery — a THIRD way a PDF is unreadable, and a register that is not a statement
 
 Three files, found by diffing the client's Google Drive against `source/` after
-every other delivery. **None of them moves a figure in the book**, and saying that
-plainly is the point of this section: two cannot be read at all, and the third
-must not be read into the book.
+every other delivery. **NOT ONE OF THEM MOVES A RUPEE OF NAV**, and every one of
+them is read — which is the point of this section, because those two facts look
+contradictory and are not. The two statements are read by RENDERING their outlined
+glyphs and their single holding is priced at face value, so it carries a quantity
+and no value; the register reads perfectly and is held out of the book by
+decision. What moves is the account count, the book's as-of and the `/register`
+page — never a total.
+
+The passage below is kept in the order it was learnt, because the first answer
+("neither is an OCR job") was right about a scan and wrong about these, and the
+distinction it turns on is the whole of why one is read and the other still is not.
 
 | File | What it is | Outcome |
 | --- | --- | --- |
 | `NEW INVESTMENT SHEET.xlsx` | the family's own record of what they PAID — 8 sheets, 427 tranche rows, 151 names, **₹842.92 Cr gross paid in** | reads perfectly, and is **not a source** |
-| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account **67786547** | **not read — text outlined to vector paths** |
-| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account **67786137** | **not read — same** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account **67786547** | **READ — by rendering its outlined glyphs, see below** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account **67786137** | **READ — same** |
 
 **A DOCUMENT WITH NO TEXT IS NOT ALWAYS A SCAN.** `august-2026-e` established that
 a scan is not a document with no reader. These two are neither: **no raster image
@@ -940,8 +973,10 @@ IMAGE**" — which is the same class of confidently wrong answer that test's own
 comment already records about the review workbook, and it sends the next person
 to ask HDFC to re-scan paper that was never on paper. They report
 **`text-outlined-to-paths`** now, and the reason names the actual remedy: a
-**re-export from the issuing system with fonts embedded**. Neither is an OCR job,
-for the reason `august-2026-e` gives.
+**re-export from the issuing system with fonts embedded**. That diagnosis is still
+what a document reports when nothing can read it; what changed is that something
+now can — see the next section, which is where this passage's original conclusion
+("neither is an OCR job") was overturned for these two and upheld for the scan.
 
 `classifyInk` in `lib/layout.mjs` draws the distinction **on the operator list**,
 because a PDF 1.7 file keeps `/Font` and `/DCTDecode` inside compressed object
@@ -953,12 +988,89 @@ against PDFs generated in the test. Measured on the corpus: the two new files ar
 0 paths — the four DCTDecode JPEGs this file already documents), and Ajay's ICICI
 statement returns 124 text rows and is never classified at all.
 
+#### They ARE read now — by rendering the outlines, and never a scan
+
+*"use whatever method you want to for extracting the data … every single file must
+be incorporated."* The refusal above was right about a SCAN and wrong to extend to
+these, and the difference is not a technicality:
+
+- a SCAN is a photograph of paper. Its information is genuinely lossy — sensor
+  noise, skew, JPEG ringing — so a figure recovered from it cannot be traced to
+  what the document printed, and a wrong digit looks exactly like a right one.
+  **Bharat's `august-2026-e` statement stays refused for that reason.**
+- OUTLINED TEXT is not a photograph of anything. The file itself carries every
+  glyph's exact bezier curves; rendering them is EVALUATING data the document
+  already holds, at whatever resolution we choose. At 600 dpi the bitmap is a
+  clean synthetic rendering of exact shapes: no noise, no skew, no compression.
+
+`lib/ocr.mjs` renders and reads those, and hands the words back **in the same
+`{x,y,width,height,text}` shape `itemsFrom` produces from pdfjs** — so
+`pageToGrid` and every reader above it work unchanged and there is no second,
+drifting "OCR table parser". `extractLayout` routes ONLY `inkKind.kind ===
+"vector"` there; a `raster` page keeps its `no-text-layer` diagnosis and is not
+read. Both directions are asserted in `layout.test.mjs`.
+
+**AND A PREMISE IS NOT A PROOF, SO THE READER CHECKS ITSELF.**
+`providers/hdfcNsdl.mjs` will not emit a holding unless the rows it read
+reproduce the statement's own printed `Total Valuation (Rs.)` **to the paisa**;
+on a mismatch it emits nothing and says why. That check is the whole licence for
+reading a rendered document — the page's own arithmetic is the witness. Here it
+passes on both files, and three further things agree: 347 x 100.000 = 34,700.000,
+the statement's words ("Rupees Thirty-Four Thousand Seven Hundred Only") match
+its digits, and the register in the same delivery independently records 347
+preference shares per trust.
+
+**THEY ADD ₹0 TO NAV, AND THAT IS THE CORRECT ANSWER.** The Market Rate is exactly
+100.000 — the FACE VALUE an unlisted preference share was allotted at —
+so `faceValueBasis` grades it `par` and the holding carries its QUANTITY and no
+value. The book gains **two accounts (49 → 51)** and its as-of advances to
+**2026-08-29**; `totalValue` does not move by a rupee. Reading 100.000 as a mark
+would have invented ₹34,700 twice.
+
+`textSource: "ocr"` rides in the provenance, and the document carries a
+`text-recovered-by-rendering` warning naming the remedy — a re-export from HDFC
+with fonts embedded — so no figure read this way is ever mistaken for a native one.
+
+**IT NEEDS TWO SYSTEM BINARIES, AND DEGRADES WITHOUT THEM RATHER THAN GUESSING.**
+`pdftoppm` (poppler-utils) and `tesseract`. Neither is an npm package and neither
+is in CI — which costs nothing, because **CI never re-extracts**: it reads the
+committed archive and checks that the book regenerates from it byte-identically.
+Where they are absent `ocrAvailable()` says so, `extractLayout` falls back to the
+`text-outlined-to-paths` diagnosis, and the run is exactly what it was before OCR
+existed. It never half-reads. Re-extracting these two locally needs:
+
+```
+sudo apt-get install -y poppler-utils tesseract-ocr
+```
+
+**AND THE PIPELINE GREW A GUARD, BECAUSE THIS SESSION DELETED 24 DOCUMENTS.**
+`node scripts/ingest/extract.mjs --help` is not a help flag — `extract.mjs` takes
+no options, so it ran a FULL extraction against the default paths, and the eight
+encrypted statements it could not open without `GLOW_PDF_PASSWORDS` simply left
+the archive. Recovered with `git checkout -- public/audit/`, and the fix is not
+"be careful": `guardAgainstShrinkingTheArchive` compares the documents this run
+read against the documents already on disk and **refuses to write, exit 1**, if
+the run produced fewer. A deliberate shrink sets `GLOW_ALLOW_ARCHIVE_SHRINK=1`
+and says so out loud. A re-extraction that quietly loses the statements it lacked
+a password for is indistinguishable, in the diff, from a drop that never carried
+them.
+
+**AND `build-book` WAS TELLING THE WRONG STORY ABOUT THEM.** Its
+`noPositionsReason` had one sentence for every unvalued account — *"this fund
+publishes no NAV … the capital drawn against a commitment"* — which is true of
+India SME and Sky Capital and false of a depository. It branches on the HOLDING
+now: a row carrying a `faceValue` gets the custody wording, and the fund wording
+is reserved for a fund. A confidently wrong reason sends the next reader to ask a
+fund manager for a NAV no fund owes.
+
 **AND THE FILENAMES NAME THE WRONG HOLDER, FOR THE FOURTH TIME.** Both files are
 named for a Bharat Jaisinghani family trust; both statements print `AJAY T
 JAISINGHANI` and `AARTI AJAY JAISINGHANI` as joint holders at Ajay's own
-Prabhadevi address. Whoever writes the reader resolves the account on the
+Prabhadevi address. `providers/hdfcNsdl.mjs` therefore resolves the account on the
 `DP Account No:` the page prints, never on the file name — `motilalDemat.mjs`'s
-rule, arriving through a third issuer. What they hold is one line each,
+rule, arriving through a third issuer — and it will not fall back to the file name
+even when the account line is unreadable: with no `DP Account No:` it emits
+nothing and says so. What they hold is one line each,
 `SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
 `0.01% PRE SERIES A PREF` at a Market Rate of **100.000** — the FACE VALUE of a
 preference share in an unlisted private company. Read as a mark it adds ₹34,700
@@ -1442,9 +1554,68 @@ reissues satisfy a check whose own heading is "across owners". Sky Capital
 reissues an unchanged statement every month, so Bharat's Hudle position appeared
 four times at identical figures and was reported as a duplicate of itself; the
 HDFC folio's two issues were doing the same, already. The guard is distinct
-ACCOUNTS now, and the five groups that remain are all real — the two Transition
-trusts, 360 ONE Special Opportunities under both CRNs, Sky's Oncare under both
-trusts, and India SME Fund II under Ankita's and Bharat's folios.
+ACCOUNTS now.
+
+### …and then it was flagging THREE pairs that are not duplicates at all
+
+That fix left five groups, and this file said "the five groups that remain are
+all real" **on the same page as its own reason why one of them is not** —
+*"India SME's three folios print coincidentally equal units."* Both cannot be
+true, and the contradiction was sitting in the prose for two deliveries.
+
+**ONE FIGURE IS NOT "THE FIGURES THAT WOULD HAVE TO COINCIDE BY CHANCE".** The
+key is `securityKey | quantity | unitCost | marketValue`, and the check's own
+comment is the rule: a group is suspicious because SEVERAL independent numbers
+agree. On a holding no statement values, quantity is the only one there is — and
+two holders subscribing the same round number of units to the same fund is an
+ordinary event. Measured, that tier was producing three false duplicates, each
+refuted by a document already in hand:
+
+| Flagged as one holding | Actually | The document that says so |
+| --- | --- | --- |
+| Sky Capital Oncare A3, 7,500 units, SKY023 + SKY024 | ₹1.50 Cr across two trusts | each folio's own statement prints ₹75 L drawn |
+| India SME Fund II A2, 27,000 units, three folios | three subscriptions | this file already called it a coincidence |
+| Swapeco Solutions, 347 shares, HDFC 67786547 + 67786137 | 694 shares across two trusts | the register records ₹1,35,00,875 under EACH |
+
+**NONE OF THEM COLLAPSED ANYTHING, WHICH IS EXACTLY WHY IT HAD TO BE FIXED NOW.**
+A quantity-only row carries no market value, so `dedupedPositions` drops it from
+no total and no figure on screen was ever wrong. The day any of those funds
+publishes a NAV, it would have halved a real holding silently, on a page
+computing correctly — the same shape as `dedupedPositions` sitting correct and
+uncalled for a drop and a half, running the other way.
+
+So a match on fewer than TWO coinciding figures is **reported and never
+grouped**, in its own section of the extraction report — narrowing detection and
+NAMING what it left out, rather than dropping it. The three that remain are the
+two Transition trusts and 360 ONE Special Opportunities under both CRNs, and the
+₹3.17 Cr excluded from the consolidated total does not move by a rupee.
+
+### Two more defects the same verification found, neither about a figure
+
+Both were invisible in every artefact except the one written to catch them.
+
+**A macOS RESOURCE FORK BECAME 25 FAILED DOCUMENTS.** Zipping on a Mac writes a
+`__MACOSX/` shadow tree of 212-byte AppleDouble stubs named `._<real name>`,
+carrying the real file's extension — so `READABLE` matched them, pdfjs failed on
+them, and each became a `failed` document with no provider, no account and no
+owner. They were invisible for as long as `source/_extracted/` happened to be
+expanded by a tool that dropped them, and that directory is GITIGNORED and
+DERIVED: a pipeline whose document count depends on who unzipped is not
+idempotent. `walk()` skips them by path now, and `scripts/source-coverage.mjs`
+still checks the bytes independently — the path says what macOS meant, the
+`%PDF` header says what is actually there, and neither alone is enough.
+
+**AND A READER SILENTLY ERASED ITS OWN PROVENANCE.** `extractOne` merges
+`{ ...base, ...result }`, which is what gives a reader the last word on what it
+read off the page. `base` also carries what only `extract.mjs` knows — which
+file, how many pages, which pages of a bundle. `hdfcNsdl.mjs` returned a whole
+`makeDocument(...)` instead of the partial every other provider returns, so that
+object's own defaults spread over them and both its documents went into the
+archive **naming no file**: right figures, no provenance, nothing failed.
+`npm run coverage:source` is what caught it, by reporting both PDFs as UNREAD —
+which is the check earning its place, and a good deal later than the merge. A
+reader that returns an empty `docKey`, `sourcePath`, `pages` or `sourcePages`
+now keeps the derived value and gets a `reader-cleared-provenance` warning.
 
 ### Two settlement deltas stand, and both are inside the printed precision
 
@@ -4630,6 +4801,22 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   Idempotent; `--only <ids>` limits it. Runs nightly via `.github/workflows/harvest.yml`.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
+  **It takes no options** — a stray argument is IGNORED, not rejected, so
+  `extract.mjs --help` runs a full extraction. Without `GLOW_PDF_PASSWORDS` that
+  drops the eight encrypted statements, which is why `guardAgainstShrinkingTheArchive`
+  refuses to write a run that read fewer documents than are already on disk
+  (override with `GLOW_ALLOW_ARCHIVE_SHRINK=1`, deliberately). `GLOW_SOURCE_DIR` /
+  `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` point a run at a scratch tree, which is how a
+  new provider is developed without touching the committed archive.
+  Reading the two outlined-text PDFs additionally needs `pdftoppm` and `tesseract`
+  on PATH; without them the run reports `text-outlined-to-paths` and reads
+  everything else exactly as before.
+- `npm run coverage:source` accounts for EVERY leaf file in `source/` — read /
+  read-via-a-byte-identical-twin / held-out-by-decision / not-a-document /
+  excluded-by-policy / unread — and **exits non-zero if anything is unread**. It
+  answers the question `docs/EXTRACTION-REPORT.md` presupposes: not *did the
+  documents tie out*, but *is there a file whose data never reached anything*.
+  Output: `docs/SOURCE-COVERAGE.md`.
 - `npm run test:ingest` runs the ingest test suites.
 - `npm run reconcile:review` checks the book against the adviser's consolidated
   review; `npm run reconcile:register` checks it against the family's own

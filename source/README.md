@@ -45,9 +45,15 @@ just noise, and noise in a provenance record is a cost of its own.
 ## A delivery may be only PARTLY ingestible, and that is a real state
 
 `august-2026-d/` brought five managers this pipeline had never met. Two folios
-landed; twenty documents have no reader yet. Every one of those twenty is
-ATTRIBUTED to the institution that issued it and counted in the coverage report
-— which is not the same as being filed under a manager who never wrote it.
+landed on the first pass; twenty documents had no reader. Every one of those
+twenty was ATTRIBUTED to the institution that issued it and counted in the
+coverage report — which is not the same as being filed under a manager who never
+wrote it, and is what made finishing them a bounded job rather than a search.
+
+**All twenty read now**, and so does everything else: `npm run coverage:source`
+accounts for every leaf file in this directory and **exits non-zero if any is
+unread**. A partly-ingestible delivery is still a real state; it is just no longer
+this one's.
 
 Before adding a reader for any of them, read the `august-2026-d` section of
 CLAUDE.md: the demat statements list every fund the family owns as a transaction
@@ -99,8 +105,8 @@ local file on name and byte size; these three matched nothing.
 | File | What it is | Outcome |
 | --- | --- | --- |
 | `NEW INVESTMENT SHEET.xlsx` | the family's own register of what they PAID — 8 sheets, 427 tranche rows, 151 names, ₹842.92 Cr gross paid-in | READS PERFECTLY — and is **not a source**, by decision |
-| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account 67786547 | **not read — the text is outlined to vector paths** |
-| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account 67786137 | **not read — same** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account 67786547 | **READ — by RENDERING its outlined glyphs**; adds an account and ₹0 of value |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account 67786137 | **READ — same** |
 
 ### The two statements: a third failure mode, and the filenames are wrong again
 
@@ -119,8 +125,10 @@ because the remedy differs and a confidently wrong diagnosis costs a day:
   issuing system with fonts embedded** — HDFC's PDF export setting is what did
   this — rather than a re-scan of paper that was never on paper.
 
-Neither is an OCR job, for the reason `august-2026-e/` already gives.
-`lib/layout.mjs`'s `classifyInk` draws the distinction on the OPERATOR LIST, and
+That diagnosis is what a document still reports when nothing can read it — and
+these two are now read; see **They ARE read** below, where the first conclusion
+here ("neither is an OCR job") was overturned for outlined text and upheld for the
+scan. `lib/layout.mjs`'s `classifyInk` draws the distinction on the OPERATOR LIST, and
 it runs **only** for a document that yielded no text at all, so no ordinary
 statement pays for the second parse. It is told apart there rather than by a byte
 search for `/Font` or `/DCTDecode`, because a PDF 1.7 file keeps both inside
@@ -129,15 +137,56 @@ compressed object streams and a raw scan finds neither.
 **AND THE FILENAMES NAME THE WRONG HOLDER — for the fourth time in this corpus.**
 Both files are named for a Bharat Jaisinghani family trust. Both statements print
 `AJAY T JAISINGHANI` and `AARTI AJAY JAISINGHANI` as the joint holders, at
-Ajay's own Prabhadevi address. Whoever writes a reader for these resolves the
+Ajay's own Prabhadevi address. `providers/hdfcNsdl.mjs` therefore resolves the
 account on the **`DP Account No:` the page prints** — 67786547 and 67786137 —
 never on the file name, which is the rule `motilalDemat.mjs` already applies to
-three of its twelve files and `pmsStatements.mjs` to all 23 of V.E.C's.
+three of its twelve files and `pmsStatements.mjs` to all 23 of V.E.C's. With no
+account line it emits nothing rather than falling back to a name the statement
+itself contradicts.
 
-What they hold is small and would be **quantity-only** if it were read: one line
-each, `SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
+What they hold is small and is **quantity-only**: one line each,
+`SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
 `0.01% PRE SERIES A PREF`, at a Market Rate of **100.000** — the FACE VALUE of a
-preference share in an unlisted private company, not a mark anyone struck.
+preference share in an unlisted private company, not a mark anyone struck. So
+`faceValueBasis` grades it `par`, the holding carries its quantity and NO value,
+and the two accounts add **₹0** to NAV. Reading 100.000 as a price would have
+invented ₹34,700 twice.
+
+### They ARE read — by rendering the outlines, and never a scan
+
+The refusal above was right about a SCAN and wrong to extend to these two, and the
+difference is not a technicality:
+
+- a SCAN is a photograph of paper. Its information is genuinely lossy — sensor
+  noise, skew, JPEG ringing — so a recovered figure cannot be traced to what the
+  document printed, and a wrong digit looks exactly like a right one. **Bharat's
+  `august-2026-e/` statement stays refused for that reason.**
+- OUTLINED TEXT is a photograph of nothing. The file carries every glyph's exact
+  bezier curves; rendering them EVALUATES data the document already holds, at
+  whatever resolution we choose. At 600 dpi the bitmap is a clean synthetic
+  rendering of exact shapes — no noise, no skew, no compression.
+
+`scripts/ingest/lib/ocr.mjs` renders and reads them and hands the words back **in
+the same `{x, y, width, height, text}` shape `itemsFrom` produces from pdfjs**, so
+`pageToGrid` and every reader above it work unchanged. `extractLayout` routes ONLY
+`inkKind.kind === "vector"` there; a `raster` page keeps `no-text-layer` and is not
+read. Both directions are asserted in `layout.test.mjs`.
+
+**A PREMISE IS NOT A PROOF, SO THE READER CHECKS ITSELF.** `hdfcNsdl.mjs` will not
+emit a holding unless its rows reproduce the statement's own printed
+`Total Valuation (Rs.)` **to the paisa**; on a mismatch it emits nothing and says
+why. That check is the whole licence for reading a rendered document — the page's
+own arithmetic is the witness. It passes on both files, and three further things
+agree: 347 x 100.000 = 34,700.000, the statement's words ("Rupees Thirty-Four
+Thousand Seven Hundred Only") match its digits, and the register in this same
+delivery independently records 347 preference shares per trust.
+
+`textSource: "ocr"` rides in the provenance and the document carries a
+`text-recovered-by-rendering` warning, so no figure read this way is mistaken for
+a native one. **It needs `pdftoppm` (poppler-utils) and `tesseract` on PATH**;
+without them the run reports `text-outlined-to-paths` again and reads everything
+else exactly as before. It never half-reads. The ask of HDFC — a re-export with
+fonts embedded — stands, because it would remove the need for any of this.
 
 **AND THE REGISTER CONFIRMS THESE *ARE* THE TRUSTS' HOLDINGS — READ THE WHOLE
 CELL.** The same delivery's `NEW INVESTMENT SHEET.xlsx` records every Swapeco
@@ -183,10 +232,13 @@ than a mark**, and `CURRENT VALUATION` is empty. Every figure in this book trace
 to the statement of the institution that struck it, and that guarantee ends on
 the first cell of an aggregation.
 
-What it is genuinely good for is the family-input layer (`src/lib/deals.ts`,
-Stage 10b) — which exists precisely because a shareholders' agreement and a cap
-table have no statement issuer and no reader — and as a second independent
-CROSS-CHECK beside the review.
+What it is genuinely good for is three things, none of which is a book figure:
+`npm run build-register` emits it to its own page at `/register`, whose ONLY
+reader is `src/pages/Register.tsx` and which reads that module directly rather
+than through `PortfolioContext`, so nothing on it can reach a total;
+`npm run reconcile:register` cross-checks the generated book against it; and the
+family-input layer (`src/lib/deals.ts`, Stage 10b) exists precisely because a
+shareholders' agreement and a cap table have no statement issuer and no reader.
 
 **IT IS MATCHED ON A HEADER NO CUSTODIAN PRINTS**, like the review before it: a
 depository tracks units, never whether the family holds the paper certificate, so

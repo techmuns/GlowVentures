@@ -1163,10 +1163,42 @@ function build(docs) {
       const acct = accounts[accounts.length - 1];
       if (acct && acct.accountId === accountId && !mine.length) {
         const unvaluedHere = (holdingsDoc?.holdings ?? []).filter((x) => !isNum(x.marketValue));
-        acct.noPositionsReason = unvaluedHere.length
+        /**
+         * WHY THE HOLDINGS ARE UNVALUED IS READ OFF THE HOLDINGS, not assumed.
+         *
+         * This branch used to tell one story for every unvalued account — "this
+         * fund publishes no NAV … the capital drawn against a commitment" — which
+         * is true of India SME and Sky Capital, drawdown funds that report units
+         * and contributions and no mark. It is FALSE of a DEPOSITORY account,
+         * where the row carries a face value the depository recorded because it
+         * had no price. Printing the fund story over a demat account is the
+         * confidently-wrong-diagnosis failure this file names elsewhere: it sends
+         * the next reader to ask a fund manager for a NAV that no fund owes.
+         *
+         * A face-valued row is the tell, and it is on the holding itself.
+         */
+        const facePriced = unvaluedHere.filter((x) => isNum(x.faceValue));
+        acct.noPositionsReason = facePriced.length === unvaluedHere.length && unvaluedHere.length
+          ? `this custody account values nothing: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book`
+          : unvaluedHere.length
           ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
           : holdingsDoc
           ? `every holding on this account's ${holdingsDoc.reportType} statement of ${holdingsDoc.asOf} has been redeemed — the balance is nil, and that is a measurement`
+          /**
+           * AND THE LAST BRANCH TOLD THE SAME WRONG STORY ONE LEVEL UP.
+           *
+           * With no holdings document at all it said "its documents report
+           * income and distributions only", which is true of the two 360 ONE
+           * Alternates folios and FALSE of Motilal Oswal demat 1201090012539150
+           * — Ajay's main demat, whose drop carries its TRANSACTION statement
+           * and not its holdings. Those two absences need completely different
+           * things: one needs nothing (the units are marked in another account),
+           * the other needs one missing document from a named custodian. So the
+           * report types the account's own documents carry decide the sentence,
+           * rather than one sentence covering both.
+           */
+          : allIssues.some((d) => /transaction/i.test(d.reportType ?? ""))
+          ? `no HOLDING statement for this account is in the drop — only its ${[...new Set(allIssues.map((d) => d.reportType))].sort().join(", ")} statement(s). The tape's closing balances are in the archive as quantities at ${allIssues.map((d) => d.asOf).filter(Boolean).sort().pop() ?? "its own date"} and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
       }
     }

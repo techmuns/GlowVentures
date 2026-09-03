@@ -516,6 +516,19 @@ const ISSUER_PROVIDER_RULES = [
    */
   [/ICICI\s+BANK\s+LIMITED[\s\S]{0,40}?DP\s*ID\s*:\s*IN\d{6}/i, "ICICI Bank (NSDL demat)"],
   /**
+   * HDFC BANK'S OWN NSDL DP ID, and it has to be the DP ID rather than the bank's
+   * name. This corpus is full of documents that MENTION HDFC without being issued
+   * by it — Sanshi prints the investor's HDFC bank details, Transition Venture an
+   * HDFC IFSC code, and 3P's own statement names HDFC as its redemption payout
+   * bank. `IN301549` is the depository participant registration and appears only
+   * on a statement HDFC's depository arm produced.
+   *
+   * Both statements this matches carry no text layer at all; their words are
+   * recovered by rendering the outlined glyphs (lib/ocr.mjs), which is why this
+   * rule can fire at all.
+   */
+  [/DP\s*ID\s*IN301549[\s\S]{0,4000}?HDFC\s+Bank\s+Limited/i, "HDFC Bank (NSDL demat)"],
+  /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
    * These six come FIRST because four of them print `Motilal Oswal` on the

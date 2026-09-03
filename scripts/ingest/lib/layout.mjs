@@ -25,6 +25,7 @@
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseNumInfo } from "./parseNum.mjs";
+import { ocrDocument } from "./ocr.mjs";
 
 /** pdfjs is loaded lazily so importing this module stays cheap for callers that only need types. */
 let _pdfjs = null;
@@ -647,6 +648,35 @@ async function readOnce(data, password, opts) {
     const inkKind = pages.length && pages.every((p) => !(p.rows ?? []).length)
       ? await classifyInk(doc)
       : null;
+    /**
+     * OUTLINED TEXT IS READ BY RENDERING IT — a scan still is not.
+     *
+     * `vector` means every glyph is stored as its exact bezier outline, so
+     * rasterising is evaluating shapes the file itself carries rather than
+     * photographing paper. `lib/ocr.mjs` carries the full argument and the
+     * limits. The recovered words come back in the SAME `{x,y,width,height,text}`
+     * shape `itemsFrom` produces, so `pageToGrid` and every reader above it work
+     * unchanged — there is no second, drifting "OCR table parser".
+     *
+     * `raster` is deliberately NOT included: a figure recovered from a
+     * photograph cannot be traced to what the document printed, which is the
+     * guarantee every other figure in this book keeps.
+     */
+    if (inkKind?.kind === "vector" && opts.ocr !== false) {
+      const o = ocrDocument(data);
+      if (o.pages.length) {
+        const rebuilt = o.pages.map((p) =>
+          pageToGrid(p.number, { width: p.widthPt, height: p.heightPt, rotation: 0 }, p.items, opts));
+        if (rebuilt.some((p) => (p.rows ?? []).length)) {
+          return {
+            pages: rebuilt, numPages: doc.numPages, inkKind,
+            textSource: "ocr", ocrConfidence: o.meanConfidence,
+            error: null, pdfError: null,
+          };
+        }
+      }
+      return { pages, numPages: doc.numPages, inkKind, ocrError: o.error, error: null, pdfError: null };
+    }
     return { pages, numPages: doc.numPages, inkKind, error: null, pdfError: null };
   } catch (e) {
     return { pages, numPages: pages.length, error: e?.message ?? String(e), pdfError: e };

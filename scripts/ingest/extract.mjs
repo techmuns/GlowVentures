@@ -20,7 +20,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
-import { classify } from "./lib/classify.mjs";
+import { NON_STATEMENT_PROVIDERS, classify } from "./lib/classify.mjs";
 import { splitBundle, isKnownReportType } from "./lib/bundle.mjs";
 import { readSpreadsheet } from "./lib/sheet.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
@@ -34,6 +34,7 @@ import * as transitionVenture from "./providers/transitionVenture.mjs";
 import * as lkp from "./providers/lkpSecurities.mjs";
 import * as motilalDemat from "./providers/motilalDemat.mjs";
 import * as nsdlDemat from "./providers/nsdlDemat.mjs";
+import * as hdfcNsdl from "./providers/hdfcNsdl.mjs";
 import * as bankAdvice from "./providers/bankAdvice.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
@@ -82,6 +83,11 @@ const EXTRACTORS = Object.fromEntries([
   // its primitives where the CDSL statement's are quantity and rate. It is the
   // only source anywhere in `source/` for their unlisted and pre-IPO holdings.
   [nsdlDemat.PROVIDER, nsdlDemat],
+  // HDFC Bank's NSDL arm. Its two statements carry no text layer — their glyphs
+  // are vector outlines — so their words are recovered by rendering the page
+  // (lib/ocr.mjs) and the reader refuses to publish a row that does not
+  // reproduce the statement's own printed Total Valuation.
+  [hdfcNsdl.PROVIDER, hdfcNsdl],
   // Two ICICI payment receipts. Read in full and attributed to nothing —
   // a receipt names no holder, no security and no folio.
   [bankAdvice.PROVIDER, bankAdvice],
@@ -167,12 +173,36 @@ const READABLE = /\.(pdf|xls|xlsx)$/i;
 /** …and which of those go to the workbook reader rather than to pdfjs. */
 const SPREADSHEET = /\.(xls|xlsx)$/i;
 
+/**
+ * A macOS RESOURCE FORK IS NOT A DOCUMENT, and it must not become one.
+ *
+ * Zipping on a Mac writes a `__MACOSX/` shadow tree of 212- and 477-byte
+ * AppleDouble stubs, one per real file, each named `._<the real name>` and
+ * carrying that name's extension. To `READABLE` they look like PDFs. Handed to
+ * pdfjs they fail, and every one became a `failed` document with no provider, no
+ * account and no owner — 25 of them from two V.E.C archives alone, which is 25
+ * entries of pure noise in a provenance record whose entire job is to say what
+ * was read and what was not.
+ *
+ * They were invisible for as long as `source/_extracted/` happened to be
+ * expanded by a tool that dropped them; that directory is GITIGNORED and
+ * derived, so which files exist under it depends on who unzipped and with what.
+ * A pipeline whose output depends on that is not idempotent.
+ *
+ * Skipped by PATH, and the claim is checked independently: `scripts/source-coverage.mjs`
+ * classes each of these `not-a-document` only after confirming it is under 4 KB
+ * and carries no `%PDF` header. Neither test alone is enough — the path says what
+ * macOS meant, the bytes say what is actually there.
+ */
+const RESOURCE_FORK = /(^|\/)__MACOSX(\/|$)|(^|\/)\._[^/]*$/;
+
 function walkAll(dir, hit, seen = new Set()) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
   for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     const full = path.join(dir, e.name);
     if (e.isSymbolicLink()) continue;
+    if (RESOURCE_FORK.test(full)) continue;
     if (e.isDirectory()) {
       const real = fs.realpathSync(full);
       if (seen.has(real)) continue;
@@ -322,6 +352,34 @@ function extractOne(file, grid, part = null) {
  * `source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` is four such
  * pages — Bharat Jaisinghani's NSDL statement at HDFC Bank, scanned to JPEG.
  */
+/**
+ * A DOCUMENT NOBODY ISSUED HAS NO READER *BY DECISION*, AND MUST NOT SAY
+ * "no-extractor".
+ *
+ * `no-extractor` means "go and write a provider reader for this", and for the
+ * family's consolidated review and their investment register that is a wrong
+ * instruction: both are held out deliberately, because every figure in this book
+ * traces to the statement of the institution that struck it and an aggregation
+ * or a cash record carries somebody else's decisions about what to include.
+ *
+ * It is the same class of mistake `noTextLayer` exists to avoid one line up —
+ * a confidently wrong diagnosis that sends the next person to do work that must
+ * never be done. Both files are still recorded in the archive, with the reason,
+ * so the provenance accounts for every file in `source/` either way.
+ */
+function heldOutByDecision(meta) {
+  if (!NON_STATEMENT_PROVIDERS.has(meta?.provider)) return null;
+  return {
+    code: "held-out-by-decision",
+    detail: `${meta.provider} — this file is READ PERFECTLY and is deliberately not a source. No institution `
+      + "issued it, so folding it into the book would end the guarantee that every figure traces to the "
+      + "statement of the institution that struck it. It is NOT a missing reader and must never be given one. "
+      + "The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the "
+      + "investment register has its own generated page at `/register` and its own cross-check "
+      + "(`npm run reconcile:register`), and reaches no portfolio total.",
+  };
+}
+
 function noTextLayer(grid) {
   const pages = grid?.pages ?? [];
   /**
@@ -387,7 +445,7 @@ function noTextLayer(grid) {
       status: "failed",
       // Reason first, provenance second: the report prints the FIRST warning as
       // the cause, and "opened with password #2" is not why a document failed.
-      warnings: [noTextLayer(grid) ?? { code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }, ...openedWarnings],
+      warnings: [noTextLayer(grid) ?? heldOutByDecision(meta) ?? { code: "no-extractor", detail: `no extractor for provider ${JSON.stringify(meta.provider)} / reportType ${meta.reportType}` }, ...openedWarnings],
     });
   }
 
@@ -411,6 +469,38 @@ function noTextLayer(grid) {
     warnings.push({
       code: "field-not-in-document-contract",
       detail: `${extractorName(extractor)} returned ${dropped.join(", ")}, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs.`,
+    });
+  }
+
+  /**
+   * A READER MUST NOT OVERWRITE PROVENANCE, AND THE MERGE BELOW LETS IT.
+   *
+   * `{ ...base, ...result }` is what gives a reader the last word on the fields
+   * it read off the page — accountNo, owner, asOf — and that is the point of it.
+   * But `base` also carries the fields only THIS function knows: which file the
+   * document came out of, how many pages it has, which pages of a bundle. A
+   * reader that returns a whole `makeDocument(...)` rather than the partial
+   * every provider here returns spreads that object's own defaults over them,
+   * and `sourcePath` comes back `undefined`.
+   *
+   * That is not hypothetical: `hdfcNsdl.mjs` did it, and the two documents it
+   * produced went into the archive naming no file — right figures, no
+   * provenance, and nothing failed. `npm run coverage:source` caught it, by
+   * reporting both PDFs as UNREAD, which is a good deal later than here.
+   *
+   * So a reader that sets one of these to a FALSY value does not get to: the
+   * base value is kept and the attempt is reported. It is not silently allowed,
+   * because a provider that genuinely needs to move one of them has found a
+   * design question rather than a field to assign.
+   */
+  const PROVENANCE = ["docKey", "sourcePath", "pages", "sourcePages", "stitches"];
+  const clobbered = PROVENANCE.filter((k) => k in result && !result[k] && base[k]);
+  for (const k of clobbered) delete result[k];
+  if (clobbered.length) {
+    warnings.push({
+      code: "reader-cleared-provenance",
+      detail: `${extractorName(extractor)} returned an empty ${clobbered.join(", ")} — kept the value extract.mjs derived. `
+        + "A provider returns the fields it READ; docKey, sourcePath and the page span belong to the file, not the reader.",
     });
   }
 
@@ -693,6 +783,46 @@ function ensureUniqueDocKeys(docs) {
 }
 
 /** public/audit/<docKey>/<section>.json + pages.json, and the manifest. */
+/**
+ * AN EXTRACTION THAT READS LESS THAN THE ARCHIVE ALREADY HOLDS IS A DATA LOSS,
+ * AND IT MUST NOT WRITE.
+ *
+ * `writeArchive` replaces the archive wholesale. That is right when a run has
+ * everything it needs, and catastrophic when it does not: EIGHT of the PDFs in
+ * this corpus are encrypted, so a run without `GLOW_PDF_PASSWORDS` reads them as
+ * failures and quietly deletes their extracted rows — the folios, the earnings,
+ * the dated lots — from a committed archive. Nothing fails and nothing says so;
+ * the next `build-book` simply produces a smaller book.
+ *
+ * That is not hypothetical. It happened during the session that added this
+ * guard: a stray invocation with default paths removed 24 files from
+ * `public/audit/` before anyone noticed, and only `git checkout` got them back.
+ *
+ * So the run compares what it READ against what the archive already has. Fewer
+ * successfully-read documents is refused; the message names the likely cause
+ * because it almost always is one. `GLOW_ALLOW_ARCHIVE_SHRINK=1` overrides it,
+ * for the legitimate case of deliberately removing a delivery.
+ */
+function guardAgainstShrinkingTheArchive(docs) {
+  if (process.env.GLOW_ALLOW_ARCHIVE_SHRINK === "1") return;
+  let existing;
+  try { existing = JSON.parse(fs.readFileSync(path.join(AUDIT_DIR, "manifest.json"), "utf8")); }
+  catch { return; }                       // no archive yet — nothing to lose
+  if (!Array.isArray(existing) || !existing.length) return;
+  const readable = (d) => d.status === "ok" || d.status === "partial";
+  const before = existing.filter(readable).length;
+  const after = docs.filter(readable).length;
+  if (after >= before) return;
+  const encrypted = docs.filter((d) => (d.warnings ?? []).some((w) => /password|encrypt/i.test(w.code + " " + (w.detail ?? "")))).length;
+  console.error("");
+  console.error(`REFUSING TO WRITE: this run read ${after} document(s) against ${before} already in ${AUDIT_DIR}.`);
+  console.error("Replacing the archive would DELETE the difference, and the extracted rows go with it.");
+  if (encrypted) console.error(`  ${encrypted} document(s) reported a password problem — set GLOW_PDF_PASSWORDS and run again.`);
+  else console.error("  The usual cause is a missing GLOW_PDF_PASSWORDS: eight PDFs here are encrypted.");
+  console.error("  If the shrink is intended, re-run with GLOW_ALLOW_ARCHIVE_SHRINK=1.");
+  process.exit(1);
+}
+
 function writeArchive(docs, grids) {
   fs.rmSync(AUDIT_DIR, { recursive: true, force: true });
   fs.mkdirSync(AUDIT_DIR, { recursive: true });
@@ -825,6 +955,7 @@ async function main() {
   // no drop contained a duplicate; the moment one did — the 360 ONE AIF holding
   // reported identically under two family members — it was 1.46 Cr counted twice.
   const report = reconcile(docs, { pdfCount: unique.length, symbolMap: loadSymbolMap(), duplicateSources });
+  guardAgainstShrinkingTheArchive(docs);
   const manifest = writeArchive(docs, grids);
   writeReports(report, DOCS_DIR);
 

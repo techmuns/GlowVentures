@@ -384,6 +384,26 @@ PRECEDENCE["ICICI Bank (NSDL demat)"] = {
 };
 
 /**
+ * HDFC BANK'S NSDL DEPOSITORY — one report type, and it values nothing.
+ *
+ * Two statements, one holding each: 347 units of an unlisted company's
+ * preference share at a Market Rate of exactly 100.000, which `faceValueBasis`
+ * grades as `par`. So the account carries its QUANTITY and no market value, and
+ * these documents move no total in the book — which is the honest outcome, not a
+ * shortfall. Reading 100.000 as a mark would invent ₹34,700 twice.
+ *
+ * A PROVIDER THE PIPELINE CAN READ MUST BE IN THIS FILE. `authoritative()`
+ * returns null for a provider with no block, and eight accounts once landed
+ * correctly, with the right owners and figures, and contributed nothing because
+ * of exactly that. Nothing failed and nothing said so.
+ */
+PRECEDENCE["HDFC Bank (NSDL demat)"] = {
+  holdings: { reportType: "holdings", note: "`Holding Statement` — the only source in this corpus for these two DP accounts." },
+  quantity: { reportType: "holdings", note: "the `Balance` column." },
+  marketValue: { reportType: "holdings", note: "the `Market Value` column, REFUSED here because the implied price is exactly the face value the preference share was allotted at. The rows read reproduce the statement's own printed `Total Valuation (Rs.)` to the paisa, which is what licenses reading a document whose text was recovered by rendering." },
+};
+
+/**
  * THE SINGLE-SCHEME FUND STATEMENTS — Buoyant, Helios, Motilal Oswal's Founders
  * and Active Momentum funds, 3P, India SME and Sky Capital.
  *
