@@ -707,21 +707,13 @@ export function MorningCIO() {
           href={drilldownHref("book")}
           hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page, and so is the arithmetic behind this number."
           value={fmtFromBase(m.totalValue, { compact: true })}
-          sub={<>
-            {/* THE TWO HALVES ARE FIGURES, NOT LINKS. They had an address each,
-                so this one tile offered three destinations — and the reader had
-                to know which of them answered their question. Both halves are
-                now a TOGGLE inside the tile's own drill-down, which is where a
-                reader who wants one of them can also see the other. */}
-            {m.hasPrivateClass
-              ? `Listed ${money(m.pp.listed)} · Private ${money(m.pp.private)}`
-              : `${m.p.length} listed positions · no private holdings`}
-            {m.accrued !== null && (
-              <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
-                + {money(m.accrued)} accrued income, not in this figure
-              </span>
-            )}
-          </>}
+          /* NO SUB-LINE. *"remove these small subtext from the clickable KPI
+             buttons since these are also already written inside each KPI
+             pages."* Measured before removing, line by line: the listed and
+             private halves are the facet toggle on `?of=book`, which prints
+             each half's count and opens it. THE ACCRUED-INCOME DISCLOSURE WAS
+             NOT THERE and is now — a fact this tile was the only place to
+             state, so it moved rather than went (see `drilldownFormula`). */
           icon={<Briefcase className="h-4 w-4" />} />
 
         {/* CAPITAL INVESTED — the whole book, and its caption says which
@@ -735,32 +727,10 @@ export function MorningCIO() {
           href={drilldownHref("invested")}
           hrefTitle="Open the holdings whose statement reports a cost, and the arithmetic struck over them — with the ones that report none, and sit outside this figure, a toggle away on the same page."
           value={fmtFromBase(m.totalInvested, { compact: true })}
-          sub={<>
-            {/* A COUNT OF POSITIONS IS NOT A SHARE OF THE BOOK, and this caption
-                said only the count. "61 positions carry no cost basis" reads as
-                a footnote about 16% of the rows; those rows are 96% of the
-                book's VALUE, because one of them is a promoter holding worth
-                more than everything else put together. A reader comparing
-                ₹471.9 Cr against a ₹13,063.2 Cr NAV needs the second number to
-                understand the first, so the caption leads with the coverage and
-                the count follows it. Same rule as the tile that read "listed
-                only" over a whole-book sum: a scope stated wrong in either
-                direction is the same failure. */}
-            cost in · {m.costedMV > 0 ? <>covers {money(m.costedMV)} of {money(m.totalValue)}</> : <>whole book</>}
-            {m.noCostCount > 0 && (
-              /* NAMED HERE, OPENED BY THE TILE. A reader told that 60 positions
-                 worth ₹165.9 Cr carry no cost needs to find out WHICH — the
-                 answer decides whether they chase a custodian for a cost
-                 statement or accept a permanent absence. That set had its own
-                 address and its own link inside this tile; it is a TOGGLE on
-                 the tile's drill-down now, beside the rows that do report a
-                 cost, so the two halves of one figure sit on one page. */
-              <span className="block text-slate-500"
-                title="These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero. Open this tile to see them beside the holdings that do report one.">
-                {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} worth {money(m.noCostMV)} carry no cost basis
-              </span>
-            )}
-          </>}
+          /* NO SUB-LINE — both halves of what this said are on the page the
+             tile opens: its own total is the covered value against the book,
+             and the cost-less positions are a facet chip printing their count,
+             with their value on the tile beside it. */
           icon={<Wallet className="h-4 w-4" />} />
 
         {/* MONEY-WEIGHTED RETURN — an XIRR, in place of Embedded gain (whose
@@ -798,16 +768,13 @@ export function MorningCIO() {
           value={m.bookMW.pct == null
             ? <AbsentValue />
             : <span className={changeColor(m.bookMW.pct)}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</span>}
+          /* THE ABSENT BRANCH KEEPS ITS REASON, AND ONLY IT. An em dash must
+             name its cause (`Absent.tsx`), so a tile with no figure still says
+             why; a tile WITH one no longer explains itself here. The window and
+             the coverage both moved to `?of=measured`. */
           sub={m.bookMW.pct == null
             ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
-            : <>
-                {m.bookMW.annualised
-                  ? `annualised${m.bookMW.windowDays ? ` · ${m.bookMW.windowDays}-day window` : ""}`
-                  : `${m.bookMW.windowDays}-day window · not annualised`}
-                <span className="block text-slate-500" title={`Only an account whose statements carry an opening portfolio value can be measured this way. ${m.xirrExcluded.length ? `Excluded: ${m.xirrExcluded.join(", ")}.` : ""}`}>
-                  {m.xirrAccounts} of {m.accountCount} accounts · {money(m.measuredMV)} of {money(m.totalValue)}
-                </span>
-              </>}
+            : undefined}
           icon={<TrendingUp className="h-4 w-4" />} />
 
         {/* CONSOLIDATED RETURN — return on the capital actually invested, over
@@ -826,12 +793,7 @@ export function MorningCIO() {
             : <span className={changeColor(m.gainPct)}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</span>}
           sub={m.gainPct == null
             ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
-            : <>
-                on capital invested · whole book
-                <span className="block text-slate-500" title="Cumulative return on invested capital across every account — not annualised.">
-                  cumulative, not annualised
-                </span>
-              </>}
+            : undefined}
           icon={<Percent className="h-4 w-4" />} />
 
         {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
@@ -853,7 +815,7 @@ export function MorningCIO() {
             ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span>
             : <AbsentValue />}
           sub={hasCommitments
-            ? "undrawn fund commitments"
+            ? undefined
             : <span className="text-slate-500">no statement in this book reports a capital commitment</span>}
           icon={<Fuel className="h-4 w-4" />} />
 
@@ -864,7 +826,7 @@ export function MorningCIO() {
             ? fmtFromBase(m.deploy.distributed, { compact: true })
             : <AbsentValue />}
           sub={hasCommitments
-            ? "cash returned to date · incl. exited funds"
+            ? undefined
             : <span className="text-slate-500">no fund has distributed, because none is held</span>}
           icon={<Coins className="h-4 w-4" />} />
       </div>

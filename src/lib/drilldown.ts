@@ -162,6 +162,12 @@ export type Drilldown = {
   /** Accounts outside the set, by number — the money-weighted figure names them. */
   excludedAccounts: string[];
   /**
+   * The dated window a rate is struck over, in days, where the scope has one.
+   * NULL everywhere else — and null on `measured` too if no account publishes a
+   * dated flow, because a window nobody can date is not a zero-day window.
+   */
+  windowDays?: number | null;
+  /**
    * Set only where the scope is legitimately EMPTY, with what would fill it. An
    * empty table renders through `AbsentSection`, never as a frame around nothing.
    */
@@ -281,10 +287,33 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         .filter((a) => !keep.has(a.accountId))
         .map((a) => a.accountNo);
       const outside = portfolio.positions.filter((p) => !keep.has(p.accountId));
+      /**
+       * THE WINDOW THE RATE IS STRUCK OVER, and it is load-bearing rather than
+       * decorative. Morning CIO's tile used to print "134-day window · not
+       * annualised" beside the figure, and that caption is the whole of Stage
+       * 10g(ii): the same tile once read +99.0% because a four-month return was
+       * compounded onto a year, and nothing was miscalculated — an annualised
+       * figure is a claim about a YEAR and this book has four months of flows.
+       * The family asked for the tile's captions to go, so the window comes
+       * here, to the page that lists the very accounts it is measured across.
+       *
+       * DERIVED FROM THE SAME INPUTS AS THE RATE, not paraphrased: the earliest
+       * dated flow among the accounts that qualify, against the book's own
+       * report date — the accounts being exactly the set this scope has just
+       * resolved, so the two cannot describe different windows.
+       */
+      const flowDates = ids
+        .flatMap((id) => (portfolio.accountCashFlows?.[id] ?? []).map((f) => f.date))
+        .filter(Boolean)
+        .sort();
+      const windowDays = flowDates.length && portfolio.asOf
+        ? Math.round((new Date(portfolio.asOf).getTime() - new Date(flowDates[0]).getTime()) / 864e5)
+        : null;
       return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
         title: "Money-weighted return",
+        windowDays,
         backs: ["the coverage the Money-weighted return states"],
         lead: `An XIRR needs a stake to measure against, so it can only be struck on an account whose statements carry an opening portfolio value. ${ids.length} account${ids.length === 1 ? " does" : "s do"}, and their market value is the coverage figure the tile prints beside the rate. The rest sit outside it on BOTH sides — closing a market value against a stake nobody stated would overstate the return rather than approximate it — and are the second set here rather than a number the tile mentions and hides.`,
         excludedAccounts: excluded,
@@ -499,13 +528,31 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
     : "Every statement's row stands as printed — this is a per-account figure and is not deduped.";
 
   switch (d.id) {
-    case "book":
+    case "book": {
+      /**
+       * WHAT THIS FIGURE LEAVES OUT, stated where the figure is. The managers'
+       * printed totals fold accrued income into market value on some rows and
+       * not others, so the book carries it as its own field and the NAV excludes
+       * it throughout — which makes our total differ from a statement's by
+       * exactly this, and a reader reconciling the two needs to be told.
+       *
+       * Morning CIO's tile used to say so, and the family asked for the tile's
+       * captions to go. It is the ONE line among them that no other surface
+       * carried, so it moved here rather than went.
+       */
+      const accrued = rows.reduce((a, p) => a + (typeof p.accruedIncome === "number" ? p.accruedIncome : 0), 0);
+      const accruedRows = rows.filter((p) => typeof p.accruedIncome === "number" && p.accruedIncome !== 0).length;
       return {
         title: `Consolidated NAV${of}`,
         excel: "= Σ market value of every holding",
-        plain: `The market value of every holding in this set, at each account's latest mark. ${basis} The two counts beside it are read off the same set: ${n(rows.length, "position")} is what Morning CIO calls Positions, and ${n(names, "distinct name")} is Distinct names — a name two members both hold is one name and two positions.`,
+        plain: `The market value of every holding in this set, at each account's latest mark. ${basis} The two counts beside it are read off the same set: ${n(rows.length, "position")} is what Morning CIO calls Positions, and ${n(names, "distinct name")} is Distinct names — a name two members both hold is one name and two positions.${
+          accruedRows
+            ? `\n\nNOT IN THIS FIGURE: ${money(accrued)} of accrued income — dividends and interest declared on ${n(accruedRows, "holding")} here and not yet received. The managers' printed totals include it on some rows and not others, so the book carries it as its own field and every market value on this site excludes it. A statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
+            : ""
+        }`,
         worked: `= ${money(mv)} ${spread} · ${n(names, "name")}`,
       };
+    }
 
     case "invested": {
       // BOTH FIGURES THAT DIVIDE BY CAPITAL OPEN THIS PAGE, so the worked
@@ -534,8 +581,16 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
       return {
         title: `What the money-weighted return covers${of}`,
         excel: "= XIRR(each account's dated flows + its own market value on its own report date)",
-        plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value. ${basis} The rate needs an opening stake to measure against, so it can only be struck where a statement publishes one; this page is the set that qualifies, and the rate itself stays on the tile it was clicked from.`,
-        worked: `= ${money(mv)} ${spread}${d.excludedAccounts.length ? ` · ${n(d.excludedAccounts.length, "account")} outside it` : ""}`,
+        plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value. ${basis} The rate needs an opening stake to measure against, so it can only be struck where a statement publishes one; this page is the set that qualifies, and the rate itself stays on the tile it was clicked from.${
+          d.windowDays == null
+            ? ""
+            : d.windowDays >= 365
+              ? `\n\nTHE WINDOW IS ${d.windowDays} DAYS, so the rate is a genuine annual one.`
+              : `\n\nTHE WINDOW IS ${d.windowDays} DAYS, AND THE RATE IS NOT ANNUALISED. It is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection of ${d.windowDays} days rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, and it contradicted the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. When the flows eventually span a year the same calculation starts returning an annual rate and says so.`
+        }`,
+        worked: `= ${money(mv)} ${spread}${d.excludedAccounts.length ? ` · ${n(d.excludedAccounts.length, "account")} outside it` : ""}${
+          d.windowDays == null ? "" : ` · ${d.windowDays}-day window${d.windowDays >= 365 ? "" : " · not annualised"}`
+        }`,
       };
 
     case "bucket":

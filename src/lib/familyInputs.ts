@@ -145,6 +145,18 @@ export const EMPTY: FamilyInputs = {
   updatedAt: "",
 };
 
+/**
+ * A blank thesis, for an editor to fill in.
+ *
+ * IT HAS NO CALLER TODAY, and that is recorded rather than left silent: Thesis &
+ * Triggers was the only editor and was removed at the family's request (Stage
+ * 10y). Every thesis they had already recorded is still stored, still coerced on
+ * import and still travels in the one export file on Exposure & IPS — this
+ * store is deliberately kept whole, the same as `deals.ts` and `household.ts`
+ * when their pages went, because deleting a model to match a layout decision
+ * throws the family's own record away. A future editor calls this again
+ * unchanged.
+ */
 export const emptyThesis = (securityKey: string): ThesisRecord => ({
   securityKey, why: "", expectedReturnPct: null, risk: "", exitTriggers: "",
   proposedBy: "", decidedOn: "", reviewEveryMonths: null, lastReviewed: "", updatedAt: "",
