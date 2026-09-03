@@ -57,8 +57,8 @@ function failureText(code: string | null | undefined, detail?: string | null): s
     // conversation this is. Named as configuration rather than dressed up as a
     // model failure, because those send the reader to different places.
     case "USER_INDEX_REQUIRED":
-      return "The assistant is not fully configured: its API needs a user index alongside the service token, and "
-        + "MUNS_USER_INDEX is not set in the Cloudflare environment. Nothing was asked.";
+      return "The assistant's API wants a user index alongside the fixed user id this dashboard sends. Set "
+        + "MUNS_USER_INDEX in the Cloudflare environment — this is configuration, not your question.";
     case "USER_INDEX_REJECTED":
       return `The assistant's API rejected the configured user index${detail ? ` — ${detail}` : ""}. `
         + "This is MUNS_USER_INDEX in the Cloudflare environment, not your question.";
