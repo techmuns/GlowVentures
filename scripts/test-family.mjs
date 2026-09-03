@@ -27,8 +27,10 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
-  ["econ calendar", "src/lib/__tests__/econCalendar.test.ts"],
+  ["chat context", "src/lib/__tests__/chatContext.test.ts"],
+  ["chat function", "src/lib/__tests__/chatFunction.test.ts"],
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
+  ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
 ];
 

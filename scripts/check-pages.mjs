@@ -51,6 +51,11 @@ const ONLY = (process.env.ONLY ?? "").split(",").map((x) => x.trim()).filter(Boo
 const PUBLISHERS = [
   ["monitor", (n) => n === "mandate" || n === "mandate-fund"],
   ["cio", (n) => n.startsWith("holdings-")],
+  // The cost-less set is a FACET of the Capital invested page, so its address is
+  // drawn by that page's toggle and by nothing else. `ONLY=holdings-nocost`
+  // without it would walk a not-found page and report NOT CHECKED — a filter
+  // that silently stops checking, which is what this list exists to prevent.
+  ["holdings-invested", (n) => n === "holdings-nocost"],
 ];
 const walked = (name) =>
   !ONLY.length
@@ -274,6 +279,38 @@ const REGISTER_SENTINEL = (() => {
   } catch { return null; }
 })();
 
+/**
+ * HOW MANY HOLDINGS THE BOOK ITSELF SAYS WERE OPENED DURING ITS OWN YEAR — the
+ * only rows a year-to-date figure can legitimately appear on, since a holding
+ * already held on 1 January needs an opening value the book does not carry.
+ *
+ * READ FROM `glowData.ts`, NOT FROM THE PAGE. The YTD column and its caption are
+ * both computed by `holdingYtd`, so comparing one against the other cannot fail
+ * — they would fabricate together. This is the independent side, the same shape
+ * as the Polycab reconciliations below: two paths to one figure.
+ */
+const YTD_MEASURABLE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    const summary = /"asOf":\s*"(\d{4})-/.exec(src);
+    if (!Array.isArray(pos) || !summary) return null;
+    const yearStart = `${summary[1]}-01-01`;
+    // Consolidated by securityKey, because that is what the by-security table
+    // draws — and a row is measurable only if EVERY lot behind it has a start.
+    const bySec = new Map();
+    for (const p of pos) {
+      const g = bySec.get(p.securityKey) ?? [];
+      g.push(p); bySec.set(p.securityKey, g);
+    }
+    let n = 0;
+    for (const g of bySec.values()) {
+      if (g.every((p) => p.heldSince) && g.every((p) => p.heldSince >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+    }
+    return n;
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -354,6 +391,28 @@ const DRILLDOWN_COUNTS = new Map();
 // one-line diagnosis naming the fix rather than a silent gap.
 const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
 
+/**
+ * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
+ *
+ * The largest by market value, so the route is stable across drops; a book with
+ * no mutual fund yields null and the route fails loudly rather than skipping.
+ * Its expected look-through is not written here either: the invariants
+ * reconstruct it from the figures the page itself renders.
+ */
+const MF_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const by = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Mutual Fund") continue;
+      by.set(p.securityKey, (by.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
+    }
+    return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -373,6 +432,23 @@ const ROUTES = [
   // because of it. `registerAbsent` below applies to every other route.
   ["register", "/register"],
   ["cio", "/cio"],
+  // ...AND THE SAME PAGE WITH THE FEEDS STILL IN FLIGHT. A card that renders an
+  // absence while it is loading tells the reader their book cannot be priced;
+  // the window is milliseconds against a real feed, so it is held open here.
+  ["cio-loading", "/cio"],
+  // ...AND THE MIRROR CASE: quotes answered, indices still in flight. The index
+  // tile only exists once the card has priced rows, so it cannot be reached on
+  // the walk above — the two feeds have to be in different states to see it.
+  ["cio-index-loading", "/cio"],
+  // ...AND THE SNAPSHOT CACHE, which is what stops a reader ever meeting the
+  // loading state twice. Loaded once with the feeds answering, then RELOADED
+  // with them held open: the figures must still be on screen from the stored
+  // snapshot rather than the card starting over from nothing.
+  ["cio-cached", "/cio"],
+  // ...AND THE MUNS CHAT PANEL, opened. It is the one surface in this app that
+  // renders text no statement produced, so what it SAYS ABOUT ITSELF is the
+  // invariant: an answer must never be mistakable for a measured figure.
+  ["chat", "/cio"],
   /**
    * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
    *
@@ -409,7 +485,16 @@ const ROUTES = [
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
   // can disagree — which they did, by the ₹3.17 Cr the footer correctly excludes.
-  ["monitor-entity", "/monitor"],        // same route, By entity toggled
+  // ...THE BY-ENTITY BUILD, NOW REACHED BY URL. The toggle that switched to it
+  // was removed at the family's request; the view was not, because it is the
+  // only one in which a class subtotal and the footer beneath it can disagree —
+  // both of this book's duplicate holdings are AIF — and that disagreement was
+  // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
+  // multi-view route in this app uses.
+  ["monitor-entity", "/monitor?view=entity"],
+  // ...AND THE ANNUALISED BASIS, reached by clicking the toggle this session
+  // added. The guard that makes it safe is asserted on the figures it draws.
+  ["monitor-cagr", "/monitor"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -457,12 +542,20 @@ const ROUTES = [
    */
   ["holdings-crossheld", () => drilldownPath("cross-held") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-topnames", () => drilldownPath("top-names") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-listed", () => drilldownPath("listed") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-private", () => drilldownPath("private") ?? "/holdings?of=none-resolved-from-cio"],
+  // THE TWO HALVES ARE FACETS OF THE NAV'S OWN PAGE NOW, and their addresses
+  // come from the Concentration card, which still links each half directly.
+  ["holdings-listed", () => drilldownPath("book#listed") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-private", () => drilldownPath("book#private") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-winners", () => drilldownPath("winners") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-losers", () => drilldownPath("losers") ?? "/holdings?of=none-resolved-from-cio"],
   ["holdings-measured", () => drilldownPath("measured") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-nocost", () => drilldownPath("no-cost") ?? "/holdings?of=none-resolved-from-cio"],
+  // ...AND THE CAPITAL INVESTED PAGE, which was never walked: only its no-cost
+  // half was, back when that half was a scope of its own. It has to be walked
+  // FIRST now, because the cost-less set is reachable only from the toggle it
+  // draws — an address that comes from the page under test rather than from a
+  // literal here, like every other drill-down in this sweep.
+  ["holdings-invested", () => drilldownPath("invested") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-nocost", () => drilldownPath("invested#no-cost") ?? "/holdings?of=none-resolved-from-invested"],
   // ...AND AN ADDRESS THAT NAMES NOTHING. A drill-down that silently falls back
   // to "everything" would answer a question it was not asked with a figure that
   // looks like the one the reader clicked, which is worse than saying so.
@@ -475,14 +568,13 @@ const ROUTES = [
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
-  ["watchlist", "/watchlist"],
-  // FOOS-spec preview pages — illustrative placeholders for spec layers whose
-  // live source does not exist yet. Walked so their light-mode remaps, overflow
-  // and any stray ₹0 are held to the same bar as every real page.
-  ["knowledge", "/knowledge"],
+  // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
+  // family's request, so they are no longer walked — there is no page at any of
+  // those three addresses to hold to the light-mode, overflow and stray-zero
+  // bar. The removal itself is asserted in `check-family-inputs.mjs`: a removal
+  // is verified by asserting it happened, never by deleting the test alongside
+  // the feature.
   ["exposure", "/exposure"],
-  ["macro", "/macro"],
-  ["economy", "/economy"],
   ["thesis", "/thesis"],
   ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
@@ -491,6 +583,16 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  /**
+   * ...AND ONE MUTUAL FUND, WHICH NOW HAS A LOOK-THROUGH THE AIF ABOVE CANNOT.
+   *
+   * Both branches are walked because the difference between them is the whole
+   * claim: a mutual fund scheme publishes its portfolio monthly and this page
+   * renders it; an AIF publishes none and the same page must keep SAYING so.
+   * A build that showed one fund's holdings under the other's name would pass
+   * either check alone.
+   */
+  ["stock-mf-lookthrough", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}` : "/stock/no-mutual-fund-in-the-book")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -520,7 +622,7 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -654,16 +756,29 @@ function headingCount(head) {
   return m ? { holdings: cr(m[1]), mv: crU(m[2], m[3]) } : null;
 }
 /**
- * A MANDATE ROW, which is an ACCOUNT and not a security. Its sub-line is the
- * one the manager, the account number and the constituent count are printed on,
- * and it is the line the row's figures hang off — so finding it is how the
- * checks tell a rolled-up mandate from a share that leaked in beside one.
+ * A MANDATE ROW, which is an ACCOUNT and not a security — read off the ROW'S OWN
+ * ATTRIBUTES rather than out of the rendered text.
+ *
+ * These facts used to be parsed from a sub-line the row printed under its name
+ * ("<manager> · account <no> · N holdings"). The family asked for that line to
+ * go — the entity has its own column and the rest belongs on the mandate's own
+ * page — and every one of the six invariants below would have gone with it,
+ * silently, because a regex that matches nothing yields an empty list and an
+ * empty list passes an `.every()`.
+ *
+ * So the row carries `data-mandate`, `data-manager`, `data-account`,
+ * `data-holdings`, `data-account-holdings` and `data-bucket`, and these read
+ * those. It is the same contract `data-row` / `data-days` already carry on the
+ * transactions rollup, and for the same reason: a STRUCTURAL claim must not
+ * depend on prose a redesign is free to delete.
  */
-const MANDATE_SUBLINE = /^(.+?)\s+·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?\b/;
-const mandateRowsIn = (body) => (body ?? "").split("\n")
-  .map((l) => MANDATE_SUBLINE.exec(l))
-  .filter(Boolean)
-  .map((m) => ({ manager: m[1].trim(), accountNo: m[2], holdings: Number(m[3]) }));
+const MANDATE_BUCKET = "PMS mandates";
+const DIRECT_EQUITY_BUCKET = "Direct Equity";
+const mandatesIn = (mandates, bucket) =>
+  (mandates ?? []).filter((m) => bucket === undefined || m.bucket === bucket);
+/** A check needs its input: no rows captured is NOT CHECKED, never a pass. */
+const needRows = (rows) => rows === null || rows === undefined
+  ? { notChecked: "no table rows captured on this run" } : null;
 
 /**
  * WHAT `/monitor` PRINTED ABOUT EACH MANDATE, so the drill-down can be checked
@@ -692,6 +807,10 @@ let MANDATE_PATH = null;
 let DRILL = null;
 /** The same, for the Direct Equity view — see `monitor-txn-direct`. */
 let DIRECT = null;
+/** What the reloaded, network-less second open rendered — see `cio-cached`. */
+let CACHED = null;
+/** What the opened chat panel rendered — see the `chat` route. */
+let CHAT = null;
 /** Header geometry, for the single-line headline claim — see `monitor`. */
 let HEAD = null;
 
@@ -855,6 +974,44 @@ const MARK_BY_SYMBOL = (() => {
   return m;
 })();
 
+/**
+ * HOW MANY DIRECT-EQUITY NAMES THE MOCKED FEED CAN PRICE — the exact number of
+ * gainers the movers card must show on the `cio-live` walk.
+ *
+ * *"daily movers/losers should comprise of direct equity holdings only."* That
+ * claim cannot be checked on the ROWS: the card lists six, and on any day the
+ * mandate names happen not to move a rows-only assertion passes over a broken
+ * filter. It can be checked on the COUNT. Every fixture price is the mark × 1.10,
+ * so every priceable name rises and the gainer count is exactly the size of the
+ * priced scope — 33 here. Fold the PMS mandates back in and it is 160-odd; fold
+ * the ETFs in and it moves too. Derived from the book on every run rather than
+ * typed, so the next drop brings its own expectation.
+ *
+ * The bucket is recomputed here from `assetClass` + the ACCOUNT's engagement,
+ * deliberately duplicating `holdingBucket` rather than importing it: this file
+ * is the independent check, and a check that imports the helper it is checking
+ * agrees with itself by construction.
+ */
+const DIRECT_EQUITY_PRICED_NAMES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const names = new Set();
+    for (const p of positions) {
+      const e = engagement.get(p.accountId);
+      if (p.assetClass !== "Equity") continue;
+      if (e !== "Direct" && e !== "Execution") continue;      // a mandate is not direct
+      const sym = p.symbol || symbols[p.securityKey];
+      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;         // the fixture cannot price it
+      names.add(p.securityKey);
+    }
+    return names.size;
+  } catch { return null; }
+})();
+
 const MOCK_INDICES = [
   ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
   ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
@@ -864,6 +1021,45 @@ const MOCK_INDICES = [
 
 /** A linear daily ramp, so the index's return between any two dates is exact. */
 const PRICE_SLOPE = 0.0004;
+
+/**
+ * A FEED THAT NEVER ANSWERS, so the LOADING state is what renders.
+ *
+ * The defect this exists for is a card that asserts an absence while the
+ * request is still in flight — "No holding in this book carries a day change
+ * right now", printed on the first paint of every cold open. That window is
+ * milliseconds against a real feed and cannot be caught by walking the page
+ * normally: the plain `cio` walk 404s immediately and lands on the FAILED
+ * branch, which is a different (and correct) state.
+ *
+ * So the quote and index routes are held open for the length of the walk. The
+ * page is then in exactly the state a reader sees on a slow connection, and the
+ * assertion is that it says it is loading and makes no claim about the book.
+ */
+async function installStalledFeeds(page) {
+  const hold = (route) => new Promise(() => { void route; });
+  await page.route("**/api/quotes", hold);
+  await page.route("**/api/indices*", hold);
+  // The snapshot cache would legitimately fill this card from a previous
+  // session and skip the loading state entirely — which is the feature, and
+  // exactly what must not be allowed to hide the branch under test.
+  await page.addInitScript(() => { try { localStorage.removeItem("glow.quotes.v1"); } catch { /* no storage */ } });
+}
+
+/**
+ * QUOTES ANSWER, INDICES DO NOT — the movers card's OTHER loading state.
+ *
+ * The index tile lives inside the branch that only renders once there are
+ * priced rows, so on a cold open with the quote feed stalled there is no tile
+ * to assert anything about. Exercising it needs the two feeds in DIFFERENT
+ * states, which is what this does: the quote mocks fulfil, the index route is
+ * held open. Registered after the mocks because Playwright matches routes
+ * newest-first, so this override wins for `/api/indices`.
+ */
+async function installStalledIndices(page) {
+  await installLiveMocks(page);
+  await page.route("**/api/indices*", (route) => new Promise(() => { void route; }));
+}
 
 async function installLiveMocks(page) {
   await page.route("**/api/quotes", async (route) => {
@@ -919,6 +1115,28 @@ async function installLiveMocks(page) {
     });
   });
 }
+
+/**
+ * ── A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION ────────────────────────
+ *
+ * The first draft of every facet invariant below returned `notChecked` when the
+ * page drew no toggle — and deleting the toggle outright, which is precisely the
+ * arrangement the family asked to be rid of, then reported the whole sweep
+ * CLEAN with seven unchecked lines. That is `golden.mjs`'s rule arriving through
+ * a control: a check that passes over no input claims confidence nobody earned.
+ *
+ * So abstention is allowed only where the BOOK genuinely has one side. The
+ * evidence is the book's own, read off Morning CIO — the NAV caption printing
+ * both halves, the Capital invested tile naming a cost-less set — never a
+ * literal here, so a drop that really does hold nothing private abstains and a
+ * drop like this one fails.
+ */
+const facetsOr = (ctx, evidence, why) =>
+  ctx?.facets ? null : (evidence ? false : notChecked(why));
+
+const BOOK_HAS_BOTH_HALVES = () =>
+  [CIO_FIGURES.get("listed"), CIO_FIGURES.get("private")].every((v) => Number.isFinite(v) && v > 0);
+const TILE_NAMES_COSTLESS = () => Number.isFinite(CIO_FIGURES.get("no-cost"));
 
 const INVARIANTS = {
   /**
@@ -1231,6 +1449,194 @@ const INVARIANTS = {
   ],
 
   /**
+   * A CARD STILL FETCHING SAYS SO — IT DOES NOT REPORT AN ABSENCE.
+   *
+   * "No holding in this book carries a day change right now" is a claim about
+   * the BOOK, and it used to render on the first paint of every cold open while
+   * the quote feed was still in flight. A reader who sees it either believes
+   * their book cannot be priced or reloads until it goes away — the same defect
+   * this repo already records on the company page, where a panel still fetching
+   * asserted the security has no live quote. THE CAUSE PICKS THE HEADLINE.
+   */
+  "cio-loading": [
+    ["the movers card says it is fetching",
+      (t) => /Fetching prices…/.test(t)],
+
+    /**
+     * ...AND MAKES NO CLAIM ABOUT THE BOOK WHILE IT DOES. Both the settled
+     * absence and the feed-failure wording are assertions this page has not
+     * earned yet, and either one on a loading card is the bug.
+     */
+    /**
+     * THE WORDING MOVED WITH THE CARD'S SCOPE, AND SO DOES THIS.
+     *
+     * The settled-absence line reads "No DIRECT-EQUITY holding carries a day
+     * change right now" since the movers card was narrowed to direct equity.
+     * Matching the old sentence here would pass because the STRING is gone
+     * rather than because the CLAIM is — a check that has quietly stopped
+     * checking. Both spellings are matched so this cannot silently lapse again
+     * if the scope word changes once more.
+     */
+    ["...and asserts neither an empty book nor a failed feed while it is in flight",
+      (t) => !/No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(t)
+        && !/did not respond/i.test(t)],
+
+  ],
+
+  /**
+   * THE INDEX TILE INSIDE THE CARD IS HELD TO THE SAME BAR.
+   *
+   * It printed "Index levels unavailable — the feed did not respond" whenever
+   * its feed was null — true before the first response as well as after a
+   * failed one. Asserted with the QUOTES answering, because the tile only
+   * exists once the card has priced rows.
+   *
+   * AND STRUCK ON THE CARD'S OWN TEXT, NOT THE PAGE'S. The first draft matched
+   * "Fetching index levels…" page-wide and passed against a broken tile: the
+   * IndexStrip at the top of every route prints that exact phrase while IT
+   * loads. Removing the tile's loading branch changed nothing the check could
+   * see — a tautology found by reintroducing the bug, which is the point of
+   * doing it.
+   */
+  /**
+   * AN AI ANSWER IS NOT A MEASUREMENT, AND THE PANEL MUST SAY SO.
+   *
+   * Every figure elsewhere in this app traces to a statement; the chat renders
+   * SENTENCES, and there is no `AbsentCell` in a paragraph. So the invariants
+   * here are about what the surface says ABOUT ITSELF — that its output is
+   * generated, what it was given, and that it can reach nothing else. A reader
+   * who cannot tell an answer from a figure is the one failure this whole book
+   * is built to prevent, arriving through prose instead of a table.
+   */
+  chat: [
+    ["the panel opens where the search box was",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return CHAT.open === true;
+      }],
+
+    /**
+     * ...AND THE DEAD SEARCH BOX IS GONE. It was an `<input>` with no value, no
+     * onChange and no handler — a control that searched nothing, in the most
+     * prominent slot on the app. Counted as an INPUT rather than matched as
+     * text, because its placeholder could legitimately appear in prose.
+     */
+    ["...and the control it replaced, which searched nothing, is gone",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return CHAT.searchInputs === 0;
+      }],
+
+    /**
+     * THE ANSWER IS MARKED AS GENERATED, IN WORDS. Not a badge to hover: a
+     * reader scanning this panel beside a dashboard of traced figures has to
+     * be able to see, without acting, that this text is a different kind of
+     * thing.
+     */
+    ["the panel states plainly that its output is generated, not a statement figure",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /AI ANSWER/i.test(CHAT.text) && /NOT A STATEMENT FIGURE/i.test(CHAT.text);
+      }],
+
+    /**
+     * ...AND SAYS WHAT IT WAS GIVEN AND WHAT IT CANNOT REACH. An assistant that
+     * looks omniscient invites questions it will answer by inventing; one that
+     * names its snapshot invites the questions it can actually answer.
+     */
+    ["...and names its snapshot, and the limits of it",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /snapshot of this dashboard/i.test(CHAT.intro)
+          && /does not carry/i.test(CHAT.intro)
+          && /cannot reach an account/i.test(CHAT.intro);
+      }],
+
+    /**
+     * THE SCRIM COVERS THE PAGE, NOT THE BAR IT WAS OPENED FROM.
+     *
+     * `backdrop-filter` on an ancestor makes that ancestor the containing block
+     * for `position: fixed` descendants, and the top bar carries
+     * `backdrop-blur` — so `fixed inset-0` resolved against the HEADER and the
+     * overlay measured 1304x55. The dashboard underneath was never dimmed, and
+     * the reader saw a dialog mixed into the page. The fix is a portal out of
+     * the bar; this is the check that it stays out, and it can only be struck
+     * on geometry — not one rendered word changes when it regresses.
+     */
+    ["the overlay covers the viewport, not just the bar it was opened from",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        const { overlay, viewport } = CHAT;
+        if (!overlay) return false;
+        return overlay.w >= viewport.w - 2 && overlay.h >= viewport.h - 2;
+      }],
+
+    /**
+     * ...AND THE PANEL IS SIZED FOR READING. It was 672x614 on a 1500x900
+     * window — under half the width, with the dashboard legible all around it.
+     * Struck as a FRACTION of the viewport rather than in pixels, so the claim
+     * survives a different window and the `--app-zoom` scale.
+     */
+    ["...and the panel takes a majority of it, rather than floating in the middle of a live page",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        const { panelBox, viewport } = CHAT;
+        if (!panelBox) return false;
+        return panelBox.w / viewport.w >= 0.55 && panelBox.h / viewport.h >= 0.7;
+      }],
+
+    /**
+     * A FAILURE NAMES ITSELF RATHER THAN RENDERING AN EMPTY ANSWER.
+     *
+     * This harness runs no Pages Function, so the ask 404s — and an empty
+     * assistant bubble there reads as the model having considered the question
+     * and had nothing. THE CAUSE PICKS THE HEADLINE: it must say the function
+     * is not available here, which is a fact about the deployment.
+     */
+    ["a failed ask names the failure instead of rendering an empty answer",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        return /server-side function/i.test(CHAT.text) && /not available in local preview/i.test(CHAT.text);
+      }],
+  ],
+
+  /**
+   * REOPENING THE DASHBOARD LANDS ON FIGURES, NOT ON A SPINNER.
+   *
+   * *"It should show data from the beginning… it can show a small loading
+   * written text but never empty."* The loading state above makes a cold open
+   * honest; this makes a reopen unnecessary. The walk loads once with the feeds
+   * answering, then reloads with them held open, so anything on screen came out
+   * of `localStorage`.
+   *
+   * Nothing is fabricated by that: every stored quote was pulled from the feed
+   * at a stated instant, its `ageS` is re-derived on read, and a snapshot older
+   * than the session is discarded rather than shown — a day change is struck
+   * against the PREVIOUS CLOSE, so yesterday's snapshot would print yesterday's
+   * move under a heading reading "Today".
+   */
+  "cio-cached": [
+    ["a reopen with no network renders the day's figures from the stored snapshot",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        return CACHED.hasFigures === true;
+      }],
+    ["...and never the empty-book claim, nor a spinner where figures should be",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        return CACHED.body === false && CACHED.saysLoading === false;
+      }],
+  ],
+
+  "cio-index-loading": [
+    ["the movers card's index tile says it is fetching rather than reporting the feed down",
+      (t) => {
+        const card = sliceBetween(t, "NSE INDICES · TODAY", "GAINERS");
+        return /Fetching index levels…/.test(card) && !/did not respond/.test(card);
+      }],
+  ],
+
+  /**
    * DIRECT EQUITY IS A NARROWER SET, AND IT IS NOT EMPTY.
    *
    * The family asked for a view holding "all direct buy and sold equity
@@ -1348,6 +1754,87 @@ const INVARIANTS = {
    * old text, so reverting either half fails rather than passing on prose that
    * happens to still be there.
    */
+  /**
+   * ── THE FUND LOOK-THROUGH ────────────────────────────────────────────────
+   *
+   * The one card on this site showing figures that are NOT the family's own, so
+   * every invariant here is about the reader being able to tell that. Struck on
+   * the FIGURES and the labels the page renders, never on the card merely being
+   * present.
+   */
+  "stock-mf-lookthrough": [
+    ["it renders the scheme card, naming the scheme and its AMC", (t) =>
+      /The scheme — NAV, returns and what it holds/i.test(t) && /matched on (ISIN|name)/i.test(t)],
+    /**
+     * THE PROVENANCE IS ON THE CARD. These are the only figures on this site
+     * that are not the family's own — a reader who takes them for statement
+     * figures is wrong about what they can be checked against, and about why
+     * they are in no total.
+     */
+    ["it says the figures are AMFI's and the AMC's, not this family's statement", (t) =>
+      /not a statement issued to this family/i.test(t)],
+    /**
+     * NAV AND ITS DAILY CHANGE, which no mutual fund on this site could show
+     * before: a fund resolves to no NSE symbol, so the quote feed never priced
+     * one. The change must name the PREVIOUS NAV AND ITS DATE — a fund does not
+     * publish on a non-business day, so "since yesterday" would be wrong across
+     * a weekend.
+     */
+    ["the NAV, its change and the previous NAV's own date all render", (t) => {
+      const i = t.search(/^NAV$/mi);
+      if (i < 0) return false;
+      const block = t.slice(i, i + 320);
+      return /\d+\.\d{2,4}/.test(block)
+        && /[+-]\d+\.\d\d%/.test(block)
+        && /since [\d,.]+ on \d{1,2} \w{3,} \d{4}/i.test(block);
+    }],
+    // THE PLAN IS THE FAMILY'S OWN, resolved from the holding's ISIN — plans
+    // differ in expense ratio and therefore NAV, so a NAV from the wrong plan
+    // is the wrong number for this holding.
+    ["the plan is named and says it came from this holding's ISIN", (t) =>
+      /^(Direct|Regular)\b/mi.test(t) && /from this holding's ISIN/i.test(t)],
+    /**
+     * EVERY RETURN CARRIES THE WINDOW IT ACTUALLY SPANS.
+     *
+     * The label is the source's and the dates are the measurement, and on this
+     * data they do not always agree — Helios's "1M" runs 19 Jun to 1 Sep. A
+     * period label rendered alone is the one figure on this card a reader could
+     * not check, so the count of windows must match the count of periods.
+     */
+    ["every return period prints the window it really covers", (t) => {
+      const i = t.search(/SCHEME RETURNS/i);
+      if (i < 0) return notChecked("this scheme carries no returns in the store on this run");
+      const block = t.slice(i, i + 1200);
+      const periods = (block.match(/[+-]\d+\.\d%/g) ?? []).length;
+      const windows = (block.match(/\d{1,2} \w{3,} \d{4}\s*→\s*\d{1,2} \w{3,} \d{4}/g) ?? []).length;
+      return periods > 0 && windows === periods;
+    }],
+    // WHICH DOCUMENT THE HOLDINGS CAME FROM. The AMC's own filing and a third
+    // party's copy of it are different things and the card names which.
+    ["the holdings name the document they came from", (t) =>
+      /holdings from (the AMC's own disclosure|an aggregator's copy)/i.test(t)],
+    // Both as-of dates, since a monthly portfolio and a statement mark rarely
+    // coincide.
+    ["both as-of dates are printed, the portfolio's and the holding's", (t) =>
+      /portfolio\s+\d{1,2} \w{3,} \d{4}\s*·\s*holding\s+\d{1,2} \w{3,} \d{4}/i.test(t)],
+    /**
+     * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES — the
+     * holding's value times the scheme's published weight. A column that
+     * silently switched basis fails here rather than looking plausible.
+     */
+    ["the look-through column is the holding's value times the disclosed weight", (t) => {
+      const hv = cr(new RegExp(String.raw`HOLDING VALUE\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      const row = /\n[^\n\t]+\t[^\t\n]*\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
+      if (!Number.isFinite(hv)) return notChecked("the holding value did not parse on this run");
+      if (!row) return notChecked("this scheme discloses no equity holdings, so there is no look-through row to reconcile");
+      const pct = Number(row[1]);
+      const shown = crU(/₹([\d,.]+)/.exec(row[2])?.[1], /(Cr|L|K)/.exec(row[2])?.[1]);
+      const expect = (hv * pct) / 100;
+      return Number.isFinite(shown) && Math.abs(shown - expect) <= Math.max(0.02, expect * 0.02);
+    }],
+    ["the card states none of it is in any total on the site", (t) =>
+      /None of this is in any total on this site/i.test(t) && /count the same money twice/i.test(t)],
+  ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
       (t) => (t.match(/no cost on the .+? statement for this holding/gi) ?? []).length >= 2],
@@ -1466,16 +1953,157 @@ const INVARIANTS = {
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t) => {
       const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-      if (!/No holding in this book carries a day change/.test(card)) return false;
+      if (!/No direct-equity holding carries a day change/.test(card)) return false;
       if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/BOOK · TODAY/i.test(card);
+      return !/DIRECT EQUITY · TODAY/i.test(card);
     }],
+  /**
+   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
+   *
+   * *"daily movers/losers should comprise of direct equity holdings only."* The
+   * scope is asserted on the HEADING and the TILE rather than on the rows,
+   * because a rows-only check passes on any day the mandate names happen not to
+   * move — and that is most days for a book whose PMS half is 131 names.
+   */
+  ["Today's movers names its scope in the heading and on the tile",
+    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
+      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
+  /**
+   * ── THREE CAPTION BLOCKS THE FAMILY ASKED TO REMOVE ───────────────────────
+   *
+   * The movers footer that explained the ranking, the movers subtitle, and the
+   * allocation table's subtitle. Asserted as ABSENCES so a future edit cannot
+   * quietly restore them, and paired below with the facts they carried that a
+   * reader still acts on — a removal that also removes a load-bearing figure is
+   * not the removal that was asked for.
+   */
+  /**
+   * SPLIT ACROSS TWO ROUTES, because half of this text only exists when the feed
+   * does. With no quotes the movers card renders its absent state and its footer
+   * is never drawn — so a check for that footer's ABSENCE passes here whether the
+   * paragraph was removed or not. Reintroducing it proved exactly that: the
+   * sentence came back and this route stayed green. The movers half is asserted
+   * on `cio-live`, where the card actually renders; the allocation subtitle and
+   * the removed card render with no feed at all and stay here.
+   */
+  ["the removed allocation caption stays removed",
+    (t) => !/Shares chosen under a discretionary mandate roll up/.test(t)
+      && !/The day’s move on the holdings the feed can price/.test(t)],
+  /**
+   * ...AND THE TWO FACTS THAT SUBTITLE CARRIED ARE STILL ON THE PAGE.
+   *
+   * That every return here is CUMULATIVE rather than annualised, and the DATE
+   * the figures close at. Both were already stated outside the card — on the
+   * Consolidated return tile and on the header's basis pill — which is why the
+   * subtitle could go without taking a measurement with it. Asserted so a later
+   * tidy-up of either of those cannot leave the table's basis unstated.
+   */
+  ["...and the basis and as-of that subtitle carried are still on the page",
+    (t) => /cumulative, not annualised/i.test(t) && /as of \d{4}-\d{2}-\d{2}/i.test(t)],
+  /**
+   * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
+   *
+   * Both halves, because neither implies the other: a page that dropped the card
+   * AND the listed/private split would pass the first check while losing a
+   * measurement, and a page that merely renamed the card would pass the second.
+   * Stage 10f's rule — a removal is verified by asserting it happened.
+   */
+  ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
+    && !/Listed vs private, on a like-for-like basis/i.test(t)],
+  ["...and the listed/private split it carried is still on the page, with both figures",
+    (t) => /Listed\s*₹[\d,.]+\s*(?:Cr|L|K)?\s*·\s*Private\s*₹[\d,.]+\s*(?:Cr|L|K)?/.test(t)
+      && /Listed \/ Private/i.test(t)],
+  ["...and the money-weighted return it carried still has its own tile and coverage",
+    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN/i.test(t) && /\d+ of \d+ accounts/.test(t)],
   /**
    * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
    * the "coming as live data lands" list; a chip for a feature already on the
    * reader's screen is the same defect as an absence recorded against a premise
    * that changed.
    */
+  /**
+   * ── ONE DESTINATION PER KPI TILE ──────────────────────────────────────────
+   *
+   * *"there are multiple links on these KPI tiles. Make these KPI tiles
+   * clickable and remove all the other links."* The NAV tile carried three
+   * addresses — its label, and the listed and private halves in its caption —
+   * and Capital invested carried two. A reader had to know which of them
+   * answered their question, and the largest target on the tile, the figure
+   * itself, went nowhere.
+   *
+   * Struck on the ANCHORS INSIDE EACH TILE rather than on the page's link list:
+   * a page-wide count cannot tell a tile with two links from two tiles with one
+   * each, which is exactly the distinction being asserted.
+   */
+  ["each KPI tile offers exactly one destination", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.links.length <= 1);
+  }],
+  /**
+   * ...AND THE TILES THAT HAVE A SET STILL OPEN IT. The rule above is satisfied
+   * by a strip with no links at all, which would answer the request by removing
+   * the feature — so the destinations are asserted too, by the figure they
+   * belong to rather than by a count.
+   */
+  ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
+    return /of=book\b/.test(at(/consolidated nav/i))
+      && /of=invested\b/.test(at(/capital invested/i))
+      && /of=measured\b/.test(at(/money-weighted|xirr/i));
+  }],
+  /**
+   * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
+   * `?of=private` and `?of=no-cost` still RESOLVE, deliberately, so a bookmark
+   * keeps working — which is precisely why their absence from the strip has to
+   * be asserted rather than assumed: nothing would break if one came back.
+   */
+  /**
+   * ── NOTHING INSIDE A TILE ADVERTISES ITSELF AS THE THING TO CLICK ─────────
+   *
+   * *"remove the remaining underlines from the texts, and even the calculation
+   * that we're showing that appears when click the underlined no."*
+   *
+   * The whole card is the target, and it used to carry two rival affordances
+   * anyway: a dotted-underlined LABEL and a dashed-underlined FIGURE, the second
+   * of which opened a popover. Both said "click this text" about a card where
+   * the text is not the thing to click, and the popover then had to be dismissed
+   * before the reader could do anything else.
+   *
+   * Struck on COMPUTED STYLE and on the element count, because the words are
+   * identical either way — every figure check on this page passed throughout.
+   */
+  ["no KPI tile underlines its text or hides arithmetic behind it", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.underlined === 0 && tile.buttons === 0);
+  }],
+  /**
+   * ...AND A TILE THAT OPENS SOMETHING LOOKS LIKE A BUTTON, while one that does
+   * not still reads as a panel.
+   *
+   * *"Just make the KPI tiles look like 3-d clickable buttons."* This is the one
+   * claim on this page that NO value or text check can reach, and the first
+   * draft of the CSS proved why it needs its own: `html:not(.dark) .card` sets a
+   * box-shadow of its own further down the stylesheet at equal specificity, so
+   * source order decided it and every tile rendered FLAT while the whole sweep
+   * stayed green. Asserted on the computed shadow.
+   *
+   * BOTH DIRECTIONS. A rule that raised every card would satisfy the first half
+   * and make the affordance meaningless — a tile that presses under the pointer
+   * and then does nothing is a worse lie than a flat one. So the drill-down
+   * page's own four tiles, which open nothing, must stay flat (`holdings-book`).
+   */
+  ["each KPI tile that opens something is raised like a button", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) => (tile.links.length > 0) === tile.raised);
+  }],
+  ["no KPI tile links at a scope that is now a facet", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) =>
+      tile.links.every((h) => !/[?&]of=(listed|private|no-cost)\b/.test(h)));
+  }],
   ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
     (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
 
@@ -1613,36 +2241,62 @@ const INVARIANTS = {
      *
      * Named individually rather than counted: a count passes when six links to
      * the wrong six sets are drawn, and the whole point is that the reader can
-     * reach the holdings behind THIS figure. `no-cost` is in the list because
-     * the tile that names those 60 positions is exactly the one where a reader
-     * cannot otherwise find out WHICH — the answer decides whether they chase a
-     * custodian or accept a permanent absence.
+     * reach the holdings behind THIS figure.
+     *
+     * ── IT IS STRUCK IN TWO PLACES BECAUSE THE PAIRING MOVED, NOT BECAUSE THE
+     *    CLAIM DID ─────────────────────────────────────────────────────────
+     *
+     * A KPI tile's target is now the WHOLE CARD — a stretched overlay anchor
+     * with no inner text — so `ctx.links` yields an empty label for all six and
+     * a label-to-href pairing read off the link list can no longer see them. It
+     * would have gone on "passing" only by being unable to fail. The pairing for
+     * those six lives in `ctx.kpiTiles`, which pairs each tile's own label with
+     * the one anchor inside it; the concentration and allocation figures are
+     * still text links and are still paired off the link list.
+     *
+     * AND THE TWO HALVES OF THE BOOK MOVED TO A FACET ADDRESS. `?of=listed` and
+     * `?of=private` still resolve for a bookmark, so asserting the OLD address
+     * here would keep passing against a page that had lost the toggle entirely.
      */
     ["every KPI tile and concentration figure opens ITS OWN set", (t, ctx) => {
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
       // PAIRED, label to destination. "The page links to `of=book` somewhere"
       // is satisfied by any one tile and says nothing about the other twelve;
       // this asserts that the figure a reader clicks opens the set that figure
       // is summed over. Each entry is [what the reader clicks, where it goes].
-      const want = [
+      const tiles = [
         [/^consolidated nav$/i, "/holdings?of=book"],
         [/^capital invested$/i, "/holdings?of=invested"],
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
+      ];
+      const texts = [
         [/^positions$/i, "/holdings?of=book"],
         [/^distinct names$/i, "/holdings?of=book"],
         [/^cross-held$/i, "/holdings?of=cross-held"],
         [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
-        [/^listed$/i, "/holdings?of=listed"],
-        [/^private$/i, "/holdings?of=private"],
+        [/^listed$/i, "/holdings?of=book&facet=listed"],
+        [/^private$/i, "/holdings?of=book&facet=private"],
         [/^winners$/i, "/holdings?of=winners"],
         [/^losers$/i, "/holdings?of=losers"],
-        // …and the holdings the Capital invested tile leaves out, which is the
-        // one set a reader has no other route to.
-        [/carry no cost basis$/i, "/holdings?of=no-cost"],
       ];
       const links = ctx?.links ?? [];
-      return want.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
+      return tiles.every(([label, href]) =>
+        ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href))
+        && texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
     }],
+    /**
+     * ...AND THE 60 POSITIONS WITH NO COST ARE STILL NAMED ON THE TILE THAT
+     * LEAVES THEM OUT. They used to be a SECOND link inside Capital invested and
+     * are a facet of that tile's own page now — which is the whole request — so
+     * what has to survive here is the SENTENCE, not the anchor. Without it the
+     * reader is never told the set exists, and no toggle three clicks away tells
+     * them: the answer decides whether they chase a custodian for a cost
+     * statement or accept a permanent absence. That the facet itself resolves is
+     * asserted where `holdings-invested` is walked.
+     */
+    ["the Capital invested tile still names the positions reporting no cost", (t) =>
+      /positions? worth ₹[\d,.]+\s*(?:Cr|L|K)? carry no cost/i.test(t)],
     /**
      * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
      *
@@ -1656,9 +2310,15 @@ const INVARIANTS = {
      */
     ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
       if (!/DRY POWDER[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
       const links = ctx?.links ?? [];
-      return [/^dry powder$/i, /^distributions$/i, /^fund commitments$/i]
-        .every((label) => links.some((l) => label.test(l.text) && l.href === "/private-market"));
+      // Two of the three are KPI TILES, whose target is the whole card and whose
+      // anchor therefore carries no text — see the invariant above. Fund
+      // commitments sits on the Capital deployment card and is still a text
+      // link, so the same claim is struck in the two places the pairing lives.
+      return [/^dry powder$/i, /^distributions$/i]
+        .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"))
+        && links.some((l) => /^fund commitments$/i.test(l.text) && l.href === "/private-market");
     }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
@@ -1745,6 +2405,86 @@ const INVARIANTS = {
    * that printed a percentage there would contradict the footer it opened from.
    */
   "holdings-book": [
+    /**
+     * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────
+     *
+     * *"the listed/private book links and pages should not exist separately…
+     * just give the toggle option inside the Consolidated NAV link page."* Every
+     * other invariant on this page and on the two halves is a FIGURE check, and
+     * every one of them passed while the halves were separate scopes reached
+     * from two extra links inside the NAV tile — so none of them can see the
+     * thing that was asked for. This is struck on the control.
+     */
+    ["the listed and private halves are a toggle on this page", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets.length === 3
+        && /whole book|every holding|all holdings/i.test(ctx.facets[0].label)
+        && ctx.facets.some((f) => /^listed/i.test(f.label))
+        && ctx.facets.some((f) => /^private/i.test(f.label));
+    }],
+    /**
+     * ...AND IT OPENS ON THE WHOLE BOOK. A toggle defaulting to a half would
+     * put a NARROWED figure under a tile that reads Consolidated NAV — the
+     * caption-that-does-not-describe-its-figure failure, arriving through a
+     * control's initial state. The value checks below cannot see it: they would
+     * simply reproduce the half and compare it against the wrong figure.
+     */
+    ["it opens on the whole book, not on a half", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets[0]?.active === true && ctx.facets.filter((f) => f.active).length === 1;
+    }],
+    /**
+     * ...AND THE COUNTS ON THE TOGGLE PARTITION THE BOOK. The halves' own pages
+     * already assert this against each other; this asserts it on the numbers
+     * printed BEFORE a reader clicks, which is where they choose. A toggle whose
+     * counts disagree with the pages behind it is the two-figures-for-one-set
+     * contradiction this repo keeps paying for.
+     */
+    ["the toggle's own counts partition the book", (t, ctx) => {
+      const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const [whole, ...halves] = ctx.facets;
+      if (!whole || !Number.isFinite(whole.rows)) return false;
+      return halves.every((f) => Number.isFinite(f.rows))
+        && halves.reduce((a, f) => a + f.rows, 0) === whole.rows;
+    }],
+    /**
+     * A TILE THAT OPENS NOTHING STAYS FLAT. The other half of Morning CIO's
+     * raised-tile claim, struck where the flat tiles are: this page's four
+     * summary tiles carry no href, so a stylesheet that raised every `.card`
+     * would pass the strip's check and fail here.
+     */
+    ["its own summary tiles are not dressed as buttons", (t, ctx) => {
+      if (!ctx?.metrics?.flatCards) return { notChecked: "no card geometry was captured on this run" };
+      return ctx.metrics.flatCards.raisedWithoutLink === 0;
+    }],
+    /**
+     * ── THE ARITHMETIC LANDED HERE ───────────────────────────────────────────
+     *
+     * *"even the calculation … we can show that inside the clickable KPI
+     * pages."* Asserted as three separate things because each fails on its own:
+     * the card exists, it carries a WORKED example (an expression with no
+     * numbers in it explains nothing a reader clicked to find out), and the
+     * worked example is struck on THIS page's rows.
+     *
+     * That last one is the whole point and the only one that can catch a real
+     * regression: `drilldownFormula` reads `d.rows`, which is the ACTIVE FACET,
+     * so a version that summed the whole scope would print the book's total on
+     * the private half — a caption not describing its own figure, which is the
+     * failure this repo has already paid for on the Capital invested tile. It is
+     * compared against the page's OWN rendered total rather than against a
+     * literal, so it stays true when the next drop moves the book.
+     */
+    ["the arithmetic behind the figure is on this page, not behind a click", (t, ctx) =>
+      !!ctx?.formula && /Σ market value/.test(ctx.formula.text) && ctx.formula.worked.length > 0],
+    ["its worked example ties to the total this page prints", (t, ctx) => {
+      if (!ctx?.formula?.worked) return false;
+      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
+      if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
+      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15;
+    }],
     ["its market value reproduces the Consolidated NAV", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -1852,6 +2592,30 @@ const INVARIANTS = {
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
       return c != null && c.holdings > 0 && c.holdings < pos;
     }],
+    /**
+     * THE OTHER HALF IS ONE CLICK AWAY FROM HERE, AND SO IS THE WHOLE BOOK.
+     *
+     * This is the half of the request the figures cannot see. A reader who
+     * opened the listed half and wants the private one must not have to go back
+     * to Morning CIO to find it — that is the "two pages that exist separately"
+     * arrangement, with the toggle merely drawn somewhere else. Struck on the
+     * toggle this page draws, with THIS half current so the control also says
+     * where the reader is.
+     */
+    ["the private half and the whole book are one click away from here", (t, ctx) => {
+      // This route resolves ONLY from a `facet=listed` address the book drew, so
+      // reaching it at all is the evidence that both halves exist.
+      const g = facetsOr(ctx, true, "");
+      if (g !== null) return g;
+      const here = ctx.facets.find((f) => f.active);
+      return !!here && /^listed/i.test(here.label)
+        && ctx.facets.some((f) => /^private/i.test(f.label) && /facet=private/.test(f.href))
+        // ...and back to the undivided book. Identified by the facet it names,
+        // never by the SHAPE of its address: the whole-book half is written
+        // `facet=all` rather than as a bare scope, and a check keyed on that
+        // spelling asserts a URL convention instead of the reader's route.
+        && ctx.facets.some((f) => !f.active && /whole book|every holding|all holdings/i.test(f.label));
+    }],
   ],
   "holdings-private": [
     ["its value reproduces the private half the NAV caption states", (t) => {
@@ -1874,6 +2638,21 @@ const INVARIANTS = {
       if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
       return here != null && here.holdings + listed.holdings === pos;
     }],
+    /**
+     * THE WORKED EXAMPLE IS THE HALF'S OWN, NOT THE BOOK'S. The single most
+     * likely regression in moving the arithmetic out of a popover: a formula
+     * summed over the SCOPE rather than the active facet reads correct on the
+     * undivided page and prints ₹710 Cr under a heading saying "Private".
+     * Struck against this page's own total, which is the private half's.
+     */
+    ["its worked example is the private half's, not the whole book's", (t, ctx) => {
+      if (!ctx?.formula?.worked) return false;
+      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
+      const nav = CIO_FIGURES.get("nav");
+      if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
+      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15
+        && (!Number.isFinite(nav) || Math.abs(worked - nav) > 0.15);
+    }],
     ["the two halves reconstruct the NAV between them", (t) => {
       const nav = CIO_FIGURES.get("nav"), listed = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
       if (![nav, listed].every(Number.isFinite)) return notChecked("Morning CIO's NAV or listed figure did not parse on this run");
@@ -1892,8 +2671,23 @@ const INVARIANTS = {
       if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
       return c != null && c.holdings === there;
     }],
-    ["the holdings in neither count are named, not dropped", (t) =>
-      /holdings in neither count/i.test(t) && /in neither figure above/i.test(t)],
+    /**
+     * THE HOLDINGS IN NEITHER COUNT ARE NAMED, NOT DROPPED — and they are named
+     * on the TOGGLE now rather than in a companion table below the rows, so the
+     * check moved with them. It used to match the companion's prose, which is
+     * the weaker claim: a page can print that sentence over an empty table. This
+     * reads the facet's own row count, so the set has to actually be reachable.
+     *
+     * A holding exactly at cost and one whose cost the statements do not report
+     * are both here, which is what lets Morning CIO's two counts be reconciled
+     * against the book instead of assumed to cover it.
+     */
+    ["the holdings in neither count are named, not dropped", (t, ctx) => {
+      if (!ctx?.facets) return false;
+      const neither = ctx.facets.find((f) => /in neither count/i.test(f.label));
+      if (!neither) return notChecked("every priced holding in this book falls on one side or the other, so there is no third set");
+      return Number.isFinite(neither.rows) && neither.rows > 0 && /facet=neither/.test(neither.href);
+    }],
     /**
      * A FILTERED SET FORMS NO MANDATE ROW.
      *
@@ -1948,6 +2742,58 @@ const INVARIANTS = {
     // only half of that rule if the drill-down then hides them.
     ["the accounts outside the figure are named, not dropped", (t) =>
       /\d+ accounts outside this figure/i.test(t) && /\d{4,}/.test(t)],
+  ],
+  /**
+   * ── THE CAPITAL INVESTED PAGE, WHICH WAS NEVER WALKED ────────────────────
+   *
+   * Only its cost-less half was, back when that half was a scope of its own —
+   * so the set the tile's own figure is summed over had no page under test at
+   * all, and the toggle that now reaches the other half is the only route to it.
+   */
+  "holdings-invested": [
+    ["its market value covers the holdings that report a cost", (t) => {
+      const c = drilldownCounts(t);
+      return c != null && c.holdings > 0;
+    }],
+    /**
+     * IT OPENS ON THE COSTED SET, because the tile it opens from reads Capital
+     * invested. A toggle defaulting to the other half would put the holdings
+     * that report NO cost under that heading — the whole of the figure's
+     * complement, under the figure's own name.
+     */
+    ["it opens on the holdings that report a cost", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      return ctx.facets[0]?.active === true && /reports a cost/i.test(ctx.facets[0].label);
+    }],
+    /**
+     * ...AND THE COST-LESS SET IS A TOGGLE HERE. This is the assertion the
+     * Morning CIO invariant defers to: that tile no longer carries a second
+     * link, so if this toggle went the 60 positions would be named on screen
+     * and reachable from nowhere in the app.
+     */
+    ["the holdings reporting no cost are one click away, with their count", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const none = ctx.facets.find((f) => /reports none/i.test(f.label));
+      if (!none) return notChecked("every holding in this book reports a cost, so there is no second facet");
+      return /facet=no-cost/.test(none.href) && Number.isFinite(none.rows) && none.rows > 0;
+    }],
+    /**
+     * ...AND THE TWO SIDES PARTITION THE BOOK. `sumOrNull` skips a missing cost
+     * rather than entering it as zero, so costed + cost-less is every holding —
+     * and the toggle's own printed counts are where a reader sees it. Held
+     * against Morning CIO's Positions count so the two pages cannot drift into
+     * agreeing with each other about a set neither has right.
+     */
+    ["the two sides of the toggle account for every position", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return ctx.facets.every((f) => Number.isFinite(f.rows))
+        && ctx.facets.reduce((a, f) => a + f.rows, 0) === pos;
+    }],
   ],
   /**
    * ── THE 60 POSITIONS THE CAPITAL INVESTED TILE LEAVES OUT ────────────────
@@ -2188,12 +3034,12 @@ const INVARIANTS = {
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
       (t) => {
         const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-        const m = /BOOK · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
         return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
       }],
     /** ...and the tile SAYS what it covers, on its face rather than in a hover. */
     ["the day-move tile names its own coverage, in rupees and in names",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ distinct names/.test(t)],
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ direct-equity names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -2212,10 +3058,51 @@ const INVARIANTS = {
      */
     ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
       (t) => {
-        const m = /The priced book is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /The priced book is\s*([+-]\d+\.\d+)%/.exec(t);
+        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
         return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
       }],
+    /**
+     * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
+     *
+     * Every fixture price is the mark × 1.10, so every priceable name in scope
+     * rises: the gainer count IS the size of the priced scope. Widening the
+     * filter back to the whole book takes it from 33 to 160-odd, and narrowing
+     * it further drops it — neither can pass. The expectation is derived from
+     * the book on every run (see `DIRECT_EQUITY_PRICED_NAMES`), never typed.
+     */
+    ["the gainers are exactly the priced DIRECT-EQUITY names, not the whole book",
+      (t) => {
+        if (DIRECT_EQUITY_PRICED_NAMES == null) {
+          return { notChecked: "the book could not be read, so the expected count could not be derived" };
+        }
+        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+        const g = /(\d+)\s+GAINERS/i.exec(card);
+        const l = /(\d+)\s+LOSERS/i.exec(card);
+        if (!g || !l) return false;
+        // Every priced name rose in this fixture, so losers must be nil and the
+        // gainers must account for the whole priced scope.
+        return Number(l[1]) === 0 && Number(g[1]) === DIRECT_EQUITY_PRICED_NAMES;
+      }],
+    /**
+     * ...AND WHAT THE NARROWING LEFT OUT IS NAMED, not silently dropped. The PMS
+     * mandates are the bulk of the book's priceable value; a card that stopped
+     * covering them without saying so is a scope change a reader cannot see.
+     */
+    ["the card names the buckets it no longer covers, with their value",
+      (t) => /Direct equity only\. Also moved today and not counted here:/.test(t)
+        && /\d+ PMS mandates ₹[\d,.]+/.test(t)],
+    /**
+     * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
+     *
+     * Asserted HERE rather than on `cio` because it is only drawn when the card
+     * has rows, and `cio` serves no feed — a check for its absence there passes
+     * over a page that would print it the moment a quote arrived.
+     */
+    ["the removed movers footer stays removed",
+      (t) => !/the other ranking is one click away/.test(t)
+        && !/closed unchanged and are in neither list/.test(t)
+        && !/never averaged across positions of different sizes/.test(t)],
     /** The gainers list is populated and ranked, and every row carries both figures. */
     ["gainers are listed with a percentage and a rupee impact each",
       (t) => {
@@ -2267,6 +3154,30 @@ const INVARIANTS = {
      * overlap vertically. Matching the words "Daily" and "Portfolio Monitor"
      * would pass just as happily with them stacked three rows deep.
      */
+    /**
+     * THE REMOVED CONTROLS STAY REMOVED — asserted rather than deleted with the
+     * feature, the same treatment the retired Public dashboard tab and the
+     * `/news` redirects get.
+     *
+     * The Holdings basis switch and the Review deck button both went at the
+     * family's request. Struck on the BUTTONS a reader can press, not on the
+     * words: "By security" and "By entity" still appear in the Transactions
+     * card's own controls and in this page's prose, so a text match would fail
+     * a page that is correct.
+     */
+    ["the removed Holdings basis switch and Review deck button stay removed",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.basisSwitch === 0 && HEAD.deckButton === 0;
+      }],
+
+    /** ...and the one action that is left sits on the filter row, not below it. */
+    ["Export Excel is on the filter row rather than wrapping onto its own",
+      () => {
+        if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
+        return HEAD.exportInline === true;
+      }],
+
     ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -2316,16 +3227,24 @@ const INVARIANTS = {
      * names are harvested FROM THE PMS SECTION rather than typed here, so this
      * cannot go stale when a manager arrives or leaves.
      */
-    ["no mandate row stands inside the Direct Equity section", (t) => {
+    ["no mandate row stands inside the Direct Equity section", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
       const de = sectionOf(t, "DIRECT EQUITY");
       if (!de) return false;                          // heading gone → nothing checked is nothing passed
-      return mandateRowsIn(de.body).length === 0 && !/\bPMS mandate\b/.test(de.body);
+      // Both halves: no row CARRIES the mandate attributes under that bucket,
+      // and the pill a mandate draws appears nowhere in its text either.
+      return mandatesIn(ctx.mandateRows, DIRECT_EQUITY_BUCKET).length === 0
+        && !/\bPMS mandate\b/.test(de.body);
     }],
-    ["no manager named in the PMS section appears under Direct Equity", (t) => {
+    ["no manager named in the PMS section appears under Direct Equity", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
       const de = sectionOf(t, "DIRECT EQUITY");
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!de || !pms) return false;
-      const managers = [...new Set(mandateRowsIn(pms.body).map((m) => m.manager))];
+      if (!de) return false;
+      // Harvested from the ROWS rather than typed here, so this cannot go stale
+      // when a manager arrives or leaves.
+      const managers = [...new Set(mandatesIn(ctx.mandateRows, MANDATE_BUCKET).map((m) => m.manager))];
       if (managers.length === 0) return false;        // the PMS section drew no mandate row
       return managers.every((m) => !de.body.includes(m));
     }],
@@ -2349,29 +3268,72 @@ const INVARIANTS = {
      * mandate silently dropped its constituents, the sum falls short of the
      * heading. Neither number is written here — both are read off the page.
      */
-    ["every row in the PMS section is a mandate, not a share", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!pms) return false;
-      const rows = mandateRowsIn(pms.body);
-      return rows.length >= 2 && rows.length === pms.rows.length;
+    ["every row in the PMS section is a mandate, not a share", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      // EVERY row filed under the bucket carries the mandate attributes: a
+      // constituent share drawn back out as its own row would not.
+      const inBucket = ctx.tableRows.filter((r) => r.bucket === MANDATE_BUCKET);
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      return rows.length >= 2 && rows.length === inBucket.length;
     }],
-    ["the PMS heading's holding count is the sum of its mandates' own counts", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      const head = headingCount(pms?.head);
-      if (!pms || !head) return false;
-      const rows = mandateRowsIn(pms.body);
+    ["the PMS heading's holding count is the sum of its mandates' own counts", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const head = headingCount(sectionOf(t, "PMS MANDATES")?.head);
+      if (!head) return false;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
       if (rows.length === 0) return false;
       const constituents = rows.reduce((n, r) => n + r.holdings, 0);
       // A roll-up that stands for no more than it draws is not a roll-up. Today
       // it is 281 shares across 10 rows; the relation is asserted, not the pair.
       return constituents === head.holdings && constituents > rows.length;
     }],
+    /**
+     * ── THE ROW IS THE NAME AND WHAT IT IS, AND NOTHING ELSE ────────────────
+     *
+     * "Do not write the entity along with the PMS name… remove the smaller text
+     * details from the front table so it is a clean row."
+     *
+     * The manager, the account number and the constituent count used to print
+     * under every mandate's name. They are on the mandate's own page, and the
+     * row now carries them only as `data-*` and in the link's hover title.
+     */
+    ["a mandate row prints no manager-and-account sub-line", (t) => {
+      const pms = sectionOf(t, "PMS MANDATES");
+      if (!pms) return false;
+      return !/·\s+account\s+\S+\s+·\s+\d+\s+holdings?/.test(pms.body);
+    }],
+    /**
+     * ...AND THE OWNER IS NOT INSIDE THE NAME EITHER — but it must still be on
+     * the row, in its own column. THIS IS THE RISK THE CHANGE INTRODUCES and the
+     * reason it is checked rather than assumed: FOUR of this book's ten mandates
+     * share a strategy name with another (the same strategy run for two members),
+     * and the owner was inside the name precisely so those pairs could be told
+     * apart. Dropping it is safe ONLY because Entities closes every row. If a
+     * future change empties that cell for mandates, two rows become
+     * indistinguishable and this fails — which is the whole point.
+     */
+    ["no two mandate rows are indistinguishable once the owner leaves the name", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      if (rows.length < 2) return false;
+      // The name must not carry the owner inside it — read off the CELL, since
+      // that is the text on screen; the `data-mandate` attribute is a different
+      // field and stayed clean while the rendered name carried the owner again.
+      if (rows.some((r) => / · /.test((r.nameCell ?? "").replace(" PMS mandate", "")))) return false;
+      // ...and name + account must be unique, which is what a reader sees once
+      // the Entities column separates the pairs.
+      const seen = new Set(rows.map((r) => `${r.mandate}@@${r.accountNo}`));
+      return seen.size === rows.length;
+    }],
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
     ["every mandate row links to its own drill-down", (t, ctx) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      if (!pms) return false;
-      const rows = mandateRowsIn(pms.body);
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
       return rows.length > 0 && links.size === rows.length;
     }],
@@ -2457,11 +3419,138 @@ const INVARIANTS = {
       const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
       if (!foot) return false;
       const cells = foot.split("\t");
-      return cells.length >= 3
+      // …Return, YTD, Sector, Entities. The two descriptor columns stay empty;
+      // the YTD total is ABSENT rather than empty (nobody can strike it), and
+      // the last figure the footer carries is the return.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === "—"
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 4].trim());
     }],
+    /**
+     * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
+     *
+     * "Realign everything on the page so that I can see more companies at the
+     * same view — right now I cannot even see 2 companies completely."
+     *
+     * Struck on the GEOMETRY the browser reports, because that is the thing
+     * that was wrong: the page printed every row correctly and still spent its
+     * first screen on three stacked rows of chrome and a security column so
+     * narrow that "Fractal Analytics Limited" wrapped onto three lines. Ten is
+     * a floor well above the two the complaint names and well below what the
+     * page now draws, so it fails on a real regression without tracking the
+     * exact number, which moves with the viewport and the book.
+     */
+    ["at least ten holdings are fully visible without scrolling",
+      (t, ctx) => !ctx?.metrics ? { notChecked: "no geometry captured on this run" }
+        : ctx.metrics.rowsInView >= 10],
+    // ...and the table starts in the top third of the viewport. A page that got
+    // its rows back by growing the window rather than by tightening the chrome
+    // would pass the count above and fail this.
+    ["the first holding sits in the top third of the screen",
+      (t, ctx) => !ctx?.metrics ? { notChecked: "no geometry captured on this run" }
+        : ctx.metrics.firstRowTop !== null && ctx.metrics.firstRowTop < ctx.metrics.viewportH / 3],
+    /**
+     * ── THE RETURN TOGGLE EXISTS AND DEFAULTS TO ABSOLUTE ───────────────────
+     * The guard itself is asserted on the `monitor-cagr` route, which clicks it.
+     */
+    ["the return basis toggle offers Absolute and CAGR",
+      (t) => /\bAbsolute\b/.test(t) && /\bCAGR\b/.test(t)],
+    /**
+     * ── THE YTD COLUMN IS THE HOLDING'S, AND IT NEVER GUESSES ───────────────
+     *
+     * "Add YTD… for the holding itself, not just the security's market return"
+     * and "if it is not possible to show data then just show a dash."
+     *
+     * The share's market move since January IS available from `/api/prices`,
+     * which is exactly what makes this dangerous: the cheap way to fill this
+     * column is to substitute a figure that answers a different question. So
+     * the assertion is on the CELLS — every one is an em dash or a signed
+     * percentage, and never a zero, which is the shape a fabricated "no change
+     * this year" would take.
+     */
+    ["a YTD column is drawn, sitting between Return and the descriptors",
+      (t) => /\bYTD\b/.test(t)],
+    ["the YTD column shows exactly as many figures as it claims to measure", (t) => {
+      // FULL-WIDTH ROWS ONLY. `isDataRow` is a tab count, and innerText renders
+      // the sticky header with five tabs of its own, so it matches there too —
+      // a header is not a row and its cells are not in these columns.
+      const rows = t.split("\n").filter(isDataRow).filter((r) => r.split("\t").length === 14);
+      if (rows.length === 0) return false;             // nothing drawn is nothing checked
+      // ... Return, YTD, Sector, Entities — so YTD is third from the end.
+      const cell = (r) => r.split("\t")[r.split("\t").length - 3].trim();
+      const shapeOk = rows.every((r) => cell(r) === "—" || /^[+-]\d+(\.\d+)?%$/.test(cell(r)));
+      const drawn = rows.filter((r) => cell(r) !== "—").length;
+      /**
+       * AND THE COUNT MUST TIE TO THE CAPTION. Shape alone is too weak: a
+       * fabricated "+0.00%" — the exact shape a defaulted YTD would take — is a
+       * signed percentage and would sail through. The caption is computed from
+       * `ytdCoverage` over the same rows, so a column that started inventing
+       * figures disagrees with the sentence underneath it, which is the
+       * contradiction this book's own footer rule is written to catch.
+       */
+      const none = /No row can be measured on this drop/.test(t);
+      const some = /measurable on (\d+) of \d+ rows/.exec(t);
+      if (!none && !some) return false;                // no caption is not a pass
+      const claimed = none ? 0 : Number(some[1]);
+      // THE BOOK IS THE THIRD PARTY. Cells and caption both come from
+      // `holdingYtd`, so they agree even when both are wrong; `YTD_MEASURABLE`
+      // is counted off `glowData.ts` and is what makes this able to fail.
+      if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
+      return shapeOk && drawn === claimed && drawn === YTD_MEASURABLE;
+    }],
+    // ...and the column says what it covers rather than leaving a wall of
+    // dashes to be read as a broken feed.
+    ["the YTD column states what it can and cannot measure",
+      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
+        && /1 January/.test(t)],
+    ["...and the column is headed Return, not an annual rate, until CAGR is picked",
+      (t) => /\bReturn\b/.test(t) && !/Return p\.a\./.test(t)],
+  ],
+  /**
+   * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
+   *
+   * "More than one year it'll be CAGR, less than one year I'd rather see
+   * absolute… never an annualised extrapolation."
+   *
+   * The danger here is specific and this repo has met it twice: a short window
+   * compounded onto a year. Morning CIO once read +99.0% that way, and the PMS
+   * statements' own `positionIrrPct` reaches +47,695% on this book doing exactly
+   * it. So these are struck on the FIGURES the page renders, not on the caption:
+   * a page that annualised everything would keep every word of the prose.
+   */
+  "monitor-cagr": [
+    ["the column names the basis it switched to", (t) => /Return p\.a\./.test(t)],
+    /**
+     * NO TRIPLE-DIGIT ANNUAL RATE ANYWHERE IN THE TABLE. This book's longest
+     * measured hold is 527 days and its returns are tens of percent; a
+     * four-figure rate here is the extrapolation bug regressing, which is how
+     * both previous occurrences announced themselves.
+     */
+    ["no return of 100% p.a. or more appears once the basis is annualised", (t) => {
+      const rows = t.split("\n").filter(isDataRow);
+      if (rows.length === 0) return false;             // nothing drawn is nothing checked
+      return !rows.some((r) => /[+-]\s?\d{3,}(\.\d+)?%/.test(r));
+    }],
+    /**
+     * THE COVERAGE LINE IS COUNTED OFF THE BOOK, and it must reconcile: the
+     * rows it says are annualised, guarded and absent have to add to the row
+     * count the header chip prints. A caption that claimed more coverage than
+     * the column has is the failure this whole feature exists to avoid.
+     */
+    ["the coverage note partitions the rows it describes", (t) => {
+      const m = /Annualised where a year can be measured\s*—\s*(\d+) of (\d+) rows/.exec(t);
+      if (!m) return false;
+      const [, cagr, total] = m.map(Number);
+      const guarded = Number(/(\d+) rows? (?:is|are) held under a year/.exec(t)?.[1] ?? 0);
+      const absent = Number(/(\d+) report no purchase date/.exec(t)?.[1] ?? 0);
+      return cagr + guarded + absent === total && total > 0;
+    }],
+    // ...and the guard is VISIBLY firing: a sub-year row is marked, never
+    // silently annualised. Empty is not a pass — this book holds such rows.
+    ["a holding held under a year is marked as absolute rather than annualised",
+      (t) => /held under a year/.test(t) && /\babs\b/.test(t)],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and
@@ -2474,12 +3563,14 @@ const INVARIANTS = {
     // reported it — must leave the mandates rolled up exactly as they were.
     // This is where a "show every statement's row" switch would most plausibly
     // unroll them, so it is asserted on the view where the risk lives.
-    ["the mandates stay rolled up when every statement's row is shown", (t) => {
-      const pms = sectionOf(t, "PMS MANDATES");
-      const head = headingCount(pms?.head);
-      if (!pms || !head) return false;
-      const rows = mandateRowsIn(pms.body);
-      return rows.length >= 2 && rows.length === pms.rows.length
+    ["the mandates stay rolled up when every statement's row is shown", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      const head = headingCount(sectionOf(t, "PMS MANDATES")?.head);
+      if (!head) return false;
+      const inBucket = ctx.tableRows.filter((r) => r.bucket === MANDATE_BUCKET);
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      return rows.length >= 2 && rows.length === inBucket.length
         && rows.reduce((n, r) => n + r.holdings, 0) === head.holdings;
     }],
     ["'Company Shares' appears nowhere on this page either", (t) => !/company\s+shares/i.test(t)],
@@ -2748,6 +3839,24 @@ const INVARIANTS = {
   // card must degrade to a NAMED absence — never to the old "a chart is
   // impossible" claim, which stopped being true when the series arrived.
   stock: [
+    // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
+    //
+    // Macro Research and Economy & Macro were the most visible readers of
+    // `src/lib/series.ts` and `SeriesChart.tsx`, and both pages have been
+    // removed. With them gone the two modules LOOK dead, and the next session
+    // deletes them — which is the half a removal like that breaks silently, the
+    // same way `watchlist.ts` looked dead the day its own tab went.
+    //
+    // They are not dead: `ReturnsTable` draws this card with `Point`,
+    // `SeriesMeta`, `HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and
+    // `rebase`, off `/api/prices` rather than off the store. So the card
+    // rendering here is the assertion that they survived.
+    //
+    // WHAT THIS CANNOT REACH, stated rather than implied: `/api/prices` does not
+    // answer in this harness, so the card resolves to its named absence and the
+    // CHART itself never mounts. `SeriesChart` is held up by the build instead —
+    // delete it and `tsc -b` fails on the import — which is why the gate for
+    // this change is build AND sweep, not either alone.
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
     // A COMPANY keeps every panel. This is the other half of `stock-fund` below:
@@ -2941,6 +4050,18 @@ const INVARIANTS = {
     // on screen as a sector nobody assigned rather than a property it lacks.
     ["a fund's missing sector is explained, not shown as Unclassified",
       (t) => /a fund holds many/i.test(t)],
+    /**
+     * AND AN AIF STILL HAS NO LOOK-THROUGH, WITH THE REASON.
+     *
+     * This is the other half of the mutual-fund claim and neither implies the
+     * other: a mutual fund scheme discloses its portfolio monthly and its page
+     * now renders it, while an AIF publishes none. A build that grew a
+     * constituent table here could only have filled it from some other scheme,
+     * which is the fabrication the look-through store must not enable.
+     */
+    ["an AIF renders no look-through table", (t) => !/What this fund holds/i.test(t)],
+    ["...and says why: an AIF publishes no monthly portfolio disclosure", (t) =>
+      /publishes no such disclosure/i.test(t) && /Category II or III/i.test(t)],
   ],
   // The AIF drill-down for a holding reported under two members. "AIF holdings
   // must be shown inside the respective AIF page drill down" — so every
@@ -3010,30 +4131,6 @@ const INVARIANTS = {
     ["the picker offers companies only, and names what it left out",
       (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
         && /company shares only/i.test(t)],
-  ],
-  // Layer 1: Knowledge & Memory is a real note store, not a mock. In this
-  // headless run nothing has been captured, so the page must show the ABSENT
-  // state with what would fill it — never "0 notes", and never the old sample
-  // counts. It must also not call its keyword search an AI query engine.
-  knowledge: [
-    ["an empty store renders the absent state, not zeros",
-      (t) => /No note has been captured yet/i.test(t) && !/\b0 notes\b/i.test(t)],
-    ["the search says what it is rather than claiming to be an AI index",
-      (t) => /not a language model reading an index/i.test(t) && !/AI query engine/i.test(t)],
-    ["the retired sample counts are gone", (t) => !/636/.test(t)],
-  ],
-  // Phase 0: Macro Research renders from the committed series store, not a live
-  // API — so it is live in this headless run with no token and no network. If
-  // the store fails to load the page says so, and these catch that.
-  macro: [
-    ["series store loaded — the returns table is live, not preview", (t) => /\d+ live/.test(t) && !/series store did not respond/i.test(t)],
-    ["observation count is stated, so the table is backed by a real series", (t) => /observations/i.test(t)],
-    ["a max-available CAGR resolved (a stored series, not a four-row preview)", (t) => /Max/.test(t) && /[+-]\d+\.\d%/.test(t)],
-    // Phase A1: the spec's weekly / quarterly / year-end views. The control is
-    // rendered only when the chosen series can honestly be coarsened, which the
-    // default (a daily commodity) can.
-    ["a frequency toggle offers the coarser views the spec asks for",
-      (t) => /Quarterly/.test(t) && /Year-end/.test(t)],
   ],
   /**
    * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
@@ -3241,17 +4338,113 @@ for (const theme of THEMES) {
       // themselves invariants and a harness that always mocked would stop
       // checking them.
       if (name === "cio-live") await installLiveMocks(page);
+      if (name === "cio-loading") await installStalledFeeds(page);
+      if (name === "cio-index-loading") await installStalledIndices(page);
+      // The first load answers, so the snapshot is written; the reload below
+      // then has to render from it.
+      if (name === "cio-cached") await installLiveMocks(page);
       const errors = [], failed = [];
       page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
       page.on("requestfailed", (r) => failed.push(`${r.url()} ${r.failure()?.errorText ?? ""}`));
       page.on("response", (r) => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
 
-      await page.goto(`${BASE}${path}`, { waitUntil: FAST ? "load" : "networkidle", timeout: 45000 });
+      /**
+       * `networkidle` CANNOT BE REACHED WHILE A REQUEST IS DELIBERATELY HELD.
+       *
+       * `cio-loading` keeps the quote and index calls open for the length of
+       * the walk — that is the whole point of it — so waiting for the network
+       * to go quiet times out against a page that is rendering exactly as
+       * intended. It waits for `load` instead, which is the state its
+       * invariants are about: the page painted, the feeds still in flight.
+       */
+      const settle = (name === "cio-loading" || name === "cio-index-loading")
+        ? "load" : (FAST ? "load" : "networkidle");
+      await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
+      if (name === "cio-cached") {
+        /**
+         * THE SECOND OPEN MUST NOT START FROM NOTHING.
+         *
+         * The first load answered and wrote the snapshot. The feeds are now
+         * held open — a cold network — and the page is reloaded. Whatever it
+         * renders comes from `localStorage` alone, which is exactly the state a
+         * reader is in when they reopen the dashboard: figures immediately,
+         * refined when the live rounds land.
+         *
+         * `unrouteAll` first, because the mocks installed before navigation
+         * would otherwise still fulfil and this would test nothing.
+         */
+        await page.waitForSelector('[data-testid="movers-coverage"]', { timeout: 20000 }).catch(() => {});
+        await page.unrouteAll({ behavior: "ignoreErrors" });
+        await page.route("**/api/quotes", (r) => new Promise(() => { void r; }));
+        await page.route("**/api/indices*", (r) => new Promise(() => { void r; }));
+        await page.reload({ waitUntil: "load", timeout: 45000 });
+        await page.waitForTimeout(600);
+        CACHED = await page.evaluate(() => ({
+          hasFigures: !!document.querySelector('[data-testid="movers-coverage"]'),
+          saysLoading: !!document.querySelector('[data-testid="movers-loading"]'),
+          // Matched on both spellings for the reason given on the `cio-loading`
+          // invariant above: the card's absent-state wording narrowed with its
+          // scope, and a probe pinned to the old sentence reports "no claim on
+          // screen" whether or not one is there.
+          body: /No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(document.body.innerText),
+        }));
+      }
+      if (name === "chat") {
+        // Open the panel and ask one question. `/api/chat` is a Pages Function
+        // and `vite preview` runs none, so the ask lands on the FAILURE path —
+        // which is the branch worth walking anyway: a chat that cannot reach
+        // its API must say which failure it was, not render an empty answer
+        // that reads as the model having nothing to say.
+        const t = page.getByTestId("muns-chat-open");
+        if (await t.count()) { await t.click(); await page.waitForTimeout(400); }
+        // THE INTRO IS CAPTURED BEFORE THE ASK. Sending a question replaces the
+        // empty state with the conversation, so an invariant about what the
+        // panel says it was GIVEN has to be struck on the state that says it.
+        const intro = await page.evaluate(() =>
+          document.querySelector('[data-testid="muns-chat-panel"]')?.innerText ?? "");
+        const box = page.getByTestId("muns-chat-input");
+        if (await box.count()) {
+          await box.fill("What is the book worth?");
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(2500);
+        }
+        CHAT = await page.evaluate((introText) => {
+          const panel = document.querySelector('[data-testid="muns-chat-panel"]');
+          return {
+            open: !!panel,
+            intro: introText,
+            text: panel ? panel.innerText : "",
+            // The dead search box this replaced. Counted as an INPUT, because
+            // its placeholder text could legitimately appear in prose.
+            searchInputs: [...document.querySelectorAll("input")]
+              .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
+            // GEOMETRY, because the bug this catches is invisible in the text.
+            // `backdrop-filter` on an ancestor makes THAT ancestor the
+            // containing block for a `position: fixed` child — and the top bar
+            // the trigger lives in carries `backdrop-blur`. The overlay
+            // measured 1304x55, a scrim over the header strip alone, so the
+            // dashboard was never dimmed and the dialog read as part of the
+            // page. Nothing in the rendered words changes when that happens.
+            overlay: panel ? (() => {
+              const r = panel.parentElement.getBoundingClientRect();
+              return { w: Math.round(r.width), h: Math.round(r.height) };
+            })() : null,
+            panelBox: panel ? (() => {
+              const r = panel.getBoundingClientRect();
+              return { w: Math.round(r.width), h: Math.round(r.height) };
+            })() : null,
+            viewport: { w: window.innerWidth, h: window.innerHeight },
+          };
+        }, intro);
+      }
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
+      if (name === "monitor-cagr") {
+        const t = page.getByRole("button", { name: /^CAGR$/ }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }      }
       /**
        * A COLLAPSED `<details>` IS NOT IN `innerText`, AND THE LIST INSIDE IT IS
        * THE HALF OF THE FAMILY'S ASK THAT THE CHART CANNOT ANSWER.
@@ -3346,12 +4539,6 @@ for (const theme of THEMES) {
             .filter((r) => / @ /.test(r.cells[0]?.innerText ?? "")).length,
         }));
       }
-      if (name === "monitor-entity") {
-        // The toggle is LABELLED WITH THE VIEW IT SWITCHES TO, so the button
-        // reading "By security" is the one that leaves the by-security view.
-        const t = page.getByRole("button", { name: /^By security$/i }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
-      }
       await page.waitForTimeout(FAST ? 350 : 800);
 
       const text = FAST ? "" : await page.evaluate(() => document.body.innerText);
@@ -3387,10 +4574,108 @@ for (const theme of THEMES) {
        * behind them. Two empty lists under a summary saying "36 accounts" is
        * arithmetic that reconciles and names nobody.
        */
+      /**
+       * ONE LINK PER KPI TILE, COUNTED OFF THE DOM.
+       *
+       * *"there are multiple links on these KPI tiles. Make these KPI tiles
+       * clickable and remove all the other links."* That is a claim about what a
+       * reader can click, and no amount of matching `innerText` can see it: the
+       * captions that used to be links render identical text either way. So the
+       * anchors inside each tile are counted where they are.
+       */
+      const kpiTiles = FAST ? null : await page.evaluate(() => {
+        const strip = document.querySelector('[data-testid="kpi-strip"]');
+        if (!strip) return null;
+        return [...strip.querySelectorAll(".card")].map((c) => ({
+          label: (c.querySelector(".label-xs")?.textContent ?? "").trim(),
+          links: [...c.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
+          /**
+           * ── THE TWO THINGS `innerText` CANNOT SEE ───────────────────────
+           *
+           * *"remove the remaining underlines from the texts… Just make the KPI
+           * tiles look like 3-d clickable buttons."* Both halves are pure
+           * presentation: a tile renders the identical words underlined or not,
+           * raised or flat, so every value check on this page passes either way.
+           * They are read off the COMPUTED style for that reason.
+           */
+          underlined: [...c.querySelectorAll("*")].filter((e) =>
+            (e.textContent ?? "").trim()
+            && getComputedStyle(e).textDecorationLine.includes("underline")).length,
+          // A popover trigger is a <button>; nothing else in a tile is one.
+          buttons: c.querySelectorAll("button").length,
+          /**
+           * RAISED = the shadow carries a HARD OFFSET LAYER (a `0 Npx 0` with
+           * N ≥ 2) — the tile's own thickness, which a flat card has no
+           * equivalent of. Matched on the shape rather than on the exact colour
+           * so a palette change does not fail a correct tile, and it is a real
+           * distinction rather than "has any shadow": every `.card` in this app
+           * already carries a soft one.
+           */
+          raised: /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(c).boxShadow),
+        }));
+      });
+      /**
+       * ── THE ARITHMETIC, ON THE PAGE THE TILE OPENS ────────────────────────
+       *
+       * *"even the calculation that we're showing that appears when click the
+       * underlined no. we can show that inside the clickable KPI pages."* The
+       * popover it replaced was opened by a click and rendered into a fixed box,
+       * so a sweep that never clicked could not have seen it at all; this is
+       * rendered with the page and is read straight off it.
+       */
+      const formula = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="drilldown-formula"]');
+        if (!box) return null;
+        const worked = box.querySelector('[data-testid="drilldown-formula-worked"]');
+        return {
+          text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
+          worked: ((worked?.textContent ?? "")).replace(/\s+/g, " ").trim(),
+        };
+      });
+      /**
+       * ── THE FACET TOGGLE, READ OFF THE TOGGLE ITSELF ─────────────────────
+       *
+       * *"the listed/private book links and pages should not exist separately…
+       * just give the toggle option inside the Consolidated NAV link page."*
+       * That is a claim about a CONTROL, and every figure on these pages
+       * renders identically whether the halves are reached by a toggle here or
+       * by two links on the page before — the value and partition invariants
+       * below all passed while the halves were separate scopes. So the toggle's
+       * own buttons are read: each one's label, the count it prints, its
+       * address, and which is current.
+       */
+      const facets = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="drilldown-facets"]');
+        if (!box) return null;
+        return [...box.querySelectorAll("a[href]")].map((a) => ({
+          label: (a.textContent ?? "").replace(/[\d,]+\s*$/, "").replace(/\s+/g, " ").trim(),
+          rows: Number(((a.textContent ?? "").match(/([\d,]+)\s*$/)?.[1] ?? "").replace(/,/g, "")),
+          href: a.getAttribute("href") ?? "",
+          active: a.getAttribute("aria-current") === "true",
+        }));
+      });
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
       }));
+      /**
+       * EVERY ROW OF THE HOLDINGS TABLE, BY WHAT IT IS rather than by what it
+       * prints. `bucket` is on every row and the mandate fields only on the
+       * rows that are mandates, which is exactly the distinction the invariants
+       * below need and the one the rendered text no longer carries.
+       */
+      const tableRows = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tbody tr[data-bucket]")].map((tr) => ({
+          bucket: tr.getAttribute("data-bucket"),
+          // The rendered first cell, which is what the reader actually reads.
+          nameCell: (tr.cells[0]?.innerText ?? "").replace(/\s+/g, " ").trim(),
+          mandate: tr.getAttribute("data-mandate"),
+          manager: tr.getAttribute("data-manager"),
+          accountNo: tr.getAttribute("data-account"),
+          holdings: Number(tr.getAttribute("data-holdings")),
+          accountHoldings: Number(tr.getAttribute("data-account-holdings")),
+        })));
+      const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
@@ -3407,7 +4692,7 @@ for (const theme of THEMES) {
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
-        for (const m of mandateRowsIn(text)) MANDATE_ROWS.set(m.accountNo, m);
+        for (const m of mandateRows ?? []) MANDATE_ROWS.set(m.accountNo, m);
       }
       /**
        * WHAT MORNING CIO DREW, so the drill-downs below can be checked against
@@ -3436,6 +4721,22 @@ for (const theme of THEMES) {
           if (m && !CIO_DRILLDOWNS.has(m[1])) CIO_DRILLDOWNS.set(m[1], h);
           if (/^\/holdings\?of=bucket&key=./.test(h) && !CIO_BUCKET_HREFS.includes(h)) CIO_BUCKET_HREFS.push(h);
         }
+      }
+      /**
+       * ── FACET ADDRESSES, KEYED `scope#facet` ─────────────────────────────
+       *
+       * The listed half, the private half and the cost-less positions were each
+       * their own scope, linked from a SECOND link inside a KPI tile. They are
+       * facets of their tile's own drill-down now, so their addresses come from
+       * two places: the Concentration card still links the two halves directly,
+       * and the no-cost set is reachable only from the toggle on the Capital
+       * invested page. Collected from EVERY route that draws one, so a walk that
+       * loses a publisher fails by resolving no address rather than by silently
+       * checking a different page.
+       */
+      for (const h of hrefs) {
+        const m = /^\/holdings\?of=([a-z-]+)(?:&key=[^&]*)?&facet=([a-z-]+)/.exec(h);
+        if (m && !CIO_DRILLDOWNS.has(`${m[1]}#${m[2]}`)) CIO_DRILLDOWNS.set(`${m[1]}#${m[2]}`, h);
       }
       if (name === "cio" && !FAST) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
@@ -3510,6 +4811,7 @@ for (const theme of THEMES) {
         HEAD = await page.evaluate(() => {
           const h1 = document.querySelector("main h1");
           if (!h1) return null;
+          const btn = [...document.querySelectorAll("main button")];
           const bar = h1.parentElement;
           const eyebrow = bar?.firstElementChild;
           const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
@@ -3522,10 +4824,56 @@ for (const theme of THEMES) {
             toggleInline: overlap(r.toggle, r.h1),
             // The eyebrow reads smaller than the title it precedes.
             eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
+            // The two retired controls, counted as BUTTONS. Matching their
+            // words would hit the Transactions card's own view controls and
+            // this page's prose, and fail a page that is correct.
+            basisSwitch: btn.filter((b) => /^By (security|entity)$/i.test((b.textContent ?? "").trim())).length,
+            deckButton: btn.filter((b) => /review deck/i.test(b.textContent ?? "")).length,
+            // Export Excel shares a line with the last filter control, rather
+            // than wrapping below it — which is the space the family asked for.
+            exportInline: (() => {
+              const ex = btn.find((b) => /export excel/i.test(b.textContent ?? ""));
+              const sel = [...document.querySelectorAll("main select")].at(-1);
+              if (!ex || !sel) return false;
+              const a = ex.getBoundingClientRect(), b = sel.getBoundingClientRect();
+              return a.top < b.bottom && b.top < a.bottom;
+            })(),
           };
         });
       }
       const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
+      /**
+       * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
+       *
+       * "Right now I cannot even see 2 companies completely, which is very
+       * inefficient presentation." That complaint is about GEOMETRY, and no
+       * amount of matching on innerText can catch it — a page can print every
+       * row correctly and still spend the first screen on chrome. So the sweep
+       * measures it in the page and hands it to the invariants, which is the
+       * only way an assertion about density can fail when density regresses.
+       */
+      const metrics = FAST ? null : await page.evaluate(() => {
+        const vh = window.innerHeight;
+        const rows = [...document.querySelectorAll("tbody tr")]
+          .map((tr) => tr.getBoundingClientRect())
+          .filter((r) => r.height > 0);
+        const inView = rows.filter((r) => r.top >= 0 && r.bottom <= vh).length;
+        const firstTop = rows.length ? Math.round(rows[0].top) : null;
+        /**
+         * A RAISED CARD MUST BE A BUTTON. Morning CIO's strip asserts that every
+         * tile which opens something looks pressable; this is the converse,
+         * measured on every card on whatever page is being walked. A stylesheet
+         * that raised `.card` outright would satisfy the strip's check and turn
+         * every panel in the app into a button that does nothing.
+         */
+        const raised = (el) => /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(el).boxShadow);
+        const cards = [...document.querySelectorAll("main .card")];
+        const flatCards = {
+          raisedWithoutLink: cards.filter((c) => raised(c) && !c.querySelector("a[href]")).length,
+          total: cards.length,
+        };
+        return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
+      });
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
@@ -3556,7 +4904,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, path, url: page.url(), navListRows }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, formula, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

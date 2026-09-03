@@ -10,7 +10,7 @@ import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absen
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
-import { parseDrilldown, resolveDrilldown, drilldownHref, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { parseDrilldown, resolveDrilldown, drilldownHref, drilldownFormula, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -202,20 +202,26 @@ export function HoldingsBehind() {
             what="This address does not name a set of holdings"
             needs="Every drill-down here opens from a figure on Morning CIO, and the address carries which figure. Reaching this page directly means the address was typed or bookmarked from a build that named its sets differently. The sets this book can show are listed below." />
           <ul className="mt-4 grid gap-1.5 text-[12.5px] sm:grid-cols-2">
+            {/* ONE ENTRY PER FIGURE, and the halves of a figure are facets of
+                its entry rather than entries of their own — the listed and
+                private halves, and the holdings reporting no cost, used to be
+                listed here as separate sets. Listing them again would be the
+                same "which of these two answers my question" the tiles have
+                just been rid of. */}
             {([
-              ["book", "", "Every holding in the book"],
-              ["invested", "", "Holdings that report a cost"],
-              ["no-cost", "", "Holdings that report none"],
-              ["listed", "", "The listed half"],
-              ["private", "", "The private half"],
-              ["top-names", "", "The largest names"],
-              ["cross-held", "", "Names two entities both hold"],
-              ["winners", "", "Holdings showing a gain"],
-              ["losers", "", "Holdings showing a loss"],
-              ["measured", "", "What the money-weighted return covers"],
-            ] as [DrilldownId, string, string][]).map(([id, key, label]) => (
-              <li key={id}>
-                <Link to={drilldownHref(id, key || undefined)} className="text-champagne-400 hover:underline">{label}</Link>
+              ["book", "", "", "Every holding in the book"],
+              ["book", "", "listed", "…the listed half"],
+              ["book", "", "private", "…the private half"],
+              ["invested", "", "", "Capital invested — the holdings that report a cost"],
+              ["invested", "", "no-cost", "…and the ones that report none"],
+              ["measured", "", "", "What the money-weighted return covers"],
+              ["top-names", "", "", "The largest names"],
+              ["cross-held", "", "", "Names two entities both hold"],
+              ["winners", "", "", "Holdings showing a gain"],
+              ["losers", "", "", "Holdings showing a loss"],
+            ] as [DrilldownId, string, string, string][]).map(([id, key, facet, label]) => (
+              <li key={`${id}-${facet}`}>
+                <Link to={drilldownHref(id, key || undefined, facet || undefined)} className="text-champagne-400 hover:underline">{label}</Link>
               </li>
             ))}
           </ul>
@@ -227,6 +233,22 @@ export function HoldingsBehind() {
   const d = resolved;
   const accIdx = accountIndex(portfolio.accounts);
   const rows = d.rows;
+  /**
+   * THE HEADING AND THE LEAD FOLLOW THE ACTIVE FACET.
+   *
+   * "Every holding in the book" over the 19 private rows is a caption that
+   * WIDENS its figure — the same failure the Capital invested tile cost this
+   * repo once, arriving through a toggle. So a facet other than the first adds
+   * its label to the heading and replaces the lead with its own note, and every
+   * sentence on screen stays true of the rows underneath it. The first facet is
+   * the scope's own set, so it keeps the scope's wording unchanged.
+   */
+  const activeIdx = Math.max(0, d.facets.findIndex((f) => f.key === d.activeFacet));
+  const activeFacet = d.facets[activeIdx] ?? null;
+  const narrowed = d.facets.length > 1 && activeIdx > 0 && !!activeFacet;
+  const heading = narrowed ? `${d.title} · ${activeFacet!.label}` : d.title;
+  const lead = narrowed && activeFacet!.note ? activeFacet!.note : d.lead;
+  const activeNote = narrowed ? "" : (activeFacet?.note ?? "");
 
   // ── The figures this page has to reconstruct ───────────────────────────────
   const mv = sum(rows.map((r) => r.marketValue));
@@ -236,6 +258,13 @@ export function HoldingsBehind() {
   const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
   const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
+  // THE WORKED EXAMPLE, IN THE READER'S OWN DISPLAY CURRENCY. `drilldownFormula`
+  // owns the arithmetic — it sits beside the set definition, so the explanation
+  // and the set cannot drift apart — and takes the formatter rather than
+  // importing one, because every figure in this app renders through the
+  // context's `fmtFromBase` and a formatter fixed in a lib would print rupees on
+  // a page showing dollars.
+  const formula = drilldownFormula(d, (n: number) => money(n) ?? "—");
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
@@ -286,8 +315,46 @@ export function HoldingsBehind() {
           <Link to="/cio" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
             <ChevronLeft className="h-3.5 w-3.5" /> Back to Morning CIO
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{d.title}</h1>
-          <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-slate-400">{d.lead}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
+          <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-slate-400">{lead}</p>
+          {/* ── THE SETS THIS FIGURE IS MADE OF ─────────────────────────────
+              *"just give the toggle option inside the Consolidated NAV link
+              page"* — and the same for every other tile. Each of these was its
+              own address, reached from a SECOND link inside a tile whose
+              headline already linked elsewhere; a reader had to know which of
+              two links answered their question and then had no way back to the
+              other half of the same figure.
+
+              THE TOGGLE IS A LINK, NOT A BUTTON. The facet is in the URL, so a
+              reader can bookmark the half they care about and the browser's
+              back button walks the halves — which is what the separate pages
+              were good at and the one thing a piece of local state would lose.
+              It also keeps the old `?of=listed` addresses meaningful. */}
+          {d.facets.length > 1 && (
+            <div className="mt-3 inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
+              role="group" aria-label="Which set to show" data-testid="drilldown-facets">
+              {d.facets.map((f) => {
+                const active = f.key === d.activeFacet;
+                return (
+                  <Link key={f.key} to={drilldownHref(d.id, d.key || undefined, f.key)}
+                    aria-current={active ? "true" : undefined}
+                    title={f.note || undefined}
+                    className={["rounded px-2.5 py-1 text-[11.5px] font-medium transition-colors",
+                      active ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                    {f.label}
+                    <span className="ml-1.5 tabular opacity-70">{fmtNum(f.rows.length)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+          {/* WHAT THE ACTIVE SET IS, where the reader is looking at it. The
+              toggle's own label is two words; the reason a set exists at all —
+              why a depository reports no cost, why an account cannot carry a
+              rate — is the part that decides what a reader does next. */}
+          {d.facets.length > 1 && activeNote && (
+            <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-slate-500" data-testid="drilldown-facet-note">{activeNote}</p>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* WHAT THIS SET STANDS BEHIND, on the page rather than left to be
                 inferred from the heading. A reader arrives here from one figure
@@ -362,6 +429,39 @@ export function HoldingsBehind() {
                   </span>}
               icon={<Layers className="h-4 w-4" />} />
           </div>
+
+          {/* ── THE ARITHMETIC, WHERE THE READER LANDED ────────────────────
+              *"even the calculation that we're showing that appears when click
+              the underlined no. we can show that inside the clickable KPI
+              pages."* It was a popover on the tile, opened by a dashed
+              underline under the figure — a second affordance on a card whose
+              whole surface is already the click target, and a box that had to be
+              dismissed before the reader could do anything else.
+
+              IT IS STRUCK ON THE ROWS BELOW IT, not on the whole scope: the
+              worked line comes from `d.rows`, which is the ACTIVE facet, so a
+              reader who has toggled to the private half sees that half's own
+              arithmetic rather than the book's under a heading reading
+              "Private". That is also why it sits here — the figures it explains
+              are directly above it and the rows it is summed over directly
+              below, which a floating popover could never be. */}
+          {formula && (
+            <div data-testid="drilldown-formula">
+              <Card className="mt-5" title="How this figure is worked out"
+                subtitle="Summed over exactly the rows in the table below — the same set, resolved by the same function that built the link you followed.">
+                <div className="mono rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-300">
+                  {formula.excel}
+                </div>
+                {formula.worked && (
+                  <div data-testid="drilldown-formula-worked"
+                    className="mono mt-2 rounded-md border border-champagne-500/25 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-200">
+                    {formula.worked}
+                  </div>
+                )}
+                <p className="mt-3 max-w-3xl whitespace-pre-line text-[12.5px] leading-relaxed text-slate-400">{formula.plain}</p>
+              </Card>
+            </div>
+          )}
 
           {d.excludedAccounts.length > 0 && (
             <Card className="mt-5" title={`${d.excludedAccounts.length} accounts outside this figure`}
@@ -536,43 +636,12 @@ export function HoldingsBehind() {
             </p>
           </Card>
 
-          {d.companion && d.companion.rows.length > 0 && (
-            <Card className="mt-5" pad={false} title={d.companion.title} subtitle={d.companion.note}>
-              <div className="overflow-x-auto">
-                <table className="min-w-full whitespace-nowrap text-sm">
-                  <thead className="border-b border-ink-700">
-                    <tr>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Held via</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink-700/60">
-                    {[...d.companion.rows].sort((a, b) => b.marketValue - a.marketValue).map((r) => (
-                      <tr key={`c-${r.accountId}-${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
-                        <td className="px-4 py-2.5">
-                          <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">{r.security}</Link>
-                          <span className="ml-2 text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(r, engagementOf(accIdx, r)))}</span>
-                        </td>
-                        <td className="px-4 py-2.5 text-[12px] text-slate-400">{providerOf(accIdx, r)}</td>
-                        <td className="px-4 py-2.5 text-[12px] text-slate-400">{ownerOf(accIdx, r)}</td>
-                        <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-ink-600 font-semibold">
-                      <td className="px-4 py-2.5 text-slate-200" colSpan={3}>
-                        {fmtNum(d.companion.rows.length)} {d.companion.rows.length === 1 ? "holding" : "holdings"}, in neither figure above
-                      </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-100">{money(sum(d.companion.rows.map((r) => r.marketValue)))}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </Card>
-          )}
+          {/* THE COMPANION TABLE IS GONE — its rows are a FACET now.
+              It rendered the second set as a whole extra table below the first,
+              which meant two tables of the same shape on one page and a reader
+              scrolling past a hundred rows to reach the set they came for. The
+              toggle above shows one set at a time, with the same rows, the same
+              totals and an address of its own. */}
         </>
       )}
 

@@ -22,12 +22,6 @@ import { StockInfo } from "@/pages/StockInfo";
 import { MandateHoldings } from "@/pages/MandateHoldings";
 import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { CompareCompanies } from "@/pages/CompareCompanies";
-import { Watchlist } from "@/pages/Watchlist";
-// FOOS-spec preview pages — each implements a spec layer whose live data source
-// does not exist yet, rendered as a clearly-marked illustrative placeholder.
-import { Knowledge } from "@/pages/Knowledge";
-import { MacroResearch } from "@/pages/MacroResearch";
-import { Economy } from "@/pages/Economy";
 import { ExposureIPS } from "@/pages/ExposureIPS";
 import { ThesisMonitor } from "@/pages/ThesisMonitor";
 import { Alerts } from "@/pages/Alerts";
@@ -142,12 +136,50 @@ export default function App() {
             <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             <Route path="/compare" element={<Gate><CompareCompanies /></Gate>} />
-            <Route path="/watchlist" element={<Gate><Watchlist /></Gate>} />
-            {/* Preview pages — pure illustrative layouts with no book dependency,
-                so they render even before statements are ingested. */}
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/macro" element={<MacroResearch />} />
-            <Route path="/economy" element={<Economy />} />
+            {/* WATCHLIST & TARGETS was REMOVED at the family's request — the tab,
+                its nav entry and `src/pages/Watchlist.tsx` with it.
+
+                NOTHING THE FAMILY TYPED WAS DELETED. `src/lib/watchlist.ts` is
+                untouched, so every target price, fair value, entry/exit level,
+                valuation method and target weight they entered is still stored
+                and still read and written by `InvestmentTools` on a name's own
+                company page — the same treatment `deals.ts` and `household.ts`
+                got when their pages went in Stage 10f. Compare Companies still
+                renders the target and the upside beside the price, which is why
+                this forwards THERE rather than to the monitor: it is the
+                surviving surface in the same nav group that carries these
+                figures. It redirects rather than 404s because a bookmark is a
+                promise the app made, and the removal is verified by asserting it
+                happened — see `check-family-inputs.mjs`. */}
+            <Route path="/watchlist" element={<Navigate to="/compare" replace />} />
+            {/* KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO were all
+                REMOVED at the family's request — the three pages, their nav
+                entries and every module left with no other caller.
+
+                ALL THREE FORWARD TO THE DASHBOARD HOME, and that is a decision
+                rather than a default. The pattern elsewhere in this file sends a
+                removed address to the surviving surface nearest its purpose —
+                /private to the private book, /watchlist to Compare Companies.
+                Nothing that survives holds the family's own notes, and nothing
+                that survives renders a commodity, index, currency or macro
+                series. Pointing these at a page that merely looks adjacent would
+                assert a continuity that does not exist, which is the stale
+                routing Stage 9d removed the day the calendar was wired. They
+                redirect rather than 404 because a bookmark is a promise the app
+                made, and the removal is verified by asserting it happened — see
+                `check-family-inputs.mjs`.
+
+                WHAT DID NOT GO WITH THEM. `src/lib/series.ts` and
+                `SeriesChart.tsx` stay: `ReturnsTable` draws a company's price
+                history with both, and `CompareCompanies` and `navSeries.test.ts`
+                read the same types. `public/series/` and `npm run harvest` stay
+                too — the RBI and IEX series in that store are ACCUMULATING, built
+                one observation per run because their sources publish only a
+                current value, so stopping the harvest would not pause a series,
+                it would end it with no way to backfill. */}
+            <Route path="/knowledge" element={<Navigate to="/cio" replace />} />
+            <Route path="/macro" element={<Navigate to="/cio" replace />} />
+            <Route path="/economy" element={<Navigate to="/cio" replace />} />
             <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
             <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
@@ -173,7 +205,12 @@ export default function App() {
             <Route path="/look-through" element={<Navigate to="/private-market" replace />} />
             <Route path="/funds" element={<Navigate to="/private-market" replace />} />
             <Route path="/value-creation" element={<Navigate to="/private-market" replace />} />
-            <Route path="/industry" element={<Navigate to="/macro" replace />} />
+            {/* Industry Research was removed at Stage 9c and forwarded to Macro
+                Research, which has now gone the same way. Chained, a bookmark
+                still LANDS on /cio — which is exactly why this is fixed in the
+                route table rather than left to a check to catch: the suite reads
+                where a redirect lands, and two hops land where one does. */}
+            <Route path="/industry" element={<Navigate to="/cio" replace />} />
             <Route path="/private" element={<Navigate to="/private-market" replace />} />
             <Route path="/data-bank" element={<Navigate to="/monitor" replace />} />
             <Route path="/household" element={<Navigate to="/family" replace />} />

@@ -380,7 +380,6 @@ rationale in [CLAUDE.md](./CLAUDE.md); in short:
 | Allocation | Family & Entities | By owning entity, and who custodies each | LIVE |
 | Allocation | Sector Composition | Sector mix with per-sector drill-down | LIVE |
 | Research | Compare Companies | Up to four holdings side by side — position, price, ratios, returns | LIVE + external |
-| Research | Watchlist & Targets | Names we follow, with our own target / fair value / entry / exit and price alerts | LIVE + local |
 | Research | *(per company)* | Returns table, financials, estimates, filings, investment tools — reached from any holding | LIVE + external |
 | Tax | Capital Gains & Tax | Realised by account and asset class, loss harvesting | STATEMENT |
 | Private Markets | Private Markets | Empty in this drop — the readable accounts are listed-equity mandates and one AIF unit | — |

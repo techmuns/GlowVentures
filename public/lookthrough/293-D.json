@@ -1,0 +1,87 @@
+{
+  "schemecode": "293-D",
+  "scheme": "Aditya Birla SL Liquid Fund(G)",
+  "amfiSchemeName": "Aditya Birla Sun Life Liquid Fund - Growth - Direct Plan",
+  "amc": "Aditya Birla Sun Life Mutual Fund",
+  "plan": "direct",
+  "option": "growth",
+  "classification": "Debt : Liquid",
+  "isin": "INF209K01VA3",
+  "nav": {
+    "value": 458.2557,
+    "date": "2026-09-01",
+    "prev": 458.1371,
+    "prevDate": "2026-08-31",
+    "changePct": 0.025887447229227874
+  },
+  "returns": {
+    "1M": {
+      "value": 1.2994,
+      "kind": "simple",
+      "startDate": "2026-06-21",
+      "endDate": "2026-09-01",
+      "startNav": 452.3773,
+      "endNav": 458.2557
+    },
+    "3M": {
+      "value": 1.7489,
+      "kind": "simple",
+      "startDate": "2026-06-01",
+      "endDate": "2026-09-01",
+      "startNav": 450.3789,
+      "endNav": 458.2557
+    },
+    "6M": {
+      "value": 3.4745,
+      "kind": "simple",
+      "startDate": "2026-03-01",
+      "endDate": "2026-09-01",
+      "startNav": 442.8682,
+      "endNav": 458.2557
+    },
+    "1Y": {
+      "value": 6.5593,
+      "kind": "simple",
+      "startDate": "2025-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 430.0474,
+      "endNav": 458.2557
+    },
+    "3Y": {
+      "value": 7.0271,
+      "kind": "cagr",
+      "startDate": "2023-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 373.7719,
+      "endNav": 458.2557
+    },
+    "5Y": {
+      "value": 6.3878,
+      "kind": "cagr",
+      "startDate": "2021-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 336.254,
+      "endNav": 458.2557
+    },
+    "10Y": {
+      "value": 6.1882,
+      "kind": "cagr",
+      "startDate": "2016-09-01",
+      "endDate": "2026-09-01",
+      "startNav": 251.4099,
+      "endNav": 458.2557
+    }
+  },
+  "returnsAsOf": "2026-09-01",
+  "fundAumCr": 71140.04,
+  "holdingsAsOf": "2026-07-31",
+  "holdingsSource": {
+    "kind": "amc",
+    "url": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio"
+  },
+  "section": "Equity Holdings",
+  "equity": [],
+  "counts": {
+    "equity": 0
+  }
+}

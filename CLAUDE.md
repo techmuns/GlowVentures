@@ -106,6 +106,12 @@ had been sitting on the client's live dashboard:
   type error. Deleting a render leaves the numbers one line from returning; the
   same reasoning that removed `custodianOf()` rather than fixing it.
 
+*(The **Economy** and **Macro Research** pages named in those last two entries
+have since been REMOVED at the family's request — see Stage 10x. The entries
+stay because the lesson is about what was PRINTED, not about which route printed
+it, and the `Row`-type deletion above is still the model for how a fabricated
+field is retired. The same treatment `PublicDashboardView` gets further up.)*
+
 The test to apply: **would this still be honest if the badge were cropped out of
 a screenshot?** Sample macro series on a page with no family data pass it.
 Anything sharing a row, a tile or a sentence with the book does not.
@@ -2675,7 +2681,7 @@ feature that is broken instead of one that was never possible.
 | **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
 | **Ratio analysis, 7 year-ends** | company page | `ratio_source` → `web-reader` — see Stage 10e |
 | Consensus / street estimates | company page | `street_estimates` |
-| Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
+| Personal watchlist, target price, fair value, entry / exit price, price alerts | company page (the `/watchlist` page is REMOVED, see Stage 10w) | **nothing** — these are the family's own judgements |
 | Insider trades, corporate announcements | company page | `insider_trades`, `corp_announcements` — the `/news` page is REMOVED, see Stage 10k |
 
 ### Two limits that are load-bearing, and are stated on screen
@@ -2699,6 +2705,10 @@ claim is that every figure traces to a source.
 
 ### Investment tools are the ONE thing a reader writes to
 
+**AND THE PAGE THAT ROLLED THEM UP IS GONE — see Stage 10w.** `/watchlist`
+redirects and `src/pages/Watchlist.tsx` is deleted. Everything below is about the
+STORE, which is untouched and is still written on every company page.
+
 `src/lib/watchlist.ts` is the only store in the app that takes user input, and it
 is deliberately nowhere near the book. `glowData.ts` is generated from `source/`
 and regenerates byte-identically; a target price is a judgement, not a statement
@@ -2715,7 +2725,8 @@ default, which is the exact failure this book exists to prevent.
 
 Named here so the gap stays visible, and so nobody builds a frame around it:
 
-- **Layer 1 — Knowledge & Memory.** Tagged notes from manager meetings, IC
+- **Layer 1 — Knowledge & Memory.** *(A note store shipped and the page has
+  since been REMOVED at the family's request — see Stage 10x.)* Tagged notes from manager meetings, IC
   discussions, fund pitches, conference notes, books and podcasts, queryable in
   natural language. Needs a note store, a tagging model and an AI index. The
   catalogue's `document_search` searches muns' own corpus, not the family's.
@@ -2737,7 +2748,8 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
 - **Industry research.** Industry size, capacity, utilisation, order books. No
   industry endpoint, and the page that composed the raw-material half of it from
   the harvest store has been REMOVED at the family's request — see Stage 9c. The
-  price series themselves are unaffected and remain on Macro Research.
+  price series themselves are unaffected and are still harvested; Macro Research
+  has since been removed too (Stage 10x), so no page charts them today.
 - **Layer 3 — IPS buckets and GAP analysis.** Growth / Liquidity / Tactical /
   Hedge / Charity, actual vs desired by geography, market cap, duration. The
   actuals are in the book; the DESIRED allocations are a family decision nobody
@@ -2806,8 +2818,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10y. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2865,8 +2881,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10y. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -3266,6 +3286,289 @@ renders the count and a `11B/1S` split beside it, so `innerText` is `211B/1S`
 and the first number in it is 21 — a parser that happens to produce A number,
 which is the exact class of wrong answer this sweep exists to catch rather than
 commit. The count is read off `data-trades` now, like `data-days` beside it.
+
+### Stage 10q — THREE ROWS OF CHROME, AND WHAT SURVIVED THE THIRD
+
+*"Remove the security/entity switch — we will show just the default view as it
+is. Also remove the review deck button, and adjust the export excel button in
+the same line as all the filters. This will give us further space to show the
+table."*
+
+With Stage 10p's headline change, that is the Portfolio Monitor down from four
+rows of chrome to two: headline + view switch, then filters + Export Excel. The
+holdings table now starts 100px higher than it did at the top of this session.
+
+**THE BASIS SWITCH IS GONE AND THE BASIS IS NOT.** `consolidate` moved from
+`useState` to `useViewParam`, so `?view=entity` still reaches the per-statement
+build. That is not a hedge: the by-entity rendering is threaded through fifteen
+sites — the row build, the footer, the dedupe gap, the realised cells, the
+Entities column header, the section subtotals — and pinning the flag to a
+literal would leave every one of those branches unreachable, which is the
+dead-code-that-looks-alive failure this file keeps naming. It is also where the
+**₹3.17 Cr subtotal bug** lived: both of this book's duplicate holdings are AIF,
+so by-entity is the ONLY view in which a class heading and the footer beneath it
+can disagree. `check:pages` walks `/monitor?view=entity` now instead of clicking
+a button that no longer exists, and its invariants are unchanged.
+
+**THE REVIEW DECK IS DELETED, NOT ORPHANED.** `src/lib/exportDeck.ts` (403
+lines) had exactly one caller, and this file's own rule is that a builder
+nothing calls is worse than no builder — the next session finds it exported and
+wires it back believing it load-bearing. So the module went with the button, and
+`pptxgenjs` came out of `package.json` with it. Both are one `git revert` away
+if the family wants the deck back.
+
+**AND THE REMOVALS ARE ASSERTED, STRUCK ON BUTTONS RATHER THAN WORDS.**
+`check:pages` counts `<button>` elements whose text is `By security` / `By
+entity` / `Review deck` and requires zero. Matching those STRINGS would fail a
+correct page: "By security" and "By entity" are still the Transactions card's
+own view controls and still appear in this page's prose. The same probe measures
+that Export Excel's box overlaps the last filter `<select>`'s — the "same line"
+claim is geometric, so it is checked on geometry, like the headline above it.
+All three verified by reintroducing their bug.
+
+### Stage 10r — A CARD THAT IS LOADING SAYS SO, AND OPENS ON THE LAST SNAPSHOT
+
+*"This section first shows empty and then starts showing data after some time.
+It should show data from the beginning… it can show a small loading written text
+but never empty and that data is not there."*
+
+Today's movers rendered **"No holding in this book carries a day change right
+now"** on the first paint of every cold open. That is a claim ABOUT THE BOOK,
+made while the quote feed was still in flight — the same defect this file
+already records on the company page, where a panel still fetching asserted the
+security has no live quote. THE CAUSE PICKS THE HEADLINE, and there were three
+causes collapsed into one branch.
+
+**THE THREE STATES ARE SEPARATED NOW.** Still fetching says so. A feed that
+answered and failed names the feed. Only a SETTLED feed that priced nothing
+makes the claim about the book — and by then the claim is true. The index tile
+inside the same card had the identical bug one layer down: it printed "Index
+levels unavailable — the feed did not respond" whenever its feed was null, which
+is true before the first response as well as after a failed one. `IndexStrip`
+had already got this right with a three-state machine; the tile now matches it.
+
+**AND THE APP OPENS ON THE LAST SNAPSHOT, SO THE FIRST STATE IS RARELY SEEN.**
+`src/lib/quoteCache.ts` keeps the merged `QuoteFeed` in `localStorage` and
+`PortfolioContext` seeds from it, so a reopen renders the day's figures
+immediately and the live rounds refine them. That matters because the upstream
+prices only PART of the book per call — the fill was several rounds deep, which
+is why the card sat empty long enough to be reported.
+
+Three rules keep a served snapshot honest, and the third is load-bearing:
+
+- **`ageS` is RE-DERIVED on read**, never restored as written. It is what the
+  top bar and the company page read to decide whether a price is fresh; restored
+  verbatim it would say "0 seconds" about a snapshot hours old.
+- **`quotesStatus` stays `loading` until a live round lands**, whatever the
+  cache held. The figures are real and dated; the top bar is telling the truth
+  when it says prices are still being fetched.
+- **A SNAPSHOT OLDER THAN THE SESSION IS DISCARDED, NOT SHOWN.** A day change is
+  `price − prevClose`, and `prevClose` is the PREVIOUS SESSION's close. Serving
+  yesterday's snapshot would print yesterday's move under a heading reading
+  "Today" — a real figure against the wrong day, which is the worst kind of
+  wrong because it is plausible. Twelve hours: long enough to cover a trading
+  day, short enough that a snapshot can never survive into the next session.
+
+**THREE ROUTES, BECAUSE THE STATES NEED THE FEEDS IN DIFFERENT CONDITIONS.**
+`cio-loading` holds both feeds open for the length of the walk — that window is
+milliseconds against a real feed and cannot be caught by walking normally, since
+the plain `cio` walk 404s immediately and lands on the FAILED branch, which is a
+different and correct state. `cio-index-loading` fulfils the quotes and holds
+only the indices, because the index tile lives inside the branch that renders
+once there are priced rows and cannot be reached with the quote feed stalled.
+`cio-cached` loads once with both answering, then RELOADS with them held open,
+so whatever is on screen came out of storage alone.
+
+**`networkidle` CANNOT BE REACHED WHILE A REQUEST IS HELD**, so those routes
+navigate on `load` instead — waiting for the network to go quiet times out
+against a page rendering exactly as intended.
+
+**AND ONE CHECK WAS A TAUTOLOGY, FOUND BY REINTRODUCING ITS BUG.** "The index
+tile says it is fetching" was matched page-wide, and the `IndexStrip` at the top
+of every route prints that exact phrase while IT loads — so deleting the tile's
+loading branch changed nothing the check could see. It is struck on the card's
+own slice now. Six bugs were reintroduced in total and each fired the right
+check; the one case left uncovered is named beside the code that governs it (a
+failed POLL blanking a good tile needs one success then a failure, sixty seconds
+apart).
+
+### Stage 10s — THE MUNS CHAT, AND THE ONE SURFACE THAT IS NOT A MEASUREMENT
+
+*"Replace the top search bar with our muns chat… it should be able to take data
+from the dashboard and answer the client any queries. It should understand the
+context since the dashboard data will be available to it."*
+
+**WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
+box was an `<input>` with no `value`, no `onChange` and no handler, in the most
+prominent slot in the app. Nothing was lost, which is why this is recorded as a
+replacement rather than as a removal to be asserted — but it is worth naming,
+because a control that looks alive and does nothing is the failure this file
+keeps finding in other forms.
+
+**`functions/api/chat.js` — AND THE TOKEN NEVER REACHES A BROWSER.** POST
+`https://devde.muns.io/chat/chat-muns` with `Bearer ${MUNS_TOKEN}`, the same
+arrangement the eight functions beside it use. The body is PIPED, not buffered:
+an expert-mode answer takes tens of seconds and a reader watching nothing happen
+assumes it is broken. `X-Chat-Id` and `X-Message-Id` are forwarded and named in
+`Access-Control-Expose-Headers`, because a header the browser cannot read is a
+header that does not exist. **Nothing is cached**, unlike every other function in
+that folder: an answer is not a document, and serving one from the edge would
+attach one member's chat id to another's request.
+
+**IT IS UNVERIFIED AGAINST THE LIVE API, AND SAYS SO.** `MUNS_TOKEN` exists only
+in the Cloudflare environment, so this could not be exercised end to end —
+`research.js` records the same position, and that doc has been wrong about a
+response shape more than once. What IS measured: `POST /chat/chat-muns` with no
+token answers **401**, so the host and route are real and the failure is
+authentication rather than a wrong path. What is NOT: the SSE frame format, and
+whether `DASHBOARD_INPUTS` is read at all. So `munsChat.ts` accepts the widest
+plausible frame set (JSON with any of eight delta field names, `choices[0]`, or
+a plain-text payload), IGNORES what it cannot parse rather than printing an
+envelope into the answer, and reports `NO_TEXT_IN_STREAM` when a stream yields
+nothing — which sends the next person to the field list rather than to the model.
+The context also rides in the TASK TEXT for the same reason: a context the model
+never sees is worse than none, because the answer looks fully briefed.
+
+**THE CONTEXT IS THE PRODUCT, AND `chatContext.ts` IS WHERE THE HONESTY LIVES.**
+A model asked about money it cannot see will fill the gap, so the snapshot is
+built to make guessing unnecessary: consolidated NAV and its listed/private
+split, allocation on `holdingBucket`, per-owner (NOT deduped, §"consolidated
+counts once, per-account does not"), every account with owner, engagement and
+report date, the top holdings, the undrawn commitments. Every figure derived,
+none typed — 27.7 KB, against the function's 256 KB body cap.
+
+**AND THE ABSENCES TRAVEL WITH THE FIGURES**, which is the half that matters.
+`what_this_book_does_not_carry` is derived too, and names: the blend of report
+dates (**47 of 49 accounts behind** the newest), the **60 of 371 positions
+carrying no cost** and the ₹165.9 Cr they hold, the **₹3.17 Cr reported twice
+and counted once**, the **₹12,351.24 Cr ring-fenced Polycab holding that is in
+no total above** — with an instruction never to add it — and the four questions
+this corpus structurally cannot answer. A model told the totals and not those
+five things answers confidently and wrongly, and each is a question a family
+office actually asks.
+
+**AN ANSWER IS NOT A MEASUREMENT AND MUST NOT LOOK LIKE ONE.** Every figure
+elsewhere in this app traces to a statement; this panel renders sentences that
+no document produced, and **there is no `AbsentCell` in a paragraph.** So it is
+marked `AI ANSWER · NOT A STATEMENT FIGURE` in words on the panel rather than in
+a tooltip, the empty state says what the assistant was given AND that it cannot
+reach an account, place a trade or see a figure the dashboard does not already
+show, and a failure names its own code — `NOT_CONFIGURED` (no token) and
+`UPSTREAM_ERROR` (a token the API refused) send the next person to completely
+different places, which is `upstreamStatus.ts`'s rule arriving through a chat.
+
+**`user_index` — AND WHY THE ENDPOINT'S OWN DOC DID NOT WORK HERE.** The first
+live request came back `400 — "user_index is required in the request body for
+service token requests"`. That is a TOKEN CLASS mismatch, not a wrong path. The
+doc specifies `Authorization: Bearer <YOUR_SESSION_TOKEN>` — a USER session
+token, where the acting user is implicit in the credential. `MUNS_TOKEN` is a
+SERVICE token, so the user is not implicit and the API asks the caller to name
+one. **This is the first USER-SCOPED muns endpoint this dashboard calls**: the
+other seven are stateless lookups — a quote, a filing, a ratio table — with no
+owner, session or history between them, which is exactly why none of them ever
+needed the field and why the omission could only surface here.
+
+**THE VALUE WAS TO BE CONFIGURED AND NEVER GUESSED — AND THE DEPLOYMENT
+OVERTURNED THAT.** `MUNS_USER_INDEX` sat in the Cloudflare environment as the
+ONLY source of the field: unset, the function refused before calling the
+upstream and named the variable (`USER_INDEX_REQUIRED`), because a wrong index
+would file this family's conversation under somebody else's account — a worse
+outcome than the 400 it replaced. That was right while nobody had supplied a
+value. See the two paragraphs below for what happened when somebody did.
+A `user_index` in the REQUEST is still ignored — the browser does
+not get to say whose account a question is filed under. `GET /api/chat?probe=1`
+makes one live round trip so the value can be confirmed on the deployment
+without a redeploy cycle, and the diagnostics report the index's PRESENCE, its
+SHAPE and its SOURCE, never the token.
+
+**AND THE IDENTITY IS `user_id: 14`, FIXED AT THE CLIENT'S INSTRUCTION.**
+*"Pass an argument named `user_id`: 14 — this is a static value, don't change
+it, keep it 14 only, include it in the main payload."* It is a CONSTANT rather
+than an environment variable precisely because it was given as one: the value is
+the same on every deployment, and putting it in the environment would let an
+unset variable break a working dashboard. It is never taken from the request —
+the browser does not get to say whose account a question is filed under — and a
+`user_id` in the body is ignored.
+
+**`MUNS_USER_INDEX` THEREFORE STOPPED BLOCKING THE CALL** — and that build sent
+`user_id` alone, deliberately NOT copying it into `user_index`, on the reasoning
+that "index" and "id" are not obviously the same field and a 14 meaning a
+position in a list rather than an identity would file this family's conversation
+under somebody else.
+
+**AND THE UPSTREAM REFUSED IT ANYWAY, WHICH IS THE MEASUREMENT THAT SETTLED
+IT.** Run on the deployment, that build came back with the SAME
+`400 — user_index is required…`. So `user_id` is not the field the API is
+asking for; the only value anyone has named for this deployment is 14; and the
+choice was between sending it under both names or a chat that can never answer.
+**The fixed identity now goes as `user_id` AND `user_index`.** What changed is
+the evidence and not the rule: the earlier refusal was declining to INVENT a
+value, and this is sending the one the client gave. `MUNS_USER_INDEX` survives
+as the OVERRIDE — set it and it WINS — for the day the two turn out to differ.
+
+**AND `USER_INDEX_REQUIRED` IS GONE RATHER THAN LEFT UNREACHABLE.** With an
+identity always in the body, a 400 naming one means the value was REJECTED and
+never that it was missing, so the two-code split collapses to
+`USER_INDEX_REJECTED` carrying the upstream's own sentence — which names the
+field, where the dashboard would only paraphrase it. The panel's
+`USER_INDEX_REQUIRED` copy went with it. `chatFunction.test.ts` asserts the
+REMOVAL — that the same 400 with no override set still comes back
+`USER_INDEX_REJECTED` — because deleting the branch and its test together would
+leave nothing to notice a future edit putting the request back to the shape the
+deployment refused.
+
+**AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
+error as `{ message: { message, error, statusCode } }`, and the first cut
+rendered that JSON blob into the chat — machine noise where a sentence belongs.
+`upstreamMessage` unwraps to the deepest string; anything that is not JSON is
+passed through truncated rather than swallowed.
+
+**AND THE DIALOG WAS TRAPPED IN THE TOP BAR.** The family reported the panel
+"mixing with the dashboard UI", and the cause was not transparency — the panel
+measures fully opaque. `backdrop-filter` on an ancestor makes THAT ANCESTOR the
+containing block for `position: fixed` descendants, and the top bar the trigger
+lives in carries `backdrop-blur`. So `fixed inset-0` resolved against the
+header: the overlay measured **1304×55**, a scrim over the header strip and
+nothing else, with the dashboard underneath never dimmed at all. It is
+portalled into `#root` now — not `document.body`, because `#root` carries
+`--app-zoom` and the dialog has to keep the app's scale.
+
+**A SCRIM HAS TO DIM, AND THE FIRST ONE DID NOT.** 0.35 alpha over a 4px blur
+left the table behind perfectly legible. It is 0.62 over a 20px blur now, on a
+warm mid-tone whose luminance stays above the light-remap check's threshold —
+the utility reads as deliberately remapped rather than as the dark chassis
+colour leaking onto a light page.
+
+**AND THE PANEL IS SIZED IN PERCENT, NEVER `vh`.** `h-[min(78vh,720px)]` painted
+78vh × 0.875 — a 614px panel in a 900px window while claiming 78% — because a
+viewport unit is not rescaled by zoom (Stage 10n). A percentage of the
+correctly-sized overlay avoids it: 896×805 against 672×614.
+
+**BOTH ARE CHECKED ON GEOMETRY**, because not one rendered word changes when
+either regresses: the overlay must cover the viewport, and the panel must take a
+majority of it. Verified by removing the portal and by restoring the old size.
+
+**THIRTY-FOUR ARITHMETIC CHECKS AND FIVE RENDERED ONES.**
+`src/lib/__tests__/chatContext.test.ts` reconciles the snapshot against the
+GENERATED book by a different path from the builder's — NAV against
+`BOOK_SUMMARY`, buckets against `dedupedPositions`, the per-owner gap against
+`doubleCountedValue`, the fence against `BOOK_POLYCAB` — and asserts the fenced
+value is NOT inside the NAV the same context reports. It also walks the whole
+payload for a non-finite number, because a `?? 0` in the builder is the
+absent-vs-zero rule failing through a JSON field instead of a table cell.
+`check:pages` walks a `chat` route that opens the panel and asks one question:
+the label, the stated snapshot, the vanished search input, and the named
+failure. All verified by reintroducing their bug.
+
+**AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+against a STUBBED upstream — the token exists only in Cloudflare, so the real
+API is out of reach from a test, but every branch around it is not: that
+`user_id` and `user_index` both carry the fixed identity at the top level, that
+`MUNS_USER_INDEX` overrides it as a number when it reads as one and verbatim
+when it does not, that a request-supplied one is ignored, that no call is made
+at all when the TOKEN is unconfigured, that `USER_INDEX_REQUIRED` can no longer
+be reached, and that the deployment's exact 400 envelope comes back as one
+readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
@@ -3676,6 +3979,14 @@ accounts.
 | Listed / Private · Top-10 · Cross-held · Winners / losers | their own sets, each walked and reconciled against the card | ₹358.0 / ₹352.3 Cr · ₹430.9 Cr · 128 names · 174 / 115 |
 | Dry powder · Distributions · Fund commitments | **`/private-market`** | not holdings — see below |
 
+**THREE OF THOSE ROWS ARE NOW REACHED DIFFERENTLY — see Stage 10v.** The SETS are
+unchanged and every figure above still holds; what moved is the route. The
+cost-less holdings, the listed half and the private half were each an address of
+their own, linked from a SECOND link inside a KPI tile; they are FACETS of the
+tile's own drill-down now, selected by a toggle above the table, because a tile
+offering three destinations made the reader choose between them before they knew
+what any of them held. The old addresses still resolve.
+
 **A REFUSED FIGURE STAYS REFUSED ONE CLICK DEEPER.** Three of the six allocation
 rows print an em dash for Return, because their Invested column covers a minority
 of their holdings — Mutual Fund reports a cost on 2 of 24, Direct Equity on 9 of
@@ -3976,6 +4287,10 @@ prints a level of nothing.
 
 #### Today's movers — and the denominator that is the whole point
 
+*(The SET was narrowed to Direct Equity a request later — see Stage 10t. The
+denominator rule below is unchanged and is why that narrowing had to move every
+caption on the card with it.)*
+
 **THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, AND THE TILE SAYS SO.** A day
 change needs a live price AND the previous close behind it; the AIF folios, the
 mutual-fund units, the cash sweeps and every unresolved name have neither. The
@@ -4036,6 +4351,638 @@ own roll-up, two independent paths inside `navHistoryFrom` to one figure. Its
 load-bearing gate is an INEQUALITY — the unadjusted NAV move must exceed the
 adjusted return by more than 5 points — so a suite cannot pass by accident on a
 drop where no capital moved, and it fails loudly if the series ever empties.
+
+### Stage 10r — density, and the guard on an annualised return
+
+Three asks on the Portfolio Monitor. Two shipped; the third is declared absent
+against a MEASUREMENT rather than a premise, which is the whole of why this
+section exists.
+
+**THE PAGE SPENT ITS FIRST SCREEN ON CHROME.** *"I cannot even see 2 companies
+completely, which is very inefficient presentation."* Measured, that was true:
+the filters, the view toggle and the two export buttons each had a row of their
+own, and the security column was narrow enough that `Fractal Analytics Limited`
+wrapped onto THREE lines, so a row stood ~70px tall. One wrapping chrome row at
+`text-xs`, `py-1.5` cells and a `min-w-[15rem]` name column put **15 holdings on
+screen at 1500x950 where 2 fitted before**.
+
+**AND DENSITY IS ASSERTED ON GEOMETRY, because no amount of matching innerText
+can see it.** A page can print every row correctly and still bury them: the
+complaint was about where things sit, not what they say. `check:pages` now
+measures `rowsInView` and `firstRowTop` IN THE PAGE and hands them to the
+invariants — at least ten rows fully visible, and the first row inside the top
+third of the viewport. The second is what stops the first being satisfied by a
+taller window instead of tighter chrome. Both were verified by putting the old
+type scale and padding back.
+
+**THE RETURN TOGGLE, AND WHY THE GUARD IS THE FEATURE.** *"More than one year
+it'll be CAGR, less than one year I'd rather see absolute… never an annualised
+extrapolation."* `holdingReturn` in `analytics.ts` is the one place that
+decides, and the page only draws:
+
+- a measured window of **≥ 365 days** → annualised, the window named in the cell;
+- **under a year** → the ABSOLUTE figure, marked `abs`, because a rate for a
+  year the holding has not seen is a claim about a year;
+- **no reported purchase date** → `AbsentCell`. Not "weaker", not silently
+  absolute: a rate over an unknown window is not a figure at all.
+
+**`positionIrrPct` LOOKS LIKE THE SOURCE FOR THIS AND IS A TRAP.** The PMS
+statements publish a per-position IRR — 75 of 371 positions carry one — and it
+is ALREADY the extrapolation being banned: it reaches **+47,695%** on this book,
+and reads 193.9% for a holding whose return on cost is 56.5%. That is a provider
+annualising a few months, the same arithmetic that put +99.0% on the Morning CIO
+strip in Stage 10g(ii). `holdingReturn` never reads it.
+
+The window can only come from `Position.heldSince`, which `build-book` emits
+under the SAME gate as the ST/LT split — the lots must account for the units held
+exactly, or Pricol's departed units would date a holding they are no longer in.
+On this drop that is **3 of 371 positions**: Crompton at 527 days annualises
+(−27.78% on cost → **−20.18% p.a.**), Transrail at 337 and Bectors at 274 hit the
+guard. The column's own caption COUNTS all three states rather than claiming
+coverage, and `check:pages` reconciles those counts against the row total.
+
+### AND YTD / CALENDAR-YEAR ON A HOLDING IS NOT MEASURABLE HERE
+
+*"Add YTD and calendar-year columns for the holding itself, not just the
+security's market return."* The distinction is exactly right — a holding's own
+return over a window is a different question from what the share did — and this
+book cannot answer it. Measured over `public/audit/`, not assumed:
+
+| | |
+| --- | --- |
+| Earliest holdings statement of any account | **2026-03-31** |
+| Transaction tape | **2026-04-01 → 2026-08-13** |
+| Valuations dated on or before 2026-01-01 | **none** |
+| Trades dated before 2026-01-01 | **0 of 839** |
+
+A holding's YTD return needs its value at 1 January and every flow since. This
+corpus begins in April, so both halves are missing for every position, and a
+calendar-YEAR return (2025, 2024) is further out of reach still — the whole
+archive is four and a half months long.
+
+**THE COLUMN IS BUILT AND IT SHOWS A DASH** — *"if it is not possible to show
+data then just show a dash."* It was first left out on the grounds that a
+permanently-dashed column reads as a broken feed; the family asked for it
+anyway, and they are right that a column naming its own absence is worth more
+than a gap nobody can see. It renders `AbsentCell` on every row it cannot
+measure, and the caption underneath COUNTS what it covers rather than leaving a
+wall of dashes to be interpreted.
+
+**ONE CASE IS GENUINELY MEASURABLE, which is why `holdingYtd` is a function and
+not a constant dash.** A holding OPENED DURING THE YEAR did not exist on 1
+January, so it has no opening value to be missing: its year-to-date return
+simply IS its return since purchase. That needs `heldSince` and therefore the
+same lot-coverage gate as everything else here. On this drop it fires for **no
+position** — all three dated holdings were opened in 2025 — and it will fire on
+its own the first time a drop brings a within-year purchase through the gate,
+moving the caption with it.
+
+**The SECURITY's market YTD is available today from `/api/prices` and is
+deliberately not substituted.** It is the cheap way to fill this column and it
+answers a different question: a position bought in March did not earn the
+market's January-to-March move. Standing one in for the other is the substitution
+this book refuses everywhere else.
+
+**AND THE CHECK ON IT IS ANCHORED OFF THE BOOK, because the obvious version
+could not fail.** The column and its caption are both computed by `holdingYtd`,
+so reconciling one against the other passes even when both fabricate — this
+file's own "a check that compares a figure with its own copy cannot fail",
+arriving through a caption instead of a footer. `YTD_MEASURABLE` in
+`check-pages.mjs` counts the qualifying rows out of `glowData.ts` directly, and
+the invariant requires the RENDERED figures, the caption's claim and that count
+to agree. Verified by fabricating a YTD on the holdings already held on 1
+January: the caption-only version passed, the book-anchored one fails.
+
+**What would fill it properly is one document**: a holdings statement dated on
+or before 1 January, per account. The moment one lands, the value at the year's
+start is measurable for every position in that account and the column becomes
+ordinary work.
+
+**CALENDAR-YEAR COLUMNS (2025, 2024) ARE NOT BUILT**, and unlike YTD they have
+no fill path at all on this corpus: the whole archive is four and a half months
+long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
+YTD earns its dash because it becomes real on the next within-year purchase;
+a 2024 column would be a dash forever.
+
+### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
+
+*"We should also be able to see each holding of every mutual fund."* … *"For all
+the mutual funds related data you can get that from our repo — amfibeas. Mutual
+Fund NAV, direct scheme NAV, rolling return etc etc., daily Mutual Fund scheme
+NAV change… everything you can find in that repo. Do not make any changes in the
+amfibeas repo — just access relevant data points from it."*
+
+**READ-ONLY, ALWAYS.** `scripts/build-fund-lookthrough.mjs` takes the checkout as
+an INPUT (`AMFIBEAS_DIR`, default `/home/user/techmuns/amfibeas`); nothing in
+this repo clones, updates or writes to it.
+
+```
+techmuns/amfibeas (read-only)            npm run build-lookthrough
+   |  book ISIN -> mf-latest-nav.json (3,439 schemes, ISIN on every one)
+   v
+public/lookthrough/index.json            securityKey -> scheme, plan, as-of
+public/lookthrough/<schemecode>.json     NAV + day change, returns, equity rows
+docs/FUND-LOOKTHROUGH.md                 what resolved, what did not, and why
+```
+
+**THIS REPLACED A LIVE SCRAPE, AND THE JOIN IS THE REASON.** The first cut
+fetched an aggregator at build time and matched a scheme BY NAME, through AMFI's
+ISIN→name map and an AMC alias table. It worked, and every hop of it could go
+wrong. AmfiBeas carries an **ISIN on all 3,439 schemes**, so the join is an exact
+identifier lookup and the name match survives only as a fallback — the same
+tiering `build-symbols` uses, and for the reason recorded there: an identifier
+above the name tiers makes the match STRICTER, not looser. **20 of 22 join on
+ISIN alone**, and the ISIN also settles the PLAN: `INF0R8701046` resolves to
+`48299-D`, the DIRECT plan the family holds, where a name match could only ever
+reach the Regular listing.
+
+**A THIRD TIER, AND IT IS A READING RATHER THAN A GUESS.** One holding records no
+ISIN and its name matches TWO schemes — the regular and direct listings of one
+fund, which share a name and a portfolio. Its own printed name says *"- Direct
+Plan Growth Option"*. So where candidates differ ONLY by plan and the holding
+names one, the plan decides: both sides state it. Anything else stays
+unresolved. **21 of 22 · ₹123.28 Cr of ₹124.46 Cr.**
+
+**THE ONE THAT DOES NOT RESOLVE IS NAMED RATHER THAN FORCED.** Liquid BeES is
+`INF732E01037` in this book — a legacy Benchmark/GS code — and AmfiBeas carries
+`INF204KC1FU1` for the Nippon scheme. Nothing available here PROVES the two are
+one security, so it is left unresolved with that reason. An ISIN alias would be
+the guess this book refuses.
+
+**FOUR THINGS THE BOOK COULD NOT SHOW BEFORE:**
+
+- **NAV, and its DAILY CHANGE.** A mutual fund resolves to no NSE symbol, so the
+  quote feed has never priced one and every fund's "Change today" was a dash. The
+  last two points of the scheme's own NAV series answer it — and the card names
+  the PREVIOUS NAV AND ITS DATE, because a fund does not publish on a
+  non-business day and "since yesterday" would be wrong across a weekend.
+- **RETURNS, taken from `mf-returns.json` rather than recomputed.** Two
+  implementations of "what is a 1-year return" is how one screen disagrees with
+  another; that file already states each period's basis (`simple` or `CAGR`).
+- **THE WINDOW EACH RETURN REALLY SPANS.** Their `1M` for Helios runs
+  **2026-06-19 → 2026-09-01**. The label is the source's; the DATES are the
+  measurement, so both print. A period label rendered alone is the one figure on
+  that card a reader could not check.
+- **THE UNDERLYING'S OWN ISIN AND SECTOR**, which the aggregator never had.
+
+**HOLDINGS: THE AMC'S OWN FILING FIRST.** `holdings-direct/` is scraped from the
+fund house's own monthly disclosure page — `meta.source` is the AMC's URL — and
+carries the underlying's ISIN and sector. `holdings/` is the same data via an
+aggregator, with neither. So the filing wins, the aggregator is the fallback, and
+**which one was used is recorded per scheme and printed on screen**: one is the
+document the fund published, the other is somebody's reading of it. Measured: 14
+schemes from the AMC, 3 from the aggregator.
+
+**AND BOTH ARE EQUITY-ONLY, WHICH IS A REAL LIMIT AND A REGRESSION ON ONE POINT.**
+`meta.section` is "Equity Holdings" on every file, so a liquid, debt or commodity
+scheme resolves to ZERO rows — correctly, it holds no equity — and **its debt
+book is not in this store**. Five of this book's schemes are in that position,
+and the aggregator's live endpoint did carry their debt sleeves (224 rows for one
+liquid fund). That is a step back for those five, taken deliberately: the repo is
+the source the family named, its provenance is better everywhere else, and the
+card states the limit in words rather than drawing an empty table. Wiring the
+debt sleeve back would need a second source beside this one.
+
+**NONE OF IT ENTERS A BOOK TOTAL.** These are the only figures on the site that
+are not the family's own — the fund's value already stands for everything the
+card shows, and counting both would count the same money twice. The card says so
+on its face. The family's exposure per underlying is `holding value × published
+weight`, computed on screen where it is labelled derived.
+
+**AVAILABLE IN AmfiBeas AND NOT SURFACED YET**, recorded so the next session does
+not have to go looking: `mf-ratios.json` (standard deviation and beta with a
+category rank and percentile), `mf-rolling-ranks.json`, `mf-category-returns.json`
+(peer-group returns per period), `public/stocks/<isin>.json` and
+`public/index-history/NIFTY_500.json`.
+
+Seven bugs were reintroduced against the card's invariants — a NAV change without
+the previous NAV's date, a return label without its window, holdings that stop
+naming their document, a plan that stops naming its ISIN, a look-through column
+on the fund's money, a dropped provenance line, and an AIF grown a card — and all
+seven fire.
+
+### Stage 10t — THE MOVERS ARE DIRECT EQUITY, AND THREE CAPTIONS GO
+
+*"remove the book performance section. daily movers/losers should comprise of
+direct equity holdings only. remove the highlighted text from ui."*
+
+**THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
+`DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
+Stage 10L after the family reported the same thing three times, and applied to
+the Transactions tab in Stage 10p. It means shares bought in the family's own
+demat or broking account (`Direct` / `Execution`), never shares a discretionary
+manager picked, and never a fund or an ETF. Measured on this book: **37 holdings,
+₹94.9 Cr, of which 33 names and ₹82.3 Cr can reach the quote feed at all.** Before
+this the list mixed the two — Jammu Kashmir Bank, Carnelian's pick, sat beside
+Fractal Analytics from the family's own demat under one heading.
+
+**EVERY FIGURE ON THE CARD MOVED WITH THE SET, AND THE CAPTIONS HAD TO FOLLOW.**
+The tile is `Direct Equity · today` rather than `Book · today`; its coverage line
+counts `N of 37 direct-equity names` rather than `N of 214 distinct names`; and
+the index comparison reads "Direct equity is +x% against the Nifty 500" rather
+than "the priced book is". A caption that widens a figure is the same failure as
+one that narrows it — the Capital invested tile already cost this page once.
+
+**AND WHAT THE NARROWING LEAVES OUT IS NAMED.** `130 PMS mandates ₹136.6 Cr · 3
+ETF ₹28.3 Cr · 1 Mutual Fund` also moved today and are not in either list. Counted
+over the holdings that carry a live day change — the ones that could otherwise
+have appeared — so a bucket with nothing priceable in it needs no excusing.
+
+**THE BOOK PERFORMANCE CARD IS REMOVED, AND NOT ONE OF ITS FIGURES IS.** It read
+"Listed vs private, on a like-for-like basis" over the listed book's invested →
+today with its unrealised gain, return and money-weighted return, and the same
+for the AIF half. All of it is still on the page and still derived: invested and
+current value per bucket in the allocation table, the money-weighted return in
+its own KPI tile with its own coverage line, and the listed/private split in the
+Consolidated NAV tile and on Concentration & risk, each linking to the holdings
+behind it. `publicPrivateSplit`, `listedBook`, `privateBook` and
+`listedTotalReturn` still feed those surfaces. **A layout removal, not a
+measurement one — and `check:pages` asserts BOTH halves**, because a page that
+dropped the card and the split together would pass the first check while losing a
+figure.
+
+**THREE CAPTIONS GO, AND TWO FACTS INSIDE ONE OF THEM DO NOT.** The movers footer
+(the ranking rationale, the unchanged-name count, the multi-account rule) and the
+movers subtitle described HOW the card works to a reader who can see it working.
+The allocation table's subtitle also carried two things a reader ACTS on: that
+every return there is CUMULATIVE rather than annualised, and the date the figures
+close at. Both were **already on the page outside that card** — the Consolidated
+return tile states "cumulative, not annualised" on its face and the header's
+`<BasisPill>` states the as-of — so the subtitle could go without taking a
+measurement with it, and an invariant now asserts those two survive.
+
+**THE PILL KEEPS THE WORD "HELD".** The first draft moved the basis and the date
+into it, reading `6 buckets · cumulative · 2026-08-13`. Two OTHER invariants read
+the bucket count out of `N buckets held`, and both reported a missing figure on a
+page rendering perfectly. **A caption is chrome; a count inside it is not.** The
+same pass added a `title` prop to `Pill` for a hover that then had nothing to
+carry, and it was reverted rather than left exported and uncalled.
+
+**SIX INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG — and one of them was
+in the wrong place.** The scope claim is struck on a COUNT, not on the rows: every
+`cio-live` fixture price is the mark × 1.10, so every priceable name in scope
+rises and the gainer count IS the size of the priced scope (33 here, 160-odd with
+the mandates folded back in). A rows-only check passes on any day the mandate
+names happen not to move, which is most days. The expectation is derived from the
+book on every run and the bucket is recomputed inside `check-pages.mjs` rather
+than imported — a check that imports the helper it is checking agrees with itself
+by construction.
+
+**AND A CHECK FOR REMOVED TEXT MUST RUN WHERE THAT TEXT WOULD RENDER.** The
+movers footer only exists when the card has rows, and the plain `cio` walk serves
+no feed — so "the footer stays removed" passed there whether it had been removed
+or not. Reintroducing the sentence proved it: `cio` stayed green. It is asserted
+on `cio-live` now; the allocation subtitle and the removed card render with no
+feed at all and stay on `cio`.
+
+### Stage 10u — A MANDATE ROW IS ITS NAME, AND THE CHECKS STOPPED READING PROSE
+
+*"Do not write the entity along with the PMS name, entity name is already a
+separate column. Other details in smaller text can be shown after we open the
+full drill down page of individual PMS page. Remove the smaller text details
+from the front table so it is a clean row."*
+
+A mandate row printed three lines: the name with the owner appended, a "PMS
+mandate" pill, and a grey sub-line reading `<manager> · account <no> · N
+holdings`. It is one line now — name and pill — and rows on screen went **18 →
+21** because a third of each mandate row was chrome.
+
+**THE OWNER LEFT THE NAME BECAUSE THE COLUMN THAT HOLDS IT NOW EXISTS.**
+`mandateLabelWithOwner` was written for a real defect: FOUR of this book's ten
+mandates share a strategy name with another — Goldstandard's Aristos, SVAN's
+Velocity, Green Lantern's GLC Growth, V.E.C's Small and Mid-Cap, each run for
+two members — so on strategy alone the section drew four pairs of
+identically-named rows with nothing to tell them apart. That reason EXPIRED when
+Sector and Entity moved to the end of the row: a mandate row populates
+`entities`, so the pairs are separated by the column that exists for it. The
+helper stays for callers with no such column (the Excel export, the holdings
+drill-down), and **`check:pages` asserts the pairs are still distinguishable**,
+because this is the one thing the change could break.
+
+**THE DETAILS MOVED TO THE PAGE THAT ALREADY PRINTED THEM.**
+`/mandate/:accountId` has always shown `provider · accountNo · owner` under its
+title. Nothing was lost: the row's link carries manager, account and count in
+its hover `title`, and the row carries them as `data-*`.
+
+**ONE THING IS NOT A DETAIL AND STAYS, CONDITIONALLY.** Under a filter a mandate
+row's figures cover PART of the account, and a reader who is not told reads a
+subset as the whole. That line renders only when `holdings.length <
+accountCount` — nothing in the unfiltered view, which is the clean row that was
+asked for.
+
+**AND SIX INVARIANTS WERE READING THAT SUB-LINE.** `MANDATE_SUBLINE` parsed the
+manager, the account and the constituent count out of the rendered text, and
+`check:family` parsed the same string again. Deleting the line would have
+retired all of them **silently**: a regex that matches nothing yields an empty
+list, and an empty list passes `.every()` and satisfies a length comparison
+against itself. So the row carries `data-mandate`, `data-manager`,
+`data-account`, `data-holdings`, `data-account-holdings` and `data-bucket`, the
+sweep collects them from the DOM into `ctx.tableRows` / `ctx.mandateRows`, and
+every one of those checks reads structure instead. Same contract `data-row` and
+`data-days` already carry on the transactions rollup, and the same rule: **a
+structural claim must not depend on prose a redesign is free to delete.** A run
+that captures no rows reports NOT CHECKED rather than passing.
+
+**THE FIRST DRAFT OF THE NEW CHECK COULD NOT FAIL, AND REINTRODUCING THE BUG IS
+WHAT FOUND IT.** "The name does not carry the owner" was struck on
+`data-mandate` — which is `MandateInfo.name`, a DIFFERENT field from the
+`Row.security` the cell actually renders. Putting the owner back into the
+rendered name left the attribute untouched and the invariant green. It reads the
+rendered first cell now. Both new invariants were then verified by reintroducing
+their bug: the owner back in the name, and the sub-line back under it.
+### Stage 10v — ONE TILE, ONE DESTINATION, AND THE HALVES BECOME A TOGGLE
+
+*"there are multiple links on these KPI tiles. Make these KPI tiles clickable and
+remove all the other links. suppose for consolidated NAV KPI tile, the
+listed/private book links and pages should not exist separately… just give the
+toggle option inside the Consolidated NAV link page. Do the same for all the
+other KPI tiles as well."*
+
+Stage 10o gave every figure on Morning CIO an address and gave several tiles
+MORE THAN ONE. The NAV tile carried three — its label, and the listed and
+private halves in its own caption; Capital invested carried two, the second
+being the 60 cost-less positions. A reader had to work out which of them
+answered their question, and the largest target on the tile, the figure itself,
+went nowhere.
+
+**THE TARGET IS THE WHOLE CARD, AND IT IS A STRETCHED OVERLAY RATHER THAN A
+WRAPPER.** The value carries an `<Auditable>` popover, which is a `<button>`,
+and a button inside an anchor is invalid markup that browsers disagree about.
+So `Kpi.tsx` renders the anchor as an absolutely-positioned sibling covering the
+card with the interactive children lifted above it: the arithmetic stays
+clickable where it is, the rest of the tile navigates, and the markup stays
+valid. Six tiles, six destinations, and every competing link inside one is gone.
+
+**AND THE SUB-SCOPES BECAME FACETS OF THE TILE'S OWN PAGE.** `listed`, `private`
+and `no-cost` were `DrilldownId`s of their own. They are `Facet`s now — a set
+plus a label plus its note, carried on the drill-down the TILE opens — and
+`/holdings` renders them as a toggle above the table, each chip printing its own
+row count. `?facet=` selects one; the first is the default. The heading and the
+lead follow the active facet, so a narrowed page never sits under the whole
+set's caption.
+
+| The tile | opens | with facets |
+| --- | --- | --- |
+| Consolidated NAV | `?of=book` | All holdings 369 · Listed 350 · Private 19 |
+| Capital invested | `?of=invested` | Reports a cost 309 · Reports none 60 |
+| Consolidated return | `?of=invested` | the same page — both figures divide by the same capital |
+| Money-weighted return | `?of=measured` | Covered · Not covered |
+| Winners / losers | `?of=winners` / `losers` | Showing a gain · In neither count |
+| Dry powder · Distributions | `/private-market` | not holdings — no facet, and no holdings table |
+
+**THE OLD ADDRESSES STILL RESOLVE, DELIBERATELY.** `?of=listed`, `?of=private`
+and `?of=no-cost` map to their scope plus facet, so a bookmark keeps working —
+which is exactly why their ABSENCE from the strip has to be asserted rather than
+assumed: nothing would break if one came back.
+
+**THE CHECKS HAD TO MOVE, AND ONE OF THEM COULD NO LONGER FAIL.** *"every KPI
+tile and concentration figure opens ITS OWN set"* pairs a link's TEXT with its
+href, read off `main a[href]`. A whole-card overlay anchor has no inner text, so
+all six tiles arrived with an empty label and the pairing could not see them —
+it would have gone on "passing" by being unable to fail. The six tiles are
+struck on `ctx.kpiTiles` now, which pairs each card's own label with the one
+anchor inside it; the concentration figures are still text links and are still
+struck on the link list. Same claim, struck where the pairing lives.
+
+**AND `kpiTiles` WAS CAPTURED INTO NO CALLER.** It was evaluated in the page and
+left out of the ctx literal handed to the invariants, so all three new
+KPI-strip checks reported NOT CHECKED — this repo's most-repeated failure,
+arriving in the harness this time. They said `notChecked` rather than passing,
+which is the only reason it was visible at all.
+
+**A MISSING TOGGLE MUST BE A FINDING, NOT AN ABSTENTION.** Every facet invariant
+first returned `notChecked` when a page drew no toggle — and deleting the toggle
+outright, which is precisely the arrangement the family asked to be rid of, then
+reported the whole sweep CLEAN with seven unchecked lines. That is `golden.mjs`'s
+rule arriving through a control. Abstention is allowed only where the BOOK
+genuinely has one side, evidenced by Morning CIO's own figures
+(`BOOK_HAS_BOTH_HALVES`, `TILE_NAMES_COSTLESS`) rather than by a literal — so a
+drop with nothing private abstains and this one fails.
+
+**THE VALUE CHECKS COULD NOT SEE ANY OF IT.** Every figure on these pages renders
+identically whether the halves are reached by a toggle here or by two links on
+the page before, and all of them passed while the halves were separate scopes. So
+the toggle is asserted on the CONTROL: that it exists, that it opens on the whole
+set rather than a half, that its printed counts partition the scope, and — on the
+listed half — that the private half and the undivided book are one click away
+FROM THERE. That last one is the half of the request the figures cannot see: a
+reader who opened one half must not have to go back to Morning CIO to reach the
+other.
+
+**IDENTIFIED BY THE FACET IT NAMES, NEVER BY THE SHAPE OF ITS ADDRESS.** The
+whole-book chip is written `facet=all` rather than as a bare scope, and the first
+draft of that check tested for the ABSENCE of a `facet=` param — asserting a URL
+convention instead of the reader's route, and failing a page that was landing
+correctly.
+
+**AND THE WINNERS PAGE'S THIRD SET MOVED WITH THEM.** "The holdings in neither
+count are named, not dropped" matched the companion table's PROSE, which a page
+can print above an empty table. Those rows are a facet now, and the check reads
+the chip's own row count — the stronger claim, and the one that survives the
+wording changing again.
+
+**ELEVEN BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: a second link inside a
+tile, the NAV tile pointed at the wrong set, the Listed half pointed at the
+private facet, the no-cost sentence dropped from the tile, Dry powder pointed at
+a holdings table, the toggle deleted, the toggle defaulted to a half, and the
+chips printing the active set's count instead of their own. Two of them fired
+checks that had to be rewritten first, which is the whole reason for doing it.
+
+### Stage 10w — Watchlist & Targets: REMOVED, and the store is not
+
+*"remove this tab"* — the sidebar entry, pointed at.
+
+`/watchlist` redirects to `/compare`, the nav entry is gone and
+`src/pages/Watchlist.tsx` is deleted. The redirect goes to Compare Companies
+rather than the monitor because that is the surviving surface in the SAME nav
+group that still renders a watched name's target and its upside; leaving it
+pointed somewhere with none of those figures while `/compare` sits one link away
+is the stale routing decision Stage 9d removed the day the calendar was wired.
+
+**`src/lib/watchlist.ts` IS UNTOUCHED, AND THAT IS THE HALF A REMOVAL LIKE THIS
+BREAKS SILENTLY.** Every target price, fair value, entry and exit level, price
+alert, valuation method, FV reference year, target weight and "why we own it"
+note the family typed is still stored and still read and written by
+`InvestmentTools` on a name's own company page — and `CompareCompanies` still
+reads the target and the upside. Nothing anyone entered was deleted. With its
+most VISIBLE reader gone the store looks dead, which is how a future session
+deletes it and takes the family's own judgements with it: the same trap
+`announcements.ts` was in when `/news` went, and the same reason `deals.ts` and
+`household.ts` stayed in Stage 10f when their pages were removed.
+
+So the check does not merely assert the tab is gone. `check:family` asserts
+BOTH halves, and only the second one can fail quietly:
+
+- the nav entry is absent and `/watchlist` REDIRECTS rather than 404s, because a
+  bookmark is a promise the app made;
+- a company page reached from the monitor still carries the Investment tools
+  panel with Target price, Fair value and Valuation method on it — the address
+  taken off the rendered page rather than typed, like every other route that
+  suite follows.
+
+`check:pages` no longer walks `/watchlist`: there is no page there to hold to
+the light-mode, overflow and stray-₹0 bar. **A removal is verified by asserting
+it happened, never by deleting the test alongside the feature.**
+
+Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
+`upsidePct`, `parseWeightPct` and `VALUATION_METHODS` all have their caller in
+`InvestmentTools`, and `readWatchlist` keeps its one in `CompareCompanies` —
+so nothing was left exported and dead, which is the failure this file keeps
+naming.
+
+### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
+
+*"remove all three pages from the dashboard UI"* — the three nav entries,
+pointed at.
+
+`/knowledge`, `/macro` and `/economy` redirect, the three nav entries are gone
+and `Knowledge.tsx`, `MacroResearch.tsx` and `Economy.tsx` are deleted, along
+with every module left with no other caller: `lib/knowledge.ts` (the note
+store), `lib/econCalendar.ts` and `EconomicCalendar.tsx` (Stage 9d's release
+calendar), `YieldCurve.tsx`, `lib/exportChart.ts`, `lib/exportSeries.ts` and
+`lib/macro.ts` — the last of which was ALREADY uncalled before this change and
+went because it is the removed page's own feed client.
+
+**ALL THREE FORWARD TO THE DASHBOARD HOME, WHICH IS A DECISION RATHER THAN A
+DEFAULT.** Every other removal in this file sends its address to the surviving
+surface nearest its purpose — `/private` to the private book, `/watchlist` to
+Compare Companies, `/household` to Family & Entities. Nothing that survives
+holds the family's own notes, and nothing that survives renders a commodity,
+index, currency or macro series. Pointing these at a page that merely LOOKS
+adjacent would assert a continuity that does not exist. `/industry`, removed at
+Stage 9c and forwarded to `/macro`, moves with it.
+
+**WHAT DID NOT GO WITH THEM — and this is the half a removal like this breaks
+silently.** `src/lib/series.ts` and `SeriesChart.tsx` were most visibly read by
+the two pages that have just gone, so they now LOOK dead. They are not:
+`ReturnsTable` draws a company's price history with `Point`, `SeriesMeta`,
+`HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and `rebase`, off
+`/api/prices`; `CompareCompanies` and `navSeries.test.ts` read the same shapes.
+The `stock` invariant that asserts the price card renders is what holds them up
+at runtime, and it says so in as many words; `SeriesChart` itself is held by the
+BUILD, because the harness serves no price feed and the chart never mounts, so
+the gate for this change is build AND sweep rather than either alone.
+
+**AND `public/series/` AND `npm run harvest` STAY, WHICH IS THE ONE DECISION
+HERE THAT IS NOT REVERSIBLE IF TAKEN THE OTHER WAY.** No page reads the store
+now — `fetchSeriesIndex` and `fetchSeriesPoints` have no caller, and
+`src/lib/series.ts`'s header says so plainly rather than leaving a silent
+orphan. But seven RBI policy rates and IEX's day-ahead spot power are
+ACCUMULATING series: their sources publish a current value and no history, so
+the store builds them one observation per run. Stopping the nightly harvest
+would not pause those series, it would END them, with nothing to backfill from.
+Deleting the only reader of a store a nightly job keeps growing is the wrong
+half to cut, and a documented no-caller is not the dead-builder failure this
+file names — that failure is the SILENT orphan a future session wires back
+believing it load-bearing.
+
+**TWO CLOUDFLARE FUNCTIONS ARE NOW UNCALLED AND ARE LEFT STANDING**:
+`functions/api/econ-calendar.js` and `functions/api/macro.js`. The request was
+for the dashboard UI, and an endpoint is a deployment surface rather than a
+page; both are stateless proxies, so nothing accumulates in them and nothing is
+lost either way. They are named here rather than removed quietly, and either can
+go on request. `check:pages`'s failed-request noise list no longer excuses
+`/api/econ-calendar`, `/api/macro` or `/api/economy`, so a stray request to any
+of them is now REPORTED instead of suppressed.
+
+`check:pages` no longer walks the three routes, and the `knowledge` and `macro`
+invariant blocks went with the pages they described. `check:family` carries the
+removal instead: the four redirects land, the three nav entries are gone, the
+now-empty KNOWLEDGE nav GROUP heading is gone with its one entry, and each page
+renders NONE OF ITS OWN CONTENT at its old address — struck on each page's own
+distinctive phrases rather than on its title, because a title survives in a nav
+entry while the page is gone.
+
+**A CHECK THAT COULD NOT CATCH WHAT ITS COMMENT CLAIMED, FOUND BY REINTRODUCING
+THE BUG.** The `/industry` row was written to catch a redirect pointed at a
+removed page. Pointed back at `/macro` it still PASSED — `/macro` now forwards
+to `/cio`, and two hops settle at the same pathname as one. The suite reads
+where a bookmark LANDS, and by that measure both routings keep the promise, so
+the chain is a fact about the route table: fixed there, named there, and the
+comment here corrected to claim only what it proves. Five other bugs were
+reintroduced — the page restored at its address, its route un-redirected, its
+nav entry put back, the group heading with it, and `ReturnsTable` dropped from
+the company page — and each fired exactly its own check.
+
+### Stage 10y — THE TILE IS THE AFFORDANCE, AND THE ARITHMETIC MOVES TO THE PAGE
+
+*"remove the remaining underlines from the texts, and even the calculation that
+we're showing that appears when click the underlined no. we can show that inside
+the clickable KPI pages. Just make the KPI tiles look like 3-d clickable buttons
+and remove every other underlines/hyperlinks on the texts."*
+
+Stage 10v made the whole card the click target and left both underlines on it. So
+each tile carried THREE affordances for one action: a dotted-underlined LABEL, a
+dashed-underlined FIGURE that opened a popover, and the card itself. Two of them
+pointed at text that is not the thing to click.
+
+**THE AFFORDANCE IS THE SURFACE NOW.** `.card.kpi-btn` in `index.css` — an inset
+top highlight (the lit edge), a hard offset shadow (the tile's thickness) and a
+soft cast shadow (its distance from the page); hover lifts it, `:active` presses
+it flat, `prefers-reduced-motion` keeps the depth and drops the movement. Written
+as plain CSS with explicit colours rather than as Tailwind utilities, because
+every `ink-*`/`slate-*` utility needs its own light-mode remap **including each
+opacity variant**, and a four-layer shadow assembled from them would need four.
+
+**IT IS `.card.kpi-btn`, NOT `.kpi-btn`, AND THE FIRST DRAFT SHIPPED FLAT.**
+`html:not(.dark) .card` sets a box-shadow of its own further down the same file
+at equal specificity, so source order decided it and every tile rendered as an
+ordinary panel — a raised button that was not raised, with the entire sweep
+green. `check:pages` resolves computed COLOUR and has never looked at a shadow.
+Qualifying with `.card` puts the rule above any `.card` rule wherever either
+lands in the file.
+
+**AND THE RAISED LOOK IS ONLY ON A TILE THAT OPENS SOMETHING.** `Kpi` applies it
+only where `href` is set, so the drill-down page's own four summary tiles stay
+flat. A card that presses under the pointer and then does nothing is a worse lie
+than a flat one — which is why the invariant is struck in BOTH directions, on two
+different pages.
+
+**THE ARITHMETIC IS ON THE PAGE THE TILE OPENS.** `drilldownFormula(d, money)` in
+`drilldown.ts` returns the `FormulaDef` for a set, and `/holdings` renders it as
+a card between the tiles and the table: the expression, the worked example, and
+the paragraph. It sits beside the SET DEFINITION for the reason this whole file
+exists — an explanation kept anywhere else drifts from the rows it explains — and
+takes the money formatter as an argument rather than importing one, because every
+figure here renders in the reader's selected display currency through
+`fmtFromBase` and a formatter fixed in a lib prints rupees on a page showing
+dollars. Same seam `auditFormulas.ts` already uses.
+
+**IT IS STRUCK ON `d.rows`, WHICH IS THE ACTIVE FACET.** A version summed over
+the whole scope reads correct on the undivided page and prints ₹710.4 Cr under a
+heading saying "Private" — the caption-does-not-describe-its-figure failure the
+Capital invested tile already cost this book once, arriving one click deeper. The
+invariant compares the worked line against the page's OWN rendered total, and on
+the private half additionally requires it NOT to equal the NAV.
+
+**ONE OF THE REMOVED POPOVERS WAS WRONG, WHICH IS WHY NOTHING REPLACES IT.** Dry
+powder's read `= Σ (Committed − Called) across funds`, and this book does not
+derive it that way: Private Market's own tile says it is *"summed exactly as each
+statement prints it, never derived from committed − drawn"*, because two folios
+print a commitment and a drawdown and NO undrawn figure, and subtracting there
+would assert a fund has nothing left to call. The page that tile opens already
+carries the correct explanation beside Committed and Drawn.
+
+**THE MONEY-WEIGHTED PAGE DOES NOT RESTATE ITS RATE, DELIBERATELY.** That figure
+is a pooled XIRR over every account's dated flows, each closing on its own report
+date; re-deriving it in `drilldown.ts` would be a SECOND source for one figure.
+The page owns the SET — which accounts qualify, what they are worth, which 42 sit
+outside — and the rate stays on the tile it was clicked from.
+
+**SCOPED TO THE KPI STRIP.** The allocation table's per-bucket returns and its
+footer still open a formula popover. That is deliberate rather than overlooked:
+the footer's popover is the one place left that reconciles the money-weighted
+whole-book figure against a column of return-on-cost cells — the Book performance
+card that also carried it was removed in Stage 10t, and the Consolidated return
+tile's went in this change. Removing the third would delete the reconciliation
+this file's own "a total must tie to its own columns" rule exists to preserve.
+
+**FIVE BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the label underline back
+on a tile, the `.card` qualifier dropped so the tiles go flat, every card raised
+so a panel poses as a button, the formula card deleted, and the formula summed
+over the scope instead of the facet. Two of them needed a second attempt to
+reproduce, which is itself the finding — the light theme is what the sweep walks
+first, so a bug introduced only in the dark rule changes nothing it can see.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -4469,6 +5416,15 @@ on the page rather than shipped as rules that would sit permanently silent.
 
 ## Stage 9d — the economic release calendar (`/api/econ-calendar`)
 
+**THE PAGE THIS SHIPPED ON HAS SINCE BEEN REMOVED — see Stage 10x.** Economy &
+Macro went at the family's request, and `EconomicCalendar.tsx`,
+`src/lib/econCalendar.ts` and its saved-response test went with it. The Function
+still stands and is named there as uncalled. Everything below is kept because it
+is what was MEASURED about that upstream — the off-by-one on Nasdaq's date
+parameter, the silent 2000-row cap, the verified `importance` mapping — and a
+future session wiring a calendar again should read it before probing anything.
+
+
 The Economy page's calendar was declared impossible on the grounds that a
 schedule and a street consensus are licensed vendor products. **That was the
 third absence in this repo recorded against an unchecked premise**, after FRED
@@ -4527,15 +5483,17 @@ Four presentation rules, each a plausible-looking wrong answer avoided:
   those at midnight UTC; rendered in a zone behind UTC that lands on the previous
   day. They are treated as day-only and grouped on the source's own date.
 
-**IT LIVES ON ECONOMY & MACRO, AND NOWHERE ELSE.** Macro Research carried a
+**IT LIVED ON ECONOMY & MACRO, AND NOWHERE ELSE.** Macro Research carried a
 SECOND "Data release calendar" card, declaring a calendar impossible for the
 same reasons — which stopped being true the moment this was wired, so a stale
-absence would have contradicted the working page one link away. It is removed,
-and `check:family` asserts both halves of that: the claim gone from Macro, the
+absence would have contradicted the working page one link away. It was removed,
+and `check:family` asserted both halves of that: the claim gone from Macro, the
 real calendar still rendering with its filters on Economy. A removal is verified
-by asserting it happened.
+by asserting it happened — which is why, now that BOTH those pages have gone
+(Stage 10x), that same pair of checks became one asserting neither page renders
+its own content at its old address.
 
-`src/lib/__tests__/econCalendar.test.ts` asserts all of it against a REAL saved
+`src/lib/__tests__/econCalendar.test.ts` asserted all of it against a REAL saved
 response, and its anchor case is India's CPI — the field the Economy page once
 printed as an invented `4.83%`, now measured at 4.45% actual against a 4.50%
 consensus, with MOSPI named as the publisher.
@@ -4549,10 +5507,11 @@ The page composed the harvested store into a per-industry dashboard — seven
 industries, each declaring which stored series ARE its input and output prices,
 with a rebased basket chart — and named its structural gaps (capacity,
 utilisation, order books) rather than drawing them. The family asked for it to
-go; `/industry` redirects to `/macro`, and `check:family` asserts the redirect.
+go; `/industry` redirects to `/cio` — it forwarded to `/macro` until that page
+was removed too (Stage 10x) — and `check:family` asserts the redirect.
 
 **NOTHING IT DEPENDED ON WAS DELETED WITH IT.** Every series it read is still in
-the harvest store and still on Macro Research: coal, iron ore, HRC, the base
+the harvest store: coal, iron ore, HRC, the base
 metals, crude, gas, spot power and the fertiliser complex. What is gone is one
 arrangement of them.
 
@@ -4594,6 +5553,15 @@ another; the answer (absent, never a shorter window relabelled) is written once.
 price is a separate measurement and the page labels it as one.
 
 ## Stage 9 — the macro series store (`npm run harvest`)
+
+**NO PAGE READS THIS STORE SINCE Stage 10x, AND THE HARVEST STILL RUNS.** Macro
+Research and Economy & Macro were the only two surfaces that charted a harvested
+series and both have been removed at the family's request. The nightly Action is
+deliberately untouched: the RBI rates and IEX spot power below are ACCUMULATING
+— one observation per run, because their sources publish a current value and no
+history — so stopping it would end those series rather than pause them. The read
+side (`src/lib/series.ts`) stays for the same reason and says so in its header.
+
 
 ```
 scripts/harvest/catalogue.mjs   what the FOOS spec asks for, and where it comes from
@@ -4921,6 +5889,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
+- `npm run build-lookthrough` refreshes `public/lookthrough/` and
+  `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
+  disclosed equity holdings — from a READ-ONLY checkout of `techmuns/amfibeas`
+  (`AMFIBEAS_DIR`, `DRY=1` to resolve and report without writing). Idempotent.
+  Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
+  the card prints both as-of dates so staleness is visible rather than silent.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run build-register` regenerates `src/data/registerData.ts` from the family's
   investment register — the `/register` page's data, and NO part of the book. Its

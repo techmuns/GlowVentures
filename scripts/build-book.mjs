@@ -988,6 +988,23 @@ function build(docs) {
       let ltCostBasis = null;
       let daysToLT = null;
       /**
+       * WHEN THE OLDEST UNIT STILL HELD WAS BOUGHT — the only thing in this book
+       * that can say how long a holding has been held, and therefore the only
+       * thing that can decide whether a return may be ANNUALISED.
+       *
+       * Emitted under the SAME gate as the ST/LT split: the lots must account for
+       * the units held exactly. A register that carries units the family no
+       * longer owns would date the holding from a lot that is gone, which is the
+       * Pricol failure one field over — and a holding period is worse than a tax
+       * basis to get wrong, because it is the DENOMINATOR of an annualised rate.
+       *
+       * Null on every position whose statements report no purchase date, which
+       * is most of them. `null` means NOT REPORTED and must never be defaulted:
+       * a missing date read as "today" makes every return infinite, and read as
+       * "long ago" makes every return vanish.
+       */
+      let heldSince = null;
+      /**
        * THE LOTS MUST ACCOUNT FOR THE UNITS ACTUALLY HELD, OR THERE IS NO SPLIT.
        *
        * This summed every dated lot the register carried, whether or not those
@@ -1037,6 +1054,9 @@ function build(docs) {
           }
         }
         daysToLT = soonest;
+        // The OLDEST lot, not the newest: the holding has existed since its
+        // first surviving unit was bought.
+        for (const l of dated) if (heldSince === null || l.purchaseDate < heldSince) heldSince = l.purchaseDate;
       }
       positions.push({
         securityKey: h.securityKey,
@@ -1066,6 +1086,7 @@ function build(docs) {
         stCostBasis,
         ltCostBasis,
         daysToLT,
+        heldSince,
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
         positionIrrPct: cp?.positionIrrPct ?? null,

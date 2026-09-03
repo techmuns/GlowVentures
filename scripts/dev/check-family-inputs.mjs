@@ -143,7 +143,28 @@ for (const [from, to] of [
   ["/look-through", "/private-market"],
   ["/funds", "/private-market"],
   ["/value-creation", "/private-market"],
-  ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+  ["/data-bank", "/monitor"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+  // KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO were removed at the
+  // family's request. All three forward to the dashboard home rather than to a
+  // neighbour, because nothing that survives holds the family's own notes and
+  // nothing that survives renders a macro series — sending them at a page that
+  // merely looks adjacent would assert a continuity that does not exist.
+  //
+  // `/industry` moves WITH them: removed at Stage 9c, it forwarded to `/macro`.
+  //
+  // AND THIS ROW CANNOT CATCH THAT, WHICH IS WORTH SAYING RATHER THAN LEAVING
+  // TO BE FOUND. Reintroducing the bug is what showed it: pointed back at
+  // `/macro` the row still PASSED, because `/macro` now redirects to `/cio` and
+  // two hops settle at the same pathname as one. What this suite reads is where
+  // a bookmark LANDS, and by that measure both routings keep the promise. The
+  // chain is a fact about the route table, so it is fixed there and named in
+  // `App.tsx` — not asserted here by a check that would have to pass either way.
+  ["/knowledge", "/cio"], ["/macro", "/cio"], ["/economy", "/cio"], ["/industry", "/cio"],
+  // WATCHLIST & TARGETS was removed at the family's request. It forwards to
+  // Compare Companies rather than the monitor because that is the surviving
+  // surface in the same nav group that still renders a watched name's target
+  // and its upside — the stale-routing rule Stage 9d applied to the calendar.
+  ["/watchlist", "/compare"],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -168,23 +189,30 @@ check("its private market value is a real measured figure, not the removed page'
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /DRAWN AGAINST NO VALUATION/i.test(text) && /in no total on this page/i.test(text));
 
-// ── The release calendar lives on Economy, and nowhere else ────────────────
+// ── THE THREE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
 //
-// Macro Research carried a second "Data release calendar" card that declared a
-// calendar impossible. That stopped being true the day `/api/econ-calendar` was
-// wired, so it was removed — and the check that replaces it has to prove the
-// RIGHT one went: the stale claim gone from Macro, the working calendar still
-// on Economy.
-await page.goto(`${BASE}/macro`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
-text = await page.locator("body").innerText();
-check("Macro Research no longer claims a calendar is impossible",
-  !/release calendar is available|release calendar can be built/i.test(text));
-await page.goto(`${BASE}/economy`, { waitUntil: "networkidle" });
-await page.waitForTimeout(1500);
-text = await page.locator("body").innerText();
-check("the real calendar is still on Economy & Macro, with its filters",
-  /data release calendar/i.test(text) && /this week/i.test(text) && /unranked/i.test(text));
+// This block used to prove that the release calendar sat on Economy & Macro and
+// that Macro Research had stopped claiming a calendar was impossible. Both those
+// pages have now gone at the family's request, so the claim to assert is the
+// removal itself: the addresses redirect (checked above) and NEITHER page's own
+// content renders anywhere.
+//
+// Struck on each page's own distinctive content rather than on its title,
+// because a title can survive in a nav entry or a heading while the page is
+// gone, and — the failure this repo has recorded twice — prose about a page is
+// not the page. The redirect lands on Morning CIO, so the text read here is the
+// dashboard's, and none of these three phrases belongs to it.
+for (const [from, label, pattern] of [
+  ["/knowledge", "Knowledge & Memory", /capture the first note|search the family's notes|notes captured/i],
+  ["/macro", "Macro Research", /returns table[\s\S]{0,400}52-week|series store did not respond|observations/i],
+  ["/economy", "Economy & Macro", /data release calendar|surprise vs consensus/i],
+]) {
+  await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  text = await page.locator("body").innerText();
+  check(`${label} renders none of its own content at ${from}`, !pattern.test(text),
+    pattern.exec(text)?.[0]);
+}
 
 // ── Portfolio Monitor ──────────────────────────────────────────────────────
 //
@@ -210,6 +238,22 @@ await page.waitForTimeout(600);
 const nav = await page.locator("body").innerText();
 check("the News & Announcements nav entry is gone", !/News & Announcements/i.test(nav));
 check("the holdings-news bell is gone with it", !/Latest holdings news/i.test(nav));
+// Watchlist & Targets went the same way: the tab, the nav entry and the page.
+// What must NOT have gone with it is the store — the family's own targets,
+// fair values and levels are still written and read on a name's own company
+// page, and that half is asserted below on the company page itself.
+check("the Watchlist & Targets nav entry is gone", !/Watchlist\s*&\s*Targets/i.test(nav));
+// KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO went the same way.
+// Removing `/knowledge` also empties the whole KNOWLEDGE nav GROUP, so its
+// heading must go with its one entry — a group label standing over nothing is a
+// section a reader will look for and never find.
+check("the Knowledge & Memory nav entry is gone", !/Knowledge\s*&\s*Memory/i.test(nav));
+check("...and the now-empty Knowledge group heading with it", !/(^|\n)\s*KNOWLEDGE\s*(\n|$)/.test(nav));
+check("the Macro Research nav entry is gone", !/Macro Research/i.test(nav));
+check("the Economy & Macro nav entry is gone", !/Economy\s*&\s*Macro/i.test(nav));
+// ...and RESEARCH, which lost two of its three, keeps the one that survived.
+check("the Research group survives with Compare Companies in it",
+  /Compare Companies/i.test(nav));
 
 check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
 check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));
@@ -255,17 +299,28 @@ if (await catSelect.count()) {
   await catSelect.selectOption({ label: "PMS mandates" });
   await page.waitForTimeout(800);
   text = await page.locator("body").innerText();
-  const subLines = [...text.matchAll(/·\s+account\s+(\S+)\s+·\s+(\d+)\s+holdings?/g)];
+  /**
+   * READ OFF THE ROWS' OWN ATTRIBUTES, not off a printed sub-line.
+   *
+   * These two used to parse "· account <no> · N holdings" out of the rendered
+   * text. That line was removed at the family's request — the entity has its own
+   * column and the rest belongs on the mandate's page — and BOTH checks would
+   * then have matched nothing, which is not a failure but an empty list, and an
+   * empty list quietly satisfies a length comparison against itself. The row
+   * carries `data-mandate` / `data-holdings` for exactly this.
+   */
+  const mandateRows = await page.$$eval("tbody tr[data-mandate]", (trs) =>
+    trs.map((tr) => ({ accountNo: tr.getAttribute("data-account"), holdings: Number(tr.getAttribute("data-holdings")) })));
   const rowsPill = Number(/(\d+)\s+rows/.exec(text)?.[1] ?? NaN);
   const links = await page.locator('a[href^="/mandate/"]').count();
   check("filtering to PMS mandates lists mandates, one row each",
-    subLines.length >= 2 && rowsPill === subLines.length && links === subLines.length,
-    `${subLines.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
+    mandateRows.length >= 2 && rowsPill === mandateRows.length && links === mandateRows.length,
+    `${mandateRows.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
   // ...and each stands for more shares than it draws, which is what a roll-up is.
-  const constituents = subLines.reduce((n, m) => n + Number(m[2]), 0);
+  const constituents = mandateRows.reduce((n, m) => n + m.holdings, 0);
   check("each mandate row stands for the shares inside it",
-    subLines.length > 0 && constituents > subLines.length,
-    `${constituents} constituent holdings across ${subLines.length} mandates`);
+    mandateRows.length > 0 && constituents > mandateRows.length,
+    `${constituents} constituent holdings across ${mandateRows.length} mandates`);
   await catSelect.selectOption({ label: "All categories" });
   await page.waitForTimeout(600);
 } else {
@@ -321,6 +376,33 @@ check("an unknown mandate address renders a named absence, not an empty table",
     && !/holdings the manager runs/.test(text));
 check("...and names the mandates this book does carry",
   (await page.locator('a[href^="/mandate/"]').count()) > 1);
+
+// ── THE WATCHLIST STORE SURVIVED THE PAGE THAT SHOWED IT ───────────────────
+//
+// Watchlist & Targets was removed at the family's request — the tab, its nav
+// entry and `src/pages/Watchlist.tsx`. `src/lib/watchlist.ts` was NOT, and this
+// is the half a removal like that breaks SILENTLY: with its most visible reader
+// gone the store looks dead, and the next session deletes it along with every
+// target price, fair value, level, valuation method and target weight the family
+// typed. The same treatment `deals.ts` and `household.ts` got in Stage 10f, and
+// the same reason `announcements.ts` stayed when `/news` went.
+//
+// So the surviving surface is asserted here: a name's own company page still
+// writes to the store. The address is taken off the monitor rather than typed,
+// like every other route this suite follows.
+await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+const watched = page.locator('a[href^="/stock/"]').first();
+if (await watched.count()) {
+  await watched.click();
+  await page.waitForTimeout(1200);
+  text = await page.locator("body").innerText();
+  check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
+  check("...with the judgement fields the watchlist store holds",
+    /target price/i.test(text) && /fair value/i.test(text) && /valuation method/i.test(text));
+} else {
+  check("a company page still carries the Investment tools panel", false, "no /stock/ link on Portfolio Monitor");
+}
 
 await browser.close();
 

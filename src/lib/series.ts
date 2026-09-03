@@ -10,6 +10,32 @@
 // were computed by the harvester against the full stored history, with every
 // horizon independent — a horizon the series cannot reach back to is `null` and
 // renders as absent, never as a shorter window silently relabelled.
+//
+// ── NO PAGE READS THE STORE TODAY, AND THAT IS RECORDED RATHER THAN SILENT ──
+//
+// Macro Research and Economy & Macro were removed at the family's request, and
+// they were the only two pages that charted a harvested series. What survives
+// imports this module for its TYPES and FORMATTERS: `ReturnsTable` draws a
+// company's price history with `Point`, `SeriesMeta`, `HORIZON_COLS`, `RANGES`,
+// `fmtLevel` and `fmtReturn`, `SeriesChart` uses `fmtLevel` and `rebase`, and
+// `CompareCompanies` and `navSeries.test.ts` read the same shapes. Those come
+// from `/api/prices`, not from the store.
+//
+// So `fetchSeriesIndex` and `fetchSeriesPoints` — and the range and resampling
+// helpers around them — currently have NO CALLER. They stay, deliberately, and
+// this paragraph is why:
+//
+//   THE STORE IS STILL BEING WRITTEN. `npm run harvest` runs nightly, and seven
+//   RBI policy rates and IEX's day-ahead spot power are ACCUMULATING series —
+//   their sources publish a current value and no history, so the store builds
+//   them one observation per run. Stopping the harvest would not pause those
+//   series, it would end them, with nothing to backfill from. Deleting the only
+//   reader of a store that a nightly job keeps growing is the wrong half to cut.
+//
+// This is NOT the dead-builder failure the conventions name. That failure is a
+// SILENT orphan the next session finds exported and wires back believing it
+// load-bearing. Written down, it is a state: no caller today, a live store
+// behind it, and one page away from having one again.
 
 export type SeriesKind = "price" | "yield";
 

@@ -493,3 +493,162 @@ export function startupTotals(s: StartupInvestment[]) {
   const fairValue = sum(s.map((x) => x.fairValue));
   return { invested, fairValue, moic: invested > 0 ? fairValue / invested : null, count: s.length };
 }
+
+// ── ABSOLUTE vs ANNUALISED (CAGR) RETURN ON A HOLDING ───────────────────────
+//
+// "There should be a toggle between absolute and CAGR return… more than one
+// year it'll be CAGR, less than one year I'd rather see absolute."
+//
+// THE GUARD IS THE FEATURE. An annualised rate is a claim about a YEAR, and
+// compounding a short window onto one is how this book once put +99.0% on the
+// Morning CIO strip over a 132-day window (Stage 10g(ii)) — every step of which
+// reproduced, and all of which was a lie about a year. The same failure is
+// already sitting in the archive: `positionIrrPct`, which the PMS statements
+// publish per position, reaches **+47,695%** on this book and reads 193.9% for
+// a holding whose return on cost is 56.5%. It is the provider annualising a
+// few months. So it is NOT a CAGR source here and this never reads it.
+//
+// The window can only come from `Position.heldSince` — the oldest unit still
+// held — which `build-book` emits only where the lot register accounts for the
+// units held exactly. That is a handful of positions; on every other one the
+// honest answer is that nobody reported when the holding was bought.
+
+/** India's long-term threshold, and the shortest window that may be annualised. */
+export const YEAR_DAYS = 365;
+
+export type ReturnMode = "absolute" | "cagr";
+
+export type HoldingReturn =
+  /** Return on cost over the whole holding, un-annualised. */
+  | { kind: "absolute"; pct: number; heldDays: number | null }
+  /** Annualised — licensed only by a measured window of at least a year. */
+  | { kind: "cagr"; pct: number; heldDays: number; since: string }
+  /** No figure, and the reason a reader needs in order to act on it. */
+  | { kind: "absent"; reason: string };
+
+const daysBetween = (fromISO: string, toISO: string) =>
+  Math.round((Date.parse(toISO) - Date.parse(fromISO)) / 86_400_000);
+
+/**
+ * The return to render for one holding, on the mode the reader picked.
+ *
+ * `asOf` is the book's own report date, never `new Date()`: closing against
+ * today on one page and the statement date on another gave the same
+ * measurement two values once already (see the XIRR notes in CLAUDE.md).
+ *
+ * Absolute mode is the column this table has always shown. CAGR mode annualises
+ * ONLY where the window is measured and at least a year; under a year it falls
+ * back to the ABSOLUTE figure and says so, which is what was asked for; and
+ * where the holding's start is unknown it renders absent, because a rate over
+ * an unknown window is not a weaker figure, it is not a figure.
+ */
+export type Holdable = { returnPct: number | null; heldSince: string | null };
+
+export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): HoldingReturn {
+  const pct = p.returnPct;
+  const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
+  if (pct === null || pct === undefined) {
+    return { kind: "absent", reason: "no statement in this book reports a cost for this holding, so it has no return to strike" };
+  }
+  if (mode === "absolute") return { kind: "absolute", pct, heldDays };
+
+  if (heldDays === null) {
+    return {
+      kind: "absent",
+      reason: "annualising needs to know when this holding was bought, and no statement covering it reports a purchase date — "
+        + "the managed accounts publish a capital-account ledger rather than a lot register. Switch to Absolute for its return on cost.",
+    };
+  }
+  // THE GUARD, stated positively: under a year the absolute figure stands, and
+  // is labelled absolute so the column never passes one basis off as the other.
+  if (heldDays < YEAR_DAYS) return { kind: "absolute", pct, heldDays };
+  // (1 + r)^(365/days) − 1, on the return already struck against cost. A cost
+  // at or below zero has no compound rate and is refused upstream by `returnPct`.
+  const years = heldDays / YEAR_DAYS;
+  const growth = 1 + pct / 100;
+  if (growth <= 0) {
+    return { kind: "absent", reason: "this holding is worth nothing against its cost, so it has no compound rate — only a total loss" };
+  }
+  return { kind: "cagr", pct: (Math.pow(growth, 1 / years) - 1) * 100, heldDays, since: p.heldSince! };
+}
+
+/** How many rows each state covers, for the caption under a CAGR column. */
+export function returnModeCoverage(positions: Holdable[], mode: ReturnMode, asOf: string) {
+  let cagr = 0, absolute = 0, absent = 0;
+  for (const p of positions) {
+    const r = holdingReturn(p, mode, asOf);
+    if (r.kind === "cagr") cagr++;
+    else if (r.kind === "absolute") absolute++;
+    else absent++;
+  }
+  return { cagr, absolute, absent, total: positions.length };
+}
+
+// ── YEAR-TO-DATE ON THE HOLDING ITSELF ──────────────────────────────────────
+//
+// "Add YTD and calendar-year columns for the holding itself, not just the
+// security's market return… if it is not possible to show data then just show
+// a dash."
+//
+// THE DISTINCTION IN THAT SENTENCE IS THE WHOLE PROBLEM. What a SHARE did since
+// 1 January is a market fact and `/api/prices` serves it. What THIS FAMILY's
+// holding did over the same window is a different measurement: it needs the
+// holding's own value on 1 January and every purchase and sale since, because a
+// position bought in March did not earn the market's Jan–Mar move.
+//
+// MEASURED OVER `public/audit/`, the book carries neither for a holding that
+// predates the year: the earliest holdings statement of any account is dated
+// 2026-03-31 and the transaction tape runs 2026-04-01 onward, with zero trades
+// and zero valuations on or before 1 January. `BOOK_POSITIONS` is one dated
+// snapshot per account, so there is no opening value to measure a year from.
+//
+// ONE CASE IS GENUINELY MEASURABLE and is the reason this is a function rather
+// than a constant dash: a holding OPENED DURING THE YEAR did not exist on 1
+// January, so it has no opening value to be missing — its year-to-date return
+// simply IS its return since purchase. That needs `heldSince`, which carries the
+// same lot-coverage gate as everything else here. On this drop it fires for no
+// position (all three dated holdings were opened in 2025), and it will fire on
+// its own the first time a drop brings a within-year purchase through the gate.
+
+export type HoldingYtd =
+  /** Opened during the year: its whole return IS its year to date. */
+  | { kind: "since-open"; pct: number; since: string }
+  | { kind: "absent"; reason: string };
+
+/**
+ * The holding's own year-to-date return, or the reason there isn't one.
+ *
+ * `asOf` is the book's report date, so the "year" is the calendar year that
+ * date falls in — never `new Date()`, which would roll the window over at
+ * midnight on a page showing figures struck in August.
+ */
+export function holdingYtd(p: Holdable, asOf: string): HoldingYtd {
+  const yearStart = `${asOf.slice(0, 4)}-01-01`;
+  if (!p.heldSince) {
+    return {
+      kind: "absent",
+      reason: "a year-to-date return on the holding needs its value on 1 January, and no statement covering it reports "
+        + "when it was bought or what it was worth then — the book carries one dated snapshot per account and none predates the year.",
+    };
+  }
+  if (p.heldSince < yearStart) {
+    return {
+      kind: "absent",
+      reason: `this holding was already held on 1 January (since ${p.heldSince}), so its year-to-date return needs its value on that date. `
+        + "No statement in this book is dated before the year began, so there is no opening value to measure from — "
+        + "the share's own market move since January is a different figure and is not shown in its place.",
+    };
+  }
+  if (p.returnPct === null || p.returnPct === undefined) {
+    return { kind: "absent", reason: "this holding was opened during the year, but no statement reports a cost for it, so there is nothing to measure a return against" };
+  }
+  // Opened this year: no opening value is MISSING, because there was none.
+  return { kind: "since-open", pct: p.returnPct, since: p.heldSince };
+}
+
+/** How many rows the YTD column can and cannot answer, for its caption. */
+export function ytdCoverage(positions: Holdable[], asOf: string) {
+  let measured = 0;
+  for (const p of positions) if (holdingYtd(p, asOf).kind === "since-open") measured++;
+  return { measured, absent: positions.length - measured, total: positions.length };
+}

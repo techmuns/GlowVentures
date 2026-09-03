@@ -691,27 +691,24 @@ export function MorningCIO() {
         right={<BasisPill liveText="Consolidated · listed live" hint="Listed holdings are priced live where a quote exists; anything the quote feed could not supply keeps its statement mark and is flagged as not-live." />} />
 
       {/* KPI strip */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {/* ONE LINK PER TILE, ASSERTED ON THE DOM. `check:pages` counts the
+          anchors inside each card here and requires at most one — a claim about
+          what a reader can click, which no amount of matching innerText can
+          make. See the `cio` invariant "each KPI tile offers exactly one
+          destination". */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
         <Kpi label="Consolidated NAV"
           href={drilldownHref("book")}
-          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once"
-          value={<Auditable formula={{
-            title: "Consolidated NAV",
-            excel: m.privateCount ? "= Σ market value of every holding + Private-markets value" : "= Σ market value of every holding",
-            plain: `The whole book across all ${m.accountCount} accounts and ${m.ownerCount} holders, at latest marks, with each holding reported twice counted once.${
-              m.hasPrivateClass ? ` It spans both halves by asset class — ${money(m.pp.listed)} listed and ${money(m.pp.private)} private (AIF, unlisted).` : ""
-            }`,
-            worked: m.privateCount
-              ? `= ${money(m.bookMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
-              : `= ${money(m.bookMV)} across ${m.p.length} positions in ${m.accountCount} accounts`,
-          }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
+          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page, and so is the arithmetic behind this number."
+          value={fmtFromBase(m.totalValue, { compact: true })}
           sub={<>
+            {/* THE TWO HALVES ARE FIGURES, NOT LINKS. They had an address each,
+                so this one tile offered three destinations — and the reader had
+                to know which of them answered their question. Both halves are
+                now a TOGGLE inside the tile's own drill-down, which is where a
+                reader who wants one of them can also see the other. */}
             {m.hasPrivateClass
-              ? <>
-                  <Link to={drilldownHref("listed")} title="Open the listed half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Listed {money(m.pp.listed)}</Link>
-                  {" · "}
-                  <Link to={drilldownHref("private")} title="Open the private half of the book" className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">Private {money(m.pp.private)}</Link>
-                </>
+              ? `Listed ${money(m.pp.listed)} · Private ${money(m.pp.private)}`
               : `${m.p.length} listed positions · no private holdings`}
             {m.accrued !== null && (
               <span className="block text-slate-500" title={`Dividends and interest declared and not yet received on ${m.accruedCount} position(s). The managers' printed totals include this; the market value column does not, so it is stated here rather than folded in.`}>
@@ -730,17 +727,8 @@ export function MorningCIO() {
             count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
           href={drilldownHref("invested")}
-          hrefTitle="Open the holdings whose statement reports a cost — and, beneath them, the ones that report none and sit outside this figure"
-          value={<Auditable formula={{
-            title: "Capital invested — consolidated",
-            excel: m.privateCount ? "= Σ cost basis of every holding + Private drawn" : "= Σ cost basis of every holding",
-            plain: `Money currently deployed, across all ${m.accountCount} accounts — the cost basis of every holding the statements price, listed and private alike, each dedupeGroup counted once.${
-              m.noCostCount ? ` ${m.noCostCount} position${m.noCostCount === 1 ? "" : "s"} (${money(m.noCostMV)} of market value) sit${m.noCostCount === 1 ? "s" : ""} outside it: a depository statement reports what is held, not what it cost, and entering a missing cost as zero would report the whole of that market value as profit.` : ""
-            }`,
-            worked: m.privateCount
-              ? `= ${money(m.bookCost)} + ${money(m.privateInvested)} = ${money(m.totalInvested)}`
-              : `= ${money(m.bookCost)} across ${m.p.length - m.noCostCount} of ${m.p.length} positions`,
-          }}>{fmtFromBase(m.totalInvested, { compact: true })}</Auditable>}
+          hrefTitle="Open the holdings whose statement reports a cost, and the arithmetic struck over them — with the ones that report none, and sit outside this figure, a toggle away on the same page."
+          value={fmtFromBase(m.totalInvested, { compact: true })}
           sub={<>
             {/* A COUNT OF POSITIONS IS NOT A SHARE OF THE BOOK, and this caption
                 said only the count. "61 positions carry no cost basis" reads as
@@ -754,16 +742,17 @@ export function MorningCIO() {
                 direction is the same failure. */}
             cost in · {m.costedMV > 0 ? <>covers {money(m.costedMV)} of {money(m.totalValue)}</> : <>whole book</>}
             {m.noCostCount > 0 && (
-              /* THE POSITIONS THIS FIGURE LEAVES OUT ARE NOW OPENABLE, which is
-                 the other half of naming them. A reader told that 60 positions
-                 worth ₹165.9 Cr carry no cost had, until now, no way to find out
-                 WHICH — and the answer decides whether they chase a custodian
-                 for a cost statement or accept a permanent absence. */
-              <Link to={drilldownHref("no-cost")}
-                className="block text-slate-500 underline decoration-dotted decoration-slate-600/50 underline-offset-[3px] hover:text-champagne-400"
-                title={`Open them. These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero.`}>
+              /* NAMED HERE, OPENED BY THE TILE. A reader told that 60 positions
+                 worth ₹165.9 Cr carry no cost needs to find out WHICH — the
+                 answer decides whether they chase a custodian for a cost
+                 statement or accept a permanent absence. That set had its own
+                 address and its own link inside this tile; it is a TOGGLE on
+                 the tile's drill-down now, beside the rows that do report a
+                 cost, so the two halves of one figure sit on one page. */
+              <span className="block text-slate-500"
+                title="These positions' statements report a holding without a cost — a depository knows what is held, not what was paid for it. Their market value is in the NAV; their cost is absent rather than zero. Open this tile to see them beside the holdings that do report one.">
                 {m.noCostCount} position{m.noCostCount === 1 ? "" : "s"} worth {money(m.noCostMV)} carry no cost basis
-              </Link>
+              </span>
             )}
           </>}
           icon={<Wallet className="h-4 w-4" />} />
@@ -799,22 +788,10 @@ export function MorningCIO() {
             the terminal value fails rather than drifts. */}
         <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
           href={drilldownHref("measured")}
-          hrefTitle="Open the holdings of the accounts this rate covers — the accounts whose statements carry an opening portfolio value, with every excluded account named"
+          hrefTitle="Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page."
           value={m.bookMW.pct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.bookMW.pct)}><Auditable formula={{
-                title: m.bookMW.annualised ? "XIRR — money-weighted, annualised" : "Money-weighted return over the measured window",
-                excel: m.bookMW.annualised
-                  ? "= XIRR(each account's dated flows + its market value on its own report date)"
-                  : "= (1 + XIRR)^(window ÷ 365) − 1",
-                plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened — closed against each account's market value ON ITS OWN REPORT DATE. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value.\n\n${
-                  m.bookMW.annualised
-                    ? `The flows span ${m.bookMW.windowDays ?? "—"} days, so this is a genuine annual rate.`
-                    : `THIS IS NOT ANNUALISED, AND THAT IS DELIBERATE. The flows span only ${m.bookMW.windowDays} days. Compounding that onto a full year gives ${m.bookMW.annualPct == null ? "—" : fmtPct(m.bookMW.annualPct, { sign: true, decimals: 1 })} p.a., which is a projection of ${m.bookMW.windowDays} strong days rather than a year the book has lived — and it would contradict the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. So the figure shown is what the book has actually earned over the window it has.`
-                }\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.`,
-                worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}`,
-                
-              }}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</Auditable></span>}
+            : <span className={changeColor(m.bookMW.pct)}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</span>}
           sub={m.bookMW.pct == null
             ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
             : <>
@@ -840,19 +817,7 @@ export function MorningCIO() {
           hrefTitle="Open the holdings this return is struck over — the ones whose statement reports a cost"
           value={m.gainPct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.gainPct)}><Auditable formula={{
-                title: "Consolidated return to date",
-                excel: "= Embedded gain ÷ Capital invested",
-                plain: `The return the whole book has produced to date on the capital in it — cumulative, not annualised, so a strong quarter reads as the quarter's gain rather than a yearly pace the book has not run for a year.${
-                  m.noCostCount ? ` Struck over the ${m.p.length - m.noCostCount} positions carrying a cost; the other ${m.noCostCount} are in neither the numerator nor the denominator.` : ""
-                }${
-                  m.bookMW.pct != null
-                    ? ` It covers the WHOLE book, where the money-weighted figure beside it covers ${money(m.measuredMV)} of ${money(m.totalValue)} — the accounts whose statements carry an opening portfolio value. Over that narrower set the money-weighted answer is ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}.`
-                    : ""
-                }`,
-                worked: `= ${money(m.embeddedGain, true)} ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}`,
-                
-              }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable></span>}
+            : <span className={changeColor(m.gainPct)}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</span>}
           sub={m.gainPct == null
             ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
             : <>
@@ -869,8 +834,17 @@ export function MorningCIO() {
         <Kpi label="Dry powder"
           href={hasCommitments ? "/private-market" : undefined}
           hrefTitle="Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
+          /* THIS TILE'S POPOVER WAS ALSO WRONG, WHICH REMOVING IT FIXES. It
+             read `= Σ (Committed − Called) across funds` — and the book does
+             not derive dry powder that way. Private Market's own tile says so
+             in as many words: it is "summed exactly as each statement prints
+             it, never derived from committed − drawn", because two folios
+             print a commitment and a drawdown and NO undrawn figure, and
+             subtracting there would assert a fund has nothing left to call.
+             The page this tile opens already carries that explanation beside
+             Committed and Drawn, so nothing needs writing to replace it. */
           value={hasCommitments
-            ? <span className="text-amber-400"><Auditable formula={{ title: "Dry powder", excel: "= Σ (Committed − Called) across funds", plain: "Capital you've committed to funds that hasn't been called yet — still to be deployed.", worked: `= ${money(m.deploy.committed)} − ${money(m.deploy.drawn)} = ${money(m.deploy.unfunded)}`,  }}>{fmtFromBase(m.deploy.unfunded, { compact: true })}</Auditable></span>
+            ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span>
             : <AbsentValue />}
           sub={hasCommitments
             ? "undrawn fund commitments"
@@ -901,14 +875,26 @@ export function MorningCIO() {
 
       {/* Allocation hero + right column */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* The long explanatory block that used to sit under this table is gone
-            at the family's request. What it carried that a reader still needs —
-            that every return here is cumulative rather than annualised, and that
-            all of them close on the book's own report date — is in this subtitle
-            and in each figure's popover, which is where the coverage and the
-            excluded accounts have always been stated in full. */}
+        {/* THE SUBTITLE IS GONE at the family's request, after the long
+            explanatory block beneath this table went the same way.
+
+            Two of the things it said are facts a reader ACTS on rather than
+            chrome: that every return here is CUMULATIVE rather than annualised,
+            and the DATE each figure closes at. Neither is dropped, because both
+            are ALREADY ON THIS PAGE outside this card — the Consolidated
+            return tile states "cumulative, not annualised" on its face, and the
+            header's `<BasisPill>` states the as-of and how many accounts are
+            behind it. Each figure's own popover still carries the coverage and
+            the excluded accounts in full. So nothing here is reachable only by
+            hover, and what has gone is the description of how the buckets
+            GROUP — which the rows themselves show.
+
+            AND THE PILL KEEPS THE WORD "HELD". Two other invariants read the
+            bucket count out of `N buckets held`; rewording it to `N buckets ·
+            cumulative · <date>` — the first draft of this change — made both
+            report a missing figure on a page rendering correctly. A caption is
+            chrome; a count inside it is not. */}
         <Card className="lg:col-span-2" title="Allocation by asset class &amp; mandate"
-          subtitle={`Shares chosen under a discretionary mandate roll up into that mandate; everything else groups by what it IS · invested, current value & total return to date — cumulative, not annualised · every figure closes at ${portfolio.asOf}`}
           right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
@@ -1075,9 +1061,9 @@ export function MorningCIO() {
                     one link standing for both and leaving the reader to guess
                     which half they are about to see. */}
                 <span className="text-slate-400">
-                  <ConcLink to={drilldownHref("listed")} title="Open the listed half — every holding whose class is not one an AIF, an unlisted company or a structured product">Listed</ConcLink>
+                  <ConcLink to={drilldownHref("book", undefined, "listed")} title="Open the listed half — every holding whose class is not an AIF, an unlisted company or a structured product. It opens the book\u2019s own drill-down with that half selected; the private half is one toggle away.">Listed</ConcLink>
                   {" / "}
-                  <ConcLink to={drilldownHref("private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks">Private</ConcLink>
+                  <ConcLink to={drilldownHref("book", undefined, "private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks. It opens the book\u2019s own drill-down with that half selected; the listed half is one toggle away.">Private</ConcLink>
                 </span>
                 <span className="mono text-slate-100">
                   {m.hasPrivateClass
@@ -1107,50 +1093,24 @@ export function MorningCIO() {
         </div>
       </div>
 
-      {/* Book performance + NAV trajectory */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Card title="Book performance" subtitle="Listed vs private, on a like-for-like basis">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[0] }} />Listed book</div>
-              <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.listedBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.listedBook.mv)}</span> today</div>
-              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.listedBook.pnl)}`}>{money(m.listedBook.pnl, true)}</div></div>
-                <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.listedBook.ret == null ? "text-slate-500" : changeColor(m.listedBook.ret)}`}>{m.listedBook.ret == null ? DASH : fmtPct(m.listedBook.ret, { sign: true, decimals: 1 })}</div></div>
-                <div>
-                  <div className="text-[11px] text-slate-500">Return (money-wtd)</div>
-                  <div className={`mono text-[15px] font-semibold ${m.listedTotalReturn == null ? "text-slate-500" : "text-slate-100"}`}
-                    title={`Money-weighted return to date${m.xirrWindowDays ? ` over a ${m.xirrWindowDays}-day window` : ""}${m.listedXirrPct != null && m.xirrWindowDays ? ` (${fmtPct(m.listedXirrPct, { sign: true, decimals: 1 })} p.a. annualised)` : ""}.${m.xirrExcluded.length ? ` Covers ${money(m.measuredMV)} of ${money(m.listedBook.mv)} — account ${m.xirrExcluded.join(", ")} publishes no opening portfolio value.` : ""}`}>
-                    {m.listedTotalReturn == null ? DASH : fmtPct(m.listedTotalReturn, { sign: true, decimals: 1 })}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {m.privateBook.count > 0 ? (
-              <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[1] }} />Private book <span className="text-slate-600">· AIF</span></div>
-                <div className="mt-2.5 text-[13px] text-slate-400"><span className="font-semibold text-slate-100">{money(m.privateBook.cost)}</span> invested → <span className="font-semibold text-slate-100">{money(m.privateBook.mv)}</span> today</div>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                  <div><div className="text-[11px] text-slate-500">Unrealized</div><div className={`mono text-[15px] font-semibold ${changeColor(m.privateBook.pnl)}`}>{money(m.privateBook.pnl, true)}</div></div>
-                  <div><div className="text-[11px] text-slate-500">Return</div><div className={`mono text-[15px] font-semibold ${m.privateBook.ret == null ? "text-slate-500" : changeColor(m.privateBook.ret)}`}>{m.privateBook.ret == null ? DASH : fmtPct(m.privateBook.ret, { sign: true, decimals: 1 })}</div></div>
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                  AIF units marked at the fund's stated NAV. These carry no dated capital-account flows in this drop, so
-                  there is no money-weighted return or distribution schedule to show — the fund's own value already is one.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-ink-600/70 bg-ink-900/60 p-4">
-                <div className="label-xs flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-ink-600" />Private book</div>
-                <div className="mt-2.5 text-[19px] font-semibold text-slate-500">{DASH}</div>
-                <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">
-                  There is no private book to compare against. Invested, gain and return all need
-                  a private holding to measure, and no statement in this drop carries one.
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
+      {/* THE BOOK PERFORMANCE CARD IS REMOVED, at the family’s request.
+
+          It sat here reading "Listed vs private, on a like-for-like basis" over
+          two tiles: the listed book invested → today with its unrealised gain,
+          return and money-weighted return, and the same for the private (AIF)
+          half. Every one of those figures is still on this page and still
+          derived — invested and current value per bucket in the allocation
+          table, the money-weighted return in its own KPI tile with its own
+          coverage line, and the listed/private split in the Consolidated NAV
+          tile and on Concentration & risk, which links each half to the
+          holdings behind it. So this is a LAYOUT removal and not a measurement
+          one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
+          `listedTotalReturn` in the model above still feed those surfaces.
+
+          `check:pages` asserts the card STAYS gone AND that the figures it
+          carried are still reachable — a removal is verified by asserting it
+          happened, never by deleting the test alongside the feature. */}
+      <div className="mt-5">
 
         {/* THE NAV SERIES REPLACES AN ABSENCE THAT HAD STOPPED BEING TRUE.
             This slot held "No valuation series in this book · each account's
