@@ -10,7 +10,7 @@ import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absen
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
-import { parseDrilldown, resolveDrilldown, drilldownHref, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { parseDrilldown, resolveDrilldown, drilldownHref, drilldownFormula, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -258,6 +258,13 @@ export function HoldingsBehind() {
   const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
   const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
+  // THE WORKED EXAMPLE, IN THE READER'S OWN DISPLAY CURRENCY. `drilldownFormula`
+  // owns the arithmetic — it sits beside the set definition, so the explanation
+  // and the set cannot drift apart — and takes the formatter rather than
+  // importing one, because every figure in this app renders through the
+  // context's `fmtFromBase` and a formatter fixed in a lib would print rupees on
+  // a page showing dollars.
+  const formula = drilldownFormula(d, (n: number) => money(n) ?? "—");
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
@@ -422,6 +429,39 @@ export function HoldingsBehind() {
                   </span>}
               icon={<Layers className="h-4 w-4" />} />
           </div>
+
+          {/* ── THE ARITHMETIC, WHERE THE READER LANDED ────────────────────
+              *"even the calculation that we're showing that appears when click
+              the underlined no. we can show that inside the clickable KPI
+              pages."* It was a popover on the tile, opened by a dashed
+              underline under the figure — a second affordance on a card whose
+              whole surface is already the click target, and a box that had to be
+              dismissed before the reader could do anything else.
+
+              IT IS STRUCK ON THE ROWS BELOW IT, not on the whole scope: the
+              worked line comes from `d.rows`, which is the ACTIVE facet, so a
+              reader who has toggled to the private half sees that half's own
+              arithmetic rather than the book's under a heading reading
+              "Private". That is also why it sits here — the figures it explains
+              are directly above it and the rows it is summed over directly
+              below, which a floating popover could never be. */}
+          {formula && (
+            <div data-testid="drilldown-formula">
+              <Card className="mt-5" title="How this figure is worked out"
+                subtitle="Summed over exactly the rows in the table below — the same set, resolved by the same function that built the link you followed.">
+                <div className="mono rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-300">
+                  {formula.excel}
+                </div>
+                {formula.worked && (
+                  <div data-testid="drilldown-formula-worked"
+                    className="mono mt-2 rounded-md border border-champagne-500/25 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-200">
+                    {formula.worked}
+                  </div>
+                )}
+                <p className="mt-3 max-w-3xl whitespace-pre-line text-[12.5px] leading-relaxed text-slate-400">{formula.plain}</p>
+              </Card>
+            </div>
+          )}
 
           {d.excludedAccounts.length > 0 && (
             <Card className="mt-5" title={`${d.excludedAccounts.length} accounts outside this figure`}

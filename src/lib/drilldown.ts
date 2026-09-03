@@ -25,6 +25,7 @@
 // be a second source for a decision made elsewhere, which is the same failure
 // one level down.
 import type { Portfolio, Position } from "./types";
+import type { FormulaDef } from "./auditFormulas";
 import { accountIndex, engagementOf } from "./accounts";
 import { holdingBucket, bucketLabel, isPrivateClass } from "./analytics";
 import { accountHasOpeningValue } from "./returns";
@@ -444,4 +445,130 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
  */
 function ownerLabel(accIdx: ReturnType<typeof accountIndex>, p: Position): string {
   return accIdx.get(p.accountId)?.owner || "Unattributed";
+}
+
+
+/**
+ * ── HOW THE FIGURE IS WORKED OUT, ON THE PAGE THE FIGURE OPENS ──────────────
+ *
+ * *"even the calculation that we're showing that appears when click the
+ * underlined no. — we can show that inside the clickable KPI pages."*
+ *
+ * The arithmetic used to be a POPOVER on the tile, opened by a dashed underline
+ * under the number. That underline was the second affordance on a card whose
+ * whole surface is now the click target, and the popover was a 328px box that
+ * had to be dismissed before the reader could do anything else. It reads better
+ * where the reader lands: the set is already on screen there, so the worked
+ * example sits above the very rows it is summed over.
+ *
+ * IT IS STRUCK ON `d.rows`, WHICH IS THE ACTIVE FACET — never on the whole
+ * scope. A reader who has toggled to the private half must not be shown the
+ * whole book's arithmetic under a heading reading "Private": that is the
+ * caption-does-not-describe-its-figure failure this repo has already paid for
+ * on the Capital invested tile, and it would arrive here the moment the worked
+ * line was computed from anything but the rows below it.
+ *
+ * The money formatter is passed IN rather than imported. Every figure in this
+ * app renders in the reader's selected display currency through `fmtFromBase`,
+ * which lives on the portfolio context; a formatter hard-coded here would print
+ * rupees on a page showing dollars. Same seam `auditFormulas.ts` already uses.
+ */
+export function drilldownFormula(d: Drilldown, money: (n: number) => string): FormulaDef | null {
+  const rows = d.rows;
+  if (!rows.length) return null;
+
+  const mv = rows.reduce((a, p) => a + p.marketValue, 0);
+  const costed = rows.filter((p) => p.costBasis != null);
+  // `sumOrNull`'s rule, inline: null when NOTHING reports a cost, and the sum
+  // over those that do otherwise. A zero here would report the whole market
+  // value as profit at an infinite return.
+  const cost = costed.length ? costed.reduce((a, p) => a + (p.costBasis ?? 0), 0) : null;
+  const accounts = new Set(rows.map((p) => p.accountId)).size;
+  const names = new Set(rows.map((p) => p.securityKey)).size;
+  const n = (k: number, one: string, many = one + "s") => `${k} ${k === 1 ? one : many}`;
+
+  /** The active facet's own label, so a narrowed page never reads as the whole. */
+  const facet = d.facets.length > 1
+    ? d.facets.find((f) => f.key === d.activeFacet)?.label ?? ""
+    : "";
+  const of = facet ? ` · ${facet}` : "";
+
+  const spread = `across ${n(rows.length, "position")} in ${n(accounts, "account")}`;
+  const basis = d.deduped
+    ? "Each holding that two members' statements both report is counted once."
+    : "Every statement's row stands as printed — this is a per-account figure and is not deduped.";
+
+  switch (d.id) {
+    case "book":
+      return {
+        title: `Consolidated NAV${of}`,
+        excel: "= Σ market value of every holding",
+        plain: `The market value of every holding in this set, at each account's latest mark. ${basis} The two counts beside it are read off the same set: ${n(rows.length, "position")} is what Morning CIO calls Positions, and ${n(names, "distinct name")} is Distinct names — a name two members both hold is one name and two positions.`,
+        worked: `= ${money(mv)} ${spread} · ${n(names, "name")}`,
+      };
+
+    case "invested": {
+      // BOTH FIGURES THAT DIVIDE BY CAPITAL OPEN THIS PAGE, so the worked
+      // example carries both: printing only the sum would leave the reader who
+      // clicked Consolidated return with the denominator and no division.
+      const gain = cost == null ? null : mv - cost;
+      const pct = cost != null && cost > 0 && gain != null ? (gain / cost) * 100 : null;
+      return {
+        title: `Capital invested${of}`,
+        excel: "= Σ cost basis of every holding    ·    Return = (Value − Invested) ÷ Invested",
+        plain: `What the statements say these holdings cost. \`sumOrNull\` SKIPS a holding whose statement prints no cost rather than entering it as zero — a zero would drag the basis down and report that holding's whole market value as profit — so the figure covers ${n(costed.length, "holding")} of ${rows.length} here. The Consolidated return is struck over exactly the same set, which is why both tiles open this one page.`,
+        worked: cost == null
+          ? `= — · no statement in this set reports a cost, so there is nothing to sum`
+          : `= ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length}${
+              pct == null ? "" : ` · return = (${money(mv)} − ${money(cost)}) ÷ ${money(cost)} = ${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(1)}%`
+            }`,
+      };
+    }
+
+    case "measured":
+      // THE RATE ITSELF IS NOT RESTATED HERE, DELIBERATELY. It is a pooled XIRR
+      // over every account's dated flows, each closing on its own report date,
+      // and re-deriving it on this page would be a SECOND source for one figure
+      // — the exact failure this whole file exists to prevent. What this page
+      // owns is the SET the rate is struck over, so that is what it works out.
+      return {
+        title: `What the money-weighted return covers${of}`,
+        excel: "= XIRR(each account's dated flows + its own market value on its own report date)",
+        plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value. ${basis} The rate needs an opening stake to measure against, so it can only be struck where a statement publishes one; this page is the set that qualifies, and the rate itself stays on the tile it was clicked from.`,
+        worked: `= ${money(mv)} ${spread}${d.excludedAccounts.length ? ` · ${n(d.excludedAccounts.length, "account")} outside it` : ""}`,
+      };
+
+    case "bucket":
+      return {
+        title: `${d.title}${of}`,
+        excel: "= Σ market value of the holdings in this bucket",
+        plain: `The bucket is decided by \`holdingBucket\`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it. ${basis}`,
+        worked: `= ${money(mv)} ${spread}${cost == null ? "" : ` · cost ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length}`}`,
+      };
+
+    case "top-names":
+      return {
+        title: `Top-${TOP_NAMES} concentration${of}`,
+        excel: `= Σ market value of the ${TOP_NAMES} largest names ÷ Consolidated NAV`,
+        plain: `Ranked on \`securityKey\` and on consolidated market value, so a name two members both hold is ONE entry at its combined size rather than two smaller ones. ${basis} The percentage on Morning CIO is this sum over the whole book, so it moves when a name grows and when the book around it does.`,
+        worked: `= ${money(mv)} across ${n(names, "name")} · ${n(rows.length, "position")} in ${n(accounts, "account")}`,
+      };
+
+    case "cross-held":
+      return {
+        title: `Cross-held names${of}`,
+        excel: "= count of securityKeys appearing under two or more owners",
+        plain: `Grouped by OWNER rather than by account: the question is how many names more than one family member holds, and keyed on the account it would instead count a name one member holds in two of their own mandates. ${basis} This is not the duplicate policy — a cross-held name is two members each genuinely owning some of it; a duplicate is ONE holding that two statements both report, and the set above has already collapsed those.`,
+        worked: `= ${n(names, "name")} · ${n(rows.length, "position")} across ${n(accounts, "account")} · ${money(mv)}`,
+      };
+
+    case "winners":
+    case "losers":
+      return {
+        title: `${d.title}${of}`,
+        excel: `= count of holdings whose (Value − Cost) ÷ Cost is ${d.id === "winners" ? "above" : "below"} zero`,
+        plain: `Struck on the basis the page is showing — live where a quote resolved, the statement mark where it did not. A holding whose cost the statements do not report has NO return to sort on and is in neither count; one sitting exactly at cost is a measured zero and is also in neither. Both are the second set on this page rather than a remainder a reader has to find by subtracting.`,
+        worked: `= ${n(rows.length, "holding")} · ${money(mv)}${cost == null ? "" : ` · cost ${money(cost)}`}`,
+      };
+  }
 }
