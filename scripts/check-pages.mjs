@@ -530,13 +530,13 @@ const ROUTES = [
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
   ["compare", "/compare"],
-  // FOOS-spec preview pages — illustrative placeholders for spec layers whose
-  // live source does not exist yet. Walked so their light-mode remaps, overflow
-  // and any stray ₹0 are held to the same bar as every real page.
-  ["knowledge", "/knowledge"],
+  // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
+  // family's request, so they are no longer walked — there is no page at any of
+  // those three addresses to hold to the light-mode, overflow and stray-zero
+  // bar. The removal itself is asserted in `check-family-inputs.mjs`: a removal
+  // is verified by asserting it happened, never by deleting the test alongside
+  // the feature.
   ["exposure", "/exposure"],
-  ["macro", "/macro"],
-  ["economy", "/economy"],
   ["thesis", "/thesis"],
   ["alerts", "/alerts"],
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
@@ -584,7 +584,7 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|econ-calendar|prices|indices|macro|economy|chat)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -3622,6 +3622,24 @@ const INVARIANTS = {
   // card must degrade to a NAMED absence — never to the old "a chart is
   // impossible" claim, which stopped being true when the series arrived.
   stock: [
+    // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
+    //
+    // Macro Research and Economy & Macro were the most visible readers of
+    // `src/lib/series.ts` and `SeriesChart.tsx`, and both pages have been
+    // removed. With them gone the two modules LOOK dead, and the next session
+    // deletes them — which is the half a removal like that breaks silently, the
+    // same way `watchlist.ts` looked dead the day its own tab went.
+    //
+    // They are not dead: `ReturnsTable` draws this card with `Point`,
+    // `SeriesMeta`, `HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and
+    // `rebase`, off `/api/prices` rather than off the store. So the card
+    // rendering here is the assertion that they survived.
+    //
+    // WHAT THIS CANNOT REACH, stated rather than implied: `/api/prices` does not
+    // answer in this harness, so the card resolves to its named absence and the
+    // CHART itself never mounts. `SeriesChart` is held up by the build instead —
+    // delete it and `tsc -b` fails on the import — which is why the gate for
+    // this change is build AND sweep, not either alone.
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
     // A COMPANY keeps every panel. This is the other half of `stock-fund` below:
@@ -3896,30 +3914,6 @@ const INVARIANTS = {
     ["the picker offers companies only, and names what it left out",
       (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
         && /company shares only/i.test(t)],
-  ],
-  // Layer 1: Knowledge & Memory is a real note store, not a mock. In this
-  // headless run nothing has been captured, so the page must show the ABSENT
-  // state with what would fill it — never "0 notes", and never the old sample
-  // counts. It must also not call its keyword search an AI query engine.
-  knowledge: [
-    ["an empty store renders the absent state, not zeros",
-      (t) => /No note has been captured yet/i.test(t) && !/\b0 notes\b/i.test(t)],
-    ["the search says what it is rather than claiming to be an AI index",
-      (t) => /not a language model reading an index/i.test(t) && !/AI query engine/i.test(t)],
-    ["the retired sample counts are gone", (t) => !/636/.test(t)],
-  ],
-  // Phase 0: Macro Research renders from the committed series store, not a live
-  // API — so it is live in this headless run with no token and no network. If
-  // the store fails to load the page says so, and these catch that.
-  macro: [
-    ["series store loaded — the returns table is live, not preview", (t) => /\d+ live/.test(t) && !/series store did not respond/i.test(t)],
-    ["observation count is stated, so the table is backed by a real series", (t) => /observations/i.test(t)],
-    ["a max-available CAGR resolved (a stored series, not a four-row preview)", (t) => /Max/.test(t) && /[+-]\d+\.\d%/.test(t)],
-    // Phase A1: the spec's weekly / quarterly / year-end views. The control is
-    // rendered only when the chosen series can honestly be coarsened, which the
-    // default (a daily commodity) can.
-    ["a frequency toggle offers the coarser views the spec asks for",
-      (t) => /Quarterly/.test(t) && /Year-end/.test(t)],
   ],
   /**
    * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
