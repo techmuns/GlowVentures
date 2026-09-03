@@ -1229,6 +1229,83 @@ TECHNOLOGIES`, `MAN INDUSTRIES` to `Deep Industries` and `INTEGRIS HEALTH` to
 `Star Health`. Near misses are LISTED for a human to commit as an alias — among
 them a Borosil WARRANT against the Borosil EQUITY, which must never be joined.
 
+### The audit against the family's consolidated review — and the question it was asked
+
+*"the invested capital is incorrect and should be higher, and thus consolidated NAV
+will also be higher … find the gaps and tell me the root cause and what we need
+exactly to fill them."*
+
+**THE FIRST HALF IS RIGHT AND THE SECOND DOES NOT FOLLOW**, and separating them is
+the whole value of the audit, because the two halves need DIFFERENT documents:
+
+```
+  NAV      = Σ marketValue  over EVERY position
+  Invested = Σ costBasis    over the positions that REPORT one
+```
+
+Different columns over different subsets. A position the book already carries at
+its statement mark but with NO COST understates invested capital by its whole cost
+and understates NAV by **nothing at all** — its contract note moves the first and
+cannot move the second by a rupee. Measured: invested ₹471.92 Cr against the
+review's ₹1,076.01 Cr, and the ₹604.09 Cr between them splits three ways:
+
+| Cause | Invested | NAV | Size |
+| --- | :---: | :---: | ---: |
+| **A.** held, valued, no cost reported — 60 of 369 positions | understated | **unaffected** | ₹165.94 Cr of MV already in NAV |
+| **B.** not in the book at all | understated | understated | ₹367.78 Cr at the review's marks |
+| **C.** an aggregate block the review itemises nowhere | understated | understated | ₹136.16 Cr at the review's marks |
+
+**EVERY ONE OF THE 60 IS IN A DEPOSITORY ACCOUNT** — ICICI NSDL and three Motilal
+demats. A depository holds the shares and did not buy them, so no cost is a fact
+about the document rather than a parsing failure: across the WHOLE archive not one
+of those (account, security) pairs carries a cost on any record type. **A is closed
+by contract notes, never by another holding statement**, and it is the only one of
+the three that leaves NAV where it is.
+
+**THE THREE OTHER TABS ARE LINE-MATCHED NOW, AND THAT MOVED THE RESIDUAL ₹184 Cr.**
+Section C had only ever read the review's **Equity** tab, so Debt, Alternate and
+Cash — ₹275.05 Cr — reached the bridge untested and section F could state only the
+SIZE of that hole, beside a residual of the same order. `assetTabLines` reads all
+three, through the same manager and security matchers, and **the residual is
+−₹79.38 Cr against −₹263.10 Cr before.**
+
+- **A heading is told from a holding by `Investment Date Range`.** A holding was
+  bought over a window (`Jul-25 - Jul-25`); a heading is not a purchase, so the
+  cell is blank or carries a stray Excel serial. Verified on all 30 rows of the
+  three tabs. Columns are matched on HEADER TEXT — `Alternate` has no Quantity
+  column at all, so every column after it sits one place left of where Debt and
+  Cash put it, and a positional read returns the wrong column silently.
+- **A heading with no children is a LINE, not a subtotal.** `PE Funds ₹32.71 Cr`
+  sits above six funds summing to exactly that — skip it for its children.
+  `Private Equity ₹136.16 Cr` sits above nothing: that block is itemised on the
+  review's own `Private Investments` tab and is reported here only in aggregate.
+  Skipping it as a subtotal loses ₹136.16 Cr; counting the ones that DO have
+  children double-counts. So it is carried and MARKED, gets its own bridge step,
+  and is kept OFF the ask list — no custodian issues a statement for a block.
+- **Consecutive identical headings are one.** `Private Equity` prints twice, the
+  second tagged `EG`. Counted twice it invents ₹136.16 Cr.
+- **THE TAB'S OWN TOTAL IS THE WITNESS.** Every rule above is a judgement about a
+  layout, so none is trusted: what is read must reproduce the tab's printed
+  `Total`, and a tab that does not yields NOTHING and says so — the same licence
+  `hdfcNsdl.mjs` needs to publish a rendered figure. All three tie to the paisa.
+
+**IT CORRECTED THREE ROWS IN A SECTION THAT LOOKED FINE**, which is what says this
+was a real gap rather than a tidy-up: Neo Infra (Debt), Baring PE and Transition
+Venture (both Alternate) were reported as holdings *the review does not carry*
+while the review carried every one of them on a tab nothing read. Five managers
+joined C1, and the DSP Gold and Silver ETFs left the client ask list for D0 —
+they are in the book, through the Motilal demat.
+
+**AND THE ASK LIST IS FOUR DOCUMENTS, NOT THIRTY-EIGHT HOLDINGS.** That is the
+deliverable: Motilal Oswal holding statements (20 lines, ₹244.59 Cr), Bharat's
+HDFC Bank NSDL statement **as a text PDF rather than a scan** (10, ₹75.63 Cr), AMC
+folio statements or a CAS for the Debt/Cash/Alternate fund lines (14, ₹47.56 Cr),
+and one block with **nothing to ask for**. The Motilal figure stays an UPPER BOUND
+and says so: the book already carries ₹78.78 Cr of Motilal demat rows no review
+line matches, because the depository clips `WOC MAAF D-GROW` where the review
+writes the scheme out in full and no tier above a prefix may join them. Closing
+that needs a hand-checked abbreviation table, not another statement.
+
 ### THE RING-FENCE — Polycab is one page, and no figure anywhere else
 
 *"We will remove everything related to Polycab from the dashboard, and move that
@@ -4824,7 +4901,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   cross-checks, the role `golden.mjs` plays for the extractors. The register one
   is where the costless-position gap is quantified: which of the 60 depository
   rows the family's own record could supply a cost for, and which need a contract
-  note from the custodian.
+  note from the custodian. The review one leads with **section G** — the client's
+  own question about invested capital, answered by splitting the shortfall on the
+  one line that decides what to ask for — and **D1**, the ask list grouped by the
+  document that would close each line.
 - `npm run test:family` runs the derived-figure suites — the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
   the financial-table parser, the cash-flow/calendar reader, the ratio-table
