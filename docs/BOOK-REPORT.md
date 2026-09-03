@@ -9,9 +9,9 @@ Generated — **do not edit by hand**.
 | --- | ---: |
 | Consolidated market value | 7,10,38,79,231.16 |
 | Positions | 371 |
-| Accounts | 49 |
+| Accounts | 51 |
 | Owners | 6 |
-| Newest as-of | 2026-08-13 |
+| Newest as-of | 2026-08-29 |
 
 ## Per account
 
@@ -31,6 +31,8 @@ Generated — **do not edit by hand**.
 | 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 18,79,95,881.19 |
 | 510854 | Green Lantern Capital LLP | Ankita Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 5,79,66,679.22 |
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
+| 67786137 | HDFC Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-08-29 | 0 | 0 |
+| 67786547 | HDFC Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-08-29 | 0 | 0 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
 | 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 11 | 63,78,01,111.15 |
@@ -71,7 +73,7 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 22 | 177 | 3,49,53,95,274.55 |
+| Ajay Jaisinghani | 24 | 177 | 3,49,53,95,274.55 |
 | Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
 | Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
 | Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
@@ -231,6 +233,14 @@ never guessed into the nearest plausible bucket.
 - account Green Lantern Capital LLP::510861: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-transaction-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-gain 2026-06-30 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-30-capital-gain`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: performance-history 2026-07-09 superseded for SNAPSHOT facts by 2026-08-10 — `green-lantern-capital-llp-510861-2026-07-09-performance-history`; its dated rows are still counted
+- account 67786137 (HDFC Bank (NSDL demat)) contributes no market value: its statement of 2026-08-29 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 67786137: no time-weighted return series in any statement
+- account 67786137: no flow block in any statement, so no value bridge
+- account 67786137: no external capital movements found, so no money-weighted return series
+- account 67786547 (HDFC Bank (NSDL demat)) contributes no market value: its statement of 2026-08-29 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account 67786547: no time-weighted return series in any statement
+- account 67786547: no flow block in any statement, so no value bridge
+- account 67786547: no external capital movements found, so no money-weighted return series
 - account HDFC Mutual Fund::16180583: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-06 — `hdfc-mutual-fund-16180583-2026-07-01-holdings`; its dated rows are still counted
 - account 16180583: no time-weighted return series in any statement
 - account 16180583: no flow block in any statement, so no value bridge
@@ -390,8 +400,8 @@ never guessed into the nearest plausible bucket.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
-- navHistory: 7 dated point(s) from 2026-07-10 to 2026-08-13, over the 13 account(s) that publish MORE THAN ONE dated valuation (₹140.17 Cr at the last point, each dedupeGroup counted once). 23 account(s) publish exactly one dated valuation and 13 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The series starts where the composition is complete: an earlier start would climb because accounts ARRIVED.
+- navHistory: 7 dated point(s) from 2026-07-10 to 2026-08-13, over the 13 account(s) that publish MORE THAN ONE dated valuation (₹140.17 Cr at the last point, each dedupeGroup counted once). 23 account(s) publish exactly one dated valuation and 15 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The series starts where the composition is complete: an earlier start would climb because accounts ARRIVED.
 - navHistory: 4 covered account(s) publish no dated capital record and hold more than one security, so a subscription or redemption inside them would read as performance: hdfc-mutual-fund-16180583, molecule-ventures-llp-7810404, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090. Named on screen with their share of the covered value.
-- unrealised short/long-term split is populated on 3 of 371 position(s), across 1 of 49 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- unrealised short/long-term split is populated on 3 of 371 position(s), across 1 of 51 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.

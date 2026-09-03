@@ -1,6 +1,6 @@
 {
- "docKey": "unknown-unknown-unknown-holdings",
- "provider": "(unidentified)",
+ "docKey": "family-investment-register-not-a-statement-unknown-unknown-unknown",
+ "provider": "Family investment register (not a statement)",
  "accountNo": null,
  "ownerSource": null,
  "accountNoSource": null,
@@ -14,14 +14,14 @@
  "members": [],
  "asOf": null,
  "inceptionDate": null,
- "reportType": "holdings",
- "sourcePath": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
- "pages": 4,
+ "reportType": "unknown",
+ "sourcePath": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+ "pages": 8,
  "status": "failed",
  "warnings": [
   {
-   "code": "no-text-layer",
-   "detail": "the file is 4 page(s) of SCANNED IMAGE (4 raster image(s)) and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
+   "code": "held-out-by-decision",
+   "detail": "Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
   }
  ],
  "holdings": [],
