@@ -383,6 +383,7 @@ const NO_COST_KEY = (() => {
 const CIO_BUCKET_HREFS = [];
 /** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
 const DRILLDOWN_COUNTS = new Map();
+const DRILLDOWN_TOTALS = new Map();
 // SIX, because the book has six buckets. Spare slots are not free: each one is
 // a route that renders a page nobody sees and reports four NOT CHECKED lines
 // every run, which is the noise that trains a reader to skim the report. A
@@ -1151,9 +1152,39 @@ async function installLiveMocks(page) {
 const facetsOr = (ctx, evidence, why) =>
   ctx?.facets ? null : (evidence ? false : notChecked(why));
 
-const BOOK_HAS_BOTH_HALVES = () =>
-  [CIO_FIGURES.get("listed"), CIO_FIGURES.get("private")].every((v) => Number.isFinite(v) && v > 0);
-const TILE_NAMES_COSTLESS = () => Number.isFinite(CIO_FIGURES.get("no-cost"));
+/**
+ * ── THE TWO GATES ARE READ FROM THE BOOK, NOT FROM A CAPTION ────────────────
+ *
+ * They decide whether a missing facet toggle is a FINDING or an honest
+ * abstention, so they have to describe the book rather than the page: read off a
+ * tile caption they would silently start abstaining the moment that caption was
+ * reworded — and both captions have now been removed from the strip outright at
+ * the family's request, which is exactly the event that would have turned every
+ * facet check into a quiet pass.
+ *
+ * Struck on `glowData.ts` for the same reason `YTD_MEASURABLE` is: it is the
+ * generated book, so the gate moves with the next drop and cannot go stale.
+ */
+const BOOK_HALVES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions) || !positions.length) return null;
+    return {
+      listed: positions.filter((p) => !PRIVATE_CLASSES.has(p.assetClass)).length,
+      private: positions.filter((p) => PRIVATE_CLASSES.has(p.assetClass)).length,
+      noCost: positions.filter((p) => p.costBasis == null).length,
+      // Whether the book reports accrued income at all. The NAV excludes it, so
+      // the drill-down must SAY so — and that claim has to be gated on the book
+      // rather than on the page's own words: gated on the page, deleting the
+      // sentence reads as "this book has no accrued income" and abstains. It did
+      // exactly that when the bug was reintroduced.
+      accrued: positions.filter((p) => typeof p.accruedIncome === "number" && p.accruedIncome !== 0).length,
+    };
+  } catch { return null; }
+})();
+const BOOK_HAS_BOTH_HALVES = () => !!BOOK_HALVES && BOOK_HALVES.listed > 0 && BOOK_HALVES.private > 0;
+const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
 
 /**
  * ── THE THREE SLICES ────────────────────────────────────────────────────────
@@ -2096,8 +2127,18 @@ const INVARIANTS = {
    * subtitle could go without taking a measurement with it. Asserted so a later
    * tidy-up of either of those cannot leave the table's basis unstated.
    */
-  ["...and the basis and as-of that subtitle carried are still on the page",
-    (t) => /cumulative, not annualised/i.test(t) && /as of \d{4}-\d{2}-\d{2}/i.test(t)],
+  /**
+   * THE AS-OF SURVIVES ON THIS PAGE; THE BASIS MOVED WITH THE CAPTIONS.
+   *
+   * "cumulative, not annualised" was on the Consolidated return TILE, and the
+   * family has since removed every tile caption — *"remove these small subtext
+   * from the clickable KPI buttons since these are also already written inside
+   * each KPI page"*. It is asserted on `holdings-invested` now, which is the
+   * page that tile opens and where the same words already stood. The report
+   * date is in the header's basis pill and stays here.
+   */
+  ["...and the as-of that subtitle carried is still on the page",
+    (t) => /as of \d{4}-\d{2}-\d{2}/i.test(t)],
   /**
    * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
    *
@@ -2108,11 +2149,51 @@ const INVARIANTS = {
    */
   ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
     && !/Listed vs private, on a like-for-like basis/i.test(t)],
-  ["...and the listed/private split it carried is still on the page, with both figures",
-    (t) => /Listed\s*₹[\d,.]+\s*(?:Cr|L|K)?\s*·\s*Private\s*₹[\d,.]+\s*(?:Cr|L|K)?/.test(t)
-      && /Listed \/ Private/i.test(t)],
-  ["...and the money-weighted return it carried still has its own tile and coverage",
-    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN/i.test(t) && /\d+ of \d+ accounts/.test(t)],
+  /**
+   * ...AND THE SPLIT IT CARRIED IS STILL REACHABLE, one click on rather than in
+   * the tile's own caption. Both halves are the facet toggle on the NAV's own
+   * page (asserted there, with their counts and their partition); what this
+   * page must still do is OFFER that page from the tile the split belongs to.
+   */
+  ["...and the listed/private split it carried is one click from the NAV tile", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
+    const nav = ctx.kpiTiles.find((x) => /consolidated nav/i.test(x.label));
+    return !!nav && /of=book\b/.test(nav.links[0] ?? "");
+  }],
+  ["...and the money-weighted return it carried still has its own tile",
+    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN|XIRR \(ANNUALISED\)/i.test(t)],
+  /**
+   * ── THE TILES CARRY A LABEL AND A FIGURE, AND NOTHING ELSE ────────────────
+   *
+   * *"remove these small subtext from the clickable KPI buttons since these are
+   * also already written inside each KPI pages."* Measured line by line before
+   * removing: every one of them was on the page its tile opens, except two that
+   * were not and have been moved there (the accrued income the NAV excludes, and
+   * the window the money-weighted rate is struck over).
+   *
+   * ONE EXCEPTION, AND IT IS THE RULE THIS FILE EXISTS FOR: a tile whose figure
+   * the book does not carry renders an em dash, and an em dash must name its
+   * cause. Those tiles keep their one line. On this book none are absent, so the
+   * check is struck on the tiles that DO have a figure — and a drop that empties
+   * one gets its reason back rather than an unexplained dash.
+   */
+  ["a KPI tile with a figure carries no caption under it", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const withFigures = ctx.kpiTiles.filter((x) => !x.absent);
+    if (!withFigures.length) return notChecked("no KPI tile on this run carries a figure");
+    return withFigures.every((x) => x.lines <= 2);
+  }],
+  ["...and a tile with no figure still names why", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const absent = ctx.kpiTiles.filter((x) => x.absent);
+    if (!absent.length) return notChecked("every KPI tile on this book carries a figure");
+    // THREE lines, not two: label, the em dash, and the reason. `>= 2` was the
+    // first draft and it could not fail — a tile rendering "DRY POWDER / —" and
+    // nothing else has two lines and is exactly the unexplained dash this is
+    // guarding against. Found by reintroducing the bug.
+    return absent.every((x) => x.lines >= 3);
+  }],
   /**
    * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
    * the "coming as live data lands" list; a chip for a feature already on the
@@ -2205,7 +2286,7 @@ const INVARIANTS = {
   ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
     (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
 
-    ["listed/private split is shown, not 'no private holdings'", (t) => /Private\s*₹/.test(t) && !/no private holdings/.test(t)],
+
     /**
      * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
      * that are asserted because either alone can pass on the wrong page.
@@ -2258,12 +2339,10 @@ const INVARIANTS = {
     // broke: the NAV tile's own caption splits the book by asset class, and
     // double-counting the AIF puts value in the headline that is in neither
     // half. Listed + Private must reconstruct the headline.
-    ["NAV = its own listed + private split (the AIF is not counted twice)", (t) => {
-      const nav = cr(new RegExp(String.raw`consolidated nav[\s\S]{0,60}?` + CR, "i").exec(t)?.[1]);
-      const listed = cr(new RegExp(String.raw`Listed\s*` + CR, "i").exec(t)?.[1]);
-      const priv = cr(new RegExp(String.raw`Private\s*` + CR, "i").exec(t)?.[1]);
-      return [nav, listed, priv].every(Number.isFinite) && Math.abs(listed + priv - nav) <= 0.6;
-    }],
+    // THE SPLIT RECONSTRUCTION MOVED TO `holdings-private`, which is where both
+    // halves are now printed — as page totals rather than as a tile caption. The
+    // relation is identical and the anchor is stronger: two independently
+    // rendered pages against the NAV the tile still prints.
     // THE +99% REGRESSION, GUARDED ON THE RENDERED PAGE.
     //
     // This tile shipped reading "+99.0% XIRR" — arithmetically correct (₹78.8 Cr
@@ -2276,22 +2355,12 @@ const INVARIANTS = {
     // RETURN". Every pattern here is case-insensitive — a case-sensitive one
     // fails on a page rendering perfectly, which is worse than no test. The
     // same lesson is already recorded in check-family-inputs.mjs.
-    ["the money-weighted tile states its window and its coverage", (t) => {
-      const i = t.search(/money-weighted return|XIRR \(annualised\)/i);
-      if (i < 0) return false;
-      const tile = t.slice(i, i + 240);
-      return /\d+-day window/.test(tile) && /\d+ of \d+ accounts/.test(tile);
-    }],
+    // THE WINDOW AND THE COVERAGE MOVED TO `holdings-measured` with the captions,
+    // and are asserted there. What stays here is the belt-and-braces guard
+    // below: whatever a caption says, no triple-digit rate may reach this strip.
     // A rate is only ever labelled "annualised" alongside a window of at least a
     // year. Anything else is the extrapolation coming back.
-    ["no sub-year window is presented as an annualised rate", (t) => {
-      const i = t.search(/money-weighted return|XIRR \(annualised\)/i);
-      if (i < 0) return false;
-      const tile = t.slice(i, i + 240);
-      const days = Number(/(\d+)-day window/.exec(tile)?.[1] ?? NaN);
-      if (!Number.isFinite(days)) return false;
-      return days >= 365 ? /annualised/i.test(tile) : /not annualised/i.test(tile);
-    }],
+
     // And the belt-and-braces version: no triple-digit return anywhere in the
     // KPI strip. Every honest figure this book can produce today is well under
     // it, so a hit here is an extrapolation by any route.
@@ -2393,8 +2462,10 @@ const INVARIANTS = {
      * statement or accept a permanent absence. That the facet itself resolves is
      * asserted where `holdings-invested` is walked.
      */
-    ["the Capital invested tile still names the positions reporting no cost", (t) =>
-      /positions? worth ₹[\d,.]+\s*(?:Cr|L|K)? carry no cost/i.test(t)],
+    // NAMING THE COST-LESS POSITIONS MOVED WITH THE CAPTIONS. It is asserted on
+    // `holdings-invested`, where the facet chip carries their count and the
+    // tile beside it their value — and the tile here is asserted to open that
+    // page, so the route from figure to explanation is checked end to end.
     /**
      * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
      *
@@ -2575,6 +2646,19 @@ const INVARIANTS = {
      * compared against the page's OWN rendered total rather than against a
      * literal, so it stays true when the next drop moves the book.
      */
+    /**
+     * WHAT THE NAV LEAVES OUT IS STATED WHERE THE NAV IS EXPLAINED. The tile
+     * used to carry "+ ₹47.1 L accrued income, not in this figure", and it was
+     * the ONE caption among the six that no other surface repeated — the
+     * managers' printed totals fold accrued income in on some rows and not
+     * others, so our total differs from a statement's by exactly this and a
+     * reader reconciling the two has to be told. It moved rather than went.
+     */
+    ["what the NAV excludes is named, with its figure", (t) => {
+      if (!BOOK_HALVES) return notChecked("the book could not be read on this run");
+      if (!BOOK_HALVES.accrued) return notChecked("no holding in this book reports accrued income");
+      return /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(t);
+    }],
     ["the arithmetic behind the figure is on this page, not behind a click", (t, ctx) =>
       !!ctx?.formula && /Σ market value/.test(ctx.formula.text) && ctx.formula.worked.length > 0],
     ["its worked example ties to the total this page prints", (t, ctx) => {
@@ -2680,10 +2764,19 @@ const INVARIANTS = {
    * showing the wrong half passes a check that only looks at its own figure.
    */
   "holdings-listed": [
-    ["its value reproduces the listed half the NAV caption states", (t) => {
-      const there = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
-      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
-      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    /**
+     * THE HALF IS SMALLER THAN THE BOOK AND BIGGER THAN NOTHING, and the exact
+     * reconstruction is struck on `holdings-private`, which is the only place
+     * that can make it: it needs both halves and the NAV.
+     *
+     * It used to be anchored on the NAV tile's own caption. That caption is gone
+     * — the family asked for every tile sub-line to go — so anchoring on it now
+     * would abstain forever, which is the silent-pass this file keeps naming.
+     */
+    ["its value is a real part of the book, not all of it and not none", (t) => {
+      const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      return Number.isFinite(here) && here > 0 && here < nav - 0.15;
     }],
     ["it carries holdings, and fewer than the whole book", (t) => {
       const c = drilldownCounts(t), pos = CIO_FIGURES.get("positions");
@@ -2716,10 +2809,10 @@ const INVARIANTS = {
     }],
   ],
   "holdings-private": [
-    ["its value reproduces the private half the NAV caption states", (t) => {
-      const there = CIO_FIGURES.get("private"), here = drilldownTotal(t);
-      if (!Number.isFinite(there)) return notChecked("Morning CIO's listed/private caption did not parse on this run");
-      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    ["its value is a real part of the book, not all of it and not none", (t) => {
+      const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      return Number.isFinite(here) && here > 0 && here < nav - 0.15;
     }],
     /**
      * THE TWO HALVES PARTITION THE BOOK — every holding in exactly one of them.
@@ -2751,9 +2844,18 @@ const INVARIANTS = {
       return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15
         && (!Number.isFinite(nav) || Math.abs(worked - nav) > 0.15);
     }],
+    /**
+     * THE TWO HALVES RECONSTRUCT THE NAV — the check that used to live on
+     * Morning CIO, reading a caption the family has since removed. The relation
+     * is identical and the anchor is stronger: the listed half's own RENDERED
+     * total, this page's own rendered total, and the NAV the tile still prints
+     * as its figure. Three independently produced numbers rather than one
+     * caption split three ways, so a page showing the wrong half now fails here
+     * instead of agreeing with the sentence it was generated from.
+     */
     ["the two halves reconstruct the NAV between them", (t) => {
-      const nav = CIO_FIGURES.get("nav"), listed = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
-      if (![nav, listed].every(Number.isFinite)) return notChecked("Morning CIO's NAV or listed figure did not parse on this run");
+      const nav = CIO_FIGURES.get("nav"), listed = DRILLDOWN_TOTALS.get("holdings-listed"), here = drilldownTotal(t);
+      if (![nav, listed].every(Number.isFinite)) return notChecked("the NAV or the listed half's total was not captured on this run");
       return Number.isFinite(here) && Math.abs(listed + here - nav) <= 0.3;
     }],
   ],
@@ -2829,10 +2931,32 @@ const INVARIANTS = {
    * the mistake is invisible, and why the page says which basis it is on.
    */
   "holdings-measured": [
-    ["its market value reproduces the coverage the money-weighted tile states", (t) => {
-      const cov = CIO_FIGURES.get("measured"), here = drilldownTotal(t);
-      if (!Number.isFinite(cov)) return notChecked("Morning CIO's money-weighted tile states no coverage on this run");
-      return Number.isFinite(here) && Math.abs(here - cov) <= 0.15;
+    ["it covers part of the book and says so, rather than all of it", (t) => {
+      const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      return Number.isFinite(here) && here > 0 && here < nav - 0.15;
+    }],
+    /**
+     * ── THE +99% GUARD, ON THE PAGE THAT NOW CARRIES IT ──────────────────────
+     *
+     * This tile shipped reading "+99.0% XIRR" — arithmetically correct (₹78.8 Cr
+     * to ₹99.4 Cr over 132 days is +28.3%, and compounding 0.36 of a year onto a
+     * full one gives 99%) and indefensible, because the managers' own annualised
+     * since-inception returns for these accounts run about 7% to 31%. The tile
+     * used to state its window and its refusal to annualise; the family asked
+     * for every tile caption to go, so `drilldownFormula` states both on the page
+     * the tile opens, deriving the window from the same flows and the same
+     * accounts the rate is struck over.
+     *
+     * A rate is only ever labelled annualised beside a window of at least a
+     * year. Anything else is the extrapolation coming back.
+     */
+    ["it states the window the rate is struck over", (t) =>
+      /\d+-day window/i.test(t)],
+    ["no sub-year window is presented as an annualised rate", (t) => {
+      const days = Number(/(\d+)-day window/i.exec(t)?.[1] ?? NaN);
+      if (!Number.isFinite(days)) return false;
+      return days >= 365 ? /genuine annual/i.test(t) : /not annualised/i.test(t);
     }],
     ["it states that it is per-account and not consolidated", (t) => /as printed\s*·\s*per account/i.test(t)],
     // AND IT NAMES WHAT IT LEAVES OUT. A figure that exists for some accounts is
@@ -2859,6 +2983,14 @@ const INVARIANTS = {
      * that report NO cost under that heading — the whole of the figure's
      * complement, under the figure's own name.
      */
+    /**
+     * "CUMULATIVE, NOT ANNUALISED" LIVES HERE NOW. It was on the Consolidated
+     * return tile, which opens this page; the family removed every tile caption,
+     * and this page's own Return on cost tile already said the same words. A
+     * return with no basis stated reads as an annual rate, which is the failure
+     * that once put +99.0% on the strip.
+     */
+    ["the return here states its basis", (t) => /cumulative, not annualised/i.test(t)],
     ["it opens on the holdings that report a cost", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
@@ -2902,10 +3034,17 @@ const INVARIANTS = {
    * statement or accept a permanent absence.
    */
   "holdings-nocost": [
-    ["its market value reproduces the figure the tile's coverage line names", (t) => {
-      const there = CIO_FIGURES.get("no-cost"), here = drilldownTotal(t);
-      if (!Number.isFinite(there)) return notChecked("Morning CIO reports no position without a cost on this run");
-      return Number.isFinite(here) && Math.abs(here - there) <= 0.15;
+    /**
+     * THE COSTED HALF AND THIS ONE ADD TO THE BOOK. `sumOrNull` skips a missing
+     * cost rather than entering it as zero, so every holding is on exactly one
+     * side of this split — and the two sides plus the NAV is the relation the
+     * tile's removed caption used to be checked against. Anchored on the two
+     * pages' own totals and the NAV the tile still prints.
+     */
+    ["it and the costed half account for the whole book", (t) => {
+      const nav = CIO_FIGURES.get("nav"), costed = DRILLDOWN_TOTALS.get("holdings-invested"), here = drilldownTotal(t);
+      if (![nav, costed].every(Number.isFinite)) return notChecked("the NAV or the costed half's total was not captured on this run");
+      return Number.isFinite(here) && here > 0 && Math.abs(costed + here - nav) <= 0.3;
     }],
     // EVERY MONETARY FIGURE ABOUT COST IS ABSENT HERE, NOT ZERO. This is the
     // page where a ₹0 would be worst: it would report the whole of ₹165.9 Cr as
@@ -4779,6 +4918,17 @@ for (const theme of THEMES) {
            * already carries a soft one.
            */
           raised: /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(c).boxShadow),
+          /**
+           * HOW MANY LINES OF TEXT THE TILE RENDERS. *"remove these small
+           * subtext from the clickable KPI buttons."* A label and a figure is
+           * two; anything more is a caption. Counted rather than matched,
+           * because the words differ per tile and a caption a redesign
+           * reintroduces would not be one this file could have listed.
+           */
+          lines: (c.innerText ?? "").split("\n").map((x) => x.trim()).filter(Boolean).length,
+          // An em dash is what `AbsentValue` renders, and such a tile KEEPS its
+          // one line — a dash with no cause is what `Absent.tsx` exists to stop.
+          absent: /(^|\n)\s*—\s*(\n|$)/.test(c.innerText ?? ""),
         }));
       });
       /**
@@ -4896,6 +5046,12 @@ for (const theme of THEMES) {
       // claim about the two pages together which neither can make alone.
       if (!FAST && name.startsWith("holdings-")) {
         DRILLDOWN_COUNTS.set(name, drilldownCounts(text));
+        // ...AND ITS TOTAL. The listed and private halves used to be anchored on
+        // the NAV tile's own caption, which the family has since removed from
+        // the strip; the relation they were asserting — the two halves
+        // reconstruct the NAV — is unchanged, so it is now struck between the
+        // two PAGES plus the NAV, which the tile still prints as its figure.
+        DRILLDOWN_TOTALS.set(name, drilldownTotal(text));
       }
       if (name === "cio") {
         // THE ADDRESSES ARE COLLECTED EVEN IN FAST MODE, for the reason
