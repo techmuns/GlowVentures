@@ -2640,6 +2640,20 @@ const INVARIANTS = {
     return ctx.kpiTiles.every((tile) =>
       tile.links.every((h) => !/[?&]of=(listed|private|no-cost)\b/.test(h)));
   }],
+  /**
+   * ...AND SO DOES THE ALLOCATION TABLE, which was the last place on this page
+   * with either. Its rows must STAY clickable — the underline was the
+   * decoration, not the link — so both halves are asserted: no decoration and
+   * no popover trigger, and a link for every row that has a set behind it.
+   */
+  ["the allocation table underlines nothing and hides no arithmetic", (t, ctx) => {
+    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
+    return ctx.allocTable.underlined === 0 && ctx.allocTable.buttons === 0;
+  }],
+  ["...and its rows are still clickable", (t, ctx) => {
+    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
+    return ctx.allocTable.links >= 2;
+  }],
   ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
     (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
 
@@ -2914,6 +2928,28 @@ const INVARIANTS = {
       const herePct = /([+-]\d+\.\d)%/.exec(tileValue(t, "RETURN ON COST") ?? "")?.[1];
       if (rowPct == null) return herePct == null;
       return herePct != null && Math.abs(Number(herePct) - Number(rowPct)) <= 0.15;
+    }],
+    /**
+     * ...AND THE WORKED EXAMPLE OBEYS THE SAME REFUSAL AS THE TILE ABOVE IT.
+     *
+     * The allocation row's return used to be a popover on Morning CIO; with the
+     * table's underlines gone it is stated here, and the FIRST DRAFT OF THAT
+     * SIMPLY DIVIDED — so Mutual Fund's card read `−0.0% over 2 of 24` on a page
+     * whose own Return on cost tile correctly showed a dash, and beneath a row
+     * that showed one too. Two answers for one figure, one click apart, and the
+     * check above could not see it because it only reads the tile.
+     *
+     * Both surfaces call `coveredReturn` now. This asserts they agree.
+     */
+    ["the worked example refuses the return wherever the tile does", (t, ctx) => {
+      if (!ctx?.formula?.worked) return notChecked("this page drew no formula card on this run");
+      const tile = tileValue(t, "RETURN ON COST");
+      // U+2212 MINUS SIGN, NOT AN ASCII HYPHEN. The worked line renders a real
+      // minus, so `[+-]` missed `= −0.0%` entirely — and the check then read a
+      // page printing a forbidden return as one printing none, and PASSED. Found
+      // by reintroducing the bug it exists for.
+      const inWorked = /=\s*[+\-\u2212]\d+\.\d%/.test(ctx.formula.worked);
+      return tile === "—" ? !inWorked : inWorked;
     }],
     // A REFUSED FIGURE STILL HAS TO SAY WHY. An em dash with no cause is the
     // "second dash" failure the stock page was fixed for.
@@ -5361,6 +5397,28 @@ for (const theme of THEMES) {
           active: a.getAttribute("aria-current") === "true",
         }));
       });
+      /**
+       * ── THE ALLOCATION TABLE CARRIES NO UNDERLINE AND NO POPOVER ──────────
+       *
+       * *"remove the underlines from the allocation table too."* Its row labels
+       * were dotted-underlined links and its return chips dashed-underlined
+       * popover triggers — the last two underlines on the page after the KPI
+       * strip lost its own. The rows stay clickable, so this cannot be struck on
+       * the link count; it is struck on the computed decoration and on the
+       * absence of a popover trigger, neither of which changes a rendered word.
+       */
+      const allocTable = FAST ? null : await page.evaluate(() => {
+        const t = [...document.querySelectorAll("main table")]
+          .find((x) => /ASSET CLASS/i.test(x.innerText ?? ""));
+        if (!t) return null;
+        return {
+          underlined: [...t.querySelectorAll("*")].filter((e) =>
+            (e.textContent ?? "").trim()
+            && getComputedStyle(e).textDecorationLine.includes("underline")).length,
+          buttons: t.querySelectorAll("button").length,
+          links: t.querySelectorAll("a[href]").length,
+        };
+      });
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
@@ -5735,7 +5793,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, allocTable, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

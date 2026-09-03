@@ -502,6 +502,30 @@ function ownerLabel(accIdx: ReturnType<typeof accountIndex>, p: Position): strin
  * which lives on the portfolio context; a formatter hard-coded here would print
  * rupees on a page showing dollars. Same seam `auditFormulas.ts` already uses.
  */
+/**
+ * ── A REFUSED RETURN STAYS REFUSED, WHEREVER IT IS PRINTED ──────────────────
+ *
+ * Morning CIO's allocation row prints an em dash for Return where its Invested
+ * column covers a minority of its holdings: Value spans all of them and
+ * Invested spans some, so a percentage across the two would divide one set of
+ * holdings by another. The drill-down page runs the same test on its own tile,
+ * and so must the worked example beside it.
+ *
+ * IT LIVES HERE BECAUSE THREE SURFACES NEED THE SAME ANSWER. It was a private
+ * helper in `HoldingsBehind` while only that page ran it; the moment the formula
+ * card started stating a return too, a second copy would have been a second
+ * definition of "covered enough" — and the first draft, which simply divided,
+ * printed `−0.0% over 2 of 24` for Mutual Fund on a page whose own tile
+ * correctly showed a dash. Two figures for one set, one click apart.
+ */
+export function coveredReturn(mv: number, cost: number | null, pnl: number | null, withoutCostMV: number) {
+  const covers = mv > 0 && withoutCostMV <= mv * 0.005;
+  return {
+    covers,
+    pct: covers && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+  };
+}
+
 export function drilldownFormula(d: Drilldown, money: (n: number) => string): FormulaDef | null {
   const rows = d.rows;
   if (!rows.length) return null;
@@ -587,19 +611,68 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
             : d.windowDays >= 365
               ? `\n\nTHE WINDOW IS ${d.windowDays} DAYS, so the rate is a genuine annual one.`
               : `\n\nTHE WINDOW IS ${d.windowDays} DAYS, AND THE RATE IS NOT ANNUALISED. It is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection of ${d.windowDays} days rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, and it contradicted the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. When the flows eventually span a year the same calculation starts returning an annual rate and says so.`
+        }${
+          /**
+           * ── THE TWO BASES, ON ONE SET ────────────────────────────────────
+           *
+           * Morning CIO's allocation footer used to carry this comparison in a
+           * popover, because the money-weighted rate and the footer's own
+           * return-on-cost are two different measurements and a reader seeing
+           * both needs them told apart. That popover is gone with the table's
+           * underlines, and this is a SHARPER place for it: the footer set a
+           * whole-book figure against a seven-account one, where here both
+           * bases describe the SAME accounts — the Return on cost tile above is
+           * the cost basis, and the rate on the tile you clicked is the dated
+           * one. The difference between them is WHEN the money arrived, which
+           * is the whole reason the second measurement exists.
+           */
+          cost == null || cost <= 0
+            ? ""
+            : `\n\nTWO MEASUREMENTS OF THIS SAME SET. Return on cost above divides ${money(mv)} by the ${money(cost)} these holdings cost and asks what the capital has produced; the money-weighted rate asks what it produced GIVEN WHEN IT ARRIVED, so a rupee that landed a month before the close is credited with a month rather than the whole window. They answer different questions and neither is a correction of the other — the gap between them is the timing of the flows.`
         }`,
         worked: `= ${money(mv)} ${spread}${d.excludedAccounts.length ? ` · ${n(d.excludedAccounts.length, "account")} outside it` : ""}${
           d.windowDays == null ? "" : ` · ${d.windowDays}-day window${d.windowDays >= 365 ? "" : " · not annualised"}`
         }`,
       };
 
-    case "bucket":
+    case "bucket": {
+      /**
+       * THE RETURN THE ALLOCATION ROW'S CHIP USED TO EXPLAIN. That chip carried
+       * a popover, and the dashed underline that opened it was the last
+       * underline in the table — *"remove the underlines from the allocation
+       * table too."* So the arithmetic lands here, on the page the row already
+       * opens, beside the very holdings it is struck over.
+       *
+       * AND IT REFUSES ITSELF ON EXACTLY THE ROWS THE CHIP DOES. A bucket whose
+       * Invested column covers a minority of its holdings has no return that
+       * divides one column by the other — the two would span different sets —
+       * so the em dash is the answer here too, with the count that causes it.
+       */
+      const costedMV = costed.reduce((a, p) => a + p.marketValue, 0);
+      // THE SAME TEST THE ROW AND THE TILE RUN, not a re-derivation of it.
+      const { pct } = coveredReturn(mv, cost, cost == null ? null : costedMV - cost, mv - costedMV);
+      const full = costed.length === rows.length;
       return {
         title: `${d.title}${of}`,
-        excel: "= Σ market value of the holdings in this bucket",
-        plain: `The bucket is decided by \`holdingBucket\`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it. ${basis}`,
-        worked: `= ${money(mv)} ${spread}${cost == null ? "" : ` · cost ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length}`}`,
+        excel: "= Σ market value of the holdings in this bucket    ·    Return = (Value of the costed holdings − Invested) ÷ Invested",
+        plain: `The bucket is decided by \`holdingBucket\`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it. ${basis}${
+          pct == null
+            ? cost == null
+              ? "\n\nNo holding here reports a cost, so there is nothing to strike a return against — the market value stands on its own."
+              : `\n\nNO RETURN IS STRUCK HERE, and the allocation row this page opens from prints an em dash for the same reason: Invested covers ${n(costed.length, "holding")} of ${rows.length} and Value covers all of them, so the ${money(mv - costedMV)} that reports no cost stands in one column and not the other. A percentage across the two would divide one set of holdings by another.`
+            : full
+              ? "\n\nThe return is CUMULATIVE, not annualised: it is the gain this bucket has produced to date on the capital in it, not a yearly pace."
+              : `\n\nThe return is CUMULATIVE, not annualised, and it covers ${n(costed.length, "holding")} of ${rows.length}: the other ${rows.length - costed.length} report no cost, and their ${money(mv - costedMV)} stands in the value column and on neither side of the ratio.`
+        }`,
+        worked: `= ${money(mv)} ${spread}${
+          pct == null
+            ? cost == null
+              ? " · no cost reported, so no return"
+              : ` · cost ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length} · return —`
+            : ` · ${money(cost ?? 0)} invested → ${money(costedMV)} today = ${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(1)}%`
+        }`,
       };
+    }
 
     case "top-names":
       return {
