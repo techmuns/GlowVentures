@@ -530,3 +530,59 @@ export type RealisedByClass = {
   realisedLT: number | null;
   securities: string[];
 };
+
+/**
+ * THE FAMILY'S INVESTMENT REGISTER — a COST record, never a valuation.
+ *
+ * `src/data/registerData.ts` is generated from the family's own workbook by
+ * `npm run build-register`. It is not a statement and is not part of the book:
+ * every figure is money that left a bank account on a date, and the workbook's
+ * `CURRENT VALUATION` column is empty on every row. Nothing typed here may be
+ * added to a market value or reach a NAV — `src/pages/Register.tsx` reads the
+ * module directly rather than through `PortfolioContext` for that reason.
+ */
+export interface RegisterLine {
+  name: string;
+  /** Money paid across every tranche of this name. A COST, not a value. */
+  paid: number;
+  tranches: number;
+  sheets: string[];
+  /** `INVESTMENT DONE UNDER`, verbatim — often a bare first name. */
+  owners: string[];
+  /** Where the book already carries it: a provider name or a securityKey. */
+  heldAs?: string;
+}
+
+export interface RegisterCostCandidate {
+  security: string;
+  securityKey: string;
+  custodian: string | null;
+  /** What the book marks it at. */
+  marketValue: number | null;
+  /** What the register says was paid. NOT a posted cost basis — see the page. */
+  paid: number;
+}
+
+export interface RegisterSummary {
+  grossPaid: number;
+  /** What the amount column reads if the subtotal rows are summed too. */
+  blindSum: number;
+  tranches: number;
+  names: number;
+  sheets: number;
+  loansRepaid: number;
+  writtenOff: number;
+  rowsWithCurrentValuation: number;
+  rowsStatingAQuantity: number;
+  paidUnderAnUnresolvedOwner: number;
+  inBookAsAccount: number;
+  inBookAsPosition: number;
+  notInBook: number;
+  namesInBookAsAccount: number;
+  namesInBookAsPosition: number;
+  namesNotInBook: number;
+  namesExited: number;
+  costlessPositions: number;
+  costlessMarketValue: number;
+  costlessCovered: number;
+}

@@ -210,21 +210,41 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** SIX DELIVERIES, and every one stays:
+**What is actually in `source/` today.** SEVEN DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/`, `august-2026-c/`, `august-2026-d/` and `august-2026-e/` —
-statements that arrived after it. Thirty-two issuers — ICICI Bank's NSDL
-depository is the new one — 49 accounts in the book, six holders and two family
-trusts, 50 files expanding to 229 — of which
-**261 documents** are extracted, 197 read fully, 62 partially and **exactly TWO
-not at all**, for two different reasons that must not be conflated:
+`august-2026-b/`, `august-2026-c/`, `august-2026-d/`, `august-2026-e/` and
+`august-2026-f/` — statements that arrived after it. **ALL SEVEN have now been
+through `npm run extract`**, `august-2026-f/` included: its two outlined-text
+statements are read by rendering their glyphs (see its own section) and its third
+file is a register held out of the book by decision. 35 provider names in the
+archive, of which **31 are issuing institutions** — HDFC Bank's NSDL depository is
+the new one — **51 accounts** in the book, six holders and two family trusts, 53
+delivered files expanding to **318 leaf files** — of which **264 documents** are
+extracted, 199 read fully, 62 partially and **exactly ONE not at all**:
 
-- the adviser's consolidated review workbook, held out BY DECISION, which is not
-  a statement;
-- Bharat's HDFC NSDL holding statement, which is a SCAN — four JPEG pages with
-  no text layer, so there is nothing for any reader to read. Reported as
-  `no-text-layer`, never as a missing reader, because those two send the next
-  person to do completely different things and only one of them is possible.
+- Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
+  four JPEG pages of photographed paper, so there is nothing any reader or any
+  renderer can recover. Reported as `no-text-layer`, never as a missing reader,
+  because those two send the next person to do completely different things and
+  only one of them is possible.
+
+Two more documents are `failed` in the archive and are NOT that: the adviser's
+consolidated review workbook and the family's investment register are both read
+perfectly and are **held out BY DECISION**, because neither is a statement. The
+archive records the decision so a future session cannot mistake it for a gap.
+
+**AND `npm run coverage:source` PROVES THERE IS NO OTHER GAP.** The extraction
+report answers *did the documents we read tie out?*; that question presupposes a
+prior one nobody could answer without reading a directory listing by hand — *is
+there a file in `source/` whose data never reached anything?* `scripts/source-coverage.mjs`
+accounts for every leaf file in exactly one class and **exits non-zero if any is
+`unread`**, so a delivery that lands a file nobody reads cannot pass silently.
+Measured today: 252 read, 4 read via a byte-identical twin, 2 held out by
+decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
+header, never assumed from the path), 2 password notes excluded by policy, and
+**0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
+them rather than edited to taste.
 
 Every encrypted statement opens, every issuer whose statements carry text has a
 reader, and `source/README.md` carries the rule for adding the next delivery.
@@ -275,17 +295,19 @@ every ZIP already at the top level.
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
 | Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
-| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (no NAV published) |
-| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (no NAV published) |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 |
+| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| HDFC Bank (NSDL demat) | 67786137 | Ajay Jaisinghani | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
+| HDFC Bank (NSDL demat) | 67786547 | Ajay Jaisinghani | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
 | Motilal Oswal demat | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
-| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (both rows are AIF units their funds report) |
-| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (`NO HOLDING IS AVAILABLE`) |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (redeemed to nil) |
+| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
+| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | — (no NAV published) |
@@ -299,7 +321,9 @@ cells and gets a different answer has found one, and no prose rescues it. The
 column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
 TIME rather than patched: hand-merging rows to keep it short is what let eight
 accounts go unlisted, and a row added by hand is a figure copied into prose. It
-is one row per account, all 42 of them, sorted by value.
+is one row per account, all 51 of them, sorted by value — and the words in the
+right-hand cell are `Account.noPositionsReason`, routed rather than written, so
+an account that changes WHY it is empty changes this table on the next run.
 
 \* the same holding, reported under both CRNs — see §4c. Counted once.
 
@@ -400,13 +424,17 @@ Two things changed, and the second is the one that speaks up next time:
 
 **What this still cannot catch, stated rather than papered over:** a pair whose
 figures never coincide at ANY as-of forms no group on any issue, so there is no
-tag to carry. Widening detection to match on quantity alone is the wrong trade —
-India SME's three folios print coincidentally equal units — so the residual risk
-is named here instead. `duplicateAifEarnings` covers the income-only side of the
-same folio pair, which is how this one was visible in the archive at all.
+tag to carry. Widening detection to match on quantity alone is the wrong trade,
+and that is measured rather than feared: it produced THREE false duplicates on
+this corpus, each refuted by a document already in hand (see "…and then it was
+flagging THREE pairs" below). So the residual risk is named here instead.
+`duplicateAifEarnings` covers the income-only side of the same folio pair, which
+is how this one was visible in the archive at all.
 
-**Every issuer has a reader.** Getting there took four of them, and each earned
-its own file because the layouts share nothing:
+**Every issuer whose statements carry recoverable text has a reader.** Each earned
+its own file because the layouts share nothing. The one issuer without one is HDFC
+Bank's `august-2026-e` statement, and that is not a missing reader — it is four
+JPEG pages with nothing on them to read (see the ring-fence section):
 
 | Reader | Documents | What it reads |
 | --- | ---: | --- |
@@ -421,6 +449,7 @@ its own file because the layouts share nothing:
 | `providers/mutualFundFolio.mjs` | 5 | folio statements, three different layouts behind one reader |
 | `providers/motilalDemat.mjs` | 12 | the family's own CDSL demat accounts — SEVEN of them, keyed on the `Client ID:` the page prints because three of the twelve FILE NAMES name the wrong member |
 | `providers/nsdlDemat.mjs` | 1 | the family's NSDL account at ICICI Bank — the mirror image of the CDSL reader, with NO RATE COLUMN, so value is the primitive and the price would be the derived thing |
+| `providers/hdfcNsdl.mjs` | 2 | the two trusts' NSDL accounts at HDFC Bank — the only reader in this book working on text recovered by RENDERING, and the only one that REFUSES its document unless the rows reproduce the statement's own printed total to the paisa |
 | `providers/bankAdvice.mjs` | 2 | ICICI payment receipts — read in full, attributed to nothing, because a receipt names no holder and no security |
 | `providers/schemePortfolio.mjs` | 1 | a fund's own SEBI portfolio disclosure — archived for look-through, worth nothing to the book |
 
@@ -916,6 +945,373 @@ reserves for them. What must not happen is the third option: dropping it quietly
 and leaving the book looking complete. **The family have since made that
 decision — see the next section.**
 
+### The `august-2026-f` delivery — a THIRD way a PDF is unreadable, and a register that is not a statement
+
+Three files, found by diffing the client's Google Drive against `source/` after
+every other delivery. **NOT ONE OF THEM MOVES A RUPEE OF NAV**, and every one of
+them is read — which is the point of this section, because those two facts look
+contradictory and are not. The two statements are read by RENDERING their outlined
+glyphs and their single holding is priced at face value, so it carries a quantity
+and no value; the register reads perfectly and is held out of the book by
+decision. What moves is the account count, the book's as-of and the `/register`
+page — never a total.
+
+The passage below is kept in the order it was learnt, because the first answer
+("neither is an OCR job") was right about a scan and wrong about these, and the
+distinction it turns on is the whole of why one is read and the other still is not.
+
+| File | What it is | Outcome |
+| --- | --- | --- |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own record of what they PAID — 8 sheets, 427 tranche rows, 151 names, **₹842.92 Cr gross paid in** | reads perfectly, and is **not a source** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account **67786547** | **READ — by rendering its outlined glyphs, see below** |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account **67786137** | **READ — same** |
+
+**A DOCUMENT WITH NO TEXT IS NOT ALWAYS A SCAN.** `august-2026-e` established that
+a scan is not a document with no reader. These two are neither: **no raster image
+anywhere and no text either** — zero font objects, zero `BT`/`Tj`, and ~9,300
+bezier curves, because every glyph has been CONVERTED TO VECTOR OUTLINES by
+whatever exported the file. pdfjs's operator list reads 2,752 ops / 545 paths /
+**zero text ops**; poppler's `pdftotext` returns one character. Two independent
+engines agree there is nothing to read.
+
+The old test would have called them `no-text-layer` — "**1 page(s) of SCANNED
+IMAGE**" — which is the same class of confidently wrong answer that test's own
+comment already records about the review workbook, and it sends the next person
+to ask HDFC to re-scan paper that was never on paper. They report
+**`text-outlined-to-paths`** now, and the reason names the actual remedy: a
+**re-export from the issuing system with fonts embedded**. That diagnosis is still
+what a document reports when nothing can read it; what changed is that something
+now can — see the next section, which is where this passage's original conclusion
+("neither is an OCR job") was overturned for these two and upheld for the scan.
+
+`classifyInk` in `lib/layout.mjs` draws the distinction **on the operator list**,
+because a PDF 1.7 file keeps `/Font` and `/DCTDecode` inside compressed object
+streams and a raw byte search finds neither. It runs **only** for a document that
+yielded no text at all, so no ordinary statement pays for the second parse —
+asserted in `layout.test.mjs` along with both directions of the classification,
+against PDFs generated in the test. Measured on the corpus: the two new files are
+`vector` (0 images, 545/540 paths), Bharat's HDFC scan is `raster` (**4 images**,
+0 paths — the four DCTDecode JPEGs this file already documents), and Ajay's ICICI
+statement returns 124 text rows and is never classified at all.
+
+#### They ARE read now — by rendering the outlines, and never a scan
+
+*"use whatever method you want to for extracting the data … every single file must
+be incorporated."* The refusal above was right about a SCAN and wrong to extend to
+these, and the difference is not a technicality:
+
+- a SCAN is a photograph of paper. Its information is genuinely lossy — sensor
+  noise, skew, JPEG ringing — so a figure recovered from it cannot be traced to
+  what the document printed, and a wrong digit looks exactly like a right one.
+  **Bharat's `august-2026-e` statement stays refused for that reason.**
+- OUTLINED TEXT is not a photograph of anything. The file itself carries every
+  glyph's exact bezier curves; rendering them is EVALUATING data the document
+  already holds, at whatever resolution we choose. At 600 dpi the bitmap is a
+  clean synthetic rendering of exact shapes: no noise, no skew, no compression.
+
+`lib/ocr.mjs` renders and reads those, and hands the words back **in the same
+`{x,y,width,height,text}` shape `itemsFrom` produces from pdfjs** — so
+`pageToGrid` and every reader above it work unchanged and there is no second,
+drifting "OCR table parser". `extractLayout` routes ONLY `inkKind.kind ===
+"vector"` there; a `raster` page keeps its `no-text-layer` diagnosis and is not
+read. Both directions are asserted in `layout.test.mjs`.
+
+**AND A PREMISE IS NOT A PROOF, SO THE READER CHECKS ITSELF.**
+`providers/hdfcNsdl.mjs` will not emit a holding unless the rows it read
+reproduce the statement's own printed `Total Valuation (Rs.)` **to the paisa**;
+on a mismatch it emits nothing and says why. That check is the whole licence for
+reading a rendered document — the page's own arithmetic is the witness. Here it
+passes on both files, and three further things agree: 347 x 100.000 = 34,700.000,
+the statement's words ("Rupees Thirty-Four Thousand Seven Hundred Only") match
+its digits, and the register in the same delivery independently records 347
+preference shares per trust.
+
+**THEY ADD ₹0 TO NAV, AND THAT IS THE CORRECT ANSWER.** The Market Rate is exactly
+100.000 — the FACE VALUE an unlisted preference share was allotted at —
+so `faceValueBasis` grades it `par` and the holding carries its QUANTITY and no
+value. The book gains **two accounts (49 → 51)** and its as-of advances to
+**2026-08-29**; `totalValue` does not move by a rupee. Reading 100.000 as a mark
+would have invented ₹34,700 twice.
+
+`textSource: "ocr"` rides in the provenance, and the document carries a
+`text-recovered-by-rendering` warning naming the remedy — a re-export from HDFC
+with fonts embedded — so no figure read this way is ever mistaken for a native one.
+
+**IT NEEDS TWO SYSTEM BINARIES, AND DEGRADES WITHOUT THEM RATHER THAN GUESSING.**
+`pdftoppm` (poppler-utils) and `tesseract`. Neither is an npm package and neither
+is in CI — which costs nothing, because **CI never re-extracts**: it reads the
+committed archive and checks that the book regenerates from it byte-identically.
+Where they are absent `ocrAvailable()` says so, `extractLayout` falls back to the
+`text-outlined-to-paths` diagnosis, and the run is exactly what it was before OCR
+existed. It never half-reads. Re-extracting these two locally needs:
+
+```
+sudo apt-get install -y poppler-utils tesseract-ocr
+```
+
+**AND THE PIPELINE GREW A GUARD, BECAUSE THIS SESSION DELETED 24 DOCUMENTS.**
+`node scripts/ingest/extract.mjs --help` is not a help flag — `extract.mjs` takes
+no options, so it ran a FULL extraction against the default paths, and the eight
+encrypted statements it could not open without `GLOW_PDF_PASSWORDS` simply left
+the archive. Recovered with `git checkout -- public/audit/`, and the fix is not
+"be careful": `guardAgainstShrinkingTheArchive` compares the documents this run
+read against the documents already on disk and **refuses to write, exit 1**, if
+the run produced fewer. A deliberate shrink sets `GLOW_ALLOW_ARCHIVE_SHRINK=1`
+and says so out loud. A re-extraction that quietly loses the statements it lacked
+a password for is indistinguishable, in the diff, from a drop that never carried
+them.
+
+**AND `build-book` WAS TELLING THE WRONG STORY ABOUT THEM.** Its
+`noPositionsReason` had one sentence for every unvalued account — *"this fund
+publishes no NAV … the capital drawn against a commitment"* — which is true of
+India SME and Sky Capital and false of a depository. It branches on the HOLDING
+now: a row carrying a `faceValue` gets the custody wording, and the fund wording
+is reserved for a fund. A confidently wrong reason sends the next reader to ask a
+fund manager for a NAV no fund owes.
+
+**AND THE FILENAMES NAME THE WRONG HOLDER, FOR THE FOURTH TIME.** Both files are
+named for a Bharat Jaisinghani family trust; both statements print `AJAY T
+JAISINGHANI` and `AARTI AJAY JAISINGHANI` as joint holders at Ajay's own
+Prabhadevi address. `providers/hdfcNsdl.mjs` therefore resolves the account on the
+`DP Account No:` the page prints, never on the file name — `motilalDemat.mjs`'s
+rule, arriving through a third issuer — and it will not fall back to the file name
+even when the account line is unreadable: with no `DP Account No:` it emits
+nothing and says so. What they hold is one line each,
+`SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
+`0.01% PRE SERIES A PREF` at a Market Rate of **100.000** — the FACE VALUE of a
+preference share in an unlisted private company. Read as a mark it adds ₹34,700
+twice; under this book's own rules it is **quantity-only with no value**.
+
+**AND THE REGISTER IN THE SAME DELIVERY CONFIRMS THESE *ARE* THE TRUSTS'
+HOLDINGS — ONCE THE WHOLE CELL IS READ.** Its `TRUST INVESTMENT` rows read
+`2807 PRE SERIRES A CCPS OF FACE VALUE RS. 100 EACH (NO OF PREFERENCE SHARE 347)`
+— **347**, once per trust, and 347 x ₹100 face = **₹34,700**, the exact Total
+Valuation both statements print. Instrument, face value and quantity all tie, so
+each file is one trust's holding and the holder line prints the **TRUSTEES**
+rather than the trust. The register also carries Bharat's own separate 244 EQUITY
+shares (₹50,20,300), for which no statement exists.
+
+**THIS PASSAGE FIRST ASSERTED THE OPPOSITE**, and the mistake is worth keeping
+because it is a new shape of an old one. The cell was read to 240 characters; the
+parenthetical carrying the unit count sits past that cut, so `2807` read as the
+quantity and nothing matched. The conclusion — "these are not the trusts' files,
+the trusts' ₹2.70 Cr has no statement, that is two asks" — was confident,
+internally consistent, and would have sent the client hunting for documents they
+had already sent. **A TRUNCATED CELL IS NOT A SHORT CELL**, and a display limit
+in a debugging script is not a fact about the source, which is the same class of
+error as reading a figure off a `title` attribute the check could not see.
+
+What survives is the mapping caution, not the ask: the statement names only the
+trustees, so a reader must resolve each account on the `DP Account No:` the page
+prints (67786547 / 67786137) and attribute it to a trust through the register.
+That is a join to establish, not a document to request.
+
+#### The register is the same decision as the review — and it was the dangerous one
+
+`NEW INVESTMENT SHEET.xlsx` is a CASH-OUTFLOW register: `INVESTMENT AMOUNT` is
+money that left a bank account on a date, and **`CURRENT VALUATION` is empty on
+every one of its 427 rows**. So it can speak to INVESTED CAPITAL, which is a cost,
+and it **cannot move NAV by a rupee** — a NAV gap closes with a holding
+statement, never with a payment record. That distinction is the whole of
+`docs/REGISTER-RECONCILIATION.md`.
+
+It is held out of the book for the reason the consolidated review is, and matched
+the same way — on a column header no issuer prints. A depository tracks units,
+never whether the family holds the paper certificate, so `ORG. SHARE CERTIFICATE
+STATUS` is the anchor. **Unmatched it was measured classifying as provider
+`Green Lantern Capital LLP`, strategy `Aristos Equity Portfolio`, owner
+`"COMMUNITY PRIVATE LIMITED BHARAT"`, accountNo `"EDUGORILLA"` and reportType
+`capital-call`** — five fields scraped off PORTFOLIO COMPANY names in its own
+cells. Green Lantern has a reader and `capital-call` is a live report type, so
+unlike the review workbook this one would have been **handed to a reader** rather
+than merely misfiled.
+
+**AND IT EXPOSED THAT THE REVIEW'S OWN PROTECTION WAS LUCK.** That rule lives in
+`ISSUER_PROVIDER_RULES`, which run AFTER `match360One`/`matchGoldstandard`, so the
+workbook escaped those only because its cells spell "Green Lantern Growth
+Strategy" rather than "GREEN LANTERN CAPITAL". The adviser writing a manager's
+full legal name in one cell was all it would have taken. Both house matchers now
+return null for either signature (`isNonStatement`), and a document nobody issued
+is short-circuited to **no report type, no account, no owner, no as-of** — because
+a reader is chosen BY REPORT TYPE, and the review reached `unknown` by accident
+while the register reached `capital-call` by the same accident running the other
+way. `pipeline.test.mjs` asserts all of it, and asserts the guard is NARROW: an
+ordinary Goldstandard appraisal, which also names Aristos, still resolves to its
+own house.
+
+#### Stage 10q — THE REGISTER IS ON THE DASHBOARD, AND IN NO TOTAL ON IT
+
+*"integrate these three new files into the dashboard, make sure there's no
+duplication."* The two PDFs cannot be read by anything (see above). The register
+can, and it now has a page — built as `BOOK_POLYCAB` is, because that is the
+construction this repo has already proven for real data that must never reach a
+NAV:
+
+- **`npm run build-register`** emits `src/data/registerData.ts` from the workbook.
+  Generated, never hand-edited, and idempotent — it regenerates byte-identically.
+- **`src/pages/Register.tsx` at `/register` is its ONLY reader**, and it reads
+  that module DIRECTLY rather than through `PortfolioContext`. `usePortfolio` is
+  used for one thing — the display-currency formatter — and never for a figure.
+  So nothing on the page can leak into a total, an allocation, a sector or a NAV.
+- **`scripts/lib/registerRead.mjs` is the one reader**, used by both
+  `build-register.mjs` and `register-reconcile.mjs`. Two copies would be two
+  chances for the page and the report to state different figures about one
+  workbook — the failure `drilldown.ts` exists to stop for the book's own numbers.
+  Extracting it was verified by regenerating `docs/REGISTER-RECONCILIATION.md`
+  byte-identically.
+
+**THE PAGE LEADS WITH THE PARTITION, NOT THE TOTAL, AND THAT IS THE ANTI-DUPLICATION
+DESIGN.** ₹842.92 Cr of paid-in capital is NOT additive to a ₹710.39 Cr book:
+₹391.14 Cr of it across 31 names is already inside NAV at a statement mark. A page
+that printed only the gross would invite exactly the double count the family asked
+to be ruled out, so the four buckets — in-book-as-account ₹347.73 Cr,
+in-book-as-position ₹43.42 Cr, not-in-book ₹450.08 Cr, exited ₹1.69 Cr — are shown
+apart, each with what it means for the dashboard, and they sum to the gross.
+
+**TWO INVARIANTS, AND NEITHER IMPLIES THE OTHER**, both verified by reintroducing
+their bug. `check:pages` walks `/register` and asserts it renders the register's
+own largest not-in-book name, states these are amounts PAID rather than a
+valuation, states it is no part of the book's totals, names the double count, and
+never posts a paid figure as a cost basis. And on EVERY OTHER ROUTE it asserts that
+name does NOT appear — `REGISTER_SENTINEL`, derived from the data like
+`RINGFENCED_KEY` so the next drop picks its own. Measured: leaking the sentinel
+onto Morning CIO fires the absence check; breaking the page's own wording fires the
+page check; the full sweep is 102 combinations clean.
+
+The sentinel is a NAME and deliberately not the word "register": `capital-register`
+is a live report type in the book and the Data Audit page prints it on every walk.
+
+#### `npm run reconcile:register` — what the register can and cannot settle
+
+`scripts/register-reconcile.mjs` is to the register what `review-reconcile.mjs` is
+to the review: an independent cross-check that never writes to the book.
+
+- **60 of 371 positions carry no cost**, worth ₹165.94 Cr, and **every one is in a
+  DEPOSITORY account** — 43 Motilal Oswal demat, 11 ICICI NSDL, 6 in accounts
+  holding nothing. That is not a defect: a depository holds the shares and did not
+  buy them, which is why the cell is `—` and not `₹0`.
+- **The register covers 7 of the 60** (₹27.35 Cr of market value against ₹43.42 Cr
+  paid) and **misses 53** (₹138.60 Cr), whose cost no document in this corpus
+  reports. Those need a contract note or transaction statement from Motilal Oswal
+  and ICICI Bank — not another register.
+- **113 register names have no counterpart in the book at all**, ₹450.08 Cr paid
+  in. That is a COST and the size of an ask, never a value this book will publish.
+**AND ONE SUBTOTAL DOES NOT SAY "TOTAL".** The register repeats each multi-tranche
+investment as its own row, and summing the amount column blind reads **₹1,274.79 Cr**
+— ₹431.88 Cr of double count, 51% too high. Matching the WORD finds 63 of them.
+It misses a 64th: `FUND HOUSE` repeats `BARING PRIVATE EQUITY INDIA FUND 6` under
+its own four tranches at ₹2,02,50,000, exactly 65 + 50 + 25 + 62.5 lakh, with no
+"TOTAL" anywhere in it. What gives it away is its SHAPE — a subtotal carries no
+serial number and no `INVESTMENT DONE UNDER`, because it is not an investment
+anybody made on a date. Measured, that structural test catches exactly that one
+row and no data row. This is `dataGovIn.mjs` and `amfi.mjs`'s own rule one layer
+up — **a headline row is NAMED, never summed** — meeting a workbook that forgot to
+name one, and the first count published here (₹844.94 Cr over 428 rows) was wrong
+by that row.
+
+- **₹842.92 Cr IS NOT ADDITIVE TO THE BOOK.** It is money paid since 2017 across
+  every vehicle the family has used, including mandates the book already carries
+  in full, capital already returned (₹6.60 Cr on the COMPANY sheet's own
+  `LOAN RETURNED BACK` column) and investments already written off (₹1.69 Cr).
+
+**A PAID FIGURE IS NOT A COST BASIS AND MUST NOT BE POSTED AS ONE** until the
+quantities tie, the entity resolves and it is shown not to double-count a cost the
+book already has — the rule `costFor` already applies to LKP's opening ledger,
+joining a cost ONLY where the quantities match exactly.
+
+**AND THE MATCHER IS SHARED, BECAUSE TWO COPIES WOULD DRIFT.**
+`shared/nameMatch.mjs` now holds the exact/alias/prefix/spacing tiers both
+reconcilers use. Extracting it exposed a live defect: `matchSecurity` took an
+`index` parameter and honoured it on **two tiers out of four**, the alias and
+prefix tiers reading `BY_KEY` whatever they were passed — so the second call, the
+one asking "did we READ this and simply fail to value it?", searched the BOOK for
+a name it was meant to look for in the ARCHIVE. That verdict is what puts a line
+on the section D1 ASK LIST, so the defect asks the client for documents already in
+hand. Measured on this corpus it changed no line and the report regenerates
+byte-identically, which is exactly why it had to be fixed structurally rather than
+left for the first line that hit it. **There is still no fuzzy tier**: a token
+overlap rule was tried and matched `KIRANAKART TECHNOLOGIES (Zepto)` to `TATA
+TECHNOLOGIES`, `MAN INDUSTRIES` to `Deep Industries` and `INTEGRIS HEALTH` to
+`Star Health`. Near misses are LISTED for a human to commit as an alias — among
+them a Borosil WARRANT against the Borosil EQUITY, which must never be joined.
+
+### The audit against the family's consolidated review — and the question it was asked
+
+*"the invested capital is incorrect and should be higher, and thus consolidated NAV
+will also be higher … find the gaps and tell me the root cause and what we need
+exactly to fill them."*
+
+**THE FIRST HALF IS RIGHT AND THE SECOND DOES NOT FOLLOW**, and separating them is
+the whole value of the audit, because the two halves need DIFFERENT documents:
+
+```
+  NAV      = Σ marketValue  over EVERY position
+  Invested = Σ costBasis    over the positions that REPORT one
+```
+
+Different columns over different subsets. A position the book already carries at
+its statement mark but with NO COST understates invested capital by its whole cost
+and understates NAV by **nothing at all** — its contract note moves the first and
+cannot move the second by a rupee. Measured: invested ₹471.92 Cr against the
+review's ₹1,076.01 Cr, and the ₹604.09 Cr between them splits three ways:
+
+| Cause | Invested | NAV | Size |
+| --- | :---: | :---: | ---: |
+| **A.** held, valued, no cost reported — 60 of 369 positions | understated | **unaffected** | ₹165.94 Cr of MV already in NAV |
+| **B.** not in the book at all | understated | understated | ₹367.78 Cr at the review's marks |
+| **C.** an aggregate block the review itemises nowhere | understated | understated | ₹136.16 Cr at the review's marks |
+
+**EVERY ONE OF THE 60 IS IN A DEPOSITORY ACCOUNT** — ICICI NSDL and three Motilal
+demats. A depository holds the shares and did not buy them, so no cost is a fact
+about the document rather than a parsing failure: across the WHOLE archive not one
+of those (account, security) pairs carries a cost on any record type. **A is closed
+by contract notes, never by another holding statement**, and it is the only one of
+the three that leaves NAV where it is.
+
+**THE THREE OTHER TABS ARE LINE-MATCHED NOW, AND THAT MOVED THE RESIDUAL ₹184 Cr.**
+Section C had only ever read the review's **Equity** tab, so Debt, Alternate and
+Cash — ₹275.05 Cr — reached the bridge untested and section F could state only the
+SIZE of that hole, beside a residual of the same order. `assetTabLines` reads all
+three, through the same manager and security matchers, and **the residual is
+−₹79.38 Cr against −₹263.10 Cr before.**
+
+- **A heading is told from a holding by `Investment Date Range`.** A holding was
+  bought over a window (`Jul-25 - Jul-25`); a heading is not a purchase, so the
+  cell is blank or carries a stray Excel serial. Verified on all 30 rows of the
+  three tabs. Columns are matched on HEADER TEXT — `Alternate` has no Quantity
+  column at all, so every column after it sits one place left of where Debt and
+  Cash put it, and a positional read returns the wrong column silently.
+- **A heading with no children is a LINE, not a subtotal.** `PE Funds ₹32.71 Cr`
+  sits above six funds summing to exactly that — skip it for its children.
+  `Private Equity ₹136.16 Cr` sits above nothing: that block is itemised on the
+  review's own `Private Investments` tab and is reported here only in aggregate.
+  Skipping it as a subtotal loses ₹136.16 Cr; counting the ones that DO have
+  children double-counts. So it is carried and MARKED, gets its own bridge step,
+  and is kept OFF the ask list — no custodian issues a statement for a block.
+- **Consecutive identical headings are one.** `Private Equity` prints twice, the
+  second tagged `EG`. Counted twice it invents ₹136.16 Cr.
+- **THE TAB'S OWN TOTAL IS THE WITNESS.** Every rule above is a judgement about a
+  layout, so none is trusted: what is read must reproduce the tab's printed
+  `Total`, and a tab that does not yields NOTHING and says so — the same licence
+  `hdfcNsdl.mjs` needs to publish a rendered figure. All three tie to the paisa.
+
+**IT CORRECTED THREE ROWS IN A SECTION THAT LOOKED FINE**, which is what says this
+was a real gap rather than a tidy-up: Neo Infra (Debt), Baring PE and Transition
+Venture (both Alternate) were reported as holdings *the review does not carry*
+while the review carried every one of them on a tab nothing read. Five managers
+joined C1, and the DSP Gold and Silver ETFs left the client ask list for D0 —
+they are in the book, through the Motilal demat.
+
+**AND THE ASK LIST IS FOUR DOCUMENTS, NOT THIRTY-EIGHT HOLDINGS.** That is the
+deliverable: Motilal Oswal holding statements (20 lines, ₹244.59 Cr), Bharat's
+HDFC Bank NSDL statement **as a text PDF rather than a scan** (10, ₹75.63 Cr), AMC
+folio statements or a CAS for the Debt/Cash/Alternate fund lines (14, ₹47.56 Cr),
+and one block with **nothing to ask for**. The Motilal figure stays an UPPER BOUND
+and says so: the book already carries ₹78.78 Cr of Motilal demat rows no review
+line matches, because the depository clips `WOC MAAF D-GROW` where the review
+writes the scheme out in full and no tier above a prefix may join them. Closing
+that needs a hand-checked abbreviation table, not another statement.
+
 ### THE RING-FENCE — Polycab is one page, and no figure anywhere else
 
 *"We will remove everything related to Polycab from the dashboard, and move that
@@ -1241,9 +1637,68 @@ reissues satisfy a check whose own heading is "across owners". Sky Capital
 reissues an unchanged statement every month, so Bharat's Hudle position appeared
 four times at identical figures and was reported as a duplicate of itself; the
 HDFC folio's two issues were doing the same, already. The guard is distinct
-ACCOUNTS now, and the five groups that remain are all real — the two Transition
-trusts, 360 ONE Special Opportunities under both CRNs, Sky's Oncare under both
-trusts, and India SME Fund II under Ankita's and Bharat's folios.
+ACCOUNTS now.
+
+### …and then it was flagging THREE pairs that are not duplicates at all
+
+That fix left five groups, and this file said "the five groups that remain are
+all real" **on the same page as its own reason why one of them is not** —
+*"India SME's three folios print coincidentally equal units."* Both cannot be
+true, and the contradiction was sitting in the prose for two deliveries.
+
+**ONE FIGURE IS NOT "THE FIGURES THAT WOULD HAVE TO COINCIDE BY CHANCE".** The
+key is `securityKey | quantity | unitCost | marketValue`, and the check's own
+comment is the rule: a group is suspicious because SEVERAL independent numbers
+agree. On a holding no statement values, quantity is the only one there is — and
+two holders subscribing the same round number of units to the same fund is an
+ordinary event. Measured, that tier was producing three false duplicates, each
+refuted by a document already in hand:
+
+| Flagged as one holding | Actually | The document that says so |
+| --- | --- | --- |
+| Sky Capital Oncare A3, 7,500 units, SKY023 + SKY024 | ₹1.50 Cr across two trusts | each folio's own statement prints ₹75 L drawn |
+| India SME Fund II A2, 27,000 units, three folios | three subscriptions | this file already called it a coincidence |
+| Swapeco Solutions, 347 shares, HDFC 67786547 + 67786137 | 694 shares across two trusts | the register records ₹1,35,00,875 under EACH |
+
+**NONE OF THEM COLLAPSED ANYTHING, WHICH IS EXACTLY WHY IT HAD TO BE FIXED NOW.**
+A quantity-only row carries no market value, so `dedupedPositions` drops it from
+no total and no figure on screen was ever wrong. The day any of those funds
+publishes a NAV, it would have halved a real holding silently, on a page
+computing correctly — the same shape as `dedupedPositions` sitting correct and
+uncalled for a drop and a half, running the other way.
+
+So a match on fewer than TWO coinciding figures is **reported and never
+grouped**, in its own section of the extraction report — narrowing detection and
+NAMING what it left out, rather than dropping it. The three that remain are the
+two Transition trusts and 360 ONE Special Opportunities under both CRNs, and the
+₹3.17 Cr excluded from the consolidated total does not move by a rupee.
+
+### Two more defects the same verification found, neither about a figure
+
+Both were invisible in every artefact except the one written to catch them.
+
+**A macOS RESOURCE FORK BECAME 25 FAILED DOCUMENTS.** Zipping on a Mac writes a
+`__MACOSX/` shadow tree of 212-byte AppleDouble stubs named `._<real name>`,
+carrying the real file's extension — so `READABLE` matched them, pdfjs failed on
+them, and each became a `failed` document with no provider, no account and no
+owner. They were invisible for as long as `source/_extracted/` happened to be
+expanded by a tool that dropped them, and that directory is GITIGNORED and
+DERIVED: a pipeline whose document count depends on who unzipped is not
+idempotent. `walk()` skips them by path now, and `scripts/source-coverage.mjs`
+still checks the bytes independently — the path says what macOS meant, the
+`%PDF` header says what is actually there, and neither alone is enough.
+
+**AND A READER SILENTLY ERASED ITS OWN PROVENANCE.** `extractOne` merges
+`{ ...base, ...result }`, which is what gives a reader the last word on what it
+read off the page. `base` also carries what only `extract.mjs` knows — which
+file, how many pages, which pages of a bundle. `hdfcNsdl.mjs` returned a whole
+`makeDocument(...)` instead of the partial every other provider returns, so that
+object's own defaults spread over them and both its documents went into the
+archive **naming no file**: right figures, no provenance, nothing failed.
+`npm run coverage:source` is what caught it, by reporting both PDFs as UNREAD —
+which is the check earning its place, and a good deal later than the merge. A
+reader that returns an empty `docKey`, `sourcePath`, `pages` or `sourcePages`
+now keeps the derived value and gets a `reader-cleared-provenance` warning.
 
 ### Two settlement deltas stand, and both are inside the printed precision
 
@@ -3013,18 +3468,18 @@ other seven are stateless lookups — a quote, a filing, a ratio table — with 
 owner, session or history between them, which is exactly why none of them ever
 needed the field and why the omission could only surface here.
 
-**THE VALUE IS CONFIGURED, NEVER GUESSED.** `MUNS_USER_INDEX` sits beside
-`MUNS_TOKEN` in the Cloudflare environment; it is not defaulted and not
-inferred, because a wrong index would file this family's conversation under
-somebody else's account — a worse outcome than the 400 it replaces. Unset, the
-function refuses BEFORE calling the upstream and names the variable
-(`USER_INDEX_REQUIRED`); rejected, it comes back as `USER_INDEX_REJECTED`
-rather than as a model failure, because those two send a reader to completely
-different places. A `user_index` in the REQUEST is ignored — the browser does
+**THE VALUE WAS TO BE CONFIGURED AND NEVER GUESSED — AND THE DEPLOYMENT
+OVERTURNED THAT.** `MUNS_USER_INDEX` sat in the Cloudflare environment as the
+ONLY source of the field: unset, the function refused before calling the
+upstream and named the variable (`USER_INDEX_REQUIRED`), because a wrong index
+would file this family's conversation under somebody else's account — a worse
+outcome than the 400 it replaced. That was right while nobody had supplied a
+value. See the two paragraphs below for what happened when somebody did.
+A `user_index` in the REQUEST is still ignored — the browser does
 not get to say whose account a question is filed under. `GET /api/chat?probe=1`
 makes one live round trip so the value can be confirmed on the deployment
-without a redeploy cycle, and the diagnostics report the index's PRESENCE and
-SHAPE, never the token.
+without a redeploy cycle, and the diagnostics report the index's PRESENCE, its
+SHAPE and its SOURCE, never the token.
 
 **AND THE IDENTITY IS `user_id: 14`, FIXED AT THE CLIENT'S INSTRUCTION.**
 *"Pass an argument named `user_id`: 14 — this is a static value, don't change
@@ -3035,16 +3490,32 @@ unset variable break a working dashboard. It is never taken from the request —
 the browser does not get to say whose account a question is filed under — and a
 `user_id` in the body is ignored.
 
-**`MUNS_USER_INDEX` THEREFORE NO LONGER BLOCKS THE CALL.** It refused before
-calling the upstream while `user_index` was the only identity the API had asked
-for and this dashboard had none. With a fixed `user_id` there is something to
-send, and refusing would refuse a call that works. The variable stays wired —
-set it and `user_index` rides alongside — but it is never DEFAULTED to
-`USER_ID`: "index" and "id" are not obviously the same field, and a 14 that
-means a position in a list rather than an identity would file this family's
-conversation under somebody else. If the upstream still wants one, its 400 comes
-back as `USER_INDEX_REQUIRED` (none set — set one) or `USER_INDEX_REJECTED` (one
-set — correct it), because those two send a reader to different places.
+**`MUNS_USER_INDEX` THEREFORE STOPPED BLOCKING THE CALL** — and that build sent
+`user_id` alone, deliberately NOT copying it into `user_index`, on the reasoning
+that "index" and "id" are not obviously the same field and a 14 meaning a
+position in a list rather than an identity would file this family's conversation
+under somebody else.
+
+**AND THE UPSTREAM REFUSED IT ANYWAY, WHICH IS THE MEASUREMENT THAT SETTLED
+IT.** Run on the deployment, that build came back with the SAME
+`400 — user_index is required…`. So `user_id` is not the field the API is
+asking for; the only value anyone has named for this deployment is 14; and the
+choice was between sending it under both names or a chat that can never answer.
+**The fixed identity now goes as `user_id` AND `user_index`.** What changed is
+the evidence and not the rule: the earlier refusal was declining to INVENT a
+value, and this is sending the one the client gave. `MUNS_USER_INDEX` survives
+as the OVERRIDE — set it and it WINS — for the day the two turn out to differ.
+
+**AND `USER_INDEX_REQUIRED` IS GONE RATHER THAN LEFT UNREACHABLE.** With an
+identity always in the body, a 400 naming one means the value was REJECTED and
+never that it was missing, so the two-code split collapses to
+`USER_INDEX_REJECTED` carrying the upstream's own sentence — which names the
+field, where the dashboard would only paraphrase it. The panel's
+`USER_INDEX_REQUIRED` copy went with it. `chatFunction.test.ts` asserts the
+REMOVAL — that the same 400 with no override set still comes back
+`USER_INDEX_REJECTED` — because deleting the branch and its test together would
+leave nothing to notice a future edit putting the request back to the shape the
+deployment refused.
 
 **AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
 error as `{ message: { message, error, statusCode } }`, and the first cut
@@ -3089,13 +3560,15 @@ absent-vs-zero rule failing through a JSON field instead of a table cell.
 the label, the stated snapshot, the vanished search input, and the named
 failure. All verified by reintroducing their bug.
 
-**AND TWENTY-TWO MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+**AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
 API is out of reach from a test, but every branch around it is not: that
-`user_index` is sent at the top level, as a number when it reads as one and
-verbatim when it does not, that a request-supplied one is ignored, that no
-call is made at all when it is unconfigured, and that the deployment's exact
-400 envelope comes back as one readable sentence under its own code.
+`user_id` and `user_index` both carry the fixed identity at the top level, that
+`MUNS_USER_INDEX` overrides it as a number when it reads as one and verbatim
+when it does not, that a request-supplied one is ignored, that no call is made
+at all when the TOKEN is unconfigured, that `USER_INDEX_REQUIRED` can no longer
+be reached, and that the deployment's exact 400 envelope comes back as one
+readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
@@ -4511,7 +4984,123 @@ over the scope instead of the facet. Two of them needed a second attempt to
 reproduce, which is itself the finding — the light theme is what the sweep walks
 first, so a bug introduced only in the dark rule changes nothing it can see.
 
-### Stage 10z — THE TILES ARE A LABEL AND A FIGURE, AND THE CAPTIONS MOVE
+### Stage 10z — THE SAME HOLDINGS, SLICED THREE WAYS
+
+*"We should also be able to see this information: category wise (MF, direct
+equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my basket
+definition wise (core, tactical etc). Default view will remain the current one,
+category wise. Create separate filters/toggles for asset class wise and basket
+definition wise."*
+
+One set of rows, three groupings. `?group=` picks the axis, like every other
+view in this app, so a slice is a link rather than an instruction. **The default
+is untouched and asserted to be** — two new axes beside an old one is exactly
+the change that silently moves the default, and the page would render perfectly
+while showing the family a table they asked to keep.
+
+| Axis | Sections | Where it comes from |
+| --- | --- | --- |
+| **Category** (default) | Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash | `holdingBucket` — the book. Unchanged |
+| **Asset class** | Equity ₹640.9 Cr · Alternate ₹28.5 Cr · Cash ₹14.1 Cr · Debt ₹5.6 Cr | the family's review |
+| **Basket** | Stable Growth ₹412.7 Cr · Thematic & Tactical ₹243.7 Cr · Liquidity ₹27.5 Cr · Entrepreneurial Growth ₹5.1 Cr | the family's review |
+
+**ALL THREE SUM TO ₹710.39 Cr**, which is `BOOK_SUMMARY.totalValue` — the same
+holdings rearranged, on the deduped basis the footer is on.
+
+**THE TWO NEW AXES CANNOT BE DERIVED, AND THAT WAS MEASURED RATHER THAN
+ASSUMED.** Our `AssetClass` says what an instrument IS; the family's says what
+EXPOSURE it carries, and three of our five classes map to more than one of
+theirs — `AIF → Equity / Alternate / Debt` (Sanshi against Baring PE against Neo
+Infra), `Mutual Fund → Equity / Cash`, `ETF → Alternate / Cash` (DSP Gold
+against Liquid BeES). **₹480 Cr of this book sits in those three**, so a
+wrapper-based guess would misfile most of the money. Only two are safe by
+definition and are derived: a company share is equity exposure under any
+taxonomy, and cash is cash. `familyTaxonomy.test.ts` asserts the ambiguity
+itself, so the day our own class could answer it the suite says so rather than
+the map silently outliving its reason.
+
+**AND IT IS A HAND-VERIFIED MAP, NOT A NAME MATCHER, BECAUSE THE MATCHER WAS
+WRITTEN FIRST AND WAS WRONG.** It produced false positives that each filed a
+real holding under the wrong basket:
+
+```
+"Motilal Oswal Active Momentum Fund"      → "Motilal Oswal Founders Fund II"
+"Motilal Oswal Wealth Delphi Equity Fund" → "Motilal Oswal Founders Fund II"
+"ICICI PRU BAF" (Balanced Advantage)      → "ICICI Pru India Opportunities Fund"
+```
+
+Sharing a fund HOUSE is not sharing a FUND — the index-cycled-valuation-method
+failure arriving through string similarity, and invisible on screen because a
+basket heading looks equally authoritative whichever rows are under it. The
+depository's own abbreviations settle it in the other direction too: no
+similarity measure gets from `WOC MAAF D-GROW` to WhiteOak Capital Multi Asset
+Allocation Fund, and one stretched far enough to try would also match funds that
+merely share a house. Every entry was read off the workbook, and then **38
+adversarial verifiers — prompted to refute, and to default to refuted when
+unsure — upheld all of them, with zero refutations.**
+
+**THE WORKBOOK CARRIES THE ANSWER THREE TIMES AND THE THREE AGREE.** Four basket
+sheets (the sheet a product sits on IS its basket), four asset-class sheets
+(likewise), and a basket CODE column on the asset-class sheets. The code column
+and the basket sheets are INDEPENDENT witnesses, cross-checked before a line of
+the map was written: **33 of 33 agree, zero disagreements**, and all 82
+basket-sheet products appear on an asset-class sheet. That is what earns this a
+committed map rather than one reading of a spreadsheet.
+
+**THE REVIEW IS STILL NOT A SOURCE FOR FIGURES.** §"the consolidated review
+workbook is not a source — by decision" is unchanged: every figure here is
+still the book's own. What was taken is a CLASSIFICATION the family made, which
+is the `familyInputs.ts` category — and it is committed rather than held in
+`localStorage` because they supplied it as a document rather than typing it in,
+the same standing `shared/sectors.mjs` has. `build-book.mjs` must never import
+it, and `glowData.ts` regenerates byte-identically with it in the tree.
+
+**A RULE FILLS GAPS AND NEVER OVERRIDES.** The family's email puts "all the
+direct stocks" in Thematic & Tactical, and their workbook corroborates it on all
+15 direct stocks it names, with no counterexample — so a company share the
+review does not name is filed there and **tagged `rule`, never `review`**, with
+the section printing how much of it was placed that way. The same sentence lists
+"PMS", and their own workbook puts the **Carnelian** PMS under Stable Growth —
+so that clause is deliberately NOT applied, and the suite asserts Carnelian
+stays where the workbook put it. A rule with a known counterexample is not a
+rule this book will apply to money.
+
+Coverage: **₹680.9 Cr named product by product, ₹11.2 Cr by the rule, ₹21.4 Cr
+unclassified** — and the unclassified is essentially one holding, Motilal Oswal
+Active Momentum Fund at ₹21.4 Cr, which the 30 June review does not list.
+Everything else in it is worth ₹0. That section names its cause rather than
+reading "Other", which would look like a bucket the family chose.
+
+**THE FILTER FOLLOWS THE AXIS, AND THAT IS A CORRECTNESS FIX.** Its options are
+the active axis's sections, and reintroducing the bug is what proved the point:
+the filter was still testing the CATEGORY key while the dropdown offered
+baskets, so picking one would have matched no row and emptied the table
+silently. Switching axis also clears the selection, for the same reason —
+`setGroupAxis` is the only way in, so no caller can reintroduce it.
+
+**AND THE SECTION BOUNDARY IS STRUCTURAL NOW.** `check:pages` used to find where
+one section ends by matching a hardcoded list of heading NAMES, where a missing
+entry is the dangerous direction: an unrecognised heading is not a boundary, so
+the section above swallows every row below it. Three axes would triple that
+list. Headings carry `data-section` / `data-axis` / `data-subtotal` instead —
+the contract `data-mandate` and `data-row` already carry, and the same rule: a
+structural claim must not depend on prose a redesign is free to reword.
+
+**THE EXCEL EXPORT CARRIES ALL THREE AT ONCE**, as columns rather than sections:
+a tab can only be grouped one way, a spreadsheet can be pivoted on any column.
+They close the sheet with the other descriptors, and the suite asserts both the
+order and that neither column is stuck on one constant — which is how a
+defaulted field looks.
+
+**Seven bugs reintroduced, and one of them was real.** The default axis moved,
+a section dropped from the partition, a section counting rows instead of
+holdings, the unclassified section losing its cause, the rule disclosure
+dropped, the filter keeping the wrong "all" label, and the stale filter — each
+fired exactly the right check. The stale-filter test is the one that earned its
+keep: it passed at first, and finding out why exposed the live filter/axis
+mismatch above.
+
+### Stage 10aa — THE TILES ARE A LABEL AND A FIGURE, AND THE CAPTIONS MOVE
 
 *"remove these small subtext from the clickable KPI buttons since these are also
 already written inside each KPI pages."*
@@ -5445,7 +6034,33 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   Idempotent; `--only <ids>` limits it. Runs nightly via `.github/workflows/harvest.yml`.
 - `npm run inventory` regenerates the ingest inventory.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
+  **It takes no options** — a stray argument is IGNORED, not rejected, so
+  `extract.mjs --help` runs a full extraction. Without `GLOW_PDF_PASSWORDS` that
+  drops the eight encrypted statements, which is why `guardAgainstShrinkingTheArchive`
+  refuses to write a run that read fewer documents than are already on disk
+  (override with `GLOW_ALLOW_ARCHIVE_SHRINK=1`, deliberately). `GLOW_SOURCE_DIR` /
+  `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` point a run at a scratch tree, which is how a
+  new provider is developed without touching the committed archive.
+  Reading the two outlined-text PDFs additionally needs `pdftoppm` and `tesseract`
+  on PATH; without them the run reports `text-outlined-to-paths` and reads
+  everything else exactly as before.
+- `npm run coverage:source` accounts for EVERY leaf file in `source/` — read /
+  read-via-a-byte-identical-twin / held-out-by-decision / not-a-document /
+  excluded-by-policy / unread — and **exits non-zero if anything is unread**. It
+  answers the question `docs/EXTRACTION-REPORT.md` presupposes: not *did the
+  documents tie out*, but *is there a file whose data never reached anything*.
+  Output: `docs/SOURCE-COVERAGE.md`.
 - `npm run test:ingest` runs the ingest test suites.
+- `npm run reconcile:review` checks the book against the adviser's consolidated
+  review; `npm run reconcile:register` checks it against the family's own
+  investment register. **Neither ever writes to the book** — both are independent
+  cross-checks, the role `golden.mjs` plays for the extractors. The register one
+  is where the costless-position gap is quantified: which of the 60 depository
+  rows the family's own record could supply a cost for, and which need a contract
+  note from the custodian. The review one leads with **section G** — the client's
+  own question about invested capital, answered by splitting the shortfall on the
+  one line that decides what to ask for — and **D1**, the ask list grouped by the
+  document that would close each line.
 - `npm run test:family` runs the derived-figure suites — the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
   the financial-table parser, the cash-flow/calendar reader, the ratio-table
@@ -5469,6 +6084,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
   the card prints both as-of dates so staleness is visible rather than silent.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
+- `npm run build-register` regenerates `src/data/registerData.ts` from the family's
+  investment register — the `/register` page's data, and NO part of the book. Its
+  only reader is `src/pages/Register.tsx`, which reads it directly so it cannot
+  reach a portfolio total.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and
   on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.

@@ -247,6 +247,39 @@ const PRIV_ASOF_MAX = (() => {
  * key that resolves to no holding, which fails rather than silently skipping.
  */
 /**
+ * THE REGISTER'S OWN SENTINEL, DERIVED RATHER THAN TYPED.
+ *
+ * `src/data/registerData.ts` is generated from the family's investment register
+ * and must reach NO portfolio total. The absence check below needs a string that
+ * appears on `/register` and nowhere else, and the largest name the book does not
+ * carry is exactly that: it is in the register by construction and in the book by
+ * definition not. Taken from the data so the next drop picks its own sentinel —
+ * the same reason `RINGFENCED_KEY` is read out of `BOOK_POLYCAB`.
+ *
+ * The WORD "register" would be useless here: `capital-register` is a live report
+ * type in the book and the Data Audit page names it on every walk.
+ */
+/** How many book positions report no cost — the register page's denominator. */
+const COSTLESS_IN_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const rows = bookArray(src, "BOOK_POSITIONS");
+    return Array.isArray(rows) ? rows.filter((p) => p.costBasis == null).length : null;
+  } catch { return null; }
+})();
+
+const REGISTER_SENTINEL = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/registerData.ts", import.meta.url), "utf8");
+    const rows = bookArray(src, "REGISTER_NOT_IN_BOOK");
+    const name = Array.isArray(rows) ? rows[0]?.name ?? null : null;
+    // Only the distinctive head of the name; the tables truncate nothing but the
+    // check should not depend on punctuation the page may render differently.
+    return name ? name.split(/[\s(,-]/).filter((w) => w.length > 3)[0] ?? null : null;
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY HOLDINGS THE BOOK ITSELF SAYS WERE OPENED DURING ITS OWN YEAR — the
  * only rows a year-to-date figure can legitimately appear on, since a holding
  * already held on 1 January needs an opening value the book does not carry.
@@ -394,6 +427,11 @@ const ROUTES = [
   // over 1.39 Cr shares worth ₹12,351 Cr. Walked as its own route so a
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
+  // THE FAMILY'S INVESTMENT REGISTER, ON ITS OWN PAGE and in NO book total. Same
+  // construction as Polycab and the same pair of obligations: this page RENDERS
+  // the register, and no consolidated figure anywhere in the sweep may move
+  // because of it. `registerAbsent` below applies to every other route.
+  ["register", "/register"],
   ["cio", "/cio"],
   // ...AND THE SAME PAGE WITH THE FEEDS STILL IN FLIGHT. A card that renders an
   // absence while it is loading tells the reader their book cannot be priced;
@@ -458,6 +496,23 @@ const ROUTES = [
   // ...AND THE ANNUALISED BASIS, reached by clicking the toggle this session
   // added. The guard that makes it safe is asserted on the figures it draws.
   ["monitor-cagr", "/monitor"],
+  /**
+   * ...AND THE SAME HOLDINGS SLICED THE FAMILY'S OTHER TWO WAYS.
+   *
+   *   "category wise (MF, direct equity, Bonds, PMS, AIF etc), asset class wise
+   *    (Equity, debt etc), my basket definition wise (core, tactical etc).
+   *    Default view will remain the current one, category wise."
+   *
+   * Both are reached by URL for the same reason `monitor-entity` is: the axis
+   * lives in `?group=`, so a slice is a link. The DEFAULT axis is asserted on
+   * the plain `monitor` route above — that it is still category, and that
+   * nothing about it moved.
+   */
+  ["monitor-assetclass", "/monitor?group=assetClass"],
+  ["monitor-basket", "/monitor?group=basket"],
+  // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
+  // one way to reach the stale-filter defect. See the walk step of this name.
+  ["monitor-axis-switch", "/monitor"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -1131,6 +1186,87 @@ const BOOK_HALVES = (() => {
 const BOOK_HAS_BOTH_HALVES = () => !!BOOK_HALVES && BOOK_HALVES.listed > 0 && BOOK_HALVES.private > 0;
 const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
 
+/**
+ * ── THE THREE SLICES ────────────────────────────────────────────────────────
+ *
+ * Shared by both new axes, because the claims are the same claims and only the
+ * expected section names differ. Struck on `data-section` / `data-subtotal`,
+ * never on the heading's words: the axis multiplies the headings, and a check
+ * that matched their prose would be retired silently by any rewording — which
+ * is the failure `MANDATE_SUBLINE` already cost this sweep once.
+ */
+const NAV_TOL = 0.6;
+const axisChecks = (axis, expected) => [
+  // 1. THE SECTIONS ARE THE FAMILY'S OWN, and no others. A section this axis
+  //    should not be able to produce means the grouping fell through to the raw
+  //    asset class somewhere — which is exactly what a wrong key does.
+  [`the ${axis} axis draws only the family's own sections`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings were rendered on this run" };
+    const keys = secs.map((x) => x.key);
+    return keys.length > 0 && keys.every((k) => expected.includes(k) || k === UNCLASSIFIED_KEY);
+  }],
+  // 2. EVERY HEADING SAYS IT IS ON THIS AXIS. A stale section left over from
+  //    another axis would reconcile perfectly and be under the wrong heading.
+  [`every ${axis} section declares the axis it was grouped on`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    return secs.every((x) => x.axis === AXIS_PARAM[axis]);
+  }],
+  // 3. THE SECTIONS PARTITION THE BOOK. This is the whole safety property of
+  //    regrouping: the same holdings, rearranged. Struck against the header
+  //    chip's CONSOLIDATED NAV — deduped by construction, and generated, so it
+  //    cannot go stale — and not against the sum of the sections' own copy of
+  //    themselves, which would agree with itself however wrong both were.
+  [`the ${axis} sections sum to the consolidated NAV`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    const nav = cr(new RegExp(CR).exec(t)?.[1]);
+    const sum = secs.reduce((a, x) => a + x.subtotal, 0) / 1e7;
+    return Number.isFinite(nav) && Math.abs(sum - nav) <= NAV_TOL;
+  }],
+  // 4. ...AND SO DO THEIR HOLDING COUNTS, against the footer's own row count on
+  //    the same page. Value alone can balance while a row is double-counted in
+  //    one section and dropped from another.
+  [`every holding lands in exactly one ${axis} section`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    const keys = secs.map((x) => x.key);
+    if (new Set(keys).size !== keys.length) return false;      // a repeated section
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows on this run" };
+    // Mandate rows stand for many holdings; the section counts holdings, so
+    // reconstruct the same figure from the rows themselves.
+    const fromRows = rows.reduce((n, r) => n + (r.mandate ? (r.holdings || 1) : 1), 0);
+    return secs.reduce((n, x) => n + x.holdings, 0) === fromRows;
+  }],
+  // 5. AN UNCLASSIFIED SECTION NAMES ITS CAUSE. "Other" would read as a bucket
+  //    the family chose. If the axis ever classifies everything this passes
+  //    vacuously and correctly — there is nothing to disclose.
+  [`an unclassified ${axis} section says the review does not list it`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    const un = secs.find((x) => x.key === UNCLASSIFIED_KEY);
+    return !un || /review does not list/i.test(un.text);
+  }],
+  // 6. AND A SECTION FILLED BY THE FAMILY'S RULE SAYS HOW MUCH. The review
+  //    naming a product and a rule covering a class are different claims, and
+  //    under one heading they look identical.
+  [`a rule-filled ${axis} section discloses how much of it was placed by rule`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    return secs.every((x) => !(x.ruleMV > 0) || /by the family's stated rule/i.test(x.text));
+  }],
+  // 7. THE FILTER FOLLOWS THE AXIS. Its "all" option is the axis's own word, so
+  //    a reader is never offered "All categories" over a table of baskets — and
+  //    more to the point, never offered a category KEY that would match no row
+  //    and empty the table without a message.
+  [`the section filter offers this axis's own options`, (t) => new RegExp(ALL_LABEL_RE[axis], "i").test(t)],
+];
+const UNCLASSIFIED_KEY = "Not classified in the family's review";
+const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
+const ALL_LABEL_RE = { "asset class": "All asset classes", basket: "All baskets" };
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -1143,6 +1279,62 @@ const INVARIANTS = {
    * its prose, which is the rule the exposure check's first draft broke — its
    * captions rendered whatever the data did and it could not fail.
    */
+  /**
+   * THE FAMILY'S INVESTMENT REGISTER — RENDERED HERE, AND IN NO PORTFOLIO TOTAL.
+   *
+   * Same pair of obligations as Polycab, and neither implies the other: this page
+   * must RENDER the register, and every other route must be free of it (the
+   * `REGISTER_SENTINEL` check in the walk). A page that rendered nothing would
+   * satisfy every absence check while showing the family none of their own data.
+   *
+   * The register is a COST record — money that left a bank account on a date —
+   * and roughly half of it is already inside the book at a statement mark. So the
+   * assertions below are about the two things a reader could get wrong: that
+   * these figures are values, and that they are additive.
+   */
+  register: [
+    ["it renders the register's own largest name, so the absence check elsewhere means something",
+      (t) => !!REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(t)],
+    /**
+     * THE FIGURES ARE COSTS AND THE PAGE SAYS SO. A reader who takes ₹842 Cr of
+     * paid-in capital for a portfolio value has misread the page by an order of
+     * magnitude against a ₹710 Cr book, which is exactly the contradiction the
+     * "a total must tie" rule exists to prevent one page over.
+     */
+    ["it states these are amounts PAID and not a valuation",
+      (t) => /money the family PAID/i.test(t) && /cash outflow/i.test(t)],
+    ["it states the register is no part of the book's totals",
+      (t) => /no part of the book/i.test(t) && /NAV/i.test(t)],
+    /**
+     * AND THE OVERLAP IS SHOWN RATHER THAN IMPLIED. The gross is NOT additive:
+     * the first bucket is already inside NAV at a manager's own mark, so a page
+     * that printed only the total would invite exactly the double count the
+     * family asked us to rule out.
+     */
+    ["it partitions the register and says the overlap must not be added twice",
+      (t) => /Already in the book/i.test(t) && /double count/i.test(t)],
+    /**
+     * NO PAID FIGURE IS PRESENTED AS A POSTED COST. The candidates table is the
+     * one place a register figure sits beside a book figure for the same
+     * holding, which is where a future edit is most likely to post one — so the
+     * refusal is asserted on the CELL, with its reason, and never as a zero.
+     */
+    ["a register figure is never posted as a cost basis, and the refusal names its reason",
+      (t, ctx) => {
+        const why = (ctx?.titles ?? []).some((x) => /quantities tie/i.test(x) && /double-count/i.test(x));
+        return why && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t);
+      }],
+    /**
+     * THE COSTLESS COUNT TIES TO THE BOOK'S OWN. The page claims to cover N of
+     * the book's costless positions; if that denominator drifted from
+     * BOOK_POSITIONS the page would be quietly describing a different book.
+     */
+    ["the costless denominator matches the book's own count of costless positions",
+      (t) => {
+        const m = /of the book's (\d+) costless positions/i.exec(t);
+        return !!m && COSTLESS_IN_BOOK != null && Number(m[1]) === COSTLESS_IN_BOOK;
+      }],
+  ],
   polycab: [
     ["the holding is named, with a share count and a market value",
       (t) => /Polycab/i.test(t) && /[\d,]{7,}/.test(t) && new RegExp(CR).test(t)],
@@ -3388,6 +3580,32 @@ const INVARIANTS = {
     // heading subtotal is the one place it could happen, because BOTH of this
     // book's duplicates are AIF holdings: in the by-entity view the AIF heading
     // summed ₹3.17 Cr that the (deduped) footer beneath it correctly did not.
+    /**
+     * THE DEFAULT SLICE IS STILL CATEGORY, AND IS STILL THE ONE IT WAS.
+     *
+     *   "Default view will remain the current one, category wise."
+     *
+     * Two new axes were added beside it, and the whole risk of that change is
+     * that the DEFAULT quietly becomes one of them — the page would render
+     * perfectly, every figure would be right, and the family would be looking
+     * at a different table from the one they asked to keep. So the plain
+     * `/monitor` walk (no `?group=`) asserts the axis it landed on, off the
+     * heading's own attribute rather than its words.
+     */
+    ["the default slice is still the category axis", (t, ctx) => {
+      const secs = ctx?.sectionRows;
+      if (!secs?.length) return { notChecked: "no section headings were rendered on this run" };
+      return secs.every((x) => x.axis === "category");
+    }],
+    // ...and the sections are the ones it has always drawn. A category axis that
+    // started emitting a basket name would satisfy the check above.
+    ["the default slice draws the category sections and no family basket", (t, ctx) => {
+      const secs = ctx?.sectionRows;
+      if (!secs?.length) return { notChecked: "no section headings on this run" };
+      const BASKETS = ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
+      return secs.some((x) => x.key === MANDATE_BUCKET)
+        && secs.every((x) => !BASKETS.includes(x.key));
+    }],
     ["the class subtotals reconstruct the footer total", (t) => {
       const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
       const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
@@ -3600,6 +3818,30 @@ const INVARIANTS = {
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and
   // where the class heading above the rows must still be on the footer's basis.
+
+  /**
+   * SWITCHING AXIS MUST NOT LEAVE THE TABLE EMPTY. The walk picks a section
+   * from the category filter and then clicks through to the basket axis. If the
+   * selection survived, it would match no basket and the table would render
+   * nothing — so this asserts the table still has rows AND that the page really
+   * did change axis, because a switch that silently failed would also "pass"
+   * a rows-only check by never having filtered anything.
+   */
+  "monitor-axis-switch": [
+    ["switching axis with a filter set leaves the table populated", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (rows === null) return { notChecked: "rows were not collected on this run" };
+      return rows.length > 0;
+    }],
+    ["...and the page really did move to the basket axis", (t, ctx) => {
+      const secs = ctx?.sectionRows;
+      if (!secs?.length) return { notChecked: "no section headings on this run" };
+      return secs.every((x) => x.axis === "basket");
+    }],
+    ["...and the filter went back to offering every basket", (t) => /All baskets/i.test(t)],
+  ],
+  "monitor-assetclass": axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]),
+  "monitor-basket": axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]),
   "monitor-entity": [
     ["the by-entity view still sections into Direct Equity, PMS mandates and the wrappers",
       (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES") && !!sectionOf(t, "AIF")],
@@ -4491,6 +4733,25 @@ for (const theme of THEMES) {
         const t = page.getByRole("button", { name: /^CAGR$/ }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }      }
       /**
+       * THE ONE DEFECT HERE THAT A URL CANNOT REACH: switching axis while a
+       * SECTION FILTER is set. The filter is an equality test on the section
+       * key, so a category key carried into the basket axis matches no row and
+       * empties the table — silently, on a page that renders perfectly. That
+       * is why `setGroupAxis` clears it, and a guard nothing exercises is a
+       * guard that stops working without anyone noticing. So this route does
+       * what a reader does: pick a section, then change the slice.
+       */
+      if (name === "monitor-axis-switch") {
+        const sel = page.locator("select").nth(2);        // the section filter
+        if (await sel.count()) {
+          const opts = await sel.locator("option").allTextContents();
+          const pick = opts.find((o) => !/^All /.test(o));
+          if (pick) { await sel.selectOption({ label: pick }); await page.waitForTimeout(400); }
+        }
+        const b = page.locator("button[data-group-axis='basket']").first();
+        if (await b.count()) { await b.click(); await page.waitForTimeout(1200); }
+      }
+      /**
        * A COLLAPSED `<details>` IS NOT IN `innerText`, AND THE LIST INSIDE IT IS
        * THE HALF OF THE FAMILY'S ASK THAT THE CHART CANNOT ANSWER.
        *
@@ -4733,6 +4994,28 @@ for (const theme of THEMES) {
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
+       * …AND EVERY SECTION HEADING, OFF ITS OWN ATTRIBUTES.
+       *
+       * The holdings table can be sectioned on three axes now — category (the
+       * default and unchanged), the family's asset class, and their baskets —
+       * and the heading TEXT was the only thing that said where a section
+       * began. `BUCKET_HEADINGS` is a hardcoded list of those names, and its own
+       * comment records why that is fragile: a heading it does not know is not
+       * a boundary, so the section above silently swallows every row below it.
+       * Three axes would triple the names that list has to track, and the
+       * failure is invisible when it happens. So a heading declares itself, the
+       * same contract `data-mandate` and `data-row` already carry.
+       */
+      const sectionRows = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tr[data-section]")].map((tr) => ({
+          key: tr.getAttribute("data-section"),
+          axis: tr.getAttribute("data-axis"),
+          subtotal: Number(tr.getAttribute("data-subtotal")),
+          holdings: Number(tr.getAttribute("data-holdings")),
+          ruleMV: Number(tr.getAttribute("data-rule-mv")),
+          text: (tr.innerText ?? "").replace(/\s+/g, " ").trim(),
+        })));
+      /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
        * the weaker one passed a bug that was really there. Reintroducing it
@@ -4940,6 +5223,17 @@ for (const theme of THEMES) {
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
       }
+      /**
+       * AND THE REGISTER REACHES NO OTHER PAGE. `registerData.ts` is a cost
+       * record the book deliberately does not carry; a name from it appearing on
+       * a page that computes a portfolio figure means the two have been mixed,
+       * which is the double count the family asked us to rule out.
+       */
+      const isRegisterPage = /\/register$/.test(page.url());
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isRegisterPage
+          && REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(mainText)) {
+        invariants.push(`the investment register is its own page, and this page names ${REGISTER_SENTINEL} from it`);
+      }
       // `holdings-row-3` shares its invariant list with every other allocation
       // row: the assertions compare each page against ITS OWN row's cells, so
       // one list serves all of them and a per-row copy would be eight places to
@@ -4955,7 +5249,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, formula, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, sectionRows, kpiTiles, facets, formula, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

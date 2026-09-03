@@ -20,8 +20,8 @@
  "status": "failed",
  "warnings": [
   {
-   "code": "no-extractor",
-   "detail": "no extractor for provider \"Consolidated family review (not a statement)\" / reportType unknown"
+   "code": "held-out-by-decision",
+   "detail": "Consolidated family review (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
   }
  ],
  "holdings": [],
