@@ -3,14 +3,16 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, BookOpen, Target, Globe, TrendingUp, Crosshair, BellRing, Cable,
+  GitCompare, Target, Crosshair, BellRing, Cable,
   Handshake,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
-// Pure-preview pages carry no book dependency, so they stay reachable even before
-// statements are ingested (the same as the setup/admin routes).
-const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger", "/knowledge", "/macro", "/economy"]);
+// Setup and admin routes carry no book dependency, so they stay reachable even
+// before statements are ingested. Knowledge & Memory, Macro Research and Economy
+// & Macro were the other three and have been removed at the family's request;
+// their addresses now redirect, so they need no entry here.
+const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger"]);
 
 // Drag-to-resize bounds for the left nav (px). Default 224 (14rem) keeps the
 // Portfolio Monitor holdings table off a horizontal scrollbar at common laptop
@@ -28,13 +30,10 @@ const NAV = [
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/private-market", label: "Private Market", icon: Handshake, group: "Daily" },
-  { to: "/knowledge", label: "Knowledge & Memory", icon: BookOpen, group: "Knowledge" },
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
   { to: "/compare", label: "Compare Companies", icon: GitCompare, group: "Research" },
-  { to: "/macro", label: "Macro Research", icon: Globe, group: "Research" },
-  { to: "/economy", label: "Economy & Macro", icon: TrendingUp, group: "Research" },
   { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor" },
   { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
