@@ -106,6 +106,12 @@ had been sitting on the client's live dashboard:
   type error. Deleting a render leaves the numbers one line from returning; the
   same reasoning that removed `custodianOf()` rather than fixing it.
 
+*(The **Economy** and **Macro Research** pages named in those last two entries
+have since been REMOVED at the family's request — see Stage 10x. The entries
+stay because the lesson is about what was PRINTED, not about which route printed
+it, and the `Row`-type deletion above is still the model for how a fabricated
+field is retired. The same treatment `PublicDashboardView` gets further up.)*
+
 The test to apply: **would this still be honest if the badge were cropped out of
 a screenshot?** Sample macro series on a page with no family data pass it.
 Anything sharing a row, a tile or a sentence with the book does not.
@@ -2264,7 +2270,8 @@ default, which is the exact failure this book exists to prevent.
 
 Named here so the gap stays visible, and so nobody builds a frame around it:
 
-- **Layer 1 — Knowledge & Memory.** Tagged notes from manager meetings, IC
+- **Layer 1 — Knowledge & Memory.** *(A note store shipped and the page has
+  since been REMOVED at the family's request — see Stage 10x.)* Tagged notes from manager meetings, IC
   discussions, fund pitches, conference notes, books and podcasts, queryable in
   natural language. Needs a note store, a tagging model and an AI index. The
   catalogue's `document_search` searches muns' own corpus, not the family's.
@@ -2286,7 +2293,8 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
 - **Industry research.** Industry size, capacity, utilisation, order books. No
   industry endpoint, and the page that composed the raw-material half of it from
   the harvest store has been REMOVED at the family's request — see Stage 9c. The
-  price series themselves are unaffected and remain on Macro Research.
+  price series themselves are unaffected and are still harvested; Macro Research
+  has since been removed too (Stage 10x), so no page charts them today.
 - **Layer 3 — IPS buckets and GAP analysis.** Growth / Liquidity / Tactical /
   Hedge / Charity, actual vs desired by geography, market cap, duration. The
   actuals are in the book; the DESIRED allocations are a family decision nobody
@@ -4341,6 +4349,80 @@ Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
 so nothing was left exported and dead, which is the failure this file keeps
 naming.
 
+### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
+
+*"remove all three pages from the dashboard UI"* — the three nav entries,
+pointed at.
+
+`/knowledge`, `/macro` and `/economy` redirect, the three nav entries are gone
+and `Knowledge.tsx`, `MacroResearch.tsx` and `Economy.tsx` are deleted, along
+with every module left with no other caller: `lib/knowledge.ts` (the note
+store), `lib/econCalendar.ts` and `EconomicCalendar.tsx` (Stage 9d's release
+calendar), `YieldCurve.tsx`, `lib/exportChart.ts`, `lib/exportSeries.ts` and
+`lib/macro.ts` — the last of which was ALREADY uncalled before this change and
+went because it is the removed page's own feed client.
+
+**ALL THREE FORWARD TO THE DASHBOARD HOME, WHICH IS A DECISION RATHER THAN A
+DEFAULT.** Every other removal in this file sends its address to the surviving
+surface nearest its purpose — `/private` to the private book, `/watchlist` to
+Compare Companies, `/household` to Family & Entities. Nothing that survives
+holds the family's own notes, and nothing that survives renders a commodity,
+index, currency or macro series. Pointing these at a page that merely LOOKS
+adjacent would assert a continuity that does not exist. `/industry`, removed at
+Stage 9c and forwarded to `/macro`, moves with it.
+
+**WHAT DID NOT GO WITH THEM — and this is the half a removal like this breaks
+silently.** `src/lib/series.ts` and `SeriesChart.tsx` were most visibly read by
+the two pages that have just gone, so they now LOOK dead. They are not:
+`ReturnsTable` draws a company's price history with `Point`, `SeriesMeta`,
+`HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and `rebase`, off
+`/api/prices`; `CompareCompanies` and `navSeries.test.ts` read the same shapes.
+The `stock` invariant that asserts the price card renders is what holds them up
+at runtime, and it says so in as many words; `SeriesChart` itself is held by the
+BUILD, because the harness serves no price feed and the chart never mounts, so
+the gate for this change is build AND sweep rather than either alone.
+
+**AND `public/series/` AND `npm run harvest` STAY, WHICH IS THE ONE DECISION
+HERE THAT IS NOT REVERSIBLE IF TAKEN THE OTHER WAY.** No page reads the store
+now — `fetchSeriesIndex` and `fetchSeriesPoints` have no caller, and
+`src/lib/series.ts`'s header says so plainly rather than leaving a silent
+orphan. But seven RBI policy rates and IEX's day-ahead spot power are
+ACCUMULATING series: their sources publish a current value and no history, so
+the store builds them one observation per run. Stopping the nightly harvest
+would not pause those series, it would END them, with nothing to backfill from.
+Deleting the only reader of a store a nightly job keeps growing is the wrong
+half to cut, and a documented no-caller is not the dead-builder failure this
+file names — that failure is the SILENT orphan a future session wires back
+believing it load-bearing.
+
+**TWO CLOUDFLARE FUNCTIONS ARE NOW UNCALLED AND ARE LEFT STANDING**:
+`functions/api/econ-calendar.js` and `functions/api/macro.js`. The request was
+for the dashboard UI, and an endpoint is a deployment surface rather than a
+page; both are stateless proxies, so nothing accumulates in them and nothing is
+lost either way. They are named here rather than removed quietly, and either can
+go on request. `check:pages`'s failed-request noise list no longer excuses
+`/api/econ-calendar`, `/api/macro` or `/api/economy`, so a stray request to any
+of them is now REPORTED instead of suppressed.
+
+`check:pages` no longer walks the three routes, and the `knowledge` and `macro`
+invariant blocks went with the pages they described. `check:family` carries the
+removal instead: the four redirects land, the three nav entries are gone, the
+now-empty KNOWLEDGE nav GROUP heading is gone with its one entry, and each page
+renders NONE OF ITS OWN CONTENT at its old address — struck on each page's own
+distinctive phrases rather than on its title, because a title survives in a nav
+entry while the page is gone.
+
+**A CHECK THAT COULD NOT CATCH WHAT ITS COMMENT CLAIMED, FOUND BY REINTRODUCING
+THE BUG.** The `/industry` row was written to catch a redirect pointed at a
+removed page. Pointed back at `/macro` it still PASSED — `/macro` now forwards
+to `/cio`, and two hops settle at the same pathname as one. The suite reads
+where a bookmark LANDS, and by that measure both routings keep the promise, so
+the chain is a fact about the route table: fixed there, named there, and the
+comment here corrected to claim only what it proves. Five other bugs were
+reintroduced — the page restored at its address, its route un-redirected, its
+nav entry put back, the group heading with it, and `ReturnsTable` dropped from
+the company page — and each fired exactly its own check.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -4773,6 +4855,15 @@ on the page rather than shipped as rules that would sit permanently silent.
 
 ## Stage 9d — the economic release calendar (`/api/econ-calendar`)
 
+**THE PAGE THIS SHIPPED ON HAS SINCE BEEN REMOVED — see Stage 10x.** Economy &
+Macro went at the family's request, and `EconomicCalendar.tsx`,
+`src/lib/econCalendar.ts` and its saved-response test went with it. The Function
+still stands and is named there as uncalled. Everything below is kept because it
+is what was MEASURED about that upstream — the off-by-one on Nasdaq's date
+parameter, the silent 2000-row cap, the verified `importance` mapping — and a
+future session wiring a calendar again should read it before probing anything.
+
+
 The Economy page's calendar was declared impossible on the grounds that a
 schedule and a street consensus are licensed vendor products. **That was the
 third absence in this repo recorded against an unchecked premise**, after FRED
@@ -4831,15 +4922,17 @@ Four presentation rules, each a plausible-looking wrong answer avoided:
   those at midnight UTC; rendered in a zone behind UTC that lands on the previous
   day. They are treated as day-only and grouped on the source's own date.
 
-**IT LIVES ON ECONOMY & MACRO, AND NOWHERE ELSE.** Macro Research carried a
+**IT LIVED ON ECONOMY & MACRO, AND NOWHERE ELSE.** Macro Research carried a
 SECOND "Data release calendar" card, declaring a calendar impossible for the
 same reasons — which stopped being true the moment this was wired, so a stale
-absence would have contradicted the working page one link away. It is removed,
-and `check:family` asserts both halves of that: the claim gone from Macro, the
+absence would have contradicted the working page one link away. It was removed,
+and `check:family` asserted both halves of that: the claim gone from Macro, the
 real calendar still rendering with its filters on Economy. A removal is verified
-by asserting it happened.
+by asserting it happened — which is why, now that BOTH those pages have gone
+(Stage 10x), that same pair of checks became one asserting neither page renders
+its own content at its old address.
 
-`src/lib/__tests__/econCalendar.test.ts` asserts all of it against a REAL saved
+`src/lib/__tests__/econCalendar.test.ts` asserted all of it against a REAL saved
 response, and its anchor case is India's CPI — the field the Economy page once
 printed as an invented `4.83%`, now measured at 4.45% actual against a 4.50%
 consensus, with MOSPI named as the publisher.
@@ -4853,10 +4946,11 @@ The page composed the harvested store into a per-industry dashboard — seven
 industries, each declaring which stored series ARE its input and output prices,
 with a rebased basket chart — and named its structural gaps (capacity,
 utilisation, order books) rather than drawing them. The family asked for it to
-go; `/industry` redirects to `/macro`, and `check:family` asserts the redirect.
+go; `/industry` redirects to `/cio` — it forwarded to `/macro` until that page
+was removed too (Stage 10x) — and `check:family` asserts the redirect.
 
 **NOTHING IT DEPENDED ON WAS DELETED WITH IT.** Every series it read is still in
-the harvest store and still on Macro Research: coal, iron ore, HRC, the base
+the harvest store: coal, iron ore, HRC, the base
 metals, crude, gas, spot power and the fertiliser complex. What is gone is one
 arrangement of them.
 
@@ -4898,6 +4992,15 @@ another; the answer (absent, never a shorter window relabelled) is written once.
 price is a separate measurement and the page labels it as one.
 
 ## Stage 9 — the macro series store (`npm run harvest`)
+
+**NO PAGE READS THIS STORE SINCE Stage 10x, AND THE HARVEST STILL RUNS.** Macro
+Research and Economy & Macro were the only two surfaces that charted a harvested
+series and both have been removed at the family's request. The nightly Action is
+deliberately untouched: the RBI rates and IEX spot power below are ACCUMULATING
+— one observation per run, because their sources publish a current value and no
+history — so stopping it would end those series rather than pause them. The read
+side (`src/lib/series.ts`) stays for the same reason and says so in its header.
+
 
 ```
 scripts/harvest/catalogue.mjs   what the FOOS spec asks for, and where it comes from

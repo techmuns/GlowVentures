@@ -143,7 +143,23 @@ for (const [from, to] of [
   ["/look-through", "/private-market"],
   ["/funds", "/private-market"],
   ["/value-creation", "/private-market"],
-  ["/data-bank", "/monitor"], ["/industry", "/macro"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+  ["/data-bank", "/monitor"], ["/news", "/monitor"], ["/recommendations", "/monitor"],
+  // KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO were removed at the
+  // family's request. All three forward to the dashboard home rather than to a
+  // neighbour, because nothing that survives holds the family's own notes and
+  // nothing that survives renders a macro series — sending them at a page that
+  // merely looks adjacent would assert a continuity that does not exist.
+  //
+  // `/industry` moves WITH them: removed at Stage 9c, it forwarded to `/macro`.
+  //
+  // AND THIS ROW CANNOT CATCH THAT, WHICH IS WORTH SAYING RATHER THAN LEAVING
+  // TO BE FOUND. Reintroducing the bug is what showed it: pointed back at
+  // `/macro` the row still PASSED, because `/macro` now redirects to `/cio` and
+  // two hops settle at the same pathname as one. What this suite reads is where
+  // a bookmark LANDS, and by that measure both routings keep the promise. The
+  // chain is a fact about the route table, so it is fixed there and named in
+  // `App.tsx` — not asserted here by a check that would have to pass either way.
+  ["/knowledge", "/cio"], ["/macro", "/cio"], ["/economy", "/cio"], ["/industry", "/cio"],
   // WATCHLIST & TARGETS was removed at the family's request. It forwards to
   // Compare Companies rather than the monitor because that is the surviving
   // surface in the same nav group that still renders a watched name's target
@@ -173,23 +189,30 @@ check("its private market value is a real measured figure, not the removed page'
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /DRAWN AGAINST NO VALUATION/i.test(text) && /in no total on this page/i.test(text));
 
-// ── The release calendar lives on Economy, and nowhere else ────────────────
+// ── THE THREE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
 //
-// Macro Research carried a second "Data release calendar" card that declared a
-// calendar impossible. That stopped being true the day `/api/econ-calendar` was
-// wired, so it was removed — and the check that replaces it has to prove the
-// RIGHT one went: the stale claim gone from Macro, the working calendar still
-// on Economy.
-await page.goto(`${BASE}/macro`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
-text = await page.locator("body").innerText();
-check("Macro Research no longer claims a calendar is impossible",
-  !/release calendar is available|release calendar can be built/i.test(text));
-await page.goto(`${BASE}/economy`, { waitUntil: "networkidle" });
-await page.waitForTimeout(1500);
-text = await page.locator("body").innerText();
-check("the real calendar is still on Economy & Macro, with its filters",
-  /data release calendar/i.test(text) && /this week/i.test(text) && /unranked/i.test(text));
+// This block used to prove that the release calendar sat on Economy & Macro and
+// that Macro Research had stopped claiming a calendar was impossible. Both those
+// pages have now gone at the family's request, so the claim to assert is the
+// removal itself: the addresses redirect (checked above) and NEITHER page's own
+// content renders anywhere.
+//
+// Struck on each page's own distinctive content rather than on its title,
+// because a title can survive in a nav entry or a heading while the page is
+// gone, and — the failure this repo has recorded twice — prose about a page is
+// not the page. The redirect lands on Morning CIO, so the text read here is the
+// dashboard's, and none of these three phrases belongs to it.
+for (const [from, label, pattern] of [
+  ["/knowledge", "Knowledge & Memory", /capture the first note|search the family's notes|notes captured/i],
+  ["/macro", "Macro Research", /returns table[\s\S]{0,400}52-week|series store did not respond|observations/i],
+  ["/economy", "Economy & Macro", /data release calendar|surprise vs consensus/i],
+]) {
+  await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  text = await page.locator("body").innerText();
+  check(`${label} renders none of its own content at ${from}`, !pattern.test(text),
+    pattern.exec(text)?.[0]);
+}
 
 // ── Portfolio Monitor ──────────────────────────────────────────────────────
 //
@@ -220,6 +243,17 @@ check("the holdings-news bell is gone with it", !/Latest holdings news/i.test(na
 // fair values and levels are still written and read on a name's own company
 // page, and that half is asserted below on the company page itself.
 check("the Watchlist & Targets nav entry is gone", !/Watchlist\s*&\s*Targets/i.test(nav));
+// KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO went the same way.
+// Removing `/knowledge` also empties the whole KNOWLEDGE nav GROUP, so its
+// heading must go with its one entry — a group label standing over nothing is a
+// section a reader will look for and never find.
+check("the Knowledge & Memory nav entry is gone", !/Knowledge\s*&\s*Memory/i.test(nav));
+check("...and the now-empty Knowledge group heading with it", !/(^|\n)\s*KNOWLEDGE\s*(\n|$)/.test(nav));
+check("the Macro Research nav entry is gone", !/Macro Research/i.test(nav));
+check("the Economy & Macro nav entry is gone", !/Economy\s*&\s*Macro/i.test(nav));
+// ...and RESEARCH, which lost two of its three, keeps the one that survived.
+check("the Research group survives with Compare Companies in it",
+  /Compare Companies/i.test(nav));
 
 check("the Public dashboard tab is gone", !/public dashboard/i.test(text));
 check("Holdings and Transactions both remain", /Holdings/.test(text) && /Transactions/.test(text));
