@@ -5197,12 +5197,37 @@ there is no per-category split on any statement to divide it by.
 **EIGHT INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG.** `check:pages` reads
 the totals rows and the footer BY COLUMN — accumulating `colSpan`, because the
 footer's label spans three columns and a category's spans one, and cell-for-cell
-the two rows are different measurements. Six bugs were put back one at a time and
-each fired exactly its own check: a partition that skips the dedupe (three
+the two rows are different measurements. Seven bugs were put back one at a time
+and each fired exactly its own check: a partition that skips the dedupe (three
 checks), the coverage test dropped so a return prints beside two columns covering
 different sets, a dash with no reason, the footer's Weight cell emptied again, a
-category that quietly stops drawing its row, and the section reader counting the
-totals row among the holdings.
+category that quietly stops drawing its row, the section reader counting the
+totals row among the holdings, and the totals keyed on the wrong AXIS — the last
+of which is what found the gate hole two paragraphs down.
+
+**THE CHECKS ARE STRUCK ON THE SECTIONS THE PAGE DECLARED, NOT ON A LIST OF
+NAMES.** The first draft counted the `BUCKET_HEADINGS` that `sectionOf` could
+find, which would have FAILED the asset-class and basket routes outright while
+claiming to check them: those axes draw the family's own section names, which
+that list does not and must not know. Matching `data-section` keys one-for-one
+against `data-category-total` keys is also the stronger claim — equal counts pass
+a page that totals one section twice and another not at all.
+
+**AND THE SEVENTH BUG FOUND A HOLE IN THE GATE ITSELF.** Keying the partition on
+`bucketFor` while the table sections on an axis Stage 10z added is the one
+mistake this integration can make, so it was put back deliberately. The
+asset-class route failed six checks — its keys overlap the category ones. The
+BASKET route reported NOT CHECKED six times and **the sweep read CLEAN**: with no
+key matching, every totals row disappeared, and a gate that abstained on "no
+totals row captured" could not tell that from a table with one section.
+
+That is `golden.mjs`'s rule and this file's own *"a missing toggle must be a
+finding"*, arriving through a subtotal. Abstention is now allowed on exactly one
+EVIDENCED condition — the page drew fewer than two sections, read off its own
+`data-section` headings, which is the single-category filter where the footer IS
+the total. Sections drawn and nothing totalling them is a failure, and so is a
+footer that has lost its handle. Re-run against the same bug, the basket route
+fails five.
 
 **THAT LAST ONE WOULD HAVE BROKEN SIX EXISTING CHECKS SILENTLY.** The totals row
 is a table row by every structural test `sectionOf` applies — a cell per column

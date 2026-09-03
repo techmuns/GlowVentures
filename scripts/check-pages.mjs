@@ -1258,20 +1258,57 @@ const columnTies = (ct, col) => {
   if (!known.length || known.some((p) => !Number.isFinite(p))) return false;
   return Math.abs(known.reduce((a, b) => a + b, 0) - total) <= Math.max(0.15, parts.length * 0.06);
 };
-/** Nothing captured means NOT CHECKED, never a pass. */
-const needTotals = (ct) => (ct?.rows?.length ? (ct.footer ? null : notChecked("the footer row carries no data-footer-total handle")) : notChecked("no per-category totals row was captured — the table drew a single category, or the handle is gone"));
+/**
+ * ── A MISSING TOTALS ROW IS A FINDING, NOT AN ABSTENTION ──────────────────────
+ *
+ * The first draft abstained whenever no totals row was captured, and that hole
+ * was found by reintroducing the one bug this integration can have: partition
+ * the totals on the CATEGORY axis while the table sections on Basket, and every
+ * section's key misses, every totals row disappears, and the table looks
+ * perfectly ordinary. The asset-class route failed — its keys overlap — and the
+ * BASKET route reported NOT CHECKED six times and the sweep read CLEAN.
+ *
+ * That is `golden.mjs`'s rule and this file's own "a missing toggle must be a
+ * finding": a check that passes over no input claims confidence nobody earned.
+ * So abstention is allowed on exactly one evidenced condition — the page drew
+ * FEWER THAN TWO SECTIONS, which is the single-category filter, where the
+ * footer is the total and no second row is owed. Sections drawn and no rows
+ * totalling them is a failure, and so is a footer that has lost its handle.
+ */
+const needTotals = (ctx) => {
+  const ct = ctx?.categoryTotals;
+  const secs = ctx?.sectionRows;
+  if (!ct || !secs) return notChecked("the totals rows were not captured on this run");
+  if (!ct.rows.length) {
+    return secs.length > 1 ? false
+      : notChecked("the table drew a single section, so the footer is its total and no per-section row is owed");
+  }
+  return ct.footer ? null : false;
+};
 const CATEGORY_TOTALS = [
   /**
-   * ONE TOTALS ROW PER SECTION, AND NEITHER MORE NOR FEWER. Read against the
-   * headings the page itself drew, so a book with a different set of categories
-   * checks its own — and a section that quietly stops totalling fails rather
-   * than reducing the count on both sides of an equality with itself.
+   * ONE TOTALS ROW PER SECTION, MATCHED KEY FOR KEY.
+   *
+   * Read against the SECTION HEADINGS THE PAGE ITSELF DECLARED (`data-section`),
+   * not against a hardcoded list of category names — so this holds on all three
+   * of Stage 10z's axes, and a book whose categories change checks its own.
+   *
+   * The first draft counted `BUCKET_HEADINGS` that `sectionOf` could find, which
+   * would have FAILED the asset-class and basket routes outright while claiming
+   * to check them: those axes draw the family's own section names, which that
+   * list does not and should not know. Matching keys is also the stronger claim
+   * — equal counts pass a page that totals one section twice and another not at
+   * all.
    */
-  ["every category the table sections on closes with its own totals row", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+  ["every section the table draws closes with its own totals row", (t, ctx) => {
+    const gate = needTotals(ctx);
     if (gate) return gate;
-    const headings = BUCKET_HEADINGS.filter((h) => !!sectionOf(t, h));
-    return headings.length > 1 && headings.length === ctx.categoryTotals.rows.length;
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings were rendered on this run" };
+    const drawn = [...secs].map((x) => x.key).sort();
+    const totalled = ctx.categoryTotals.rows.map((r) => r.key).sort();
+    return drawn.length > 1 && drawn.length === totalled.length
+      && drawn.every((k, i) => k === totalled[i]);
   }],
   /**
    * ── THE CATEGORIES ADD TO THE TOTAL ROW, COLUMN BY COLUMN ─────────────────
@@ -1288,11 +1325,11 @@ const CATEGORY_TOTALS = [
    * chosen anyway; this pair is what holds it once a drop makes it visible.
    */
   ["the category totals add to the footer's market value", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+    const gate = needTotals(ctx);
     return gate || columnTies(ctx.categoryTotals, COL.mv);
   }],
   ["the category totals add to the footer's invested and unrealised P&L", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+    const gate = needTotals(ctx);
     return gate || (columnTies(ctx.categoryTotals, COL.invested) && columnTies(ctx.categoryTotals, COL.pnl));
   }],
   /**
@@ -1302,7 +1339,7 @@ const CATEGORY_TOTALS = [
    * footer must print one, and the categories must reconstruct it.
    */
   ["the category weights add to the footer's own weight", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+    const gate = needTotals(ctx);
     if (gate) return gate;
     const total = pctCell(ctx.categoryTotals.footer.text[COL.weight]);
     const parts = ctx.categoryTotals.rows.map((r) => pctCell(r.text[COL.weight]));
@@ -1326,7 +1363,7 @@ const CATEGORY_TOTALS = [
    * rather than asserted through the noise.
    */
   ["a category whose cost side does not cover it refuses a return on cost", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+    const gate = needTotals(ctx);
     if (gate) return gate;
     let asserted = 0;
     for (const r of ctx.categoryTotals.rows) {
@@ -1366,7 +1403,7 @@ const CATEGORY_TOTALS = [
    * invariant on /holdings reading text that never contained it.
    */
   ["every metric a category cannot total renders a dash with a reason", (t, ctx) => {
-    const gate = needTotals(ctx?.categoryTotals);
+    const gate = needTotals(ctx);
     if (gate) return gate;
     const never = [COL.qty, COL.avgCost, COL.cmp, COL.ytd];
     const money = [COL.invested, COL.day, COL.mv, COL.weight, COL.pnl, COL.realised, COL.ret];
@@ -1376,14 +1413,21 @@ const CATEGORY_TOTALS = [
       // never as an empty cell where a measurement belongs.
       && money.every((c) => r.text[c] !== "" && (r.text[c] !== "—" || r.title[c].length > 20)));
   }],
-  /**
-   * ...AND THE ROW IS NOT A HOLDING. It is a table row by every structural test
-   * the section reader applies, so `sectionOf` has to keep it out of `rows` or
-   * six invariants that mean "the holdings drawn here" start reading a subtotal:
-   * its Qty cell is an em dash by design and the first of them fails on it.
-   * Asserted against the rows the DOM says are holdings, not against a count of
-   * itself.
-   */
+];
+/**
+ * ...AND THE ROW IS NOT A HOLDING. It is a table row by every structural test
+ * the section reader applies, so `sectionOf` has to keep it out of `rows` or
+ * six invariants that mean "the holdings drawn here" start reading a subtotal:
+ * its Qty cell is an em dash by design and the first of them fails on it.
+ * Asserted against the rows the DOM says are holdings, not against a count of
+ * itself.
+ *
+ * SEPARATE FROM THE LIST ABOVE because it is struck through `sectionOf`, which
+ * finds a section by the CATEGORY axis's own heading names — so it belongs on
+ * the routes that draw those, and not on the two axes whose sections the family
+ * names.
+ */
+const CATEGORY_TOTAL_NOT_A_HOLDING = [
   ["a category's totals row is not counted among its holdings", (t, ctx) => {
     const gate = needRows(ctx?.tableRows);
     if (gate) return gate;
@@ -3478,6 +3522,7 @@ const INVARIANTS = {
 
   monitor: [
     ...CATEGORY_TOTALS,
+    ...CATEGORY_TOTAL_NOT_A_HOLDING,
 
     /**
      * THE HEADLINE IS ONE LINE, AND THE VIEW SWITCH RIDES WITH IT.
@@ -3938,10 +3983,14 @@ const INVARIANTS = {
     }],
     ["...and the filter went back to offering every basket", (t) => /All baskets/i.test(t)],
   ],
-  "monitor-assetclass": axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]),
-  "monitor-basket": axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]),
+  // The totals row renders on every axis, so its claims are checked on every
+  // axis: the sections it totals are the family's own here, and a partition that
+  // adds up on the category axis can still miss on one the family defined.
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS],
+  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS],
   "monitor-entity": [
     ...CATEGORY_TOTALS,
+    ...CATEGORY_TOTAL_NOT_A_HOLDING,
     ["the by-entity view still sections into Direct Equity, PMS mandates and the wrappers",
       (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES") && !!sectionOf(t, "AIF")],
     // A mandate row is one account's statement already, so the by-entity toggle
