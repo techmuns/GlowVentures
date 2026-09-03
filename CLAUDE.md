@@ -4897,6 +4897,126 @@ reintroduced — the page restored at its address, its route un-redirected, its
 nav entry put back, the Monitor heading with it, and the Export button deleted
 while its explanatory prose stayed — and each fired exactly its own check.
 
+### Stage 10aa — THE NAV CHART WAS AN EMPTY BOX, AND EVERY CHECK ON IT PASSED
+
+*"fix this blank section, it should show a proper time graph showing larger
+period return comparison."*
+
+**IT RENDERED NO SVG AT ALL.** `NavVsIndex`'s plot area was
+`min-h-[15rem] flex-1` with `ResponsiveContainer height="100%"` inside it. That
+holder is a `flex-basis: 0` item in an AUTO-HEIGHT column, so its used height
+comes from `min-height` — and Chrome does not treat that as a DEFINITE height
+for a percentage child. Measured in the browser: the holder painted 1225 × 210
+and the container inside it 1225 × **0**. No axes, no legend, no lines, no
+`<svg>` element. Every other chart in this app already sizes definitely
+(`h-72`, `h-44`, `SeriesChart`'s `style={{height}}`); this was the single
+exception and the single blank. It is `h-[22rem]` now.
+
+**AND NOTHING COULD SEE IT — EIGHT INVARIANTS ON THIS CARD, ALL GREEN.** The
+coverage line, the flow-adjusted return against the unadjusted one, the external
+capital in rupees, the value not proven to be performance, the three-list
+partition: every one of them reads `innerText`, and every one of them was
+CORRECT while the chart beside them was an empty frame. Verified by
+reintroducing the bug — the old holder puts the blank back and not one
+pre-existing check fails. **A chart is checked on its geometry or it is not
+checked**, which is the same rule this file already reaches for the headline's
+layout, Export Excel's row and the KPI overlay anchor, arriving at the one
+element that is nothing BUT geometry. `ctx.navChart` measures the painted SVG,
+each curve's `d` length and vertex count, the axis ticks, the legend's order and
+the range control.
+
+**THE AXIS WAS NOT A TIME AXIS, WHICH IS THE OTHER HALF OF "PROPER".** It was
+`dataKey="date"` on a CATEGORY scale over the book's seven statement dates, so
+10 → 11 August (one day) took the same width as 10 → 27 July (seventeen), and
+every segment's slope was a fact about ROW ORDER rather than about time. It is
+`type="number" scale="time"` now, ticked one per year/quarter/month by span —
+`SeriesChart`'s rule, on timestamps.
+
+**AND THE "INDEX" WAS SEVEN STRAIGHT SEGMENTS.** `rebasedIndex` samples the
+index AT THE BOOK'S DATES, which is exactly right for the comparison pill and
+wrong to draw: a line through seven sampled closes is not the Nifty 500's path.
+`indexCurve` draws every settled close the feed carries. The two now serve their
+own purposes and the check tells them apart on VERTEX COUNT — 245 against 7.
+
+#### The larger period is asymmetric, and saying so is the whole of the honesty
+
+**THE BOOK'S OWN DATED SERIES IS FIVE WEEKS AND CANNOT BE LONGER.** Measured
+rather than assumed: `BOOK_NAV_HISTORY` is 7 points over 2026-07-10 → 2026-08-13,
+and the per-account histories reach back only to 2026-05-31 — the whole archive
+is four and a half months (§"AND YTD / CALENDAR-YEAR ON A HOLDING IS NOT
+MEASURABLE HERE"). No range control invents a point.
+
+What CAN be lengthened is the INDEX's context around it, and `/api/prices`
+carries years of `^CRSLDX` daily closes. So a `Book window · 3M · 6M · 1Y · 3Y ·
+5Y · Max` control governs how far back the index is drawn, defaulting to **1Y**
+— the ask was for a larger period, and opening on the book's own window would
+show exactly what was complained about. Four rules keep it honest:
+
+- **BOTH LINES ARE REBASED AT THE BOOK'S FIRST POINT, NOT THE WINDOW'S.** That is
+  the only base at which the comparison is exact: both pass through 100 on the
+  one date both measurements exist for. Rebasing to the left edge of a five-year
+  window would put the book's line at whatever level the index happened to reach
+  by July and invite a reader to compare two numbers struck from different starts.
+- **THE MEASURED STRETCH IS SHADED**, at every range wider than itself. On the 1Y
+  view most of the axis is index history the book has no measurement over, and an
+  unshaded chart invites the reader to read the whole width as a comparison —
+  a caption widening a figure it does not narrow, arriving through a time axis.
+- **THE HEADLINE PILLS STAY ON THE BOOK'S OWN WINDOW.** Book +0.54% against the
+  index's figure over the SAME dates. The selected range's return is stated
+  separately, under the chart, as the index's own and labelled *market history
+  rather than a comparison* — never set beside a book figure struck over a
+  different period.
+- **ONLY THE BOOK RANGE CAPS THE END.** Everywhere else the index runs to its own
+  last settled close, which is the useful half of asking for a longer period:
+  where the market has gone since the book was last marked. The book range caps
+  because its label promises the window both lines cover, and **a control that
+  describes itself wrongly is the same defect as a caption that does.**
+
+**SIX SERIES COLOURS BECAME THEME VARIABLES.** `#d9c48f` on ivory is a line a
+reader cannot see, and `#2b2668` grid lines are a near-black web on it — and the
+light-mode sweep could not report either, because an SVG `stroke` is not a
+Tailwind utility and there is no computed class to resolve. `--chart-grid`,
+`--chart-axis`, `--chart-book`, `--chart-index`, `--chart-nav` and `--chart-band`
+are defined for both themes in `index.css`; champagne darkens to `#8a6a1c` on
+light, exactly as `.text-champagne-400` already does. This also gives
+`SeriesChart` the `--chart-grid` it has always referenced and never had.
+
+**AND THE LEGEND'S ORDER IS STATED, BECAUSE IT DIFFERS FROM THE PAINT ORDER ON
+PURPOSE.** The book's line is drawn LAST so it sits above the index — seven
+points against up to thirteen hundred closes — and a legend following the
+children would then lead with the index on a card whose subject is the book.
+
+**SIX BUGS REINTRODUCED, EACH FIRING EXACTLY ITS OWN CHECK**: the old
+`min-h`/`flex-1` holder, the category axis, a range control defaulting to the
+book's window, the sentence naming the measured window, the index sampled to the
+book's dates, and the shaded band removed. Two of them exposed defects in the
+CHECKS first, which is the point of doing it — a vertex counter that split on
+`[LM]` read **1** for a 245-point curve, because these lines are
+`type="monotone"` and recharts emits one `M` and a cubic bezier per point with
+not an `L` in the whole path; and the band assertion was first struck on `cio`,
+which serves no price feed, so the chart is correctly the book's own window with
+nothing to mark. The band belongs on `cio-live`, where a wider window exists —
+and it asserts the window really IS wider before requiring the band, so it
+cannot pass by asserting nothing.
+
+**WHAT IS STILL NOT DRAWN, AND WHERE THE LONGER COMPARISON ACTUALLY LIVES.**
+`BOOK_ACCOUNT_RETURNS` carries the managers' OWN published 1m/3m/6m/1y and
+since-inception returns for 12 accounts, each beside the benchmark that manager
+publishes — real primary-source figures over genuinely long periods. They are
+per-mandate, on different fee bases (`after`/`before`), against different
+benchmarks (N50TRI, S&P BSE 500 TRI, NSmCap250TRI) and each ends at its own
+statement date, so they can never be averaged into a book return. `/performance`
+already renders them per account and this card deliberately does not duplicate
+them.
+
+**AND `/performance` STILL CARRIES THE ABSENCE THIS CARD EXISTS TO CORRECT.** Its
+"NAV trajectory" card renders an `AbsentSection` reading *"No valuation series in
+this book · each account's statements carry exactly two dated portfolio values"*
+— the same premise Stage 10p measured and found false, still standing one route
+over from a chart built on the data it says does not exist. Named here rather
+than fixed, because the family pointed at Morning CIO; it is the sixth absence
+against an unchecked premise and it is one `<NavVsIndex />` away.
+
 ### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
 
 *"remove all three pages from the dashboard UI"* — the three nav entries,
