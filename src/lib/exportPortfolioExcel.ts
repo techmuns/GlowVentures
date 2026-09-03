@@ -5,6 +5,7 @@
 import ExcelJS from "exceljs";
 import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
+import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, DASH } from "./format";
 import { holdingYtd } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
@@ -31,6 +32,8 @@ const C = {
 
 type HoldingRow = {
   security: string; bucket: string; heldVia: string; sector: string; entities: string;
+  /** The family's own two slices — see `familyTaxonomy.ts`. */
+  familyClass: string; basket: string;
   /** The mandate this row sits in, or null for a row no manager runs. */
   mandate: string | null;
   /** The issuers whose statements carry this row — named when it reports no cost. */
@@ -131,6 +134,11 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
       const costNA = cost === null || (cost === 0 && mv > 0);
       rows.push({
         security: ps[0].security, bucket, sector: ps[0].sector,
+        // THE FAMILY'S OWN AXES, struck on the same position the bucket is and
+        // through the same helpers the tab uses, so the sheet and the screen
+        // can never disagree about which basket a holding is in.
+        familyClass: familyClassKeyOf(ps[0], isMandateHeld(engagementOf(idx, ps[0]))),
+        basket: basketKeyOf(ps[0], isMandateHeld(engagementOf(idx, ps[0]))),
         // Both of these are PER-ACCOUNT facts and read the RAW rows, not the
         // deduped ones: an owner whose statement was collapsed still reported
         // the holding, and so did the account that states the route.
@@ -322,8 +330,24 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     // row. See `holdingYtd`; the sheet says the same thing the tab does.
     { key: "ytdPct", header: "YTD", width: 11, numFmt: PCT, align: "right", signed: true },
     { key: "bucket", header: "Class", width: 18 },
+    /**
+     * THE FAMILY'S OWN TWO SLICES, AS COLUMNS RATHER THAN AS SECTIONS.
+     *
+     * The tab can only be sectioned one way at a time; a spreadsheet can be
+     * pivoted on any column, so the sheet carries all three axes at once and
+     * lets the reader group by whichever they want. That is the one thing the
+     * workbook can do that the screen cannot, and it is why these belong here
+     * rather than being left to a second export.
+     *
+     * Both fall back to the same sentence the tab's section heading uses, never
+     * to a blank: an empty cell in a column of classifications reads as an
+     * oversight, and `SUM(...)` over a pivot silently drops it.
+     */
+
     { key: "heldVia", header: "Held via", width: 20 },
     { key: "mandate", header: "Mandate", width: 34 },
+    { key: "familyClass", header: "Asset Class (family)", width: 22 },
+    { key: "basket", header: "Basket (family)", width: 24 },
     { key: "sector", header: "Sector", width: 20 },
     { key: "entities", header: "Entities", width: 24 },
   ];
@@ -357,6 +381,8 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       ytdPct: h.ytdPct ?? DASH,
       bucket: bucketLabel(h.bucket),
       heldVia: h.heldVia,
+      familyClass: h.familyClass,
+      basket: h.basket,
       mandate: h.mandate ?? DASH,
       sector: h.sector,
       entities: h.entities,
