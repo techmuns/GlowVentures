@@ -4511,6 +4511,78 @@ over the scope instead of the facet. Two of them needed a second attempt to
 reproduce, which is itself the finding — the light theme is what the sweep walks
 first, so a bug introduced only in the dark rule changes nothing it can see.
 
+### Stage 10z — THE TILES ARE A LABEL AND A FIGURE, AND THE CAPTIONS MOVE
+
+*"remove these small subtext from the clickable KPI buttons since these are also
+already written inside each KPI pages."*
+
+Stage 10y made the tile a button and moved the arithmetic to the page it opens.
+The captions under each figure stayed, and they were the last chrome on the
+strip. **The premise was checked line by line before anything was removed**,
+which is the whole of this section: eight of the ten captions were indeed already
+on the page their tile opens, and **two were not**.
+
+| Caption | Already on the page it opens? |
+| --- | --- |
+| `Listed ₹358 Cr · Private ₹352.3 Cr` | yes — the facet toggle, with each half's count |
+| `+ ₹47.1 L accrued income, not in this figure` | **NO** |
+| `cost in · covers ₹544.4 Cr of ₹710.4 Cr` | yes — the page's own total and its share of the book |
+| `60 positions worth ₹165.9 Cr carry no cost basis` | yes — the facet chip and the tile beside it |
+| `134-day window · not annualised` | **NO** |
+| `7 of 49 accounts · ₹110.4 Cr of ₹710.4 Cr` | yes — the lead, the total and the excluded list |
+| `on capital invested · whole book` | yes |
+| `cumulative, not annualised` | yes — that page's Return on cost tile |
+| `undrawn fund commitments` · `cash returned to date` | yes — Private Market's own tiles |
+
+**SO THE TWO MOVED RATHER THAN WENT.** The accrued-income disclosure is in the
+`book` drill-down's arithmetic card, because a NAV that excludes accrued income
+differs from a manager's printed total by exactly that and a reader reconciling
+the two has to be told. The XIRR window is on `?of=measured`, **derived there
+from the same flows and the same accounts the rate is struck over** — 134 days
+either way, which is the two derivations agreeing rather than one copying the
+other.
+
+**THAT SECOND ONE IS STAGE 10g(ii)'s GUARD, AND IT CANNOT SIMPLY BE DELETED.**
+The tile once read **+99.0%** because a 132-day return was compounded onto a
+year; nothing was miscalculated and it contradicted the managers' own annualised
+since-inception figures for those very accounts. `moneyWeightedReturn` refuses to
+annualise a sub-year window and **the caller must say so** — the caller is now
+the drill-down, which states the window, the refusal, and what compounding it
+would claim.
+
+**AN ABSENT TILE KEEPS ITS ONE LINE.** `sub` is removed only from the populated
+branch. An em dash must name its cause (`Absent.tsx`), so a tile whose figure the
+book does not carry still says why. On this book none are absent, which is
+exactly when that distinction is invisible — so it is a check rather than a
+comment.
+
+**AND THE CHECKS HAD TO MOVE OFF THE CAPTIONS THEY WERE READING.** Seven
+invariants failed and five more abstained the moment the captions went, because
+`CIO_FIGURES` parsed `listed`, `private`, `no-cost` and `measured` OUT OF THEM.
+Every claim survives, struck where the fact now is:
+
+- The two gates that decide whether a missing facet toggle is a finding or an
+  honest abstention (`BOOK_HAS_BOTH_HALVES`, `TILE_NAMES_COSTLESS`) read
+  `glowData.ts` now instead of a tile caption. Read off the page they would have
+  started abstaining silently the moment the caption was reworded — and removing
+  the captions outright is precisely that event.
+- Listed + Private = NAV moved to `holdings-private`, anchored on the two pages'
+  own rendered totals plus the NAV the tile still prints. **Three independently
+  produced figures rather than one sentence split three ways**, so a page showing
+  the wrong half now fails instead of agreeing with the caption it came from.
+- Costed + cost-less = NAV is the same shape on `holdings-nocost`.
+
+**TWO OF THE NEW CHECKS COULD NOT FAIL, AND REINTRODUCING THE BUG IS WHAT FOUND
+BOTH.** "What the NAV excludes is named" gated on the PAGE containing the words
+"accrued income" — so deleting the sentence read as *this book has no accrued
+income* and abstained; it is gated on the book now. And "a tile with no figure
+still names why" required two lines, which is exactly what an unexplained
+`DRY POWDER / —` renders; it requires three.
+
+Five bugs reintroduced in total, each firing its own check: a caption back on a
+tile, the accrued disclosure deleted, the window deleted, the private half
+widened to the whole book, and an absent tile stripped of its reason.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
