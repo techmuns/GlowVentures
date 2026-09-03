@@ -109,6 +109,69 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   A KPI TILE THAT OPENS SOMETHING LOOKS LIKE A BUTTON
+
+   *"Just make the KPI tiles look like 3-d clickable buttons and remove every
+   other underlines/hyperlinks on the texts."*
+
+   The whole card is the click target, so the affordance has to be the CARD. It
+   used to be an underline on the label and a second, differently-dashed one on
+   the figure — two pieces of text advertising themselves as the thing to click,
+   on a tile where the text is not the thing to click.
+
+   WRITTEN AS PLAIN CSS WITH EXPLICIT COLOURS, deliberately. Tailwind emits each
+   `ink-*`/`slate-*` opacity variant as its own class and every one of them needs
+   a light-mode remap of its own; a four-layer shadow assembled from utilities
+   would need four remaps and would fail the first one somebody forgot. Two
+   rules here, one per theme, is the whole surface.
+
+   IT IS `.card.kpi-btn`, NOT `.kpi-btn`, AND THAT IS NOT COSMETIC. The first
+   draft rendered FLAT: `html:not(.dark) .card` sets its own box-shadow further
+   down this file at the same specificity, so source order decided it and the
+   tile lost — a raised button that was not raised, on a page where every other
+   check passed. `check:pages` resolves computed COLOUR and would never have
+   seen it. Qualifying with `.card` puts this rule above any `.card` rule at
+   equal specificity wherever either lands in the file, and an invariant now
+   reads the computed shadow so the flat version fails rather than ships.
+
+   The stack is: an inset top highlight (the lit edge), a hard offset shadow
+   (the tile's thickness) and a soft cast shadow (its distance from the page).
+   Hover lifts it and thickens the edge; :active presses it flat, and lands the
+   press on the same 2px the resting offset is, so the tile ends level with the
+   page rather than dipping below it. `:focus-within` matches hover so a
+   keyboard reader sees the same state the pointer does.
+   ------------------------------------------------------------------------- */
+.card.kpi-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 2px 0 0 #14142b,
+    0 5px 12px -4px rgba(0, 0, 0, 0.55);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+.card.kpi-btn:hover,
+.card.kpi-btn:focus-within {
+  transform: translateY(-1px);
+  border-color: rgba(217, 196, 143, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 3px 0 0 #14142b,
+    0 10px 20px -6px rgba(0, 0, 0, 0.6);
+}
+.card.kpi-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 0 0 #14142b,
+    0 1px 3px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* A reader who has asked not to be animated gets the depth and none of the
+   movement — the shadow still says "raised", the tile just does not jump. */
+@media (prefers-reduced-motion: reduce) {
+  .card.kpi-btn, .card.kpi-btn:hover, .card.kpi-btn:focus-within, .card.kpi-btn:active { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
    LIGHT MODE — Pearl / Ivory with indigo-tinted ink.
    Remaps the dark ink-* (indigo) + slate-* utilities to a warm ivory palette
    so the whole chassis shifts without rewriting components.
@@ -153,6 +216,30 @@ html:not(.dark) .bg-ink-700\/80 { background-color: rgba(217, 196, 143, 0.38); }
 /* Sidebar footer avatar — was dark indigo with dark text; make it champagne
    (matches the logo) so the initials read. */
 html:not(.dark) .bg-ink-600 { background-color: #d9c48f; }
+
+/* The raised KPI tile, on ivory. The dark theme's edge is a near-black slab,
+   which on a light page reads as a bruise rather than a thickness — this is the
+   warm border colour darkened, so the tile looks lifted off the paper. */
+html:not(.dark) .card.kpi-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 0 0 #ded8c8,
+    0 5px 12px -5px rgba(90, 82, 60, 0.28);
+}
+html:not(.dark) .card.kpi-btn:hover,
+html:not(.dark) .card.kpi-btn:focus-within {
+  border-color: rgba(184, 154, 82, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 3px 0 0 #d5cdb8,
+    0 10px 20px -7px rgba(90, 82, 60, 0.32);
+}
+html:not(.dark) .card.kpi-btn:active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 0 #ded8c8,
+    0 1px 3px -1px rgba(90, 82, 60, 0.3);
+}
 
 /* Inner panels / hover surfaces (slate remaps) */
 html:not(.dark) .bg-slate-900 { background-color: #efece3; }

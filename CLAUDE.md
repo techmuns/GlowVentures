@@ -2351,8 +2351,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10w. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2410,8 +2414,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10w. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -4211,6 +4219,86 @@ private facet, the no-cost sentence dropped from the tile, Dry powder pointed at
 a holdings table, the toggle deleted, the toggle defaulted to a half, and the
 chips printing the active set's count instead of their own. Two of them fired
 checks that had to be rewritten first, which is the whole reason for doing it.
+
+### Stage 10w — THE TILE IS THE AFFORDANCE, AND THE ARITHMETIC MOVES TO THE PAGE
+
+*"remove the remaining underlines from the texts, and even the calculation that
+we're showing that appears when click the underlined no. we can show that inside
+the clickable KPI pages. Just make the KPI tiles look like 3-d clickable buttons
+and remove every other underlines/hyperlinks on the texts."*
+
+Stage 10v made the whole card the click target and left both underlines on it. So
+each tile carried THREE affordances for one action: a dotted-underlined LABEL, a
+dashed-underlined FIGURE that opened a popover, and the card itself. Two of them
+pointed at text that is not the thing to click.
+
+**THE AFFORDANCE IS THE SURFACE NOW.** `.card.kpi-btn` in `index.css` — an inset
+top highlight (the lit edge), a hard offset shadow (the tile's thickness) and a
+soft cast shadow (its distance from the page); hover lifts it, `:active` presses
+it flat, `prefers-reduced-motion` keeps the depth and drops the movement. Written
+as plain CSS with explicit colours rather than as Tailwind utilities, because
+every `ink-*`/`slate-*` utility needs its own light-mode remap **including each
+opacity variant**, and a four-layer shadow assembled from them would need four.
+
+**IT IS `.card.kpi-btn`, NOT `.kpi-btn`, AND THE FIRST DRAFT SHIPPED FLAT.**
+`html:not(.dark) .card` sets a box-shadow of its own further down the same file
+at equal specificity, so source order decided it and every tile rendered as an
+ordinary panel — a raised button that was not raised, with the entire sweep
+green. `check:pages` resolves computed COLOUR and has never looked at a shadow.
+Qualifying with `.card` puts the rule above any `.card` rule wherever either
+lands in the file.
+
+**AND THE RAISED LOOK IS ONLY ON A TILE THAT OPENS SOMETHING.** `Kpi` applies it
+only where `href` is set, so the drill-down page's own four summary tiles stay
+flat. A card that presses under the pointer and then does nothing is a worse lie
+than a flat one — which is why the invariant is struck in BOTH directions, on two
+different pages.
+
+**THE ARITHMETIC IS ON THE PAGE THE TILE OPENS.** `drilldownFormula(d, money)` in
+`drilldown.ts` returns the `FormulaDef` for a set, and `/holdings` renders it as
+a card between the tiles and the table: the expression, the worked example, and
+the paragraph. It sits beside the SET DEFINITION for the reason this whole file
+exists — an explanation kept anywhere else drifts from the rows it explains — and
+takes the money formatter as an argument rather than importing one, because every
+figure here renders in the reader's selected display currency through
+`fmtFromBase` and a formatter fixed in a lib prints rupees on a page showing
+dollars. Same seam `auditFormulas.ts` already uses.
+
+**IT IS STRUCK ON `d.rows`, WHICH IS THE ACTIVE FACET.** A version summed over
+the whole scope reads correct on the undivided page and prints ₹710.4 Cr under a
+heading saying "Private" — the caption-does-not-describe-its-figure failure the
+Capital invested tile already cost this book once, arriving one click deeper. The
+invariant compares the worked line against the page's OWN rendered total, and on
+the private half additionally requires it NOT to equal the NAV.
+
+**ONE OF THE REMOVED POPOVERS WAS WRONG, WHICH IS WHY NOTHING REPLACES IT.** Dry
+powder's read `= Σ (Committed − Called) across funds`, and this book does not
+derive it that way: Private Market's own tile says it is *"summed exactly as each
+statement prints it, never derived from committed − drawn"*, because two folios
+print a commitment and a drawdown and NO undrawn figure, and subtracting there
+would assert a fund has nothing left to call. The page that tile opens already
+carries the correct explanation beside Committed and Drawn.
+
+**THE MONEY-WEIGHTED PAGE DOES NOT RESTATE ITS RATE, DELIBERATELY.** That figure
+is a pooled XIRR over every account's dated flows, each closing on its own report
+date; re-deriving it in `drilldown.ts` would be a SECOND source for one figure.
+The page owns the SET — which accounts qualify, what they are worth, which 42 sit
+outside — and the rate stays on the tile it was clicked from.
+
+**SCOPED TO THE KPI STRIP.** The allocation table's per-bucket returns and its
+footer still open a formula popover. That is deliberate rather than overlooked:
+the footer's popover is the one place left that reconciles the money-weighted
+whole-book figure against a column of return-on-cost cells — the Book performance
+card that also carried it was removed in Stage 10t, and the Consolidated return
+tile's went in this change. Removing the third would delete the reconciliation
+this file's own "a total must tie to its own columns" rule exists to preserve.
+
+**FIVE BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the label underline back
+on a tile, the `.card` qualifier dropped so the tiles go flat, every card raised
+so a panel poses as a button, the formula card deleted, and the formula summed
+over the scope instead of the facet. Two of them needed a second attempt to
+reproduce, which is itself the finding — the light theme is what the sweep walks
+first, so a bug introduced only in the dark rule changes nothing it can see.
 
 ### Stage 10k — News & Announcements: REMOVED
 
