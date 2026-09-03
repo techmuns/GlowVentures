@@ -45,9 +45,15 @@ just noise, and noise in a provenance record is a cost of its own.
 ## A delivery may be only PARTLY ingestible, and that is a real state
 
 `august-2026-d/` brought five managers this pipeline had never met. Two folios
-landed; twenty documents have no reader yet. Every one of those twenty is
-ATTRIBUTED to the institution that issued it and counted in the coverage report
-— which is not the same as being filed under a manager who never wrote it.
+landed on the first pass; twenty documents had no reader. Every one of those
+twenty was ATTRIBUTED to the institution that issued it and counted in the
+coverage report — which is not the same as being filed under a manager who never
+wrote it, and is what made finishing them a bounded job rather than a search.
+
+**All twenty read now**, and so does everything else: `npm run coverage:source`
+accounts for every leaf file in this directory and **exits non-zero if any is
+unread**. A partly-ingestible delivery is still a real state; it is just no longer
+this one's.
 
 Before adding a reader for any of them, read the `august-2026-d` section of
 CLAUDE.md: the demat statements list every fund the family owns as a transaction
@@ -89,3 +95,165 @@ Sanshi Class A2 2,341,480.851 and Class E 1,761,264.629 on Ajay's, Sanshi Class 
 Opportunities Series 8 Class A3 at the same 9,90,429.684 units the two CRNs
 already report between them. A name can be a spelling; four exact unit counts
 against four different funds are not a coincidence.
+
+## `august-2026-f/` — a third way a PDF can be unreadable, and a register that is not a statement
+
+Three files, found by diffing the client's Google Drive against `source/` after
+`august-2026-e/` had landed. Every other file in that Drive folder matches a
+local file on name and byte size; these three matched nothing.
+
+| File | What it is | Outcome |
+| --- | --- | --- |
+| `NEW INVESTMENT SHEET.xlsx` | the family's own register of what they PAID — 8 sheets, 427 tranche rows, 151 names, ₹842.92 Cr gross paid-in | READS PERFECTLY — and is **not a source**, by decision |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf` | HDFC Bank NSDL, DP account 67786547 | **READ — by RENDERING its outlined glyphs**; adds an account and ₹0 of value |
+| `HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf` | HDFC Bank NSDL, DP account 67786137 | **READ — same** |
+
+### The two statements: a third failure mode, and the filenames are wrong again
+
+`august-2026-e/` established that a SCAN is not a document with no reader. These
+two are neither. They contain **no raster image at all and no text either**: zero
+font objects, zero `BT`/`Tj` operators, and ~9,300 bezier curves — every glyph
+has been **CONVERTED TO VECTOR OUTLINES** by whatever exported the file. pdfjs's
+operator list reads 2,752 ops, 545 paths, no text ops; poppler's `pdftotext`
+returns one character. Two independent PDF engines agree there is nothing to read.
+
+`extract.mjs` reports them as **`text-outlined-to-paths`**, not `no-text-layer`,
+because the remedy differs and a confidently wrong diagnosis costs a day:
+
+- a SCAN is a raster, and its resolution is all there will ever be;
+- OUTLINED TEXT is resolution-independent, so the ask is a **re-export from the
+  issuing system with fonts embedded** — HDFC's PDF export setting is what did
+  this — rather than a re-scan of paper that was never on paper.
+
+That diagnosis is what a document still reports when nothing can read it — and
+these two are now read; see **They ARE read** below, where the first conclusion
+here ("neither is an OCR job") was overturned for outlined text and upheld for the
+scan. `lib/layout.mjs`'s `classifyInk` draws the distinction on the OPERATOR LIST, and
+it runs **only** for a document that yielded no text at all, so no ordinary
+statement pays for the second parse. It is told apart there rather than by a byte
+search for `/Font` or `/DCTDecode`, because a PDF 1.7 file keeps both inside
+compressed object streams and a raw scan finds neither.
+
+**AND THE FILENAMES NAME THE WRONG HOLDER — for the fourth time in this corpus.**
+Both files are named for a Bharat Jaisinghani family trust. Both statements print
+`AJAY T JAISINGHANI` and `AARTI AJAY JAISINGHANI` as the joint holders, at
+Ajay's own Prabhadevi address. `providers/hdfcNsdl.mjs` therefore resolves the
+account on the **`DP Account No:` the page prints** — 67786547 and 67786137 —
+never on the file name, which is the rule `motilalDemat.mjs` already applies to
+three of its twelve files and `pmsStatements.mjs` to all 23 of V.E.C's. With no
+account line it emits nothing rather than falling back to a name the statement
+itself contradicts.
+
+What they hold is small and is **quantity-only**: one line each,
+`SWAPECO SOLUTIONS PRIVATE LIMITED` / `INE2DT103015`, 347.000 units of a
+`0.01% PRE SERIES A PREF`, at a Market Rate of **100.000** — the FACE VALUE of a
+preference share in an unlisted private company, not a mark anyone struck. So
+`faceValueBasis` grades it `par`, the holding carries its quantity and NO value,
+and the two accounts add **₹0** to NAV. Reading 100.000 as a price would have
+invented ₹34,700 twice.
+
+### They ARE read — by rendering the outlines, and never a scan
+
+The refusal above was right about a SCAN and wrong to extend to these two, and the
+difference is not a technicality:
+
+- a SCAN is a photograph of paper. Its information is genuinely lossy — sensor
+  noise, skew, JPEG ringing — so a recovered figure cannot be traced to what the
+  document printed, and a wrong digit looks exactly like a right one. **Bharat's
+  `august-2026-e/` statement stays refused for that reason.**
+- OUTLINED TEXT is a photograph of nothing. The file carries every glyph's exact
+  bezier curves; rendering them EVALUATES data the document already holds, at
+  whatever resolution we choose. At 600 dpi the bitmap is a clean synthetic
+  rendering of exact shapes — no noise, no skew, no compression.
+
+`scripts/ingest/lib/ocr.mjs` renders and reads them and hands the words back **in
+the same `{x, y, width, height, text}` shape `itemsFrom` produces from pdfjs**, so
+`pageToGrid` and every reader above it work unchanged. `extractLayout` routes ONLY
+`inkKind.kind === "vector"` there; a `raster` page keeps `no-text-layer` and is not
+read. Both directions are asserted in `layout.test.mjs`.
+
+**A PREMISE IS NOT A PROOF, SO THE READER CHECKS ITSELF.** `hdfcNsdl.mjs` will not
+emit a holding unless its rows reproduce the statement's own printed
+`Total Valuation (Rs.)` **to the paisa**; on a mismatch it emits nothing and says
+why. That check is the whole licence for reading a rendered document — the page's
+own arithmetic is the witness. It passes on both files, and three further things
+agree: 347 x 100.000 = 34,700.000, the statement's words ("Rupees Thirty-Four
+Thousand Seven Hundred Only") match its digits, and the register in this same
+delivery independently records 347 preference shares per trust.
+
+`textSource: "ocr"` rides in the provenance and the document carries a
+`text-recovered-by-rendering` warning, so no figure read this way is mistaken for
+a native one. **It needs `pdftoppm` (poppler-utils) and `tesseract` on PATH**;
+without them the run reports `text-outlined-to-paths` again and reads everything
+else exactly as before. It never half-reads. The ask of HDFC — a re-export with
+fonts embedded — stands, because it would remove the need for any of this.
+
+**AND THE REGISTER CONFIRMS THESE *ARE* THE TRUSTS' HOLDINGS — READ THE WHOLE
+CELL.** The same delivery's `NEW INVESTMENT SHEET.xlsx` records every Swapeco
+holding the family has, and its `TRUST INVESTMENT` rows read, in full:
+
+```
+2807 PRE SERIRES A CCPS OF FACE VALUE RS. 100 EACH (NO OF PREFERENCE SHARE 347)
+```
+
+**347**, once per trust, at a face value of ₹100 — which is 347 x 100 =
+**₹34,700**, the exact Total Valuation both statements print. Instrument, face
+value and quantity all tie. So each file is one trust's holding, and the holder
+line prints the **TRUSTEES** rather than the trust:
+
+| Holder in the register | Paid | Units | Statement |
+| --- | ---: | ---: | --- |
+| Bharat Jaisinghani (PVT INV) | ₹50,20,300 | 244 EQUITY | none in this corpus |
+| Bharat Jaisinghani Family Trust **2** | ₹1,35,00,875 | **347** CCPS | DP 67786547 |
+| Bharat Jaisinghani Family Trust **3** | ₹1,35,00,875 | **347** CCPS | DP 67786137 |
+
+**THIS PARAGRAPH FIRST SAID THE OPPOSITE**, on a cell read to 240 characters —
+the parenthetical that carries the unit count sits past that cut, and without it
+`2807` looks like the quantity and nothing matches. A truncated cell is not a
+short cell, and the claim it produced ("the trusts' ₹2.70 Cr has no statement,
+ask the client for it") would have sent the client looking for documents they had
+already sent. Whoever writes the reader must still resolve each account on the
+**`DP Account No:` the page prints** and attribute it to a trust using the
+register, because the statement itself names only the trustees — but that is a
+mapping problem, not a missing document. That
+is the rule `motilalDemat.mjs` states for an AIF unit at 100.000 and the one
+`nsdlDemat.mjs` grades into `declared`/`scheme`/`par`, arriving through a third
+document. Read as a mark it would add ₹34,700 twice to NAV.
+
+### The register: the same decision as the consolidated review, for the same reason
+
+`NEW INVESTMENT SHEET.xlsx` is the family's own record of every direct and
+private investment — angel tickets, LLP capital, pre-IPO allotments, fund
+commitments — with the date, the entity it was made under and the amount paid.
+It reads perfectly (`lib/sheet.mjs`, 8 sheets). It is still **not a source**, and
+for exactly the reason the adviser's consolidated review is not one: no
+institution struck it, its `INVESTMENT AMOUNT` column is a **cash outflow rather
+than a mark**, and `CURRENT VALUATION` is empty. Every figure in this book traces
+to the statement of the institution that struck it, and that guarantee ends on
+the first cell of an aggregation.
+
+What it is genuinely good for is three things, none of which is a book figure:
+`npm run build-register` emits it to its own page at `/register`, whose ONLY
+reader is `src/pages/Register.tsx` and which reads that module directly rather
+than through `PortfolioContext`, so nothing on it can reach a total;
+`npm run reconcile:register` cross-checks the generated book against it; and the
+family-input layer (`src/lib/deals.ts`, Stage 10b) exists precisely because a
+shareholders' agreement and a cap table have no statement issuer and no reader.
+
+**IT IS MATCHED ON A HEADER NO CUSTODIAN PRINTS**, like the review before it: a
+depository tracks units, never whether the family holds the paper certificate, so
+`ORG. SHARE CERTIFICATE STATUS` is the anchor. Without that rule it was measured
+classifying as provider **Green Lantern Capital LLP**, strategy **Aristos Equity
+Portfolio**, owner **"COMMUNITY PRIVATE LIMITED BHARAT"**, accountNo
+**"EDUGORILLA"** and reportType **`capital-call`** — five fields scraped off
+PORTFOLIO COMPANY names in its own cells. Green Lantern has a reader and
+`capital-call` is a live report type, so unlike the review workbook this one
+would have been **handed to a reader** rather than merely misfiled.
+
+Adding it also exposed that the review's own protection was luck: its rule lived
+in `ISSUER_PROVIDER_RULES`, which run AFTER `match360One`/`matchGoldstandard`, so
+the workbook escaped those only because its cells spell "Green Lantern Growth
+Strategy" rather than "GREEN LANTERN CAPITAL". Both house matchers now return
+null for either signature, and `pipeline.test.mjs` asserts that a non-statement
+reaches **no report type, no account and no owner** — while an ordinary
+Goldstandard appraisal, which also names Aristos, still resolves to its own house.

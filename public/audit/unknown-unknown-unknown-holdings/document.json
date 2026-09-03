@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "no-text-layer",
-   "detail": "the file is 4 page(s) of SCANNED IMAGE and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
+   "detail": "the file is 4 page(s) of SCANNED IMAGE (4 raster image(s)) and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
   }
  ],
  "holdings": [],

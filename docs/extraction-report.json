@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-27T02:56:38.974Z",
+  "generatedAt": "2026-09-03T04:41:06.573Z",
   "summary": {
-    "documents": 261,
-    "parsed": 197,
+    "documents": 264,
+    "parsed": 199,
     "partial": 62,
-    "failed": 2,
+    "failed": 3,
     "rowSumChecks": 261,
     "totalMismatches": 100,
     "totalsMaterial": 0,
@@ -19,14 +19,15 @@
     "datedExplained": 127,
     "datedRounding": 60,
     "crossReportDeltas": 18,
-    "suspectedDuplicates": 5,
+    "suspectedDuplicates": 3,
+    "quantityOnlyMatches": 3,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 54,
+    "securitiesWithoutSymbol": 27,
     "ownerNamesUnmatched": 2,
     "stitchesApplied": 127
   },
   "coverage": {
-    "pdfsFound": 251,
+    "pdfsFound": 254,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -49,9 +50,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 197,
+    "parsed": 199,
     "partial": 62,
-    "failed": 2,
+    "failed": 3,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -549,6 +550,20 @@
           "failed": 1
         }
       },
+      "HDFC Bank (NSDL demat)": {
+        "holdings": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        }
+      },
+      "Family investment register (not a statement)": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
       "Motilal Oswal Active Momentum Fund": {
         "holdings": {
           "ok": 0,
@@ -592,7 +607,7 @@
         "provider": "Consolidated family review (not a statement)",
         "reportType": "unknown",
         "reasons": [
-          "no-extractor: no extractor for provider \"Consolidated family review (not a statement)\" / reportType unknown"
+          "held-out-by-decision: Consolidated family review (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
         ]
       },
       {
@@ -601,7 +616,16 @@
         "provider": "(unidentified)",
         "reportType": "holdings",
         "reasons": [
-          "no-text-layer: the file is 4 page(s) of SCANNED IMAGE and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
+          "no-text-layer: the file is 4 page(s) of SCANNED IMAGE (4 raster image(s)) and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
+        ]
+      },
+      {
+        "docKey": "family-investment-register-not-a-statement-unknown-unknown-unknown",
+        "sourcePath": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "provider": "Family investment register (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
         ]
       }
     ],
@@ -820,7 +844,7 @@
       },
       {
         "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund ΓÇô_9049241536_10072026143812407917.pdf",
         "reasons": [
           "statement-basis: the family's consolidated review carries this holding under the name of what it OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — and files it under Equity / Multi Cap. Same units (99,995) and same NAV; its closing value differs by ₹100 only because the review rounds the NAV to two decimals. It is a FUND OF FUNDS, so the family holds V.E.C and Carnelian both directly and through this; nothing is looked through and nothing is counted twice"
         ]
@@ -45128,17 +45152,61 @@
       ],
       "doubleCountRisk": 14408473.91,
       "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+    }
+  ],
+  "quantityOnlyMatches": [
+    {
+      "security": "India SME Investments Fund II — Class A2",
+      "securityKey": "india-sme-investments-fund-ii-class-a2",
+      "quantity": 27000,
+      "owners": [
+        "ankita-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "accounts": [
+        "1201090012838316",
+        "177302",
+        "175964"
+      ],
+      "occurrences": [
+        {
+          "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+          "owner": "Ankita Jaisinghani",
+          "ownerId": "ankita-jaisinghani",
+          "accountNo": "1201090012838316",
+          "asOf": "2026-07-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "india-sme-investments-177302-2026-06-30-holdings",
+          "owner": "Ankita Jaisinghani",
+          "ownerId": "ankita-jaisinghani",
+          "accountNo": "177302",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "india-sme-investments-175964-2026-06-30-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "175964",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
     },
     {
-      "dedupeGroup": "dg-sky-capital-rising-titans-fund-oncare-class-a3-8",
       "security": "Sky Capital Rising Titans Fund — Oncare — Class A3",
       "securityKey": "sky-capital-rising-titans-fund-oncare-class-a3",
       "quantity": 7500,
-      "totalCost": 7500000,
-      "marketValue": null,
       "owners": [
         "bharat-jaisinghani-family-trust-2",
         "bharat-jaisinghani-family-trust-3"
+      ],
+      "accounts": [
+        "SKY023",
+        "SKY024"
       ],
       "occurrences": [
         {
@@ -45206,48 +45274,38 @@
           "reportType": "holdings"
         }
       ],
-      "doubleCountRisk": null,
-      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+      "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
     },
     {
-      "dedupeGroup": "dg-india-sme-investments-fund-ii-class-a2-3",
-      "security": "India SME Investments Fund II — Class A2",
-      "securityKey": "india-sme-investments-fund-ii-class-a2",
-      "quantity": 27000,
-      "totalCost": null,
-      "marketValue": null,
+      "security": "SWAPECO SOLUTIONS PRIVATE LIMITED",
+      "securityKey": "swapeco-solutions",
+      "quantity": 347,
       "owners": [
-        "ankita-jaisinghani",
-        "bharat-jaisinghani"
+        "ajay-jaisinghani"
+      ],
+      "accounts": [
+        "67786547",
+        "67786137"
       ],
       "occurrences": [
         {
-          "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-          "owner": "Ankita Jaisinghani",
-          "ownerId": "ankita-jaisinghani",
-          "accountNo": "1201090012838316",
-          "asOf": "2026-07-31",
+          "docKey": "hdfc-bank-nsdl-demat-67786547-2026-08-29-holdings",
+          "owner": "AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "67786547",
+          "asOf": "2026-08-29",
           "reportType": "holdings"
         },
         {
-          "docKey": "india-sme-investments-177302-2026-06-30-holdings",
-          "owner": "Ankita Jaisinghani",
-          "ownerId": "ankita-jaisinghani",
-          "accountNo": "177302",
-          "asOf": "2026-06-30",
-          "reportType": "holdings"
-        },
-        {
-          "docKey": "india-sme-investments-175964-2026-06-30-holdings",
-          "owner": "Bharat Jaisinghani",
-          "ownerId": "bharat-jaisinghani",
-          "accountNo": "175964",
-          "asOf": "2026-06-30",
+          "docKey": "hdfc-bank-nsdl-demat-67786137-2026-08-29-holdings",
+          "owner": "AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "67786137",
+          "asOf": "2026-08-29",
           "reportType": "holdings"
         }
       ],
-      "doubleCountRisk": null,
-      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
+      "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
     }
   ],
   "duplicateAifEarnings": [
@@ -45312,50 +45370,8 @@
         ]
       },
       {
-        "security": "BIRLA CABLE LTD-EQ",
-        "securityKey": "birla-cable-ltd-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "ONESOURCE SPECIAL-EQ",
-        "securityKey": "onesource-special-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "AXIS BANK EQ",
-        "securityKey": "axis-bank-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "BHARAT PARENTERAL-EQ",
-        "securityKey": "bharat-parenteral-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
         "security": "CHEELIZZA IND-EQ1/",
         "securityKey": "cheelizza-ind-eq1",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "CITY UNION -EQ RE1/",
-        "securityKey": "city-union-eq-re1",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "CLEAN MAX ENV-EQ 1/",
-        "securityKey": "clean-max-env-eq-1",
         "docs": [
           "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
         ]
@@ -45375,87 +45391,10 @@
         ]
       },
       {
-        "security": "FEDERAL BANK EQ 2/",
-        "securityKey": "federal-bank-eq-2",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "ICICI BANK-EQ",
-        "securityKey": "icici-bank-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "INDIAN BANK - EQ",
-        "securityKey": "indian-bank-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "INDUSIND BANK EQUITY",
-        "securityKey": "indusind-bank-equity",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "INFINIUM PHARMA-EQ",
-        "securityKey": "infinium-pharma-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "KAYNES TECHNOLOGY-EQ",
-        "securityKey": "kaynes-technology-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
         "security": "NATIONAL STOCK EX-EQ",
         "securityKey": "national-stock-ex-eq",
         "docs": [
           "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "RBL BNK-EQ RE 10",
-        "securityKey": "rbl-bnk-eq-re-10",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "SBI - EQ",
-        "securityKey": "sbi-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "THE KARUR VYS-EQ",
-        "securityKey": "the-karur-vys-eq",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "ZAGGLE PREPAID-EQ1/",
-        "securityKey": "zaggle-prepaid-eq1",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
-        ]
-      },
-      {
-        "security": "PG ELECTRO-EQ1/",
-        "securityKey": "pg-electro-eq1",
-        "docs": [
-          "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings"
         ]
       },
       {
@@ -45521,13 +45460,6 @@
         ]
       },
       {
-        "security": "Crompton Greaves Consumer Elec",
-        "securityKey": "crompton-greaves-consumer-elec",
-        "docs": [
-          "lkp-securities-98245-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "SASKEN COMMUNICATION TECHNOLOGIES LTD.",
         "securityKey": "sasken-communication-technologies",
         "docs": [
@@ -45555,22 +45487,8 @@
         ]
       },
       {
-        "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
-        "securityKey": "clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/",
         "securityKey": "electromech-infraprojects-limited-eq-new-fv-rs-5",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
-        "securityKey": "ema-partners-india-limited-eq-new-fv-rs-5",
         "docs": [
           "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
         ]
@@ -45583,36 +45501,8 @@
         ]
       },
       {
-        "security": "FRACTAL ANALYTICS LIMITED - EQ",
-        "securityKey": "fractal-analytics-limited-eq",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
-        "securityKey": "grand-continent-hotels-limited-eq",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
-        "securityKey": "insolation-energy-limited-eq-new-fv-re-1",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
         "securityKey": "integris-medtech-limited-eq-new-fv-re-1",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
-        "securityKey": "jaro-institute-of-technology-management-and-research-limited-eq",
         "docs": [
           "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
         ]
@@ -45639,20 +45529,6 @@
         ]
       },
       {
-        "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
-        "securityKey": "parth-electricals-and-engineering-limited-eq",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "POLYCAB INDIA LIMITED - EQ",
-        "securityKey": "polycab-india-limited-eq",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/",
         "securityKey": "radiant-innovative-manufacturing-limited-eq-new-fv-rs-10",
         "docs": [
@@ -45662,13 +45538,6 @@
       {
         "security": "SKS FASTENERS LIMITED - EQ",
         "securityKey": "sks-fasteners-limited-eq",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
-        "securityKey": "smartworks-coworking-spaces-limited-eq",
         "docs": [
           "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
         ]
@@ -45729,16 +45598,7 @@
         ]
       }
     ],
-    "reportTypesWithoutExtractor": [
-      {
-        "provider": "Consolidated family review (not a statement)",
-        "reportType": "unknown",
-        "reason": "no-extractor",
-        "docs": [
-          "consolidated-family-review-not-a-statement-unknown-unknown-unknown"
-        ]
-      }
-    ],
+    "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
@@ -45785,6 +45645,7 @@
       "360 ONE Private Wealth",
       "Motilal Oswal Financial Services (demat)",
       "ICICI Bank (NSDL demat)",
+      "HDFC Bank (NSDL demat)",
       "Helios Mutual Fund",
       "Motilal Oswal Founders Fund",
       "Motilal Oswal Active Momentum Fund",

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -20,6 +20,10 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
+import {
+  basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd, familyBasket, familyAssetClass,
+  UNCLASSIFIED, UNCLASSIFIED_WHY,
+} from "@/lib/familyTaxonomy";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -135,6 +139,17 @@ type Row = {
    * the sections sum to the footer in both views — see `bucketGroups`.
    */
   dedupeGroup?: string;
+  /**
+   * WHO SAID THIS ROW BELONGS IN ITS SECTION, on the two family axes.
+   * `"review"` — named product by product in the family's consolidated review.
+   * `"rule"` — placed by their stated rule for direct stocks.
+   * `"derived"` — our own asset class already answered it beyond doubt.
+   * `null` — nobody has, and the row sits under `UNCLASSIFIED`.
+   * Always `"review"`-equivalent on the category axis, which is derived from
+   * the book itself and asks nothing of the family; the field is only read on
+   * the other two.
+   */
+  groupSource: "review" | "rule" | "derived" | null;
   /** Set on `kind === "mandate"` and nowhere else. */
   mandate?: MandateInfo;
 };
@@ -163,6 +178,64 @@ const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engag
 const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
 const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
+/**
+ * ── THE SAME HOLDINGS, SLICED THREE WAYS ────────────────────────────────────
+ *
+ *   "We should also be able to see this information: category wise (MF, direct
+ *    equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my
+ *    basket definition wise (core, tactical etc). Default view will remain the
+ *    current one, category wise."
+ *
+ * Three axes over ONE set of rows. Nothing about what a row IS changes when the
+ * axis does — the same 371 positions, the same figures, regrouped — so the axis
+ * touches only the section key, its order and its heading. Every other branch on
+ * this page (the footer, the dedupe gap, the realised cells, the weight base)
+ * is untouched and stays correct by construction.
+ *
+ * CATEGORY IS THE DEFAULT AND IS UNCHANGED, as asked: `holdingBucket`, which is
+ * where three rounds of the "Direct Equity" argument were settled and must not
+ * be relitigated here. The other two are the FAMILY'S OWN taxonomy and are not
+ * derivable from any statement — see `familyTaxonomy.ts`, which measures why.
+ */
+const GROUP_AXES = ["category", "assetClass", "basket"] as const;
+type GroupAxis = (typeof GROUP_AXES)[number];
+const GROUP_VIEWS: readonly ViewDef<GroupAxis>[] = [
+  { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, cash." },
+  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
+  { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
+];
+/** The section a holding sits in on the chosen axis. One place, three answers. */
+const groupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Position): string => {
+  if (axis === "category") return bucketFor(idx, p);
+  const isMandate = heldUnderMandate(idx, p);
+  return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
+};
+/** Reading order per axis, with the unclassified section last on the two new ones. */
+/**
+ * HOW A ROW'S SECTION KEY WAS AUTHORISED on the active axis — see `Row.groupSource`.
+ * Null on the category axis is not "unknown": that axis is derived from the book
+ * and asks nothing of the family, so the heading has nothing to disclose.
+ */
+const groupSourceFor = (axis: GroupAxis, idx: AccountIndex, p: Position) => {
+  if (axis === "category") return "review" as const;
+  const isMandate = heldUnderMandate(idx, p);
+  const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
+  return r?.source ?? null;
+};
+const groupOrdFor = (axis: GroupAxis) =>
+  axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
+/**
+ * The heading. The two family axes are already the family's own words, so they
+ * render verbatim; only the category axis has a label function, because that is
+ * the axis where the wording was itself the fix (§"Company Shares").
+ */
+const groupLabelFor = (axis: GroupAxis) => (key: string) =>
+  axis === "category" ? bucketLabel(key) : key;
+/** What the "all" option on the filter says, per axis. */
+const ALL_LABEL: Record<GroupAxis, string> = {
+  category: "All categories", assetClass: "All asset classes", basket: "All baskets",
+};
+
 // Weight, P&L and return all move with the live price, so they no longer match
 // any cell in the workbook — an audit link would point at a different number.
 // Live cells therefore render plain, and only rows still on their workbook mark
@@ -190,6 +263,13 @@ export function PortfolioMonitor() {
    */
   const [holdingsView] = useViewParam(HOLDINGS_VIEWS);
   const consolidate = holdingsView === "security";
+  /**
+   * WHICH AXIS THE TABLE IS SECTIONED ON. In the URL (`?group=`) like the
+   * view flag beside it, so a slice can be bookmarked and shared — the family
+   * asked for three ways to read one table, and "send me the basket view" has
+   * to be a link rather than an instruction.
+   */
+  const [groupAxis, setGroupAxisParam] = useViewParam(GROUP_VIEWS, {}, "group");
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -202,6 +282,15 @@ export function PortfolioMonitor() {
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
   const [bucket, setBucket] = useState("All");
+  /**
+   * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
+   * rather than a courtesy. The filter is an equality test on the section key,
+   * so a "AIF" selection carried into the basket axis matches no row and empties
+   * the table with no message — the failure mode this repo keeps naming, where
+   * a screen renders perfectly and shows nothing. Every entry point to the axis
+   * goes through this, so no caller can reintroduce it.
+   */
+  const setGroupAxis = useCallback((k: GroupAxis) => { setBucket("All"); setGroupAxisParam(k); }, [setGroupAxisParam]);
   /**
    * ABSOLUTE or CAGR, and the guard is not here — see `holdingReturn`. Absolute
    * is the default because it is the figure every row can answer; CAGR is
@@ -230,9 +319,18 @@ export function PortfolioMonitor() {
   const sectors = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.sector))).sort()], [positions]);
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
   // Buckets present, in a fixed reading order (own → mandates → wrappers → cash).
+  /**
+   * THE FILTER FOLLOWS THE AXIS. Sectioning by basket while the dropdown still
+   * offered "AIF" would leave a reader filtering on a key no section carries —
+   * and because the filter is a plain equality test, that empties the table
+   * SILENTLY. So its options are the groups of whichever axis is active, and
+   * `groupAxis` resets the selection (below) rather than letting a stale key
+   * survive the switch.
+   */
   const buckets = useMemo(
-    () => ["All", ...Array.from(new Set(positions.map((p) => bucketFor(accIdx, p)))).sort((a, b) => bucketOrd(a) - bucketOrd(b))],
-    [positions, accIdx],
+    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(groupAxis, accIdx, p))))
+      .sort((a, b) => groupOrdFor(groupAxis)(a) - groupOrdFor(groupAxis)(b))],
+    [positions, accIdx, groupAxis],
   );
   /**
    * Each mandate account's OWN totals, struck over every position it holds
@@ -275,7 +373,14 @@ export function PortfolioMonitor() {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
-    if (bucket !== "All") base = base.filter((p) => bucketFor(accIdx, p) === bucket);
+    /**
+     * THE FILTER IS ON THE ACTIVE AXIS, and it has to be: its options come from
+     * that axis (see `buckets`), so testing them against the category key would
+     * compare a basket name to a category and match nothing — an empty table on
+     * a page that renders perfectly. The filter and its option list must read
+     * the SAME key or one of them is lying about what it offers.
+     */
+    if (bucket !== "All") base = base.filter((p) => groupKeyFor(groupAxis, accIdx, p) === bucket);
     /**
      * THE WEIGHT DENOMINATOR IS STRUCK HERE, BEFORE THE COMPANY FILTER.
      *
@@ -339,7 +444,8 @@ export function PortfolioMonitor() {
       const whole = mandateTotals.get(accountId);
       return {
         kind: "mandate" as const,
-        bucket: MANDATE_BUCKET,
+        bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
+        groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
         // A mandate holds many securities bought on many dates. There is no one
         // window to annualise it over, so CAGR renders absent on these rows.
         heldSince: null,
@@ -435,7 +541,8 @@ export function PortfolioMonitor() {
           ? dps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), dps[0].heldSince!)
           : null;
         return {
-          kind: "security" as const, bucket: bucketFor(accIdx, ps[0]),
+          kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
+        groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(dps, accIdx), quantity: qty,
           avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
@@ -453,7 +560,8 @@ export function PortfolioMonitor() {
       });
     } else {
       out = rest.map((p) => ({
-        kind: "security" as const, bucket: bucketFor(accIdx, p),
+        kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, p),
+        groupSource: groupSourceFor(groupAxis, accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], parts: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
@@ -508,7 +616,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, sortKey, asc]);
+  }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, groupAxis, sortKey, asc]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -553,10 +661,24 @@ export function PortfolioMonitor() {
         // heading counts 281 across 10 rows. Counting rows there would report the
         // section as ten holdings and quietly retire 271 of them from the page.
         const holdings = rs.reduce((n, r) => n + (r.mandate ? r.mandate.holdings.length : 1), 0);
-        return { key, rows: rs, subtotal, collapsed, holdings };
+        /**
+         * HOW MUCH OF THIS SECTION THE FAMILY PLACED BY RULE RATHER THAN BY
+         * NAMING IT. On the same deduped basis as the subtotal above, so the
+         * two figures in one heading are always comparable — a rule-placed
+         * value larger than the subtotal beside it would be a contradiction a
+         * reader could see, and this is what stops it arising.
+         */
+        const ruleSeen = new Set<string>();
+        let ruleMV = 0;
+        for (const r of rs) {
+          if (r.groupSource !== "rule") continue;
+          if (r.dedupeGroup) { if (ruleSeen.has(r.dedupeGroup)) continue; ruleSeen.add(r.dedupeGroup); }
+          ruleMV += r.marketValue;
+        }
+        return { key, rows: rs, subtotal, collapsed, holdings, ruleMV };
       })
-      .sort((a, b) => bucketOrd(a.key) - bucketOrd(b.key));
-  }, [rows]);
+      .sort((a, b) => groupOrdFor(groupAxis)(a.key) - groupOrdFor(groupAxis)(b.key));
+  }, [rows, groupAxis]);
   const showBucketSections = bucket === "All" && bucketGroups.length > 1;
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
@@ -579,7 +701,7 @@ export function PortfolioMonitor() {
    * table states it: a reader who adds a column and lands somewhere else must
    * be told why, not left to discover it.
    */
-  const weightScope = [entity !== "All" ? entity : null, sector !== "All" ? sector : null, bucket !== "All" ? bucketLabel(bucket) : null].filter(Boolean).join(" · ");
+  const weightScope = [entity !== "All" ? entity : null, sector !== "All" ? sector : null, bucket !== "All" ? groupLabelFor(groupAxis)(bucket) : null].filter(Boolean).join(" · ");
   const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
   const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
   /**
@@ -717,8 +839,33 @@ export function PortfolioMonitor() {
         {/* Categories, not asset classes: "PMS mandates" is a bucket rather than
             a class (§5 — a mandate is a relationship), and it is the choice a
             reader of this table is actually making. */}
+        {/*
+          THE THREE SLICES. "Default view will remain the current one, category
+          wise" — so Category is first, and `useViewParam` makes the first view
+          the param-free default, which is the same mechanism every other view
+          on this page uses rather than a second convention.
+
+          It sits on the FILTER row and not beside the title: the Holdings /
+          Transactions switch up there names WHAT you are looking at, and this
+          changes how the same thing is arranged, which is what the rest of this
+          row does. `setGroupAxis` (not the raw param setter) clears the section
+          filter — see its note.
+        */}
+        {view === "holdings" && (
+          <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5" role="tablist"
+            aria-label="Group holdings by">
+            {GROUP_VIEWS.map((g) => (
+              <button key={g.key} type="button" role="tab" aria-selected={groupAxis === g.key} title={g.title}
+                data-group-axis={g.key}
+                onClick={() => setGroupAxis(g.key)}
+                className={`rounded px-2 py-1 text-xs font-medium transition-colors ${groupAxis === g.key ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                {g.label}
+              </button>
+            ))}
+          </div>
+        )}
         <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-          {buckets.map((s) => <option key={s} value={s}>{s === "All" ? "All categories" : bucketLabel(s)}</option>)}
+          {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[groupAxis] : groupLabelFor(groupAxis)(s)}</option>)}
         </select>
         {/*
           ABSOLUTE vs CAGR. The guard lives in `holdingReturn`, not here: under a
@@ -790,10 +937,24 @@ export function PortfolioMonitor() {
                 {bucketGroups.map((grp) => (
                   <Fragment key={grp.key}>
                     {showBucketSections && (
-                      <tr className="bg-ink-900/50">
+                      /*
+                        `data-section` IS THE CONTRACT, NOT THE HEADING TEXT.
+                        `check:pages` finds where one section ends by finding
+                        where the next begins, and it used to do that against a
+                        hardcoded list of heading NAMES — where a missing entry
+                        is the dangerous direction, because an unrecognised
+                        heading is not a boundary and the section above silently
+                        swallows every row below it. Three axes multiply the
+                        headings that list would have to track. So the boundary
+                        is structural now, exactly as `data-mandate` and
+                        `data-row` already are: a claim about structure must not
+                        depend on prose a redesign is free to reword.
+                      */
+                      <tr className="bg-ink-900/50" data-section={grp.key} data-axis={groupAxis}
+                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}>
                         <td colSpan={14} className="px-2 py-1.5">
                           <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
-                            {bucketLabel(grp.key)}
+                            {groupLabelFor(groupAxis)(grp.key)}
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
@@ -816,6 +977,35 @@ export function PortfolioMonitor() {
                               <span className="font-normal normal-case tracking-normal text-slate-500"
                                 title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
                                 · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
+                              </span>
+                            )}
+                            {/*
+                              AN UNCLASSIFIED SECTION NAMES ITS CAUSE, and it is
+                              the one heading on this page that is not a fact
+                              about the holdings under it. "Other" would read as
+                              a category the family chose; this says the review
+                              does not list them and what would fill it — the
+                              rule every absent figure on this site follows,
+                              applied to a section heading.
+                            */}
+                            {grp.key === UNCLASSIFIED && (
+                              <span className="font-normal normal-case tracking-normal text-amber-400/80" title={UNCLASSIFIED_WHY}>
+                                · the family's review does not list {grp.rows.length === 1 ? "this holding" : "these holdings"}, so no {groupAxis === "basket" ? "basket" : "asset class"} is stated
+                              </span>
+                            )}
+                            {/*
+                              AND A SECTION FILLED BY THE FAMILY'S RULE SAYS SO.
+                              "All the direct stocks" is the family instructing,
+                              and the review naming a fund product by product is
+                              the family stating — on screen both are just rows
+                              under a heading, so the difference is printed
+                              rather than collapsed. Silent only when the whole
+                              section is review-stated, which is the common case.
+                            */}
+                            {grp.ruleMV > 0 && (
+                              <span className="font-normal normal-case tracking-normal text-slate-500"
+                                title={`The family's review names most of this section product by product. ${fmtFromBase(grp.ruleMV, { compact: true })} of it is placed here by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.`}>
+                                · {fmtFromBase(grp.ruleMV, { compact: true })} by the family's stated rule, not named individually
                               </span>
                             )}
                           </span>

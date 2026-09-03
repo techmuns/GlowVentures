@@ -614,6 +614,7 @@ function duplicateHoldings(docs) {
   }
 
   const out = [];
+  const quantityOnly = [];
   for (const [, entries] of byFigures) {
     if (entries.length < 2) continue;
     const owners = new Set(entries.map((e) => e.doc.ownerId ?? e.doc.owner ?? "(unknown)"));
@@ -632,6 +633,58 @@ function duplicateHoldings(docs) {
     const accounts = new Set(entries.map((e) => e.doc.accountNo));
     if (accounts.size < 2) continue;
     const first = entries[0].h;
+
+    /**
+     * ONE FIGURE IS NOT "THE FIGURES THAT WOULD HAVE TO COINCIDE BY CHANCE".
+     *
+     * The key above is security + quantity + unit cost + market value, and the
+     * comment on it is the rule: a group is suspicious because several
+     * independent numbers agree. Where only ONE of the three is reported at all,
+     * the whole match rests on it — and this book already contains the reason
+     * that is not enough, in its own words: *"India SME's three folios print
+     * coincidentally equal units"*. Two holders subscribing the same round
+     * number of units to the same fund is an ORDINARY event; two rows agreeing
+     * on quantity AND cost AND market value to the paisa is not.
+     *
+     * Measured on this corpus, the quantity-only tier was producing THREE false
+     * duplicates, and each is refuted by a document already in hand:
+     *
+     *   • Sky Capital Oncare Class A3, 7,500 units under SKY023 and SKY024 —
+     *     the fund's own statements print ₹75 L DRAWN AGAINST EACH, ₹1.50 Cr of
+     *     real money, one folio per trust;
+     *   • India SME Fund II Class A2, 27,000 units under three folios — named
+     *     in CLAUDE.md as a coincidence and flagged as a duplicate anyway;
+     *   • Swapeco Solutions, 347 preference shares under HDFC NSDL 67786547 and
+     *     67786137 — the family's own register records ₹1,35,00,875 under EACH
+     *     trust, separately.
+     *
+     * None collapses anything TODAY, because a quantity-only row is a row no
+     * statement values and `dedupedPositions` drops it from no total. That is
+     * exactly when this is cheapest to fix: the day any of those funds publishes
+     * a NAV, `dedupedPositions` would have halved a real holding silently, on a
+     * page computing correctly. So a one-figure match is REPORTED and never
+     * grouped — narrowing detection, and naming what it left out, rather than
+     * dropping it.
+     */
+    const coinciding = [isNum(first.quantity), isNum(first.unitCost), isNum(first.marketValue)].filter(Boolean).length;
+    if (coinciding < 2) {
+      quantityOnly.push({
+        security: first.security,
+        securityKey: first.securityKey,
+        quantity: first.quantity,
+        owners: [...owners],
+        accounts: [...accounts],
+        occurrences: entries.map((e) => ({
+          docKey: e.doc.docKey, owner: e.doc.owner, ownerId: e.doc.ownerId,
+          accountNo: e.doc.accountNo, asOf: e.doc.asOf, reportType: e.doc.reportType,
+        })),
+        resolution: "NOT a dedupe group. The only figure these rows share is the quantity, and no statement "
+          + "here values them, so there is nothing to double-count and nothing to collapse. Treat as two real "
+          + "holdings unless a statement says otherwise — a shared unit count alone is not evidence of one.",
+      });
+      continue;
+    }
+
     out.push({
       dedupeGroup: `dg-${first.securityKey}-${entries.length}`,
       security: first.security,
@@ -648,7 +701,9 @@ function duplicateHoldings(docs) {
       resolution: "NOT deduped — both are reported. Decide which statement owns this position.",
     });
   }
-  return out.sort((a, b) => (b.doubleCountRisk ?? 0) - (a.doubleCountRisk ?? 0));
+  out.sort((a, b) => (b.doubleCountRisk ?? 0) - (a.doubleCountRisk ?? 0));
+  quantityOnly.sort((a, b) => String(a.security).localeCompare(String(b.security)));
+  return { groups: out, quantityOnly };
 }
 
 // ── d) + e) Coverage and unresolved ──────────────────────────────────────────
@@ -897,7 +952,7 @@ export function reconcile(docs, opts = {}) {
   const rowSums = docs.flatMap((d) => rowSumChecks(d, docs));
   const derived = docs.flatMap((d) => derivedVsPrinted(d, docs));
   const deltas = crossReportDeltas(docs);
-  const duplicates = duplicateHoldings(docs);
+  const { groups: duplicates, quantityOnly: quantityOnlyMatches } = duplicateHoldings(docs);
   const duplicateEarnings = duplicateAifEarnings(docs);
   // Tag the matching rows before any consolidated figure is computed.
   applyDedupePolicy(docs, duplicates);
@@ -927,6 +982,7 @@ export function reconcile(docs, opts = {}) {
       datedRounding: dated.filter((d) => d.severity === "rounding").length,
       crossReportDeltas: deltas.length,
       suspectedDuplicates: duplicates.length,
+      quantityOnlyMatches: quantityOnlyMatches.length,
       suspectedDuplicateEarnings: duplicateEarnings.length,
       securitiesWithoutSymbol: unres.securitiesWithoutSymbol.length,
       ownerNamesUnmatched: unres.ownerNamesUnmatched.length,
@@ -939,6 +995,7 @@ export function reconcile(docs, opts = {}) {
     datedTableChecks: dated,
     crossReportDeltas: deltas,
     duplicateHoldings: duplicates,
+    quantityOnlyMatches,
     duplicateAifEarnings: duplicateEarnings,
     unresolved: unres,
     stitches,
@@ -1155,6 +1212,34 @@ export function renderMarkdown(r) {
       L.push("");
     }
   }
+
+  L.push("### Matched on QUANTITY ALONE — reported, and NOT deduped");
+  L.push("");
+  L.push("Rows on different accounts that share a security and a unit count, and share no other");
+  L.push("figure — because no statement here values them. **One figure coinciding is not evidence");
+  L.push("of one holding**: two holders subscribing the same round number of units to the same fund");
+  L.push("is an ordinary event, and this book's own note already says India SME's three folios");
+  L.push("print coincidentally equal units. So these are carried as SEPARATE holdings and named");
+  L.push("here, rather than sharing a `dedupeGroup` that would halve a real position the day one of");
+  L.push("these funds publishes a NAV.");
+  L.push("");
+  if (!(r.quantityOnlyMatches ?? []).length) {
+    L.push("_None detected._");
+  } else {
+    for (const d of r.quantityOnlyMatches) {
+      L.push(`**${esc(d.security)} · ${fmt(d.quantity)} units · ${d.accounts.length} accounts**`);
+      L.push("");
+      L.push(esc(d.resolution));
+      L.push("");
+      L.push("| Owner | Account | As of | Report | Document |");
+      L.push("| --- | --- | --- | --- | --- |");
+      for (const o of d.occurrences) {
+        L.push(`| ${esc(o.owner)} | ${esc(o.accountNo)} | ${esc(o.asOf)} | ${esc(o.reportType)} | \`${esc(o.docKey)}\` |`);
+      }
+      L.push("");
+    }
+  }
+  L.push("");
 
   L.push("### AIF income reported under two folios");
   L.push("");
