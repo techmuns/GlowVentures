@@ -23,6 +23,7 @@ import {
 } from "../lib/document.mjs";
 import { reconcile, consolidatedValue } from "../reconcile.mjs";
 import { makeGridPdf } from "./fixtures/makePdf.mjs";
+import { classify, NON_STATEMENT_PROVIDERS } from "../lib/classify.mjs";
 
 let pass = 0, fail = 0;
 const eq = (label, got, want, tol = 0.011) => {
@@ -337,6 +338,58 @@ try {
   assertNormalized(makeDocument({ docKey: "bad2", provider: GS, sourcePath: "x", status: "ok", engagement: "Custody", holdings: [] }));
 } catch { threw = true; }
 ok("unknown engagement rejected", threw);
+
+
+
+// ── A DOCUMENT NOBODY ISSUED MUST REACH NO READER ──────────────────────────────
+//
+// Two files in `source/` are the family's or their adviser's own records rather
+// than statements: the 25-tab consolidated review and, since august-2026-f, the
+// investment register. Both NAME EVERY MANAGER IN THE BOOK, so every rule that
+// matches on an issuer's name claims them.
+//
+// The register is the dangerous one and is the reason these assertions exist.
+// Measured before the guard in `matchGoldstandard`, it classified as
+// provider "Green Lantern Capital LLP", strategy "Aristos Equity Portfolio",
+// owner "COMMUNITY PRIVATE LIMITED BHARAT", accountNo "EDUGORILLA" and
+// reportType "capital-call" — all five scraped off PORTFOLIO COMPANY names in
+// its cells. Green Lantern has a reader and `capital-call` is a live report
+// type, so it would have been HANDED TO ONE, unlike the review workbook which
+// escaped only because the fund readers happened to refuse its summary row.
+{
+  // The distinguishing header of each, and enough manager names to trip every
+  // issuer rule — which is exactly what the real files contain.
+  const managers = "GREEN LANTERN CAPITAL LLP CARNELIAN ASSET MANAGEMENT Aristos Equity Portfolio "
+    + "V.E.C ASSAGO MOLECULE VENTURES Buoyant Opportunities Strategy GOLDSTANDARD WEALTH";
+  const cases = [
+    ["family investment register", "NEW INVESTMENT SHEET.xlsx",
+      `SR. NO. INVESTMENT NAME INVESTMENT DONE UNDER INVESTMENT AMOUNT ORG. SHARE CERTIFICATE STATUS\n`
+      + `${managers}\nCAPITAL COMMITMENT OF 15000000 DRAWDOWN NOTICE\nAccount : GoldStandard Bharat`],
+    ["consolidated family review", "Final Consolidated Review.xlsx",
+      `Absolute Gain / (Loss) Including Redeemed Funds\n${managers}`],
+  ];
+  for (const [label, file, text] of cases) {
+    const c = classify({ fileName: file, text });
+    ok(`${label}: provider is a non-statement label`, NON_STATEMENT_PROVIDERS.has(c.provider), `got ${c.provider}`);
+    // reportType is what chooses a reader, so this is the assertion that matters.
+    eq(`${label}: carries no report type`, c.reportType, "unknown");
+    eq(`${label}: carries no sections`, c.sections.length, 0);
+    // A non-statement is about no single account and no single holder.
+    eq(`${label}: carries no account number`, c.accountNo, null);
+    eq(`${label}: carries no owner`, c.ownerName, null);
+    eq(`${label}: carries no as-of`, c.asOfDate, null);
+  }
+
+  // The guard must be NARROW: an ordinary Goldstandard appraisal, which also
+  // names Aristos, must still be claimed by its own house rule.
+  const real = classify({
+    fileName: "G100023_100023_PortFolioAppraisal.pdf",
+    text: "GOLDSTANDARD WEALTH PRIVATE LIMITED Aristos Equity Portfolio Account : 100023  Ajay Jaisinghani",
+  });
+  eq("a real Goldstandard appraisal still resolves", real.provider, "Goldstandard Wealth Private Limited");
+  ok("a real Goldstandard appraisal is not a non-statement",
+    !NON_STATEMENT_PROVIDERS.has(real.provider), `got ${real.provider}`);
+}
 
 console.log(`\n  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

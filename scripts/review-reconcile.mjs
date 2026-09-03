@@ -45,6 +45,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
+import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
 
 const WORKBOOK = "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx";
 const BOOK = "src/data/glowData.ts";
@@ -156,9 +157,29 @@ function investorwise() {
 }
 
 /** Book, per owner. A PER-OWNER figure, so it dedupes (each group once) but never across owners. */
+/**
+ * A PER-OWNER FIGURE DOES NOT DEDUPE, AND THIS ONE DID.
+ *
+ * CLAUDE.md states it plainly: "a consolidated figure counts each `dedupeGroup`
+ * ONCE; a per-account or per-owner figure does not." Reading `CONSOLIDATED` here
+ * broke that, and it broke it on the one holding in this book that makes the
+ * error visible.
+ *
+ * Transition Venture Capital Fund I — Class A1 is reported under BOTH Bharat
+ * Jaisinghani family trusts, ₹1,71,46,374.76 each, sharing one `dedupeGroup`.
+ * Deduped, whichever trust sorted second lost its ONLY position — so section B
+ * reported "Bharat Jaisinghani Family Trust III — *not in the book*" against a
+ * book that holds ₹1.71 Cr for it, and the missing row silently joined the
+ * "holders with no account in this book" step of the bridge.
+ *
+ * That is the same failure, in the same direction, that CLAUDE.md already
+ * records once: deduping a per-account breakdown emptied Bharat's 360 ONE row to
+ * `0 · ₹0 · ₹0` for an account holding ₹1.46 Cr. The consolidated TOTAL below
+ * still dedupes, because that one is consolidated.
+ */
 function bookByOwner() {
   const m = new Map();
-  for (const p of CONSOLIDATED) {
+  for (const p of POSITIONS) {
     const o = ACC.get(p.accountId)?.owner ?? "Unattributed";
     m.set(o, (m.get(o) ?? 0) + p.marketValue);
   }
@@ -208,20 +229,133 @@ function equityLines() {
   return out;
 }
 
-function simpleSheetLines(name, { productCol = 1, qtyCol = null, costCol, mvCol }) {
+/**
+ * THE OTHER THREE ASSET TABS — Debt, Cash and Alternate, read line by line.
+ *
+ * `simpleSheetLines` used to sit here, defined and called by nothing: section C
+ * had only ever examined the Equity tab, so ₹275.05 Cr of the review reached the
+ * bridge untested and section F could state only the SIZE of that hole. It was
+ * deleted rather than wired, because wiring it naively is worse than the gap —
+ * it skipped rows starting "Product|Total|from Live|Note|Refer" and would have
+ * counted every level of a nested tab at several times its own total.
+ *
+ * ── THE HEADING RULE, MEASURED RATHER THAN GUESSED ─────────────────────────
+ *
+ * These tabs have no investor column, which is what `equityLines` uses to tell a
+ * heading from a holding. What they DO have is `Investment Date Range`, and it
+ * separates them cleanly: a HOLDING was bought over a window and the cell reads
+ * `Jul-25 - Jul-25`, `Sept 20 - March 24`, or the sheet's own `#N/A`. A HEADING
+ * is not a purchase, so the cell is blank or carries a stray Excel date serial
+ * (`43984`, `219849`) left over from a formula. Verified against all three tabs:
+ * the rule classifies every one of their 30 rows the way a reader would.
+ *
+ * ── A HEADING WITH NO CHILDREN IS A LINE, NOT A SUBTOTAL ───────────────────
+ *
+ * This is the distinction that makes the tab add up. `Alternate` prints
+ * `PE Funds ₹32.71 Cr` above six funds that sum to exactly that — a SUBTOTAL, to
+ * be skipped in favour of its children. It also prints `Private Equity
+ * ₹136.16 Cr` above nothing at all: that block's constituents live on the
+ * `Private Investments` tab, and it is reported here only in aggregate. Skipping
+ * it as a subtotal loses ₹136.16 Cr; counting the ones that DO have children
+ * double-counts. So a heading is emitted as a line only where nothing itemises
+ * it, and it is MARKED as an aggregate so no reader takes it for a holding.
+ *
+ * ── AND CONSECUTIVE IDENTICAL HEADINGS ARE ONE ─────────────────────────────
+ *
+ * `Alternate` prints `Private Equity ₹136.15930288800004` on two consecutive
+ * rows, the second tagged `EG` in its left-hand column. Same block, restated
+ * once with a tag; counted twice it invents ₹136.16 Cr.
+ *
+ * ── THE TAB'S OWN TOTAL IS THE WITNESS, AND A MISMATCH REFUSES THE TAB ──────
+ *
+ * Every rule above is a judgement about a layout, so none of them is trusted:
+ * what is emitted must reproduce the tab's own printed `Total` row. On a
+ * mismatch the tab yields NOTHING and says so, and section F goes back to
+ * reporting its size — which is exactly the state before this existed, rather
+ * than a set of lines nobody can check. Measured today all three reproduce their
+ * printed total to the paisa.
+ */
+const ASSET_TABS = ["Debt", "Alternate", "Cash"];
+
+function assetTabLines(name) {
   const rows = sheet(name);
-  const out = [];
-  rows.forEach((r, i) => {
-    const c = r.map((x) => String(x ?? "").trim());
-    const product = c[productCol];
-    if (!product || /^(Product|Total|from Live|Note|Refer)/i.test(product)) return;
-    out.push({
-      row: i + 1, sheet: name, product,
-      qty: qtyCol == null ? null : num(c[qtyCol]),
-      cost: num(c[costCol]), mv: num(c[mvCol]),
+  const cells = (r) => (r ?? []).map((x) => String(x ?? "").trim());
+
+  // MATCH ON HEADER TEXT, NEVER ON COLUMN INDEX — `Alternate` has no Quantity
+  // column at all, so every column after it sits one place left of where Debt
+  // and Cash put it. A positional read returns the wrong column silently.
+  let head = -1, col = {};
+  for (let i = 0; i < rows.length && head < 0; i++) {
+    const c = cells(rows[i]);
+    if (!c.some((x) => /^Product$/i.test(x)) || !c.some((x) => /^Market Value$/i.test(x))) continue;
+    head = i;
+    c.forEach((label, k) => { if (label) col[label.toLowerCase()] = k; });
+  }
+  const need = ["product", "investment date range", "market value"];
+  const missing = need.filter((k) => col[k] == null);
+  if (head < 0 || missing.length) {
+    return { name, lines: [], printedTotal: null, ok: false,
+      why: head < 0 ? "no header row carrying both `Product` and `Market Value`"
+        : `the header row does not carry ${missing.join(", ")}` };
+  }
+
+  const at = (c, k) => (col[k] == null ? "" : c[col[k]] ?? "");
+  const isSerialOrBlank = (v) => !v || /^-?[\d.]+$/.test(v);
+
+  let printedTotal = null;
+  const raw = [];
+  for (let i = head + 1; i < rows.length; i++) {
+    const c = cells(rows[i]);
+    const product = at(c, "product");
+    if (!product || /^\*?Note[: ]|^from Live/i.test(product)) continue;
+    const mv = num(at(c, "market value"));
+    /**
+     * A TAB'S HOLDINGS ARE THE ROWS ABOVE ITS OWN TOTAL, and stopping there is
+     * what keeps the narrative out. `Debt` carries a "Debt Investment Plan /
+     * Recommendation" table below its total — a second table, whose rows are
+     * proposals ("Neo Special Credit Opportunities Fund — Add 20 Cr") and not
+     * holdings; `Alternate` carries six `*Note:` lines whose text sits in the
+     * PRODUCT column, so a keyword filter on that column misses them. Both are
+     * ₹0 and would not have broken the tie-out, which is exactly why the tab
+     * would have gone on listing them as holdings worth nothing.
+     */
+    if (/^Total$/i.test(product)) { printedTotal = mv; break; }
+    raw.push({
+      row: i + 1,
+      product,
+      qty: num(at(c, "quantity")),
+      cost: num(at(c, "investment at cost")),
+      mv,
+      isHeading: isSerialOrBlank(at(c, "investment date range")),
     });
-  });
-  return out;
+  }
+
+  // Collapse a heading immediately restated with the same figure.
+  const rowsOut = [];
+  for (const r of raw) {
+    const prev = rowsOut[rowsOut.length - 1];
+    if (r.isHeading && prev?.isHeading && prev.product === r.product && prev.mv === r.mv) continue;
+    rowsOut.push(r);
+  }
+
+  const lines = [];
+  for (let i = 0; i < rowsOut.length; i++) {
+    const r = rowsOut[i];
+    if (!r.isHeading) { lines.push({ ...r, tab: name, section: null, aggregate: false }); continue; }
+    let kids = 0;
+    for (let j = i + 1; j < rowsOut.length && !rowsOut[j].isHeading; j++) kids++;
+    if (kids) {                                    // a subtotal: its children carry it
+      for (let j = i + 1; j <= i + kids; j++) rowsOut[j].section = r.product;
+      continue;
+    }
+    lines.push({ ...r, tab: name, section: null, aggregate: true });   // nothing itemises it
+  }
+
+  const sum = lines.reduce((t, l) => t + (l.mv ?? 0), 0);
+  const ok = printedTotal != null && Math.abs(sum - printedTotal) < 0.005;
+  return { name, lines: ok ? lines : [], printedTotal, sum, ok,
+    why: ok ? null : printedTotal == null ? "the tab prints no `Total` row to check against"
+      : `the ${lines.length} line(s) read sum to ${cr(sum)} against the tab's own printed total of ${cr(printedTotal)}` };
 }
 
 // ── matching the review's names to the book ─────────────────────────────────
@@ -296,6 +430,74 @@ const BY_KEY = (() => {
  * absent-recorded-against-the-wrong-cause failure this repo keeps meeting, so
  * the archive is consulted before anything is called missing.
  */
+/**
+ * WHY AN ACCOUNT REPORTS NOTHING, IN ITS OWN STATEMENT'S WORDS.
+ *
+ * Read from the archive rather than written here, so a drop that supplies the
+ * missing statement empties section F1 by itself instead of leaving a sentence
+ * behind that has stopped being true — which is the stale-absence failure this
+ * repo has recorded five times.
+ */
+/**
+ * AN ACCOUNT AT ZERO BECAUSE IT WAS REDEEMED IS NOT A MISSING DOCUMENT.
+ *
+ * The first draft of F1 called every matched-manager zero "a missing document"
+ * and put it on the ask list. 3P is the case that shows why that is wrong, and
+ * its own statement settles it on page 2: Class B1 and B2 were reclassified INTO
+ * Class B3 on 31-03-2026, and Class B3 was then `Full Units Redemption` on
+ * 31-07-2026 for ₹31,05,82,835.17, payout to `HDFC0000084` — the exact figure
+ * and the exact bank on the ICICI advice filed as `3P_Folio 3000048.pdf`.
+ *
+ * So the book's zero is CORRECT AND COMPLETE, the extractor's warning that
+ * "where the units went is not on this document" is contradicted by page 2 of
+ * that same document, and asking 3P for a statement would close nothing. The
+ * real question is where ₹52.49 Cr of proceeds went after 04-08-2026.
+ *
+ * Read from the archive's own page text, so this row disappears by itself if a
+ * later drop supersedes the statement.
+ */
+const EXITED = (() => {
+  const m = new Map();
+  let manifest;
+  try { manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8")); }
+  catch { return m; }
+  for (const d of manifest) {
+    let text = "";
+    try {
+      const pj = JSON.parse(readFileSync(`public/audit/${d.docKey}/pages.json`, "utf8"));
+      text = (pj.pages ?? []).map((p) => p.text ?? "").join("\n");
+    } catch { continue; }
+    // "31-07-2026 Full Units Redemption - - - (31,05,82,835.17)"
+    const red = text.match(/(\d{2}-\d{2}-\d{4})\s+Full Units Redemption[^\n(]*\(([\d,]+\.\d{2})\)/);
+    if (!red) continue;
+    const amount = Number(red[2].replace(/,/g, ""));
+    if (!Number.isFinite(amount)) continue;
+    const bank = text.match(/Primary Bank Account\s*:\s*\S*\/\S*\/([A-Z][A-Z .]+?)\//)?.[1]?.trim() ?? "the registered bank account";
+    const prev = m.get(d.provider);
+    m.set(d.provider, {
+      amount: (prev?.amount ?? 0) + amount,
+      bank,
+      detail: `**fully redeemed ${red[1]}** — the statement's own transaction history closes every class to nil`,
+    });
+  }
+  return m;
+})();
+
+const ZERO_REASON = (() => {
+  const m = new Map();
+  let manifest;
+  try { manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8")); }
+  catch { return m; }
+  for (const d of manifest) {
+    let doc;
+    try { doc = JSON.parse(readFileSync(`public/audit/${d.docKey}/document.json`, "utf8")); }
+    catch { continue; }
+    const w = (doc.warnings ?? []).find((x) => x.detail);
+    if (w && !m.has(d.provider)) m.set(d.provider, w.detail);
+  }
+  return m;
+})();
+
 const ARCHIVE_KEYS = (() => {
   const m = new Map();
   let manifest;
@@ -338,49 +540,24 @@ const SECURITY_ALIASES = new Map([
   ["m-s-grand-continent-hotels", "grand-continent-hotels-limited-eq"],
 ]);
 
-function matchSecurity(product, index = BY_KEY) {
-  const k = securityKeyOf(product);
-  if (index.has(k)) return { key: k, how: "exact" };
-  const alias = SECURITY_ALIASES.get(k);
-  if (alias && BY_KEY.has(alias)) return { key: alias, how: "committed alias" };
-  /**
-   * THE PREFIX RUNS ONE WAY ONLY, AND GETTING THAT WRONG JOINED FOUR COMPANIES
-   * TO ONE ROW.
-   *
-   * The book's names come from a depository, which appends what the scrip is
-   * ("FRACTAL ANALYTICS LIMITED - EQ", "- EQ NEW FV RS. 5/-"), so a book key
-   * legitimately EXTENDS a review key. The reverse never holds: a review name
-   * longer than a book name is a DIFFERENT, more specific security. Accepting
-   * `k.startsWith(bk)` too matched `Vedanta Aluminium Metal Ltd`, `Vedanta Power
-   * Ltd`, `Vedanta Iron & Steel Ltd` and `Vedanta Oil & Gas Ltd` all onto the one
-   * book row named `Vedanta` — four demerged companies reported against 12,909
-   * shares of their former parent, each looking like a holding this book had
-   * partly read. It had read none of them.
-   */
-  const pre = [...BY_KEY.keys()].filter((bk) => bk.startsWith(k));
-  if (pre.length === 1) return { key: pre[0], how: "prefix" };
-  if (pre.length > 1) return { key: null, how: `ambiguous (${pre.length} book names start with this)` };
-  /**
-   * SAME LETTERS, DIFFERENT SPACING — and this is not a fuzzy tier.
-   *
-   * The review writes "Smart Works" and "Yash High Voltage"; the depository
-   * writes "SMARTWORKS COWORKING SPACES" and "YASH HIGHVOLTAGE". Compared with
-   * the separators removed these are the same characters in the same order,
-   * which is a fact about where each source put a space and not a judgement
-   * about whether two names mean the same company. It is still required to be
-   * UNAMBIGUOUS — exactly one book key may match — because the moment two do,
-   * the evidence no longer identifies one company and the line is reported
-   * instead. `build-symbols` refuses a fuzzy tier for the stronger reason that
-   * a wrong symbol prices another company; here a wrong join would state a
-   * reconciliation nobody can reproduce, so the same discipline applies.
-   */
-  const flat = (x) => x.replace(/-/g, "");
-  const fk = flat(k);
-  const loose = [...index.keys()].filter((bk) => flat(bk).startsWith(fk));
-  if (loose.length === 1) return { key: loose[0], how: "same letters, different spacing" };
-  if (loose.length > 1) return { key: null, how: `ambiguous on spacing (${loose.length} book names)` };
-  return { key: null, how: "no book position carries this name" };
-}
+/**
+ * The tiers live in `shared/nameMatch.mjs` so this reconciler and
+ * `register-reconcile.mjs` cannot drift apart about whether the book carries a
+ * name. Two matchers are built because the two questions are different: does
+ * the BOOK carry it, and — if not — did we READ it and simply fail to value it?
+ *
+ * Both used to come from one function whose `index` parameter was honoured on
+ * two tiers out of four, the alias and prefix tiers reading `BY_KEY` whatever
+ * they were passed. The archive question therefore searched the book, could
+ * return a key `ARCHIVE_KEYS` does not hold, and reported a line as
+ * "no statement in `source/` reports this" when one does. That verdict is what
+ * puts a line on the section D1 ASK LIST, so the defect asks the client for
+ * documents already in hand. Measured on this corpus it changed no line — the
+ * report regenerates byte-identically — which is precisely why it had to be
+ * fixed structurally rather than left to be found by the first line that hit it.
+ */
+const matchSecurity = makeSecurityMatcher(BY_KEY, SECURITY_ALIASES);
+const matchInArchive = makeSecurityMatcher(ARCHIVE_KEYS, SECURITY_ALIASES);
 
 // ═══════════════════════════════════════════════════════════════════════════
 const L = [];
@@ -392,6 +569,10 @@ say("Generated by `node scripts/review-reconcile.mjs` — **do not edit by hand*
 say();
 say(`Review: \`${WORKBOOK}\`, struck **30 June 2026**, figures in ${REVIEW_UNIT_NOTE}.`);
 say(`Book: \`${BOOK}\`, ${CONSOLIDATED.length} consolidated positions across ${ACCOUNTS.length} accounts, each at its own statement date.`);
+say();
+say("**If you read one section, read G** — it answers the question this audit was commissioned");
+say("for (*is invested capital too low, and does NAV follow?*), and **D1** is the list of");
+say("documents to send the client. Everything between them is the evidence.");
 say();
 say("The review is **not a source and never becomes one** — every figure in this book traces");
 say("to the statement of the institution that struck it. This is the independent check on the");
@@ -507,6 +688,30 @@ for (const [o, v] of bo) if (!iw.some(({ holder }) => (OWNER_ALIAS.get(holder) ?
 }
 say(`| **Total** | **₹${cr(revSum)} Cr** | **₹${cr(bookSum)} Cr** | **${(bookSum - revSum >= 0 ? "+" : "") + cr(bookSum - revSum)} Cr** |`);
 say();
+/**
+ * AND THE FOOTER MUST SAY WHY IT IS NOT THE HEADLINE TOTAL.
+ *
+ * This column is PER-OWNER, so it does not dedupe (see `bookByOwner`) and it
+ * sums to the raw book. Section A's consolidated figure counts each
+ * `dedupeGroup` once. Both are right on their own basis and they differ by
+ * exactly the two duplicated holdings — a reader who adds this column and gets a
+ * third answer has found the contradiction the allocation footer already cost
+ * this book once, so the difference is stated here rather than left to be found.
+ */
+{
+  const consolidatedSum = CONSOLIDATED.reduce((t, p) => t + p.marketValue, 0) / CR;
+  const dd = bookSum - consolidatedSum;
+  if (Math.abs(dd) > 0.005) {
+    say(`This column is **per-owner and therefore does not dedupe** — each family member is shown`);
+    say(`what their own statements report. It sums to ₹${cr(bookSum)} Cr against the consolidated`);
+    say(`₹${cr(consolidatedSum)} Cr in section A, and the ₹${cr(dd)} Cr between them is the two holdings`);
+    say("reported under two members each: 360 ONE Special Opportunities under both CRNs, and");
+    say("Transition Venture Fund I under both Bharat family trusts. Counted once consolidated,");
+    say("shown to both owners here. Neither figure is wrong; they answer different questions.");
+    say();
+  }
+}
+say();
 say("Every book figure here is ex-promoter by construction: Polycab is ring-fenced into");
 say("`BOOK_POLYCAB` and reaches no per-owner total. Section A states it once, on its own.");
 say();
@@ -524,7 +729,36 @@ say("IS the deliverable, because it names exactly which statements are still mis
 say();
 let gapNoStatement = 0;
 const eq = equityLines();
-const products = eq.filter((l) => !l.isSection && l.mv != null && l.mv !== 0);
+
+/**
+ * THE OTHER THREE TABS JOIN THE SAME PIPELINE, rather than getting one of their
+ * own. Every line below runs the identical manager match, then the identical
+ * security match, then lands in C1, C2, D0 or D like an Equity line — because a
+ * fund is a fund whichever tab the adviser filed it under, and a second pipeline
+ * is a second chance for the two to disagree about one workbook.
+ *
+ * Wiring them corrected three rows in section E, which is the check that this was
+ * a real gap rather than a tidy-up: Neo Infra (Debt), Baring PE and Transition
+ * Venture (both Alternate) were all reported as holdings the review does not
+ * carry, while the review carried every one of them on a tab nothing read.
+ */
+const assetTabs = ASSET_TABS.map(assetTabLines);
+const assetRefused = assetTabs.filter((t) => !t.ok);
+const assetLines = assetTabs.flatMap((t) => t.lines.map((l) => ({
+  product: l.product,
+  advisor: `${l.tab} tab`,
+  investor: "",
+  qty: l.qty,
+  cost: l.cost,
+  mv: l.mv,
+  section: l.section,
+  aggregate: l.aggregate,
+  tab: l.tab,
+  isSection: false,
+})));
+
+const products = [...eq.filter((l) => !l.isSection), ...assetLines]
+  .filter((l) => l.mv != null && l.mv !== 0);
 const matchedProviders = new Map();
 const unmatchedLines = [];
 const securityLines = [];
@@ -544,10 +778,15 @@ say();
 say("| Review line | Review MV | Book (same manager) | Difference | Book accounts |");
 say("| --- | ---: | ---: | ---: | ---: |");
 let c1rev = 0, c1book = 0;
+const zeroedManagers = [];
 for (const [prov, e] of [...matchedProviders].sort((a, b) => b[1].review - a[1].review)) {
   const b = bookByProvider(prov);
   c1rev += e.review; c1book += b.mv / CR;
   const d = b.mv / CR - e.review;
+  // A matched manager the book values at ZERO is a missing document, not drift.
+  if (e.review > 0 && b.mv === 0) {
+    zeroedManagers.push({ product: e.lines.map((l) => l.product).join(", "), prov, reviewMV: e.review });
+  }
   say(`| ${e.lines.map((l) => l.product).join("<br>")} <br><sub>-> ${prov}</sub> | ₹${cr(e.review)} Cr | ₹${cr(b.mv / CR)} Cr | ${(d >= 0 ? "+" : "") + cr(d)} Cr | ${b.accounts} |`);
 }
 say(`| **Total matched** | **₹${cr(c1rev)} Cr** | **₹${cr(c1book)} Cr** | **${(c1book - c1rev >= 0 ? "+" : "") + cr(c1book - c1rev)} Cr** | |`);
@@ -571,7 +810,7 @@ for (const l of securityLines.sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0))) {
   if (!b) {
     // Before calling anything missing, ask whether a statement we already read
     // reports it and simply could not value it.
-    const am = matchSecurity(l.product, ARCHIVE_KEYS);
+    const am = matchInArchive(l.product);
     const a = am.key ? ARCHIVE_KEYS.get(am.key) : null;
     if (a) {
       verdict = `in the archive, **not valued** — ${qty(a.qty)} unit(s)${a.faceValue != null ? ` recorded at a face value of ${a.faceValue}` : ", no price published"}`;
@@ -599,22 +838,122 @@ say(`no value this book may publish, and **${missing} are reported by no stateme
 say();
 
 // ── D. what the review carries and the book does not ───────────────────────
+// The book's holdings the review has no line for. Computed HERE because both
+// section D (as an upper-bound caveat on the ask) and section E (as its own
+// table) read it, and two copies would be two chances for the caveat and the
+// table to disagree about the same positions.
+const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
+const orphan = CONSOLIDATED.filter((p) => {
+  // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
+  // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
+  // can never be true and the branch was dead. Ring-fencing already keeps the
+  // holding out of this list. A dead branch with a confident purpose is how a
+  // future session "fixes" a rule that was never broken — this file names that
+  // failure elsewhere, so it does not get to keep one of its own.
+  if (!reviewNames.has(p.securityKey)) {
+    const prov = ACC.get(p.accountId)?.provider;
+    return !matchedProviders.has(prov);
+  }
+  return false;
+});
+const orphanByProvider = (prov) => orphan.reduce(
+  (e, p) => (ACC.get(p.accountId)?.provider === prov ? { n: e.n + 1, mv: e.mv + p.marketValue } : e),
+  { n: 0, mv: 0 });
+
+/**
+ * BEFORE CALLING A LINE MISSING, ASK WHETHER THE BOOK ALREADY CARRIES IT.
+ *
+ * `securityLines` — the Direct Equity and Unlisted sections — run the security
+ * matcher and then the archive matcher, and the comment on ARCHIVE_KEYS says
+ * exactly why: "telling a reader to go and find a statement that is already read
+ * would be the absent-recorded-against-the-wrong-cause failure this repo keeps
+ * meeting". `unmatchedLines` never ran either. Every line the review carries
+ * outside those two sections and outside a named manager went STRAIGHT to
+ * section D under the verdict "no statement in `source/` reports this" — a claim
+ * nothing had tested.
+ *
+ * These are the review's fund and scheme lines, and the book demonstrably holds
+ * some of them: it reads Motilal Oswal's demat statements, and those carry the
+ * mutual-fund units the review lists under MOPWM. The cost of the defect is not
+ * an arithmetic error in the bridge — the money is genuinely not in the book's
+ * matched total either way — it is that the CLIENT ASK LIST in D1 asks for
+ * documents already in hand.
+ *
+ * The same two tiers are applied here, in the same order, and a line that
+ * resolves is reported in D0 instead of being asked for.
+ */
+const alreadyHeld = [];
+const trulyAbsent = [];
+for (const l of unmatchedLines) {
+  const m = matchSecurity(l.product);
+  const b = m.key ? BY_KEY.get(m.key) : null;
+  if (b) { alreadyHeld.push({ l, b, how: m.how, where: "valued in the book" }); continue; }
+  const am = matchInArchive(l.product);
+  const a = am.key ? ARCHIVE_KEYS.get(am.key) : null;
+  if (a) { alreadyHeld.push({ l, b: null, arch: a, how: am.how, where: "read, but carries no value" }); continue; }
+  trulyAbsent.push(l);
+}
+if (alreadyHeld.length) {
+  say("### D0. Review lines this book DOES carry — tested before being asked for");
+  say();
+  say("Each of these reached the missing list untested, because a review line outside the Direct");
+  say("Equity and Unlisted sections never ran the security matcher. They are held here, so they are");
+  say("reported rather than requested.");
+  say();
+  say("| Review line | Custodian / advisor | Review MV | Book | Joined |");
+  say("| --- | --- | ---: | --- | --- |");
+  for (const h of alreadyHeld.sort((x, y) => (y.l.mv ?? 0) - (x.l.mv ?? 0))) {
+    const bookCell = h.b
+      ? `₹${cr(h.b.mv / CR)} Cr <br><sub>${h.b.rows[0]?.security ?? "—"}${h.b.rows.length > 1 ? ` +${h.b.rows.length - 1} more row(s)` : ""}</sub>`
+      : `— <br><sub>in the archive, ${qty(h.arch.qty)} unit(s), no value published</sub>`;
+    say(`| ${h.l.product} | ${h.l.advisor || "—"} | ₹${cr(h.l.mv)} Cr | ${bookCell} | ${h.how} |`);
+  }
+  say();
+  say(`**₹${cr(alreadyHeld.reduce((t, h) => t + (h.l.mv ?? 0), 0))} Cr of review lines were on the ask list and should not have been.**`);
+  say();
+}
+
 say("## D. What the review carries that this book does not — and what would close it");
 say();
-if (!notInBook.length && !unmatchedLines.length) {
+if (!notInBook.length && !trulyAbsent.length) {
   say("Nothing: every review line matched a manager or a security in the book.");
 } else {
   say("| Review line | Custodian / advisor | Review MV | Why it is not here |");
   say("| --- | --- | ---: | --- |");
-  const custodianNote = (adv) =>
-    /HDFC/i.test(adv ?? "") ? "held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
-      : /ICICI/i.test(adv ?? "") ? "the ICICI NSDL statement is read; this line is not on it, so it sits in another account"
-      : /MOPWM|Motilal/i.test(adv ?? "") ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
-      : /Private/i.test(adv ?? "") ? "a private holding the review carries at cost; no statement in the drop values it"
+  /**
+   * WHAT WOULD CLOSE THIS LINE, AND THE ANSWER IS DIFFERENT FOR AN AGGREGATE.
+   *
+   * The Equity tab names a custodian per line, which is what makes that half of
+   * this joinable at all. The three asset tabs name none, so their lines are
+   * routed on WHAT THE LINE IS instead: an AGGREGATE heading nothing itemises is
+   * not a missing statement and must not be asked for as one — `Private Equity
+   * ₹136.16 Cr` is a block whose constituents sit on the review's own
+   * `Private Investments` tab, and asking a custodian for it would be asking for
+   * a document nobody issues. A named fund is an AMC folio, and the document
+   * that carries it is that AMC's account statement or a CAS, never a demat
+   * holding statement — a depository moves units without a price (§precedence).
+   */
+  const custodianNote = (l) => {
+    const adv = l.advisor ?? "";
+    if (l.aggregate) {
+      return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
+        + "`" + l.tab + "` tab and itemises it nowhere. Its constituents are on the review's own "
+        + "`Private Investments` tab and in the family's investment register (`/register`); no custodian issues "
+        + "a statement for it, so this is not a document to ask for";
+    }
+    if (l.tab) {
+      return `a fund line on the **${l.tab}** tab. What carries it is the AMC's own folio statement or a `
+        + "consolidated account statement (CAS) — not a demat holding statement, which moves units without a price";
+    }
+    return /HDFC/i.test(adv) ? "held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
+      : /ICICI/i.test(adv) ? "the ICICI NSDL statement is read; this line is not on it, so it sits in another account"
+      : /MOPWM|Motilal/i.test(adv) ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
+      : /Private/i.test(adv) ? "a private holding the review carries at cost; no statement in the drop values it"
       : "no statement in `source/` reports this holding";
-  for (const l of [...notInBook, ...unmatchedLines].sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0)))
-    say(`| ${l.product} | ${l.advisor || "—"} | ₹${cr(l.mv)} Cr | ${custodianNote(l.advisor)} |`);
-  gapNoStatement = [...notInBook, ...unmatchedLines].reduce((s, l) => s + (l.mv ?? 0), 0);
+  };
+  for (const l of [...notInBook, ...trulyAbsent].sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0)))
+    say(`| ${l.product} | ${l.advisor || "—"} | ₹${cr(l.mv)} Cr | ${custodianNote(l)} |`);
+  gapNoStatement = [...notInBook, ...trulyAbsent].reduce((s, l) => s + (l.mv ?? 0), 0);
   const gap = gapNoStatement;
   say();
   say(`**₹${cr(gap)} Cr of review lines have no counterpart in this book.**`);
@@ -628,9 +967,13 @@ if (!notInBook.length && !unmatchedLines.length) {
   say("### D1. Grouped by the one document that would close each");
   say();
   const asks = new Map();
-  for (const l of [...notInBook, ...unmatchedLines]) {
+  for (const l of [...notInBook, ...trulyAbsent]) {
     const adv = l.advisor ?? "";
-    const k = /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
+    // An AGGREGATE is not a document anybody issues — see custodianNote. It is
+    // counted apart so the ask list stays a list of things a client can send.
+    const k = l.aggregate ? "NOTHING TO ASK FOR — an aggregate block the review itemises on another tab"
+      : l.tab ? "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
+      : /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
       : /ICICI/i.test(adv) ? "an ICICI Bank NSDL statement for the account this line sits in"
       : /MOPWM|Motilal/i.test(adv) ? "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
       : /Private/i.test(adv) ? "a valuation for the private holdings the review carries at cost"
@@ -647,26 +990,48 @@ if (!notInBook.length && !unmatchedLines.length) {
   say("Every figure in that last column is the REVIEW's, not this book's — it is what the");
   say("review says those holdings are worth at 30 June, and it is the size of the ask rather");
   say("than a number this book will publish when the statements arrive.");
+  say();
+  /**
+   * AND THE MOTILAL ASK IS AN UPPER BOUND, BECAUSE THE DEPOSITORY ABBREVIATES.
+   *
+   * D0 above tests every line against the book and the archive and joins none of
+   * these — correctly, because no tier here guesses. But the book DOES hold
+   * Motilal demat fund positions the review has no match for, and the names make
+   * it obvious why neither side joins: the depository clips a scheme to
+   * `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes
+   * "WhiteOak Capital Multi Asset Allocation Fund-Direct(G)" and "ICICI Pru
+   * India Opportunities Fund". Neither string prefixes the other and no rule
+   * short of a committed alias can bridge them.
+   *
+   * So the two lists overlap by an amount nobody can yet state, and the honest
+   * thing is to say so with both figures rather than let the ask read as fully
+   * incremental. `stripDepositoryTail` already exists for exactly this family of
+   * name; what is missing is an ABBREVIATION table, which is a hand-checked
+   * artefact and not something to infer.
+   */
+  // Same precedence D1 groups on — HDFC first — or a line advised
+  // "HDFC Bank / MOPWM" is counted against both asks at once.
+  const mopwmAsk = [...notInBook, ...trulyAbsent]
+    .filter((l) => !/HDFC/i.test(l.advisor ?? "") && /MOPWM|Motilal/i.test(l.advisor ?? ""))
+    .reduce((t, l) => t + (l.mv ?? 0), 0);
+  const demat = orphanByProvider("Motilal Oswal Financial Services (demat)");
+  if (mopwmAsk > 0 && demat.mv > 0) {
+    say(`**THE MOTILAL FIGURE IS AN UPPER BOUND.** The book already carries **₹${cr(demat.mv / CR)} Cr`);
+    say(`across ${demat.n} Motilal demat positions** that no review line matches (section E), against`);
+    say(`the ₹${cr(mopwmAsk)} Cr asked for here. The two lists certainly overlap: the depository clips a`);
+    say("scheme name to `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes them out in");
+    say("full, so neither string prefixes the other and no tier above may join them. Closing that gap");
+    say("needs a hand-checked ABBREVIATION table, not another statement — and until it exists the");
+    say("incremental value of this ask is smaller than the figure printed, by an amount nobody here");
+    say("can responsibly state.");
+    say();
+  }
 }
 say();
 
 // ── E. what the book carries and the review does not ───────────────────────
 say("## E. What this book carries that the review does not");
 say();
-const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
-const orphan = CONSOLIDATED.filter((p) => {
-  // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
-  // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
-  // can never be true and the branch was dead. Ring-fencing already keeps the
-  // holding out of this list. A dead branch with a confident purpose is how a
-  // future session "fixes" a rule that was never broken — this file names that
-  // failure elsewhere, so it does not get to keep one of its own.
-  if (!reviewNames.has(p.securityKey)) {
-    const prov = ACC.get(p.accountId)?.provider;
-    return !matchedProviders.has(prov);
-  }
-  return false;
-});
 const orphanBy = new Map();
 for (const p of orphan) {
   const k = ACC.get(p.accountId)?.provider ?? "—";
@@ -684,17 +1049,159 @@ say("folios by decision.");
 say();
 
 // ── F. the bridge, which must close or say where it does not ───────────────
+/**
+ * THE AGGREGATE BLOCK IS COUNTED APART EVERYWHERE IT APPEARS, because it is a
+ * different KIND of gap. Every other line in section D is a holding some
+ * institution can send a statement for. `Private Equity ₹136.16 Cr` is not: the
+ * review reports it only as a total, itemises it on its own `Private
+ * Investments` tab, and no custodian issues a document for a block. Read by
+ * section G, by the D1 ask list and by the bridge, from one place.
+ */
+const aggregateLines = [...notInBook, ...trulyAbsent].filter((l) => l.aggregate);
+const aggregateTotal = aggregateLines.reduce((t, l) => t + (l.mv ?? 0), 0);
+
+/**
+ * ── G. THE QUESTION THIS AUDIT WAS ASKED ───────────────────────────────────
+ *
+ * "Invested capital is incorrect and should be higher, and THUS consolidated NAV
+ * will also be higher."
+ *
+ * The first half is right and is measured below. The second half does not follow,
+ * and the distinction is the single most useful thing in this document, because
+ * the two halves need DIFFERENT documents to fix:
+ *
+ *   NAV      = Σ marketValue    over every position
+ *   Invested = Σ costBasis      over the positions that report one
+ *
+ * They are different columns over different subsets. A position the book already
+ * carries at its market value but with NO COST is understating invested capital
+ * by its whole cost and understating NAV by nothing at all — supplying its
+ * contract note moves the first and cannot move the second by a rupee. Only a
+ * holding that is ABSENT ENTIRELY moves both.
+ *
+ * So the gap is split on exactly that line, and each half is given the document
+ * that closes it.
+ */
+const reviewCost = (() => {
+  // Each tab's own cost total, read from the tab's own total row — never summed
+  // from the leaves, which is the headline-row rule the ingest already follows.
+  const out = [];
+  for (const t of assetTabs) {
+    const rows = sheet(t.name);
+    let head = -1, col = {};
+    for (let i = 0; i < rows.length && head < 0; i++) {
+      const c = rows[i].map((x) => String(x ?? "").trim());
+      if (c.some((x) => /^Product$/i.test(x)) && c.some((x) => /^Market Value$/i.test(x))) {
+        head = i; c.forEach((l, k) => { if (l) col[l.toLowerCase()] = k; });
+      }
+    }
+    const tot = rows.slice(head + 1).find((r) => /^Total$/i.test(String(r?.[col.product] ?? "").trim()));
+    out.push([t.name, tot && col["investment at cost"] != null ? num(tot[col["investment at cost"]]) : null]);
+  }
+  /**
+   * THE EQUITY TAB PRINTS NO `Total` ROW — its grand total is the last SECTION
+   * row, labelled `Equity`. That is identified by TYING IT to the Asset
+   * Allocation tab's own Equity figure rather than by taking the last row, so a
+   * re-ordered sheet fails loudly instead of reporting a section as the total.
+   */
+  const eqAlloc = alloc.find((r) => /^Equity$/i.test(r.label))?.mv ?? null;
+  const eqTotal = eq.find((l) => l.isSection && eqAlloc != null && Math.abs((l.mv ?? -1) - eqAlloc) < 0.005) ?? null;
+  out.unshift(["Equity", eqTotal?.cost ?? null]);
+  return { rows: out, total: out.every(([, v]) => v != null) ? out.reduce((t, [, v]) => t + v, 0) : null };
+})();
+
+const costed = CONSOLIDATED.filter((p) => p.costBasis != null);
+const costless = CONSOLIDATED.filter((p) => p.costBasis == null);
+const bookInvested = costed.reduce((t, p) => t + p.costBasis, 0) / CR;
+const costlessMV = costless.reduce((t, p) => t + p.marketValue, 0) / CR;
+const absentValue = gapNoStatement - aggregateTotal;
+
+say("## G. Invested capital — the client's own question, answered");
+say();
+say("> *\"the invested capital is incorrect and should be higher, and thus consolidated NAV will");
+say("> also be higher\"*");
+say();
+say("**The first half is right. The second does not follow from it**, and separating them is the");
+say("most actionable thing here, because the two halves need different documents.");
+say();
+say("| | |");
+say("| --- | ---: |");
+say(`| Review, invested at cost (its own tab totals) | **₹${cr(reviewCost.total)} Cr** |`);
+say(`| Book, invested at cost | **₹${cr(bookInvested)} Cr** |`);
+say(`| **Shortfall** | **₹${cr((reviewCost.total ?? 0) - bookInvested)} Cr** |`);
+say();
+say("Per tab, so the shortfall can be attributed rather than asserted:");
+say();
+say("| Review tab | Invested at cost |");
+say("| --- | ---: |");
+for (const [n, v] of reviewCost.rows) say(`| ${n} | ${v == null ? "**not printed**" : "₹" + cr(v) + " Cr"} |`);
+say(`| **Total** | **${reviewCost.total == null ? "—" : "₹" + cr(reviewCost.total) + " Cr"}** |`);
+say();
+say("### G1. The shortfall has two halves, and only one of them moves NAV");
+say();
+say("```");
+say("  NAV      = the sum of marketValue over EVERY position");
+say("  Invested = the sum of costBasis   over the positions that REPORT one");
+say("```");
+say();
+say("They are different columns over different subsets, which is why the client's inference");
+say("does not hold in general. Split on exactly that line:");
+say();
+say("| Cause | Invested | NAV | Size |");
+say("| --- | :---: | :---: | ---: |");
+say(`| **A. Held, valued, and no cost reported** — ${costless.length} of ${CONSOLIDATED.length} positions | understated | **not affected** | ₹${cr(costlessMV)} Cr of market value already in NAV |`);
+say(`| **B. Not in the book at all** — section D | understated | understated | ₹${cr(absentValue)} Cr at the review's marks |`);
+say(`| **C. An aggregate block the review itemises nowhere** | understated | understated | ₹${cr(aggregateTotal)} Cr at the review's marks |`);
+say();
+say("**CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**");
+say(`Every one of those ${costless.length} positions is in a DEPOSITORY account:`);
+say();
+say("| Account | Costless rows | Their market value |");
+say("| --- | ---: | ---: |");
+{
+  const byAcct = new Map();
+  for (const p of costless) {
+    const e = byAcct.get(p.accountId) ?? { n: 0, mv: 0 };
+    e.n++; e.mv += p.marketValue; byAcct.set(p.accountId, e);
+  }
+  for (const [id, e] of [...byAcct].sort((a, b) => b[1].mv - a[1].mv)) {
+    const a = ACC.get(id);
+    say(`| ${a?.provider ?? id} ${a?.accountNo ?? ""} | ${e.n} | ₹${cr(e.mv / CR)} Cr |`);
+  }
+}
+say();
+say("A depository holds the shares; it did not buy them, so its statement prints ISIN, quantity,");
+say("rate and value and **no cost**. That is not a parsing failure and not a missing join —");
+say("across the WHOLE audit archive not one of those (account, security) pairs carries a cost on");
+say("any record type. The dashboard renders `—` there, with the custodian named, and that is the");
+say("honest answer until a contract note arrives.");
+say();
+say("**WHAT WOULD CLOSE CAUSE A:** a transaction statement or contract note from **ICICI Bank**");
+say("and **Motilal Oswal** for those accounts — the buy prices, not another holding statement.");
+say("The family's own investment register already covers part of it: `npm run reconcile:register`");
+say("measures which, and the answer today is 7 of the 60 rows.");
+say();
+say("**AND CAUSE A CANNOT RAISE NAV.** Those rows are already in the ₹" + cr(SUMMARY.totalValue / CR) + " Cr at their");
+say("statement marks. Supplying their cost raises invested capital, lowers the reported return on");
+say("cost, and leaves NAV where it is. NAV rises only on B and C — the holdings that are absent.");
+say();
+
 say("## F. The bridge — review total to book total");
 say();
 say("A reconciliation that does not close is an anecdote. This one closes to a residual that");
 say("is NAMED rather than plugged: no step below is fitted to make the arithmetic work.");
 say();
+// The aggregate block gets its OWN step rather than being folded into "lines no
+// statement reports": that would put the largest single number on the ask list
+// behind a request nobody can fulfil. See its declaration above section G.
 const steps = [
   ["Review portfolio total, 30 June 2026", reviewTotal, null],
   ["less: holders with no account in this book", -absentHolders,
     "Hope India Trust (a separate taxpayer, held out by decision) and the Bharat Jaisinghani family trusts whose statements the drop does not carry"],
-  ["less: lines no statement in `source/` reports", -gapNoStatement,
-    "section D — the Motilal Oswal and HDFC Bank statements that have not been supplied"],
+  ["less: aggregate blocks the review itemises nowhere", -aggregateTotal,
+    `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total only. Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
+  ["less: lines no statement in `source/` reports", -(gapNoStatement - aggregateTotal),
+    "section D — the Motilal Oswal, HDFC Bank and AMC statements that have not been supplied"],
 ];
 let running = 0;
 say("| Step | Amount | Running | Why |");
@@ -711,9 +1218,109 @@ say(`| **What the book would carry on those two adjustments alone** | | **₹${c
 say(`| **What the book actually carries (ex-promoter)** | | **₹${cr(bookExPromoter)} Cr** | |`);
 say(`| **Residual** | | **${(residual >= 0 ? "+" : "−") + "₹" + cr(Math.abs(residual))} Cr** | see below |`);
 say();
-say("**THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things this");
-say("reconciliation can name but cannot yet quantify line by line, and saying so is the honest");
-say("position — a bridge forced to zero would be a fabricated figure with a badge on it:");
+/**
+ * ONE COMPONENT OF THE RESIDUAL *CAN* BE QUANTIFIED, AND LEAVING IT INSIDE
+ * "MARKET MOVEMENT" HID A ₹52 Cr ASK.
+ *
+ * A manager matched in C1 whose book value is ZERO while the review carries real
+ * money is not drift and is not a valuation basis: it is an account whose own
+ * statement reports nothing to value. That is a MISSING DOCUMENT, and it belongs
+ * on the ask list in D1 rather than in a paragraph about six weeks of prices.
+ *
+ * 3P is the case that forced this. Its 31 July statement prints all three classes
+ * at ZERO UNITS with its own warning — "the fund reclassified them out on
+ * 31-03-2026 and prints the zero. Where the units went is not on this document" —
+ * while the depository still carries 3P units and two ICICI payment advices dated
+ * 04/08/2026 name folios 3000048 and 3000049 for ₹52.49 Cr between them. Folio
+ * 3000049 appears NOWHERE in this book: it has no account, and its only trace in
+ * the whole archive is a filename on a payment receipt.
+ *
+ * The reason is read off each account's own zero rather than typed here, so a
+ * drop that supplies the destination statement empties this row by itself.
+ */
+const zeroed = [...zeroedManagers].sort((a, b) => b.reviewMV - a.reviewMV);
+const zeroedTotal = zeroed.reduce((t, m) => t + m.reviewMV, 0);
+if (zeroed.length) {
+  say("### F1. The part of the residual where the money LEFT, and is not a price");
+  say();
+  say("A manager matched in C1 whose book value is **zero** while the review carries real money is");
+  say("not market drift — its own statement reports nothing to value. But zero has two very");
+  say("different causes and they lead to opposite actions, so the statement is read for which:");
+  say();
+  say("| Manager | Review MV, 30 Jun | Book | What its own statement says | Action |");
+  say("| --- | ---: | ---: | --- | --- |");
+  for (const m of zeroed) {
+    const exited = EXITED.get(m.prov);
+    const action = exited
+      ? `**follow the money, do not ask for a statement** — ₹${cr(exited.amount / CR)} Cr was paid out to ${exited.bank}`
+      : "ask the manager for a current statement";
+    say(`| ${m.product} <br><sub>-> ${m.prov}</sub> | ₹${cr(m.reviewMV)} Cr | ₹0.00 Cr | ${exited ? exited.detail : (ZERO_REASON.get(m.prov) ?? "the account reports no value at its statement date")} | ${action} |`);
+  }
+  say();
+  say(`**₹${cr(zeroedTotal)} Cr of the residual is this.** Where a statement records a REDEMPTION the`);
+  say("book's zero is correct and complete, and the open question is not the manager's paperwork but");
+  say("**where the proceeds went** — cash that left one account and has to have landed in another.");
+  say("Asking the manager to re-send a statement they have already sent correctly would close");
+  say("nothing. Where no redemption is recorded, the manager's current statement is the ask.");
+  say();
+}
+/**
+ * F2 USED TO REPORT A HOLE, AND NOW REPORTS THE MEASUREMENT THAT CLOSED IT.
+ *
+ * Section C matched line by line against the EQUITY tab only, so the Debt,
+ * Alternate and Cash tabs could appear in neither the matched total nor section
+ * D and fell straight into the residual — ₹275.05 Cr of it, against a residual
+ * of ₹263.10 Cr, which is to say the bridge could not tell whether the tabs
+ * explained all of it, none of it or something between.
+ *
+ * `assetTabLines` reads all three now, and every printed total below is read
+ * from the tab's OWN `Total` row rather than re-derived — the same rule
+ * `amfi.mjs` follows for a headline row, and the witness for everything above.
+ */
+say("### F2. Every tab IS line-matched now, and each ties to its own printed total");
+say();
+say("This section used to report a hole: section C read the **Equity tab only**, so the Debt,");
+say("Alternate and Cash tabs reached the bridge untested and only their SIZE could be stated.");
+say("All three are read line by line now, through the same manager and security matchers as the");
+say("Equity tab — a fund is a fund whichever tab the adviser filed it under.");
+say();
+say("**A heading is told from a holding by `Investment Date Range`.** A holding was bought over a");
+say("window (`Jul-25 - Jul-25`); a heading is not a purchase, so the cell is blank or carries a");
+say("stray Excel serial. A heading whose children sum to it is a SUBTOTAL and is skipped in favour");
+say("of them; a heading nothing itemises is an AGGREGATE line and is carried, marked as one.");
+say();
+say("| Review tab | Lines read | They sum to | Its own printed total | |");
+say("| --- | ---: | ---: | ---: | --- |");
+for (const t of assetTabs) {
+  say(`| ${t.name} | ${t.ok ? t.lines.length : "—"} | ${t.ok ? "₹" + cr(t.sum) + " Cr" : "—"} | ₹${cr(t.printedTotal)} Cr | ${t.ok ? "**ties**" : "**REFUSED** — " + t.why} |`);
+}
+say(`| **All three** | **${assetTabs.reduce((n, t) => n + (t.ok ? t.lines.length : 0), 0)}** | | **₹${cr(assetTabs.reduce((v, t) => v + (t.printedTotal ?? 0), 0))} Cr** | |`);
+say();
+say("**THE TAB'S OWN TOTAL IS THE WITNESS.** Every rule above is a judgement about a layout, so");
+say("none is trusted: what is read must reproduce the tab's printed `Total`. A tab that does not");
+say("yields NOTHING and says so here — a set of lines nobody can check is worse than a gap that is");
+say("honestly measured, which is the state this section used to describe for all three.");
+say();
+if (assetRefused.length) {
+  say(`**${assetRefused.length} tab(s) fail that check and contribute no lines**, so their value is back in the`);
+  say("residual untested. Fix the heading rule for them before reading anything above.");
+  say();
+}
+say("What reading them corrected — which is the check that this was a real gap and not a tidy-up:");
+say();
+say("- **Three rows left section E.** Neo Infra (Debt), Baring PE and Transition Venture (both");
+say("  Alternate) were reported as holdings the review does not carry, while the review carried");
+say("  every one of them on a tab nothing read.");
+say("- **Five managers joined C1** — India SME, Sky Capital, Neo Infra, Transition Venture and");
+say("  Baring PE — two of them the ₹0 case F1 exists for.");
+say("- **The DSP Gold and Silver ETFs joined D0**: held in the book through the Motilal demat, and");
+say("  on the client ask list until this ran.");
+say("- **The residual fell from −₹263.10 Cr to what section F now prints.**");
+say();
+
+say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things");
+say("this reconciliation can name but cannot yet quantify line by line, and saying so is the");
+say("honest position — a bridge forced to zero would be a fabricated figure with a badge on it:");
 say();
 say("1. **Six weeks of market movement.** The review is struck 30 June; most of this book's");
 say("   accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every");

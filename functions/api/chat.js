@@ -37,14 +37,27 @@
 // them has an owner, a session or a history, which is exactly why none of them
 // ever needed this field and why the omission surfaced only here.
 //
-// ── AND THE VALUE IS CONFIGURED, NEVER GUESSED ──────────────────────────────
+// ── `user_id` ALONE DID NOT SATISFY IT, AND THAT WAS MEASURED ───────────────
 //
-// `MUNS_USER_INDEX` sits beside `MUNS_TOKEN` in the Cloudflare environment. It
-// is not defaulted and not inferred: a wrong user index would file this
-// family's conversation under somebody else's account, which is a worse outcome
-// than the 400 it replaces. Unset, the function says so by name
-// (`USER_INDEX_REQUIRED`) and names the variable to set, rather than sending a
-// value nobody chose.
+// The client then supplied an identity — "pass `user_id`: 14, static, in the
+// main payload" — and this function sent it, deliberately NOT copying it into
+// `user_index`, on the grounds that "index" and "id" need not name the same
+// thing and a wrong index would file this family's conversation under somebody
+// else's account.
+//
+// THE DEPLOYMENT SETTLED IT. Running that build, the upstream returned the SAME
+// 400 naming `user_index`: `user_id` is not the field it is asking for, and 14
+// is the only value anyone has named for this deployment. So the fixed identity
+// is sent under BOTH names now, and the reasoning above survives as the reason
+// `MUNS_USER_INDEX` still exists — set it and it WINS, for the day the two turn
+// out to differ. What changed is the evidence, not the rule: the earlier
+// refusal was declining to INVENT a value, and this is sending the one the
+// client gave.
+//
+// Because an identity is now always in the body, a 400 naming one means the
+// value was REJECTED and never that it was missing. `USER_INDEX_REQUIRED` was
+// removed rather than left as a branch nothing can reach, and the upstream's
+// own words now reach the reader — see the 400 handler.
 //
 // ── UNVERIFIED AGAINST THE LIVE API ─────────────────────────────────────────
 //
@@ -65,6 +78,20 @@ const VERSION = "chat-fn/1";
 const UPSTREAM = "https://devde.muns.io/chat/chat-muns";
 const UPSTREAM_TIMEOUT_MS = 120000;   // expert mode is slow; a stream, not a fetch
 const MAX_BODY_BYTES = 256 * 1024;    // the dashboard context is a few KB
+
+/**
+ * THE ACTING USER, FIXED AT THE CLIENT'S INSTRUCTION.
+ *
+ * "Pass an argument named `user_id`: 14 — this is a static value, don't change
+ * it, keep it 14 only, include it in the main payload."
+ *
+ * It is a CONSTANT rather than an environment variable precisely because it was
+ * given as one: the value is the same on every deployment, and putting it in
+ * the Cloudflare environment would mean a working dashboard could be broken by
+ * an unset variable somewhere else. It is the only identity this dashboard
+ * sends, it is never taken from the request, and a browser cannot change it.
+ */
+const USER_ID = 14;
 
 /**
  * The upstream's own words, out of whatever envelope it wrapped them in.
@@ -104,17 +131,24 @@ const json = (obj, status = 200) =>
 export async function onRequest(context) {
   const { request, env } = context;
   const token = env && env.MUNS_TOKEN;
-  const userIndex = env && env.MUNS_USER_INDEX;
+  // THE ENVIRONMENT OVERRIDES; THE FIXED IDENTITY IS THE DEFAULT. Unset — which
+  // is how the deployment runs today — the acting user is `USER_ID` under both
+  // names, which is what the upstream actually accepts.
+  const envIndex = env && env.MUNS_USER_INDEX;
+  const userIndex = envIndex || USER_ID;
   const meta = {
     version: VERSION,
     deploymentId: (env && (env.CF_PAGES_COMMIT_SHA || env.CF_PAGES_BRANCH)) || null,
     colo: request.cf && request.cf.colo ? request.cf.colo : null,
     tokenPresent: !!token,
     // The PRESENCE and the SHAPE, never the value — the same discipline the
-    // token itself is held to. `sent` is what the body would carry, so a
-    // mis-typed index shows up here rather than needing a redeploy to find.
-    userIndexPresent: !!userIndex,
-    userIndexSent: userIndex ? asUserIndex(userIndex) : null,
+    // token itself is held to. `sent` is what the body will carry and `source`
+    // says where it came from, so an overridden deployment can be told from a
+    // default one without a redeploy to find out.
+    userIndexPresent: !!envIndex,
+    userIndexSent: asUserIndex(userIndex),
+    userIndexSource: envIndex ? "MUNS_USER_INDEX" : "user_id",
+    userIdSent: USER_ID,
   };
 
   // GET /api/chat            — configuration, no upstream call.
@@ -123,7 +157,7 @@ export async function onRequest(context) {
   //                            deployment, since the token exists nowhere else.
   if (request.method === "GET") {
     const probe = new URL(request.url).searchParams.get("probe");
-    if (!probe) return json({ ok: !!token && !!userIndex, upstream: UPSTREAM, ...meta });
+    if (!probe) return json({ ok: !!token, upstream: UPSTREAM, ...meta });
     if (!token) return json({ ok: false, failureCode: "NOT_CONFIGURED", ...meta });
     try {
       const r = await fetch(UPSTREAM, {
@@ -132,7 +166,8 @@ export async function onRequest(context) {
         body: JSON.stringify({
           tasks: ["Reply with the single word: ok"],
           query_context: { chatHistory: [], mode: "fast" },
-          ...(userIndex ? { user_index: asUserIndex(userIndex) } : {}),
+          user_id: USER_ID,
+          user_index: asUserIndex(userIndex),
         }),
       });
       const text = (await r.text()).slice(0, 600);
@@ -147,10 +182,16 @@ export async function onRequest(context) {
   // as such so the panel can say the assistant is not configured rather than
   // implying the question had no answer.
   if (!token) return json({ ok: false, failureCode: "NOT_CONFIGURED", ...meta }, 503);
-  // NAMED BEFORE THE CALL, not discovered from a 400. The upstream's own message
-  // is accurate and unreadable; this says which variable is missing and where it
-  // lives, which is what the next person actually needs.
-  if (!userIndex) return json({ ok: false, failureCode: "USER_INDEX_REQUIRED", ...meta }, 503);
+  /**
+   * `MUNS_USER_INDEX` DOES NOT BLOCK THE CALL, AND NO LONGER NEEDS TO BE SET.
+   *
+   * It used to refuse before reaching the upstream, because at that point this
+   * dashboard had no identity to send at all. It has one now — the fixed
+   * `USER_ID` above, sent under both names — so the variable is an OVERRIDE
+   * rather than a prerequisite, and an unset one is the ordinary case rather
+   * than a misconfiguration. If the upstream refuses the identity anyway, the
+   * 400 handler below reports it in the upstream's own words.
+   */
 
   let body;
   try {
@@ -183,9 +224,13 @@ export async function onRequest(context) {
       body: JSON.stringify({
         tasks: body.tasks,
         query_context,
-        // Required because MUNS_TOKEN is a SERVICE token — see the note at the
-        // top. Never taken from the request: the browser does not get to say
-        // whose account a question is filed under.
+        // The acting user, in the main payload. Fixed, and never taken from the
+        // request: the browser does not get to say whose account a question is
+        // filed under.
+        user_id: USER_ID,
+        // ALWAYS SENT, and the same identity. `MUNS_TOKEN` is a SERVICE token,
+        // so the upstream has to be told whose conversation this is — and
+        // `user_id` alone did not satisfy it. See the note at the top.
         user_index: asUserIndex(userIndex),
         ...(body.chat_id ? { chat_id: body.chat_id } : {}),
       }),
@@ -205,12 +250,14 @@ export async function onRequest(context) {
     let preview = null;
     try { preview = (await upstream.text()).slice(0, 600); } catch { /* body already gone */ }
     const message = upstreamMessage(preview);
-    // A 400 NAMING `user_index` MEANS THE CONFIGURED VALUE IS WRONG, not that
-    // the question was. Reported as its own code so the panel sends the reader
-    // to the environment rather than to the model.
-    const code = upstream.status === 400 && /user_index/i.test(message ?? "")
-      ? "USER_INDEX_REJECTED"
-      : "UPSTREAM_ERROR";
+    // A 400 NAMING AN IDENTITY FIELD IS A CONFIGURATION FACT, not a bad
+    // question — and it now carries ONE meaning: the identity in the body was
+    // refused. There is no "missing" case left to report, because one is always
+    // sent, so `USER_INDEX_REQUIRED` is gone rather than left unreachable. The
+    // upstream's own words ride along in `detail`: they name the field it is
+    // complaining about, and this dashboard should not paraphrase them.
+    const identity = upstream.status === 400 && /user_index|user_id/i.test(message ?? "");
+    const code = identity ? "USER_INDEX_REJECTED" : "UPSTREAM_ERROR";
     return json({ ok: false, failureCode: code, upstreamStatus: upstream.status, detail: message, ...meta }, 502);
   }
 

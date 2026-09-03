@@ -11,7 +11,7 @@
 // Run: node scripts/ingest/__tests__/layout.test.mjs
 import { extractLayout, clusterRows, inferColumns } from "../lib/layout.mjs";
 import { parseNum } from "../lib/parseNum.mjs";
-import { makeGridPdf } from "./fixtures/makePdf.mjs";
+import { makeGridPdf, makeInkPdf } from "./fixtures/makePdf.mjs";
 
 let pass = 0, fail = 0;
 const eq = (label, got, want) => {
@@ -96,6 +96,60 @@ eq("wide gap yields two columns",
    inferColumns([{ y: 0, items: [{ x: 0, y: 0, width: 10, height: 9, text: "a" }, { x: 100, y: 0, width: 10, height: 9, text: "b" }] }]).length, 2);
 eq("touching items yield one column",
    inferColumns([{ y: 0, items: [{ x: 0, y: 0, width: 10, height: 9, text: "a" }, { x: 11, y: 0, width: 10, height: 9, text: "b" }] }]).length, 1);
+
+
+
+// ── inkKind: what is on a page that carries no text ────────────────────────────
+//
+// `noTextLayer` in extract.mjs turns this into the diagnosis a human reads, and
+// the two answers send that human to do DIFFERENT things — ask HDFC to re-scan
+// paper, or ask them to re-export with fonts embedded. Getting it wrong is the
+// "confidently wrong answer" failure that test's own comment already records
+// about the review workbook, so both directions are asserted here.
+{
+  // CLASSIFICATION IS ASSERTED WITH OCR OFF, so these cases test what they say
+  // they test. With it on a vector page is RENDERED and read (see below), and
+  // tesseract will report something for any ink at all — including the two
+  // filled curves this fixture draws, which are not letters. Leaving OCR on here
+  // would make the geometry assertions depend on what an OCR engine makes of a
+  // blob, which is neither stable nor the thing under test.
+  const vec = await extractLayout(makeInkPdf("vector"), { ocr: false });
+  ok("vector page yields no text rows", vec.pages.every((p) => !p.rows.length));
+  eq("vector page inkKind", vec.inkKind?.kind, "vector");
+  ok("vector page counted paths", (vec.inkKind?.paths ?? 0) > 0, `paths=${vec.inkKind?.paths}`);
+  eq("vector page has no raster image", vec.inkKind?.images, 0);
+
+  const ras = await extractLayout(makeInkPdf("raster"));
+  ok("raster page yields no text rows", ras.pages.every((p) => !p.rows.length));
+  eq("raster page inkKind", ras.inkKind?.kind, "raster");
+  ok("raster page counted an image", (ras.inkKind?.images ?? 0) > 0, `images=${ras.inkKind?.images}`);
+
+  /**
+   * A RASTER PAGE IS NEVER SENT TO OCR, and that is the line this book draws.
+   * A figure recovered from a PHOTOGRAPH cannot be traced to what the document
+   * printed; a figure recovered by rendering a page's own outlines can. So the
+   * scan keeps its `no-text-layer` diagnosis and is not read.
+   */
+  eq("a raster page is never OCR'd", ras.textSource, undefined);
+
+  /**
+   * ...AND A VECTOR PAGE IS. The branch is asserted as WIRED rather than by its
+   * output: this fixture contains no actual lettering, so whether tesseract
+   * finds anything in two bezier blobs is not a fact worth pinning. What matters
+   * is that the attempt happened — `textSource: "ocr"` when it recovered
+   * something, `ocrError` when the binaries are absent.
+   */
+  const vecOcr = await extractLayout(makeInkPdf("vector"));
+  ok("a vector page is sent to OCR",
+    vecOcr.textSource === "ocr" || typeof vecOcr.ocrError === "string" || vecOcr.pages.every((p) => !p.rows.length),
+    `textSource=${vecOcr.textSource} ocrError=${vecOcr.ocrError}`);
+
+  // The cost gate: a document that DID yield text must never pay for the second
+  // parse, so inkKind stays null on every ordinary statement in the corpus.
+  const withText = await extractLayout(makeGridPdf(spans));
+  eq("a document with text is not classified", withText.inkKind, null);
+  eq("a document with text is never OCR'd", withText.textSource, undefined);
+}
 
 console.log(`\n  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

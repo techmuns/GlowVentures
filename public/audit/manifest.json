@@ -2743,7 +2743,7 @@
   "strategy": null,
   "asOf": "2026-06-30",
   "reportType": "holdings",
-  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund ΓÇô_9049241536_10072026143812407917.pdf",
   "pages": 2,
   "sections": [
    "pages"
@@ -2753,7 +2753,7 @@
   "fileKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
   "label": "Motilal Oswal Delphi Equity Fund · 9049241536 · holdings",
   "fy": "2026-06-30",
-  "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
+  "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund ΓÇô_9049241536_10072026143812407917.pdf",
   "sheets": [
    {
     "key": "pages",
@@ -8602,6 +8602,96 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-bank-nsdl-demat-67786547-2026-08-29-holdings",
+  "provider": "HDFC Bank (NSDL demat)",
+  "accountNo": "67786547",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-29",
+  "reportType": "holdings",
+  "sourcePath": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "hdfc-bank-nsdl-demat-67786547-2026-08-29-holdings",
+  "label": "HDFC Bank (NSDL demat) · 67786547 · holdings",
+  "fy": "2026-08-29",
+  "source": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-bank-nsdl-demat-67786137-2026-08-29-holdings",
+  "provider": "HDFC Bank (NSDL demat)",
+  "accountNo": "67786137",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-08-29",
+  "reportType": "holdings",
+  "sourcePath": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "hdfc-bank-nsdl-demat-67786137-2026-08-29-holdings",
+  "label": "HDFC Bank (NSDL demat) · 67786137 · holdings",
+  "fy": "2026-08-29",
+  "source": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "family-investment-register-not-a-statement-unknown-unknown-unknown",
+  "provider": "Family investment register (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+  "pages": 8,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "fileKey": "family-investment-register-not-a-statement-unknown-unknown-unknown",
+  "label": "Family investment register (not a statement) · unknown",
+  "fy": "",
+  "source": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 8,
     "cols": 2
    }
   ]

@@ -14,17 +14,17 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-08-13";
+export const BOOK_AS_OF = "2026-08-29";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-08-13",
+  "asOf": "2026-08-29",
   "listedValue": 3580403826.11,
   "privateValue": 3523475405.05,
   "totalValue": 7103879231.16,
   "positionsCount": 371,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 49
+  "accountsCount": 51
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -266,6 +266,36 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "hdfc-bank-nsdl-demat-67786137",
+    "provider": "HDFC Bank (NSDL demat)",
+    "accountNo": "67786137",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "NSDL depository account at IN301549 — Free Balance",
+    "members": [],
+    "asOf": "2026-08-29",
+    "inceptionDate": null,
+    "custodian": "HDFC Bank (NSDL demat)",
+    "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67786547",
+    "provider": "HDFC Bank (NSDL demat)",
+    "accountNo": "67786547",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "NSDL depository account at IN301549 — Free Balance",
+    "members": [],
+    "asOf": "2026-08-29",
+    "inceptionDate": null,
+    "custodian": "HDFC Bank (NSDL demat)",
+    "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
+  },
+  {
     "accountId": "hdfc-mutual-fund-16180583",
     "provider": "HDFC Mutual Fund",
     "accountNo": "16180583",
@@ -428,7 +458,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-07-31",
     "inceptionDate": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
+    "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -488,7 +518,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-07-31",
     "inceptionDate": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 2 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
+    "noPositionsReason": "this custody account values nothing: its statement of 2026-07-31 carries 2 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090037436848",
@@ -10442,6 +10472,18 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     },
     {
+      "accountId": "hdfc-bank-nsdl-demat-67786137",
+      "provider": "HDFC Bank (NSDL demat)",
+      "accountNo": "67786137",
+      "bookValue": 0
+    },
+    {
+      "accountId": "hdfc-bank-nsdl-demat-67786547",
+      "provider": "HDFC Bank (NSDL demat)",
+      "accountNo": "67786547",
+      "bookValue": 0
+    },
+    {
       "accountId": "india-sme-investments-175962",
       "provider": "India SME Investments",
       "accountNo": "175962",
@@ -10710,6 +10752,34 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "periodTo": "2026-07-27",
     "lots": 83,
     "source": "green-lantern-capital-llp-510861-2026-07-27-capital-gain"
+  },
+  {
+    "entity": "Ajay Jaisinghani · HDFC 67786137",
+    "accountId": "hdfc-bank-nsdl-demat-67786137",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · HDFC 67786547",
+    "accountId": "hdfc-bank-nsdl-demat-67786547",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
   },
   {
     "entity": "Bharat Jaisinghani · HDFC 16180583",
