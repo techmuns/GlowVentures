@@ -32,6 +32,7 @@ const SUITES = [
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
   ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
+  ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
 ];
 
 let failed = 0;
