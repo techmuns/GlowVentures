@@ -86,6 +86,130 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
 }
 
 /**
+ * The index's last close ON OR BEFORE a date — the one lookup every alignment
+ * here is built on, so the chart, the pills and the aligned points cannot
+ * disagree about which close a date resolves to.
+ *
+ * Null before the index's own first close, never its first close: a book date
+ * that predates the series has no level, and substituting the earliest one
+ * would flatten the start of the curve and print a 0% first interval that
+ * nothing measured.
+ */
+export function levelOnOrBefore(sorted: Point[], date: string): number | null {
+  let out: number | null = null;
+  for (const p of sorted) {
+    if (p.t > date) break;
+    out = p.v;
+  }
+  return out;
+}
+
+/** Ascending by date, so every lookup above can walk once and stop. */
+export function sortPoints(points: Point[]): Point[] {
+  return [...points].sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
+}
+
+/**
+ * THE INDEX AS ITS OWN DAILY CURVE, rebased at the book's first dated point.
+ *
+ * `rebasedIndex` below samples the index at the BOOK's seven dates, which is
+ * what the pills need and is the wrong thing to draw: seven straight segments
+ * across five weeks is not the index's path, and over a year of context it would
+ * be four. This returns every settled close the feed carries inside the window,
+ * so the line the reader sees is the market's own.
+ *
+ * THE BASE IS THE BOOK'S FIRST POINT AND NOT THE WINDOW'S. That is deliberate
+ * and it is the only base at which the comparison is exact: both lines pass
+ * through 100 on the one date both measurements exist for. A curve rebased to
+ * the left edge of a five-year window would put the book's line at whatever
+ * level the index happened to reach by July and invite a reader to compare two
+ * numbers struck from different starts.
+ */
+export function indexCurve(points: Point[], baseDate: string, fromDate: string | null): Point[] {
+  const sorted = sortPoints(points);
+  const base = levelOnOrBefore(sorted, baseDate);
+  if (base == null || !(base > 0)) return [];
+  const out: Point[] = [];
+  for (const p of sorted) {
+    if (fromDate && p.t < fromDate) continue;
+    out.push({ t: p.t, v: (p.v / base) * 100 });
+  }
+  return out;
+}
+
+/**
+ * The index's return between two dates, each resolved NEAREST-EARLIER.
+ *
+ * Used for the like-for-like pill (the index over the book's own window) and for
+ * the selected range's own figure, which is index-only and is labelled as such.
+ * Null where either end predates the index's first close, rather than a return
+ * measured from a date the feed does not cover.
+ */
+export function indexReturnBetween(points: Point[], from: string, to: string): number | null {
+  const sorted = sortPoints(points);
+  const a = levelOnOrBefore(sorted, from);
+  const b = levelOnOrBefore(sorted, to);
+  if (a == null || b == null || !(a > 0)) return null;
+  return (b / a - 1) * 100;
+}
+
+/**
+ * ── HOW FAR BACK THE CHART LOOKS ────────────────────────────────────────────
+ *
+ * The family asked for a larger period than the book's own five weeks, and the
+ * honest answer is asymmetric: the INDEX has years of daily closes and the BOOK
+ * has what its statements carry. So the range governs the index's context and
+ * the book draws where it is measured — with the measured window shaded, so a
+ * reader on the five-year view can see at a glance which stretch of the chart
+ * carries a comparison and which is market history alone.
+ *
+ * `days: 0` is the book's own span rather than a duration, so the default view
+ * is exactly the window in which both lines exist.
+ */
+export type NavRangeKey = "book" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "MAX";
+
+export const NAV_RANGES: { key: NavRangeKey; label: string; days: number | null }[] = [
+  { key: "book", label: "Book window", days: 0 },
+  { key: "3M", label: "3M", days: 91 },
+  { key: "6M", label: "6M", days: 183 },
+  { key: "1Y", label: "1Y", days: 365 },
+  { key: "3Y", label: "3Y", days: 365 * 3 },
+  { key: "5Y", label: "5Y", days: 365 * 5 },
+  { key: "MAX", label: "Max", days: null },
+];
+
+/**
+ * The window's first date, counted BACK FROM THE BOOK'S LAST DATED POINT.
+ *
+ * Anchored on the book rather than on today so the shaded measured window keeps
+ * its place as the range widens, and so a range does not silently shrink the
+ * comparison because three weeks have passed since the last statement.
+ */
+export function rangeStart(range: NavRangeKey, bookFrom: string, bookTo: string): string | null {
+  const days = NAV_RANGES.find((r) => r.key === range)?.days;
+  if (days === null || days === undefined) return null;
+  if (days === 0) return bookFrom;
+  const d = new Date(`${bookTo}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * The window's last date, and only the book range has one.
+ *
+ * On every other range the index is drawn to its own last settled close, which
+ * is weeks past the last statement and is the useful half of asking for a longer
+ * period — where the market has gone since the book was last marked. The BOOK
+ * range is the exception because its label promises the window both lines cover,
+ * and an index line running three weeks past the book's final point would make
+ * that label false. A control that describes itself wrongly is the same defect
+ * as a caption that does.
+ */
+export function rangeEnd(range: NavRangeKey, bookTo: string): string | null {
+  return range === "book" ? bookTo : null;
+}
+
+/**
  * The index's level on each of the book's own dates, rebased to the same 100.
  *
  * NEAREST-EARLIER, NEVER NEAREST. A book date is a statement date and an index
@@ -98,7 +222,7 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
  */
 export function alignIndex(indexPoints: Point[], dates: string[]): { date: string; level: number }[] {
   if (!indexPoints.length) return [];
-  const sorted = [...indexPoints].sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
+  const sorted = sortPoints(indexPoints);
   const out: { date: string; level: number }[] = [];
   let i = 0;
   let last: Point | null = null;
