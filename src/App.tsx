@@ -21,7 +21,6 @@ import { StockInfo } from "@/pages/StockInfo";
 import { MandateHoldings } from "@/pages/MandateHoldings";
 import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { CompareCompanies } from "@/pages/CompareCompanies";
-import { Watchlist } from "@/pages/Watchlist";
 // FOOS-spec preview pages — each implements a spec layer whose live data source
 // does not exist yet, rendered as a clearly-marked illustrative placeholder.
 import { Knowledge } from "@/pages/Knowledge";
@@ -140,7 +139,22 @@ export default function App() {
             <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             <Route path="/compare" element={<Gate><CompareCompanies /></Gate>} />
-            <Route path="/watchlist" element={<Gate><Watchlist /></Gate>} />
+            {/* WATCHLIST & TARGETS was REMOVED at the family's request — the tab,
+                its nav entry and `src/pages/Watchlist.tsx` with it.
+
+                NOTHING THE FAMILY TYPED WAS DELETED. `src/lib/watchlist.ts` is
+                untouched, so every target price, fair value, entry/exit level,
+                valuation method and target weight they entered is still stored
+                and still read and written by `InvestmentTools` on a name's own
+                company page — the same treatment `deals.ts` and `household.ts`
+                got when their pages went in Stage 10f. Compare Companies still
+                renders the target and the upside beside the price, which is why
+                this forwards THERE rather than to the monitor: it is the
+                surviving surface in the same nav group that carries these
+                figures. It redirects rather than 404s because a bookmark is a
+                promise the app made, and the removal is verified by asserting it
+                happened — see `check-family-inputs.mjs`. */}
+            <Route path="/watchlist" element={<Navigate to="/compare" replace />} />
             {/* Preview pages — pure illustrative layouts with no book dependency,
                 so they render even before statements are ingested. */}
             <Route path="/knowledge" element={<Knowledge />} />

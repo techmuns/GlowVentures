@@ -2220,7 +2220,7 @@ feature that is broken instead of one that was never possible.
 | **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
 | **Ratio analysis, 7 year-ends** | company page | `ratio_source` → `web-reader` — see Stage 10e |
 | Consensus / street estimates | company page | `street_estimates` |
-| Personal watchlist, target price, fair value, entry / exit price, price alerts | `/watchlist` + company page | **nothing** — these are the family's own judgements |
+| Personal watchlist, target price, fair value, entry / exit price, price alerts | company page (the `/watchlist` page is REMOVED, see Stage 10w) | **nothing** — these are the family's own judgements |
 | Insider trades, corporate announcements | company page | `insider_trades`, `corp_announcements` — the `/news` page is REMOVED, see Stage 10k |
 
 ### Two limits that are load-bearing, and are stated on screen
@@ -2243,6 +2243,10 @@ that mapping is how a figure nobody can trace enters a dashboard whose entire
 claim is that every figure traces to a source.
 
 ### Investment tools are the ONE thing a reader writes to
+
+**AND THE PAGE THAT ROLLED THEM UP IS GONE — see Stage 10w.** `/watchlist`
+redirects and `src/pages/Watchlist.tsx` is deleted. Everything below is about the
+STORE, which is untouched and is still written on every company page.
 
 `src/lib/watchlist.ts` is the only store in the app that takes user input, and it
 is deliberately nowhere near the book. `glowData.ts` is generated from `source/`
@@ -2356,7 +2360,7 @@ violate any of them.**
   than a hyperlink. The six KPI tiles are the exception, at the family's
   request: their whole card is the click target, so a dashed figure inside one
   was a second affordance for a different action, and the arithmetic is rendered
-  on the page the tile opens instead. See Stage 10w. **And the Data
+  on the page the tile opens instead. See Stage 10x. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2419,7 +2423,7 @@ violate any of them.**
   than a hyperlink. The six KPI tiles are the exception, at the family's
   request: their whole card is the click target, so a dashed figure inside one
   was a second affordance for a different action, and the arithmetic is rendered
-  on the page the tile opens instead. See Stage 10w. **And the Data
+  on the page the tile opens instead. See Stage 10x. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2990,6 +2994,61 @@ show, and a failure names its own code — `NOT_CONFIGURED` (no token) and
 `UPSTREAM_ERROR` (a token the API refused) send the next person to completely
 different places, which is `upstreamStatus.ts`'s rule arriving through a chat.
 
+**`user_index` — AND WHY THE ENDPOINT'S OWN DOC DID NOT WORK HERE.** The first
+live request came back `400 — "user_index is required in the request body for
+service token requests"`. That is a TOKEN CLASS mismatch, not a wrong path. The
+doc specifies `Authorization: Bearer <YOUR_SESSION_TOKEN>` — a USER session
+token, where the acting user is implicit in the credential. `MUNS_TOKEN` is a
+SERVICE token, so the user is not implicit and the API asks the caller to name
+one. **This is the first USER-SCOPED muns endpoint this dashboard calls**: the
+other seven are stateless lookups — a quote, a filing, a ratio table — with no
+owner, session or history between them, which is exactly why none of them ever
+needed the field and why the omission could only surface here.
+
+**THE VALUE IS CONFIGURED, NEVER GUESSED.** `MUNS_USER_INDEX` sits beside
+`MUNS_TOKEN` in the Cloudflare environment; it is not defaulted and not
+inferred, because a wrong index would file this family's conversation under
+somebody else's account — a worse outcome than the 400 it replaces. Unset, the
+function refuses BEFORE calling the upstream and names the variable
+(`USER_INDEX_REQUIRED`); rejected, it comes back as `USER_INDEX_REJECTED`
+rather than as a model failure, because those two send a reader to completely
+different places. A `user_index` in the REQUEST is ignored — the browser does
+not get to say whose account a question is filed under. `GET /api/chat?probe=1`
+makes one live round trip so the value can be confirmed on the deployment
+without a redeploy cycle, and the diagnostics report the index's PRESENCE and
+SHAPE, never the token.
+
+**AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
+error as `{ message: { message, error, statusCode } }`, and the first cut
+rendered that JSON blob into the chat — machine noise where a sentence belongs.
+`upstreamMessage` unwraps to the deepest string; anything that is not JSON is
+passed through truncated rather than swallowed.
+
+**AND THE DIALOG WAS TRAPPED IN THE TOP BAR.** The family reported the panel
+"mixing with the dashboard UI", and the cause was not transparency — the panel
+measures fully opaque. `backdrop-filter` on an ancestor makes THAT ANCESTOR the
+containing block for `position: fixed` descendants, and the top bar the trigger
+lives in carries `backdrop-blur`. So `fixed inset-0` resolved against the
+header: the overlay measured **1304×55**, a scrim over the header strip and
+nothing else, with the dashboard underneath never dimmed at all. It is
+portalled into `#root` now — not `document.body`, because `#root` carries
+`--app-zoom` and the dialog has to keep the app's scale.
+
+**A SCRIM HAS TO DIM, AND THE FIRST ONE DID NOT.** 0.35 alpha over a 4px blur
+left the table behind perfectly legible. It is 0.62 over a 20px blur now, on a
+warm mid-tone whose luminance stays above the light-remap check's threshold —
+the utility reads as deliberately remapped rather than as the dark chassis
+colour leaking onto a light page.
+
+**AND THE PANEL IS SIZED IN PERCENT, NEVER `vh`.** `h-[min(78vh,720px)]` painted
+78vh × 0.875 — a 614px panel in a 900px window while claiming 78% — because a
+viewport unit is not rescaled by zoom (Stage 10n). A percentage of the
+correctly-sized overlay avoids it: 896×805 against 672×614.
+
+**BOTH ARE CHECKED ON GEOMETRY**, because not one rendered word changes when
+either regresses: the overlay must cover the viewport, and the panel must take a
+majority of it. Verified by removing the portal and by restoring the old size.
+
 **THIRTY-FOUR ARITHMETIC CHECKS AND FIVE RENDERED ONES.**
 `src/lib/__tests__/chatContext.test.ts` reconciles the snapshot against the
 GENERATED book by a different path from the builder's — NAV against
@@ -3001,6 +3060,14 @@ absent-vs-zero rule failing through a JSON field instead of a table cell.
 `check:pages` walks a `chat` route that opens the panel and asks one question:
 the label, the stated snapshot, the vanished search input, and the named
 failure. All verified by reintroducing their bug.
+
+**AND TWENTY-TWO MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+against a STUBBED upstream — the token exists only in Cloudflare, so the real
+API is out of reach from a test, but every branch around it is not: that
+`user_index` is sent at the top level, as a number when it reads as one and
+verbatim when it does not, that a request-supplied one is ignored, that no
+call is made at all when it is unconfigured, and that the deployment's exact
+400 envelope comes back as one readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
@@ -4220,7 +4287,49 @@ a holdings table, the toggle deleted, the toggle defaulted to a half, and the
 chips printing the active set's count instead of their own. Two of them fired
 checks that had to be rewritten first, which is the whole reason for doing it.
 
-### Stage 10w — THE TILE IS THE AFFORDANCE, AND THE ARITHMETIC MOVES TO THE PAGE
+### Stage 10w — Watchlist & Targets: REMOVED, and the store is not
+
+*"remove this tab"* — the sidebar entry, pointed at.
+
+`/watchlist` redirects to `/compare`, the nav entry is gone and
+`src/pages/Watchlist.tsx` is deleted. The redirect goes to Compare Companies
+rather than the monitor because that is the surviving surface in the SAME nav
+group that still renders a watched name's target and its upside; leaving it
+pointed somewhere with none of those figures while `/compare` sits one link away
+is the stale routing decision Stage 9d removed the day the calendar was wired.
+
+**`src/lib/watchlist.ts` IS UNTOUCHED, AND THAT IS THE HALF A REMOVAL LIKE THIS
+BREAKS SILENTLY.** Every target price, fair value, entry and exit level, price
+alert, valuation method, FV reference year, target weight and "why we own it"
+note the family typed is still stored and still read and written by
+`InvestmentTools` on a name's own company page — and `CompareCompanies` still
+reads the target and the upside. Nothing anyone entered was deleted. With its
+most VISIBLE reader gone the store looks dead, which is how a future session
+deletes it and takes the family's own judgements with it: the same trap
+`announcements.ts` was in when `/news` went, and the same reason `deals.ts` and
+`household.ts` stayed in Stage 10f when their pages were removed.
+
+So the check does not merely assert the tab is gone. `check:family` asserts
+BOTH halves, and only the second one can fail quietly:
+
+- the nav entry is absent and `/watchlist` REDIRECTS rather than 404s, because a
+  bookmark is a promise the app made;
+- a company page reached from the monitor still carries the Investment tools
+  panel with Target price, Fair value and Valuation method on it — the address
+  taken off the rendered page rather than typed, like every other route that
+  suite follows.
+
+`check:pages` no longer walks `/watchlist`: there is no page there to hold to
+the light-mode, overflow and stray-₹0 bar. **A removal is verified by asserting
+it happened, never by deleting the test alongside the feature.**
+
+Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
+`upsidePct`, `parseWeightPct` and `VALUATION_METHODS` all have their caller in
+`InvestmentTools`, and `readWatchlist` keeps its one in `CompareCompanies` —
+so nothing was left exported and dead, which is the failure this file keeps
+naming.
+
+### Stage 10x — THE TILE IS THE AFFORDANCE, AND THE ARITHMETIC MOVES TO THE PAGE
 
 *"remove the remaining underlines from the texts, and even the calculation that
 we're showing that appears when click the underlined no. we can show that inside
