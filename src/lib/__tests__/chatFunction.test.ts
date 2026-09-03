@@ -62,14 +62,15 @@ function stub(reply: { status?: number; body?: string; headers?: Record<string, 
   ok("...and no request is made to the upstream", seen.url === undefined);
 }
 {
+  // `MUNS_USER_INDEX` NO LONGER BLOCKS THE CALL. The client supplied a fixed
+  // identity (`user_id: 14`), so a request with the token alone has something
+  // to send and refusing it would refuse a call that works.
   const seen = stub({});
   const r = await post({ MUNS_TOKEN: "t" });
-  const j = await r.json();
-  // THE FIX'S CENTRAL ASSERTION. The value is never invented: without one the
-  // function refuses rather than sending a user index nobody chose, because a
-  // wrong index files this family's conversation under another account.
-  ok("token but no user index → USER_INDEX_REQUIRED", j.failureCode === "USER_INDEX_REQUIRED", String(j.failureCode));
-  ok("...and STILL no request is made — no guessed index is ever sent", seen.url === undefined);
+  ok("the token alone is enough — the call goes out", r.status === 200 && seen.url !== undefined);
+  ok("...carrying the fixed user_id", seen.body?.user_id === 14, JSON.stringify(seen.body?.user_id));
+  ok("...and NO user_index, rather than defaulting one from the id",
+    !Object.prototype.hasOwnProperty.call(seen.body ?? {}, "user_index"));
 }
 
 // ── the happy path sends the field, in the shape the name implies ──────────
@@ -78,7 +79,11 @@ function stub(reply: { status?: number; body?: string; headers?: Record<string, 
   const r = await post({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "42" });
   ok("configured → the stream is passed through", r.status === 200 && (r.headers.get("content-type") ?? "").includes("event-stream"));
   ok("...to the documented endpoint", seen.url === "https://devde.muns.io/chat/chat-muns", String(seen.url));
-  ok("...carrying user_index at the TOP LEVEL of the body, as the error asked",
+  // THE CLIENT'S INSTRUCTION, ASSERTED AS A LITERAL: "pass an argument named
+  // user_id: 14 — this is a static value, don't change it, keep it 14 only,
+  // include it in the main payload."
+  ok("...carrying user_id: 14 at the TOP LEVEL of the body", seen.body?.user_id === 14, JSON.stringify(seen.body?.user_id));
+  ok("...and user_index beside it when one is configured",
     Object.prototype.hasOwnProperty.call(seen.body ?? {}, "user_index"), JSON.stringify(seen.body?.user_index));
   ok("...as a number, because an all-digit index reads as one", seen.body?.user_index === 42);
   ok("...with the service token in the header, never in the body",
@@ -94,9 +99,11 @@ function stub(reply: { status?: number; body?: string; headers?: Record<string, 
 {
   // THE BROWSER DOES NOT GET TO CHOOSE WHOSE ACCOUNT A QUESTION IS FILED UNDER.
   const seen = stub({});
-  await post({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "42" }, { ...ASK, user_index: 999 });
+  await post({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "42" }, { ...ASK, user_index: 999, user_id: 999 });
   ok("a user_index in the REQUEST is ignored — the environment's wins", seen.body?.user_index === 42,
     JSON.stringify(seen.body?.user_index));
+  ok("...and a user_id in the request cannot override the fixed one", seen.body?.user_id === 14,
+    JSON.stringify(seen.body?.user_id));
 }
 
 // ── the upstream's own words, out of its envelope ──────────────────────────
@@ -109,12 +116,20 @@ function stub(reply: { status?: number; body?: string; headers?: Record<string, 
   }) });
   const r = await post({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "wrong" });
   const j = await r.json();
-  ok("a 400 naming user_index comes back as USER_INDEX_REJECTED, not a model failure",
+  ok("a 400 naming an identity field, WITH an index set, is USER_INDEX_REJECTED — correct the value",
     j.failureCode === "USER_INDEX_REJECTED", String(j.failureCode));
   ok("...and the detail is the human sentence, not the whole JSON envelope",
     j.detail === "user_index is required in the request body for service token requests", String(j.detail));
   ok("...so the panel never prints a raw envelope at a reader again",
     !String(j.detail).includes("statusCode") && !String(j.detail).includes("{"));
+}
+{
+  // ...and the SAME upstream 400 with no index configured is a different
+  // remedy: set one. Two codes because they send a reader to different places.
+  stub({ status: 400, body: JSON.stringify({ message: { message: "user_index is required in the request body for service token requests" } }) });
+  const j = await (await post({ MUNS_TOKEN: "t" })).json();
+  ok("...and with NO index set it is USER_INDEX_REQUIRED — set one",
+    j.failureCode === "USER_INDEX_REQUIRED", String(j.failureCode));
 }
 {
   stub({ status: 401, body: "Unauthorized" });
@@ -127,19 +142,22 @@ function stub(reply: { status?: number; body?: string; headers?: Record<string, 
 {
   stub({});
   const j = await (await get({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "42" })).json();
-  ok("GET reports configuration as ok when both are set", j.ok === true);
+  ok("GET reports configuration as ok when the token is set", j.ok === true);
+  ok("...and names the fixed user_id it will send", j.userIdSent === 14, String(j.userIdSent));
   ok("...and says the index is present and what shape it will send",
     j.userIndexPresent === true && j.userIndexSent === 42, JSON.stringify(j.userIndexSent));
   ok("...and NEVER echoes the token", !JSON.stringify(j).includes("\"t\"") || !("token" in j));
   const half = await (await get({ MUNS_TOKEN: "t" })).json();
-  ok("...and is NOT ok with the token alone", half.ok === false && half.userIndexPresent === false);
+  ok("...and the token alone is now enough, with the index reported absent",
+    half.ok === true && half.userIndexPresent === false);
 }
 {
   const seen = stub({ status: 200, body: "data: ok\n\n" });
   const j = await (await get({ MUNS_TOKEN: "t", MUNS_USER_INDEX: "42" }, "?probe=1")).json();
   ok("the probe makes ONE live round trip and reports what came back",
     seen.url === "https://devde.muns.io/chat/chat-muns" && j.upstreamStatus === 200, String(j.upstreamStatus));
-  ok("...sending the same user_index the real path would", seen.body?.user_index === 42);
+  ok("...sending the same identity the real path would",
+    seen.body?.user_id === 14 && seen.body?.user_index === 42);
 }
 
 process.exit(fails ? 1 : 0);

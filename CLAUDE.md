@@ -3010,6 +3010,26 @@ makes one live round trip so the value can be confirmed on the deployment
 without a redeploy cycle, and the diagnostics report the index's PRESENCE and
 SHAPE, never the token.
 
+**AND THE IDENTITY IS `user_id: 14`, FIXED AT THE CLIENT'S INSTRUCTION.**
+*"Pass an argument named `user_id`: 14 — this is a static value, don't change
+it, keep it 14 only, include it in the main payload."* It is a CONSTANT rather
+than an environment variable precisely because it was given as one: the value is
+the same on every deployment, and putting it in the environment would let an
+unset variable break a working dashboard. It is never taken from the request —
+the browser does not get to say whose account a question is filed under — and a
+`user_id` in the body is ignored.
+
+**`MUNS_USER_INDEX` THEREFORE NO LONGER BLOCKS THE CALL.** It refused before
+calling the upstream while `user_index` was the only identity the API had asked
+for and this dashboard had none. With a fixed `user_id` there is something to
+send, and refusing would refuse a call that works. The variable stays wired —
+set it and `user_index` rides alongside — but it is never DEFAULTED to
+`USER_ID`: "index" and "id" are not obviously the same field, and a 14 that
+means a position in a list rather than an identity would file this family's
+conversation under somebody else. If the upstream still wants one, its 400 comes
+back as `USER_INDEX_REQUIRED` (none set — set one) or `USER_INDEX_REJECTED` (one
+set — correct it), because those two send a reader to different places.
+
 **AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
 error as `{ message: { message, error, statusCode } }`, and the first cut
 rendered that JSON blob into the chat — machine noise where a sentence belongs.
