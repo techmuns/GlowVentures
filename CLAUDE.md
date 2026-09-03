@@ -2363,8 +2363,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10y. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -2422,8 +2426,12 @@ violate any of them.**
   than left exported and uncalled: a builder nothing calls is the
   dead-code-that-looks-alive failure this file keeps naming, and the next
   session would wire it back believing it load-bearing.
-  **The FORMULA popovers stay** — a dashed figure still opens the arithmetic
-  behind it, which is an explanation rather than a hyperlink. **And the Data
+  **The FORMULA popovers stay, EXCEPT on Morning CIO's KPI strip** — a dashed
+  figure still opens the arithmetic behind it, which is an explanation rather
+  than a hyperlink. The six KPI tiles are the exception, at the family's
+  request: their whole card is the click target, so a dashed figure inside one
+  was a second affordance for a different action, and the arithmetic is rendered
+  on the page the tile opens instead. See Stage 10y. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
   serves is unchanged. A future session that wants a figure traceable again
@@ -3005,18 +3013,18 @@ other seven are stateless lookups — a quote, a filing, a ratio table — with 
 owner, session or history between them, which is exactly why none of them ever
 needed the field and why the omission could only surface here.
 
-**THE VALUE IS CONFIGURED, NEVER GUESSED.** `MUNS_USER_INDEX` sits beside
-`MUNS_TOKEN` in the Cloudflare environment; it is not defaulted and not
-inferred, because a wrong index would file this family's conversation under
-somebody else's account — a worse outcome than the 400 it replaces. Unset, the
-function refuses BEFORE calling the upstream and names the variable
-(`USER_INDEX_REQUIRED`); rejected, it comes back as `USER_INDEX_REJECTED`
-rather than as a model failure, because those two send a reader to completely
-different places. A `user_index` in the REQUEST is ignored — the browser does
+**THE VALUE WAS TO BE CONFIGURED AND NEVER GUESSED — AND THE DEPLOYMENT
+OVERTURNED THAT.** `MUNS_USER_INDEX` sat in the Cloudflare environment as the
+ONLY source of the field: unset, the function refused before calling the
+upstream and named the variable (`USER_INDEX_REQUIRED`), because a wrong index
+would file this family's conversation under somebody else's account — a worse
+outcome than the 400 it replaced. That was right while nobody had supplied a
+value. See the two paragraphs below for what happened when somebody did.
+A `user_index` in the REQUEST is still ignored — the browser does
 not get to say whose account a question is filed under. `GET /api/chat?probe=1`
 makes one live round trip so the value can be confirmed on the deployment
-without a redeploy cycle, and the diagnostics report the index's PRESENCE and
-SHAPE, never the token.
+without a redeploy cycle, and the diagnostics report the index's PRESENCE, its
+SHAPE and its SOURCE, never the token.
 
 **AND THE IDENTITY IS `user_id: 14`, FIXED AT THE CLIENT'S INSTRUCTION.**
 *"Pass an argument named `user_id`: 14 — this is a static value, don't change
@@ -3027,16 +3035,32 @@ unset variable break a working dashboard. It is never taken from the request —
 the browser does not get to say whose account a question is filed under — and a
 `user_id` in the body is ignored.
 
-**`MUNS_USER_INDEX` THEREFORE NO LONGER BLOCKS THE CALL.** It refused before
-calling the upstream while `user_index` was the only identity the API had asked
-for and this dashboard had none. With a fixed `user_id` there is something to
-send, and refusing would refuse a call that works. The variable stays wired —
-set it and `user_index` rides alongside — but it is never DEFAULTED to
-`USER_ID`: "index" and "id" are not obviously the same field, and a 14 that
-means a position in a list rather than an identity would file this family's
-conversation under somebody else. If the upstream still wants one, its 400 comes
-back as `USER_INDEX_REQUIRED` (none set — set one) or `USER_INDEX_REJECTED` (one
-set — correct it), because those two send a reader to different places.
+**`MUNS_USER_INDEX` THEREFORE STOPPED BLOCKING THE CALL** — and that build sent
+`user_id` alone, deliberately NOT copying it into `user_index`, on the reasoning
+that "index" and "id" are not obviously the same field and a 14 meaning a
+position in a list rather than an identity would file this family's conversation
+under somebody else.
+
+**AND THE UPSTREAM REFUSED IT ANYWAY, WHICH IS THE MEASUREMENT THAT SETTLED
+IT.** Run on the deployment, that build came back with the SAME
+`400 — user_index is required…`. So `user_id` is not the field the API is
+asking for; the only value anyone has named for this deployment is 14; and the
+choice was between sending it under both names or a chat that can never answer.
+**The fixed identity now goes as `user_id` AND `user_index`.** What changed is
+the evidence and not the rule: the earlier refusal was declining to INVENT a
+value, and this is sending the one the client gave. `MUNS_USER_INDEX` survives
+as the OVERRIDE — set it and it WINS — for the day the two turn out to differ.
+
+**AND `USER_INDEX_REQUIRED` IS GONE RATHER THAN LEFT UNREACHABLE.** With an
+identity always in the body, a 400 naming one means the value was REJECTED and
+never that it was missing, so the two-code split collapses to
+`USER_INDEX_REJECTED` carrying the upstream's own sentence — which names the
+field, where the dashboard would only paraphrase it. The panel's
+`USER_INDEX_REQUIRED` copy went with it. `chatFunction.test.ts` asserts the
+REMOVAL — that the same 400 with no override set still comes back
+`USER_INDEX_REJECTED` — because deleting the branch and its test together would
+leave nothing to notice a future edit putting the request back to the shape the
+deployment refused.
 
 **AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
 error as `{ message: { message, error, statusCode } }`, and the first cut
@@ -3081,13 +3105,15 @@ absent-vs-zero rule failing through a JSON field instead of a table cell.
 the label, the stated snapshot, the vanished search input, and the named
 failure. All verified by reintroducing their bug.
 
-**AND TWENTY-TWO MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+**AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
 API is out of reach from a test, but every branch around it is not: that
-`user_index` is sent at the top level, as a number when it reads as one and
-verbatim when it does not, that a request-supplied one is ignored, that no
-call is made at all when it is unconfigured, and that the deployment's exact
-400 envelope comes back as one readable sentence under its own code.
+`user_id` and `user_index` both carry the fixed identity at the top level, that
+`MUNS_USER_INDEX` overrides it as a number when it reads as one and verbatim
+when it does not, that a request-supplied one is ignored, that no call is made
+at all when the TOKEN is unconfigured, that `USER_INDEX_REQUIRED` can no longer
+be reached, and that the deployment's exact 400 envelope comes back as one
+readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 
@@ -4542,6 +4568,86 @@ comment here corrected to claim only what it proves. Five other bugs were
 reintroduced — the page restored at its address, its route un-redirected, its
 nav entry put back, the group heading with it, and `ReturnsTable` dropped from
 the company page — and each fired exactly its own check.
+
+### Stage 10y — THE TILE IS THE AFFORDANCE, AND THE ARITHMETIC MOVES TO THE PAGE
+
+*"remove the remaining underlines from the texts, and even the calculation that
+we're showing that appears when click the underlined no. we can show that inside
+the clickable KPI pages. Just make the KPI tiles look like 3-d clickable buttons
+and remove every other underlines/hyperlinks on the texts."*
+
+Stage 10v made the whole card the click target and left both underlines on it. So
+each tile carried THREE affordances for one action: a dotted-underlined LABEL, a
+dashed-underlined FIGURE that opened a popover, and the card itself. Two of them
+pointed at text that is not the thing to click.
+
+**THE AFFORDANCE IS THE SURFACE NOW.** `.card.kpi-btn` in `index.css` — an inset
+top highlight (the lit edge), a hard offset shadow (the tile's thickness) and a
+soft cast shadow (its distance from the page); hover lifts it, `:active` presses
+it flat, `prefers-reduced-motion` keeps the depth and drops the movement. Written
+as plain CSS with explicit colours rather than as Tailwind utilities, because
+every `ink-*`/`slate-*` utility needs its own light-mode remap **including each
+opacity variant**, and a four-layer shadow assembled from them would need four.
+
+**IT IS `.card.kpi-btn`, NOT `.kpi-btn`, AND THE FIRST DRAFT SHIPPED FLAT.**
+`html:not(.dark) .card` sets a box-shadow of its own further down the same file
+at equal specificity, so source order decided it and every tile rendered as an
+ordinary panel — a raised button that was not raised, with the entire sweep
+green. `check:pages` resolves computed COLOUR and has never looked at a shadow.
+Qualifying with `.card` puts the rule above any `.card` rule wherever either
+lands in the file.
+
+**AND THE RAISED LOOK IS ONLY ON A TILE THAT OPENS SOMETHING.** `Kpi` applies it
+only where `href` is set, so the drill-down page's own four summary tiles stay
+flat. A card that presses under the pointer and then does nothing is a worse lie
+than a flat one — which is why the invariant is struck in BOTH directions, on two
+different pages.
+
+**THE ARITHMETIC IS ON THE PAGE THE TILE OPENS.** `drilldownFormula(d, money)` in
+`drilldown.ts` returns the `FormulaDef` for a set, and `/holdings` renders it as
+a card between the tiles and the table: the expression, the worked example, and
+the paragraph. It sits beside the SET DEFINITION for the reason this whole file
+exists — an explanation kept anywhere else drifts from the rows it explains — and
+takes the money formatter as an argument rather than importing one, because every
+figure here renders in the reader's selected display currency through
+`fmtFromBase` and a formatter fixed in a lib prints rupees on a page showing
+dollars. Same seam `auditFormulas.ts` already uses.
+
+**IT IS STRUCK ON `d.rows`, WHICH IS THE ACTIVE FACET.** A version summed over
+the whole scope reads correct on the undivided page and prints ₹710.4 Cr under a
+heading saying "Private" — the caption-does-not-describe-its-figure failure the
+Capital invested tile already cost this book once, arriving one click deeper. The
+invariant compares the worked line against the page's OWN rendered total, and on
+the private half additionally requires it NOT to equal the NAV.
+
+**ONE OF THE REMOVED POPOVERS WAS WRONG, WHICH IS WHY NOTHING REPLACES IT.** Dry
+powder's read `= Σ (Committed − Called) across funds`, and this book does not
+derive it that way: Private Market's own tile says it is *"summed exactly as each
+statement prints it, never derived from committed − drawn"*, because two folios
+print a commitment and a drawdown and NO undrawn figure, and subtracting there
+would assert a fund has nothing left to call. The page that tile opens already
+carries the correct explanation beside Committed and Drawn.
+
+**THE MONEY-WEIGHTED PAGE DOES NOT RESTATE ITS RATE, DELIBERATELY.** That figure
+is a pooled XIRR over every account's dated flows, each closing on its own report
+date; re-deriving it in `drilldown.ts` would be a SECOND source for one figure.
+The page owns the SET — which accounts qualify, what they are worth, which 42 sit
+outside — and the rate stays on the tile it was clicked from.
+
+**SCOPED TO THE KPI STRIP.** The allocation table's per-bucket returns and its
+footer still open a formula popover. That is deliberate rather than overlooked:
+the footer's popover is the one place left that reconciles the money-weighted
+whole-book figure against a column of return-on-cost cells — the Book performance
+card that also carried it was removed in Stage 10t, and the Consolidated return
+tile's went in this change. Removing the third would delete the reconciliation
+this file's own "a total must tie to its own columns" rule exists to preserve.
+
+**FIVE BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the label underline back
+on a tile, the `.card` qualifier dropped so the tiles go flat, every card raised
+so a panel poses as a button, the formula card deleted, and the formula summed
+over the scope instead of the facet. Two of them needed a second attempt to
+reproduce, which is itself the finding — the light theme is what the sweep walks
+first, so a bug introduced only in the dark rule changes nothing it can see.
 
 ### Stage 10k — News & Announcements: REMOVED
 
