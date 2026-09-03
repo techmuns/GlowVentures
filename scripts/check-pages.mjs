@@ -1459,6 +1459,39 @@ const INVARIANTS = {
       }],
 
     /**
+     * THE SCRIM COVERS THE PAGE, NOT THE BAR IT WAS OPENED FROM.
+     *
+     * `backdrop-filter` on an ancestor makes that ancestor the containing block
+     * for `position: fixed` descendants, and the top bar carries
+     * `backdrop-blur` — so `fixed inset-0` resolved against the HEADER and the
+     * overlay measured 1304x55. The dashboard underneath was never dimmed, and
+     * the reader saw a dialog mixed into the page. The fix is a portal out of
+     * the bar; this is the check that it stays out, and it can only be struck
+     * on geometry — not one rendered word changes when it regresses.
+     */
+    ["the overlay covers the viewport, not just the bar it was opened from",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        const { overlay, viewport } = CHAT;
+        if (!overlay) return false;
+        return overlay.w >= viewport.w - 2 && overlay.h >= viewport.h - 2;
+      }],
+
+    /**
+     * ...AND THE PANEL IS SIZED FOR READING. It was 672x614 on a 1500x900
+     * window — under half the width, with the dashboard legible all around it.
+     * Struck as a FRACTION of the viewport rather than in pixels, so the claim
+     * survives a different window and the `--app-zoom` scale.
+     */
+    ["...and the panel takes a majority of it, rather than floating in the middle of a live page",
+      () => {
+        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
+        const { panelBox, viewport } = CHAT;
+        if (!panelBox) return false;
+        return panelBox.w / viewport.w >= 0.55 && panelBox.h / viewport.h >= 0.7;
+      }],
+
+    /**
      * A FAILURE NAMES ITSELF RATHER THAN RENDERING AN EMPTY ANSWER.
      *
      * This harness runs no Pages Function, so the ask 404s — and an empty
@@ -4208,6 +4241,22 @@ for (const theme of THEMES) {
             // its placeholder text could legitimately appear in prose.
             searchInputs: [...document.querySelectorAll("input")]
               .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
+            // GEOMETRY, because the bug this catches is invisible in the text.
+            // `backdrop-filter` on an ancestor makes THAT ancestor the
+            // containing block for a `position: fixed` child — and the top bar
+            // the trigger lives in carries `backdrop-blur`. The overlay
+            // measured 1304x55, a scrim over the header strip alone, so the
+            // dashboard was never dimmed and the dialog read as part of the
+            // page. Nothing in the rendered words changes when that happens.
+            overlay: panel ? (() => {
+              const r = panel.parentElement.getBoundingClientRect();
+              return { w: Math.round(r.width), h: Math.round(r.height) };
+            })() : null,
+            panelBox: panel ? (() => {
+              const r = panel.getBoundingClientRect();
+              return { w: Math.round(r.width), h: Math.round(r.height) };
+            })() : null,
+            viewport: { w: window.innerWidth, h: window.innerHeight },
           };
         }, intro);
       }

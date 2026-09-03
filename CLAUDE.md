@@ -3016,6 +3016,31 @@ rendered that JSON blob into the chat — machine noise where a sentence belongs
 `upstreamMessage` unwraps to the deepest string; anything that is not JSON is
 passed through truncated rather than swallowed.
 
+**AND THE DIALOG WAS TRAPPED IN THE TOP BAR.** The family reported the panel
+"mixing with the dashboard UI", and the cause was not transparency — the panel
+measures fully opaque. `backdrop-filter` on an ancestor makes THAT ANCESTOR the
+containing block for `position: fixed` descendants, and the top bar the trigger
+lives in carries `backdrop-blur`. So `fixed inset-0` resolved against the
+header: the overlay measured **1304×55**, a scrim over the header strip and
+nothing else, with the dashboard underneath never dimmed at all. It is
+portalled into `#root` now — not `document.body`, because `#root` carries
+`--app-zoom` and the dialog has to keep the app's scale.
+
+**A SCRIM HAS TO DIM, AND THE FIRST ONE DID NOT.** 0.35 alpha over a 4px blur
+left the table behind perfectly legible. It is 0.62 over a 20px blur now, on a
+warm mid-tone whose luminance stays above the light-remap check's threshold —
+the utility reads as deliberately remapped rather than as the dark chassis
+colour leaking onto a light page.
+
+**AND THE PANEL IS SIZED IN PERCENT, NEVER `vh`.** `h-[min(78vh,720px)]` painted
+78vh × 0.875 — a 614px panel in a 900px window while claiming 78% — because a
+viewport unit is not rescaled by zoom (Stage 10n). A percentage of the
+correctly-sized overlay avoids it: 896×805 against 672×614.
+
+**BOTH ARE CHECKED ON GEOMETRY**, because not one rendered word changes when
+either regresses: the overlay must cover the viewport, and the panel must take a
+majority of it. Verified by removing the portal and by restoring the old size.
+
 **THIRTY-FOUR ARITHMETIC CHECKS AND FIVE RENDERED ONES.**
 `src/lib/__tests__/chatContext.test.ts` reconciles the snapshot against the
 GENERATED book by a different path from the builder's — NAV against

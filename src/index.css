@@ -123,9 +123,13 @@ html:not(.dark) .bg-ink-950 { background-color: #f4f2ec; }
 /* The Muns chat's modal scrim. Tailwind emits every opacity variant as its own
    class, so this needs its own remap — unremapped it paints the dark chassis
    colour over a light page, which `check:pages` reports as a dark surface in
-   light mode. A scrim still has to dim, so this is the light ground at low
-   alpha rather than a transparent no-op. */
-html:not(.dark) .bg-ink-950\/60 { background-color: rgba(120, 114, 96, 0.35); }
+   light mode.
+   A SCRIM HAS TO DIM, and the first attempt did not: at 0.35 alpha over a 4px
+   blur the dashboard behind stayed fully legible and the dialog read as part of
+   the page. This is a warm mid-tone at 0.62 — dark enough to push the page back
+   under the panel's 20px blur, light enough that the utility still reads as
+   remapped rather than as the dark chassis colour leaking onto a light page. */
+html:not(.dark) .bg-ink-950\/70 { background-color: rgba(96, 91, 76, 0.62); }
 html:not(.dark) .bg-ink-900 { background-color: #efece3; }
 html:not(.dark) .bg-ink-900\/85 { background-color: rgba(239, 236, 227, 0.92); }
 html:not(.dark) .bg-ink-900\/60 { background-color: rgba(239, 236, 227, 0.7); }

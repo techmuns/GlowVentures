@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Sparkles, Send, X, Loader2, TriangleAlert } from "lucide-react";
 import { askMuns, type ChatTurn } from "@/lib/munsChat";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
@@ -167,11 +168,46 @@ export function MunsChat() {
         </span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-950/60 p-4 pt-16 backdrop-blur-sm"
+      {/*
+        THE OVERLAY IS PORTALLED OUT OF THE TOP BAR, AND THAT IS THE BUG THAT
+        MADE THE DIALOG "MIX WITH THE DASHBOARD".
+
+        `backdrop-filter` on an ancestor makes that ancestor the containing
+        block for `position: fixed` descendants — and the top bar this trigger
+        lives in carries `backdrop-blur`. So `fixed inset-0` resolved against
+        the HEADER: measured, the overlay was 1304x55, a scrim over the header
+        strip and nothing else. The dashboard underneath was never dimmed at
+        all, which is exactly what the reader saw.
+
+        Portalled into `#root` rather than `document.body`: `#root` carries
+        `--app-zoom`, so the dialog keeps the app's scale, and it has no filter
+        or transform of its own, so `inset-0` finally resolves against the
+        viewport.
+      */}
+      {open && createPortal(
+        /*
+          THE DASHBOARD HAS TO RECEDE, OR THE TWO LAYERS READ AS ONE.
+          
+          The panel was always fully opaque — measured, not assumed — so the
+          "mixing" was never transparency in the panel. It was the SCRIM: at
+          0.35 alpha with 4px of blur the table behind stayed perfectly legible,
+          so the eye never separated the dialog from the page under it. A heavy
+          blur and a real dim are what make a modal read as one.
+        */
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/70 p-6 backdrop-blur-xl"
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+          {/*
+            SIZED AS A PERCENTAGE OF THE OVERLAY, NEVER IN `vh`.
+            
+            `#root` carries `--app-zoom`, and a viewport unit is NOT rescaled by
+            zoom (see index.css) — so the old `h-[min(78vh,720px)]` painted
+            78vh x 0.875, a 614px panel in a 900px window while claiming 78%.
+            The overlay is `fixed inset-0`, which DOES resolve correctly in the
+            zoomed coordinate space, so a percentage of it is a percentage of
+            the real viewport. Same trap the app shell hit once; same fix.
+          */}
           <div data-testid="muns-chat-panel"
-            className="flex h-[min(78vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
+            className="flex h-full max-h-[920px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
 
             <div className="flex items-center gap-2 border-b border-ink-700 px-4 py-3">
               <Sparkles className="h-4 w-4 text-champagne-400" />
@@ -255,7 +291,8 @@ export function MunsChat() {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.getElementById("root") ?? document.body,
       )}
     </>
   );
