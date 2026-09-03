@@ -23,7 +23,10 @@
 // Everything else is written as a RELATION for the same reason. The one place a
 // literal appears is the load-bearing gate, and it is stated as an inequality.
 import { BOOK_NAV_HISTORY, BOOK_NAV_COVERAGE, BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNTS } from "@/data/glowData";
-import { navIndexSeries, alignIndex, rebasedIndex, navCoverageStats, windowReturnPct } from "@/lib/navSeries";
+import {
+  navIndexSeries, alignIndex, rebasedIndex, navCoverageStats, windowReturnPct,
+  levelOnOrBefore, indexCurve, indexReturnBetween, rangeStart, rangeEnd, NAV_RANGES,
+} from "@/lib/navSeries";
 import type { Point } from "@/lib/series";
 
 let fails = 0;
@@ -162,6 +165,64 @@ eq("one point produces no index", navIndexSeries([{ period: "x", date: "2026-01-
   ]);
   ok("an interval starting at zero leaves the index unchanged rather than infinite",
     Number.isFinite(s[1].index) && s[1].index === 100);
+}
+
+// ── THE LONGER WINDOW, AND THE TWO THINGS IT MUST NOT DO ────────────────────
+//
+// The family asked for a larger period than the book's own five weeks. The
+// index can supply one and the book cannot, so every helper below exists to
+// keep those two facts apart on one pair of axes.
+{
+  // `indexCurve` draws the index's OWN closes, where `rebasedIndex` samples it
+  // at the book's dates. Both are needed and confusing them is what made the
+  // old chart's "index" seven straight segments.
+  const curve = indexCurve(idxPoints, "2026-07-15", null);
+  eq("the curve carries every close the feed has, not one per book date", curve.length, idxPoints.length);
+  near("…rebased to 100 at the BOOK's first point, not the window's",
+    curve.find((c) => c.t === "2026-07-15")?.v ?? null, 100);
+  ok("…so a close BEFORE the base sits below 100",
+    (curve.find((c) => c.t === "2026-07-01")?.v ?? 0) < 100);
+
+  eq("a window start drops the closes before it",
+    indexCurve(idxPoints, "2026-07-15", "2026-07-15").map((c) => c.t),
+    ["2026-07-15", "2026-08-01"]);
+
+  // THE BASE HAS TO EXIST. A book whose first point predates the index's own
+  // history yields NO CURVE rather than one rebased to the earliest close,
+  // which would draw a comparison from a date the feed does not cover.
+  eq("a base before the index's first close yields no curve at all",
+    indexCurve(idxPoints, "2026-01-01", null), []);
+}
+{
+  near("a window return resolves both ends nearest-EARLIER",
+    // 2026-07-20 → 110 (the 07-15 close), 2026-08-05 → 120.
+    indexReturnBetween(idxPoints, "2026-07-20", "2026-08-05"), (120 / 110 - 1) * 100);
+  eq("a start before the first close yields no return, not one from the first close",
+    indexReturnBetween(idxPoints, "2026-06-01", "2026-08-01"), null);
+  eq("no points yields no return", indexReturnBetween([], "2026-07-01", "2026-08-01"), null);
+  eq("the lookup itself is null before the series starts",
+    levelOnOrBefore(idxPoints, "2026-06-30"), null);
+}
+{
+  // THE RANGE IS COUNTED BACK FROM THE BOOK'S LAST POINT, not from today —
+  // so the shaded measured window keeps its place as the range widens, and
+  // three weeks passing between statements cannot silently shrink it.
+  eq("the book range is exactly the book's own window",
+    [rangeStart("book", "2026-07-10", "2026-08-13"), rangeEnd("book", "2026-08-13")],
+    ["2026-07-10", "2026-08-13"]);
+  eq("a year counts back from the book's last dated point",
+    rangeStart("1Y", "2026-07-10", "2026-08-13"), "2025-08-13");
+  eq("MAX imposes no start", rangeStart("MAX", "2026-07-10", "2026-08-13"), null);
+  // ...AND ONLY THE BOOK RANGE CAPS THE END. On every other range the index
+  // runs to its own last close, which is the useful half of a longer period:
+  // where the market has gone since the book was last marked.
+  eq("no other range caps the end", NAV_RANGES.filter((r) => rangeEnd(r.key, "2026-08-13") !== null).map((r) => r.key),
+    ["book"]);
+  // THE CONTROL MUST OFFER SOMETHING LONGER THAN THE BOOK. A range list that
+  // collapsed to the book's own window is the arrangement that was complained
+  // about, and it would pass every arithmetic check above.
+  ok("the range list reaches a year or more",
+    NAV_RANGES.some((r) => r.days === null || (r.days ?? 0) >= 365));
 }
 
 process.exit(fails ? 1 : 0);

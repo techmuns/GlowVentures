@@ -2305,6 +2305,80 @@ const INVARIANTS = {
       if (pcts.length < 2) return false;
       return Math.max(...pcts) - Math.min(...pcts) > 1;
     }],
+  /**
+   * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
+   *
+   * The one invariant this card never had, and the one defect it shipped with.
+   * Everything else here reads TEXT, and the text was right the whole time the
+   * plot area was an empty box — a `ResponsiveContainer height="100%"` inside a
+   * `flex-1` holder resolving to zero. Struck on geometry, because no rendered
+   * word changes when it regresses.
+   *
+   * The book's own series is baked into the bundle, so this holds with NO FEED
+   * AT ALL: the walk that serves nothing must still draw the book and the raw
+   * NAV. The index line needs `cio-live`, and is asserted there.
+   */
+  ["the NAV chart paints — a sized plot area with the book's own curve in it",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const c = ctx.navChart;
+      return c.svgHeight > 200 && c.svgWidth > 400
+        // A `<path>` with an empty `d` is what a zero-height chart emits, so the
+        // curve is measured rather than counted.
+        && c.pathLen.filter((n) => n > 20).length >= 2
+        && c.yTicks >= 3
+        && c.legend.length >= 2;
+    }],
+  /**
+   * A REAL TIME AXIS, NOT SEVEN EQUALLY-SPACED LABELS.
+   *
+   * The axis was `type="category"` over the book's own dates, so 10 → 11 August
+   * and 10 → 27 July took the same width and every segment's slope was a fact
+   * about row order. Struck on the TICK LABELS: a time-scaled axis over a year
+   * prints months (`2026-04`), a category axis over seven statement dates can
+   * only ever print those seven. Both shapes are accepted — the axis switches
+   * granularity with the span — and a tick that is not a date fails.
+   */
+  ["the NAV chart's x-axis is dated, and its ticks are real dates",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const ticks = ctx.navChart.xTicks;
+      return ticks.length >= 3 && ticks.every((x) => /^\d{4}(-\d{2})?$|^\d{2}-\d{2}$/.test(x));
+    }],
+  /**
+   * THE PERIOD CONTROL IS THE FAMILY'S ASK, SO ITS ABSENCE IS A FINDING.
+   *
+   * *"it should show a proper time graph showing larger period return
+   * comparison."* The book's own dated series is five weeks and cannot be
+   * longer; what CAN be lengthened is the index's context around it. A card that
+   * lost the control would go back to showing five weeks and every text check
+   * would stay green — the same shape as the missing facet toggle, and answered
+   * the same way: measured, never abstained from.
+   */
+  ["the NAV chart offers a period longer than the book's own window",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const keys = ctx.navChart.ranges.map((r) => r.key);
+      return keys.includes("book") && ["1Y", "3Y", "5Y", "MAX"].filter((k) => keys.includes(k)).length >= 3
+        && ctx.navChart.activeRange !== null
+        // ...AND IT DOES NOT OPEN ON THE SHORTEST ONE. Defaulting to the book's
+        // own window would satisfy every check above while showing exactly what
+        // was complained about.
+        && ctx.navChart.activeRange !== "book";
+    }],
+  /**
+   * ...AND THE LONGER WINDOW SAYS, IN WORDS, WHICH STRETCH CARRIES A COMPARISON.
+   *
+   * On the default 1Y view most of the axis is index history the book has no
+   * measurement over, and a reader who is not told reads the whole width as a
+   * comparison — a caption widening a figure it does not narrow, arriving
+   * through a time axis. The sentence renders with no feed at all, so it is
+   * asserted here; the SHADED BAND needs a window wider than the book's own and
+   * is therefore asserted on `cio-live`, where one exists.
+   */
+  ["the card names the book's own window and calls the rest market history",
+    (t) => /The book.s own dated series is \d+ statement dates over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+      && /market history rather than a comparison/.test(t)],
   ["the NAV card names the external capital it nets out, in rupees",
     // MONEY IN ANY SCALE. `CR` matches crore alone, and a drop whose only flow
     // was a few lakh would fail a check about a page that was correct — the
@@ -3639,6 +3713,48 @@ const INVARIANTS = {
       (t) => {
         const card = sliceBetween(t, "0 LOSERS", "Allocation by asset class");
         return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
+      }],
+    /**
+     * ...AND THE INDEX IS ITS OWN DAILY CURVE, NOT SEVEN SAMPLED POINTS.
+     *
+     * The chart used to align the index to the BOOK'S seven statement dates and
+     * draw a line through those — a plausible-looking curve that is not the
+     * index's path, and over a year of context would have been four segments. On
+     * this fixture the feed carries a settled close per weekday back to January,
+     * so the index curve must have far more vertices than the book's line does.
+     * Struck as a RATIO against the book's own curve rather than a literal, so a
+     * fixture with a different number of closes cannot make it stale.
+     */
+    ["the Nifty 500 line is drawn from its own daily closes, not sampled to the book's dates",
+      (t, ctx) => {
+        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+        const c = ctx.navChart;
+        if (c.lines < 3) return false;
+        const lens = [...c.pathLen].sort((a, b) => b - a);
+        // The longest curve is the index's; the book's two lines are seven
+        // points each. An index sampled to the book's dates would be the same
+        // length as they are.
+        return lens[0] > lens[1] * 4 && c.vertices > 40;
+      }],
+    /**
+     * ...AND THE STRETCH THAT CARRIES A COMPARISON IS SHADED.
+     *
+     * With a feed the chart spans months of index history the book has no
+     * measurement over. The band is the book's own first-to-last statement date,
+     * so it says where the two lines are both real — and it is asserted here
+     * rather than on `cio` because with no feed the chart IS the book's window
+     * and there is correctly nothing to mark.
+     */
+    ["the measured window is shaded once the chart is wider than it",
+      (t, ctx) => {
+        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+        const note = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}) · \d+ index closes/.exec(ctx.navChart.rangeNote ?? "");
+        if (!note) return false;
+        const book = /statement dates over (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(t);
+        if (!book) return false;
+        // The window really is wider than the book's own — otherwise the band's
+        // absence would be correct and this check would be asserting nothing.
+        return note[1] < book[1] && ctx.navChart.band >= 1;
       }],
     /** And with a price history in hand the NAV card draws the comparison. */
     ["the NAV card draws the Nifty 500 line and states its return",
@@ -5250,6 +5366,63 @@ for (const theme of THEMES) {
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
       }));
       /**
+       * ── THE NAV CHART, MEASURED — BECAUSE ITS TEXT WAS ALWAYS RIGHT ──────
+       *
+       * This card rendered an EMPTY BOX on the family's screen for as long as it
+       * has existed, and every invariant on it passed the whole time. The
+       * container was `min-h-[15rem] flex-1`, so `ResponsiveContainer
+       * height="100%"` resolved against a flex item whose used height comes from
+       * `min-height` — which Chrome does not treat as definite for a percentage
+       * child. The container measured 1225 x 0, recharts drew no SVG at all, and
+       * the eight text checks above went on reading a caption, two returns and a
+       * list of named accounts that were every one of them correct.
+       *
+       * A CHART IS CHECKED ON ITS GEOMETRY OR IT IS NOT CHECKED. So: the painted
+       * height, the line paths and how long each one's `d` actually is, the axis
+       * ticks, the legend's own reading order, and the range control. `pathLen`
+       * is the load-bearing one — a `<path>` element exists whether or not it has
+       * a curve in it, and an empty `d` is exactly what a chart with no plot area
+       * emits.
+       */
+      const navChart = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector('[data-testid="nav-chart"]');
+        if (!el) return null;
+        const svg = el.querySelector("svg.recharts-surface");
+        const paths = [...el.querySelectorAll(".recharts-line-curve")];
+        const card = el.closest(".card");
+        const ranges = [...(card?.querySelectorAll("[data-range]") ?? [])].map((b) => ({
+          key: b.getAttribute("data-range"),
+          active: b.getAttribute("aria-selected") === "true",
+        }));
+        return {
+          height: Math.round(el.getBoundingClientRect().height),
+          svgHeight: svg ? Math.round(svg.getBoundingClientRect().height) : 0,
+          svgWidth: svg ? Math.round(svg.getBoundingClientRect().width) : 0,
+          lines: paths.length,
+          pathLen: paths.map((e) => (e.getAttribute("d") ?? "").length),
+          // The plotted vertices of the longest curve — a straight line between
+          // two dates and a real daily series both draw a path, and only this
+          // tells them apart.
+          //
+          // COUNTED ON EVERY DRAW COMMAND, INCLUDING `C`. The first draft split
+          // on `[LM]` and read 1 for a 245-point curve: these lines are
+          // `type="monotone"`, so recharts emits one `M` and a cubic bezier per
+          // point thereafter and there is not an `L` in the whole path. A
+          // counter that reads 1 for every curve cannot tell a sampled line from
+          // a daily one, which is the only thing it exists to do.
+          vertices: Math.max(0, ...paths.map((e) => ((e.getAttribute("d") ?? "").match(/[MLC]/g) ?? []).length)),
+          xTicks: [...el.querySelectorAll(".recharts-xAxis .recharts-cartesian-axis-tick-value")]
+            .map((e) => (e.textContent ?? "").trim()),
+          yTicks: el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick").length,
+          legend: [...el.querySelectorAll(".recharts-legend-item-text")].map((e) => (e.textContent ?? "").trim()),
+          band: el.querySelectorAll(".recharts-reference-area").length,
+          flowDots: el.querySelectorAll(".recharts-reference-dot").length,
+          ranges,
+          activeRange: ranges.find((r) => r.active)?.key ?? null,
+          rangeNote: (card?.querySelector('[data-testid="nav-range-note"]')?.textContent ?? "").trim(),
+        };
+      });
+      /**
        * EVERY ROW OF THE HOLDINGS TABLE, BY WHAT IT IS rather than by what it
        * prints. `bucket` is on every row and the mandate fields only on the
        * rows that are mandates, which is exactly the distinction the invariants
@@ -5562,7 +5735,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
