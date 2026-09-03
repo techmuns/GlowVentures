@@ -3005,18 +3005,18 @@ other seven are stateless lookups — a quote, a filing, a ratio table — with 
 owner, session or history between them, which is exactly why none of them ever
 needed the field and why the omission could only surface here.
 
-**THE VALUE IS CONFIGURED, NEVER GUESSED.** `MUNS_USER_INDEX` sits beside
-`MUNS_TOKEN` in the Cloudflare environment; it is not defaulted and not
-inferred, because a wrong index would file this family's conversation under
-somebody else's account — a worse outcome than the 400 it replaces. Unset, the
-function refuses BEFORE calling the upstream and names the variable
-(`USER_INDEX_REQUIRED`); rejected, it comes back as `USER_INDEX_REJECTED`
-rather than as a model failure, because those two send a reader to completely
-different places. A `user_index` in the REQUEST is ignored — the browser does
+**THE VALUE WAS TO BE CONFIGURED AND NEVER GUESSED — AND THE DEPLOYMENT
+OVERTURNED THAT.** `MUNS_USER_INDEX` sat in the Cloudflare environment as the
+ONLY source of the field: unset, the function refused before calling the
+upstream and named the variable (`USER_INDEX_REQUIRED`), because a wrong index
+would file this family's conversation under somebody else's account — a worse
+outcome than the 400 it replaced. That was right while nobody had supplied a
+value. See the two paragraphs below for what happened when somebody did.
+A `user_index` in the REQUEST is still ignored — the browser does
 not get to say whose account a question is filed under. `GET /api/chat?probe=1`
 makes one live round trip so the value can be confirmed on the deployment
-without a redeploy cycle, and the diagnostics report the index's PRESENCE and
-SHAPE, never the token.
+without a redeploy cycle, and the diagnostics report the index's PRESENCE, its
+SHAPE and its SOURCE, never the token.
 
 **AND THE IDENTITY IS `user_id: 14`, FIXED AT THE CLIENT'S INSTRUCTION.**
 *"Pass an argument named `user_id`: 14 — this is a static value, don't change
@@ -3027,16 +3027,32 @@ unset variable break a working dashboard. It is never taken from the request —
 the browser does not get to say whose account a question is filed under — and a
 `user_id` in the body is ignored.
 
-**`MUNS_USER_INDEX` THEREFORE NO LONGER BLOCKS THE CALL.** It refused before
-calling the upstream while `user_index` was the only identity the API had asked
-for and this dashboard had none. With a fixed `user_id` there is something to
-send, and refusing would refuse a call that works. The variable stays wired —
-set it and `user_index` rides alongside — but it is never DEFAULTED to
-`USER_ID`: "index" and "id" are not obviously the same field, and a 14 that
-means a position in a list rather than an identity would file this family's
-conversation under somebody else. If the upstream still wants one, its 400 comes
-back as `USER_INDEX_REQUIRED` (none set — set one) or `USER_INDEX_REJECTED` (one
-set — correct it), because those two send a reader to different places.
+**`MUNS_USER_INDEX` THEREFORE STOPPED BLOCKING THE CALL** — and that build sent
+`user_id` alone, deliberately NOT copying it into `user_index`, on the reasoning
+that "index" and "id" are not obviously the same field and a 14 meaning a
+position in a list rather than an identity would file this family's conversation
+under somebody else.
+
+**AND THE UPSTREAM REFUSED IT ANYWAY, WHICH IS THE MEASUREMENT THAT SETTLED
+IT.** Run on the deployment, that build came back with the SAME
+`400 — user_index is required…`. So `user_id` is not the field the API is
+asking for; the only value anyone has named for this deployment is 14; and the
+choice was between sending it under both names or a chat that can never answer.
+**The fixed identity now goes as `user_id` AND `user_index`.** What changed is
+the evidence and not the rule: the earlier refusal was declining to INVENT a
+value, and this is sending the one the client gave. `MUNS_USER_INDEX` survives
+as the OVERRIDE — set it and it WINS — for the day the two turn out to differ.
+
+**AND `USER_INDEX_REQUIRED` IS GONE RATHER THAN LEFT UNREACHABLE.** With an
+identity always in the body, a 400 naming one means the value was REJECTED and
+never that it was missing, so the two-code split collapses to
+`USER_INDEX_REJECTED` carrying the upstream's own sentence — which names the
+field, where the dashboard would only paraphrase it. The panel's
+`USER_INDEX_REQUIRED` copy went with it. `chatFunction.test.ts` asserts the
+REMOVAL — that the same 400 with no override set still comes back
+`USER_INDEX_REJECTED` — because deleting the branch and its test together would
+leave nothing to notice a future edit putting the request back to the shape the
+deployment refused.
 
 **AND THE PANEL PRINTED THE WHOLE ENVELOPE AT THE READER.** NestJS nests its
 error as `{ message: { message, error, statusCode } }`, and the first cut
@@ -3081,13 +3097,15 @@ absent-vs-zero rule failing through a JSON field instead of a table cell.
 the label, the stated snapshot, the vanished search input, and the named
 failure. All verified by reintroducing their bug.
 
-**AND TWENTY-TWO MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
+**AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
 API is out of reach from a test, but every branch around it is not: that
-`user_index` is sent at the top level, as a number when it reads as one and
-verbatim when it does not, that a request-supplied one is ignored, that no
-call is made at all when it is unconfigured, and that the deployment's exact
-400 envelope comes back as one readable sentence under its own code.
+`user_id` and `user_index` both carry the fixed identity at the top level, that
+`MUNS_USER_INDEX` overrides it as a number when it reads as one and verbatim
+when it does not, that a request-supplied one is ignored, that no call is made
+at all when the TOKEN is unconfigured, that `USER_INDEX_REQUIRED` can no longer
+be reached, and that the deployment's exact 400 envelope comes back as one
+readable sentence under its own code.
 
 ### Stage 10g — the XIRR is on the Morning CIO, and it is CHECKED
 

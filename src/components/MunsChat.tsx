@@ -53,15 +53,13 @@ function failureText(code: string | null | undefined, detail?: string | null): s
     case "UNREACHABLE":
       return "The assistant's API could not be reached. This is the service, not your question.";
     // `MUNS_TOKEN` is a SERVICE token, so the chat endpoint — the only
-    // user-scoped one this dashboard calls — needs `user_index` to know whose
-    // conversation this is. Named as configuration rather than dressed up as a
-    // model failure, because those send the reader to different places.
-    case "USER_INDEX_REQUIRED":
-      return "The assistant's API wants a user index alongside the fixed user id this dashboard sends. Set "
-        + "MUNS_USER_INDEX in the Cloudflare environment — this is configuration, not your question.";
+    // user-scoped one this dashboard calls — must name the acting user. One is
+    // ALWAYS sent now, so the only identity failure left is a REFUSED one:
+    // there is no `USER_INDEX_REQUIRED` case any more, and the upstream's own
+    // words carry the name of the field it is complaining about.
     case "USER_INDEX_REJECTED":
-      return `The assistant's API rejected the configured user index${detail ? ` — ${detail}` : ""}. `
-        + "This is MUNS_USER_INDEX in the Cloudflare environment, not your question.";
+      return `The assistant's API refused the user identity this dashboard sends${detail ? ` — ${detail}` : ""}. `
+        + "Override it with MUNS_USER_INDEX in the Cloudflare environment — this is configuration, not your question.";
     case "UPSTREAM_ERROR":
       return `The assistant's API refused the request${detail ? ` — ${detail}` : ""}.`;
     case "NO_TEXT_IN_STREAM":
