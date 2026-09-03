@@ -1965,6 +1965,46 @@ const INVARIANTS = {
    * keeps working — which is precisely why their absence from the strip has to
    * be asserted rather than assumed: nothing would break if one came back.
    */
+  /**
+   * ── NOTHING INSIDE A TILE ADVERTISES ITSELF AS THE THING TO CLICK ─────────
+   *
+   * *"remove the remaining underlines from the texts, and even the calculation
+   * that we're showing that appears when click the underlined no."*
+   *
+   * The whole card is the target, and it used to carry two rival affordances
+   * anyway: a dotted-underlined LABEL and a dashed-underlined FIGURE, the second
+   * of which opened a popover. Both said "click this text" about a card where
+   * the text is not the thing to click, and the popover then had to be dismissed
+   * before the reader could do anything else.
+   *
+   * Struck on COMPUTED STYLE and on the element count, because the words are
+   * identical either way — every figure check on this page passed throughout.
+   */
+  ["no KPI tile underlines its text or hides arithmetic behind it", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.underlined === 0 && tile.buttons === 0);
+  }],
+  /**
+   * ...AND A TILE THAT OPENS SOMETHING LOOKS LIKE A BUTTON, while one that does
+   * not still reads as a panel.
+   *
+   * *"Just make the KPI tiles look like 3-d clickable buttons."* This is the one
+   * claim on this page that NO value or text check can reach, and the first
+   * draft of the CSS proved why it needs its own: `html:not(.dark) .card` sets a
+   * box-shadow of its own further down the stylesheet at equal specificity, so
+   * source order decided it and every tile rendered FLAT while the whole sweep
+   * stayed green. Asserted on the computed shadow.
+   *
+   * BOTH DIRECTIONS. A rule that raised every card would satisfy the first half
+   * and make the affordance meaningless — a tile that presses under the pointer
+   * and then does nothing is a worse lie than a flat one. So the drill-down
+   * page's own four tiles, which open nothing, must stay flat (`holdings-book`).
+   */
+  ["each KPI tile that opens something is raised like a button", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) => (tile.links.length > 0) === tile.raised);
+  }],
   ["no KPI tile links at a scope that is now a facet", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     return ctx.kpiTiles.every((tile) =>
@@ -2316,6 +2356,41 @@ const INVARIANTS = {
       return halves.every((f) => Number.isFinite(f.rows))
         && halves.reduce((a, f) => a + f.rows, 0) === whole.rows;
     }],
+    /**
+     * A TILE THAT OPENS NOTHING STAYS FLAT. The other half of Morning CIO's
+     * raised-tile claim, struck where the flat tiles are: this page's four
+     * summary tiles carry no href, so a stylesheet that raised every `.card`
+     * would pass the strip's check and fail here.
+     */
+    ["its own summary tiles are not dressed as buttons", (t, ctx) => {
+      if (!ctx?.metrics?.flatCards) return { notChecked: "no card geometry was captured on this run" };
+      return ctx.metrics.flatCards.raisedWithoutLink === 0;
+    }],
+    /**
+     * ── THE ARITHMETIC LANDED HERE ───────────────────────────────────────────
+     *
+     * *"even the calculation … we can show that inside the clickable KPI
+     * pages."* Asserted as three separate things because each fails on its own:
+     * the card exists, it carries a WORKED example (an expression with no
+     * numbers in it explains nothing a reader clicked to find out), and the
+     * worked example is struck on THIS page's rows.
+     *
+     * That last one is the whole point and the only one that can catch a real
+     * regression: `drilldownFormula` reads `d.rows`, which is the ACTIVE FACET,
+     * so a version that summed the whole scope would print the book's total on
+     * the private half — a caption not describing its own figure, which is the
+     * failure this repo has already paid for on the Capital invested tile. It is
+     * compared against the page's OWN rendered total rather than against a
+     * literal, so it stays true when the next drop moves the book.
+     */
+    ["the arithmetic behind the figure is on this page, not behind a click", (t, ctx) =>
+      !!ctx?.formula && /Σ market value/.test(ctx.formula.text) && ctx.formula.worked.length > 0],
+    ["its worked example ties to the total this page prints", (t, ctx) => {
+      if (!ctx?.formula?.worked) return false;
+      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
+      if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
+      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15;
+    }],
     ["its market value reproduces the Consolidated NAV", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -2468,6 +2543,21 @@ const INVARIANTS = {
       const pos = CIO_FIGURES.get("positions");
       if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
       return here != null && here.holdings + listed.holdings === pos;
+    }],
+    /**
+     * THE WORKED EXAMPLE IS THE HALF'S OWN, NOT THE BOOK'S. The single most
+     * likely regression in moving the arithmetic out of a popover: a formula
+     * summed over the SCOPE rather than the active facet reads correct on the
+     * undivided page and prints ₹710 Cr under a heading saying "Private".
+     * Struck against this page's own total, which is the private half's.
+     */
+    ["its worked example is the private half's, not the whole book's", (t, ctx) => {
+      if (!ctx?.formula?.worked) return false;
+      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
+      const nav = CIO_FIGURES.get("nav");
+      if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
+      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15
+        && (!Number.isFinite(nav) || Math.abs(worked - nav) > 0.15);
     }],
     ["the two halves reconstruct the NAV between them", (t) => {
       const nav = CIO_FIGURES.get("nav"), listed = CIO_FIGURES.get("listed"), here = drilldownTotal(t);
@@ -4405,7 +4495,48 @@ for (const theme of THEMES) {
         return [...strip.querySelectorAll(".card")].map((c) => ({
           label: (c.querySelector(".label-xs")?.textContent ?? "").trim(),
           links: [...c.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
+          /**
+           * ── THE TWO THINGS `innerText` CANNOT SEE ───────────────────────
+           *
+           * *"remove the remaining underlines from the texts… Just make the KPI
+           * tiles look like 3-d clickable buttons."* Both halves are pure
+           * presentation: a tile renders the identical words underlined or not,
+           * raised or flat, so every value check on this page passes either way.
+           * They are read off the COMPUTED style for that reason.
+           */
+          underlined: [...c.querySelectorAll("*")].filter((e) =>
+            (e.textContent ?? "").trim()
+            && getComputedStyle(e).textDecorationLine.includes("underline")).length,
+          // A popover trigger is a <button>; nothing else in a tile is one.
+          buttons: c.querySelectorAll("button").length,
+          /**
+           * RAISED = the shadow carries a HARD OFFSET LAYER (a `0 Npx 0` with
+           * N ≥ 2) — the tile's own thickness, which a flat card has no
+           * equivalent of. Matched on the shape rather than on the exact colour
+           * so a palette change does not fail a correct tile, and it is a real
+           * distinction rather than "has any shadow": every `.card` in this app
+           * already carries a soft one.
+           */
+          raised: /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(c).boxShadow),
         }));
+      });
+      /**
+       * ── THE ARITHMETIC, ON THE PAGE THE TILE OPENS ────────────────────────
+       *
+       * *"even the calculation that we're showing that appears when click the
+       * underlined no. we can show that inside the clickable KPI pages."* The
+       * popover it replaced was opened by a click and rendered into a fixed box,
+       * so a sweep that never clicked could not have seen it at all; this is
+       * rendered with the page and is read straight off it.
+       */
+      const formula = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="drilldown-formula"]');
+        if (!box) return null;
+        const worked = box.querySelector('[data-testid="drilldown-formula-worked"]');
+        return {
+          text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
+          worked: ((worked?.textContent ?? "")).replace(/\s+/g, " ").trim(),
+        };
       });
       /**
        * ── THE FACET TOGGLE, READ OFF THE TOGGLE ITSELF ─────────────────────
@@ -4634,7 +4765,20 @@ for (const theme of THEMES) {
           .filter((r) => r.height > 0);
         const inView = rows.filter((r) => r.top >= 0 && r.bottom <= vh).length;
         const firstTop = rows.length ? Math.round(rows[0].top) : null;
-        return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh };
+        /**
+         * A RAISED CARD MUST BE A BUTTON. Morning CIO's strip asserts that every
+         * tile which opens something looks pressable; this is the converse,
+         * measured on every card on whatever page is being walked. A stylesheet
+         * that raised `.card` outright would satisfy the strip's check and turn
+         * every panel in the app into a button that does nothing.
+         */
+        const raised = (el) => /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(el).boxShadow);
+        const cards = [...document.querySelectorAll("main .card")];
+        const flatCards = {
+          raisedWithoutLink: cards.filter((c) => raised(c) && !c.querySelector("a[href]")).length,
+          total: cards.length,
+        };
+        return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
       });
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
@@ -4655,7 +4799,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, tableRows, mandateRows, kpiTiles, facets, formula, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

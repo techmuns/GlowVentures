@@ -699,17 +699,8 @@ export function MorningCIO() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
         <Kpi label="Consolidated NAV"
           href={drilldownHref("book")}
-          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page."
-          value={<Auditable formula={{
-            title: "Consolidated NAV",
-            excel: m.privateCount ? "= Σ market value of every holding + Private-markets value" : "= Σ market value of every holding",
-            plain: `The whole book across all ${m.accountCount} accounts and ${m.ownerCount} holders, at latest marks, with each holding reported twice counted once.${
-              m.hasPrivateClass ? ` It spans both halves by asset class — ${money(m.pp.listed)} listed and ${money(m.pp.private)} private (AIF, unlisted).` : ""
-            }`,
-            worked: m.privateCount
-              ? `= ${money(m.bookMV)} + ${money(m.privateCurrent)} = ${money(m.totalValue)}`
-              : `= ${money(m.bookMV)} across ${m.p.length} positions in ${m.accountCount} accounts`,
-          }}>{fmtFromBase(m.totalValue, { compact: true })}</Auditable>}
+          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page, and so is the arithmetic behind this number."
+          value={fmtFromBase(m.totalValue, { compact: true })}
           sub={<>
             {/* THE TWO HALVES ARE FIGURES, NOT LINKS. They had an address each,
                 so this one tile offered three destinations — and the reader had
@@ -736,17 +727,8 @@ export function MorningCIO() {
             count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
           href={drilldownHref("invested")}
-          hrefTitle="Open the holdings whose statement reports a cost — with the ones that report none, and sit outside this figure, a toggle away on the same page."
-          value={<Auditable formula={{
-            title: "Capital invested — consolidated",
-            excel: m.privateCount ? "= Σ cost basis of every holding + Private drawn" : "= Σ cost basis of every holding",
-            plain: `Money currently deployed, across all ${m.accountCount} accounts — the cost basis of every holding the statements price, listed and private alike, each dedupeGroup counted once.${
-              m.noCostCount ? ` ${m.noCostCount} position${m.noCostCount === 1 ? "" : "s"} (${money(m.noCostMV)} of market value) sit${m.noCostCount === 1 ? "s" : ""} outside it: a depository statement reports what is held, not what it cost, and entering a missing cost as zero would report the whole of that market value as profit.` : ""
-            }`,
-            worked: m.privateCount
-              ? `= ${money(m.bookCost)} + ${money(m.privateInvested)} = ${money(m.totalInvested)}`
-              : `= ${money(m.bookCost)} across ${m.p.length - m.noCostCount} of ${m.p.length} positions`,
-          }}>{fmtFromBase(m.totalInvested, { compact: true })}</Auditable>}
+          hrefTitle="Open the holdings whose statement reports a cost, and the arithmetic struck over them — with the ones that report none, and sit outside this figure, a toggle away on the same page."
+          value={fmtFromBase(m.totalInvested, { compact: true })}
           sub={<>
             {/* A COUNT OF POSITIONS IS NOT A SHARE OF THE BOOK, and this caption
                 said only the count. "61 positions carry no cost basis" reads as
@@ -809,19 +791,7 @@ export function MorningCIO() {
           hrefTitle="Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page."
           value={m.bookMW.pct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.bookMW.pct)}><Auditable formula={{
-                title: m.bookMW.annualised ? "XIRR — money-weighted, annualised" : "Money-weighted return over the measured window",
-                excel: m.bookMW.annualised
-                  ? "= XIRR(each account's dated flows + its market value on its own report date)"
-                  : "= (1 + XIRR)^(window ÷ 365) − 1",
-                plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened — closed against each account's market value ON ITS OWN REPORT DATE. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value.\n\n${
-                  m.bookMW.annualised
-                    ? `The flows span ${m.bookMW.windowDays ?? "—"} days, so this is a genuine annual rate.`
-                    : `THIS IS NOT ANNUALISED, AND THAT IS DELIBERATE. The flows span only ${m.bookMW.windowDays} days. Compounding that onto a full year gives ${m.bookMW.annualPct == null ? "—" : fmtPct(m.bookMW.annualPct, { sign: true, decimals: 1 })} p.a., which is a projection of ${m.bookMW.windowDays} strong days rather than a year the book has lived — and it would contradict the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. So the figure shown is what the book has actually earned over the window it has.`
-                }\n\nIt covers ${m.xirrAccounts} of ${m.accountCount} accounts — ${money(m.measuredMV)} of ${money(m.totalValue)}. The rest publish no opening portfolio value, and closing an account's market value against a stake nobody stated would overstate the rate rather than approximate it${m.xirrExcluded.length ? ` (${m.xirrExcluded.join(", ")})` : ""}.\n\nCHECKED AGAINST THE MANAGERS' OWN FIGURES: five of these accounts print a financial-year-to-date return on the same report date, and this calculation reproduces all five to within 0.47 percentage points — V.E.C's two to within 0.05.`,
-                worked: `${m.xirrAccounts} accounts · ${money(m.measuredMV)} · closed at each account's own as-of = ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}`,
-                
-              }}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</Auditable></span>}
+            : <span className={changeColor(m.bookMW.pct)}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</span>}
           sub={m.bookMW.pct == null
             ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
             : <>
@@ -847,19 +817,7 @@ export function MorningCIO() {
           hrefTitle="Open the holdings this return is struck over — the ones whose statement reports a cost"
           value={m.gainPct == null
             ? <AbsentValue />
-            : <span className={changeColor(m.gainPct)}><Auditable formula={{
-                title: "Consolidated return to date",
-                excel: "= Embedded gain ÷ Capital invested",
-                plain: `The return the whole book has produced to date on the capital in it — cumulative, not annualised, so a strong quarter reads as the quarter's gain rather than a yearly pace the book has not run for a year.${
-                  m.noCostCount ? ` Struck over the ${m.p.length - m.noCostCount} positions carrying a cost; the other ${m.noCostCount} are in neither the numerator nor the denominator.` : ""
-                }${
-                  m.bookMW.pct != null
-                    ? ` It covers the WHOLE book, where the money-weighted figure beside it covers ${money(m.measuredMV)} of ${money(m.totalValue)} — the accounts whose statements carry an opening portfolio value. Over that narrower set the money-weighted answer is ${fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}${m.bookMW.annualised ? " p.a." : ` over ${m.bookMW.windowDays} days`}.`
-                    : ""
-                }`,
-                worked: `= ${money(m.embeddedGain, true)} ÷ ${money(m.totalInvested)} = ${fmtPct(m.gainPct, { sign: true, decimals: 1 })}`,
-                
-              }}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</Auditable></span>}
+            : <span className={changeColor(m.gainPct)}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</span>}
           sub={m.gainPct == null
             ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
             : <>
@@ -876,8 +834,17 @@ export function MorningCIO() {
         <Kpi label="Dry powder"
           href={hasCommitments ? "/private-market" : undefined}
           hrefTitle="Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
+          /* THIS TILE'S POPOVER WAS ALSO WRONG, WHICH REMOVING IT FIXES. It
+             read `= Σ (Committed − Called) across funds` — and the book does
+             not derive dry powder that way. Private Market's own tile says so
+             in as many words: it is "summed exactly as each statement prints
+             it, never derived from committed − drawn", because two folios
+             print a commitment and a drawdown and NO undrawn figure, and
+             subtracting there would assert a fund has nothing left to call.
+             The page this tile opens already carries that explanation beside
+             Committed and Drawn, so nothing needs writing to replace it. */
           value={hasCommitments
-            ? <span className="text-amber-400"><Auditable formula={{ title: "Dry powder", excel: "= Σ (Committed − Called) across funds", plain: "Capital you've committed to funds that hasn't been called yet — still to be deployed.", worked: `= ${money(m.deploy.committed)} − ${money(m.deploy.drawn)} = ${money(m.deploy.unfunded)}`,  }}>{fmtFromBase(m.deploy.unfunded, { compact: true })}</Auditable></span>
+            ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span>
             : <AbsentValue />}
           sub={hasCommitments
             ? "undrawn fund commitments"
