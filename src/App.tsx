@@ -23,8 +23,6 @@ import { MandateHoldings } from "@/pages/MandateHoldings";
 import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { CompareCompanies } from "@/pages/CompareCompanies";
 import { ExposureIPS } from "@/pages/ExposureIPS";
-import { ThesisMonitor } from "@/pages/ThesisMonitor";
-import { Alerts } from "@/pages/Alerts";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // A page only renders when there is something real to render. An empty book
@@ -180,8 +178,31 @@ export default function App() {
             <Route path="/knowledge" element={<Navigate to="/cio" replace />} />
             <Route path="/macro" element={<Navigate to="/cio" replace />} />
             <Route path="/economy" element={<Navigate to="/cio" replace />} />
-            <Route path="/thesis" element={<Gate><ThesisMonitor /></Gate>} />
-            <Route path="/alerts" element={<Gate><Alerts /></Gate>} />
+            {/* THESIS & TRIGGERS and ALERTS were REMOVED at the family's request —
+                both pages, both nav entries, and with them the whole MONITOR nav
+                group, which held nothing else.
+
+                BOTH FORWARD TO EXPOSURE & IPS, which is the surviving surface
+                nearest their purpose rather than a neutral fallback. All three
+                were the family-input layer: a thesis, an alert rule and an IPS
+                target are things the family TYPES, not figures a statement
+                reports. Exposure & IPS is the one that stays, it holds the IPS
+                targets and the bucket mapping, and — the part that decides it —
+                it carries the Export/Import that round-trips the WHOLE store in
+                one file, theses and alert rules included. So it is now the only
+                way to reach a stored thesis or alert rule, which makes it the
+                honest destination for someone who bookmarked either page.
+
+                NOTHING THE FAMILY TYPED WAS DELETED. `src/lib/familyInputs.ts`
+                is untouched: every thesis, trigger, review date and alert rule
+                they entered is still stored and still exports — the same
+                treatment `deals.ts` and `household.ts` got at Stage 10f and
+                `watchlist.ts` at Stage 10w. `alertEngine.ts` stays too, because
+                Exposure & IPS reads `bucketActuals` and `bucketWeightPct` from
+                it; only `evaluateAlerts` and `ALERT_KIND_LABEL`, which had no
+                caller left, went with the page. */}
+            <Route path="/thesis" element={<Navigate to="/exposure" replace />} />
+            <Route path="/alerts" element={<Navigate to="/exposure" replace />} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
             {/* THE FUND-OF-FUNDS PRIVATE MARKETS PAGE OF Stage 10f IS STILL
                 GONE, and so are the Data Bank and the Family Dashboard. What

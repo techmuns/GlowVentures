@@ -12,6 +12,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  costCoversSet,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 import { drilldownHref, TOP_NAMES } from "@/lib/drilldown";
@@ -268,8 +269,13 @@ export function MorningCIO() {
        * ₹98,742 uncovered out of ₹352.3 Cr) and PMS mandates (+11.4%, fully
        * costed), and correctly refuses Direct Equity and Mutual Fund, where the
        * two columns describe different sets of holdings.
+       *
+       * `costCoversSet`, not a copy of it: the Portfolio Monitor's per-category
+       * totals row prints a return over the SAME buckets, and two copies of one
+       * test are two chances for one screen to show a return the other refuses
+       * for the category a reader is comparing them on.
        */
-      const costCoversRow = mv > 0 && withoutCostMV <= mv * 0.005;
+      const costCoversRow = costCoversSet(mv, withoutCostMV);
       return {
         count: rows.length, cost, mv, pnl,
         withoutCost: noCost.length,

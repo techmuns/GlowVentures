@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Target, Crosshair, BellRing, Cable,
+  GitCompare, Target, Cable,
   Handshake, NotebookPen,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -35,8 +35,6 @@ const NAV = [
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
   { to: "/compare", label: "Compare Companies", icon: GitCompare, group: "Research" },
-  { to: "/thesis", label: "Thesis & Triggers", icon: Crosshair, group: "Monitor" },
-  { to: "/alerts", label: "Alerts", icon: BellRing, group: "Monitor" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
   { to: "/performance", label: "NAV & Performance", icon: Activity, group: "Analytics" },
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: "Analytics" },

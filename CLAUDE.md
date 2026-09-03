@@ -2755,8 +2755,11 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   actuals are in the book; the DESIRED allocations are a family decision nobody
   has supplied, and inventing a target weight would fabricate the entire gap.
 - **Layer 4 — thesis monitoring** and **Layer 5 — alerts** beyond price levels.
-  Both need a store plus a rules engine; only the price-level half of Layer 5 is
-  possible today, and that is what shipped.
+  Both need a store plus a rules engine; only the price-level half of Layer 5 was
+  ever possible, and both pages that shipped it have since been REMOVED at the
+  family's request — see Stage 10y. The STORE is untouched: every thesis and
+  alert rule they entered is still held in `familyInputs.ts` and still exports
+  from Exposure & IPS. Nothing evaluates a rule today.
 - **PDF and PowerPoint export.** Excel export exists (`exportPortfolioExcel.ts`).
 
 ## Conventions
@@ -2822,7 +2825,7 @@ violate any of them.**
   opens the arithmetic behind it elsewhere in the app, which is an explanation
   rather than a hyperlink. Morning CIO has none left, at the family's request:
   the KPI tiles went in Stage 10y and the allocation table's rows and footer in
-  Stage 10ab, and in both cases the arithmetic is rendered on the page the
+  Stage 10ac, and in both cases the arithmetic is rendered on the page the
   figure opens instead. Nothing on that page is underlined. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
@@ -2885,7 +2888,7 @@ violate any of them.**
   opens the arithmetic behind it elsewhere in the app, which is an explanation
   rather than a hyperlink. Morning CIO has none left, at the family's request:
   the KPI tiles went in Stage 10y and the allocation table's rows and footer in
-  Stage 10ab, and in both cases the arithmetic is rendered on the page the
+  Stage 10ac, and in both cases the arithmetic is rendered on the page the
   figure opens instead. Nothing on that page is underlined. **And the Data
   Audit PAGE is untouched and still in the nav**: only the links pointing INTO
   it were removed, its own document chips are `<button>`s, and the provenance it
@@ -4830,6 +4833,190 @@ Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
 so nothing was left exported and dead, which is the failure this file keeps
 naming.
 
+### Stage 10y — Thesis & Triggers and Alerts: REMOVED, and the store is not
+
+*"remove both the pages from the dashboard ui"* — the two nav entries, pointed
+at.
+
+`/thesis` and `/alerts` redirect, both nav entries are gone, and
+`ThesisMonitor.tsx` and `Alerts.tsx` are deleted. Between them they were the
+WHOLE of the **MONITOR** nav group, so its heading goes with them, exactly as
+the KNOWLEDGE heading went with its one entry at Stage 10x.
+
+**BOTH FORWARD TO EXPOSURE & IPS, and that is the surviving surface nearest
+their purpose rather than a neutral fallback.** All three pages were the
+family-input layer — a thesis, an alert rule and an IPS target are things the
+family TYPES, not figures a statement reports. Exposure & IPS is the one that
+stays, it holds the IPS targets and the bucket mapping, and the part that
+decides it: **it carries the Export/Import that round-trips the WHOLE store in
+one file, theses and alert rules included.** With both editors gone it is the
+only surface that reaches a stored thesis or alert rule, which makes it the
+honest destination for a bookmark rather than a near-enough one. Contrast
+Stage 10x, where nothing survived that held notes or macro series and all three
+addresses correctly went to the dashboard home.
+
+**`src/lib/familyInputs.ts` IS UNTOUCHED.** Every thesis, expected return, exit
+trigger, review schedule and alert rule the family entered is still stored,
+still coerced on import and still travels in that one export file — the
+treatment `deals.ts` and `household.ts` got at Stage 10f and `watchlist.ts` at
+Stage 10w. `emptyThesis` is the one export left with no caller; it says so at
+its own definition rather than sitting as a silent orphan, because this store is
+deliberately kept whole and a future editor calls it again unchanged.
+
+**`alertEngine.ts` LOST TWO THIRDS OF ITSELF AND STAYS.** Exposure & IPS reads
+`bucketActuals` and `bucketWeightPct` from it — the bucket roll-up was never
+about alerts, it answers "what fraction of the book sits in each IPS bucket" —
+so those stay. `evaluateAlerts` and `ALERT_KIND_LABEL` had exactly one caller
+between them and went with the page: **229 lines to 68.** No arithmetic
+assertion was lost with them, checked rather than assumed —
+`familyMath.test.ts` covers `deals`, `household`, `watchlist` and `marketCap`
+and never touched the evaluator. What the evaluator ENFORCED is worth keeping in
+view and is recorded in the section below rather than in dead code: *a rule
+whose inputs are incomplete does not fire and does not pass either.*
+
+**AND THE CHECK THAT WAS MEANT TO GUARD THE STORE COULD NOT FAIL.**
+`check:family` already asserted "the whole store can still be exported from
+here" as `/export/i` over the page text — and the paragraph BENEATH the buttons
+explains what Export does, so deleting the button outright left it green. That
+check is now struck on the BUTTONS, both of them, because an export with no
+import back is a one-way door out of the family's own record. Reintroducing the
+bug proved the rewrite: with the button gone and its prose intact it reports
+`0 export · 1 import` and fails.
+
+**AND A NEW CHECK FAILED A CORRECT PAGE, for the reason its own comment had just
+named.** The removed pages are asserted to render none of their own content at
+their old addresses, struck on each page's distinctive phrases. `alert rules`
+was one of them — and it is in Exposure & IPS's export tooltip, legitimately,
+because the export does carry them. A phrase the DESTINATION prints is not
+distinctive to the page that was removed. Narrowed to `no rules yet` and `need a
+source, not a threshold`, which only that page ever printed.
+
+`check:pages` no longer walks either route and the `thesis` and `alerts`
+invariant blocks went with the pages they described. Five bugs were
+reintroduced — the page restored at its address, its route un-redirected, its
+nav entry put back, the Monitor heading with it, and the Export button deleted
+while its explanatory prose stayed — and each fired exactly its own check.
+
+### Stage 10aa — THE NAV CHART WAS AN EMPTY BOX, AND EVERY CHECK ON IT PASSED
+
+*"fix this blank section, it should show a proper time graph showing larger
+period return comparison."*
+
+**IT RENDERED NO SVG AT ALL.** `NavVsIndex`'s plot area was
+`min-h-[15rem] flex-1` with `ResponsiveContainer height="100%"` inside it. That
+holder is a `flex-basis: 0` item in an AUTO-HEIGHT column, so its used height
+comes from `min-height` — and Chrome does not treat that as a DEFINITE height
+for a percentage child. Measured in the browser: the holder painted 1225 × 210
+and the container inside it 1225 × **0**. No axes, no legend, no lines, no
+`<svg>` element. Every other chart in this app already sizes definitely
+(`h-72`, `h-44`, `SeriesChart`'s `style={{height}}`); this was the single
+exception and the single blank. It is `h-[22rem]` now.
+
+**AND NOTHING COULD SEE IT — EIGHT INVARIANTS ON THIS CARD, ALL GREEN.** The
+coverage line, the flow-adjusted return against the unadjusted one, the external
+capital in rupees, the value not proven to be performance, the three-list
+partition: every one of them reads `innerText`, and every one of them was
+CORRECT while the chart beside them was an empty frame. Verified by
+reintroducing the bug — the old holder puts the blank back and not one
+pre-existing check fails. **A chart is checked on its geometry or it is not
+checked**, which is the same rule this file already reaches for the headline's
+layout, Export Excel's row and the KPI overlay anchor, arriving at the one
+element that is nothing BUT geometry. `ctx.navChart` measures the painted SVG,
+each curve's `d` length and vertex count, the axis ticks, the legend's order and
+the range control.
+
+**THE AXIS WAS NOT A TIME AXIS, WHICH IS THE OTHER HALF OF "PROPER".** It was
+`dataKey="date"` on a CATEGORY scale over the book's seven statement dates, so
+10 → 11 August (one day) took the same width as 10 → 27 July (seventeen), and
+every segment's slope was a fact about ROW ORDER rather than about time. It is
+`type="number" scale="time"` now, ticked one per year/quarter/month by span —
+`SeriesChart`'s rule, on timestamps.
+
+**AND THE "INDEX" WAS SEVEN STRAIGHT SEGMENTS.** `rebasedIndex` samples the
+index AT THE BOOK'S DATES, which is exactly right for the comparison pill and
+wrong to draw: a line through seven sampled closes is not the Nifty 500's path.
+`indexCurve` draws every settled close the feed carries. The two now serve their
+own purposes and the check tells them apart on VERTEX COUNT — 245 against 7.
+
+#### The larger period is asymmetric, and saying so is the whole of the honesty
+
+**THE BOOK'S OWN DATED SERIES IS FIVE WEEKS AND CANNOT BE LONGER.** Measured
+rather than assumed: `BOOK_NAV_HISTORY` is 7 points over 2026-07-10 → 2026-08-13,
+and the per-account histories reach back only to 2026-05-31 — the whole archive
+is four and a half months (§"AND YTD / CALENDAR-YEAR ON A HOLDING IS NOT
+MEASURABLE HERE"). No range control invents a point.
+
+What CAN be lengthened is the INDEX's context around it, and `/api/prices`
+carries years of `^CRSLDX` daily closes. So a `Book window · 3M · 6M · 1Y · 3Y ·
+5Y · Max` control governs how far back the index is drawn, defaulting to **1Y**
+— the ask was for a larger period, and opening on the book's own window would
+show exactly what was complained about. Four rules keep it honest:
+
+- **BOTH LINES ARE REBASED AT THE BOOK'S FIRST POINT, NOT THE WINDOW'S.** That is
+  the only base at which the comparison is exact: both pass through 100 on the
+  one date both measurements exist for. Rebasing to the left edge of a five-year
+  window would put the book's line at whatever level the index happened to reach
+  by July and invite a reader to compare two numbers struck from different starts.
+- **THE MEASURED STRETCH IS SHADED**, at every range wider than itself. On the 1Y
+  view most of the axis is index history the book has no measurement over, and an
+  unshaded chart invites the reader to read the whole width as a comparison —
+  a caption widening a figure it does not narrow, arriving through a time axis.
+- **THE HEADLINE PILLS STAY ON THE BOOK'S OWN WINDOW.** Book +0.54% against the
+  index's figure over the SAME dates. The selected range's return is stated
+  separately, under the chart, as the index's own and labelled *market history
+  rather than a comparison* — never set beside a book figure struck over a
+  different period.
+- **ONLY THE BOOK RANGE CAPS THE END.** Everywhere else the index runs to its own
+  last settled close, which is the useful half of asking for a longer period:
+  where the market has gone since the book was last marked. The book range caps
+  because its label promises the window both lines cover, and **a control that
+  describes itself wrongly is the same defect as a caption that does.**
+
+**SIX SERIES COLOURS BECAME THEME VARIABLES.** `#d9c48f` on ivory is a line a
+reader cannot see, and `#2b2668` grid lines are a near-black web on it — and the
+light-mode sweep could not report either, because an SVG `stroke` is not a
+Tailwind utility and there is no computed class to resolve. `--chart-grid`,
+`--chart-axis`, `--chart-book`, `--chart-index`, `--chart-nav` and `--chart-band`
+are defined for both themes in `index.css`; champagne darkens to `#8a6a1c` on
+light, exactly as `.text-champagne-400` already does. This also gives
+`SeriesChart` the `--chart-grid` it has always referenced and never had.
+
+**AND THE LEGEND'S ORDER IS STATED, BECAUSE IT DIFFERS FROM THE PAINT ORDER ON
+PURPOSE.** The book's line is drawn LAST so it sits above the index — seven
+points against up to thirteen hundred closes — and a legend following the
+children would then lead with the index on a card whose subject is the book.
+
+**SIX BUGS REINTRODUCED, EACH FIRING EXACTLY ITS OWN CHECK**: the old
+`min-h`/`flex-1` holder, the category axis, a range control defaulting to the
+book's window, the sentence naming the measured window, the index sampled to the
+book's dates, and the shaded band removed. Two of them exposed defects in the
+CHECKS first, which is the point of doing it — a vertex counter that split on
+`[LM]` read **1** for a 245-point curve, because these lines are
+`type="monotone"` and recharts emits one `M` and a cubic bezier per point with
+not an `L` in the whole path; and the band assertion was first struck on `cio`,
+which serves no price feed, so the chart is correctly the book's own window with
+nothing to mark. The band belongs on `cio-live`, where a wider window exists —
+and it asserts the window really IS wider before requiring the band, so it
+cannot pass by asserting nothing.
+
+**WHAT IS STILL NOT DRAWN, AND WHERE THE LONGER COMPARISON ACTUALLY LIVES.**
+`BOOK_ACCOUNT_RETURNS` carries the managers' OWN published 1m/3m/6m/1y and
+since-inception returns for 12 accounts, each beside the benchmark that manager
+publishes — real primary-source figures over genuinely long periods. They are
+per-mandate, on different fee bases (`after`/`before`), against different
+benchmarks (N50TRI, S&P BSE 500 TRI, NSmCap250TRI) and each ends at its own
+statement date, so they can never be averaged into a book return. `/performance`
+already renders them per account and this card deliberately does not duplicate
+them.
+
+**AND `/performance` STILL CARRIES THE ABSENCE THIS CARD EXISTS TO CORRECT.** Its
+"NAV trajectory" card renders an `AbsentSection` reading *"No valuation series in
+this book · each account's statements carry exactly two dated portfolio values"*
+— the same premise Stage 10p measured and found false, still standing one route
+over from a chart built on the data it says does not exist. Named here rather
+than fixed, because the family pointed at Morning CIO; it is the sixth absence
+against an unchecked premise and it is one `<NavVsIndex />` away.
+
 ### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
 
 *"remove all three pages from the dashboard UI"* — the three nav entries,
@@ -5172,7 +5359,164 @@ Five bugs reintroduced in total, each firing its own check: a caption back on a
 tile, the accrued disclosure deleted, the window deleted, the private half
 widened to the whole book, and an absent tile stripped of its reason.
 
-### Stage 10ab — THE ALLOCATION TABLE LOSES ITS UNDERLINES TOO
+### Stage 10ab — EVERY METRIC, TOTALLED FOR EACH CATEGORY
+
+*"Show aggregate totals for every metric for each category investments."*
+
+The Portfolio Monitor sections its holdings by CATEGORY — `holdingBucket`, the
+grouping Stage 10L settled after the family reported the same thing three times
+— and each section heading has carried a holding count and a market value ever
+since. Everything else a reader compares categories on is a COLUMN, and the only
+way to compare six categories on it was to add 85 rows by eye.
+
+**EACH SECTION NOW CLOSES WITH A ROW THAT TOTALS ITS OWN COLUMNS.** Measured on
+this book, and every figure derived rather than typed:
+
+| Category | Invested | Market value | Weight | Unreal. P&L | Realised | Return |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct Equity | ₹1.22 Cr\* | ₹94.9 Cr | 13.4% | −₹22.9 L\* | +₹7 L | **refused** |
+| PMS mandates | ₹124.6 Cr | ₹138.7 Cr | 19.5% | +₹14.1 Cr | +₹1.32 Cr | +11.36% |
+| ETF | — | ₹24.6 Cr | 3.5% | — | — | — |
+| Mutual Fund | ₹52.4 Cr\* | ₹99.9 Cr | 14.1% | −₹26,209\* | — | **refused** |
+| AIF | ₹293.7 Cr\* | ₹352.3 Cr | 49.6% | +₹58.6 Cr\* | — | +19.95% |
+| Cash | ₹0 | ₹0 | 0.0% | ₹0 | — | — |
+| **Total** | **₹471.9 Cr** | **₹710.4 Cr** | **100.0%** | **+₹72.5 Cr** | **+₹1.39 Cr** | **+15.37%** |
+
+\* struck over the holdings that report a cost — 9 of 37, 2 of 24, 15 of 19 —
+with the uncovered value named in the cell's own hover.
+
+**AND IT FOLLOWS THE AXIS, NOT THE CATEGORY.** Stage 10z made the table
+sectionable three ways, so the partition keys on `groupKeyFor(groupAxis, …)` —
+the same function the ROW build keys its section on — and the row's label on
+`groupLabelFor(groupAxis)`. Keying it on `bucketFor` while the table sections on
+Basket would have totalled the CATEGORY a holding sits in and printed it under
+the basket's heading: every figure right, every one under the wrong name, which
+is the caption failure this file already records twice.
+
+**IT IS A ROW OF CELLS, NOT A WIDENED HEADING, AND THAT IS THE WHOLE DESIGN.** A
+total belongs UNDER THE COLUMN IT TOTALS. This book has already paid twice for a
+figure printed under a heading that describes something else — the allocation
+footer carrying a money-weighted return in a column of returns-on-cost, and the
+Morning CIO tile captioned "cost in · listed only" over a whole-book sum. The
+heading keeps its name, count and size; the metrics sit where their column is.
+
+**THE PARTITION IS OF THE POSITIONS THE FOOTER ITSELF SUMS**, so the categories
+add to the Total row BY CONSTRUCTION rather than by a tolerance. Summing the
+ROWS instead would tie for market value and could miss for the other two: a
+consolidated row carries `mv − cost` as its P&L while the footer sums the lots'
+own, and those differ the moment one security is consolidated from a costed lot
+and an uncosted one. **Measured, that condition is 0 of 216 groups on this book**
+— the wrong construction would tie here and no check could catch it — so it is
+written down beside the code rather than tested for, and the right construction
+was chosen before a drop makes the difference visible instead of after.
+
+**A RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT COVER DIFFERENT SETS.**
+`sumOrNull` skips a holding whose statement reports no cost, so Invested covers a
+narrower set than Market value — and Direct Equity reports a cost on 9 of its 37
+holdings. A return on cost there would sit between a printed ₹1.22 Cr invested
+and a printed ₹94.9 Cr current and describe neither. That is the failure Morning
+CIO's allocation row was already fixed for, so **the test is now
+`costCoversSet` in `analytics.ts` and BOTH screens call it**: the two print a
+return per bucket over the same buckets, and a test copied into each is two
+chances for one screen to show a figure the other refuses for the category a
+reader is comparing them on. Same reasoning as `holdingBucket` itself being one
+function rather than a per-page reflex.
+
+**AND THE HEADING'S SUBTOTAL IS NOW THE SAME FIELD THE ROW PRINTS.** It used to
+walk the rows collapsing repeated `dedupeGroup`s — a correct computation, and a
+SECOND SOURCE for a figure that now appears twice in one section. The two agreed
+except in the by-entity view, where they would have picked different members of
+the ₹1.46 Cr pair and printed marks ₹87,950 apart under one heading. One figure,
+computed once, printed twice. `collapsed` is now derived as the gap between the
+rows on screen and that printed subtotal, which is what its note has always
+claimed.
+
+**THE FOOTER'S WEIGHT CELL WAS EMPTY AND IS NOT ANY MORE.** A column of shares
+with no total is a set of figures a reader cannot check by adding. It reads
+100.0% unfiltered — the denominator IS this table's book — and less under a
+company filter, which is the gap the caption below already explains.
+
+**FOUR COLUMNS CAN NEVER HAVE A CATEGORY TOTAL, AND EACH SAYS SO.** Quantity —
+shares of one company plus units of a fund is a number with no unit; average cost
+and CMP — both per-unit, and a category has no unit; YTD — the same absence its
+own rows carry, since no statement in this book is dated before the year began.
+All four render `AbsentCell` WITH A REASON rather than sitting blank: a reader
+who scans an empty cell learns nothing about whether a figure was withheld or
+never existed, which is this book's founding rule arriving one row above the
+footer that already keeps it.
+
+**REALISED IS CLAIMED BY ONE CATEGORY, NEVER SPLIT.** A name's realised gain is
+reported PER SECURITY across the whole book, so the categories claim each key
+once, in reading order, and the sum is the footer's own union total. A name held
+both directly and inside a mandate is the case that makes the rule necessary and
+the case this book does not contain (zero of 175 distinct equity names); when one
+arrives the cell says the figure was ATTRIBUTED rather than divided, because
+there is no per-category split on any statement to divide it by.
+
+**EIGHT INVARIANTS, EACH VERIFIED BY REINTRODUCING ITS BUG.** `check:pages` reads
+the totals rows and the footer BY COLUMN — accumulating `colSpan`, because the
+footer's label spans three columns and a category's spans one, and cell-for-cell
+the two rows are different measurements. Seven bugs were put back one at a time
+and each fired exactly its own check: a partition that skips the dedupe (three
+checks), the coverage test dropped so a return prints beside two columns covering
+different sets, a dash with no reason, the footer's Weight cell emptied again, a
+category that quietly stops drawing its row, the section reader counting the
+totals row among the holdings, and the totals keyed on the wrong AXIS — the last
+of which is what found the gate hole two paragraphs down.
+
+**THE CHECKS ARE STRUCK ON THE SECTIONS THE PAGE DECLARED, NOT ON A LIST OF
+NAMES.** The first draft counted the `BUCKET_HEADINGS` that `sectionOf` could
+find, which would have FAILED the asset-class and basket routes outright while
+claiming to check them: those axes draw the family's own section names, which
+that list does not and must not know. Matching `data-section` keys one-for-one
+against `data-category-total` keys is also the stronger claim — equal counts pass
+a page that totals one section twice and another not at all.
+
+**AND THE SEVENTH BUG FOUND A HOLE IN THE GATE ITSELF.** Keying the partition on
+`bucketFor` while the table sections on an axis Stage 10z added is the one
+mistake this integration can make, so it was put back deliberately. The
+asset-class route failed six checks — its keys overlap the category ones. The
+BASKET route reported NOT CHECKED six times and **the sweep read CLEAN**: with no
+key matching, every totals row disappeared, and a gate that abstained on "no
+totals row captured" could not tell that from a table with one section.
+
+That is `golden.mjs`'s rule and this file's own *"a missing toggle must be a
+finding"*, arriving through a subtotal. Abstention is now allowed on exactly one
+EVIDENCED condition — the page drew fewer than two sections, read off its own
+`data-section` headings, which is the single-category filter where the footer IS
+the total. Sections drawn and nothing totalling them is a failure, and so is a
+footer that has lost its handle. Re-run against the same bug, the basket route
+fails five.
+
+**THAT LAST ONE WOULD HAVE BROKEN SIX EXISTING CHECKS SILENTLY.** The totals row
+is a table row by every structural test `sectionOf` applies — a cell per column
+and therefore a tab per boundary — and six invariants read `sectionOf(...).rows`
+as "the holdings drawn in this section". Its Qty cell is an em dash BY DESIGN, so
+"the first cell after the security name is a figure" fails on it. `sectionOf`
+keeps it out of `rows` and exposes it as `total`, and a new invariant asserts the
+exclusion against the rows the DOM says are holdings rather than against a count
+of itself.
+
+**AND TWO BUGS WERE IN THE CHECKER, BOTH FOUND BY THE FIGURES NOT ADDING UP.**
+
+- **`crU` read a suffix-less figure as CRORE.** `fmtFromBase` drops the suffix
+  below a lakh, so `−₹26,209` — Mutual Fund's real unrealised loss — came back as
+  −₹2,620.9 Cr, four times this whole book, and the categories summed to
+  −₹26,136 Cr against a printed +₹72.5 Cr. It is the plausible-wrong-number
+  failure this file exists to catch, arriving in the checker rather than in the
+  page. Fixed at `crU`, so every caller that allows an optional unit gets it.
+- **`[+-−]` IS A RANGE, NOT THREE CHARACTERS.** Unescaped, the hyphen makes a
+  range from `+` (U+002B) to `−` (U+2212) that swallows every digit and the rupee
+  sign with them: the percent parser read `13.4%` as 3.4 and `100.0%` as 0, and a
+  weight column summing to 30.1 against a printed 0 was the only sign of it.
+
+**WHAT IS DELIBERATELY UNCHANGED.** Selecting a single category hides the
+sections and the FOOTER is that category's total, which is complete and needs no
+second row. The Excel export keeps its own footer and no per-category subtotals —
+the ask was about the tab, and Stage 10n's record of the column reorder is that
+the export follows when the family asks it to.
+
+### Stage 10ac — THE ALLOCATION TABLE LOSES ITS UNDERLINES TOO
 
 *"remove the underlines from the allocation table too."*
 
@@ -5644,15 +5988,23 @@ carries the measurement beside the entry so it cannot go stale silently.
 
 ### The alert engine — silence is read as all-clear
 
-`alertEngine.ts` evaluates the family's rules against the book. Its governing
-rule: **a rule whose inputs are incomplete does not fire, and does not pass
-either** — it reports UNMEASURABLE with the reason, counted apart from the clear.
-A price rule on a security with no live quote must never look like one that was
-checked and held; a month-old statement mark cannot answer whether a level was
-crossed today. That is the absent-vs-zero rule applied to a boolean.
+**THE EVALUATOR HAS BEEN REMOVED WITH ITS PAGE — see Stage 10y.** `alertEngine.ts`
+still exists and still serves Exposure & IPS's IPS-bucket roll-up
+(`bucketActuals`, `bucketWeightPct`); what went is `evaluateAlerts` and
+`ALERT_KIND_LABEL`, which had no caller once `/alerts` was removed at the
+family's request. The family's alert RULES are untouched in `familyInputs.ts`
+and still export; nothing evaluates them today.
+
+The rule it enforced is kept here because it is the reason a future rules engine
+must not be written naively, and because it generalises past alerts: **a rule
+whose inputs are incomplete does not fire, and does not pass either** — it
+reports UNMEASURABLE with the reason, counted apart from the clear. A price rule
+on a security with no live quote must never look like one that was checked and
+held; a month-old statement mark cannot answer whether a level was crossed
+today. That is the absent-vs-zero rule applied to a boolean.
 
 Alerts the spec asks for that need a SOURCE rather than a threshold — manager
-resignation and style drift, liquidity coverage, capital-call dates — are named
+resignation and style drift, liquidity coverage, capital-call dates — were named
 on the page rather than shipped as rules that would sit permanently silent.
 
 ## Stage 9d — the economic release calendar (`/api/econ-calendar`)

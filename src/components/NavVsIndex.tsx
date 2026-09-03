@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ReferenceDot } from "recharts";
+import {
+  LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
+  ReferenceDot, ReferenceArea,
+} from "recharts";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
@@ -7,7 +10,10 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { navIndexSeries, rebasedIndex, navCoverageStats, windowReturnPct } from "@/lib/navSeries";
+import {
+  navIndexSeries, rebasedIndex, navCoverageStats, windowReturnPct,
+  indexCurve, indexReturnBetween, rangeStart, rangeEnd, NAV_RANGES, type NavRangeKey,
+} from "@/lib/navSeries";
 import { fetchPriceHistory, toPoints, type PriceHistory } from "@/lib/prices";
 import { NIFTY_500_SYMBOL, NIFTY_500_LABEL } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
@@ -33,15 +39,69 @@ import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from
 // EVERY ACCOUNT THE SERIES CANNOT COVER IS NAMED, which is the half of the
 // family's request that the chart cannot answer on its own.
 
-const BOOK_COLOR = "#d9c48f";
-const INDEX_COLOR = "#6366f1";
-const NAV_COLOR = "#64748b";
+// EVERY SERIES COLOUR IS A THEME VARIABLE — see the block in `index.css`.
+// A hardcoded hex in a recharts prop is not a Tailwind utility, so the
+// light-mode remap sweep cannot resolve it, and `#d9c48f` on ivory is a line a
+// reader cannot see. `stroke` accepts `var()` and `SeriesChart` already does it
+// for the grid.
+const BOOK_COLOR = "var(--chart-book, #d9c48f)";
+const INDEX_COLOR = "var(--chart-index, #6366f1)";
+const NAV_COLOR = "var(--chart-nav, #64748b)";
+const GRID_COLOR = "var(--chart-grid, #2b2668)";
+const AXIS_COLOR = "var(--chart-axis, #6b6880)";
+const BAND_COLOR = "var(--chart-band, rgba(217,196,143,0.07))";
+
+const DAY = 86400000;
+const ts = (d: string) => Date.parse(`${d}T00:00:00Z`);
+const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+
+/**
+ * ONE TICK PER PERIOD, TAKEN FROM THE DATES THAT EXIST.
+ *
+ * Letting recharts place ticks on a five-year time axis and then shortening each
+ * to its year prints "2023 2023 2024 2024" — several land inside one year and
+ * format identically. `SeriesChart` solved this once; the same reasoning applies
+ * here, on timestamps rather than strings.
+ */
+function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (t: number) => string } {
+  const period = spanDays > 365 * 2.5 ? "year" : spanDays > 200 ? "quarter" : spanDays > 75 ? "month" : "day";
+  const fmt = period === "year"
+    ? (t: number) => iso(t).slice(0, 4)
+    : period === "day"
+      ? (t: number) => iso(t).slice(5)
+      : (t: number) => iso(t).slice(0, 7);
+  if (period === "day") {
+    // Under about ten weeks every book date is worth its own tick, and there are
+    // only ever a handful of them.
+    return { ticks: dates.map(ts), fmt };
+  }
+  const keyOf = (d: string) =>
+    period === "year" ? d.slice(0, 4)
+      : period === "quarter" ? `${d.slice(0, 4)}Q${Math.floor(Number(d.slice(5, 7)) / 3.01) + 1}`
+        : d.slice(0, 7);
+  const firsts: string[] = [];
+  let last = "";
+  for (const d of dates) {
+    const k = keyOf(d);
+    if (k !== last) { firsts.push(d); last = k; }
+  }
+  const stride = Math.max(1, Math.ceil(firsts.length / 10));
+  return { ticks: firsts.filter((_, i) => i % stride === 0).map(ts), fmt };
+}
 
 export function NavVsIndex() {
   const { portfolio, fmtFromBase } = usePortfolio();
   const [index, setIndex] = useState<PriceHistory | null>(null);
   const [indexState, setIndexState] = useState<"loading" | "ok" | "down">("loading");
   const [showRaw, setShowRaw] = useState(true);
+  /**
+   * HOW FAR BACK THE CHART LOOKS. Defaults to 1Y rather than the book's own five
+   * weeks: the family asked for a larger period, and a year of the index around
+   * the measured window is real market history rather than a wider frame around
+   * the same seven points. The measured stretch is SHADED at every range, so a
+   * reader can always see which part of the axis carries a comparison.
+   */
+  const [range, setRange] = useState<NavRangeKey>("1Y");
 
   useEffect(() => {
     let alive = true;
@@ -57,30 +117,82 @@ export function NavVsIndex() {
     const book = navIndexSeries(portfolio.navHistory);
     const stats = navCoverageStats(BOOK_NAV_COVERAGE, portfolio);
     const dates = book.map((p) => p.date);
-    const idx = index ? rebasedIndex(toPoints(index), dates) : new Map<string, number>();
-    const rows = book.map((p) => ({
-      date: p.date,
-      book: Number(p.index.toFixed(3)),
-      nav: Number(p.navIndex.toFixed(3)),
-      navRupees: p.nav,
-      flowIn: p.flowIn,
-      accountsOnDate: p.accountsOnDate,
-      accountsCarried: p.accountsCarried,
-      unreportedFlowValue: p.unreportedFlowValue,
-      index: idx.has(p.date) ? Number((idx.get(p.date) as number).toFixed(3)) : null,
-    }));
+    const bookFrom = dates[0] ?? null;
+    const bookTo = dates[dates.length - 1] ?? null;
+    const pts = index ? toPoints(index) : [];
+
+    // The book's own seven points, sampled from the index at the same dates —
+    // what the like-for-like pill and the tooltip need.
+    const idx = pts.length ? rebasedIndex(pts, dates) : new Map<string, number>();
+
+    /**
+     * THE INDEX'S OWN DAILY CURVE OVER THE SELECTED WINDOW, rebased at the
+     * book's first point so both lines pass through 100 on the one date they
+     * share. Without this the "index" was seven straight segments between the
+     * book's statement dates — a plausible-looking line that is not the index's
+     * path, and over a year of context it would have been four.
+     */
+    const from = bookFrom && bookTo ? rangeStart(range, bookFrom, bookTo) : null;
+    const until = bookTo ? rangeEnd(range, bookTo) : null;
+    const curve = bookFrom && pts.length ? indexCurve(pts, bookFrom, from) : [];
+
+    const bookByDate = new Map(book.map((p) => [p.date, p]));
+    const allDates = [...new Set([...curve.map((c) => c.t), ...dates])]
+      .filter((d) => (!from || d >= from) && (!until || d <= until))
+      .sort();
+    const curveByDate = new Map(curve.map((c) => [c.t, c.v]));
+
+    const rows = allDates.map((d) => {
+      const p = bookByDate.get(d);
+      const level = curveByDate.get(d) ?? (idx.has(d) ? (idx.get(d) as number) : undefined);
+      return {
+        t: ts(d),
+        date: d,
+        book: p ? Number(p.index.toFixed(3)) : null,
+        nav: p ? Number(p.navIndex.toFixed(3)) : null,
+        flowIn: p?.flowIn ?? 0,
+        unreportedFlowValue: p?.unreportedFlowValue ?? 0,
+        index: level === undefined ? null : Number(level.toFixed(3)),
+      };
+    });
+
     const bookRet = windowReturnPct(book);
-    const lastIdx = [...idx.values()].at(-1);
-    const indexRet = lastIdx === undefined ? null : lastIdx - 100;
+    /**
+     * THE LIKE-FOR-LIKE FIGURE, AND THE RANGE'S OWN, KEPT APART.
+     *
+     * `indexRet` is the index over the BOOK'S window — the only window in which
+     * a comparison exists, and the one the headline pills state. `rangeRet` is
+     * the index over whatever period the reader selected and is INDEX-ONLY: the
+     * book has no measurement over it, so it is labelled as market history
+     * rather than set beside a book figure it does not correspond to.
+     */
+    const indexRet = bookFrom && bookTo && pts.length ? indexReturnBetween(pts, bookFrom, bookTo) : null;
+    const rangeFrom = rows.length ? rows[0].date : null;
+    const rangeTo = rows.length ? rows[rows.length - 1].date : null;
+    const rangeRet = rangeFrom && rangeTo && pts.length ? indexReturnBetween(pts, rangeFrom, rangeTo) : null;
+
     // The steps a reader would otherwise read as performance: an interval that
     // took external capital. Marked ON the chart, not explained underneath it.
     const flowMarks = rows.filter((r) => Math.abs(r.flowIn) > 1e5);
     const unproven = rows.filter((r) => r.unreportedFlowValue > 0);
-    return { book, rows, stats, bookRet, indexRet, flowMarks, unproven, dates };
-  }, [portfolio, index]);
+    const spanDays = rows.length > 1 ? (rows[rows.length - 1].t - rows[0].t) / DAY : 0;
+    const { ticks, fmt: tickFmt } = axisTicks(
+      spanDays > 75 ? allDates : dates, spanDays);
+    return {
+      book, rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven, dates,
+      bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays,
+      // COUNTED OFF THE ROWS THAT ARE DRAWN, not off the curve before it is
+      // clipped — the book range caps at the last statement date, and a count
+      // taken upstream of that would report closes the chart does not contain.
+      indexRuns: rows.filter((r) => r.index != null).length,
+    };
+  }, [portfolio, index, range]);
 
   if (!model || !portfolio) return null;
-  const { rows, stats, bookRet, indexRet, flowMarks, unproven } = model;
+  const {
+    rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven,
+    bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays, indexRuns,
+  } = model;
   const cov = BOOK_NAV_COVERAGE;
   // NAMED FROM THE REGISTRY, NOT FROM THE ID. `accountId` is a slug and reads
   // as one; the registry is where "who runs this and whose money it is" lives,
@@ -96,7 +208,14 @@ export function NavVsIndex() {
   // A series needs at least two points and a set to hold constant over. Both
   // halves of the family's ask are answered here: the series when it exists, and
   // the accounts that cannot supply one either way.
-  if (rows.length < 2) {
+  //
+  // STRUCK ON THE BOOK'S OWN DATES, NOT ON `rows`. `rows` is now the union of the
+  // book's dates and the index's daily closes, so it is in the hundreds the
+  // moment the feed answers — a book with no series of its own would sail past a
+  // `rows.length` test and draw an index alone under a heading promising a
+  // comparison. `dates` is the book's, and is the only thing this branch is
+  // about.
+  if (model.dates.length < 2) {
     return (
       <Card className="flex flex-col" title="Portfolio NAV vs Nifty 500"
         subtitle="Dated portfolio values from the statements, against the index">
@@ -112,9 +231,9 @@ export function NavVsIndex() {
     <Card className="flex flex-col"
       title="Portfolio NAV vs Nifty 500"
       subtitle={<>
-        {rows.length} dated points, {cov.from} → {cov.to}, over the{" "}
+        {model.dates.length} dated points, {cov.from} → {cov.to}, over the{" "}
         <strong className="text-slate-300">{stats.coveredCount} of {stats.accountsTotal} accounts</strong> that publish more than one
-        dated valuation — {fmtFromBase(rows[rows.length - 1].navRupees, { compact: true })} of the{" "}
+        dated valuation — {fmtFromBase(model.book[model.book.length - 1].nav, { compact: true })} of the{" "}
         {fmtFromBase(stats.consolidatedValue, { compact: true })} book.
         {/* THE NUMERATOR IS THE SERIES' OWN LAST POINT, NOT THE PER-ACCOUNT SUM.
             Those differ by ₹1.46 Cr here — 360 ONE Special Opportunities under
@@ -125,6 +244,13 @@ export function NavVsIndex() {
         {" "}Each point holds every account at its most recent mark on that date and counts each duplicated holding once.
       </>}
       right={
+        /* THE HEADLINE IS THE LIKE-FOR-LIKE PAIR, AND ONLY THAT.
+           Both figures are struck over the BOOK'S OWN WINDOW, which is the only
+           window in which a comparison exists. The selected range's own index
+           return sits under the chart instead, labelled market history — a
+           reader must never find an index figure over five years sitting beside
+           a book figure over five weeks, which is a caption widening a figure it
+           does not narrow. */
         <div className="flex flex-col items-end gap-1">
           {bookRet == null ? <Pill>— no return</Pill> : (
             <Pill tone={bookRet >= 0 ? "gain" : "loss"}>Book {fmtPct(bookRet, { sign: true })}</Pill>
@@ -132,37 +258,121 @@ export function NavVsIndex() {
           {indexRet == null
             ? <span title="The index history could not be fetched, so no comparison is drawn."><Pill>— {NIFTY_500_LABEL}</Pill></span>
             : <Pill tone="info">{NIFTY_500_LABEL} {fmtPct(indexRet, { sign: true })}</Pill>}
+          <span className="text-[10px] uppercase tracking-wide text-slate-500">
+            over {cov.from} → {cov.to}
+          </span>
         </div>
       }>
 
-      <div className="min-h-[15rem] flex-1">
+      {/* ── HOW FAR BACK TO LOOK ────────────────────────────────────────────
+          The book's own dated series is five weeks and cannot be longer — the
+          whole archive is four and a half months. What CAN be lengthened is the
+          index's context around it, and the shaded band below keeps the measured
+          stretch identifiable at every range, so a five-year view reads as
+          market history with a measured window in it rather than as a comparison
+          over five years. */}
+      <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="nav-range">
+        <span className="label-xs">Period</span>
+        <div role="tablist" aria-label="Chart period"
+          className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+          {NAV_RANGES.map((r) => (
+            <button key={r.key} type="button" role="tab" aria-selected={range === r.key}
+              data-range={r.key} onClick={() => setRange(r.key)}
+              title={r.key === "book"
+                ? "The window both lines cover — the book's own first to last statement date."
+                : `${r.label} of Nifty 500 closes ending at the book's last statement date. The book's own line still covers only its measured window.`}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                range === r.key
+                  ? "bg-champagne-500 text-ink-950"
+                  : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+              }`}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+        {indexState === "ok" && indexRuns > 0 && (
+          <span className="text-[11px] text-slate-500" data-testid="nav-range-note">
+            {rangeFrom} → {rangeTo} · {indexRuns} index closes
+          </span>
+        )}
+      </div>
+
+      {/* ── A DEFINITE HEIGHT, WHICH IS WHY THIS CARD WENT BLANK ─────────────
+          This was `min-h-[15rem] flex-1`, and `ResponsiveContainer height="100%"`
+          resolved against it as ZERO: the holder is a `flex-basis: 0` item in an
+          auto-height column, so its used height comes from `min-height` and
+          Chrome does not treat that as a definite height for a percentage child.
+          The container measured 1225 × 0 and recharts rendered no SVG at all —
+          no axes, no legend, no lines, an empty box under a full and correct
+          caption. Every other chart in this app (`h-72`, `h-44`,
+          `SeriesChart`'s `style={{height}}`) already sizes definitely; this one
+          was the single exception and the single blank.
+
+          AND NOTHING COULD SEE IT. Every invariant on this card reads rendered
+          TEXT — the coverage line, the two returns, the named accounts — and all
+          of them passed against an empty frame, because the words were right. A
+          chart is checked on its geometry or it is not checked; see the
+          `nav-chart` probe in `check-pages.mjs`. */}
+      <div className="h-[22rem]" data-testid="nav-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-            <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-            <XAxis dataKey="date" stroke="#6b6880" fontSize={11} />
+            <CartesianGrid stroke={GRID_COLOR} strokeDasharray="2 4" vertical={false} />
+            {/* ── A REAL TIME AXIS, NOT SEVEN EQUALLY-SPACED LABELS ──────────
+                This was a CATEGORY axis over the book's dates, so 10 → 11 August
+                (one day) took the same width as 10 → 27 July (seventeen), and
+                the slope of every segment was a fact about the row order rather
+                than about time. A chart whose x-axis is not time cannot show
+                what happened between two marks. */}
+            <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]}
+              ticks={ticks} tickFormatter={tickFmt} minTickGap={16}
+              stroke={AXIS_COLOR} fontSize={11} />
             {/* INDEX POINTS, NOT RUPEES. Both curves are rebased to 100 at the
                 first dated point, so the axis is a ratio and must not be run
                 through the money formatter — `fmtFromBase` would put a ₹ on a
                 number that is not an amount of anything. */}
-            <YAxis stroke="#6b6880" fontSize={11} width={52} domain={["auto", "auto"]}
+            <YAxis stroke={AXIS_COLOR} fontSize={11} width={52} domain={["auto", "auto"]}
               tickFormatter={(v: number) => fmtNum(v, 1)} />
             <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
+              labelFormatter={(t: number) => iso(Number(t))}
               formatter={(v: number, name: string) => [`${fmtNum(v, 2)} (${fmtPct(v - 100, { sign: true })})`, name]} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line type="monotone" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2} dot={{ r: 2 }}
-              name="Book · ex capital flows" connectNulls />
-            <Line type="monotone" dataKey="index" stroke={INDEX_COLOR} strokeWidth={2} dot={false}
-              name={NIFTY_500_LABEL} connectNulls />
+            {/* THE LEGEND'S ORDER IS THE READING ORDER, NOT THE PAINT ORDER.
+                The book's line is drawn LAST so it sits above the index curve
+                (seven points against up to thirteen hundred closes), and a
+                legend that followed the children would then lead with the index
+                on a card whose subject is the book. The payload is stated so the
+                two orders can differ on purpose. */}
+            <Legend wrapperStyle={{ fontSize: 11 }} payload={[
+              { value: "Book · ex capital flows", type: "line", id: "book", color: BOOK_COLOR },
+              ...(showRaw ? [{ value: "NAV incl. capital added", type: "line" as const, id: "nav", color: NAV_COLOR }] : []),
+              { value: NIFTY_500_LABEL, type: "line", id: "index", color: INDEX_COLOR },
+            ]} />
+            {/* THE STRETCH THE COMPARISON COVERS, SHADED.
+                On the 1Y and longer views most of the axis is index history the
+                book has no measurement over, and an unshaded chart invites the
+                reader to read the whole width as a comparison. The band is the
+                book's own first-to-last statement date, so it says exactly where
+                the two lines are both real. */}
+            {bookFrom && bookTo && spanDays > 75 && (
+              <ReferenceArea x1={ts(bookFrom)} x2={ts(bookTo)} fill={BAND_COLOR} stroke={GRID_COLOR}
+                strokeOpacity={0.5} ifOverflow="hidden" />
+            )}
+            <Line type="monotone" dataKey="index" stroke={INDEX_COLOR} strokeWidth={1.8} dot={false}
+              name={NIFTY_500_LABEL} connectNulls isAnimationActive={false} />
             {showRaw && (
               <Line type="monotone" dataKey="nav" stroke={NAV_COLOR} strokeWidth={1.5} strokeDasharray="4 3" dot={false}
-                name="NAV incl. capital added" connectNulls />
+                name="NAV incl. capital added" connectNulls isAnimationActive={false} />
             )}
+            {/* DRAWN LAST SO IT SITS ON TOP. The book's line is the subject of
+                the card and there are seven points of it against up to twelve
+                hundred index closes; under the index curve it disappears. */}
+            <Line type="monotone" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2.4} dot={{ r: 2.5 }}
+              name="Book · ex capital flows" connectNulls isAnimationActive={false} />
             {/* THE STEP THAT IS MONEY, MARKED WHERE IT HAPPENS. A reader looking
                 at the dashed line jumping 8% in one interval must be able to see
                 on the chart that a deposit landed there, not read it in a
                 paragraph below the fold. */}
             {flowMarks.map((f) => (
-              <ReferenceDot key={f.date} x={f.date} y={f.nav} r={5} fill="none" stroke="#f59e0b" strokeWidth={2} />
+              <ReferenceDot key={f.date} x={f.t} y={f.nav ?? undefined} r={5} fill="none" stroke="#f59e0b" strokeWidth={2} />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -176,7 +386,11 @@ export function NavVsIndex() {
               <strong className="text-slate-300">{fmtFromBase(flowMarks.reduce((a, f) => a + Math.max(f.flowIn, 0), 0), { compact: true })}</strong>{" "}
               of external capital that entered over the window (circled), because money added is not money earned.
               The dashed line is the NAV with it left in — it reads{" "}
-              {fmtPct(rows[rows.length - 1].nav - 100, { sign: true })} against the book&rsquo;s{" "}
+              {/* OFF THE BOOK'S OWN LAST POINT. `rows` now runs to the index's
+                  last close, which is weeks past the book's final statement and
+                  carries no NAV at all — reading the last row here would print
+                  a dash where the unadjusted return belongs. */}
+              {fmtPct(model.book[model.book.length - 1].navIndex - 100, { sign: true })} against the book&rsquo;s{" "}
               {bookRet == null ? "—" : fmtPct(bookRet, { sign: true })}, and the difference is the deposit rather than performance.{" "}
               <button type="button" onClick={() => setShowRaw((v) => !v)}
                 className="underline decoration-dotted underline-offset-2 hover:text-champagne-400">
@@ -199,6 +413,24 @@ export function NavVsIndex() {
             security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.
           </p>
         )}
+        <p data-testid="nav-window-note">
+          {/* ── WHAT THE WIDER WINDOW IS, AND WHAT IT IS NOT ─────────────────
+              The family asked for a longer period than the book's five weeks.
+              The index can supply one; the book cannot, and saying so is the
+              whole of the honesty here. So the range's return is stated as the
+              INDEX'S OWN over that period and never set beside a book figure
+              struck over a different window — the "a caption that widens a
+              figure it does not narrow" rule, on a period rather than on a set. */}
+          <strong className="text-slate-300">The book&rsquo;s own dated series is {model.dates.length} statement dates
+            over {cov.from} → {cov.to}</strong>{" "}
+          and cannot reach further back: the earliest holdings statement in this archive is dated 2026-03-31 and only{" "}
+          {stats.coveredCount} accounts are valued more than once. Everything outside the shaded band is the{" "}
+          {NIFTY_500_LABEL} alone — over the period shown it moved{" "}
+          {rangeRet == null ? DASH : <span className={changeColor(rangeRet)}>{fmtPct(rangeRet, { sign: true })}</span>}{" "}
+          ({rangeFrom} → {rangeTo}), which is market history rather than a comparison, because the book has no measurement
+          across it. A monthly valuation from any of the {stats.singleCount + stats.unvaluedCount} accounts below extends
+          the measured window; nothing else does.
+        </p>
         <p>
           The index is taken at its last close <em>on or before</em> each statement date, never the nearest in either
           direction — a book date is a statement date and an index date is a trading session, and taking the nearer close
