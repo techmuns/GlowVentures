@@ -92,7 +92,7 @@ const columnUnder = (ws: ExcelJS.Worksheet, header: string, lastRow: number): un
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
   "Security", "Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)",
   "Weight of book", "Unreal. P&L (₹)", "Return", "YTD",
-  "Class", "Held via", "Mandate", "Sector", "Entities",
+  "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
 ]);
 eq("Transactions columns: Entity closes the row", headersOf(txnSheet), [
   "Date", "Security", "Type", "Qty", "Price (₹)", "Amount (₹)", "Realized P&L (₹)", "Entity",
@@ -145,7 +145,7 @@ for (const h of ["Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)", "We
      cells.length > 0 && cells.every(numericOrDash),
      `${cells.length} rows`);
 }
-for (const h of ["Security", "Class", "Held via", "Mandate", "Sector", "Entities"]) {
+for (const h of ["Security", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities"]) {
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a descriptor, never a figure`,
      cells.length > 0 && cells.every((v) => typeof v === "string" && !/^-?[\d.]+$/.test(v)),
@@ -175,6 +175,30 @@ eq("...and Amount carries the amount",
 eq("a trade with no realised figure is an em dash, not a zero",
    columnUnder(txnSheet, "Realized P&L (₹)", 3 + TXNS.length),
    [DASH, TXNS[1].realized]);
+
+
+// ── 5. THE FAMILY'S TWO AXES TRAVEL WITH THE SHEET ──────────────────────────
+// The tab can only be sectioned one way at a time; the workbook carries all
+// three axes as columns so a reader can pivot on whichever they want. Both must
+// carry the family's own vocabulary and NEVER a blank — an empty cell in a
+// column of classifications reads as an oversight, and a pivot silently drops it.
+{
+  const baskets = new Set(["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity",
+                           "Not classified in the family's review"]);
+  const classes = new Set(["Equity", "Debt", "Alternate", "Cash", "Not classified in the family's review"]);
+  const bCells = columnUnder(holdings, "Basket (family)", dataLast);
+  const cCells = columnUnder(holdings, "Asset Class (family)", dataLast);
+  ok("every Basket cell is one of the family's four, or the named remainder",
+     bCells.length > 0 && bCells.every((v) => typeof v === "string" && baskets.has(v)),
+     `${new Set(bCells.map(String)).size} distinct`);
+  ok("every Asset Class cell is one of the family's four, or the named remainder",
+     cCells.length > 0 && cCells.every((v) => typeof v === "string" && classes.has(v)),
+     `${new Set(cCells.map(String)).size} distinct`);
+  // ...and the sheet actually USES more than one, so a column stuck on a single
+  // constant — the way a defaulted field looks — cannot pass.
+  ok("the sheet distinguishes more than one basket", new Set(bCells.map(String)).size > 1);
+  ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);
+}
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
 process.exit(fails ? 1 : 0);

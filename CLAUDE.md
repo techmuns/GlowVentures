@@ -4162,6 +4162,122 @@ or not. Reintroducing the sentence proved it: `cio` stayed green. It is asserted
 on `cio-live` now; the allocation subtitle and the removed card render with no
 feed at all and stay on `cio`.
 
+### Stage 10v — THE SAME HOLDINGS, SLICED THREE WAYS
+
+*"We should also be able to see this information: category wise (MF, direct
+equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my basket
+definition wise (core, tactical etc). Default view will remain the current one,
+category wise. Create separate filters/toggles for asset class wise and basket
+definition wise."*
+
+One set of rows, three groupings. `?group=` picks the axis, like every other
+view in this app, so a slice is a link rather than an instruction. **The default
+is untouched and asserted to be** — two new axes beside an old one is exactly
+the change that silently moves the default, and the page would render perfectly
+while showing the family a table they asked to keep.
+
+| Axis | Sections | Where it comes from |
+| --- | --- | --- |
+| **Category** (default) | Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash | `holdingBucket` — the book. Unchanged |
+| **Asset class** | Equity ₹640.9 Cr · Alternate ₹28.5 Cr · Cash ₹14.1 Cr · Debt ₹5.6 Cr | the family's review |
+| **Basket** | Stable Growth ₹412.7 Cr · Thematic & Tactical ₹243.7 Cr · Liquidity ₹27.5 Cr · Entrepreneurial Growth ₹5.1 Cr | the family's review |
+
+**ALL THREE SUM TO ₹710.39 Cr**, which is `BOOK_SUMMARY.totalValue` — the same
+holdings rearranged, on the deduped basis the footer is on.
+
+**THE TWO NEW AXES CANNOT BE DERIVED, AND THAT WAS MEASURED RATHER THAN
+ASSUMED.** Our `AssetClass` says what an instrument IS; the family's says what
+EXPOSURE it carries, and three of our five classes map to more than one of
+theirs — `AIF → Equity / Alternate / Debt` (Sanshi against Baring PE against Neo
+Infra), `Mutual Fund → Equity / Cash`, `ETF → Alternate / Cash` (DSP Gold
+against Liquid BeES). **₹480 Cr of this book sits in those three**, so a
+wrapper-based guess would misfile most of the money. Only two are safe by
+definition and are derived: a company share is equity exposure under any
+taxonomy, and cash is cash. `familyTaxonomy.test.ts` asserts the ambiguity
+itself, so the day our own class could answer it the suite says so rather than
+the map silently outliving its reason.
+
+**AND IT IS A HAND-VERIFIED MAP, NOT A NAME MATCHER, BECAUSE THE MATCHER WAS
+WRITTEN FIRST AND WAS WRONG.** It produced false positives that each filed a
+real holding under the wrong basket:
+
+```
+"Motilal Oswal Active Momentum Fund"      → "Motilal Oswal Founders Fund II"
+"Motilal Oswal Wealth Delphi Equity Fund" → "Motilal Oswal Founders Fund II"
+"ICICI PRU BAF" (Balanced Advantage)      → "ICICI Pru India Opportunities Fund"
+```
+
+Sharing a fund HOUSE is not sharing a FUND — the index-cycled-valuation-method
+failure arriving through string similarity, and invisible on screen because a
+basket heading looks equally authoritative whichever rows are under it. The
+depository's own abbreviations settle it in the other direction too: no
+similarity measure gets from `WOC MAAF D-GROW` to WhiteOak Capital Multi Asset
+Allocation Fund, and one stretched far enough to try would also match funds that
+merely share a house. Every entry was read off the workbook, and then **38
+adversarial verifiers — prompted to refute, and to default to refuted when
+unsure — upheld all of them, with zero refutations.**
+
+**THE WORKBOOK CARRIES THE ANSWER THREE TIMES AND THE THREE AGREE.** Four basket
+sheets (the sheet a product sits on IS its basket), four asset-class sheets
+(likewise), and a basket CODE column on the asset-class sheets. The code column
+and the basket sheets are INDEPENDENT witnesses, cross-checked before a line of
+the map was written: **33 of 33 agree, zero disagreements**, and all 82
+basket-sheet products appear on an asset-class sheet. That is what earns this a
+committed map rather than one reading of a spreadsheet.
+
+**THE REVIEW IS STILL NOT A SOURCE FOR FIGURES.** §"the consolidated review
+workbook is not a source — by decision" is unchanged: every figure here is
+still the book's own. What was taken is a CLASSIFICATION the family made, which
+is the `familyInputs.ts` category — and it is committed rather than held in
+`localStorage` because they supplied it as a document rather than typing it in,
+the same standing `shared/sectors.mjs` has. `build-book.mjs` must never import
+it, and `glowData.ts` regenerates byte-identically with it in the tree.
+
+**A RULE FILLS GAPS AND NEVER OVERRIDES.** The family's email puts "all the
+direct stocks" in Thematic & Tactical, and their workbook corroborates it on all
+15 direct stocks it names, with no counterexample — so a company share the
+review does not name is filed there and **tagged `rule`, never `review`**, with
+the section printing how much of it was placed that way. The same sentence lists
+"PMS", and their own workbook puts the **Carnelian** PMS under Stable Growth —
+so that clause is deliberately NOT applied, and the suite asserts Carnelian
+stays where the workbook put it. A rule with a known counterexample is not a
+rule this book will apply to money.
+
+Coverage: **₹680.9 Cr named product by product, ₹11.2 Cr by the rule, ₹21.4 Cr
+unclassified** — and the unclassified is essentially one holding, Motilal Oswal
+Active Momentum Fund at ₹21.4 Cr, which the 30 June review does not list.
+Everything else in it is worth ₹0. That section names its cause rather than
+reading "Other", which would look like a bucket the family chose.
+
+**THE FILTER FOLLOWS THE AXIS, AND THAT IS A CORRECTNESS FIX.** Its options are
+the active axis's sections, and reintroducing the bug is what proved the point:
+the filter was still testing the CATEGORY key while the dropdown offered
+baskets, so picking one would have matched no row and emptied the table
+silently. Switching axis also clears the selection, for the same reason —
+`setGroupAxis` is the only way in, so no caller can reintroduce it.
+
+**AND THE SECTION BOUNDARY IS STRUCTURAL NOW.** `check:pages` used to find where
+one section ends by matching a hardcoded list of heading NAMES, where a missing
+entry is the dangerous direction: an unrecognised heading is not a boundary, so
+the section above swallows every row below it. Three axes would triple that
+list. Headings carry `data-section` / `data-axis` / `data-subtotal` instead —
+the contract `data-mandate` and `data-row` already carry, and the same rule: a
+structural claim must not depend on prose a redesign is free to reword.
+
+**THE EXCEL EXPORT CARRIES ALL THREE AT ONCE**, as columns rather than sections:
+a tab can only be grouped one way, a spreadsheet can be pivoted on any column.
+They close the sheet with the other descriptors, and the suite asserts both the
+order and that neither column is stuck on one constant — which is how a
+defaulted field looks.
+
+**Seven bugs reintroduced, and one of them was real.** The default axis moved,
+a section dropped from the partition, a section counting rows instead of
+holdings, the unclassified section losing its cause, the rule disclosure
+dropped, the filter keeping the wrong "all" label, and the stale filter — each
+fired exactly the right check. The stale-filter test is the one that earned its
+keep: it passed at first, and finding out why exposed the live filter/axis
+mismatch above.
+
 ### Stage 10u — A MANDATE ROW IS ITS NAME, AND THE CHECKS STOPPED READING PROSE
 
 *"Do not write the entity along with the PMS name, entity name is already a
