@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 76 series, 345,346 points
+- **Harvested:** 76 series, 345,360 points
 - **Failed:** 7
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
@@ -19,7 +19,7 @@ not have.
 | Natural Gas | Energy | 6,532 | 2000-08-30 | 2026-09-02 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 596 | 1977-01-01 | 2026-08-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 680 | 1970-01-01 | 2026-08-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 25 | 2026-08-10 | 2026-09-03 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Electricity (IEX day-ahead) | Energy | 26 | 2026-08-10 | 2026-09-04 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,526 | 2000-08-30 | 2026-09-02 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,528 | 2000-08-30 | 2026-09-02 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,554 | 1997-10-29 | 2026-09-02 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -58,25 +58,25 @@ not have.
 | Shanghai Composite | Asia | 7,068 | 1997-07-02 | 2026-09-02 | index | Yahoo Finance `000001.SS` | official-api |
 | Nifty 50 | India | 4,652 | 2007-09-17 | 2026-09-02 | index | Yahoo Finance `^NSEI` | official-api |
 | Sensex | India | 7,187 | 1997-07-01 | 2026-09-02 | index | Yahoo Finance `^BSESN` | official-api |
-| USD / INR | India | 5,904 | 2003-12-01 | 2026-09-01 | INR per USD | Yahoo Finance `INR=X` | official-api |
-| EUR / USD | Majors | 5,907 | 2003-12-01 | 2026-09-01 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
-| GBP / USD | Majors | 5,919 | 2003-12-01 | 2026-09-01 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
-| USD / JPY | Majors | 7,742 | 1996-10-30 | 2026-09-01 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
-| USD / CNY | Majors | 6,306 | 2001-06-24 | 2026-09-01 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
+| USD / INR | India | 5,905 | 2003-12-01 | 2026-09-02 | INR per USD | Yahoo Finance `INR=X` | official-api |
+| EUR / USD | Majors | 5,908 | 2003-12-01 | 2026-09-02 | USD per EUR | Yahoo Finance `EURUSD=X` | official-api |
+| GBP / USD | Majors | 5,920 | 2003-12-01 | 2026-09-02 | USD per GBP | Yahoo Finance `GBPUSD=X` | official-api |
+| USD / JPY | Majors | 7,743 | 1996-10-30 | 2026-09-02 | JPY per USD | Yahoo Finance `JPY=X` | official-api |
+| USD / CNY | Majors | 6,307 | 2001-06-24 | 2026-09-02 | CNY per USD | Yahoo Finance `CNY=X` | official-api |
 | Dollar Index (DXY) | Majors | 14,135 | 1971-01-04 | 2026-09-02 | index | Yahoo Finance `DX-Y.NYB` | official-api |
 | US 10 Year Treasury | Government Bonds | 14,187 | 1970-01-02 | 2026-09-02 | % | Yahoo Finance `^TNX` | official-api |
 | US 13 Week T-Bill | Government Bonds | 14,187 | 1970-01-02 | 2026-09-02 | % | Yahoo Finance `^IRX` | official-api |
 | US 5 Year Treasury | Government Bonds | 14,187 | 1970-01-02 | 2026-09-02 | % | Yahoo Finance `^FVX` | official-api |
 | US 30 Year Treasury | Government Bonds | 12,413 | 1977-02-15 | 2026-09-02 | % | Yahoo Finance `^TYX` | official-api |
 | India 10 Year G-Sec | Government Bonds | 175 | 2011-12-01 | 2026-06-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
-| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 801 | 2023-08-11 | 2026-09-01 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
-| RBI Repo Rate | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 25 | 2026-08-10 | 2026-09-03 | % | Reserve Bank of India `SLR` | scraped-official |
+| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 802 | 2023-08-11 | 2026-09-02 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
+| RBI Repo Rate | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 26 | 2026-08-10 | 2026-09-04 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
@@ -108,7 +108,6 @@ but a one-day return spanning a roll is measuring the roll.
 | WTI Crude | warn | large-move | 2 consecutive move(s) over 25%; largest 37.7% on 2020-04-22 (10.010000228881836 → 13.779999732971191) |
 | Natural Gas | warn | large-move | 10 consecutive move(s) over 25%; largest 47.5% on 2026-01-29 (7.460000038146973 → 3.9179999828338623) |
 | LNG (Japan) | warn | large-move | 2 consecutive move(s) over 25%; largest 54.5% on 1980-01-01 (3.69 → 5.7) |
-| LNG (Japan) | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-07-01 |
 | Thermal Coal (Australian) | warn | large-move | 10 consecutive move(s) over 25%; largest 58.6% on 1975-01-01 (16.9 → 26.8) |
 | Silver | warn | large-move | 1 consecutive move(s) over 25%; largest 31.3% on 2026-01-30 (114.03700256347656 → 78.29000091552734) |
 | Platinum | warn | large-move | 3 consecutive move(s) over 25%; largest 43.5% on 2000-04-26 (775 → 438.1000061035156) |
@@ -126,6 +125,7 @@ but a one-day return spanning a roll is measuring the roll.
 | DAP | warn | large-move | 11 consecutive move(s) over 25%; largest 62.3% on 1974-01-01 (132.5 → 215) |
 | Phosphate Rock | warn | large-move | 19 consecutive move(s) over 25%; largest 300.0% on 1977-01-01 (35 → 140) |
 | Potash (KCl) | warn | large-move | 14 consecutive move(s) over 25%; largest 70.8% on 2012-08-01 (279.5 → 477.5) |
+| Bloomberg Commodity Index | warn | revised-history | 1 stored point(s) restated by the source; most recent 2020-05-28 |
 | Hang Seng | warn | large-move | 1 consecutive move(s) over 25%; largest 33.3% on 1987-10-26 (3362.39990234375 → 2241.699951171875) |
 | US 10 Year Treasury | warn | large-move | 4 consecutive move(s) over 25%; largest 49.9% on 2020-03-10 (0.49900001287460327 → 0.7480000257492065) |
 | US 13 Week T-Bill | warn | large-move | 497 consecutive move(s) over 25%; largest 1214.3% on 2008-09-19 (0.07000000029802322 → 0.9200000166893005) |
