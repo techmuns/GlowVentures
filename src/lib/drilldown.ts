@@ -26,8 +26,16 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import type { FormulaDef } from "./auditFormulas";
-import { accountIndex, engagementOf } from "./accounts";
-import { holdingBucket, bucketLabel, isPrivateClass } from "./analytics";
+import { accountIndex } from "./accounts";
+import { isPrivateClass } from "./analytics";
+/**
+ * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
+ * allocation table can be grouped three ways, and a drill-down that re-derived
+ * a holding's section would be a second answer to the question the row it
+ * opened from already answered. Same reason the predicates below are delegated
+ * rather than paraphrased.
+ */
+import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { accountHasOpeningValue } from "./returns";
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
@@ -45,7 +53,24 @@ export const TOP_NAMES = 10;
  */
 export type DrilldownId =
   | "book"        // every holding — Consolidated NAV, Positions, Distinct names
-  | "bucket"      // one allocation row
+  | "bucket"      // one allocation row, on the CATEGORY axis
+  /**
+   * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
+   *
+   * Morning CIO's allocation table can now be sliced three ways, and each slice
+   * has to open the holdings behind it exactly as the category rows already do
+   * — an axis a reader can select but not open would be a table of totals with
+   * no way in, which is the state this whole page was built to end.
+   *
+   * They are SCOPES OF THEIR OWN rather than a `bucket` address carrying an
+   * extra `axis=` param, because the three axes answer different questions and
+   * the address should say which: `?of=basket&key=Stable Growth` names the
+   * family's judgement, `?of=bucket&key=AIF` names what the instrument is. It
+   * also leaves every existing `?of=bucket` bookmark meaning precisely what it
+   * meant before.
+   */
+  | "basket"        // …on the family's BASKET axis
+  | "family-class"  // …on the family's own ASSET-CLASS axis
   | "invested"    // Capital invested and the Consolidated return struck on it
   | "measured"    // the accounts the money-weighted return covers
   | "top-names"
@@ -54,8 +79,22 @@ export type DrilldownId =
   | "losers";
 
 const IDS = new Set<DrilldownId>([
-  "book", "bucket", "invested", "measured", "top-names", "cross-held", "winners", "losers",
+  "book", "bucket", "basket", "family-class",
+  "invested", "measured", "top-names", "cross-held", "winners", "losers",
 ]);
+
+/**
+ * WHICH SCOPE OPENS A ROW OF THE ALLOCATION TABLE, per axis — the one place the
+ * mapping lives, so Morning CIO builds the link and this file resolves it from
+ * the same table rather than from two agreeing literals.
+ */
+export const AXIS_SCOPE: Record<GroupAxis, DrilldownId> = {
+  category: "bucket", basket: "basket", assetClass: "family-class",
+};
+/** …and back, for the three branches that share one implementation. */
+const SCOPE_AXIS: Partial<Record<DrilldownId, GroupAxis>> = {
+  bucket: "category", basket: "basket", "family-class": "assetClass",
+};
 
 /**
  * ── ONE ADDRESS PER TILE, AND THE SUB-SETS ARE FACETS OF IT ─────────────────
@@ -218,18 +257,41 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
   };
 
   switch (scope.id) {
-    case "bucket": {
-      const rows = consolidated.filter((p) => holdingBucket(p, engagementOf(accIdx, p)) === scope.key);
-      const label = bucketLabel(scope.key);
+    /**
+     * ── ONE ALLOCATION ROW, ON WHICHEVER AXIS THE TABLE WAS GROUPED BY ──────
+     *
+     * Three ids, one implementation. The rows differ only in which function
+     * decides the section, and that function is `groupKeyFor` — THE SAME ONE
+     * Morning CIO's table groups on and the Portfolio Monitor sections on. A
+     * branch per axis would be three chances for a drill-down to list a set the
+     * row it opened from does not sum.
+     *
+     * WHAT DIFFERS IS THE SENTENCE, and it has to. A category is derived from
+     * the book and asks nothing of the family; a basket and the family's asset
+     * class are the FAMILY'S OWN JUDGEMENT, stated in their consolidated review
+     * and derivable from no statement in the archive. A reader is entitled to
+     * know which of those they are looking at, so the lead says so per axis
+     * rather than describing all three as "the row's own arithmetic".
+     */
+    case "bucket":
+    case "basket":
+    case "family-class": {
+      const axis = SCOPE_AXIS[scope.id] as GroupAxis;
+      const rows = consolidated.filter((p) => groupKeyFor(axis, accIdx, p) === scope.key);
+      const label = groupLabelFor(axis)(scope.key);
+      const noun = GROUP_NOUN[axis].one;
+      const decidedBy = axis === "category"
+        ? "The bucket is decided by `holdingBucket` — the one function every holdings table on this site groups by — so this list is the row's own arithmetic rather than a second reading of it."
+        : `The ${noun} is the FAMILY'S OWN, taken from their consolidated review product by product: no statement in the archive states one, and nothing here is inferred from what the instrument is. A direct stock the review does not name individually is placed by their own stated rule instead, and the allocation row says how much of it was.`;
       return {
         ...base, id: scope.id, key: scope.key,
         title: label,
-        backs: [`the ${label} row of Morning CIO's allocation table`],
-        lead: `Every holding Morning CIO files under ${label}. The bucket is decided by \`holdingBucket\` — the one function every holdings table on this site groups by — so this list is the row's own arithmetic rather than a second reading of it.`,
+        backs: [`the ${label} row of Morning CIO's allocation table${axis === "category" ? "" : `, grouped by ${noun}`}`],
+        lead: `Every holding Morning CIO files under ${label}. ${decidedBy}`,
         rows,
         absent: rows.length ? null : {
           what: `Nothing is filed under ${label}`,
-          needs: `This address names a bucket the current book puts no holding in. A bucket the book HAS always has rows behind it: the allocation table only draws a row where its count is above zero, so a link from that table can never land here. Reaching this page means the address was typed or bookmarked from a book that has since been rebuilt.`,
+          needs: `This address names a ${noun} the current book puts no holding in. A ${noun} the book HAS always has rows behind it: the allocation table only draws a row where its count is above zero, so a link from that table can never land here. Reaching this page means the address was typed or bookmarked from a book that has since been rebuilt.`,
         },
       };
     }
@@ -635,7 +697,9 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
         }`,
       };
 
-    case "bucket": {
+    case "bucket":
+    case "basket":
+    case "family-class": {
       /**
        * THE RETURN THE ALLOCATION ROW'S CHIP USED TO EXPLAIN. That chip carried
        * a popover, and the dashed underline that opened it was the last
@@ -643,19 +707,30 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
        * table too."* So the arithmetic lands here, on the page the row already
        * opens, beside the very holdings it is struck over.
        *
-       * AND IT REFUSES ITSELF ON EXACTLY THE ROWS THE CHIP DOES. A bucket whose
+       * AND IT REFUSES ITSELF ON EXACTLY THE ROWS THE CHIP DOES. A section whose
        * Invested column covers a minority of its holdings has no return that
        * divides one column by the other — the two would span different sets —
        * so the em dash is the answer here too, with the count that causes it.
+       *
+       * ALL THREE AXES SHARE IT, and that is the point rather than a saving:
+       * the basket rows refuse a return on exactly the coverage test the
+       * category rows refuse one on, so a reader who switches the table's axis
+       * cannot get a percentage for a set the other axis withholds one for.
        */
+      const axis = SCOPE_AXIS[d.id] as GroupAxis;
+      const noun = GROUP_NOUN[axis].one;
       const costedMV = costed.reduce((a, p) => a + p.marketValue, 0);
       // THE SAME TEST THE ROW AND THE TILE RUN, not a re-derivation of it.
       const { pct } = coveredReturn(mv, cost, cost == null ? null : costedMV - cost, mv - costedMV);
       const full = costed.length === rows.length;
       return {
         title: `${d.title}${of}`,
-        excel: "= Σ market value of the holdings in this bucket    ·    Return = (Value of the costed holdings − Invested) ÷ Invested",
-        plain: `The bucket is decided by \`holdingBucket\`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it. ${basis}${
+        excel: `= Σ market value of the holdings in this ${noun}    ·    Return = (Value of the costed holdings − Invested) ÷ Invested`,
+        plain: `${
+          axis === "category"
+            ? "The bucket is decided by `holdingBucket`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it."
+            : `The ${noun} is the family's own, read off their consolidated review product by product — nothing here is inferred from what the instrument is, and a holding their review does not name carries no ${noun} rather than a guessed one.`
+        } ${basis}${
           pct == null
             ? cost == null
               ? "\n\nNo holding here reports a cost, so there is nothing to strike a return against — the market value stands on its own."

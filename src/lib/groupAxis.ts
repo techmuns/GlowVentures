@@ -1,0 +1,161 @@
+/**
+ * ── THE SAME HOLDINGS, SLICED THREE WAYS — IN ONE PLACE ─────────────────────
+ *
+ *   "We should also be able to see this information: category wise (MF, direct
+ *    equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my
+ *    basket definition wise (core, tactical etc)."
+ *
+ *   …and then, on Morning CIO: *"I have given you my baskets… how is the core
+ *    doing, how is the satellite portfolio doing, how is the liquidity
+ *    portfolio doing. This should be the Morning CIO page. Add a selector in
+ *    the allocation section to select asset class wise / category wise / basket
+ *    wise allocation and performance overview."*
+ *
+ * The second request is the first one arriving on a SECOND SCREEN, and that is
+ * the whole reason this file exists. The Portfolio Monitor grew these three axes
+ * first and owned them privately; Morning CIO's allocation table now groups on
+ * the same three. Two copies of "which section does this holding sit in" would
+ * be two chances for one screen to file a holding under a basket the other puts
+ * somewhere else — the failure `holdingBucket`, `costCoversSet` and
+ * `accountHasOpeningValue` were each extracted for, arriving a fourth time.
+ *
+ * So the axis is decided ONCE, here, and both pages import it:
+ *
+ *   CATEGORY     — `holdingBucket`. What KIND of thing this is and who chose
+ *                  it: Direct Equity, PMS mandates, AIF, Mutual Fund, ETF,
+ *                  Cash. THE DEFAULT ON BOTH SCREENS, and unchanged — this is
+ *                  where three rounds of the "Direct Equity" argument were
+ *                  settled and it must not be relitigated through a new axis.
+ *   ASSET CLASS  — the family's Equity / Debt / Alternate / Cash. NOT our
+ *                  `AssetClass`: theirs says what EXPOSURE a holding carries,
+ *                  ours says what the instrument IS, and three of our five
+ *                  classes are genuinely ambiguous on this book. See
+ *                  `familyTaxonomy.ts`, which measures why.
+ *   BASKET       — Stable Growth / Entrepreneurial Growth / Thematic & Tactical
+ *                  / Liquidity, as the family's own review states them.
+ *
+ * NOTHING ABOUT WHAT A HOLDING IS CHANGES WHEN THE AXIS DOES. The same
+ * positions, the same figures, regrouped — so an axis touches only the section
+ * key, its reading order and its heading. Every other branch on either page
+ * (the footer, the dedupe gap, the cost-coverage refusal, the weight base) is
+ * untouched and stays correct by construction. Measured on this book, all three
+ * axes sum to `BOOK_SUMMARY.totalValue` to the rupee.
+ */
+import type { Position } from "./types";
+import { engagementOf, type AccountIndex } from "./accounts";
+import {
+  holdingBucket, bucketLabel, isMandateHeld,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+} from "./analytics";
+import {
+  basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd,
+  familyBasket, familyAssetClass, type TaxonomySource,
+} from "./familyTaxonomy";
+
+/**
+ * WHICH SECTION A HOLDING BELONGS IN on the category axis. `holdingBucket`
+ * decides; this only supplies the engagement, which is a fact about the ACCOUNT
+ * and never about the position — reading it off the position is what would put
+ * two rows of one mandate in two sections.
+ */
+export const bucketFor = (idx: AccountIndex, p: Position) => holdingBucket(p, engagementOf(idx, p) || null);
+export const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engagementOf(idx, p) || null);
+
+/**
+ * Category sections in reading order: what the family chose itself, then what
+ * it handed to a manager, then the wrappers, then cash.
+ *
+ * `UNROUTED_EQUITY_BUCKET` is in the list because that — and NOT the raw
+ * `"Equity"` — is what `holdingBucket` returns for a share whose account states
+ * no route. No such account is in this book, and if one arrives it gets its own
+ * section between the two routed ones rather than being folded into either,
+ * neither of which would be true of it. Spelling it `"Equity"` here made the
+ * entry dead: the key that actually arrives fell through the `i < 0` branch and
+ * sorted the section BELOW Cash, which is the opposite of what it claimed.
+ */
+export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
+
+export const GROUP_AXES = ["category", "assetClass", "basket"] as const;
+export type GroupAxis = (typeof GROUP_AXES)[number];
+
+/**
+ * The three segments, in the order both screens draw them. Shaped as
+ * `ViewDef<GroupAxis>` without importing it: a lib that reaches into
+ * `components/` for a type inverts the dependency for nothing, and the shape is
+ * structurally assignable either way.
+ */
+export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: string }[] = [
+  { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, cash." },
+  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
+  { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
+];
+
+/** The section a holding sits in on the chosen axis. One place, three answers. */
+export const groupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Position): string => {
+  if (axis === "category") return bucketFor(idx, p);
+  const isMandate = heldUnderMandate(idx, p);
+  return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
+};
+
+/**
+ * HOW A ROW'S SECTION KEY WAS AUTHORISED on the active axis. Null on the
+ * category axis is not "unknown": that axis is derived from the book and asks
+ * nothing of the family, so the heading has nothing to disclose.
+ */
+export const groupSourceFor = (axis: GroupAxis, idx: AccountIndex, p: Position): TaxonomySource | null => {
+  if (axis === "category") return "review";
+  const isMandate = heldUnderMandate(idx, p);
+  const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
+  return r?.source ?? null;
+};
+
+/** Reading order per axis, with the unclassified section last on the two new ones. */
+export const groupOrdFor = (axis: GroupAxis) =>
+  axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
+
+/**
+ * The heading. The two family axes are already the family's own words, so they
+ * render verbatim; only the category axis has a label function, because that is
+ * the axis where the wording was itself the fix (§"Company Shares").
+ */
+export const groupLabelFor = (axis: GroupAxis) => (key: string) =>
+  axis === "category" ? bucketLabel(key) : key;
+
+/** What the "all" option on a section filter says, per axis. */
+export const ALL_LABEL: Record<GroupAxis, string> = {
+  category: "All categories", assetClass: "All asset classes", basket: "All baskets",
+};
+
+/**
+ * THE NOUN FOR ONE SECTION ON EACH AXIS, singular and plural.
+ *
+ * A count inside a caption is not chrome — two of `check:pages`'s invariants
+ * read Morning CIO's allocation count out of its own pill — so the noun has to
+ * come from the axis rather than be typed per screen, or a table of BASKETS
+ * ends up captioned "6 buckets held". "Bucket" stays the category word because
+ * that is what `holdingBucket` returns and what every existing caption says.
+ */
+export const GROUP_NOUN: Record<GroupAxis, { one: string; many: string }> = {
+  category: { one: "bucket", many: "buckets" },
+  assetClass: { one: "asset class", many: "asset classes" },
+  basket: { one: "basket", many: "baskets" },
+};
+
+/** `3 baskets` / `1 bucket` — a count and its noun, agreeing, per axis. */
+export const groupCount = (axis: GroupAxis, n: number) =>
+  `${n} ${n === 1 ? GROUP_NOUN[axis].one : GROUP_NOUN[axis].many}`;
+
+/**
+ * WHAT A COLUMN OF SECTION NAMES IS HEADED, per axis.
+ *
+ * The category heading keeps the words it has always had. It is not a perfect
+ * description of that axis — "asset class & mandate" predates the regroup — but
+ * it is the one a reader has learnt, and renaming it is a change the family has
+ * not asked for.
+ */
+export const GROUP_COLUMN_HEAD: Record<GroupAxis, string> = {
+  category: "Asset class / mandate",
+  assetClass: "Asset class — the family's own",
+  basket: "Basket",
+};

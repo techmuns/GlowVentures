@@ -15,7 +15,19 @@ import {
   costCoversSet,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
-import { drilldownHref, TOP_NAMES } from "@/lib/drilldown";
+/**
+ * THE THREE AXES THE ALLOCATION TABLE CAN BE GROUPED ON, decided once for this
+ * screen and the Portfolio Monitor alike — see the header of `groupAxis.ts`.
+ */
+import {
+  GROUP_AXES, GROUP_VIEWS, type GroupAxis, groupKeyFor, groupSourceFor,
+  groupCount, GROUP_COLUMN_HEAD, GROUP_NOUN,
+} from "@/lib/groupAxis";
+import {
+  BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED, UNCLASSIFIED_WHY,
+} from "@/lib/familyTaxonomy";
+import { useViewParam } from "@/components/ViewToggle";
+import { drilldownHref, AXIS_SCOPE, TOP_NAMES } from "@/lib/drilldown";
 import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -80,8 +92,61 @@ const BUCKET_COLOR: Record<string, string> = {
 };
 const bucketColor = (key: string, i: number) => BUCKET_COLOR[key] ?? CHART_COLORS[i % CHART_COLORS.length];
 
+/**
+ * ONE COLOUR PER SECTION ON THE FAMILY'S OWN TWO AXES, for the same reason as
+ * the map above: the donut and the table beside it have to agree, and a section
+ * the book produces that is not named here must still arrive with a colour
+ * rather than a blank swatch.
+ *
+ * THE UNCLASSIFIED SECTION IS DELIBERATELY OFF THE PALETTE. It is not one of the
+ * family's four baskets or four asset classes — it is the holdings their review
+ * does not place — so it takes a muted slate that reads as a remainder rather
+ * than as a fifth choice they made.
+ */
+const BASKET_COLOR: Record<string, string> = {
+  // The two biggest baskets on this book are 58% and 34% of it, so they take
+  // colours from opposite ends of the palette. Drawn as two champagne shades
+  // (the first cut) the donut read as one wedge covering 92% of the NAV.
+  "Stable Growth": "#c3a962",
+  "Thematic & Tactical": "#a855f7",
+  "Entrepreneurial Growth": "#10b981",
+  Liquidity: "#22d3ee",
+};
+const FAMILY_CLASS_COLOR: Record<string, string> = {
+  Equity: "#c3a962",
+  Debt: "#818cf8",
+  Alternate: "#a855f7",
+  Cash: "#22d3ee",
+};
+const UNPLACED_COLOR = "#64748b";
+/**
+ * WHAT THE CARD IS CALLED ON EACH AXIS. The category title is unchanged — it
+ * predates the regroup and is not a perfect description of that axis, but it is
+ * the heading the family reads and `check:pages` uses it as a section boundary
+ * on this page. The other two say plainly whose taxonomy they are.
+ */
+const ALLOC_TITLE: Record<GroupAxis, string> = {
+  category: "Allocation by asset class & mandate",
+  assetClass: "Allocation by asset class — the family's own",
+  basket: "Allocation by basket — the family's own",
+};
+const sectionColor = (axis: GroupAxis, key: string, i: number) => {
+  if (key === UNCLASSIFIED) return UNPLACED_COLOR;
+  if (axis === "category") return bucketColor(key, i);
+  const map = axis === "basket" ? BASKET_COLOR : FAMILY_CLASS_COLOR;
+  return map[key] ?? CHART_COLORS[i % CHART_COLORS.length];
+};
+
 export function MorningCIO() {
   const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  /**
+   * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
+   * every other view in this app, and for the reason the Portfolio Monitor's
+   * own axis is: the family asked for three ways to read one book, and "send me
+   * the basket view" has to be a link rather than an instruction. The default
+   * stays param-free and stays CATEGORY, which is the table they already read.
+   */
+  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
@@ -308,13 +373,38 @@ export function MorningCIO() {
      * disappearing out of the Cash row into a bucket that does not mention it is
      * the same silence this page has already been fixed for once.
      */
-    const bucketRows = new Map<string, typeof p>();
-    for (const x of p) {
-      const key = holdingBucket(x, engagementOf(accIdx, x));
-      const rows = bucketRows.get(key) ?? [];
-      rows.push(x);
-      bucketRows.set(key, rows);
+    /**
+     * ── AND IT IS GROUPED THREE WAYS, BECAUSE THE FAMILY ASKED FOR ALL THREE ──
+     *
+     * *"I have given you my baskets… how is the core doing, how is the satellite
+     * portfolio doing, how is the liquidity portfolio doing. This should be the
+     * Morning CIO page. Add a selector in the allocation section to select asset
+     * class wise / category wise / basket wise allocation and performance
+     * overview."*
+     *
+     * The Portfolio Monitor grew these three axes first; this is the same
+     * request arriving on a second screen, so the axis is decided by the SAME
+     * function both screens group on (`groupKeyFor`, in `lib/groupAxis.ts`)
+     * rather than by a copy living here. A basket that means one thing on the
+     * Monitor and another on this page is the failure that file exists to stop.
+     *
+     * ALL THREE ARE BUILT ON EVERY RENDER, not just the active one. It is a
+     * group-by over 369 rows and it keeps the axis out of this memo's
+     * dependencies — the memo also pools every account's XIRR, and recomputing
+     * that because a reader pressed a segment would be work for nothing.
+     */
+    const rowsByAxis = new Map<GroupAxis, Map<string, typeof p>>();
+    for (const axis of GROUP_AXES) {
+      const m = new Map<string, typeof p>();
+      for (const x of p) {
+        const key = groupKeyFor(axis, accIdx, x);
+        const rows = m.get(key) ?? [];
+        rows.push(x);
+        m.set(key, rows);
+      }
+      rowsByAxis.set(axis, m);
     }
+    const bucketRows = rowsByAxis.get("category")!;
     const rowsIn = (key: string) => bucketRows.get(key) ?? [];
     // The "Book performance — Listed vs private" card must split on ASSET CLASS,
     // not on the fund-of-funds model. That model (privateMarkets.*) is empty here,
@@ -433,6 +523,21 @@ export function MorningCIO() {
       withoutCost: number;
       /** …and what they are worth, so the row can say what stands behind no cost. */
       withoutCostMV: number;
+      /**
+       * Value in this section placed by the family's STATED RULE rather than
+       * named product by product in their review. Zero on the category axis,
+       * which asks nothing of them. A section filled entirely by a rule and one
+       * the review states line by line are the same heading on screen, so the
+       * row prints the difference rather than collapsing it.
+       */
+      ruleMV: number;
+      /**
+       * TRUE where the family's review places this row nowhere — the
+       * unclassified section, and any fund-of-funds row on a family axis. The
+       * row says so rather than sitting under a heading that would read as a
+       * basket the family chose.
+       */
+      unplaced: boolean;
       sheet: PrivateSheet | null;
     };
     const fundBasis = (r: XirrResult) =>
@@ -456,14 +561,27 @@ export function MorningCIO() {
       // A fund's drawn capital IS its cost, on every fund in the model — there
       // is no such thing as a drawdown with no call behind it.
       withoutCost: 0, withoutCostMV: 0,
+      // The family's review classifies products and names none of these.
+      ruleMV: 0, unplaced: false,
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
-    const positionBucket = (key: string, i: number): Bucket => {
-      const g = eqGroup(rowsIn(key));
+    const positionBucket = (axis: GroupAxis, key: string, i: number): Bucket => {
+      const rows = rowsByAxis.get(axis)?.get(key) ?? [];
+      const g = eqGroup(rows);
+      /**
+       * HOW MUCH OF THIS SECTION THE FAMILY NAMED, AND HOW MUCH THEIR RULE
+       * PLACED. On the two family axes a section can be filled two ways — their
+       * review naming a product, or their own stated rule ("all the direct
+       * stocks belong to Thematic & Tactical") — and on screen both are just
+       * rows under one heading. The difference is printed rather than
+       * collapsed, exactly as the Portfolio Monitor's section headings print
+       * it. Zero on the category axis, which asks nothing of the family.
+       */
+      const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
       return {
-        key, color: bucketColor(key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
-        fromPositions: true,
+        key, color: sectionColor(axis, key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
+        fromPositions: true, ruleMV, unplaced: key === UNCLASSIFIED,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
         // cost `sumOrNull` struck on part of it — which on Direct Equity is
@@ -476,24 +594,35 @@ export function MorningCIO() {
       };
     };
     /**
-     * THE BUCKETS THIS BOOK IS DECLARED TO HAVE, PLUS ANY THE POSITIONS PRODUCE.
+     * THE SECTIONS THIS BOOK IS DECLARED TO HAVE, PLUS ANY THE POSITIONS PRODUCE.
      *
-     * The declared list is in the BUCKET vocabulary, so it can no longer name
-     * "Equity" — a bucket that no longer exists — and a declared bucket holding
-     * nothing is named as absent below rather than drawn as a row of zeros.
-     * Anything `holdingBucket` returns that is not declared (a class this drop
-     * does not carry, or equity whose account states no engagement) still gets
-     * its own row: a bucket the book HAS must never be silently dropped for not
+     * The declared list is per AXIS and is in that axis's own vocabulary — so
+     * the category list can no longer name "Equity", a bucket that no longer
+     * exists, and the family lists are the family's own four names in their own
+     * reading order. Anything `groupKeyFor` returns that is not declared (a
+     * class this drop does not carry, equity whose account states no
+     * engagement, a holding the family's review does not place) still gets its
+     * own row: a section the book HAS must never be silently dropped for not
      * being on a list written before it arrived.
      */
-    const DECLARED_BUCKETS = [MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, "AIF", "Mutual Fund", "ETF", "Cash"];
-    const positionKeys = [
-      ...DECLARED_BUCKETS,
-      ...[...bucketRows.keys()].filter((k) => !DECLARED_BUCKETS.includes(k)),
-    ];
-    const allBuckets: Bucket[] = [
-      ...positionKeys.map(positionBucket),
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue },
+    const DECLARED: Record<GroupAxis, readonly string[]> = {
+      category: [MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, "AIF", "Mutual Fund", "ETF", "Cash"],
+      basket: BASKET_ORDER,
+      assetClass: FAMILY_CLASS_ORDER,
+    };
+    /**
+     * THE FUND-OF-FUNDS ROWS, WHICH ARE THE SAME ON EVERY AXIS AND SAY SO.
+     *
+     * These come from `privateMarkets.*` — fund-level records rather than
+     * positions — so `groupKeyFor` has nothing to key them on and the family's
+     * review, which classifies PRODUCTS, does not name them. They therefore keep
+     * their own rows on the two family axes and are marked `unplaced`, so a row
+     * under a table of BASKETS never reads as a basket the family chose. Every
+     * one of them is empty in this book, so none renders; this is what keeps it
+     * honest the day one does.
+     */
+    const fundModelBuckets: Bucket[] = [
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -501,10 +630,24 @@ export function MorningCIO() {
       fundBucket("Pre-IPO Funds", "#38bdf8", pm.preIpoFunds.length, preF, preX, "pre-ipo"),
       fundBucket("Debt Funds", "#818cf8", pm.debtFunds.length, debtF, debtX, "debt-fund"),
     ];
-    // A bucket the book holds NOTHING in is not a row of zeros — it is named
-    // below the table as absent, so a reader can tell "nothing here" from
-    // "nothing left". This is the whole §0 rule applied to the allocation view.
-    const buckets = allBuckets.filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
+    const bucketsFor = (axis: GroupAxis): Bucket[] => {
+      const declared = DECLARED[axis];
+      const keys = [
+        ...declared,
+        ...[...(rowsByAxis.get(axis)?.keys() ?? [])].filter((k) => !declared.includes(k)),
+      ];
+      const all = [
+        ...keys.map((k, i) => positionBucket(axis, k, i)),
+        // A fund-model record carries no family taxonomy — see above.
+        ...fundModelBuckets.map((b) => (axis === "category" ? b : { ...b, unplaced: true })),
+      ];
+      // A section the book holds NOTHING in is not a row of zeros — it is left
+      // out entirely, so a reader can tell "nothing here" from "nothing left".
+      // This is the whole §0 rule applied to the allocation view.
+      return all.filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
+    };
+    const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket") } as Record<GroupAxis, Bucket[]>;
+    const buckets = bucketsByAxis.category;
 
     // Book-level XIRR: every listed dated flow closed against the live listed
     // value, pooled with the private book's calls and marks.
@@ -597,7 +740,7 @@ export function MorningCIO() {
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       listedBook, privateBook,
-      buckets, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
+      buckets, bucketsByAxis, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       xirrAccounts: listedParts.length,
       // THE ONE PLACE THE TILE'S FIGURE IS DECIDED. `moneyWeightedReturn`
@@ -614,7 +757,22 @@ export function MorningCIO() {
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
-  const donutData = m.buckets.map((b) => ({ name: bucketLabel(b.key), value: convertFromBase(b.current) }));
+  /**
+   * THE SECTIONS THE CARD IS CURRENTLY DRAWING. All three are built in the
+   * model; this picks one. Every figure in them is the same arithmetic over the
+   * same holdings — only the grouping moves — which is why the footer, the
+   * weight base and the cost-coverage refusal below need no branch of their own.
+   */
+  const sections = m.bucketsByAxis[allocAxis] ?? m.buckets;
+  const sectionLabel = (key: string) => (allocAxis === "category" ? bucketLabel(key) : key);
+  const donutData = sections.map((b) => ({ name: sectionLabel(b.key), value: convertFromBase(b.current) }));
+  /**
+   * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
+   * rows on screen rather than recomputed from the book — a caption struck on a
+   * different set from the table under it is the failure this page has already
+   * paid for twice.
+   */
+  const ruleMV = sections.reduce((a, b) => a + b.ruleMV, 0);
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
@@ -632,7 +790,7 @@ export function MorningCIO() {
   // off one strong quarter); the family asked to see the return actually earned
   // to date, so every row shows total return on the capital in it, and the
   // money-weighted figure (de-annualised) lives once in the footer total.
-  const returnCell = (b: typeof m.buckets[number]) => {
+  const returnCell = (b: typeof sections[number]) => {
     if (b.retPct == null) {
       /**
        * WHICH ABSENCE THIS IS, NAMED — a reader acts differently on each, and a
@@ -860,14 +1018,58 @@ export function MorningCIO() {
             cumulative · <date>` — the first draft of this change — made both
             report a missing figure on a page rendering correctly. A caption is
             chrome; a count inside it is not. */}
-        <Card className="lg:col-span-2" title="Allocation by asset class &amp; mandate"
-          right={<Pill tone="info">{m.buckets.length} bucket{m.buckets.length === 1 ? "" : "s"} held</Pill>}>
+        {/*
+            ── ONE BOOK, THREE SLICES, AND THE FAMILY PICKS ──────────────────
+
+            *"I have given you my baskets… how is the core doing, how is the
+            satellite portfolio doing, how is the liquidity portfolio doing.
+            This should be the Morning CIO page. Add a selector in the
+            allocation section to select asset class wise / category wise /
+            basket wise allocation and performance overview."*
+
+            The segments regroup THE SAME ROWS. Invested, Current, Return and
+            Weight are the identical arithmetic over the identical holdings on
+            every axis, and all three sum to the same NAV — so the footer, the
+            weight base and the cost-coverage refusal are untouched and stay
+            correct by construction. Only the section key moves, and it moves
+            through `groupKeyFor`, which is also what the Portfolio Monitor
+            sections on: one answer to "which basket is this holding in",
+            shared, rather than one per screen.
+
+            THE TITLE FOLLOWS THE AXIS, because a table of BASKETS headed
+            "Allocation by asset class & mandate" is the caption-does-not-
+            describe-its-figure failure this page has already paid for twice.
+            The category title is left exactly as it was — it predates the
+            regroup and is not a perfect description of that axis, but it is the
+            one the family has learnt and renaming it is not what they asked for.
+
+            AND THE PILL'S NOUN FOLLOWS TOO. Two `check:pages` invariants read
+            this table's row count out of the pill, so the count is not chrome —
+            but "6 buckets held" over a table of baskets would be wrong about
+            what it counted. `groupCount` supplies the noun per axis. */}
+        <Card className="lg:col-span-2" title={ALLOC_TITLE[allocAxis]}
+          right={
+            <div className="flex flex-wrap items-center gap-2">
+              <div role="tablist" aria-label="Group the allocation by"
+                className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
+                {GROUP_VIEWS.map((v) => (
+                  <button key={v.key} type="button" role="tab" aria-selected={allocAxis === v.key} title={v.title}
+                    data-alloc-axis={v.key}
+                    onClick={() => setAllocAxis(v.key)}
+                    className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${allocAxis === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+              <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
+            </div>
+          }>
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={74} stroke="none">
-                    {m.buckets.map((b, i) => <Cell key={i} fill={b.color} />)}
+                    {sections.map((b, i) => <Cell key={i} fill={b.color} />)}
                   </Pie>
                   <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
                     formatter={(v: number) => fmtCurrency(v, displayCurrency, { compact: true })} />
@@ -880,43 +1082,69 @@ export function MorningCIO() {
               </div>
             </div>
             <div className="min-w-0 flex-1 overflow-x-auto">
-              <table className="min-w-full text-sm">
+              {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
+                  this table is asserted through. `check:pages` used to find it
+                  by matching the words "ASSET CLASS" in its header, which is a
+                  claim about prose the axis selector is free to change — and on
+                  the basket view that finder returns nothing, so every
+                  invariant struck on it would have abstained rather than
+                  failed. Same contract `data-section` and `data-mandate`
+                  already carry on the Portfolio Monitor. */}
+              <table className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
                 <thead>
                   <tr className="border-b border-ink-700">
-                    <th className="label-xs px-2 py-2 text-left font-medium">Asset class / mandate</th>
+                    <th className="label-xs px-2 py-2 text-left font-medium">{GROUP_COLUMN_HEAD[allocAxis]}</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Invested</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Current</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap" title="Total return to date on the capital in each bucket — cumulative, not annualised.">Return (total)</th>
+                    <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap" title={`Total return to date on the capital in each ${GROUP_NOUN[allocAxis].one} — cumulative, not annualised.`}>Return (total)</th>
                     <th className="label-xs px-2 py-2 text-right font-medium">Weight</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {m.buckets.map((b) => (
-                    <tr key={b.key} className="hover:bg-ink-700/40">
+                  {sections.map((b) => (
+                    <tr key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
                       <td className="px-2 py-2.5">
-                        {/* THE ROW OPENS THE HOLDINGS BEHIND IT — the whole of
-                            this change. AIF, PMS mandates, Mutual Fund, Direct
-                            Equity and ETF alike: the destination lists exactly
-                            the holdings this row's three figures are summed
-                            over, because `drilldownHref` and the page it opens
-                            both read the same bucket from `holdingBucket`.
+                        {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
+                            axis the table is grouped by. AIF, PMS mandates,
+                            Mutual Fund, Direct Equity, ETF, and every basket
+                            and family asset class alike: the destination lists
+                            exactly the holdings this row's three figures are
+                            summed over, because `drilldownHref` and the page it
+                            opens both read the section from `groupKeyFor`.
+                            `AXIS_SCOPE` is the one place the axis chooses the
+                            scope, so a link built here and a set resolved there
+                            cannot name different things.
 
                             A row the fund-of-funds model produced carries no
                             positions and is deliberately NOT a link (see
                             `fromPositions`): a link to a table that could only
                             be empty reads as a feed that failed. */}
                         {b.fromPositions ? (
-                          <Link to={drilldownHref("bucket", b.key)}
-                            title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${bucketLabel(b.key)}`}
+                          <Link to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
+                            title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
                             className="flex items-center gap-2 font-medium text-slate-100 transition-colors hover:text-champagne-400">
                             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                            {bucketLabel(b.key)}
+                            {sectionLabel(b.key)}
                           </Link>
                         ) : (
                           <span className="flex items-center gap-2 font-medium text-slate-100"
                             title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
                             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                            {bucketLabel(b.key)}
+                            {sectionLabel(b.key)}
+                          </span>
+                        )}
+                        {/* AN UNPLACED ROW NAMES ITS CAUSE, and it is the one
+                            row here that is not a fact about the holdings under
+                            it. "Other" would read as a section the family
+                            chose; this says their review does not list these
+                            and what would fill it — the rule every absent
+                            figure on this site follows, applied to a row label.
+                            A fund-of-funds row carries it on a family axis for
+                            the same reason: their review classifies products
+                            and names none of those. */}
+                        {b.unplaced && (
+                          <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-400/80" title={UNCLASSIFIED_WHY}>
+                            the family&rsquo;s review does not place {b.count === 1 ? "this holding" : "these holdings"}
                           </span>
                         )}
                       </td>
@@ -969,6 +1197,37 @@ export function MorningCIO() {
                   </tr>
                 </tfoot>
               </table>
+              {/*
+                ── WHOSE JUDGEMENT THIS VIEW IS, WHERE IT IS ONE ────────────────
+
+                The two family axes are not derived from any statement: they are
+                the family's own consolidated review, product by product, plus
+                one rule they stated themselves ("all the direct stocks belong
+                to Thematic & Tactical") that fills the gaps their review leaves.
+                On screen both are just rows under one heading, so the
+                difference is printed rather than collapsed — the same
+                disclosure the Portfolio Monitor's section headings carry.
+
+                RENDERED ONLY ON A FAMILY AXIS AND ONLY WHEN THE RULE ACTUALLY
+                PLACED SOMETHING. The category axis asks nothing of the family
+                and has nothing to disclose; a view the review states line by
+                line has nothing either, and a sentence about a rule that placed
+                no holding is chrome.
+              */}
+              {allocAxis !== "category" && (
+                <p className="mt-3 text-[11px] leading-relaxed text-slate-500" data-testid="alloc-taxonomy-source">
+                  Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
+                  product by product. No statement in the archive carries {GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"};
+                  nothing here is inferred from what the instrument is.
+                  {ruleMV > 0 && (
+                    <>
+                      {" "}{money(ruleMV)} of the {money(m.totalValue)} above is placed by their stated rule instead
+                      &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
+                      review does not name those holdings individually.
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           </div>
         </Card>

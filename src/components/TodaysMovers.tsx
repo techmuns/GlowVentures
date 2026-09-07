@@ -7,6 +7,7 @@ import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { useViewParam } from "@/components/ViewToggle";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { symbolCoverage } from "@/lib/quotes";
@@ -37,6 +38,31 @@ import { symbolCoverage } from "@/lib/quotes";
 // mixed them — Jammu Kashmir Bank (Carnelian's pick) sat beside Fractal
 // Analytics (the family's own demat) under one heading.
 //
+// ── …AND THE ETFs CAME BACK, AS THE FAMILY'S OWN FIRST WORDING HAD THEM ──────
+//
+// *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
+// Basically, or else… separate tabs, stocks… ETF… mutual fund."*
+//
+// The request that built this card said "MY STOCKS AND ETFS are up, Sensex is
+// down this much" — quoted at the top of this file since the day it was written
+// — and the narrowing above then dropped the ETFs along with the mandate names.
+// It was right about the mandates and wrong about the ETFs, which is what the
+// family have now said: an ETF the family bought in its own demat is a holding
+// they chose, priced by the same quote feed, on the same session as the shares
+// beside it. Nothing about combining them mixes two measurements.
+//
+// SO THE DEFAULT IS BOTH, AND THE CONSTITUENTS ARE TABS. That delivers both
+// halves of the sentence rather than picking one: the card opens on stocks and
+// ETFs together, and Stocks, ETFs and Mutual funds each have a tab of their own.
+// The scope lives in the URL (`?movers=`) like every other view in this app, so
+// a tab can be linked rather than described.
+//
+// EVERY CAPTION MOVES WITH THE SCOPE, and that is not cosmetic. The tile label,
+// the coverage line, the index comparison and the excluded footer each state
+// what the figure covers, and a caption that widens or narrows a figure it does
+// not is the failure the Capital invested tile already cost this book once. They
+// all read the active scope rather than a literal.
+//
 // ── AND THE DAY'S MOVE IS OVER THE PRICED PART OF THAT SET ───────────────────
 //
 // A day change needs a LIVE price and the PREVIOUS CLOSE behind it; four Direct
@@ -62,9 +88,71 @@ type Row = {
 
 const TOP_N = 6;
 
+/**
+ * ── WHAT "TODAY'S MOVERS" COVERS, AND THE FOUR SETS THE FAMILY ASKED FOR ────
+ *
+ * Each scope is a set of `holdingBucket` keys — the SAME function the allocation
+ * table and the Portfolio Monitor group on — so a tab here and the row a reader
+ * clicks on Morning CIO's allocation table cover exactly the same holdings.
+ * Re-deriving "is this an ETF" from the asset class would be a second answer:
+ * an ETF a discretionary manager holds inside a mandate is not a holding the
+ * family chose, and `holdingBucket` is where that distinction lives.
+ *
+ * `subject` and `verb` exist because these captions are SENTENCES about the
+ * set — "Stocks and ETFs ARE −0.2% against the Nifty 500" — and a label
+ * interpolated into one has to agree with the verb after it. `noun` is what one
+ * name in the set is called in the coverage line.
+ */
+const MOVER_SCOPES = [
+  {
+    key: "stocks-etfs", label: "Stocks & ETFs",
+    title: "Shares and ETFs the family bought in its own demat or broking accounts. Not a share a discretionary manager picked — those are counted under the mandate that holds them.",
+    buckets: [DIRECT_EQUITY_BUCKET, "ETF"], subject: "Stocks and ETFs", verb: "are", noun: "direct-equity and ETF",
+    // `subject` is interpolated into TWO sentences — "… are +11% against the
+    // Nifty 500" and "… only. Also moved today and not counted here" — so it
+    // carries no leading article: "The ETFs only." reads as a fragment.
+  },
+  {
+    key: "stocks", label: "Stocks",
+    title: "Shares the family bought itself — its own demat and broking accounts only.",
+    buckets: [DIRECT_EQUITY_BUCKET], subject: "Direct equity", verb: "is", noun: "direct-equity",
+  },
+  {
+    key: "etf", label: "ETFs",
+    title: "Exchange-traded funds the family holds directly. Priced by the same feed and on the same session as the shares beside them.",
+    buckets: ["ETF"], subject: "ETFs", verb: "are", noun: "ETF",
+  },
+  {
+    key: "mf", label: "Mutual funds",
+    title: "Mutual-fund holdings. A fund unit has no NSE trading symbol, so the quote feed cannot price one intraday — see the card for what does carry a scheme's NAV move.",
+    buckets: ["Mutual Fund"], subject: "Mutual funds", verb: "are", noun: "mutual-fund",
+  },
+] as const;
+type MoverScope = (typeof MOVER_SCOPES)[number]["key"];
+
+/**
+ * WHY A SCOPE MAY BE EMPTY, in that scope's own terms.
+ *
+ * A fund unit is not an unlucky case of an unresolved symbol: it can NEVER have
+ * one, because the feed is keyed on an NSE trading symbol and a scheme is not
+ * traded. Told the generic "no live quote" reason, a reader goes looking for a
+ * feed fix that cannot exist — the confidently-wrong-diagnosis failure this book
+ * keeps naming. It says so, and names where the NAV move actually lives.
+ */
+const CANNOT_BE_PRICED: Partial<Record<MoverScope, (m: { unpriceable: number; distinct: number }) => string>> = {
+  mf: (m) => `A mutual-fund unit has no NSE trading symbol, and the quote feed is keyed on one — ${m.unpriceable} of the ${m.distinct} schemes here resolve to none and cannot be priced intraday at all. What a scheme does publish is ONE dated NAV per business day, struck after the close; showing that under a heading reading “today” would set one day's move beside another's. Each fund's own page carries its published NAV, the date it is struck on and the change since the previous one.`,
+};
+
 export function TodaysMovers() {
   const { portfolio, consolidated, quotesStatus, quotesAsOf, fmtFromBase } = usePortfolio();
   const [rank, setRank] = useState<"impact" | "pct">("impact");
+  /**
+   * WHICH SET THIS CARD COVERS. In the URL (`?movers=`) like every other view in
+   * this app, so "look at the ETFs" is a link. The default stays param-free and
+   * is stocks-and-ETFs together, which is what the family asked to see first.
+   */
+  const [scopeKey, setScopeKey] = useViewParam(MOVER_SCOPES, {}, "movers");
+  const active = MOVER_SCOPES.find((s) => s.key === scopeKey) ?? MOVER_SCOPES[0];
   const [indices, setIndices] = useState<IndexFeed | null>(null);
   /**
    * THREE STATES, NOT TWO — the same rule `IndexStrip` already follows.
@@ -101,14 +189,16 @@ export function TodaysMovers() {
     if (!portfolio) return null;
     const accts = accountIndex(portfolio.accounts);
     /**
-     * DIRECT EQUITY ONLY — the family's request, and the axis is the ACCOUNT's
-     * engagement, not the security. `holdingBucket` reads it through
-     * `engagementOf`, which is the one place this app decides who chose a
-     * holding; re-deriving it here would be a second definition to drift.
+     * THE ACTIVE SCOPE, and the axis is the ACCOUNT's engagement rather than the
+     * security. `holdingBucket` reads it through `engagementOf`, which is the
+     * one place this app decides who chose a holding; re-deriving it here would
+     * be a second definition to drift — and it is the reason an ETF sitting
+     * inside a PMS mandate is NOT in the ETF tab: the manager chose it, so it
+     * belongs to the mandate exactly as a manager-picked share does.
      */
-    const isDirect = (p: typeof consolidated[number]) =>
-      holdingBucket(p, engagementOf(accts, p)) === DIRECT_EQUITY_BUCKET;
-    const scope = consolidated.filter(isDirect);
+    const inScope = (p: typeof consolidated[number]) =>
+      (active.buckets as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p)));
+    const scope = consolidated.filter(inScope);
     /**
      * WHAT THE NARROWING LEAVES OUT, NAMED RATHER THAN DROPPED.
      *
@@ -119,7 +209,7 @@ export function TodaysMovers() {
      */
     const excluded = new Map<string, { mv: number; names: Set<string> }>();
     for (const p of consolidated) {
-      if (isDirect(p)) continue;
+      if (inScope(p)) continue;
       if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
       const key = bucketLabel(holdingBucket(p, engagementOf(accts, p)));
       const e = excluded.get(key) ?? { mv: 0, names: new Set<string>() };
@@ -166,7 +256,8 @@ export function TodaysMovers() {
 
     // COVERAGE IS OVER THE SCOPE, NOT THE BOOK. "159 of 214 distinct names" was
     // true of the whole book and is a claim about a set this card no longer
-    // shows; against Direct Equity the honest denominator is its own 37.
+    // shows; against the active scope the honest denominator is its own — 40
+    // names for stocks and ETFs together, 37 for stocks alone.
     const cov = symbolCoverage(scope);
     const distinct = new Set(scope.map((p) => p.securityKey)).size;
     const scopeValue = scope.reduce((a, p) => a + p.marketValue, 0);
@@ -186,7 +277,7 @@ export function TodaysMovers() {
       gainSum: gainers.reduce((a, r) => a + r.dayChange, 0),
       lossSum: losers.reduce((a, r) => a + r.dayChange, 0),
     };
-  }, [portfolio, consolidated, rank]);
+  }, [portfolio, consolidated, rank, active]);
 
   if (!portfolio || !model) return null;
 
@@ -200,16 +291,35 @@ export function TodaysMovers() {
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3" title="Today&rsquo;s movers &middot; Direct Equity"
+    <Card className="lg:col-span-3" title={`Today\u2019s movers \u00b7 ${active.label}`}
       right={
-        <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
-          {(["impact", "pct"] as const).map((k) => (
-            <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k}
-              className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
-                rank === k ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
-              {k === "impact" ? "By ₹ impact" : "By % move"}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* THE SCOPE, AND IT IS IN THE HEADING TOO. A card headed "Today's
+              movers" over 36 of the book's 214 names is a claim about the book —
+              Stage 10L is three rounds of the family reporting exactly that kind
+              of heading — so the set is named where it cannot be removed as
+              chrome, and these tabs say which sets there are. */}
+          <div role="tablist" aria-label="Which holdings today’s movers covers"
+            className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
+            {MOVER_SCOPES.map((sc) => (
+              <button key={sc.key} type="button" role="tab" aria-selected={scopeKey === sc.key} title={sc.title}
+                data-movers-scope={sc.key}
+                onClick={() => setScopeKey(sc.key)}
+                className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  scopeKey === sc.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                {sc.label}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
+            {(["impact", "pct"] as const).map((k) => (
+              <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k}
+                className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  rank === k ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                {k === "impact" ? "By ₹ impact" : "By % move"}
+              </button>
+            ))}
+          </div>
         </div>
       }>
 
@@ -247,17 +357,26 @@ export function TodaysMovers() {
           </p>
         </div>
       ) : model.rows.length === 0 ? (
+        /* THE CAUSE PICKS THE HEADLINE, and there are three of them here rather
+           than one. A feed that did not respond is a fact about the SERVICE; a
+           scope whose instruments can never be priced intraday is a fact about
+           the INSTRUMENT and no feed will ever change it; anything else is a
+           fact about which of this scope's names resolved a symbol. Collapsing
+           the second into the third would send a reader looking for a quote-feed
+           fix for a mutual fund, which is the confidently-wrong diagnosis this
+           book keeps naming. */
         <AbsentSection
-          what="No direct-equity holding carries a day change right now"
+          what={`No ${active.noun} holding carries a day change right now`}
           needs={quotesStatus === "unavailable"
             ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every holding is showing its statement mark; nothing has been substituted. The top bar names the failure."
-            : `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities the family holds in its own demat and broking accounts resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — this card is direct equity only.`} />
+            : CANNOT_BE_PRICED[active.key]?.(model)
+              ?? `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities in this scope resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — ${model.excludedRows.length ? "they are named below the lists on the other tabs" : "this card covers what the family holds directly"}.`} />
       ) : (
         <>
           {/* ── The book's own move, and the four indices beside it ───────── */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs">Direct Equity &middot; today</div>
+              <div className="label-xs">{active.label} &middot; today</div>
               <div className={`mt-2 text-[22px] font-semibold tabular ${changeColor(model.dayChange)}`}>
                 {fmtFromBase(model.dayChange, { compact: true, sign: true })}
               </div>
@@ -268,9 +387,18 @@ export function TodaysMovers() {
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage">
-                on {fmtFromBase(model.movedValue, { compact: true })} across {model.pricedNames} of {model.distinct} direct-equity
-                names — the rest carry no live quote and are not counted either way
-                {clock ? ` · quotes ${clock}` : ""}
+                {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
+                    NOT. A name count alone hides how much of a scope a figure
+                    stands on: the mutual-fund tab prices ONE of 20 schemes and
+                    that one is worth ₹18,822 of ₹99.9 Cr, so "1 of 20" and
+                    "₹18,822 of ₹99.9 Cr" are very different disclosures of the
+                    same fact — and the second is the one a reader needs beside
+                    a percentage printed at 22px. `scopeValue` was already
+                    computed for this and rendered nowhere, which is this book's
+                    most-repeated defect. */}
+                on {fmtFromBase(model.movedValue, { compact: true })} of the {fmtFromBase(model.scopeValue, { compact: true })} held,
+                across {model.pricedNames} of {model.distinct} {active.noun} names — the rest carry no live quote and are
+                not counted either way{clock ? ` · quotes ${clock}` : ""}
               </p>
             </div>
 
@@ -307,11 +435,12 @@ export function TodaysMovers() {
                 const gap = model.dayPct - n500.changePct;
                 return (
                   /* "THE PRICED BOOK" WAS TRUE AND IS NOT ANY MORE. This figure
-                     is now struck over direct equity alone, and a sentence that
-                     called it the book would be the caption-that-widens failure
-                     the Capital invested tile already cost this page once. */
+                     is struck over the ACTIVE SCOPE, and a sentence that called
+                     it the book would be the caption-that-widens failure the
+                     Capital invested tile already cost this page once — so the
+                     subject is the scope's own, and it moves with the tab. */
                   <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index">
-                    Direct equity is <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
+                    {active.subject} {active.verb} <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
                     Nifty 500 today, on {fmtFromBase(model.movedValue, { compact: true })} of
                     the {fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a
                     return over any longer window.
@@ -323,10 +452,13 @@ export function TodaysMovers() {
 
           {/* ── Gainers and losers ────────────────────────────────────────── */}
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <MoverList title={`${model.gainCount} gainers`} tone="gain" rows={model.gainers}
-              total={model.gainSum} fmt={fmtFromBase} rank={rank} />
-            <MoverList title={`${model.lossCount} losers`} tone="loss" rows={model.losers}
-              total={model.lossSum} fmt={fmtFromBase} rank={rank} />
+            {/* A COUNT AND ITS NOUN AGREE. "1 GAINERS" was on the family's own
+                screenshot of this card, and a scope tab makes a one-name list an
+                ordinary outcome rather than a rarity. */}
+            <MoverList title={`${model.gainCount} gainer${model.gainCount === 1 ? "" : "s"}`} tone="gain" rows={model.gainers}
+              total={model.gainSum} fmt={fmtFromBase} rank={rank} noun={active.noun} />
+            <MoverList title={`${model.lossCount} loser${model.lossCount === 1 ? "" : "s"}`} tone="loss" rows={model.losers}
+              total={model.lossSum} fmt={fmtFromBase} rank={rank} noun={active.noun} />
           </div>
           {/* THE EXPLANATORY FOOTER IS GONE AT THE FAMILY'S REQUEST — the ranking
               rationale, the unchanged-name count and the multi-account rule all
@@ -338,7 +470,7 @@ export function TodaysMovers() {
               nothing here rather than a sentence about an empty set. */}
           {model.excludedRows.length > 0 && (
             <p className="mt-3 text-[11px] text-slate-500" data-testid="movers-excluded">
-              Direct equity only. Also moved today and not counted here:{" "}
+              {active.subject} only. Also moved today and not counted here:{" "}
               {model.excludedRows.map((e, i) => (
                 <span key={e.label}>
                   {i > 0 ? " · " : ""}{e.names} {e.label} {fmtFromBase(e.mv, { compact: true })}
@@ -352,10 +484,12 @@ export function TodaysMovers() {
   );
 }
 
-function MoverList({ title, tone, rows, total, fmt, rank }: {
+function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
   title: string; tone: "gain" | "loss"; rows: Row[]; total: number;
   fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
   rank: "impact" | "pct";
+  /** What one holding in the active scope is called — the empty state says it. */
+  noun: string;
 }) {
   return (
     <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
@@ -373,7 +507,7 @@ function MoverList({ title, tone, rows, total, fmt, rank }: {
       </div>
       {rows.length === 0 ? (
         <p className="mt-3 text-[11.5px] text-slate-500">
-          No priced direct-equity holding moved this way today — a measurement over the names the feed prices, not a
+          No priced {noun} holding moved this way today — a measurement over the names the feed prices, not a
           statement about the whole book.
         </p>
       ) : (
