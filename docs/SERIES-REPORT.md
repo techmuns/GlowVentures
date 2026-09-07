@@ -6,7 +6,7 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 76 series, 345,453 points
+- **Harvested:** 76 series, 345,461 points
 - **Failed:** 7
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
@@ -19,7 +19,7 @@ not have.
 | Natural Gas | Energy | 6,534 | 2000-08-30 | 2026-09-04 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 596 | 1977-01-01 | 2026-08-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 680 | 1970-01-01 | 2026-08-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 28 | 2026-08-10 | 2026-09-06 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Electricity (IEX day-ahead) | Energy | 29 | 2026-08-10 | 2026-09-07 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,528 | 2000-08-30 | 2026-09-04 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,530 | 2000-08-30 | 2026-09-04 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,556 | 1997-10-29 | 2026-09-04 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -70,13 +70,13 @@ not have.
 | US 30 Year Treasury | Government Bonds | 12,415 | 1977-02-15 | 2026-09-04 | % | Yahoo Finance `^TYX` | official-api |
 | India 10 Year G-Sec | Government Bonds | 175 | 2011-12-01 | 2026-06-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
 | US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 803 | 2023-08-11 | 2026-09-03 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
-| RBI Repo Rate | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 28 | 2026-08-10 | 2026-09-06 | % | Reserve Bank of India `SLR` | scraped-official |
+| RBI Repo Rate | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 29 | 2026-08-10 | 2026-09-07 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 88 | 2019-04-30 | 2026-07-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
