@@ -468,6 +468,42 @@ const ROUTES = [
    * an unpriced holding as flat cannot produce those numbers.
    */
   ["cio-live", "/cio"],
+  /**
+   * ...AND THE MOVERS CARD'S OTHER TABS, ON THE SAME FULFILLED FEED.
+   *
+   * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
+   * Basically, or else… separate tabs, stocks… ETF… mutual fund."* The default
+   * is the two together and is asserted on `cio-live`; these walk the
+   * constituents, because a tab group that renders is not a tab group that
+   * FILTERS — the whole defect available here is a segment that changes the
+   * heading and leaves the rows alone, which reads as a working control.
+   *
+   * The ETF tab is walked because it is the set that came BACK, and the mutual
+   * fund tab because it is the one whose reason for being nearly empty is a
+   * fact about the instrument rather than about the feed: a scheme has no NSE
+   * trading symbol and can never have one, and a card that told a reader
+   * otherwise would send them looking for a quote-feed fix that cannot exist.
+   */
+  ["cio-movers-etf", "/cio?movers=etf"],
+  ["cio-movers-mf", "/cio?movers=mf"],
+  /**
+   * ...AND THE ALLOCATION CARD ON THE FAMILY'S OTHER TWO AXES.
+   *
+   * *"I have given you my baskets… how is the core doing, how is the satellite
+   * portfolio doing, how is the liquidity portfolio doing. This should be the
+   * Morning CIO page. Add a selector in the allocation section to select asset
+   * class wise / category wise / basket wise allocation and performance
+   * overview."*
+   *
+   * Both are reached by URL for the same reason `monitor-basket` is: the axis
+   * lives in `?alloc=`, so a slice is a link. The DEFAULT axis is asserted on
+   * the plain `cio` route — that it is still category, and that nothing about
+   * it moved — because two new axes beside an old one is exactly the change
+   * that silently moves a default, and the page would render perfectly while
+   * showing the family a table they asked to keep.
+   */
+  ["cio-alloc-basket", "/cio?alloc=basket"],
+  ["cio-alloc-class", "/cio?alloc=assetClass"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
@@ -549,6 +585,18 @@ const ROUTES = [
    */
   ...BUCKET_SLOTS.map((n) => [`holdings-row-${n}`, () => CIO_BUCKET_HREFS[n - 1] ?? `/holdings?of=bucket&key=no-row-${n}-on-morning-cio`]),
   ["holdings-book", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
+  /**
+   * ...AND ONE ROW FROM EACH OF THE FAMILY'S OWN TWO AXES.
+   *
+   * An axis a reader can select but not open would be a table of totals with no
+   * way in, which is the state `/holdings` was built to end. Each address is the
+   * one the axis's own route drew — typing `?of=basket&key=Stable Growth` here
+   * would be a second source for a key the family's review generates, and a
+   * stale one would keep "passing" by rendering the drill-down's not-found
+   * state.
+   */
+  ["holdings-basket", () => drilldownPath("basket") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-family-class", () => drilldownPath("family-class") ?? "/holdings?of=none-resolved-from-cio"],
   /**
    * ...AND THE CONCENTRATION FIGURES, which until now had their LINKS asserted
    * on the `cio` route and their DESTINATIONS asserted by nothing. A link that
@@ -908,6 +956,15 @@ const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew 
  */
 /** What Morning CIO printed for each allocation row: label -> {invested, current, weight}. */
 const CIO_ALLOCATION = new Map();
+/**
+ * ...AND THE SAME, ON THE FAMILY'S OWN TWO AXES, keyed `<scope>:<section>`.
+ *
+ * Read off `data-alloc-row` rather than out of the page text, because a section
+ * the family's review does not place carries a SECOND LINE in its label cell and
+ * the text parser picks that row up under the disclosure sentence instead of its
+ * own name — figures unchanged, which is exactly why it would go unnoticed.
+ */
+const ALLOC_CELLS = new Map();
 /** The KPI figures the drill-downs have to reproduce, in ₹ Cr. */
 const CIO_FIGURES = new Map();
 
@@ -949,6 +1006,27 @@ function cioAllocationRows(text) {
     out.push({ label: m[1].trim(), invested: m[2], current: m[3], ret: m[4].trim(), weight: Number(m[5]) });
   }
   return out;
+}
+
+/**
+ * THE GAINER COUNT ON ONE MOVERS TAB, AGAINST THE SCOPE'S OWN PRICED SIZE.
+ *
+ * Shared by the four scope routes because the claim is the same claim and only
+ * the expected number differs — and because a copy per route is four chances for
+ * one tab's expectation to drift onto another's set. Every fixture price is the
+ * mark × 1.10, so nothing falls: losers must be nil and the gainers must account
+ * for the whole priced scope.
+ */
+function moversGainersAre(text, scopeKey) {
+  if (PRICED_NAMES_IN_SCOPE == null) {
+    return { notChecked: "the book could not be read, so the expected count could not be derived" };
+  }
+  const want = PRICED_NAMES_IN_SCOPE[scopeKey];
+  const card = sliceBetween(text, "Today’s movers", "Allocation by");
+  const g = /(\d+)\s+GAINERS?/i.exec(card);
+  const l = /(\d+)\s+LOSERS?/i.exec(card);
+  if (!g || !l) return false;
+  return Number(l[1]) === 0 && Number(g[1]) === want;
 }
 
 /** `₹352.3 Cr` / `₹68.3 L` / `—` -> a number in ₹ Cr, or NaN for an em dash. */
@@ -1031,40 +1109,63 @@ const MARK_BY_SYMBOL = (() => {
 })();
 
 /**
- * HOW MANY DIRECT-EQUITY NAMES THE MOCKED FEED CAN PRICE — the exact number of
- * gainers the movers card must show on the `cio-live` walk.
+ * HOW MANY NAMES THE MOCKED FEED CAN PRICE IN EACH MOVERS SCOPE — the exact
+ * number of gainers the card must show on the `cio-live` walk, per tab.
  *
- * *"daily movers/losers should comprise of direct equity holdings only."* That
- * claim cannot be checked on the ROWS: the card lists six, and on any day the
- * mandate names happen not to move a rows-only assertion passes over a broken
- * filter. It can be checked on the COUNT. Every fixture price is the mark × 1.10,
- * so every priceable name rises and the gainer count is exactly the size of the
- * priced scope — 33 here. Fold the PMS mandates back in and it is 160-odd; fold
- * the ETFs in and it moves too. Derived from the book on every run rather than
- * typed, so the next drop brings its own expectation.
+ * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
+ * Basically, or else… separate tabs, stocks… ETF… mutual fund."* The card opens
+ * on stocks and ETFs together and offers the constituents as tabs, and the
+ * claim that each tab covers ITS OWN SET cannot be checked on the ROWS: the
+ * lists show six, and on any day the mandate names happen not to move a
+ * rows-only assertion passes over a broken filter.
+ *
+ * It can be checked on the COUNT. Every fixture price is the mark × 1.10, so
+ * every priceable name rises and the gainer count is exactly the size of the
+ * priced scope. Measured on this book: 36 for stocks and ETFs, 33 for stocks
+ * alone, 3 for the ETFs. Fold the PMS mandates back in and the first is 160-odd;
+ * drop the ETFs from the default and it is 33 — neither can pass. Derived from
+ * the book on every run rather than typed, so the next drop brings its own
+ * expectation.
  *
  * The bucket is recomputed here from `assetClass` + the ACCOUNT's engagement,
  * deliberately duplicating `holdingBucket` rather than importing it: this file
  * is the independent check, and a check that imports the helper it is checking
  * agrees with itself by construction.
  */
-const DIRECT_EQUITY_PRICED_NAMES = (() => {
+const PRICED_NAMES_IN_SCOPE = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
-    const names = new Set();
-    for (const p of positions) {
+    /**
+     * `holdingBucket`, re-derived. ONLY `PMS` is a mandate: `AIF`,
+     * `Distribution` and `Advisory` are fund routes, and a fund's holding
+     * buckets as its own asset class rather than under a manager.
+     */
+    const bucket = (p) => {
       const e = engagement.get(p.accountId);
-      if (p.assetClass !== "Equity") continue;
-      if (e !== "Direct" && e !== "Execution") continue;      // a mandate is not direct
-      const sym = p.symbol || symbols[p.securityKey];
-      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;         // the fixture cannot price it
-      names.add(p.securityKey);
-    }
-    return names.size;
+      if (e === "PMS") return "PMS mandates";
+      if (p.assetClass !== "Equity") return p.assetClass;
+      return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
+    };
+    const count = (keys) => {
+      const names = new Set();
+      for (const p of positions) {
+        if (!keys.includes(bucket(p))) continue;
+        const sym = p.symbol || symbols[p.securityKey];
+        if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
+        names.add(p.securityKey);
+      }
+      return names.size;
+    };
+    return {
+      "stocks-etfs": count([DIRECT_EQUITY_BUCKET, "ETF"]),
+      stocks: count([DIRECT_EQUITY_BUCKET]),
+      etf: count(["ETF"]),
+      mf: count(["Mutual Fund"]),
+    };
   } catch { return null; }
 })();
 
@@ -1470,6 +1571,110 @@ const CATEGORY_TOTAL_NOT_A_HOLDING = [
     return de.rows.length === ctx.tableRows.filter((r) => r.bucket === DIRECT_EQUITY_BUCKET).length;
   }],
 ];
+/**
+ * ── MORNING CIO'S ALLOCATION CARD, ON WHICHEVER AXIS IT IS GROUPED BY ───────
+ *
+ * *"Add a selector in the allocation section to select asset class wise /
+ * category wise / basket wise allocation and performance overview."*
+ *
+ * These hold on ALL THREE axes and are therefore shared. Every one is struck on
+ * `data-alloc-*` rather than on a heading's words: the selector's whole job is
+ * to change those words, and a check matching one would be retired silently by
+ * the next rewording — the failure `MANDATE_SUBLINE` already cost this sweep.
+ */
+const ALLOC_AXIS = [
+  /**
+   * THE SELECTOR EXISTS, OFFERS ALL THREE, AND EXACTLY ONE IS ACTIVE. A missing
+   * selector is a FINDING and not an abstention: shipping the axes without the
+   * control is precisely the arrangement the family asked to be rid of, and a
+   * gate that abstained on "no tabs captured" would report the whole sweep clean
+   * over it.
+   */
+  ["the allocation card offers all three axes, exactly one active", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    const keys = (a.axes ?? []).map((x) => x.key);
+    return ["category", "assetClass", "basket"].every((k) => keys.includes(k))
+      && (a.axes ?? []).filter((x) => x.active).length === 1
+      && (a.axes ?? []).find((x) => x.active)?.key === a.axis;
+  }],
+  /**
+   * THE SECTIONS PARTITION THE BOOK, on every axis. This is the claim that makes
+   * three views of one book honest rather than three different books: each
+   * axis's rows must sum to the SAME consolidated NAV the footer prints, and the
+   * weights to 100. A regroup that dropped a holding, double-counted one, or
+   * quietly filtered the unclassified remainder away breaks exactly this and
+   * nothing else on the page.
+   */
+  ["the allocation rows sum to the footer's own total, and the weights to 100", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a?.foot) return { notChecked: "the allocation table was not on screen on this run" };
+    if (a.cells.length < 2) return false;
+    const cur = a.cells.reduce((x, r) => x + money2cr(r.current), 0);
+    const wt = a.cells.reduce((x, r) => x + Number((/([\d.]+)%/.exec(r.weight) ?? [0, NaN])[1]), 0);
+    const foot = money2cr(a.foot.current);
+    /**
+     * THE BOUND IS THE PAGE'S OWN PRINTING PRECISION, REPRODUCED — never a
+     * tolerance widened until the figures fit. Every cell here is rendered to
+     * one decimal place (`₹640.9 Cr`, `90.2%`), so each carries up to half of
+     * that last digit, and n rows against a printed footer is (n + 1) of them.
+     * Measured on the family's asset-class axis the five rows sum to ₹710.35 Cr
+     * against a printed ₹710.4 Cr — 0.05 Cr of rounding on figures that tie to
+     * the rupee underneath. A missing or double-counted row moves this by
+     * whole crores and still cannot pass.
+     */
+    const slack = (a.cells.length + 1) * 0.05;
+    return Number.isFinite(foot) && Math.abs(cur - foot) <= slack && Math.abs(wt - 100) <= slack;
+  }],
+  /**
+   * ...AND EVERY ROW OPENS ITS OWN SET. Counting the links is not enough: six
+   * links to one address satisfies a count while opening the same holdings six
+   * times, and an axis whose rows all pointed at the CATEGORY scope would look
+   * perfect until a reader clicked one.
+   */
+  ["every allocation row opens a different set, on this axis's own scope", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    const want = { category: "bucket", basket: "basket", assetClass: "family-class" }[a.axis];
+    const rows = (ctx?.hrefs ?? []).filter((h) => new RegExp(`^/holdings\\?of=${want}&key=.`).test(h));
+    return rows.length === a.rows.length && new Set(rows).size === rows.length;
+  }],
+  /** ...AND THE TABLE STILL UNDERLINES NOTHING AND HIDES NO ARITHMETIC. */
+  ["the allocation table underlines nothing and hides no arithmetic, on every axis", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    return a.underlined === 0 && a.buttons === 0 && a.links >= 2;
+  }],
+];
+
+/**
+ * ── …AND WHOSE JUDGEMENT THE TWO FAMILY AXES ARE ────────────────────────────
+ *
+ * A basket and the family's own asset class are derivable from no statement in
+ * the archive: they are the family's consolidated review, product by product,
+ * plus one rule they stated themselves. On screen a section heading looks
+ * exactly as authoritative whichever of those put the rows under it, so the card
+ * says which — and a holding their review does not place is NAMED rather than
+ * swept into whichever section happens to be first.
+ */
+const ALLOC_FAMILY_AXIS = [
+  ["a family axis says whose taxonomy it is",
+    (t) => /Grouped by the family’s own (basket|asset class), as their consolidated review states it/.test(t)],
+  /**
+   * AN UNPLACED ROW NAMES ITS CAUSE. Gated on the row EXISTING, because a later
+   * review that names everything is a book with no such row — and a check that
+   * required the sentence would then fail a page that is right.
+   */
+  ["a section the review does not place says so, where the book has one", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    if (!(a.rows ?? []).some((k) => /^Not classified/.test(k ?? ""))) {
+      return { notChecked: "the family's review places every holding in this book on this axis" };
+    }
+    return /the family’s review does not place these holdings/.test(t);
+  }],
+];
+
 /**
  * ── THE THREE SLICES ────────────────────────────────────────────────────────
  *
@@ -1882,15 +2087,17 @@ const INVARIANTS = {
     /**
      * THE WORDING MOVED WITH THE CARD'S SCOPE, AND SO DOES THIS.
      *
-     * The settled-absence line reads "No DIRECT-EQUITY holding carries a day
-     * change right now" since the movers card was narrowed to direct equity.
-     * Matching the old sentence here would pass because the STRING is gone
-     * rather than because the CLAIM is — a check that has quietly stopped
-     * checking. Both spellings are matched so this cannot silently lapse again
-     * if the scope word changes once more.
+     * The settled-absence line NAMES THE SCOPE — "No direct-equity and ETF
+     * holding carries a day change right now" — and the scope is now a tab, so
+     * that noun changes with it. Matching one spelling here would pass because
+     * the STRING is gone rather than because the CLAIM is, which is a check that
+     * has quietly stopped checking; enumerating the spellings was the previous
+     * attempt at that and it lapsed the moment the ETFs came back. So the
+     * pattern is anchored on the two ends of the sentence and takes ANY noun
+     * between them.
      */
     ["...and asserts neither an empty book nor a failed feed while it is in flight",
-      (t) => !/No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(t)
+      (t) => !/\bNo\b[^\n]{0,80}?carries a day change/i.test(t)
         && !/did not respond/i.test(t)],
 
   ],
@@ -2439,21 +2646,45 @@ const INVARIANTS = {
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t) => {
       const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-      if (!/No direct-equity holding carries a day change/.test(card)) return false;
+      if (!/No direct-equity and ETF holding carries a day change/.test(card)) return false;
       if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/DIRECT EQUITY · TODAY/i.test(card);
+      return !/STOCKS & ETFS · TODAY/i.test(card);
     }],
   /**
-   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
+   * ── TODAY'S MOVERS IS STOCKS AND ETFs, AND THE HEADING SAYS SO ────────────
    *
-   * *"daily movers/losers should comprise of direct equity holdings only."* The
-   * scope is asserted on the HEADING and the TILE rather than on the rows,
+   * *"ETFs can be a part of stocks… it should actually be stocks and ETFs."*
+   * The scope is asserted on the HEADING and the TILE rather than on the rows,
    * because a rows-only check passes on any day the mandate names happen not to
-   * move — and that is most days for a book whose PMS half is 131 names.
+   * move — and that is most days for a book whose PMS half is 131 names. The
+   * COUNT that proves the set is right lives on `cio-live`, where a feed exists.
    */
   ["Today's movers names its scope in the heading and on the tile",
-    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
-      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
+    (t) => /Today’s movers\s*·\s*Stocks & ETFs/i.test(t)
+      && /STOCKS & ETFS · TODAY|No direct-equity and ETF holding carries a day change/i.test(t)],
+  /**
+   * ...AND THE SCOPE TABS ARE THERE WITH NO FEED TOO. They are a control rather
+   * than a figure, so a page that hid them until a quote landed would leave a
+   * reader on a cold open unable to reach the ETF or fund view at all.
+   */
+  ["the movers scope tabs render with no feed, defaulting to stocks-and-ETFs", (t, ctx) => {
+    const tabs = ctx?.moverScopes;
+    if (!tabs || !tabs.length) return { notChecked: "the movers scope tabs were not on screen on this run" };
+    return ["stocks-etfs", "stocks", "etf", "mf"].every((k) => tabs.some((x) => x.key === k))
+      && tabs.find((x) => x.active)?.key === "stocks-etfs";
+  }],
+  /**
+   * ...AND THE ALLOCATION CARD STILL OPENS ON CATEGORY. *"Default view will
+   * remain the current one, category wise."* Two new axes beside an old one is
+   * the change that silently moves a default, and the page would render
+   * perfectly while showing the family a table they asked to keep.
+   */
+  ["the allocation card defaults to the category axis", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    return a.axis === "category" && (a.axes ?? []).find((x) => x.active)?.key === "category";
+  }],
+  ...ALLOC_AXIS,
   /**
    * ── THREE CAPTION BLOCKS THE FAMILY ASKED TO REMOVE ───────────────────────
    *
@@ -2966,6 +3197,54 @@ const INVARIANTS = {
    * the same one Morning CIO's own allocation footer makes, and a drill-down
    * that printed a percentage there would contradict the footer it opened from.
    */
+  /**
+   * ── A BASKET ROW, OPENED ───────────────────────────────────────────────────
+   *
+   * An axis a reader can select but not open would be a table of totals with no
+   * way in. Both routes get the SAME two claims the category rows get, because
+   * the risk is identical: each page is internally consistent whichever set it
+   * shows, so a drill-down listing the wrong holdings is invisible from either
+   * screen alone and obvious from both.
+   *
+   * AND THE FIRST CLAIM IS THAT IT RESOLVED AT ALL. These addresses come from
+   * the links the axis routes drew; unresolved, the walk lands on `/holdings`'s
+   * own not-found page, which has no console error, no overflow and no stray
+   * zero — so without this it would pass every generic check while asserting
+   * nothing, which is the "check that quietly stops checking" this file exists
+   * to prevent.
+   */
+  "holdings-alloc-row": [
+    ["it opened a section Morning CIO's axis actually drew, and says which figure it stands behind", (t, ctx) => {
+      const q = new URLSearchParams(String(ctx?.path ?? "").split("?")[1] ?? "");
+      const scope = q.get("of"), key = q.get("key");
+      if (!scope || !key) return false;   // the address never resolved — a finding, not an abstention
+      return new RegExp(`behind the ${esc(key)} row`, "i").test(t) && new RegExp(`^${esc(key)}$`, "m").test(t);
+    }],
+    /**
+     * ITS TOTAL IS THE CELL THE READER CLICKED. Bounded at the printing
+     * precision — both figures render to one decimal in Cr, so they can differ
+     * by rounding and by nothing else.
+     */
+    ["its market value reproduces that row's Current cell", (t, ctx) => {
+      const q = new URLSearchParams(String(ctx?.path ?? "").split("?")[1] ?? "");
+      const cell = ALLOC_CELLS.get(`${q.get("of")}:${q.get("key")}`);
+      if (!cell) return false;   // likewise: no cell to compare against means the address is wrong
+      const here = drilldownTotal(t), there = money2cr(cell.current);
+      return [here, there].every(Number.isFinite) && Math.abs(here - there) <= 0.15;
+    }],
+    /**
+     * ...AND IT SAYS WHOSE JUDGEMENT PUT THESE HOLDINGS TOGETHER. A category is
+     * derived from the book and asks nothing of the family; a basket is their
+     * own review, and a page that described one as the other would be asserting
+     * a provenance the archive does not carry.
+     */
+    ["it names the family's review as what decided this section",
+      // EITHER APOSTROPHE. This page's lead is a plain string in `drilldown.ts`
+      // and renders a straight quote; the pages around it use the typographic
+      // one. A check pinned to the wrong glyph fails a page that is right.
+      (t) => /the FAMILY['’]S OWN, taken from their consolidated review/i.test(t)],
+  ],
+
   "holdings-book": [
     /**
      * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────
@@ -3664,12 +3943,21 @@ const INVARIANTS = {
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
       (t) => {
         const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-        const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        // The tile's label is the SCOPE's, and the default scope is stocks and
+        // ETFs together — *"it should actually be stocks and ETFs."*
+        const m = /STOCKS & ETFS · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
         return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
       }],
-    /** ...and the tile SAYS what it covers, on its face rather than in a hover. */
+    /**
+     * ...AND THE TILE SAYS WHAT IT COVERS, on its face rather than in a hover —
+     * in NAMES and in RUPEES, both. A name count alone hides how much of a scope
+     * a percentage stands on: the mutual-fund tab prices one of twenty schemes
+     * and that one is worth ₹18,822 of ₹99.9 Cr, so "1 of 20" and "₹18,822 of
+     * ₹99.9 Cr" disclose the same fact very differently, and the second is the
+     * one a reader needs beside a figure printed at 22px.
+     */
     ["the day-move tile names its own coverage, in rupees and in names",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? across \d+ of \d+ direct-equity names/.test(t)],
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ direct-equity and ETF names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -3688,40 +3976,56 @@ const INVARIANTS = {
      */
     ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
       (t) => {
-        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
+        // The SUBJECT of that sentence is the active scope's own, so it moves
+        // with the tab — a sentence still reading "Direct equity" over a set
+        // that now includes the ETFs would be the caption-that-widens failure.
+        const m = /Stocks and ETFs are\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /Stocks and ETFs are\s*([+-]\d+\.\d+)%/.exec(t);
         return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
       }],
     /**
-     * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
+     * THE MOVERS SET IS STOCKS AND ETFs, CHECKED ON A COUNT RATHER THAN ON NAMES.
      *
      * Every fixture price is the mark × 1.10, so every priceable name in scope
      * rises: the gainer count IS the size of the priced scope. Widening the
-     * filter back to the whole book takes it from 33 to 160-odd, and narrowing
-     * it further drops it — neither can pass. The expectation is derived from
-     * the book on every run (see `DIRECT_EQUITY_PRICED_NAMES`), never typed.
+     * filter back to the whole book takes it from 36 to 160-odd; dropping the
+     * ETFs back out takes it to 33 — neither can pass, which is what makes this
+     * the check that the family's actual request landed. The expectation is
+     * derived from the book on every run (`PRICED_NAMES_IN_SCOPE`), never typed.
      */
-    ["the gainers are exactly the priced DIRECT-EQUITY names, not the whole book",
-      (t) => {
-        if (DIRECT_EQUITY_PRICED_NAMES == null) {
-          return { notChecked: "the book could not be read, so the expected count could not be derived" };
-        }
-        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-        const g = /(\d+)\s+GAINERS/i.exec(card);
-        const l = /(\d+)\s+LOSERS/i.exec(card);
-        if (!g || !l) return false;
-        // Every priced name rose in this fixture, so losers must be nil and the
-        // gainers must account for the whole priced scope.
-        return Number(l[1]) === 0 && Number(g[1]) === DIRECT_EQUITY_PRICED_NAMES;
-      }],
+    ["the gainers are exactly the priced STOCK-AND-ETF names, not the whole book",
+      (t) => moversGainersAre(t, "stocks-etfs")],
     /**
-     * ...AND WHAT THE NARROWING LEFT OUT IS NAMED, not silently dropped. The PMS
+     * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
      * mandates are the bulk of the book's priceable value; a card that stopped
      * covering them without saying so is a scope change a reader cannot see.
      */
-    ["the card names the buckets it no longer covers, with their value",
-      (t) => /Direct equity only\. Also moved today and not counted here:/.test(t)
+    ["the card names the buckets it does not cover, with their value",
+      (t) => /Stocks and ETFs only\. Also moved today and not counted here:/.test(t)
         && /\d+ PMS mandates ₹[\d,.]+/.test(t)],
+    /**
+     * ...AND THE SCOPE TABS ARE ON THE CARD, ALL FOUR, WITH THE COMBINED ONE
+     * ACTIVE.
+     *
+     * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
+     * Basically, or else… separate tabs, stocks… ETF… mutual fund."* Both halves
+     * of that sentence are delivered — the card opens on the two together, and
+     * each constituent has a tab — so both are asserted, and the DEFAULT is
+     * asserted separately because a build that shipped the tabs and opened on
+     * the wrong one would satisfy a count of them.
+     *
+     * Struck on the CONTROLS rather than on words: every one of these labels
+     * also appears in the card's own prose, so a text match would pass over a
+     * page that had lost the tab group entirely.
+     */
+    ["the movers card offers all four scopes and opens on stocks-and-ETFs", (t, ctx) => {
+      const tabs = ctx?.moverScopes;
+      if (!tabs || !tabs.length) return { notChecked: "the movers scope tabs were not on screen on this run" };
+      const keys = tabs.map((x) => x.key);
+      return ["stocks-etfs", "stocks", "etf", "mf"].every((k) => keys.includes(k))
+        && tabs.filter((x) => x.active).length === 1
+        && tabs.find((x) => x.active)?.key === "stocks-etfs";
+    }],
     /**
      * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
      *
@@ -3813,6 +4117,80 @@ const INVARIANTS = {
         return !!raw && Number(book[1]) !== Number(raw[1]) && Number(book[1]) < Number(idx[1]);
       }],
   ],
+
+  /**
+   * ── A MOVERS TAB COVERS ITS OWN SET, AND ITS CAPTIONS SAY WHICH ─────────────
+   *
+   * *"or else… separate tabs, stocks… ETF… mutual fund."*
+   *
+   * The defect available here is a segment that changes the HEADING and leaves
+   * the rows alone — a control that looks alive and filters nothing, which is
+   * the failure this file keeps naming in other forms. So the count is struck
+   * against the scope's own priced size, derived from the book: the ETF tab has
+   * three names and the default has thirty-six, and neither number can be
+   * produced by the other's filter.
+   */
+  "cio-movers-etf": [
+    ["the ETF tab shows exactly the priced ETF names", (t) => moversGainersAre(t, "etf")],
+    // ...AND EVERY CAPTION ON THE CARD MOVED WITH IT. A heading that narrowed
+    // while the tile below it still said "Stocks & ETFs" would be the
+    // caption-that-widens failure inside one card.
+    /**
+     * ...AND THE TILE'S LABEL IS ANCHORED TO THE START OF ITS OWN LINE.
+     *
+     * `/ETFS · TODAY/` is SATISFIED BY "STOCKS & ETFS · TODAY" — so the first
+     * draft of this check passed with the tile pinned to the default scope while
+     * the tab beside it narrowed, which is precisely the bug it was written to
+     * catch. Found by reintroducing that bug. A caption claim has to be struck
+     * on the WHOLE caption.
+     */
+    ["the ETF tab's heading, tile and index sentence all name the ETFs",
+      (t) => /Today’s movers\s*·\s*ETFs/i.test(t)
+        && /(?:^|\n)\s*ETFS · TODAY/i.test(t)
+        && /(?:^|\n|\s)ETFs are\s*[+-]\d+\.\d+%\s*against the/.test(t)],
+    // ...AND WHAT IT LEAVES OUT IS NAMED, including the stocks it no longer
+    // covers — the footer is struck over the ACTIVE scope, not over a literal.
+    ["the ETF tab names the stocks and mandates it does not cover",
+      (t) => /ETFs only\. Also moved today and not counted here:/.test(t)
+        && /\d+ Direct Equity ₹[\d,.]+/.test(t)],
+  ],
+
+  /**
+   * ── AND THE MUTUAL-FUND TAB, WHOSE ABSENCE IS ABOUT THE INSTRUMENT ──────────
+   *
+   * A fund unit has no NSE trading symbol and the quote feed is keyed on one, so
+   * this tab covers almost nothing and always will. Told the generic "no live
+   * quote" reason a reader goes looking for a feed fix that cannot exist — THE
+   * CAUSE PICKS THE HEADLINE, and this is the one scope on the card whose cause
+   * is the instrument rather than the service.
+   */
+  "cio-movers-mf": [
+    ["the mutual-fund tab shows exactly the priced mutual-fund names", (t) => moversGainersAre(t, "mf")],
+    ["the mutual-fund tab names its own scope in the heading and on the tile",
+      (t) => /Today’s movers\s*·\s*Mutual funds/i.test(t)
+        && /(?:^|\n)\s*(?:MUTUAL FUNDS · TODAY|No mutual-fund holding carries a day change)/i.test(t)],
+    /**
+     * THE COVERAGE IS STATED IN RUPEES, WHICH IS THE HALF THAT MATTERS HERE. One
+     * scheme of twenty is priced and it is worth a five-figure sum against a
+     * ₹99.9 Cr scope, so a percentage printed at 22px stands on 0.002% of what
+     * the tab is named after. "1 of 20" alone does not say that; the value does.
+     */
+    ["the mutual-fund tab states the value its percentage stands on, not just a name count",
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ mutual-fund names/.test(t)
+        || /No mutual-fund holding carries a day change/.test(t)],
+  ],
+
+  /**
+   * ── THE ALLOCATION CARD, SLICED THE FAMILY'S OWN TWO WAYS ──────────────────
+   *
+   * Shared by both new axes, because the claims are the same claims and only the
+   * section names differ — which is exactly why they must not be struck on those
+   * names. All of it reads `data-alloc-*`, the structural contract the table
+   * carries: an axis selector is free to reword every heading on this card, and
+   * a check matching one would be retired silently by that rewording.
+   */
+  "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
+  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
 
   monitor: [
     ...CATEGORY_TOTALS,
@@ -5050,7 +5428,11 @@ for (const theme of THEMES) {
       // walk deliberately does NOT get them, because the absent states are
       // themselves invariants and a harness that always mocked would stop
       // checking them.
-      if (name === "cio-live") await installLiveMocks(page);
+      // THE LIVE LAYER ON EVERY ROUTE THAT ASSERTS A DAY CHANGE. The movers
+      // scope tabs are only meaningful with a feed behind them: unfulfilled,
+      // every tab renders the same absent state and a filter that matched
+      // nothing would be indistinguishable from one that worked.
+      if (name === "cio-live" || name === "cio-movers-etf" || name === "cio-movers-mf") await installLiveMocks(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
       // The first load answers, so the snapshot is written; the reload below
@@ -5096,11 +5478,11 @@ for (const theme of THEMES) {
         CACHED = await page.evaluate(() => ({
           hasFigures: !!document.querySelector('[data-testid="movers-coverage"]'),
           saysLoading: !!document.querySelector('[data-testid="movers-loading"]'),
-          // Matched on both spellings for the reason given on the `cio-loading`
-          // invariant above: the card's absent-state wording narrowed with its
-          // scope, and a probe pinned to the old sentence reports "no claim on
-          // screen" whether or not one is there.
-          body: /No (?:direct-equity )?holding (?:in this book )?carries a day change/i.test(document.body.innerText),
+          // ANY noun between the two ends of that sentence, for the reason
+          // given on the `cio-loading` invariant: the card's absent-state
+          // wording carries the active scope's name, and a probe pinned to one
+          // spelling reports "no claim on screen" whether or not one is there.
+          body: /\bNo\b[^\n]{0,80}?carries a day change/i.test(document.body.innerText),
         }));
       }
       if (name === "chat") {
@@ -5407,18 +5789,66 @@ for (const theme of THEMES) {
        * the link count; it is struck on the computed decoration and on the
        * absence of a popover trigger, neither of which changes a rendered word.
        */
+      /**
+       * FOUND BY `data-alloc-table`, NOT BY MATCHING "ASSET CLASS" IN ITS
+       * HEADER. That header is now the family's own word for the active axis —
+       * "Basket" on one of the three — so the old finder returns NOTHING on two
+       * of the routes this sweep walks, and every invariant struck on it would
+       * have abstained rather than failed. A structural claim must not depend on
+       * prose an axis selector is free to change, which is the contract
+       * `data-section` and `data-mandate` already carry.
+       */
       const allocTable = FAST ? null : await page.evaluate(() => {
-        const t = [...document.querySelectorAll("main table")]
-          .find((x) => /ASSET CLASS/i.test(x.innerText ?? ""));
+        const t = document.querySelector("main table[data-alloc-table]");
         if (!t) return null;
         return {
+          axis: t.getAttribute("data-alloc-axis") ?? "",
+          rows: [...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => r.getAttribute("data-alloc-row")),
+          /**
+           * THE CELLS, READ OFF THE DOM RATHER THAN OUT OF `innerText`.
+           *
+           * The page-text parser (`cioAllocationRows`) reads a row as
+           * `label \t money \t money \t return \t weight`, and a section the
+           * family's review does not place carries a SECOND LINE in its label
+           * cell — so that parser picks the row up under the disclosure
+           * sentence rather than under its own name. Nothing about the figures
+           * changes, which is exactly why it would go unnoticed. Read cell by
+           * cell there is no such ambiguity.
+           */
+          cells: [...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => ({
+            key: r.getAttribute("data-alloc-row"),
+            current: (r.cells[2]?.innerText ?? "").trim(),
+            weight: (r.cells[4]?.innerText ?? "").trim(),
+          })),
+          foot: (() => {
+            const f = t.querySelector("tfoot tr");
+            return f ? { current: (f.cells[2]?.innerText ?? "").trim(), weight: (f.cells[4]?.innerText ?? "").trim() } : null;
+          })(),
           underlined: [...t.querySelectorAll("*")].filter((e) =>
             (e.textContent ?? "").trim()
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
           buttons: t.querySelectorAll("button").length,
           links: t.querySelectorAll("a[href]").length,
+          // The axis segments, so "the selector exists and offers all three" is
+          // a claim about controls rather than about words on the page.
+          axes: [...document.querySelectorAll("main [data-alloc-axis][role='tab']")].map((b) => ({
+            key: b.getAttribute("data-alloc-axis"), active: b.getAttribute("aria-selected") === "true",
+          })),
         };
       });
+      /**
+       * THE MOVERS SCOPE TABS. Struck on the CONTROLS rather than on words:
+       * "Stocks", "ETFs" and "Mutual funds" all appear in this card's own prose
+       * and in the allocation table below it, so a text match would pass over a
+       * page that had lost the tab group entirely — the "a check that cannot
+       * fail" failure this file exists to prevent.
+       */
+      const moverScopes = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main [data-movers-scope][role='tab']")].map((b) => ({
+          key: b.getAttribute("data-movers-scope"),
+          label: (b.textContent ?? "").trim(),
+          active: b.getAttribute("aria-selected") === "true",
+        })));
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
@@ -5597,12 +6027,21 @@ for (const theme of THEMES) {
         // two PAGES plus the NAV, which the tile still prints as its figure.
         DRILLDOWN_TOTALS.set(name, drilldownTotal(text));
       }
-      if (name === "cio") {
-        // THE ADDRESSES ARE COLLECTED EVEN IN FAST MODE, for the reason
-        // `MANDATE_PATH` is: the responsive sweep would otherwise walk each
-        // drill-down's not-found page at every width, measuring the layout of a
-        // screen nobody sees. The FIGURES below need real `innerText` and are
-        // gated; the invariants that read them are gated the same way.
+      // THE ADDRESSES ARE COLLECTED EVEN IN FAST MODE, for the reason
+      // `MANDATE_PATH` is: the responsive sweep would otherwise walk each
+      // drill-down's not-found page at every width, measuring the layout of a
+      // screen nobody sees. The FIGURES below need real `innerText` and are
+      // gated; the invariants that read them are gated the same way.
+      //
+      // COLLECTED FROM THE THREE ALLOCATION AXES, not from `cio` alone: the
+      // basket and family-asset-class rows are only drawn on their own routes,
+      // and a `holdings-basket` walk with no address to resolve would fall
+      // through to a not-found page and go on reporting clean.
+      if (allocTable?.foot && allocTable.axis !== "category") {
+        const scope = { basket: "basket", assetClass: "family-class" }[allocTable.axis];
+        for (const c of allocTable.cells) ALLOC_CELLS.set(`${scope}:${c.key}`, c);
+      }
+      if (name === "cio" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
         for (const h of hrefs) {
           const m = /^\/holdings\?of=([a-z-]+)/.exec(h);
           // FIRST WINS, so the row captured is the allocation table's largest —
@@ -5782,7 +6221,11 @@ for (const theme of THEMES) {
       // row: the assertions compare each page against ITS OWN row's cells, so
       // one list serves all of them and a per-row copy would be eight places to
       // drift apart.
-      const checks = INVARIANTS[name] ?? INVARIANTS[name.replace(/-\d+$/, "")];
+      const checks = INVARIANTS[name]
+        // The two family-axis drill-downs share one block: the claims are the
+        // same claims and only the scope in the address differs.
+        ?? (name === "holdings-basket" || name === "holdings-family-class" ? INVARIANTS["holdings-alloc-row"] : null)
+        ?? INVARIANTS[name.replace(/-\d+$/, "")];
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && checks) {
         for (const [desc, test] of checks) {
           let r;
@@ -5793,7 +6236,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, allocTable, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -10,9 +10,8 @@ import { StockLink } from "@/components/StockLink";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
-  holdingRoute, ROUTE_LABEL, holdingBucket, bucketLabel, isMandateHeld,
-  mandateLabel,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  holdingRoute, ROUTE_LABEL,
+  mandateLabel, MANDATE_BUCKET,
   holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
   costCoversSet,
 } from "@/lib/analytics";
@@ -21,10 +20,14 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
+import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
+// THE THREE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the
+// same three; see the header of `groupAxis.ts` for why they cannot be a local
+// definition on either screen.
 import {
-  basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd, familyBasket, familyAssetClass,
-  UNCLASSIFIED, UNCLASSIFIED_WHY,
-} from "@/lib/familyTaxonomy";
+  GROUP_VIEWS, type GroupAxis, groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
+  ALL_LABEL, bucketFor, heldUnderMandate,
+} from "@/lib/groupAxis";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -177,85 +180,18 @@ type BucketTotals = {
 };
 
 /**
- * WHICH SECTION A HOLDING BELONGS IN. `holdingBucket` decides; this only supplies
- * the engagement, which is a fact about the ACCOUNT and never about the position.
- */
-const bucketFor = (idx: AccountIndex, p: Position) => holdingBucket(p, engagementOf(idx, p) || null);
-const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engagementOf(idx, p) || null);
-
-/**
- * Sections in reading order: what the family chose itself, then what it handed
- * to a manager, then the wrappers, then cash.
+ * ── THE AXIS MACHINERY MOVED TO `lib/groupAxis.ts` ──────────────────────────
  *
- * `UNROUTED_EQUITY_BUCKET` is in the list because that — and NOT the raw
- * `"Equity"` — is what `holdingBucket` returns for a share whose account states
- * no route. No such account is in this book, and if one arrives it gets its own
- * section between the two routed ones rather than being folded into either,
- * neither of which would be true of it. Spelling it `"Equity"` here made the
- * entry dead: the key that actually arrives fell through `bucketOrd`'s `i < 0`
- * branch and sorted the section BELOW Cash, which is the opposite of what this
- * comment claimed.
+ * It was defined here while this was the only screen carrying three axes.
+ * Morning CIO's allocation table now groups on the same three, at the family's
+ * request ("add a selector in the allocation section… category wise / asset
+ * class wise / basket wise"), and two copies of "which section does this
+ * holding sit in" would be two chances for one screen to file a holding under a
+ * basket the other puts somewhere else — the failure `holdingBucket` and
+ * `costCoversSet` were each extracted for. Everything that used to be defined
+ * here is imported above, unchanged: the section key per axis, its source, its
+ * reading order, its heading, the category order and the filter's "all" label.
  */
-const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
-const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
-
-/**
- * ── THE SAME HOLDINGS, SLICED THREE WAYS ────────────────────────────────────
- *
- *   "We should also be able to see this information: category wise (MF, direct
- *    equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my
- *    basket definition wise (core, tactical etc). Default view will remain the
- *    current one, category wise."
- *
- * Three axes over ONE set of rows. Nothing about what a row IS changes when the
- * axis does — the same 371 positions, the same figures, regrouped — so the axis
- * touches only the section key, its order and its heading. Every other branch on
- * this page (the footer, the dedupe gap, the realised cells, the weight base)
- * is untouched and stays correct by construction.
- *
- * CATEGORY IS THE DEFAULT AND IS UNCHANGED, as asked: `holdingBucket`, which is
- * where three rounds of the "Direct Equity" argument were settled and must not
- * be relitigated here. The other two are the FAMILY'S OWN taxonomy and are not
- * derivable from any statement — see `familyTaxonomy.ts`, which measures why.
- */
-const GROUP_AXES = ["category", "assetClass", "basket"] as const;
-type GroupAxis = (typeof GROUP_AXES)[number];
-const GROUP_VIEWS: readonly ViewDef<GroupAxis>[] = [
-  { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, cash." },
-  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
-  { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
-];
-/** The section a holding sits in on the chosen axis. One place, three answers. */
-const groupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Position): string => {
-  if (axis === "category") return bucketFor(idx, p);
-  const isMandate = heldUnderMandate(idx, p);
-  return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
-};
-/** Reading order per axis, with the unclassified section last on the two new ones. */
-/**
- * HOW A ROW'S SECTION KEY WAS AUTHORISED on the active axis — see `Row.groupSource`.
- * Null on the category axis is not "unknown": that axis is derived from the book
- * and asks nothing of the family, so the heading has nothing to disclose.
- */
-const groupSourceFor = (axis: GroupAxis, idx: AccountIndex, p: Position) => {
-  if (axis === "category") return "review" as const;
-  const isMandate = heldUnderMandate(idx, p);
-  const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
-  return r?.source ?? null;
-};
-const groupOrdFor = (axis: GroupAxis) =>
-  axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
-/**
- * The heading. The two family axes are already the family's own words, so they
- * render verbatim; only the category axis has a label function, because that is
- * the axis where the wording was itself the fix (§"Company Shares").
- */
-const groupLabelFor = (axis: GroupAxis) => (key: string) =>
-  axis === "category" ? bucketLabel(key) : key;
-/** What the "all" option on the filter says, per axis. */
-const ALL_LABEL: Record<GroupAxis, string> = {
-  category: "All categories", assetClass: "All asset classes", basket: "All baskets",
-};
 
 // Weight, P&L and return all move with the live price, so they no longer match
 // any cell in the workbook — an audit link would point at a different number.

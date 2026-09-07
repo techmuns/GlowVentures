@@ -4569,6 +4569,11 @@ seven fire.
 *"remove the book performance section. daily movers/losers should comprise of
 direct equity holdings only. remove the highlighted text from ui."*
 
+*(The ETFs have since come BACK to this card, at the family's request — see
+Stage 10ad. What stands from this section is the mandate half, which is
+unchanged: a share a discretionary manager picked is still not in the movers
+list. The scope is a tab now, and the default is stocks and ETFs together.)*
+
 **THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
 `DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
 Stage 10L after the family reported the same thing three times, and applied to
@@ -5185,6 +5190,12 @@ is untouched and asserted to be** — two new axes beside an old one is exactly
 the change that silently moves the default, and the page would render perfectly
 while showing the family a table they asked to keep.
 
+*(THE AXIS MACHINERY HAS SINCE MOVED to `src/lib/groupAxis.ts` — Morning CIO's
+allocation card groups on the same three at the family's request, and two copies
+of "which section does this holding sit in" would be two chances for one screen
+to file a holding under a basket the other puts somewhere else. See Stage 10ad.
+Nothing below changed except where it is defined.)*
+
 | Axis | Sections | Where it comes from |
 | --- | --- | --- |
 | **Category** (default) | Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash | `holdingBucket` — the book. Unchanged |
@@ -5568,6 +5579,195 @@ passed, twice, on exactly the two rows it exists for.
 Three bugs reintroduced, each firing its own check: an underline back on a row
 label, the rows stripped of their links, and the formula dividing regardless of
 coverage.
+
+### Stage 10ad — THE ETFs COME BACK TO THE MOVERS, AND THE ALLOCATION GETS THE FAMILY'S OWN AXES
+
+Two asks on Morning CIO, and each is a request this file has a record of getting
+half-right once already.
+
+#### 1. *"ETFs can be a part of stocks… it should actually be stocks and ETFs. Basically, or else… separate tabs, stocks… ETF… mutual fund."*
+
+**THE CARD'S OWN HEADER COMMENT HAS QUOTED THE ANSWER SINCE THE DAY IT WAS
+WRITTEN.** The request that built Today's movers was *"MY STOCKS AND ETFS are up,
+Sensex is down this much, Nifty"*; Stage 10t then narrowed the card to
+`DIRECT_EQUITY_BUCKET` and the ETFs went out with the mandate names. That
+narrowing was RIGHT about the mandates — a share Carnelian picked is not a
+holding the family chose — and wrong about the ETFs, which the family have now
+said. An ETF bought in the family's own demat is a holding they chose, priced by
+the same feed, on the same session as the shares beside it. Nothing about
+combining them mixes two measurements, which is the test that matters.
+
+**SO THE DEFAULT IS BOTH AND THE CONSTITUENTS ARE TABS** — `Stocks & ETFs` ·
+`Stocks` · `ETFs` · `Mutual funds` — which delivers both halves of that sentence
+rather than picking one. Each scope is a set of `holdingBucket` keys, the same
+function the allocation table and the Portfolio Monitor group on, so a tab here
+and a row on the allocation table cover exactly the same holdings. That is also
+why an ETF held INSIDE a PMS mandate is not in the ETF tab: the manager chose it,
+so it belongs to the mandate exactly as a manager-picked share does. The scope
+lives in `?movers=`, so a tab is a link.
+
+| Tab | Names | Priced by the fixture |
+| --- | ---: | ---: |
+| Stocks & ETFs — default | 40 | **36** |
+| Stocks | 37 | 33 |
+| ETFs | 3 | 3 |
+| Mutual funds | 20 | 1 |
+
+**EVERY CAPTION MOVES WITH THE SCOPE, AND THAT IS NOT COSMETIC.** The tile label,
+the coverage line, the index comparison and the excluded footer each state what
+the figure covers; a caption that widens or narrows a figure it does not is the
+failure the Capital invested tile already cost this page once. `subject` and
+`verb` ride on each scope because these are SENTENCES — "Stocks and ETFs **are**
+−0.2% against the Nifty 500" — and a label interpolated into one has to agree
+with the verb after it.
+
+**THE MUTUAL-FUND TAB'S ABSENCE IS ABOUT THE INSTRUMENT, NOT THE FEED**, and it
+says so. A fund unit has no NSE trading symbol and the quote feed is keyed on
+one, so 19 of the book's 20 schemes can never be priced intraday — told the
+generic "no live quote" reason a reader goes looking for a feed fix that cannot
+exist. What a scheme DOES publish is one dated NAV per business day struck after
+the close, and printing that under a heading reading "today" would set one day's
+move beside another's; the tab names where that figure actually lives (each
+fund's own page, Stage 10s) rather than substituting it.
+
+**THE FIRST DRAFT'S ABSENCE SENTENCE WAS AN ABSOLUTE AND WAS FALSE.** It read "no
+scheme in this book can be priced intraday, today or on any other day" — and the
+depository files one Liquid BeES row as a Mutual Fund, which resolves `LIQUIDBEES`
+and prices like any listed instrument. The sentence takes the MEASURED counts now
+(`19 of the 20 schemes here resolve to none`), which is the same discipline the
+rest of this file applies to a premise nobody rechecked.
+
+**AND THE COVERAGE LINE STATES A VALUE, NOT ONLY A NAME COUNT.** `scopeValue` was
+already computed in that card's model and rendered nowhere — this book's
+most-repeated defect — and the mutual-fund tab is what made it matter: one scheme
+of twenty is priced and it is worth ₹18,822 against a ₹99.9 Cr scope, so "1 of 20"
+and "₹18,822 of ₹99.9 Cr" disclose the same fact very differently. The second is
+the one a reader needs beside a percentage printed at 22px. Every tab now reads
+`on ₹X of the ₹Y held, across N of M … names`.
+
+(*"1 GAINERS"* was on the family's own screenshot of this card and is fixed in the
+same change: a scope tab makes a one-name list an ordinary outcome.)
+
+#### 2. *"I have given you my baskets… how is the core doing, how is the satellite portfolio doing, how is the liquidity portfolio doing. This should be the Morning CIO page. Add a selector in the allocation section to select asset class wise / category wise / basket wise allocation and performance overview."*
+
+This is Stage 10z arriving on a SECOND SCREEN. The Portfolio Monitor grew those
+three axes and owned them privately; Morning CIO's allocation card now groups on
+the same three, and two copies of "which section does this holding sit in" would
+be two chances for one screen to file a holding under a basket the other puts
+somewhere else — the failure `holdingBucket`, `costCoversSet` and
+`accountHasOpeningValue` were each extracted for, arriving a fourth time.
+
+**SO `src/lib/groupAxis.ts` IS THE ONE PLACE, AND BOTH PAGES IMPORT IT.** The
+section key per axis, its source, its reading order, its heading, the category
+order and the filter's "all" label all moved there verbatim; `PortfolioMonitor`
+lost 64 lines net and gained no behaviour. Measured on this book, all three axes sum
+to `BOOK_SUMMARY.totalValue` **to the rupee**:
+
+| Category | | Family asset class | | Basket | |
+| --- | ---: | --- | ---: | --- | ---: |
+| AIF | ₹352.3 Cr | Equity | ₹640.9 Cr | Stable Growth | ₹412.7 Cr |
+| PMS mandates | ₹138.7 Cr | Alternate | ₹28.4 Cr | Thematic & Tactical | ₹243.7 Cr |
+| Mutual Fund | ₹99.9 Cr | Not classified | ₹21.4 Cr | Liquidity | ₹27.5 Cr |
+| Direct Equity | ₹94.9 Cr | Cash | ₹14.1 Cr | Not classified | ₹21.4 Cr |
+| ETF | ₹24.6 Cr | Debt | ₹5.55 Cr | Entrepreneurial Growth | ₹5.07 Cr |
+| Cash | ₹0 | | | | |
+
+**NOTHING ABOUT THE ARITHMETIC CHANGES WHEN THE AXIS DOES.** Invested, Current,
+Return and Weight are the identical sums over the identical holdings on every
+axis, so the footer, the weight base and the cost-coverage refusal needed no
+branch of their own and stay correct by construction. In particular **a return
+refused on one axis is refused on all three**: `costCoversSet` is what decides
+it, and Stable Growth's Invested covers ₹391.5 Cr of its ₹412.7 Cr, so its Return
+is an em dash for exactly the reason Direct Equity's is. That is the honest answer
+to "how is the core doing" and it is the same answer the Portfolio Monitor's
+per-category totals row gives — which is the point of the two screens sharing one
+test rather than each carrying a copy.
+
+**THE DEFAULT IS UNCHANGED AND IS ASSERTED TO BE.** Two new axes beside an old one
+is exactly the change that silently moves a default, and the page would render
+perfectly while showing the family a table they asked to keep.
+
+**THE TITLE, THE COLUMN HEAD AND THE PILL'S NOUN ALL FOLLOW THE AXIS.** A table of
+BASKETS headed "Allocation by asset class & mandate" is the
+caption-does-not-describe-its-figure failure this page has already paid for twice,
+and "6 buckets held" over a table of baskets would be wrong about what it counted
+— but the COUNT inside that pill is not chrome (two invariants read it), so
+`groupCount` supplies the noun per axis rather than the caption being rewritten.
+The category title is left exactly as it was: it predates the regroup and is not a
+perfect description of that axis, but it is the heading the family has learnt.
+
+**AND EVERY ROW STILL OPENS THE HOLDINGS BEHIND IT.** `?of=basket&key=…` and
+`?of=family-class&key=…` are scopes of their own rather than a `bucket` address
+carrying an `axis=` param, because the three axes answer different questions and
+the address should say which — and every existing `?of=bucket` bookmark keeps
+meaning what it meant. `AXIS_SCOPE` is the one place the axis picks the scope, so
+a link built on the page and a set resolved in `drilldown.ts` cannot name
+different things. An axis a reader can select but not open would be a table of
+totals with no way in, which is the state `/holdings` was built to end.
+
+**WHOSE JUDGEMENT IT IS, IS ON THE CARD.** A basket and the family's own asset
+class are derivable from no statement in the archive — they are the family's
+consolidated review, product by product, plus one rule they stated themselves —
+and on screen a section heading looks equally authoritative whichever put the rows
+under it. So a family axis states its provenance and names the **₹11.2 Cr placed
+by the rule** rather than by the review, exactly as the Portfolio Monitor's
+section headings do. A holding their review does not place gets its own row that
+says so, in the family's absence-names-its-cause form, never "Other".
+
+**A FUND-OF-FUNDS ROW CARRIES NO FAMILY TAXONOMY AND IS MARKED.** Those come from
+`privateMarkets.*` — fund-level records rather than positions — so `groupKeyFor`
+has nothing to key them on and a review that classifies PRODUCTS names none of
+them. Every one is empty in this book, so none renders; the marking is what keeps
+a row under a table of BASKETS from ever reading as a basket the family chose.
+
+**THE TWO BIGGEST BASKETS TOOK COLOURS FROM OPPOSITE ENDS OF THE PALETTE**, after
+the first cut drew them as two champagne shades and the donut read as one wedge
+covering 92% of the NAV.
+
+#### Eight bugs reintroduced, and two of them were bugs in the CHECKS
+
+Each was put back one at a time, rebuilt and swept. Six fired immediately; the
+two that did not are the point of doing it:
+
+- **`/ETFS · TODAY/` IS SATISFIED BY "STOCKS & ETFS · TODAY".** Pinning the
+  tile's label to the default scope while the tab beside it narrowed — precisely
+  the bug that check exists for — left the sweep GREEN. A caption claim has to be
+  struck on the whole caption; it is anchored to the start of its own line now.
+- **AN UNRESOLVED DRILL-DOWN ADDRESS PASSED EVERY GENERIC CHECK.** The two new
+  `/holdings` routes take the address the axis routes drew; unresolved, the walk
+  lands on `/holdings`'s own not-found page, which has no console error, no
+  overflow and no stray zero. They now assert they OPENED something and that its
+  market value reproduces the very cell a reader clicked — and a missing address
+  is a FAILURE rather than an abstention.
+
+The six that fired on the first attempt: the default movers scope dropping the
+ETFs (the `cio-live` gainer count, derived per scope from the book), tabs that
+render but filter nothing, the allocation card's default axis moving, a family
+axis's rows all pointing at the CATEGORY scope, the unplaced row losing the
+sentence naming its cause, and a section quietly dropped from the partition.
+
+**THE ALLOCATION TABLE IS FOUND BY `data-alloc-table` NOW, NOT BY MATCHING "ASSET
+CLASS" IN ITS HEADER.** That header is the family's own word for the active axis
+on two of the three routes, so the old finder returns nothing there and every
+invariant struck on it would have ABSTAINED rather than failed. Its cells are
+read off the DOM for the same reason the Monitor's are: a section the review does
+not place carries a second line in its label cell, and the page-text parser picks
+that row up under the disclosure sentence instead of its own name — figures
+unchanged, which is exactly why it would go unnoticed.
+
+**AND THE PARTITION BOUND IS THE PAGE'S OWN PRINTING PRECISION, REPRODUCED.**
+Every cell renders to one decimal in Cr, so n rows against a printed footer carry
+(n + 1) half-digits of rounding: the family's asset-class rows sum to ₹710.35 Cr
+against a printed ₹710.4 Cr on figures that tie to the rupee underneath. A
+missing or double-counted row moves it by whole crores and still cannot pass.
+That is a bound derived from what the page prints, never a tolerance widened
+until the figures fit.
+
+**THE ABSENT-STATE PROBES TAKE ANY NOUN NOW.** `No <scope> holding carries a day
+change` is the movers card's settled-absence line and its noun moves with the
+tab. The previous attempt at this enumerated the spellings — and lapsed the moment
+the ETFs came back — so the pattern is anchored on the two ends of the sentence
+instead.
 
 ### Stage 10k — News & Announcements: REMOVED
 
