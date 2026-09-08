@@ -178,6 +178,9 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/securityKey.ts` — the join key (see below).
 - `src/lib/accounts.ts` — the account registry: owner vs provider, per-account as-of.
 - `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector / per-custodian rollups); `sumOrNull`.
+- `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
+  by both surfaces: the Transactions card's My investments rollup and the
+  per-contribution breakdown a holdings row opens into. See Stage 10ag.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
@@ -6056,6 +6059,184 @@ first, the asset-class sheets read from the wrong column (which fired the
 can't-pass-by-matching-nothing gate at `57/5 of 57`), and the workbook moved out
 from under the suite.
 
+### Stage 10ag — WHAT THE FAMILY DID, AND WHAT EACH TRANCHE OF IT EARNED
+
+Two asks, one source, and the source had been in the archive since the first
+drop with nothing reading it.
+
+*"in transactions we need to see the transactions we have done, not what the
+transactions the portfolio manager has done… and then if we click and open the
+drill down page of one AIF/PMS then inside that we should see what all
+transactions the portfolio manager of that fund has made."* And: *"VC… I
+invested additional 10 crores… previous amount… what was the return? Now this 10
+crores… what it has done what's the overall portfolio return."*
+
+**THE ARCHIVE CARRIES BOTH RECORDS AND ONLY ONE WAS EVER READ.** `transactions`
+is the manager working a mandate — Green Lantern buying The Anup Engineering on
+fifty days. `cashFlows` typed `contribution` or `withdrawal` is the family
+putting money IN, and `loadTransactions` had never touched it. Measured across
+the corpus: **20 dated contributions totalling ₹193 Cr across 10 accounts**, and
+94 withdrawals totalling ₹2.86 L. That is the decision the family actually
+makes, and the card that exists to show their transactions was showing somebody
+else's.
+
+#### The amount column is a RUNNING BALANCE on the row that carries the units
+
+The single most dangerous thing in this delivery. Sanshi prints one
+contribution as THREE rows on one date, and the third is a cumulative total in
+the same column the others print a movement in:
+
+```
+17-06-2025  Drawdown                                        1,00,00,000.00
+17-06-2025  Stamp Duty @ 0.005%                                   (499.98)
+17-06-2025  Units Allotment  109.4462  91,364.524  1,91,359.524  1,99,98,999.97
+```
+
+All three are typed `contribution` in the archive. **Summing them reports ₹44 Cr
+of investment into a folio that received ₹22 Cr** — and every row looks right:
+same kind, same date, a plausible rupee figure, nothing failing anywhere. It is
+the plausible-wrong-number failure this book exists to catch, arriving through a
+column heading nobody had read.
+
+So a move's `amount` is the GROSS row the statement prints on that date, which
+is a primitive needing no arithmetic, and `invested` is that less the same
+date's printed charges. **The balance is the WITNESS rather than the source**,
+and three things agree on this corpus, each measured before a line was written:
+
+```
+Σ invested       = the position's own costBasis      TO THE PAISA
+Σ invested       = the last printed Balance Amount   within ₹0.04
+invested ÷ units = the Allotment NAV the statement prints to 4dp
+```
+
+`costBasis` reaches the book from the fund's HOLDINGS table and the tranches
+from its TRANSACTIONS table — two readers over two regions of one statement — so
+their agreeing is a real cross-check and not a figure compared with its own
+copy. A date carrying an allotment row and NO gross row is unambiguous only
+where the account has exactly ONE such row (a balance after a single
+contribution IS that contribution); with several and nothing to check against,
+`amount` is null and says so. **An account whose running total does not
+reproduce is withheld entirely, with the reason** — differencing a sequence that
+might not be cumulative is how the ₹44 Cr gets invented.
+
+#### Ask 1 — My investments, and the manager one level down
+
+`BOOK_CAPITAL_MOVES` is the family's own dated capital; `capitalRollup` in
+`src/lib/tranches.ts` puts one line per account on the Transactions card, which
+now DEFAULTS to it. **Lumpsum or staggered is a COUNT, not a detector** — one
+dated contribution is a lumpsum, more than one is not. No cadence, no tolerance,
+no minimum, which is `txnRollup`'s own reasoning arriving at a question the
+family asked in exactly those terms.
+
+The manager's own dealing keeps its tab AND now sits inside the mandate
+drill-down, which is where the ask puts it. `ManagerTrades` reuses `rollup`
+rather than reimplementing it, so the two surfaces cannot disagree about what a
+manager did.
+
+**AND IT IS RENDERED ON THE FUND BRANCH TOO, WHICH IS NOT A TIDY-UP.** That page
+early-returns for anything that is not a PMS mandate, and **Buoyant Capital
+103473 is an AIF folio that DOES issue a transaction statement** — one of the
+twelve accounts in this book that does. Rendering the card only on the mandate
+branch would have hidden a whole dealing record behind a routing decision about
+what the account is called.
+
+**AND THE TITLE FOLLOWS THE ROUTE, BECAUSE ON A FUND IT IS NOT THE MANAGER'S
+DEALING.** Buoyant's transaction statement prints `Buoyant Opportunities
+Strategy — Class A4, ₹25 Cr`: the FAMILY subscribing for units, not Buoyant
+trading. Headed *"What the manager traded"* that reads as the manager buying
+₹25 Cr of its own strategy, which is not what happened. A mandate gets that
+heading; everything else gets *"Dated dealing on this account"* and a caption
+saying what the rows are. The caption-does-not-describe-its-figure failure, one
+card title over.
+
+#### Ask 2 — each investment separately, and why UNITS are the whole of it
+
+A tranche's value today is ITS OWN units at today's NAV. Split a position's
+value across its contributions by SIZE instead and every tranche reports the
+same blended return — **which is precisely the figure the family asked to have
+broken apart.** Ankita's Sanshi folio bought at 100.00 in March and 123.84 in
+October, so the March rupee is worth 24% more than the October one:
+
+| Bought | Entry NAV | Invested | Value today | Return |
+| --- | ---: | ---: | ---: | ---: |
+| 21 Mar 2025 | ₹100.0000 | ₹1.00 Cr | ₹1.62 Cr | +61.6% → **CAGR 39.50%** |
+| 17 Jun 2025 | ₹109.4462 | ₹1.00 Cr | ₹1.48 Cr | +47.6% → **CAGR 38.34%** |
+| 3 Sep 2025 | ₹121.6322 | ₹10.0 Cr | ₹13.3 Cr | **ABS 32.83%** |
+| 6 Oct 2025 | ₹123.8393 | ₹10.0 Cr | ₹13.0 Cr | **ABS 30.47%** |
+
+So `BOOK_POSITION_TRANCHES` is **gated on the allotted units accounting for
+EVERY unit held** — the same gate `costFor` and the ST/LT split already apply,
+and it holds EXACTLY on all seven positions that publish one. Three consequences
+make the panel checkable rather than merely plausible: Σ units = the position's
+quantity (the gate), Σ value = its market value, Σ invested = its cost basis. The
+footer reconciles to the row it expands from **by construction**.
+
+**THE RETURN GOES THROUGH `holdingReturn`, NOT A SECOND RULE.** A tranche is the
+one thing in this book with a real purchase date, so it is the one place a
+genuine CAGR is strikable — and exactly where compounding a four-month window
+onto a year would be most tempting. A year or more annualises, anything shorter
+stands as the absolute figure and is TAGGED, so Stage 10g(ii)'s guard lives in
+one place still and `positionIrrPct` stays unread.
+
+**AND THE TABLE IS HANDED THE ROW'S OWN DEDUPED POSITIONS.** Keyed on
+`securityKey` it would union Transition Venture Fund I across both family
+trusts and offer 15,000 units against a row printing 7,500 — while every
+within-panel check still reconciled, because footer and rows would double
+together. §"consolidated counts once, per-account does not", arriving through a
+drill-down. Where a row spans several folios the panel names the HOLDER on every
+line: two members contributed on the SAME DAY under the SAME label, and without
+it those read as one decision printed twice at different sizes.
+
+#### What is absent, counted rather than claimed
+
+**7 of 371 positions** open a contribution history, **2 bought over more than
+one date**; **10 of 51 accounts** publish any dated capital record at all. The
+managed mandates issue a capital-account ledger rather than unit allotments, and
+a depository records what is held and never what was paid for it. Both surfaces
+COUNT that rather than asserting coverage, and a row with no breakdown draws no
+chevron — an affordance that opens nothing is worse than none.
+
+**A RETURN NEEDS THE DENOMINATOR TO BE COMPLETE, AND TWO THINGS ESTABLISH IT.**
+Either every position in the account is unit-tied, or the account's own printed
+**inception date is on or after its first contribution** — the statement saying
+its record starts where the account does. Measured: seven qualify by units and
+three by inception, EXACTLY (SVAN's and Green Lantern's inception dates equal
+their first contribution to the day). An account meeting neither keeps its
+figures and loses its return, with the reason on the cell.
+
+#### Nine bugs reintroduced, and THREE of them exposed defects in the checks
+
+- **The set-size test for a blended split could not fail.** A return cell reads
+  `CAGR39.50%`, so comparing cell TEXT made two rows differ whenever their TAGS
+  differed — and a size-weighted split passed happily while every tranche within
+  an account reported the identical percentage. The real claim is MONOTONICITY:
+  within one panel every tranche is the same fund at the same NAV today, so
+  return is a strict function of entry NAV. Cheaper entry must show the higher
+  return, and two contributions at the SAME entry NAV must show the SAME return
+  — which this book exercises, two members having bought at 109.4462 on one day.
+- **The entity check excused itself.** It read `head.includes("entity")` — it
+  asked the page whether it had drawn the column and passed when it had not, so
+  deleting the column left the sweep green. Gated on the BOOK's own count of the
+  folios behind the largest history now.
+- **And the return-coverage note was a tautology**, both sides reading the same
+  flag. Worse, **this book cannot exercise that gate at all**: all ten funded
+  accounts pass it, so a working gate and a deleted one draw the same ten
+  returns. That is recorded here rather than papered over, and the gate is
+  exercised in `tranches.test.ts` on constructed inputs — the only place it can
+  be.
+
+The six that fired first time: the default view back to the manager rollup
+(7 checks), the running-balance trap (7 in the suite, cost basis exactly
+doubled), a truncated panel (4), a footer computed independently of its rows,
+the staggered label pinned to a literal, and a dedupe pair counted twice.
+
+**AND ONE LIGHT-MODE REMAP WAS MISSING, FOUND BY A ROUTE THAT CLICKS.**
+`hover:text-champagne-400` had no `html:not(.dark)` rule — only the base class
+and the `group-hover` variant did — so a hovered control came back at `#ecdcae`
+on white. The sweep had never caught it because nothing in it hovered one; a
+route that CLICKS a toggle leaves it hovered. It covers the Entities pill and
+the mandate links too, which have carried that class all along.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -6959,8 +7140,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   reader, the account XIRR, the private-market roll-up, the Excel export, the
   **index strip's day move** (`indicesFunction.test.ts` — the level and the
   previous close must never be the same session; a live probe cannot check it,
-  because outside a 3h45m window plus every weekend the function is correct) and
-  the **dated NAV series** (`navSeries.test.ts`, Stage 10p: the series' last point
+  because outside a 3h45m window plus every weekend the function is correct),
+  the **family's own dated investments** (`tranches.test.ts`, Stage 10ag: the
+  tranches must tie to the position's own quantity, cost basis and market value
+  on three separate paths; the derived entry NAV is checked against the one the
+  archive's own `pages.json` PRINTS, because nothing else in this repo can
+  confirm it) and the **dated NAV series** (`navSeries.test.ts`, Stage 10p: the series' last point
   against the covered accounts' own roll-up, and the flow adjustment asserted as
   LOAD-BEARING rather than merely present). Every one of the API-backed three
   runs against a REAL saved API response

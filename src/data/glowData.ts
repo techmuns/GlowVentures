@@ -8,9 +8,9 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, Commitment,
-  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, RealisedByClass,
-  StartupInvestment,
+  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,
+  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,
+  RealisedByClass, StartupInvestment,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -11648,6 +11648,1461 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
       "description": "TDS Trf to Capital A/c"
     }
   ]
+};
+
+/**
+ * THE FAMILY'S OWN DATED INVESTMENTS — money they put in and took out.
+ *
+ * Distinct from BOOK_ACCOUNT_CASH_FLOWS above, which exists for the XIRR and
+ * carries a synthetic opening-value entry that is not a transaction anybody
+ * made. These are movements the statements print as such, and they are what
+ * the Transactions card leads with: a share a manager picked is that manager's
+ * decision, and the capital behind the mandate is the family's.
+ */
+export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2024-09-03",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2024-09-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 5390,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2024-12-03",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2024-12-06",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 713,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2024-12-11",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 775,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-01-07",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2290.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-01-07",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2630.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-01-16",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 100000000,
+    "invested": 100000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-01-16",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 30000000,
+    "invested": 30000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-01-31",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3555,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-01-31",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2891.25,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-02-06",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 523,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-02-06",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 444,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-02-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 950,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-02-17",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 30000000,
+    "invested": 30000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-02-17",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 545,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-02-17",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 30000000,
+    "invested": 30000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-02-18",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1290,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-02-18",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 580.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-03-05",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1276,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-03-05",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 928,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-03-07",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 886,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-03-12",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1600,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9069671554",
+    "date": "2025-03-21",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "units": 99995,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-04-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1600,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-04-17",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 742,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9069671634",
+    "date": "2025-04-30",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 27500000,
+    "invested": 27498625.07,
+    "units": 276847.775,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-06-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4103,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9069671554",
+    "date": "2025-06-17",
+    "direction": "in",
+    "label": "Drawdown",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "units": 91364.524,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "sanshi-fund-9069671634",
+    "date": "2025-06-17",
+    "direction": "in",
+    "label": "Drawdown",
+    "amount": 27500000,
+    "invested": 27498625.07,
+    "units": 251252.442,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-07-09",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 6780,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-07-09",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4701,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-07-09",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3420,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-07-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 5862,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-07-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4170,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-07-30",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4169,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-07-30",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2965,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-08-05",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1287,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-08-12",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4152,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-08-12",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2810,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-08-19",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1039,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-08-21",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2720,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-08-21",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1936,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-08-22",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1925,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-08-26",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1680,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-08-26",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1161,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-01",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1498,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-09-01",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1066,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4170,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-09-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2970,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9069671554",
+    "date": "2025-09-03",
+    "direction": "in",
+    "label": "Top Up",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "units": 822109.608,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "sanshi-fund-9069671634",
+    "date": "2025-09-03",
+    "direction": "in",
+    "label": "Top Up",
+    "amount": 150000000,
+    "invested": 149992500.37,
+    "units": 1233164.412,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-09-05",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4090,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-09",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1299.6,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-09-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 15496,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 10744,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-09-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 7816,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-09-16",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2220,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-18",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1362.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-09-23",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1708,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 5444,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-09-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3884,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-09-25",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1088,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-09-25",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3627,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-09-25",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1950,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9039671821",
+    "date": "2025-10-03",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 750000000,
+    "invested": 749962501.87,
+    "units": 6045934.485,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "sanshi-fund-9039671854",
+    "date": "2025-10-06",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 150000000,
+    "invested": 149992500.37,
+    "units": 1211186.597,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "sanshi-fund-9069671554",
+    "date": "2025-10-06",
+    "direction": "in",
+    "label": "Top Up",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "units": 807457.732,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-10-06",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2985,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-10-06",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2123,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-10-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2648,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-10-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1928,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-10-17",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 6491,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "transition-venture-capital-TVC262",
+    "date": "2025-10-17",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": 7500,
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "securityKey": "transition-venture-capital-fund-i-class-a1"
+  },
+  {
+    "accountId": "transition-venture-capital-TVC263",
+    "date": "2025-10-17",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": 7500,
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "securityKey": "transition-venture-capital-fund-i-class-a1"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-10-20",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1010,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-10-27",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2100,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-10-29",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 35000000,
+    "invested": 35000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-10-29",
+    "direction": "in",
+    "label": "Capital inflow",
+    "amount": 15000000,
+    "invested": 15000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-11-11",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 10896,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-11-11",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 7758,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-11-17",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1380,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-11-17",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 900.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-11-18",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1925,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-11-28",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2660,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-11-28",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4536,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2025-11-28",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3140,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-12-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3041,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2025-12-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1275,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "sanshi-fund-9039671912",
+    "date": "2025-12-16",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 250000000,
+    "invested": 249987500.62,
+    "units": 2341480.851,
+    "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2025-12-29",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2458,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-02-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1222,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-02-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 797,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-02-12",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2532,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-02-12",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 900.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-02-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1604,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-02-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1048,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-02-20",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 580,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-02-24",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1114,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-03-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3885,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-03-04",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3332,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-03-23",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 3687,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-04-02",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4047,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-04-20",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 9426,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-06-05",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 8832,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-06-09",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2306,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-06-10",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 986,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-06-25",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2482,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-07-03",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 8493,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-07-03",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4764,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-07-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1830,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-07-13",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 1190,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-07-31",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 4044,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-07-31",
+    "direction": "out",
+    "label": "Capital outflow",
+    "amount": 2624,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  }
+];
+
+/**
+ * Per-position contribution history, keyed `<accountId>|<securityKey>`, and
+ * ONLY where the allotted units account for every unit held. Everything else
+ * is absent by that gate rather than shown partially — see `positionTranchesFrom`.
+ */
+export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
+  "sanshi-fund-9039671821|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "accountId": "sanshi-fund-9039671821",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "moves": [
+      {
+        "accountId": "sanshi-fund-9039671821",
+        "date": "2025-10-03",
+        "direction": "in",
+        "label": "Initial Contribution",
+        "amount": 750000000,
+        "invested": 749962501.87,
+        "units": 6045934.485,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      }
+    ],
+    "units": 6045934.485
+  },
+  "sanshi-fund-9039671854|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "accountId": "sanshi-fund-9039671854",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "moves": [
+      {
+        "accountId": "sanshi-fund-9039671854",
+        "date": "2025-10-06",
+        "direction": "in",
+        "label": "Initial Contribution",
+        "amount": 150000000,
+        "invested": 149992500.37,
+        "units": 1211186.597,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      }
+    ],
+    "units": 1211186.597
+  },
+  "sanshi-fund-9039671912|sanshi-fund-i-open-ended-aif-cat-iii-class-a2": {
+    "accountId": "sanshi-fund-9039671912",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
+    "moves": [
+      {
+        "accountId": "sanshi-fund-9039671912",
+        "date": "2025-12-16",
+        "direction": "in",
+        "label": "Initial Contribution",
+        "amount": 250000000,
+        "invested": 249987500.62,
+        "units": 2341480.851,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
+      }
+    ],
+    "units": 2341480.851
+  },
+  "sanshi-fund-9069671554|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "accountId": "sanshi-fund-9069671554",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "moves": [
+      {
+        "accountId": "sanshi-fund-9069671554",
+        "date": "2025-03-21",
+        "direction": "in",
+        "label": "Initial Contribution",
+        "amount": 10000000,
+        "invested": 9999500.02,
+        "units": 99995,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      },
+      {
+        "accountId": "sanshi-fund-9069671554",
+        "date": "2025-06-17",
+        "direction": "in",
+        "label": "Drawdown",
+        "amount": 10000000,
+        "invested": 9999500.02,
+        "units": 91364.524,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      },
+      {
+        "accountId": "sanshi-fund-9069671554",
+        "date": "2025-09-03",
+        "direction": "in",
+        "label": "Top Up",
+        "amount": 100000000,
+        "invested": 99995000.25,
+        "units": 822109.608,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      },
+      {
+        "accountId": "sanshi-fund-9069671554",
+        "date": "2025-10-06",
+        "direction": "in",
+        "label": "Top Up",
+        "amount": 100000000,
+        "invested": 99995000.25,
+        "units": 807457.732,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      }
+    ],
+    "units": 1820926.864
+  },
+  "sanshi-fund-9069671634|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "accountId": "sanshi-fund-9069671634",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "moves": [
+      {
+        "accountId": "sanshi-fund-9069671634",
+        "date": "2025-04-30",
+        "direction": "in",
+        "label": "Initial Contribution",
+        "amount": 27500000,
+        "invested": 27498625.07,
+        "units": 276847.775,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      },
+      {
+        "accountId": "sanshi-fund-9069671634",
+        "date": "2025-06-17",
+        "direction": "in",
+        "label": "Drawdown",
+        "amount": 27500000,
+        "invested": 27498625.07,
+        "units": 251252.442,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      },
+      {
+        "accountId": "sanshi-fund-9069671634",
+        "date": "2025-09-03",
+        "direction": "in",
+        "label": "Top Up",
+        "amount": 150000000,
+        "invested": 149992500.37,
+        "units": 1233164.412,
+        "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+        "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      }
+    ],
+    "units": 1761264.629
+  },
+  "transition-venture-capital-TVC262|transition-venture-capital-fund-i-class-a1": {
+    "accountId": "transition-venture-capital-TVC262",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "moves": [
+      {
+        "accountId": "transition-venture-capital-TVC262",
+        "date": "2025-10-17",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 7500000,
+        "invested": 7500000,
+        "units": 7500,
+        "security": "Transition Venture Capital Fund I — Class A1",
+        "securityKey": "transition-venture-capital-fund-i-class-a1"
+      }
+    ],
+    "units": 7500
+  },
+  "transition-venture-capital-TVC263|transition-venture-capital-fund-i-class-a1": {
+    "accountId": "transition-venture-capital-TVC263",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "moves": [
+      {
+        "accountId": "transition-venture-capital-TVC263",
+        "date": "2025-10-17",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 7500000,
+        "invested": 7500000,
+        "units": 7500,
+        "security": "Transition Venture Capital Fund I — Class A1",
+        "securityKey": "transition-venture-capital-fund-i-class-a1"
+      }
+    ],
+    "units": 7500
+  }
 };
 
 /**

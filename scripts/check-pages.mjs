@@ -311,6 +311,86 @@ const YTD_MEASURABLE = (() => {
   } catch { return null; }
 })();
 
+/**
+ * HOW MANY ACCOUNTS THE FAMILY IS RECORDED AS HAVING FUNDED, off `glowData.ts`.
+ *
+ * Anchored on the book rather than on the page, because the page's own caption
+ * and its rows are computed by the same function — reconciling one against the
+ * other passes even when both are wrong, which is this repo's "a check that
+ * compares a figure with its own copy cannot fail", arriving through a caption.
+ * A view that quietly dropped an account fails here and nowhere else.
+ */
+const FUNDED_ACCOUNTS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    if (!Array.isArray(moves)) return null;
+    return new Set(moves.map((m) => m.accountId)).size;
+  } catch { return null; }
+})();
+
+/**
+ * THE LARGEST CONTRIBUTION HISTORY IN THE BOOK, and how many folios it spans.
+ *
+ * Derived from `glowData.ts` because the sweep expands the row offering the most
+ * contributions, and every claim about that panel has to be anchored on
+ * something the PAGE cannot move. The first draft of the entity check read
+ * `head.includes("entity")` — it asked the page whether it had drawn the column
+ * and excused it when it had not, so deleting the column left the check green.
+ */
+const BIGGEST_TRANCHE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const m = /export const BOOK_POSITION_TRANCHES[^=]*=\s*(\{[\s\S]*?\n\});/.exec(src);
+    if (!m) return null;
+    const idx = JSON.parse(m[1]);
+    // The Monitor consolidates by security, so a row is every entry sharing a
+    // securityKey — the same grouping, or the count would not match the panel.
+    const bySec = new Map();
+    for (const v of Object.values(idx)) {
+      const g = bySec.get(v.securityKey) ?? { moves: 0, accounts: new Set() };
+      g.moves += v.moves.length; g.accounts.add(v.accountId);
+      bySec.set(v.securityKey, g);
+    }
+    let best = null;
+    for (const [key, g] of bySec) {
+      if (!best || g.moves > best.moves) best = { key, moves: g.moves, accounts: g.accounts.size };
+    }
+    return best;
+  } catch { return null; }
+})();
+
+/**
+ * HOW MANY CONTRIBUTION ROWS THE WHOLE TABLE SHOULD OFFER, on the book's own
+ * DEDUPED basis — the consolidated view counts each `dedupeGroup` once.
+ *
+ * This is the only place the dedupe is observable from the rendered page.
+ * Transition Venture Fund I is reported under both family trusts; keyed on the
+ * securityKey a panel would union both and offer 12 tranche rows where the
+ * table's own rows account for 11, and every within-panel check would still
+ * reconcile perfectly because both halves doubled together.
+ */
+const TRANCHE_ROWS_TOTAL = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const m = /export const BOOK_POSITION_TRANCHES[^=]*=\s*(\{[\s\S]*?\n\});/.exec(src);
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    if (!m || !Array.isArray(pos)) return null;
+    const idx = JSON.parse(m[1]);
+    const bySec = new Map();
+    for (const p of pos) { const g = bySec.get(p.securityKey) ?? []; g.push(p); bySec.set(p.securityKey, g); }
+    let n = 0;
+    for (const ps of bySec.values()) {
+      const seen = new Set();
+      for (const p of ps) {
+        if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+        n += idx[`${p.accountId}|${p.securityKey}`]?.moves.length ?? 0;
+      }
+    }
+    return n;
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -507,6 +587,18 @@ const ROUTES = [
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
+  // ...AND THE MANAGER ROLLUP, WHICH IS NO LONGER THE DEFAULT. The family asked
+  // for the transactions THEY made to lead, so `monitor-txns` above now lands on
+  // My investments and the manager's own dealing is a tab. Its invariants moved
+  // here WITH it rather than being deleted alongside the default: the rollup
+  // still has to lose nothing, and a check that stops running because a tab
+  // moved is a check that silently stopped.
+  ["monitor-txn-manager", "/monitor"],
+  // ...AND THE HOLDINGS TABLE WITH A CONTRIBUTION HISTORY OPEN. A row's Invested
+  // figure opens into the dated contributions behind it, and the panel's whole
+  // claim is that those tranches account for the row — which is only testable
+  // once one is expanded.
+  ["monitor-tranche", "/monitor"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -2033,7 +2125,206 @@ const INVARIANTS = {
    * it is a prettier screen that quietly drops trades — and a dropped trade is
    * invisible on a page whose entire purpose is showing fewer rows.
    */
+  /**
+   * WHAT THE FAMILY DID IS WHAT THE CARD OPENS ON.
+   *
+   * *"in transactions we need to see the transactions we have done, not what
+   * the transactions the portfolio manager has done."* Every check here is
+   * struck on the FIGURES or on a `data-` handle, never on the heading: a table
+   * of the manager's trades under a tab reading "My investments" would satisfy
+   * any prose match, and is exactly the regression this route exists to catch.
+   */
   "monitor-txns": [
+    ["the Transactions card opens on the family's own capital, not the manager's",
+      (t, ctx) => ctx.mineRows.length > 0 && ctx.managerRows.length === 0],
+
+    /**
+     * AND THE ROWS ARE ACCOUNTS THE FAMILY FUNDED, tied to the book's own count
+     * of them. Read off `glowData.ts` rather than off the page, so a view that
+     * quietly dropped an account cannot agree with its own caption.
+     */
+    ["every funded account in the book has a row", (t, ctx) => ctx.mineRows.length === FUNDED_ACCOUNTS],
+
+    /**
+     * LUMPSUM OR STAGGERED, WHICH IS THE ASK ITSELF — *"how have I executed
+     * lumpsum or through a staggered investment"*. Struck on the count behind
+     * the label, so a row tagged staggered must really carry more than one dated
+     * contribution and a lumpsum exactly one. A label pinned to a literal passes
+     * a prose check and fails this one.
+     */
+    ["every row's lumpsum/staggered label matches its own contribution count",
+      (t, ctx) => ctx.mineRows.length > 0 && ctx.mineRows.every((r) =>
+        (r.how === "staggered") === (r.contributions > 1))],
+    ["and the book really contains both kinds",
+      (t, ctx) => ctx.mineRows.some((r) => r.how === "staggered") && ctx.mineRows.some((r) => r.how === "lumpsum")],
+
+    /**
+     * THE FOOTER TIES TO ITS OWN ROWS. Summed from the rows on screen rather
+     * than computed beside them — the Private Market page's PM-1, where a
+     * footer derived independently went on printing the right total while every
+     * row above it carried a double count.
+     */
+    ["the footer's payment count is the sum of the rows'",
+      (t, ctx) => {
+        const m = /Total · (\d+) accounts\t(\d+) payments/.exec(t);
+        if (!m) return false;
+        const rows = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
+        return Number(m[1]) === ctx.mineRows.length && Number(m[2]) === rows;
+      }],
+
+    /**
+     * A RETURN IS PUBLISHED ONLY WHERE THE CONTRIBUTION LIST PROVABLY REACHES
+     * INCEPTION, and the caption COUNTS how many rows that is rather than
+     * claiming coverage. Both halves: the note states a fraction, and the
+     * fraction matches the rows that actually render one.
+     */
+    ["the note counts the rows that can state a return, and it matches them",
+      (t, ctx) => {
+        const m = /A return is struck only where the contribution list\s+provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "))
+          || /provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "));
+        if (!m) return false;
+        return Number(m[1]) === ctx.mineRows.filter((r) => r.hasReturn).length
+          && Number(m[2]) === ctx.mineRows.length;
+      }],
+
+    /**
+     * AND THE NAME OPENS THE MANDATE — the second half of the ask, *"if we
+     * click and open the drill down page of one AIF/PMS then inside that we
+     * should see what all transactions the portfolio manager of that fund has
+     * made"*. Paired label-to-href, never a count of links: a row pointing at
+     * the wrong account satisfies any tally.
+     */
+    ["every row's name links to its own mandate",
+      (t, ctx) => ctx.mineRows.length > 0
+        && ctx.mineRows.every((r) => r.href === `/mandate/${r.accountId}`)],
+
+    /**
+     * NO SIDE THAT DID NOT MOVE IS PRINTED AS ₹0. An account that took nothing
+     * out took nothing out; ₹0 says a withdrawal was measured at nothing.
+     */
+    ["a row with no withdrawal shows a dash, never a zero",
+      (t) => /—/.test(t) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t)],
+  ],
+
+  /**
+   * EACH INVESTMENT SEPARATELY, AND THE COMBINED — *"we should be able to open a
+   * drop down to see separate investments made at different times and their
+   * returns"*.
+   *
+   * The panel's whole claim is that its rows account for the ROW IT OPENED
+   * FROM. So the checks reconcile the panel's own footer against the tranche
+   * rows above it AND against the count the toggle advertises — two comparisons,
+   * because a panel that dropped a tranche from both would reconcile perfectly
+   * with itself, which is the Private Market page's PM-1 in miniature.
+   */
+  "monitor-tranche": [
+    ["a contribution history opens", (t, ctx) => ctx.tranchePanel !== null],
+
+    ["it draws one row per contribution the toggle claims",
+      (t, ctx) => ctx.tranchePanel !== null
+        && ctx.tranchePanel.rows === ctx.tranchePanel.claimed && ctx.tranchePanel.rows > 1],
+
+    /**
+     * THE FOOTER IS SUMMED FROM THE ROWS. Read off the rendered cells rather
+     * than recomputed here: a footer derived independently of its own rows is
+     * the failure this repo keeps finding, and comparing it to a second
+     * derivation of the same inputs would not see it.
+     */
+    ["the combined units are the sum of the rows' units",
+      (t, ctx) => ctx.tranchePanel !== null
+        && Math.abs(ctx.tranchePanel.unitsFooter - ctx.tranchePanel.unitsRows) <= 0.001],
+
+    /**
+     * THE EARLIER RUPEE IS WORTH MORE, WHICH IS THE WHOLE QUESTION — and the
+     * claim is MONOTONICITY, not mere variation.
+     *
+     * Every tranche in one panel is the same fund at the same NAV today, so a
+     * tranche's return is a strict function of the NAV it bought at: cheaper
+     * entry, higher return, always. That makes two exact assertions available,
+     * and the weaker "the returns are not all equal" is worth recording as what
+     * this check first was — under a size-weighted split (the bug it exists to
+     * catch) each ACCOUNT reports its own blended ratio, so returns still vary
+     * ACROSS accounts and the set-size test passed happily while every tranche
+     * within an account showed the identical figure.
+     */
+    ["a cheaper entry NAV always shows the higher return",
+      (t, ctx) => {
+        const p = ctx.tranchePanel;
+        if (!p || p.navs.some((n) => n === null) || p.returns.some((r) => r === null)) return false;
+        const pairs = p.navs.map((n, i) => [n, p.returns[i]]).sort((a, b) => a[0] - b[0]);
+        return pairs.every(([, r], i) => i === 0 || r <= pairs[i - 1][1] + 1e-9);
+      }],
+    ["...and two contributions at the SAME entry NAV show the same return",
+      (t, ctx) => {
+        const p = ctx.tranchePanel;
+        if (!p || p.navs.some((n) => n === null)) return false;
+        const by = new Map();
+        p.navs.forEach((n, i) => { (by.get(n) ?? by.set(n, []).get(n)).push(p.returns[i]); });
+        // Must actually exercise it: this book's Sanshi row has two members
+        // contributing at 109.4462 on one day, so a run with no repeated NAV
+        // means the panel changed under the check rather than that it passed.
+        const shared = [...by.values()].filter((v) => v.length > 1);
+        return shared.length > 0 && shared.every((v) => v.every((r) => Math.abs(r - v[0]) < 0.02));
+      }],
+    ["and the entry NAVs really do differ across the tranches",
+      (t, ctx) => ctx.tranchePanel !== null && new Set(ctx.tranchePanel.navs).size > 1],
+
+    /**
+     * NOTHING UNDER A YEAR IS LABELLED ANNUALISED — Stage 10g(ii)'s guard,
+     * asserted where a reader would see it break. Every tranche carries its own
+     * tag, and a panel where every row said CAGR would be compounding four-month
+     * windows onto a year.
+     */
+    ["every tranche's return is tagged with the basis it is on",
+      (t, ctx) => ctx.tranchePanel !== null
+        && ctx.tranchePanel.tags.length === ctx.tranchePanel.rows
+        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "ABS")],
+    ["and this book's tranches are not all annualised",
+      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("ABS")],
+
+    /**
+     * A ROW SPANNING SEVERAL FOLIOS NAMES WHOSE MONEY EACH CONTRIBUTION WAS.
+     * Two members contributed on the SAME DAY under the SAME label to this
+     * book's Sanshi Class E row; without the holder those read as one decision
+     * printed twice at different sizes.
+     *
+     * Gated on the BOOK's own count of the folios behind the largest history,
+     * never on whether the page drew an Entity column — see `BIGGEST_TRANCHE`.
+     */
+    ["a multi-folio history names the entity on every row",
+      (t, ctx) => {
+        if (BIGGEST_TRANCHE === null || ctx.tranchePanel === null) return false;
+        if (BIGGEST_TRANCHE.accounts <= 1) return true;   // nothing to disambiguate
+        return ctx.tranchePanel.spansEntities
+          && ctx.tranchePanel.entities.filter(Boolean).length === ctx.tranchePanel.rows;
+      }],
+    ["...and the panel really is the book's largest history",
+      (t, ctx) => BIGGEST_TRANCHE !== null && ctx.tranchePanel !== null
+        && ctx.tranchePanel.rows === BIGGEST_TRANCHE.moves],
+
+    /**
+     * AND THE COVERAGE IS COUNTED RATHER THAN CLAIMED. A chevron on some rows
+     * and not others needs a reason on the page, and the count must match what
+     * the table actually drew.
+     */
+    /**
+     * A HOLDING TWO MEMBERS REPORT IS COUNTED ONCE HERE TOO. The consolidated
+     * table collapses each `dedupeGroup`, so the contribution histories it
+     * offers must collapse with it — a panel keyed on the securityKey would
+     * union both trusts' Transition Venture rows and still reconcile with
+     * itself, because its footer and its rows would double together.
+     */
+    ["the histories offered count each dedupeGroup once, like the rows do",
+      (t, ctx) => TRANCHE_ROWS_TOTAL !== null && ctx.trancheRowsOffered === TRANCHE_ROWS_TOTAL],
+
+    ["the note counts the rows offering a history, and it matches",
+      (t, ctx) => {
+        const m = /(\d+) of (\d+) rows open their Invested/.exec(t.replace(/\s+/g, " "));
+        return !!m && Number(m[1]) === ctx.trancheToggles && Number(m[1]) > 0;
+      }],
+  ],
+
+  "monitor-txn-manager": [
     /**
      * THE DEFAULT IS THE ROLLUP. Struck on the arithmetic rather than on the
      * heading: a tape re-labelled would satisfy any prose match, so this asserts
@@ -5682,9 +5973,36 @@ for (const theme of THEMES) {
           };
         }, intro);
       }
-      if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
+      if (name === "monitor-txns" || name === "monitor-txn-manager"
+        || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+        // THE VIEW IS A TAB NOW, AND THE DEFAULT MOVED. `monitor-txns` walks
+        // what a reader sees first (My investments); every route that checks the
+        // MANAGER's dealing has to say so, or it would quietly start asserting
+        // the manager rollup's invariants against a table of the family's own
+        // contributions and abstain on every one of them.
+        const tab = name === "monitor-txn-direct" ? /^Direct Equity$/
+          : name === "monitor-txns" ? null : /^By manager$/;
+        if (tab) {
+          const v = page.getByRole("button", { name: tab }).first();
+          if (await v.count()) { await v.click(); await page.waitForTimeout(900); }
+        }
+      }
+      // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
+      // contributions rather than the first, so a regression that truncates a
+      // breakdown cannot be satisfied by a single-tranche row that has nothing
+      // to truncate — the same trap `data-days` already exists for on the
+      // transactions drill-down.
+      if (name === "monitor-tranche") {
+        const btns = page.locator("[data-tranche-toggle]");
+        const n = await btns.count();
+        let best = -1, bestN = -1;
+        for (let i = 0; i < n; i++) {
+          const c = Number(await btns.nth(i).getAttribute("data-tranche-rows")) || 0;
+          if (c > bestN) { bestN = c; best = i; }
+        }
+        if (best >= 0) { await btns.nth(best).click(); await page.waitForTimeout(700); }
       }
       // monitor-cagr / monitor-ytd / monitor-xirr / monitor-returns-multi are
       // reached by the `?ret=` URL (see the route table), not by a click — the
@@ -6079,6 +6397,103 @@ for (const theme of THEMES) {
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
+       * ── MY INVESTMENTS, AND THE MANAGER ROLLUP, READ AS STRUCTURE ───────────
+       *
+       * Both are tables of rows with a name and figures, and on innerText alone
+       * they are indistinguishable — which is precisely the regression to catch:
+       * the card opening on the manager's trades under a tab reading "My
+       * investments" satisfies every prose match there is. So each row is read
+       * off its own `data-` handles, and the two collections are separate so a
+       * check can assert one is EMPTY while the other is not.
+       */
+      const mineRows = FAST ? [] : await page.evaluate(() =>
+        [...document.querySelectorAll("tr[data-mine-row]")].map((tr) => ({
+          accountId: tr.getAttribute("data-mine-row"),
+          contributions: Number(tr.getAttribute("data-mine-contributions")),
+          how: tr.querySelector("[data-mine-how]")?.getAttribute("data-mine-how") ?? null,
+          href: tr.querySelector("[data-mine-link]")?.getAttribute("href") ?? null,
+          // A return renders as a figure; withheld, it renders an AbsentCell
+          // whose reason is in a `title`. Read the CELL rather than the text, so
+          // "does this row state a return" is answered structurally.
+          hasReturn: /%/.test((tr.cells[7]?.innerText ?? "")),
+        })));
+      const managerRows = FAST ? [] : await page.evaluate(() =>
+        [...document.querySelectorAll('tr[data-row="group"]')].map((tr) => ({
+          trades: Number(tr.getAttribute("data-trades")),
+        })));
+      /**
+       * ── THE CONTRIBUTION HISTORY PANEL, CELL BY CELL ───────────────────────
+       *
+       * Read off the rendered cells, so the footer is compared with the ROWS
+       * ABOVE IT rather than with a second derivation of the same inputs. Units
+       * are parsed from the cell text because that is the figure a reader adds
+       * up; a `data-` copy of the number would agree with itself by
+       * construction.
+       */
+      const trancheToggles = FAST ? 0 : await page.evaluate(() =>
+        document.querySelectorAll("[data-tranche-toggle]").length);
+      const trancheRowsOffered = FAST ? 0 : await page.evaluate(() =>
+        [...document.querySelectorAll("[data-tranche-toggle]")]
+          .reduce((a, b) => a + (Number(b.getAttribute("data-tranche-rows")) || 0), 0));
+      const tranchePanel = FAST ? null : await page.evaluate(() => {
+        const panel = document.querySelector("[data-tranche-panel]");
+        if (!panel) return null;
+        const key = panel.getAttribute("data-tranche-panel");
+        const toggle = document.querySelector(`[data-tranche-toggle="${key}"]`);
+        const rows = [...panel.querySelectorAll("tr[data-tranche-row]")];
+        const foot = panel.querySelector("tr[data-tranche-total]");
+        const head = [...panel.querySelectorAll("thead th")].map((th) => th.textContent.trim().toLowerCase());
+        // Located BY HEADER, never by index — the columns shift by one when the
+        // Entity column is drawn, and a positional read would silently return
+        // the wrong cell exactly when the row spans several folios.
+        //
+        // AND colSpan IS ACCUMULATED, because the footer's label cell spans two
+        // columns (three with Entity) while a data row's spans one. Indexing
+        // `tr.cells` directly reads the footer one or two columns to the LEFT of
+        // where the header says — which is how the first draft compared the
+        // combined UNITS against the combined INVESTED and reported a mismatch
+        // on a panel that was adding up perfectly. The category-totals reader on
+        // this same page already documents this trap; it is the same one.
+        const at = (tr, label) => {
+          const want = head.indexOf(label);
+          if (want < 0) return null;
+          let col = 0;
+          for (const cell of tr.cells) {
+            const span = cell.colSpan || 1;
+            if (want >= col && want < col + span) return (cell.innerText ?? "").trim();
+            col += span;
+          }
+          return null;
+        };
+        const num = (v) => (v === null ? NaN : Number(v.replace(/[^\d.-]/g, "")));
+        const spansEntities = head.includes("entity");
+        return {
+          rows: rows.length,
+          claimed: Number(toggle?.getAttribute("data-tranche-rows") ?? -1),
+          unitsRows: rows.reduce((a, tr) => a + num(at(tr, "units")), 0),
+          unitsFooter: foot ? num(at(foot, "units")) : NaN,
+          // THE FIGURE, NOT THE CELL. A return cell reads "CAGR39.50%", so
+          // comparing cell TEXT makes a set of two rows differ whenever their
+          // TAGS differ — and the check meant to catch a blended split passed
+          // happily while every row reported the same percentage under two
+          // different tags. Parse the number the reader actually compares.
+          returns: rows.map((tr) => {
+            const m = /(-?[\d.]+)%/.exec(at(tr, "return") ?? "");
+            return m ? Number(m[1]) : null;
+          }),
+          navs: rows.map((tr) => {
+            const m = /([\d.,]+)/.exec((at(tr, "entry nav") ?? "").replace(/[^\d.,]/g, ""));
+            return m ? Number(m[1].replace(/,/g, "")) : null;
+          }),
+          tags: rows.map((tr) => {
+            const m = /(CAGR|ABS)/.exec(at(tr, "return") ?? "");
+            return m ? m[1] : null;
+          }),
+          entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],
+          spansEntities,
+        };
+      });
+      /**
        * ── THE PER-CATEGORY TOTALS ROW, READ OFF ITS CELLS ─────────────────────
        *
        * "Show aggregate totals for every metric for each category." The claim is
@@ -6450,7 +6865,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -12,6 +12,8 @@ import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, 
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
+import { loadTransactions, type Txn } from "@/lib/ledger";
+import { rollup, acctKey } from "@/lib/txnRollup";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 
@@ -392,6 +394,15 @@ export function MandateHoldings() {
             account in full.
           </p>
         </Card>
+        {/* AND THE MANAGER'S DEALING BELONGS HERE TOO, ON A PAGE THAT IS NOT A
+            MANDATE. Buoyant Capital 103473 is an AIF folio — this branch — and
+            it is one of the twelve accounts in this book that DOES issue a
+            transaction statement. Rendering this card only on the mandate
+            branch would have hidden a manager's whole dealing record behind a
+            routing decision about what the account is called, which is the
+            "reason expired" failure this repo has already paid for once. Where
+            a fund genuinely reports none, the card says so in its own words. */}
+        <ManagerTrades account={account} />
       </div>
     );
   }
@@ -692,7 +703,177 @@ export function MandateHoldings() {
         </div>
       </Card>
 
+      <ManagerTrades account={account} />
     </div>
+  );
+}
+
+/**
+ * WHAT THE MANAGER TRADED — the second half of the family's ask.
+ *
+ * *"first we need to see what transactions we have made and then if we click
+ * and open the drill down page of one AIF/PMS then inside that we should see
+ * what all transactions the portfolio manager of that fund has made."*
+ *
+ * The Transactions card now opens on the family's own capital (My investments);
+ * this is where the manager's own dealing went. Grouped per SECURITY rather
+ * than left as a tape, because that is the decision — Green Lantern bought The
+ * Anup Engineering on fifty separate days, and fifty rows hide what one row
+ * says. `rollup` is reused rather than reimplemented, so this table and the
+ * Transactions card cannot disagree about what a manager did.
+ *
+ * ── AND AN AIF HONESTLY HAS NOTHING HERE ────────────────────────────────────
+ *
+ * A PMS reports every share it holds for the family, so its dealing is data
+ * this book actually has. A fund UNIT is one purchase of somebody else's
+ * portfolio: the family owns units, the fund owns the shares, and no statement
+ * in this drop reports a fund's own dealing. That is a permanent absence rather
+ * than a feed that is down, and it is stated as one — the same asymmetry the
+ * holdings drill-down already draws between a mandate and a fund.
+ */
+function ManagerTrades({ account }: { account: Account }) {
+  /**
+   * THE TITLE HAS TO DESCRIBE WHAT IS UNDER IT, AND ON A FUND IT IS NOT THE
+   * MANAGER'S DEALING.
+   *
+   * A PMS transaction statement prints the shares the manager bought and sold
+   * for the family. Buoyant's AIF folio prints something else entirely under
+   * the same report type: "Buoyant Opportunities Strategy — Class A4, ₹25 Cr" —
+   * the FAMILY subscribing for units. Both are dated rows on a transaction
+   * statement; only one of them is a manager trading.
+   *
+   * Headed "What the manager traded", the second reads as Buoyant having bought
+   * ₹25 Cr of its own strategy, which is not what happened. So the route picks
+   * the words, exactly as `holdingBucket` picks a section heading — the caption
+   * failure this book has already paid for twice, arriving through a card title.
+   */
+  const isMandate = holdingRoute(account.engagement) === "mandate";
+  const { fmtFromBase } = usePortfolio();
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [txns, setTxns] = useState<Txn[]>([]);
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const money = (v: number | null) => (v === null ? null : fmtFromBase(v, { compact: true }));
+
+  useEffect(() => {
+    let alive = true;
+    loadTransactions().then((d) => {
+      if (!alive) return;
+      if (!d) { setStatus("error"); return; }
+      setTxns(d.txns); setStatus("ready");
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // Joined on the two identifiers the STATEMENT itself prints, never on a
+  // re-derived accountId slug — `txnRollup`'s own rule.
+  const mine = useMemo(
+    () => txns.filter((t) => acctKey(t.provider, t.accountNo) === acctKey(account.provider, account.accountNo)),
+    [txns, account.provider, account.accountNo],
+  );
+  const groups = useMemo(() => rollup(mine, [account], "manager"), [mine, account]);
+  const instruments = groups[0]?.instruments ?? [];
+
+  return (
+    <Card title={isMandate ? "What the manager traded" : "Dated dealing on this account"}
+      subtitle={`${account.provider} · account ${account.accountNo}`}>
+      {status === "loading" ? (
+        <p className="text-sm text-slate-500">Loading the manager&rsquo;s dated trades…</p>
+      ) : status === "error" ? (
+        <AbsentSection what="The audit archive didn't respond"
+          needs="This table reads the extracted transaction statements from /audit. That request didn't come back — refresh to retry. The archive is served alongside the app, so this is the archive being unreachable rather than your session being stale." />
+      ) : !instruments.length ? (
+        <AbsentSection what="No dealing is reported for this account"
+          needs={isMandate
+            ? `${account.provider} issues no transaction statement for this account in this drop, so what it bought and sold over the period was never reported here. Its HOLDINGS above are what the statement does carry.`
+            : "A fund unit is one purchase of somebody else's portfolio: the family holds units and the fund holds the shares, and no statement in this drop reports a fund's own dealing. This is a decided absence rather than a feed that is down — the capital the family put INTO this fund is on the Transactions card, under My investments."} />
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-lg border border-ink-700">
+            <table className="min-w-full text-[13px]" data-manager-trades>
+              <thead className="bg-ink-800">
+                <tr className="border-b border-ink-700">
+                  <th className="label-xs px-3 py-2 text-left font-medium">Security</th>
+                  <th className="label-xs px-3 py-2 text-right font-medium">Trades</th>
+                  <th className="label-xs px-3 py-2 text-right font-medium">Bought</th>
+                  <th className="label-xs px-3 py-2 text-right font-medium">Sold</th>
+                  <th className="label-xs px-3 py-2 text-right font-medium">Realized P&L</th>
+                  <th className="label-xs px-3 py-2 text-left font-medium">Period</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/60">
+                {instruments.map((ins) => {
+                  const isOpen = open.has(ins.key);
+                  return (
+                    <Fragment key={ins.key}>
+                      <tr data-manager-row={ins.key} className="cursor-pointer hover:bg-ink-700/30"
+                        onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(ins.key)) n.delete(ins.key); else n.add(ins.key); return n; })}>
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <ChevronRight className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                            <span className="text-slate-200">{ins.security}</span>
+                            {ins.staggered && <Pill>staggered · {ins.days} days</Pill>}
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                          {ins.buys + ins.sells}<span className="ml-1 text-[10px] text-slate-500">{ins.buys}B/{ins.sells}S</span>
+                        </td>
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
+                          {ins.buys === 0 ? <span className="text-slate-600">—</span>
+                            : money(ins.bought) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
+                        </td>
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
+                          {ins.sells === 0 ? <span className="text-slate-600">—</span>
+                            : money(ins.sold) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
+                        </td>
+                        <td className="px-3 py-1.5 text-right mono whitespace-nowrap">
+                          {ins.realized === null
+                            ? <AbsentCell reason="no capital gain statement covers this account, so what these sales realised was never reported" />
+                            : <span className={changeColor(ins.realized)}>{money(ins.realized)}</span>}
+                        </td>
+                        <td className="px-3 py-1.5 text-[12px] mono text-slate-500 whitespace-nowrap">
+                          {ins.first === ins.last ? fmtDate(ins.first) : `${fmtDate(ins.first)} → ${fmtDate(ins.last)}`}
+                        </td>
+                      </tr>
+                      {isOpen && ins.tranches.map((t, i) => (
+                        <tr key={`${ins.key}::${i}`} data-manager-tranche={ins.key} className="bg-ink-900/40 text-[12px]">
+                          <td className="px-3 py-1 pl-8 text-slate-400">
+                            {fmtDate(t.date)}
+                            <span className={`ml-2 rounded px-1 py-0.5 text-[10px] ${t.side === "Buy" ? "bg-sky-500/15 text-sky-300" : "bg-amber-500/15 text-amber-300"}`}>{t.side}</span>
+                            <span className="ml-2 mono text-slate-500">{fmtNum(t.qty)}{t.price !== null && <> @ {fmtFromBase(t.price)}</>}</span>
+                          </td>
+                          <td />
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? "—") : ""}</td>
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? "—") : ""}</td>
+                          <td className="px-3 py-1 text-right mono whitespace-nowrap">
+                            {t.realized === null
+                              ? <AbsentCell reason={t.realizedNote ?? "no capital gain lot in the statements matches this sale"} />
+                              : <span className={changeColor(t.realized)}>{money(t.realized)}</span>}
+                          </td>
+                          <td />
+                        </tr>
+                      ))}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+            {instruments.length} {instruments.length === 1 ? "line" : "lines"} over the period this account&rsquo;s
+            statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it.{" "}
+            {isMandate ? (
+              <>These are the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own
+                capital into it is on the Transactions card, under My investments.</>
+            ) : (
+              <>This is a FUND FOLIO, so what its transaction statement prints is the family subscribing for units —
+                not the fund dealing in the companies it owns, which no statement in this drop reports. The units
+                bought here are the same money the Transactions card shows under My investments where that account
+                also publishes a capital record.</>
+            )}
+          </p>
+        </>
+      )}
+    </Card>
   );
 }
 
