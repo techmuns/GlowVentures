@@ -683,3 +683,185 @@ export function ytdCoverage(positions: Holdable[], asOf: string) {
   for (const p of positions) if (holdingYtd(p, asOf).kind === "since-open") measured++;
   return { measured, absent: positions.length - measured, total: positions.length };
 }
+
+// ── THE RETURN-METHODOLOGY LAYER — WHICH RETURN, AND SAY WHICH ───────────────
+//
+// "When you say return… is it my year-to-date return? my holding-period return?
+// my calendar-year return? I can give you ten different returns for one scheme."
+// So the reader PICKS which return, and every cell states which one it is. The
+// picker replaces the old Absolute/CAGR toggle and offers all of them at once.
+//
+// And a DEFAULT that follows the rule the family stated: equity held under a
+// year is ABSOLUTE, a year or more is CAGR; fixed income is XIRR; multiple
+// tranches is XIRR. That default is the `auto` measure below, and it labels each
+// cell with the measure it resolved to.
+//
+// EVERYTHING HERE OBEYS THE TWO STANDING RULES.
+//  - The annualisation guard lives in `holdingReturn` and is not re-implemented:
+//    `auto` and `cagr` delegate to it, so a sub-year window can never be
+//    compounded onto a year (the +99.0% / +47,695% failure this repo has met).
+//  - A measure this book cannot strike renders a DASH WITH THE REASON, never a
+//    plausible wrong number. Per-holding XIRR is the honest example: the
+//    statements cover the current period only, so no cash-flow history exists to
+//    solve one against, and `positionIrrPct` is the banned extrapolation — so the
+//    XIRR measure names why it is absent rather than reaching for a figure.
+
+export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd" | "calendar";
+
+export type ReturnMeasureDef = {
+  key: ReturnMeasure;
+  /** The full name in the picker. */
+  label: string;
+  /** The tag printed beside the figure, so a cell states which return it is. */
+  tag: string;
+  /** One line under the picker and in the column caption. */
+  hint: string;
+};
+
+/** The picker's options, in reading order — `auto` first, as the default. */
+export const RETURN_MEASURES: ReturnMeasureDef[] = [
+  { key: "auto", label: "By methodology", tag: "AUTO",
+    hint: "Equity held under a year: absolute. A year or more: CAGR. Fixed income: XIRR. Each cell says which one it is." },
+  { key: "absolute", label: "Absolute — holding period", tag: "ABS",
+    hint: "The total return on cost since the holding was bought, not annualised." },
+  { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
+    hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays absolute." },
+  { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
+    hint: "A money-weighted return across every cash flow. It needs each tranche's date and amount, which the statements here do not carry per holding — so per holding it is shown as absent, and the per-account XIRR is on Performance." },
+  { key: "ytd", label: "Year to date", tag: "YTD",
+    hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
+  { key: "calendar", label: "Calendar year", tag: "CY",
+    hint: "A past calendar year's return — it needs the holding's value at the start and end of that year, which this book is not dated early enough to carry." },
+];
+
+const MEASURE_BY_KEY = new Map(RETURN_MEASURES.map((m) => [m.key, m]));
+export const returnMeasureDef = (k: ReturnMeasure): ReturnMeasureDef => MEASURE_BY_KEY.get(k) ?? RETURN_MEASURES[0];
+export const isReturnMeasure = (k: string): k is ReturnMeasure => MEASURE_BY_KEY.has(k as ReturnMeasure);
+
+/**
+ * FIXED INCOME — the class the methodology routes to XIRR rather than CAGR.
+ *
+ * Only `Bond` today: a bond's return on cost ignores its coupons, so the family
+ * asked for a money-weighted figure there. There are zero bonds in the current
+ * book, which is exactly why the branch has to be written now rather than when
+ * one arrives — the first bond would otherwise be annualised like equity. The
+ * fund vehicles (AIF / mutual fund / ETF) are NOT fixed income here: they are
+ * pooled holdings marked at a NAV and take the equity-style absolute/CAGR rule.
+ */
+export const isFixedIncome = (assetClass: string | null | undefined) => assetClass === "Bond";
+
+/**
+ * What a return cell needs to decide its own measure.
+ * `heldSince` licenses annualisation; `assetClass` routes fixed income to XIRR;
+ * `costNA` is the depository case — a value but no cost, so no return at all.
+ */
+export type ReturnInput = {
+  returnPct: number | null;
+  heldSince: string | null;
+  assetClass: string | null | undefined;
+  costNA?: boolean;
+};
+
+export type MeasuredReturn =
+  /** A figure to print, and the tag that says which measure it is. */
+  | { shown: true; pct: number; tag: string; note?: string }
+  /** No figure, with the reason a reader needs in order to act on it. */
+  | { shown: false; tag: string; reason: string };
+
+const NO_COST_RETURN =
+  "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
+const NO_HOLDING_XIRR =
+  "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
+const noCalendarReason = (asOf: string) =>
+  `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
+
+/**
+ * The return to print for one holding, on the measure the reader picked.
+ *
+ * `auto` applies the family's rule and tags each cell with the measure it
+ * resolved to (ABS or CAGR here — XIRR falls back to the return on cost because
+ * this book cannot strike it, and says so in the note). The concrete measures
+ * render that measure or a dash naming why this book cannot. `absolute` and
+ * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
+ */
+export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: string): MeasuredReturn {
+  const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
+
+  if (measure === "absolute") {
+    if (noCost) return { shown: false, tag: "ABS", reason: NO_COST_RETURN };
+    return { shown: true, pct: p.returnPct as number, tag: "ABS" };
+  }
+
+  if (measure === "cagr") {
+    const r = holdingReturn(p, "cagr", asOf);
+    if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
+    if (r.kind === "cagr") {
+      return { shown: true, pct: r.pct, tag: "CAGR",
+        note: `Annualised over the ${r.heldDays} days since ${r.since}, the oldest unit still held.` };
+    }
+    // The guard fired: under a year, so the ABSOLUTE figure stands, marked.
+    return { shown: true, pct: r.pct, tag: "ABS",
+      note: r.heldDays === null
+        ? "Held for an unreported period, so this is the total return on cost, not an annual rate."
+        : `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
+  }
+
+  if (measure === "ytd") {
+    const y = holdingYtd(p, asOf);
+    return y.kind === "absent"
+      ? { shown: false, tag: "YTD", reason: y.reason }
+      : { shown: true, pct: y.pct, tag: "YTD",
+          note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
+  }
+
+  if (measure === "xirr") {
+    return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+  }
+
+  if (measure === "calendar") {
+    return { shown: false, tag: "CY", reason: noCalendarReason(asOf) };
+  }
+
+  // ── auto: the methodology ──────────────────────────────────────────────────
+  if (noCost) return { shown: false, tag: "AUTO", reason: NO_COST_RETURN };
+  const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
+  if (isFixedIncome(p.assetClass)) {
+    // The rule routes fixed income to XIRR, which this book cannot strike per
+    // holding — so the return on cost stands, tagged ABS, and the note names the
+    // measure the methodology would use once the cash-flow history exists.
+    return { shown: true, pct: p.returnPct as number, tag: "ABS",
+      note: "Fixed income — the methodology would show a money-weighted XIRR, which needs every coupon and tranche this book does not carry per holding, so this is the total return on cost." };
+  }
+  // Equity and the pooled vehicles: annualise a measured year, otherwise the
+  // total return on cost, tagged so the two bases never read as one.
+  if (heldDays !== null && heldDays >= YEAR_DAYS) {
+    const r = holdingReturn(p, "cagr", asOf);
+    if (r.kind === "cagr") {
+      return { shown: true, pct: r.pct, tag: "CAGR", note: `Held ${r.heldDays} days, so the return on cost is annualised.` };
+    }
+    // A total loss has no compound rate — fall through to the absolute figure.
+  }
+  return { shown: true, pct: p.returnPct as number, tag: "ABS",
+    note: heldDays === null
+      ? "No purchase date on file, so this is the total return on cost; a holding a year or older is shown as CAGR once a date is known."
+      : `Held ${heldDays} days — under a year, so this is the total return on cost.` };
+}
+
+/**
+ * How many rows a measure can and cannot answer, for the column caption.
+ *
+ * `cagr` / `absolute` split the shown rows so the CAGR caption can say how many
+ * were annualised versus held under a year; `absent` is the rest. Counted rather
+ * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
+ */
+export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
+  let shown = 0, absent = 0, cagr = 0, absolute = 0;
+  for (const r of rows) {
+    const m = measuredReturn(r, measure, asOf);
+    if (!m.shown) { absent++; continue; }
+    shown++;
+    if (m.tag === "CAGR") cagr++;
+    else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
+  }
+  return { total: rows.length, shown, absent, cagr, absolute };
+}
