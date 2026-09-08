@@ -529,9 +529,24 @@ const ROUTES = [
   // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
   // multi-view route in this app uses.
   ["monitor-entity", "/monitor?view=entity"],
-  // ...AND THE ANNUALISED BASIS, reached by clicking the toggle this session
-  // added. The guard that makes it safe is asserted on the figures it draws.
-  ["monitor-cagr", "/monitor"],
+  // ...AND EACH RETURN MEASURE THE PICKER OFFERS, reached by URL (`?ret=`)
+  // rather than by a click — the picker replaced the Absolute/CAGR toggle, and
+  // the measure lives in the URL like every other view on this page, so the
+  // sweep navigates straight to it. The one Return column shows the chosen
+  // measure, labelled; the guard that keeps CAGR safe is asserted on the figures
+  // the annualised view draws.
+  ["monitor-cagr", "/monitor?ret=cagr"],
+  // ...YTD IS NOW A MEASURE, NOT A COLUMN. The separate YTD column is gone; when
+  // ticked, YTD renders in the one Return column under the same rule — measurable
+  // only where a holding was opened during the year, a dash naming why otherwise.
+  ["monitor-ytd", "/monitor?ret=ytd"],
+  // ...AND XIRR, which per holding this book cannot strike (the statements carry
+  // no cash-flow history per security), so every cell is a dash with the reason
+  // rather than the banned `positionIrrPct` extrapolation.
+  ["monitor-xirr", "/monitor?ret=xirr"],
+  // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
+  // column shows both, each on its own labelled line.
+  ["monitor-returns-multi", "/monitor?ret=absolute,cagr"],
   /**
    * ...AND THE SAME HOLDINGS SLICED THE FAMILY'S OTHER TWO WAYS.
    *
@@ -1351,7 +1366,10 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * one way this row can be wrong.
  */
 /** Column indices of the holdings table, which is what the cells are read by. */
-const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, weight: 7, pnl: 8, realised: 9, ret: 10, ytd: 11, sector: 12, entity: 13 };
+// The 13-column holdings table, after the separate YTD column was folded into
+// the Return measure picker. Return is now third from the end (Sector, Entity
+// close the row). There is no YTD column, so no COL.ytd.
+const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, weight: 7, pnl: 8, realised: 9, ret: 10, sector: 11, entity: 12 };
 /**
  * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
  * is a different answer from an unparseable one; NaN for anything else, so a
@@ -1525,13 +1543,13 @@ const CATEGORY_TOTALS = [
   /**
    * ── AND EVERY DASH ON THAT ROW NAMES ITS OWN ABSENCE ──────────────────────
    *
-   * Four of the fourteen columns can never have a category total: quantities of
-   * different securities do not add, an average cost and a price are per unit,
-   * and a year-to-date return needs an opening value no statement in this book
-   * is dated early enough to carry. Those are DECIDED absences and must read as
-   * such — a reader who scans an empty cell learns nothing about whether a
-   * figure was withheld or never existed, which is this book's founding rule
-   * arriving one row below the footer that already keeps it.
+   * Three of the thirteen columns can never have a category total: quantities of
+   * different securities do not add, and an average cost and a price are per
+   * unit. Those are DECIDED absences and must read as such — a reader who scans
+   * an empty cell learns nothing about whether a figure was withheld or never
+   * existed, which is this book's founding rule arriving one row below the footer
+   * that already keeps it. (The separate YTD total went with the YTD column,
+   * which is a Return measure now rather than a column of its own.)
    *
    * Struck on the `title`, because that is where `AbsentCell` puts the reason
    * and innerText cannot see it — the same blindness that left the cost-reason
@@ -1540,7 +1558,7 @@ const CATEGORY_TOTALS = [
   ["every metric a category cannot total renders a dash with a reason", (t, ctx) => {
     const gate = needTotals(ctx);
     if (gate) return gate;
-    const never = [COL.qty, COL.avgCost, COL.cmp, COL.ytd];
+    const never = [COL.qty, COL.avgCost, COL.cmp];
     const money = [COL.invested, COL.day, COL.mv, COL.weight, COL.pnl, COL.realised, COL.ret];
     return ctx.categoryTotals.rows.every((r) =>
       never.every((c) => r.text[c] === "—" && r.title[c].length > 20)
@@ -4497,14 +4515,14 @@ const INVARIANTS = {
       const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
       if (!foot) return false;
       const cells = foot.split("\t");
-      // …Return, YTD, Sector, Entities. The two descriptor columns stay empty;
-      // the YTD total is ABSENT rather than empty (nobody can strike it), and
-      // the last figure the footer carries is the return.
-      return cells.length >= 4
+      // …Realised, Return, Sector, Entities. The two descriptor columns stay
+      // empty; the last figure the footer carries is now the return, since the
+      // separate YTD column (and its absent total) is gone — YTD is a Return
+      // measure now.
+      return cells.length >= 3
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && cells[cells.length - 3].trim() === "—"
-        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 4].trim());
+        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -4530,60 +4548,59 @@ const INVARIANTS = {
       (t, ctx) => !ctx?.metrics ? { notChecked: "no geometry captured on this run" }
         : ctx.metrics.firstRowTop !== null && ctx.metrics.firstRowTop < ctx.metrics.viewportH / 3],
     /**
-     * ── THE RETURN TOGGLE EXISTS AND DEFAULTS TO ABSOLUTE ───────────────────
-     * The guard itself is asserted on the `monitor-cagr` route, which clicks it.
-     */
-    ["the return basis toggle offers Absolute and CAGR",
-      (t) => /\bAbsolute\b/.test(t) && /\bCAGR\b/.test(t)],
-    /**
-     * ── THE YTD COLUMN IS THE HOLDING'S, AND IT NEVER GUESSES ───────────────
+     * ── THE RETURN-MEASURE PICKER, AND THE ONE RETURN COLUMN ────────────────
      *
-     * "Add YTD… for the holding itself, not just the security's market return"
-     * and "if it is not possible to show data then just show a dash."
+     * "When you say return… is it my year-to-date return? my holding-period
+     * return? my calendar-year return? I can give you ten different returns for
+     * one scheme." So the Absolute/CAGR toggle became a picker of every measure,
+     * the separate YTD column is folded into the one Return column, and each
+     * cell states which return it is.
      *
-     * The share's market move since January IS available from `/api/prices`,
-     * which is exactly what makes this dangerous: the cheap way to fill this
-     * column is to substitute a figure that answers a different question. So
-     * the assertion is on the CELLS — every one is an em dash or a signed
-     * percentage, and never a zero, which is the shape a fabricated "no change
-     * this year" would take.
+     * Struck on the picker's own attributes, not on its option text — the options
+     * are only in the DOM when it is open, and a control asserted on prose a
+     * redesign is free to reword is the fragile check this file keeps replacing.
+     * `data-return-measures` is every measure it offers; `data-return-active` is
+     * what is ticked. The default is `auto` (the methodology), asserted here; the
+     * guard that keeps CAGR safe is asserted on `monitor-cagr`, YTD on
+     * `monitor-ytd`, XIRR on `monitor-xirr`, and the multi-select on
+     * `monitor-returns-multi`.
      */
-    ["a YTD column is drawn, sitting between Return and the descriptors",
-      (t) => /\bYTD\b/.test(t)],
-    ["the YTD column shows exactly as many figures as it claims to measure", (t) => {
-      // FULL-WIDTH ROWS ONLY. `isDataRow` is a tab count, and innerText renders
-      // the sticky header with five tabs of its own, so it matches there too —
-      // a header is not a row and its cells are not in these columns.
-      const rows = t.split("\n").filter(isDataRow).filter((r) => r.split("\t").length === 14);
-      if (rows.length === 0) return false;             // nothing drawn is nothing checked
-      // ... Return, YTD, Sector, Entities — so YTD is third from the end.
-      const cell = (r) => r.split("\t")[r.split("\t").length - 3].trim();
-      const shapeOk = rows.every((r) => cell(r) === "—" || /^[+-]\d+(\.\d+)?%$/.test(cell(r)));
-      const drawn = rows.filter((r) => cell(r) !== "—").length;
-      /**
-       * AND THE COUNT MUST TIE TO THE CAPTION. Shape alone is too weak: a
-       * fabricated "+0.00%" — the exact shape a defaulted YTD would take — is a
-       * signed percentage and would sail through. The caption is computed from
-       * `ytdCoverage` over the same rows, so a column that started inventing
-       * figures disagrees with the sentence underneath it, which is the
-       * contradiction this book's own footer rule is written to catch.
-       */
-      const none = /No row can be measured on this drop/.test(t);
-      const some = /measurable on (\d+) of \d+ rows/.exec(t);
-      if (!none && !some) return false;                // no caption is not a pass
-      const claimed = none ? 0 : Number(some[1]);
-      // THE BOOK IS THE THIRD PARTY. Cells and caption both come from
-      // `holdingYtd`, so they agree even when both are wrong; `YTD_MEASURABLE`
-      // is counted off `glowData.ts` and is what makes this able to fail.
-      if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
-      return shapeOk && drawn === claimed && drawn === YTD_MEASURABLE;
+    ["the return-measure picker offers the methodology and every measure, and defaults to it", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
+      const want = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"];
+      return want.every((k) => rs.offers.includes(k)) && rs.active.length === 1 && rs.active[0] === "auto";
     }],
-    // ...and the column says what it covers rather than leaving a wall of
-    // dashes to be read as a broken feed.
-    ["the YTD column states what it can and cannot measure",
-      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
-        && /1 January/.test(t)],
-    ["...and the column is headed Return, not an annual rate, until CAGR is picked",
+    /**
+     * ── THE SEPARATE YTD COLUMN IS GONE — YTD IS A MEASURE NOW ──────────────
+     *
+     * A removal is verified by asserting it happened. On the default (auto) view
+     * the word "YTD" appears nowhere: there is no YTD column header, and the YTD
+     * caption only renders when the YTD measure is ticked (asserted on
+     * `monitor-ytd`). It is offered inside the picker instead.
+     */
+    ["the separate YTD column is gone, and YTD is offered as a measure", (t, ctx) => {
+      const txt = ctx?.main ?? t;   // scope to page content — the picker is closed, so YTD is nowhere on the auto view
+      const rs = ctx?.returnSelect;
+      return !/\bYTD\b/.test(txt) && (!rs || rs.offers.includes("ytd"));
+    }],
+    /**
+     * ── EVERY RETURN CELL STATES WHICH RETURN IT IS ─────────────────────────
+     *
+     * The whole point of the picker is that a bare percentage was ambiguous. So
+     * every cell in the one Return column carries a tag naming its measure — on
+     * the auto view that is the measure the methodology resolved to (ABS or CAGR),
+     * and it is on the absent cells too, so a reader always knows which return is
+     * missing. Read off the cells the page draws (`data-return-cell`).
+     */
+    ["every return cell is labelled with the measure it shows", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      return cells.every((c) => /\b(AUTO|ABS|CAGR|XIRR|YTD|CY)\b/.test(c));
+    }],
+    ["the methodology view names its rule",
+      (t) => /Return follows the methodology/.test(t)],
+    ["...and the column is headed Return, not an annual rate — the measure is on the cells, not the header",
       (t) => /\bReturn\b/.test(t) && !/Return p\.a\./.test(t)],
   ],
   /**
@@ -4599,7 +4616,14 @@ const INVARIANTS = {
    * a page that annualised everything would keep every word of the prose.
    */
   "monitor-cagr": [
-    ["the column names the basis it switched to", (t) => /Return p\.a\./.test(t)],
+    // The picker is on CAGR, and the CAGR caption explains what it annualises.
+    // The measure is on the URL and the cells, not a "Return p.a." header any more.
+    ["the CAGR measure is selected", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
+      return rs.active.length === 1 && rs.active[0] === "cagr";
+    }],
+    ["the column names the basis it is showing", (t) => /Annualised where a year can be measured/.test(t)],
     /**
      * NO TRIPLE-DIGIT ANNUAL RATE ANYWHERE IN THE TABLE. This book's longest
      * measured hold is 527 days and its returns are tens of percent; a
@@ -4627,8 +4651,90 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
+    // The marker is the ABS tag now (the cell shows the total return on cost,
+    // tagged ABS) and the caption says "held under a year".
     ["a holding held under a year is marked as absolute rather than annualised",
-      (t) => /held under a year/.test(t) && /\babs\b/.test(t)],
+      (t) => /held under a year/.test(t) && /\bABS\b/.test(t)],
+  ],
+  /**
+   * ── YTD IS A MEASURE NOW, AND IT NEVER GUESSES ─────────────────────────────
+   *
+   * "Add YTD… for the holding itself, not just the security's market return" and
+   * "if it is not possible to show data then just show a dash." The separate YTD
+   * column is gone; ticking YTD shows it in the one Return column under the same
+   * rule — measurable only where a holding was OPENED during the year, a dash
+   * naming why otherwise, and NEVER the share's market move since January, which
+   * `/api/prices` could supply and which would answer a different question.
+   *
+   * Struck on the cells the page draws. `YTD_MEASURABLE` is counted off
+   * `glowData.ts` — the independent third party that makes a fabricated "+0.00%"
+   * (the shape a defaulted YTD takes) fail rather than sail through.
+   */
+  "monitor-ytd": [
+    ["the YTD measure is selected", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
+      return rs.active.length === 1 && rs.active[0] === "ytd";
+    }],
+    ["the Return column shows YTD, and only where the book can measure it", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      // Every cell is the YTD measure — tagged YTD, and either a signed % or a
+      // dash, never a fabricated +0.00%.
+      const shapeOk = cells.every((c) => /\bYTD\b/.test(c) && (/—/.test(c) || /[+-]\d+(\.\d+)?%/.test(c)));
+      const drawn = cells.filter((c) => /[+-]\d+(\.\d+)?%/.test(c)).length;
+      if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
+      return shapeOk && drawn === YTD_MEASURABLE;
+    }],
+    ["the YTD caption states what it can and cannot measure",
+      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
+        && /1 January/.test(t)],
+  ],
+  /**
+   * ── XIRR PER HOLDING IS NOT MEASURABLE HERE, AND SAYS SO ───────────────────
+   *
+   * "Fixed income… more than one year should be XIRR… an XIRR when there are
+   * multiple tranches." The methodology routes to XIRR, and this book cannot
+   * strike one per holding: the statements carry no cash-flow history per
+   * security, and `positionIrrPct` is the banned extrapolation. So every cell is
+   * a dash with the reason — the honest answer, verified rather than a figure
+   * invented to fill the column.
+   */
+  "monitor-xirr": [
+    ["the XIRR measure is selected", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
+      return rs.active.length === 1 && rs.active[0] === "xirr";
+    }],
+    ["every per-holding XIRR cell is a dash tagged XIRR, never an invented rate", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      return cells.every((c) => /\bXIRR\b/.test(c) && /—/.test(c) && !/[+-]\d+(\.\d+)?%/.test(c));
+    }],
+    ["the XIRR caption names why it is absent and points to Performance",
+      (t) => /money-weighted XIRR/.test(t) && /Performance/.test(t)],
+  ],
+  /**
+   * ── THE MULTI-SELECT: TWO MEASURES IN ONE COLUMN, EACH LABELLED ────────────
+   *
+   * "give a dropdown multiselector… in that dropdown give all types of return
+   * options… in the one column it will show the type of return that we select."
+   * With Absolute AND CAGR ticked, the one Return column shows both, each on its
+   * own tagged line — which is also the "always have a CAGR column" ask, answered
+   * without a second column.
+   */
+  "monitor-returns-multi": [
+    ["the picker reflects the two chosen measures", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
+      return rs.active.length === 2 && rs.active.includes("absolute") && rs.active.includes("cagr");
+    }],
+    ["the one Return column shows both picked measures, each labelled", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      // A costed row shows an ABS line and a CAGR line in the one cell.
+      return cells.some((c) => /\bABS\b/.test(c) && /\bCAGR\b/.test(c));
+    }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
   // printed here, so this is where "carry both, count once" is visible — and
@@ -5537,9 +5643,10 @@ for (const theme of THEMES) {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
       }
-      if (name === "monitor-cagr") {
-        const t = page.getByRole("button", { name: /^CAGR$/ }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }      }
+      // monitor-cagr / monitor-ytd / monitor-xirr / monitor-returns-multi are
+      // reached by the `?ret=` URL (see the route table), not by a click — the
+      // Absolute/CAGR toggle is a measure picker now and the measure lives in the
+      // URL like every other view on this page.
       /**
        * THE ONE DEFECT HERE THAT A URL CANNOT REACH: switching axis while a
        * SECTION FILTER is set. The filter is an equality test on the section
@@ -5949,7 +6056,7 @@ for (const theme of THEMES) {
          * The footer's label spans three columns and a category's does not, so
          * `cells[4]` is a different measurement on each — and an invariant that
          * adds the categories up against the footer is comparing exactly those.
-         * Accumulating `colSpan` puts both on the table's own 14 columns, which
+         * Accumulating `colSpan` puts both on the table's own 13 columns, which
          * is the only basis on which the comparison means anything.
          */
         const byColumn = (tr) => {
@@ -5989,7 +6096,28 @@ for (const theme of THEMES) {
           holdings: Number(tr.getAttribute("data-holdings")),
           ruleMV: Number(tr.getAttribute("data-rule-mv")),
           text: (tr.innerText ?? "").replace(/\s+/g, " ").trim(),
-        })));      /**
+        })));
+      /**
+       * THE RETURN-MEASURE PICKER AND THE ONE RETURN COLUMN, off their own
+       * attributes. The picker replaced the Absolute/CAGR toggle: its wrapper
+       * carries `data-return-measures` (every measure it offers) and
+       * `data-return-active` (what is ticked), so the sweep reads what it offers
+       * and what is selected without opening it. Each data row's Return cell
+       * carries `data-return-cell`, and its text is the tag(s) plus the figure —
+       * the labelling the family asked for, which is what these routes assert.
+       */
+      const returnSelect = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("[data-return-measures]");
+        if (!el) return null;
+        return {
+          offers: (el.getAttribute("data-return-measures") || "").split(",").filter(Boolean),
+          active: (el.getAttribute("data-return-active") || "").split(",").filter(Boolean),
+        };
+      });
+      const returnCells = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tbody tr[data-bucket] td[data-return-cell]")]
+          .map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()));
+      /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
        * the weaker one passed a bug that was really there. Reintroducing it
@@ -6236,7 +6364,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

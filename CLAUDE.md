@@ -4467,6 +4467,82 @@ long, so no drop of the CURRENT statements can ever supply a 2024 opening value.
 YTD earns its dash because it becomes real on the next within-year purchase;
 a 2024 column would be a dash forever.
 
+*(THE ABSOLUTE/CAGR TOGGLE AND THE SEPARATE YTD COLUMN ARE GONE — Stage 10af
+folds every return into ONE column behind a measure picker. Everything above is
+unchanged in substance: `holdingReturn`'s guard, `positionIrrPct` staying
+banned, YTD measurable only on a within-year purchase, calendar-year absent.
+What moved is only where the reader chooses the measure and how it is labelled.)*
+
+### Stage 10af — WHICH RETURN, AND SAY WHICH: ONE COLUMN, A MEASURE PICKER
+
+*"When you say return… is it my year-to-date return? my holding-period return?
+my calendar-year return? I can give you ten different returns for one scheme."*
+And: *"implement the return methodology — equity under a year absolute, a year or
+more CAGR; fixed income XIRR; an XIRR when there are multiple tranches. Replace
+the absolute/CAGR toggle with a dropdown multiselector of all the return types.
+The holdings table gets ONE return column, remove YTD etc. from the table, and
+that column shows the type we select."*
+
+**THE METHODOLOGY IS ONE FUNCTION, `measuredReturn` IN `analytics.ts`**, so two
+surfaces cannot disagree about what "the return" is — the same reason
+`holdingBucket` and `costCoversSet` are single functions. It delegates the
+annualisation to `holdingReturn`, so the guard that keeps a 132-day window from
+compounding onto a year (Stage 10g(ii)) lives in exactly one place still, and
+`positionIrrPct` stays unread. `RETURN_MEASURES` is the picker's catalogue —
+`auto`, `absolute`, `cagr`, `xirr`, `ytd`, `calendar` — each with the tag the
+cell prints so a reader always knows WHICH return it is.
+
+**`auto` IS THE FAMILY'S RULE, TAGGED PER ROW.** Equity held a year or more is
+CAGR, everything else is the total return on cost (tagged ABS), and fixed income
+(`isFixedIncome`, `Bond`) would be XIRR — which this book cannot strike per
+holding, so the return on cost stands with a note naming the ideal measure. On
+this drop `auto` annualises exactly the rows the CAGR measure does (Crompton) and
+shows ABS for the rest, absent only where there is no cost — verified against the
+generated book, not asserted.
+
+**EVERY MEASURE THIS BOOK CANNOT STRIKE RENDERS A DASH WITH THE REASON, never a
+plausible number.** Per-holding XIRR needs a cash-flow history the statements do
+not carry per security (`positionIrrPct` is the banned extrapolation), so it is
+absent on every row and points to Performance for the per-account figure. YTD is
+measurable only on a within-year purchase (§ Stage 10r), calendar-year not at all
+on a four-month archive. This is the family's own *"if it is not possible to show
+data then just show a dash"* applied to five measures at once.
+
+**THE PICKER REPLACES THE TOGGLE, AND THE SELECTION LIVES IN `?ret=`** like every
+other view on this page, so the CAGR view is a shareable link and `check:pages`
+reaches each measure by URL rather than a click. `auto` is the param-free default
+and is mutually exclusive with the concrete measures (picking one means "show me
+that", not "that plus the rule"); the concrete ones MULTI-SELECT, so Absolute and
+CAGR can sit side by side — the *"always have a CAGR column"* ask, answered
+without a second column. The one Return column shows the ticked measure(s), each
+on its own labelled line.
+
+**THE SEPARATE YTD COLUMN IS GONE — 14 COLUMNS TO 13.** YTD is a measure now, not
+a column; the footer's and each category-total's YTD cell went with it. The
+category and footer returns DO NOT follow the picker and stay cumulative on cost
+(`costCoversSet`): a bucket has no single purchase date to annualise over, so
+annualising it would be the very extrapolation the guard forbids.
+
+**RENDERED INLINE, NEVER STACKED**, and that is load-bearing rather than
+cosmetic: the sweep reads whole rows by splitting the page text on newlines, and
+a flex-column cell puts a newline INSIDE it that shatters the row for every
+row-based check. A block-stacked first draft did exactly that and failed the
+"sector is second from the end" invariant — so measures sit inline (visual
+wrapping adds no newline) and each is `whitespace-nowrap` so a tag never splits
+from its figure.
+
+**CHECKED ON THE PICKER'S OWN ATTRIBUTES AND THE CELLS IT DRAWS**, not on option
+prose the picker only shows when open. `data-return-measures` is every measure it
+offers and `data-return-active` what is ticked; each Return cell carries
+`data-return-cell`. Five routes assert it — `monitor` (the picker offers all
+measures, defaults to auto, no YTD column, every cell labelled), `monitor-cagr`
+(the guard: no triple-digit rate, the coverage note partitions, a sub-year row
+tagged ABS), `monitor-ytd` (drawn ties to `YTD_MEASURABLE` off `glowData.ts`),
+`monitor-xirr` (every cell a dash tagged XIRR, never an invented rate) and
+`monitor-returns-multi` (both picked measures in one column, each labelled). The
+methodology arithmetic is in `holdingReturn.test.ts` (`npm run test:family`),
+anchored on the generated book so it cannot go stale when the next drop moves it.
+
 ### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 
 *"We should also be able to see each holding of every mutual fund."* … *"For all

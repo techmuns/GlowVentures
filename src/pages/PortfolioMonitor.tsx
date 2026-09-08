@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowUpDown, ChevronRight, ChevronDown, Check, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -12,7 +12,7 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  holdingReturn, returnModeCoverage, type ReturnMode, holdingYtd, ytdCoverage,
+  measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure,
   costCoversSet,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
@@ -199,6 +199,108 @@ type BucketTotals = {
 // keep the trace. The inputs that don't move (quantity, cost) keep theirs either way.
 const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from the ledger; this figure is worked out from them, so it has no workbook cell to trace to.";
 
+/** The picker's option keys, in reading order — `auto` first. */
+const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
+
+/**
+ * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — held in the URL (`?ret=`) like
+ * every other view on this page, so "send me the CAGR view" is a link.
+ *
+ * `auto` is the methodology and the param-free default, so `/monitor` stays one
+ * URL. It is MUTUALLY EXCLUSIVE with the concrete measures: picking Absolute or
+ * CAGR means "show me that one", not "that one on top of the rule", so a concrete
+ * selection replaces auto and clearing everything falls back to it. The concrete
+ * measures multi-select — the family can pin Absolute AND CAGR side by side, each
+ * labelled, which is the "always have a CAGR column" ask answered without a
+ * second column.
+ */
+function useReturnMeasures(): [ReturnMeasure[], (next: ReturnMeasure[]) => void] {
+  const [sp, setSp] = useSearchParams();
+  const set = new Set((sp.get("ret") ?? "").split(",").map((s) => s.trim()).filter(isReturnMeasure));
+  // Concrete measures win over auto, in canonical order; empty → auto.
+  const concrete = MEASURE_KEYS.filter((k) => k !== "auto" && set.has(k));
+  const measures = concrete.length ? concrete : (["auto"] as ReturnMeasure[]);
+  const setMeasures = useCallback((next: ReturnMeasure[]) => {
+    const clean = MEASURE_KEYS.filter((k) => k !== "auto" && next.includes(k));
+    const nextSp = new URLSearchParams(sp);
+    if (clean.length === 0) nextSp.delete("ret");
+    else nextSp.set("ret", clean.join(","));
+    setSp(nextSp);
+  }, [sp, setSp]);
+  return [measures, setMeasures];
+}
+
+/**
+ * THE RETURN-MEASURE PICKER — replaces the Absolute/CAGR toggle.
+ *
+ * "When you say return… what return is it? I can give you ten different returns
+ * for one scheme." So this offers every one of them, the single Return column
+ * shows whichever are ticked, and each cell is labelled with the measure it is.
+ * `auto` behaves as a reset-to-methodology choice (mutually exclusive); the rest
+ * tick on and off together. It is never empty — unticking the last one falls back
+ * to auto — because an empty selection is not a state a reader means to be in.
+ */
+function ReturnMeasureSelect({ measures, onChange }: { measures: ReturnMeasure[]; onChange: (m: ReturnMeasure[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  const isAuto = measures.length === 1 && measures[0] === "auto";
+  const ticked = (k: ReturnMeasure) => (k === "auto" ? isAuto : measures.includes(k));
+  const toggle = (k: ReturnMeasure) => {
+    if (k === "auto") { onChange(["auto"]); return; }
+    const set = new Set(measures.filter((m) => m !== "auto"));
+    set.has(k) ? set.delete(k) : set.add(k);
+    onChange(MEASURE_KEYS.filter((m) => m !== "auto" && set.has(m)));
+  };
+  const label = isAuto ? "Return · by methodology"
+    : measures.length === 1 ? returnMeasureDef(measures[0]).label
+    : `${measures.length} return types`;
+  return (
+    <div ref={wrapRef} className="relative"
+      data-return-measures={MEASURE_KEYS.join(",")} data-return-active={measures.join(",")}>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox"
+        title="Which return to show — the methodology, or pick one or more explicitly. Every cell is labelled with the return it is showing."
+        className="flex w-fit items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
+        <span className="truncate">{label}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
+          <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
+          <ul className="max-h-80 overflow-auto py-1">
+            {RETURN_MEASURES.map((m) => {
+              const on = ticked(m.key);
+              return (
+                <li key={m.key} role="option" aria-selected={on}
+                  onMouseDown={(e) => { e.preventDefault(); toggle(m.key); }}
+                  className={`flex cursor-pointer items-start gap-2 px-3 py-1.5 text-sm hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
+                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-medium">{m.label}</span>
+                      <span className="rounded bg-ink-700/70 px-1 text-[9px] font-semibold tracking-wide text-slate-400">{m.tag}</span>
+                    </span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{m.hint}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
   const [view, setView] = useState<"holdings" | "transactions">("holdings");
@@ -249,11 +351,14 @@ export function PortfolioMonitor() {
    */
   const setGroupAxis = useCallback((k: GroupAxis) => { setBucket("All"); setGroupAxisParam(k); }, [setGroupAxisParam]);
   /**
-   * ABSOLUTE or CAGR, and the guard is not here — see `holdingReturn`. Absolute
-   * is the default because it is the figure every row can answer; CAGR is
-   * licensed only by a measured holding period of at least a year.
+   * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — the picker that replaced the
+   * Absolute/CAGR toggle. Default is `auto`, the methodology (equity under a year
+   * absolute, a year or more CAGR, fixed income XIRR); the reader can pin one or
+   * more concrete measures instead, each labelled in the column. Held in the URL
+   * (`?ret=`), so the guard-firing CAGR view is a shareable link and the sweep
+   * reaches it without a click. See `useReturnMeasures` / `measuredReturn`.
    */
-  const [returnMode, setReturnMode] = useState<ReturnMode>("absolute");
+  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
   const [sortKey, setSortKey] = useState<SortKey>("marketValue");
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -948,21 +1053,16 @@ export function PortfolioMonitor() {
           {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[groupAxis] : groupLabelFor(groupAxis)(s)}</option>)}
         </select>
         {/*
-          ABSOLUTE vs CAGR. The guard lives in `holdingReturn`, not here: under a
-          year the cell falls back to the ABSOLUTE figure and labels it, and a
-          holding whose start date nobody reports renders absent. So this switch
-          can never turn a four-month gain into an annual rate.
+          THE RETURN-MEASURE PICKER, in place of the Absolute/CAGR toggle. The
+          guard still lives in `holdingReturn` and not here: `auto` and CAGR
+          delegate to it, so no measure can turn a four-month gain into an annual
+          rate, and a measure this book cannot strike renders a dash with its
+          reason. The single Return column shows whichever measures are ticked,
+          each labelled — which is the "state which return it is" the family asked
+          for, and the "always have a CAGR column" ask (pin it beside Absolute).
         */}
         {view === "holdings" && (
-          <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5"
-            title="Absolute is return on cost over however long the holding has been held. CAGR annualises it — and only where a statement reports when the holding was bought and it has been held at least a year.">
-            {(["absolute", "cagr"] as const).map((m) => (
-              <button key={m} type="button" onClick={() => setReturnMode(m)}
-                className={`rounded px-2 py-1 text-sm font-medium transition-colors ${returnMode === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-                {m === "absolute" ? "Absolute" : "CAGR"}
-              </button>
-            ))}
-          </div>
+          <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
         )}
         {/* ONE ACTION, ON THE FILTER ROW. The basis switch and the Review deck
             button are both gone at the family's request, so Export Excel is the
@@ -992,16 +1092,14 @@ export function PortfolioMonitor() {
                   <Th right onClick={sortBtn("weight")}>Weight</Th>
                   <Th right onClick={sortBtn("unrealizedPnL")}>Unreal. P&L</Th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
-                  <Th right onClick={sortBtn("returnPct")}>{returnMode === "cagr" ? "Return p.a." : "Return"}</Th>
                   {/*
-                    THE HOLDING'S OWN YEAR TO DATE — not the share's market move
-                    since January, which is a different measurement and is never
-                    substituted for it. Measurable only where the holding was
-                    OPENED during the year, because then there is no opening
-                    value to be missing; every other row renders a dash naming
-                    what it would take. See `holdingYtd`.
+                    ONE RETURN COLUMN, headed just "Return" — the measure it shows
+                    is chosen in the picker on the filter row and named on every
+                    cell (ABS / CAGR / XIRR / YTD), so the header does not carry
+                    it. The separate YTD column is gone: YTD is one of the measures
+                    now, shown in this column when it is ticked.
                   */}
-                  <th className="label-xs px-2 py-1.5 text-right font-medium">YTD</th>
+                  <Th right onClick={sortBtn("returnPct")}>Return</Th>
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -1032,7 +1130,7 @@ export function PortfolioMonitor() {
                       */
                       <tr className="bg-ink-900/50" data-section={grp.key} data-axis={groupAxis}
                         data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}>
-                        <td colSpan={14} className="px-2 py-1.5">
+                        <td colSpan={13} className="px-2 py-1.5">
                           <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                             {groupLabelFor(groupAxis)(grp.key)}
                             {/* The count is of HOLDINGS, not of rows: ten mandate
@@ -1270,45 +1368,43 @@ export function PortfolioMonitor() {
                           : <span className={changeColor(realized.get(r.securityKey)!)}>{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</span>
                         }</td>
                         {/*
-                          ABSOLUTE, OR ANNUALISED WHERE A MEASURED YEAR LICENSES IT.
-                          `holdingReturn` decides; this cell only draws. Under a year
-                          it returns the ABSOLUTE figure and the cell marks it `abs`,
-                          so the column never passes one basis off as the other — the
-                          same discipline the mixed-basis market value already keeps.
+                          THE ONE RETURN COLUMN — the ticked measure(s), each
+                          labelled with its tag. `measuredReturn` decides; this
+                          cell only draws. `auto` resolves per row to the
+                          methodology's measure and tags it (ABS / CAGR); the
+                          concrete measures show that measure or a dash naming why
+                          this book cannot strike it (XIRR per holding, YTD outside
+                          a within-year purchase, calendar year). The guard is
+                          inside `measuredReturn`, so no line can annualise a
+                          sub-year window. The plain return on cost keeps its audit
+                          popover on rows still on their workbook mark; the derived
+                          figures carry a tooltip instead.
+
+                          RENDERED INLINE, NEVER STACKED IN A FLEX COLUMN. A
+                          block-stacked cell puts a newline INSIDE it, and the
+                          sweep reads whole rows by splitting the page text on
+                          newlines — an internal one shatters the row. So measures
+                          sit inline (wrapping is visual and adds no newline), and
+                          each is `whitespace-nowrap` so a tag never splits from
+                          its figure.
                         */}
-                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.returnPct)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                          {r.costNA ? "—" : (() => {
-                            const ret = holdingReturn(r, returnMode, portfolio.asOf);
-                            if (ret.kind === "absent") return <AbsentCell reason={ret.reason} />;
-                            if (ret.kind === "cagr") return (
-                              <span title={`Annualised over the ${ret.heldDays} days since ${fmtDate(ret.since)}, the oldest unit still held. ${fmtPct(r.returnPct, { sign: true })} in total.`}>
-                                {fmtPct(ret.pct, { sign: true })}
-                              </span>
-                            );
-                            const body = r.live
-                              ? fmtPct(ret.pct, { sign: true })
-                              : <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}>{fmtPct(ret.pct, { sign: true })}</Auditable>;
-                            if (returnMode === "absolute") return body;
-                            // CAGR mode, guard fired: the absolute figure, marked.
+                        <td data-return-cell="" className="px-2 py-1.5 text-right mono" title={r.live && !r.costNA ? mixedBasisNote : undefined}>
+                          {returnMeasures.map((measure) => {
+                            const res = measuredReturn(r, measure, portfolio.asOf);
+                            // Tag "ABS" is always the raw return on cost (res.pct === returnPct),
+                            // so its audit popover ties to the workbook; CAGR/other are derived.
+                            const value = !res.shown
+                              ? <AbsentCell reason={res.reason} />
+                              : res.tag === "ABS" && !r.live
+                                ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
+                                : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                             return (
-                              <span title={ret.heldDays === null
-                                ? "Held for an unreported period, so this is the total return on cost and not an annual rate."
-                                : `Held ${ret.heldDays} days — under a year, so this is the total return on cost. Annualising it would state a rate for a year this holding has not seen.`}>
-                                {body}<span className="ml-1 text-[10px] text-amber-400/80">abs</span>
+                              <span key={measure} className="ml-1 whitespace-nowrap first:ml-0">
+                                <span className="mr-0.5 rounded bg-ink-700/60 px-1 text-[9px] font-semibold tracking-wide text-slate-500">{res.tag}</span>
+                                {value}
                               </span>
                             );
-                          })()}
-                        </td>
-                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
-                          {(() => {
-                            const y = holdingYtd(r, portfolio.asOf);
-                            return y.kind === "absent"
-                              ? <AbsentCell reason={y.reason} />
-                              : <span className={changeColor(y.pct)}
-                                  title={`Opened ${fmtDate(y.since)}, during the current year — so its year-to-date return is its whole return since purchase. It held nothing on 1 January, so no opening value is missing.`}>
-                                  {fmtPct(y.pct, { sign: true })}
-                                </span>;
-                          })()}
+                          })}
                         </td>
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
@@ -1343,7 +1439,7 @@ export function PortfolioMonitor() {
                           family bought itself. */}
                       {m && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={14} className="px-3 pb-3 pt-1">
+                          <td colSpan={13} className="px-3 pb-3 pt-1">
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                               {/* WHAT THE MANAGER REPORTS, OR WHAT THE FILTERS LEFT OF IT — never the
                                   first sentence over the second list. Filtered to one company this read
@@ -1427,7 +1523,7 @@ export function PortfolioMonitor() {
                       )}
                       {!m && multi && isOpen && (
                         <tr className="bg-ink-900/60">
-                          <td colSpan={14} className="px-3 pb-3 pt-1">
+                          <td colSpan={13} className="px-3 pb-3 pt-1">
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
                                 <thead>
@@ -1608,15 +1704,19 @@ export function PortfolioMonitor() {
                                 {fmtFromBase(realised.total, { compact: true, sign: true })}
                               </span>
                           }</td>
+                          {/* The category return is CUMULATIVE ON COST, on the
+                              footer's basis, and does NOT follow the per-holding
+                              measure picker: a bucket has no single purchase date
+                              to annualise over, so annualising it would be the very
+                              extrapolation the guard forbids. It is refused where
+                              the cost side does not cover the market value beside
+                              it (`costCoversSet`), the same as Morning CIO. */}
                           <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${ret === null ? "text-slate-500" : changeColor(ret)}`}>
                             {ret === null
                               ? <AbsentCell reason={retWhy} />
-                              : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised.`}>
+                              : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
                                   {fmtPct(ret, { sign: true })}
                                 </span>}
-                          </td>
-                          <td className="px-2 py-1.5 text-right mono">
-                            <AbsentCell reason="a year-to-date return for a category needs every holding's value on 1 January, and no statement here is dated before the year began" />
                           </td>
                           {/* Sector and Entity describe a holding; a category has
                               no sum of words. Empty, exactly as in the footer. */}
@@ -1627,7 +1727,7 @@ export function PortfolioMonitor() {
                     })()}
                   </Fragment>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={14} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={13} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
                 {/* `data-footer-total` is the handle the sweep adds the category
@@ -1691,16 +1791,13 @@ export function PortfolioMonitor() {
                         : "no sale of these names appears on the transaction statements in this drop"} />
                     : <span className={changeColor(realisedSplit.total)}>{fmtFromBase(realisedSplit.total, { compact: true, sign: true })}</span>
                   }</td>
+                  {/* THE FOOTER RETURN IS THE WHOLE BOOK ON COST — cumulative, on
+                      the footer's own basis, and like the category returns it does
+                      NOT follow the per-holding measure picker: the book has no one
+                      purchase date to annualise over. */}
                   <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
                     {feedLive ? fmtPct(totalRet, { sign: true })
                               : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
-                  </td>
-                  {/* A BOOK-WIDE YTD IS ABSENT FOR THE SAME REASON ITS ROWS ARE,
-                      and it is an ABSENT figure rather than an empty cell: a
-                      total nobody could strike is a measurement that is missing,
-                      not a column with nothing to add. */}
-                  <td className="px-2 py-1.5 text-right mono whitespace-nowrap">
-                    <AbsentCell reason="a year-to-date return for the book needs every holding's value on 1 January, and no statement here is dated before the year began" />
                   </td>
                   {/* Sector and Entity — descriptors, so the footer has nothing
                       to total under them. Empty rather than absent: a column
@@ -1731,44 +1828,45 @@ export function PortfolioMonitor() {
             </p>
           )}
           {/*
-            WHAT A CAGR COLUMN COVERS, counted rather than claimed. Annualising
-            needs a purchase date, and the managed accounts publish a
-            capital-account ledger instead of a lot register — so on this book
-            the window is measurable for very few rows. A column that silently
-            showed absolute figures under a "Return p.a." heading would be the
-            two-bases-in-one-column failure this file keeps naming.
+            ONE CAPTION PER TICKED MEASURE, so the reader is told WHICH return
+            each note is about and how much of the table it can answer — counted
+            rather than claimed. A drop that brings a purchase date or a within-year
+            buy through the lot gate moves these lines on their own, and a column
+            that quietly started guessing would move them the wrong way. Each note
+            is tagged with the measure it describes, the same tag the column uses.
           */}
-          {/*
-            WHAT THE YTD COLUMN COVERS. Counted off the rows on screen, so a
-            drop that brings a within-year purchase through the lot gate moves
-            this line on its own — and a column that quietly started guessing
-            would move it the wrong way.
-          */}
-          {(() => {
-            const cov = ytdCoverage(rows, portfolio.asOf);
-            if (cov.measured === cov.total) return null;
-            return (
-              <p className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
-                <span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
-                {cov.measured > 0
-                  ? <>It is measurable on {cov.measured} of {cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. </>
+          {returnMeasures.map((measure) => {
+            const def = returnMeasureDef(measure);
+            const cov = returnCoverage(rows, measure, portfolio.asOf);
+            const year = portfolio.asOf.slice(0, 4);
+            let body: React.ReactNode = null;
+            if (measure === "auto") {
+              body = <>Return follows the methodology — equity held a year or more is <span className="text-amber-400/80">CAGR</span>, everything else is the total return on cost, tagged <span className="text-amber-400/80">ABS</span>, and fixed income would be <span className="text-amber-400/80">XIRR</span> (this book holds none).{" "}
+                {cov.cagr > 0 ? <>{cov.cagr} {cov.cagr === 1 ? "row is" : "rows are"} annualised, </> : null}{cov.absolute} on the total return on cost{cov.absent > 0 ? <>, and {cov.absent} report no cost so carry no return</> : null}.</>;
+            } else if (measure === "cagr") {
+              body = <><span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
+                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">ABS</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
+                {cov.absent > 0 && <>{cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.</>}</>;
+            } else if (measure === "ytd") {
+              body = <><span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
+                {cov.shown > 0
+                  ? <>It is measurable on {cov.shown} of {cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. </>
                   : <>No row can be measured on this drop. </>}
-                The other {cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that
-                date: the earliest statement in this book is dated after the year began, so there is no opening value to
-                measure from. One holdings statement per account dated on or before 1 January fills this column.
-              </p>
-            );
-          })()}
-          {returnMode === "cagr" && (() => {
-            const cov = returnModeCoverage(rows, "cagr", portfolio.asOf);
+                The other {cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.</>;
+            } else if (measure === "xirr") {
+              body = <><span className="font-medium text-slate-400">A money-weighted XIRR needs every cash flow for a holding</span> — each tranche&rsquo;s date and amount — and the statements here cover the current period only, so it is absent on all {cov.total} rows. The per-account money-weighted return is on <span className="font-medium text-slate-400">Performance</span>.</>;
+            } else if (measure === "calendar") {
+              body = <>A <span className="font-medium text-slate-400">calendar-year</span> return needs the holding&rsquo;s value at the start and end of that year, and the book&rsquo;s earliest statement is dated in {year}, after the current year began — so it is absent on all {cov.total} rows.</>;
+            } else if (measure === "absolute" && cov.absent > 0) {
+              body = <><span className="font-medium text-slate-400">Absolute is the total return on cost since purchase, not annualised.</span> It is shown on {cov.shown} of {cov.total} rows; the other {cov.absent} report no cost, so there is nothing to strike a return against.</>;
+            }
+            if (!body) return null;
             return (
-              <p className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
-                <span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
-                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">abs</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
-                {cov.absent > 0 && <>{cov.absent} report no purchase date at all — the managed accounts publish a capital-account ledger rather than a lot register, so there is no window to annualise over.</>}
+              <p key={measure} className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                <span className="mr-1 rounded bg-ink-700/60 px-1 text-[9px] font-semibold tracking-wide text-slate-400">{def.tag}</span>{body}
               </p>
             );
-          })()}
+          })}
           {dupGap > 0 && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
               The rows above show each member's statement as printed. Two holdings are reported under two members,
