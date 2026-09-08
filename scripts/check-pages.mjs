@@ -1259,7 +1259,10 @@ async function installLiveMocks(page) {
       const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
       return {
         id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: "NSE",
-        level, prevClose: prev, prevCloseDate: "2026-08-12",
+        // The level's OWN session, distinct from the previous close's, because the
+        // real Function now names both ends of the move — a fixture missing a
+        // field the response carries stops exercising what reads it.
+        level, sessionDate: "2026-08-13", prevClose: prev, prevCloseDate: "2026-08-12",
         change: Math.round((level - prev) * 100) / 100, changePct: (INDEX_FACTOR - 1) * 100,
         dayHigh: level, dayLow: level, high52: prev * 1.2, low52: prev * 0.8,
         asOf: "2026-08-13T10:00:00.000Z",

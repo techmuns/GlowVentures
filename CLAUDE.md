@@ -4249,7 +4249,7 @@ date` now, and **the capital column is what stops the 13 August row's +8.51% fro
 reading as a good month.** An absence's WORDING surviving its data is the same
 defect as the absence itself.
 
-#### The four live indices, and two traps that print plausible wrong numbers
+#### The four live indices, and THREE traps that print plausible wrong numbers
 
 `functions/api/indices.js` serves Nifty 50, Nifty 500, Nifty Midcap 150 and Nifty
 Smallcap 250 from Yahoo's chart endpoint; `IndexStrip` renders them between the
@@ -4287,6 +4287,73 @@ on the shape of the key. All three decoys are refused by the running code.
 deliberately not used on the strip or the NAV chart's axis: running 23,090.75
 through the display-currency converter divides the Nifty 500 by the USD rate and
 prints a level of nothing.
+
+**3. THE TWO ENDS OF THE MOVE WERE PICKED BY TWO DIFFERENT CLOCKS, AND FOR HOURS
+AT A TIME THEY WERE THE SAME SESSION.** The family sent a screenshot of the strip
+reading **+0.00% on all four indices at once**, with moves of 0.05 / 0.00 / −0.05
+/ +0.05 on levels near 23,000, and asked whether that could be right. It is not a
+market that stood still — measured against Yahoo's own bars, all four reproduce
+**to four decimals** as the level minus ITS OWN SESSION'S CLOSE:
+
+```
+Nifty 50            23,779.20 − 23,779.150390625  = +0.0496   (7 Sep − 7 Sep)
+Nifty 500           23,156.20 − 23,156.199218750  = +0.0008
+Nifty Midcap 150    23,062.20 − 23,062.250000000  = −0.0500
+Nifty Smallcap 250  18,484.20 − 18,484.150390625  = +0.0496
+```
+
+Trap 1 established that the previous close is the last SETTLED bar. **It never
+said which clock decides "settled"**, and the answer was `new Date()` — the
+SERVER's UTC date — while `regularMarketPrice` follows the EXCHANGE's session.
+IST is UTC+5:30, so from **05:30 IST** (00:00 UTC) until the session's first tick
+at 09:15 the UTC date has already rolled over while the level is still the
+previous session's close: the bar the filter exists to exclude becomes the
+"previous" close, and the level is differenced against itself. **The same holds
+through every weekend and every market holiday**, when the level does not move
+for days — so this printed a fabricated zero for a large fraction of the week.
+
+The residual ±0.05 is the tell, and it is why the figure looked like data: Yahoo
+rounds `regularMarketPrice` to 2dp and its bar closes are float32
+(`23,779.150390625`), so a session differenced against itself lands a few paise
+off zero rather than exactly on it. **A clean 0.00 would have been easier to
+doubt.**
+
+**THE FUNCTION NO LONGER READS THE SERVER'S CLOCK AT ALL.** The level's session
+is `meta.regularMarketTime`, each bar's is its own stamp, both are localised with
+the `meta.gmtoffset` the response declares (19800 for IST), and the previous
+close is the last bar **strictly before** the level's session. One clock, taken
+from the document — `lib/table.mjs`'s own rule arriving through a date rather
+than a column. Where the upstream omits the offset both ends fall back to UTC
+*together*: **the defect was never the zone, it was using two clocks for the two
+halves of one subtraction.**
+
+Two consequences worth stating, because both are the honest answer rather than a
+workaround. Pre-open, when `regularMarketPrice` is still yesterday's close, the
+strip now reports **yesterday's** move — the last completed session, which is
+what a level dated yesterday can truthfully be compared against. And a level
+whose session cannot be read carries **no change at all**: without it there is
+nothing to exclude and the last bar might be the level's own, which is the defect
+itself, so it refuses rather than guessing. `sessionDate` rides in the response
+and the strip's hover names BOTH ends — a reader could not see this defect
+because only one of the two dates was ever printed.
+
+**A LIVE PROBE CANNOT CHECK THIS, WHICH IS WHY IT IS A TEST.** Outside that
+window the function is correct, so a probe run at the wrong hour reports a clean
+feed — the defect had been shipping since Stage 10p and every sweep passed.
+`src/lib/__tests__/indicesFunction.test.ts` stubs the upstream **from the real
+measured bars** (7 and 8 September 2026) and supplies the clock, so the failing
+window is reproducible on demand rather than once a day. Twelve checks: the
+pre-open case, the mid-session case, a 24-hour sweep of the invariant, a null
+holiday bar, the refusal, the offset in both directions, **that a genuinely
+unchanged close still reports 0.00% from two different sessions** — the fix is
+about WHICH sessions are compared and must not suppress a measured zero — and
+that trap 2's identity check still outranks every figure.
+
+Three bugs were reintroduced and each fired its own checks; **putting the
+original filter back reproduces the client's screenshot at `Δ 0.0496`**, which is
+what says the diagnosis is the defect rather than a theory about it. The
+24-hour sweep is a guard on the invariant and did NOT catch the original — the
+pre-open case is what does, and that is recorded rather than papered over.
 
 #### Today's movers — and the denominator that is the whole point
 
@@ -6889,8 +6956,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run test:family` runs the derived-figure suites — the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
   the financial-table parser, the cash-flow/calendar reader, the ratio-table
-  reader, the account XIRR, the private-market roll-up, the Excel export and the
-  **dated NAV series** (`navSeries.test.ts`, Stage 10p: the series' last point
+  reader, the account XIRR, the private-market roll-up, the Excel export, the
+  **index strip's day move** (`indicesFunction.test.ts` — the level and the
+  previous close must never be the same session; a live probe cannot check it,
+  because outside a 3h45m window plus every weekend the function is correct) and
+  the **dated NAV series** (`navSeries.test.ts`, Stage 10p: the series' last point
   against the covered accounts' own roll-up, and the flow adjustment asserted as
   LOAD-BEARING rather than merely present). Every one of the API-backed three
   runs against a REAL saved API response

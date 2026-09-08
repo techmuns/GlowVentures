@@ -27,6 +27,14 @@ export type IndexQuote = {
   currency?: string | null;
   exchange?: string | null;
   level: number | null;
+  /**
+   * The exchange-local session the LEVEL belongs to. `prevCloseDate` is the
+   * session before it, and the two can never be equal: the strip once printed
+   * +0.00% on all four indices because the level was differenced against its own
+   * session's close (see trap 3 in `functions/api/indices.js`), so the change's
+   * two ends are both named rather than left implicit.
+   */
+  sessionDate?: string | null;
   prevClose: number | null;
   prevCloseDate: string | null;
   change: number | null;

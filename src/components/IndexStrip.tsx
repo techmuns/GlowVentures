@@ -30,6 +30,11 @@ function Cell({ q }: { q: IndexQuote }) {
   const title = q.ok
     ? [
         `${q.name ?? q.label} · ${q.exchange ?? "NSE"} · index points`,
+        // BOTH ENDS OF THE MOVE ARE NAMED. The strip printed +0.00% on all four
+        // indices while the level was being differenced against its OWN
+        // session's close; a reader could not see it because only one of the two
+        // dates was ever stated. See trap 3 in `functions/api/indices.js`.
+        q.sessionDate ? `session ${q.sessionDate}` : null,
         q.prevCloseDate ? `previous close ${fmtNum(q.prevClose ?? 0, 2)} on ${q.prevCloseDate}` : null,
         q.dayLow != null && q.dayHigh != null ? `day ${fmtNum(q.dayLow, 2)} – ${fmtNum(q.dayHigh, 2)}` : null,
         q.low52 != null && q.high52 != null ? `52w ${fmtNum(q.low52, 2)} – ${fmtNum(q.high52, 2)}` : null,

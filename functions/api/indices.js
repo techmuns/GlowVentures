@@ -23,6 +23,9 @@
 //    SETTLED BAR of the series, which is the same rule `/api/prices` already
 //    applies when it excludes today's in-progress bar.
 //
+//    THAT RULE DID NOT SAY WHICH CLOCK DECIDES "TODAY", AND THE OMISSION PRINTED
+//    +0.00% ON ALL FOUR INDICES — see trap 3.
+//
 // 2. A SYMBOL THAT LOOKS RIGHT IS NOT THE INDEX. Measured the same day:
 //      NIFTYMIDCAP150.NS   → "NIFTY MIDCAP 150"   22,949.95   ← the index
 //      NIFTY_MIDCAP_150.NS → an unnamed instrument 7,757.15   ← not the index
@@ -35,6 +38,33 @@
 //    level rather than a figure from whatever instrument answered. Same rule as
 //    `lib/table.mjs`: match on the label the source prints, never on the shape
 //    of the key.
+//
+// 3. THE LEVEL AND THE PREVIOUS CLOSE WERE CHOSEN BY TWO DIFFERENT CLOCKS, and
+//    for hours at a time they landed on THE SAME SESSION, so the strip printed a
+//    subtraction of a session from itself. Measured against the client's own
+//    screenshot on 2026-09-08 and reproduced to four decimals on all four:
+//
+//      Nifty 50            level 23,779.20  −  7 Sep close 23,779.150390625  = +0.05
+//      Nifty 500           level 23,156.20  −  7 Sep close 23,156.199218750  = +0.00
+//      Nifty Midcap 150    level 23,062.20  −  7 Sep close 23,062.250000000  = −0.05
+//      Nifty Smallcap 250  level 18,484.20  −  7 Sep close 18,484.150390625  = +0.05
+//
+//    `regularMarketPrice` follows the EXCHANGE's session; "today" was
+//    `new Date().toISOString()`, the SERVER's UTC date. IST is UTC+5:30, so from
+//    05:30 IST (00:00 UTC) until the session's first tick at 09:15 the UTC date
+//    has already rolled over while the level is still the PREVIOUS session's
+//    close — the bar the filter was meant to exclude becomes the "previous"
+//    close, and the level is differenced against itself. The residual ±0.05 is
+//    only Yahoo rounding `regularMarketPrice` to 2dp against a float32 bar
+//    close; it is not a market move. **The same applies to every weekend and
+//    every market holiday**, when the level stays put for days.
+//
+//    So this function no longer reads the server's clock AT ALL. The level's own
+//    session is `meta.regularMarketTime`, every bar's is its own stamp, both are
+//    localised with the `meta.gmtoffset` the response declares, and the previous
+//    close is the last bar STRICTLY BEFORE the level's session. One clock, taken
+//    from the document — `lib/table.mjs`'s rule again, arriving through a date.
+//    A level whose session cannot be read carries no change rather than a zero.
 const CHART = "https://query1.finance.yahoo.com/v8/finance/chart";
 const UA = "Mozilla/5.0 (compatible; GlowVenturesDashboard/1.0)";
 const TIMEOUT_MS = 12000;
@@ -101,22 +131,40 @@ async function readIndex(spec, signal) {
     };
   }
 
-  // The previous close is the last SETTLED session. Trap 1 above.
+  // ONE CLOCK, AND IT IS THE EXCHANGE'S. Traps 1 and 3 above. `gmtoffset` is
+  // seconds east of UTC (19800 for IST); where the upstream omits it both sides
+  // fall back to UTC together, which keeps the comparison CONSISTENT even when
+  // the printed date label would be a day out — the defect was never the zone,
+  // it was using two clocks for the two halves of one subtraction.
+  const offset = Number.isFinite(meta.gmtoffset) ? meta.gmtoffset : 0;
+  const sessionOf = (epochSeconds) =>
+    new Date((epochSeconds + offset) * 1000).toISOString().slice(0, 10);
+
+  const level = Number.isFinite(meta.regularMarketPrice) ? meta.regularMarketPrice : null;
+  // WHICH SESSION THE LEVEL BELONGS TO, from the upstream's own timestamp for it.
+  const sessionDate = Number.isFinite(meta.regularMarketTime) ? sessionOf(meta.regularMarketTime) : null;
+
+  // The previous close is the last settled bar STRICTLY BEFORE that session, so
+  // the level can never be differenced against its own close. Pre-open, when
+  // `regularMarketPrice` is still yesterday's close, this correctly reports
+  // YESTERDAY's move — the last completed session, which is what a level dated
+  // yesterday can honestly be compared against.
   const stamps = res.timestamp ?? [];
   const closes = res.indicators?.quote?.[0]?.close ?? [];
-  const today = new Date().toISOString().slice(0, 10);
   const settled = [];
   for (let i = 0; i < stamps.length; i++) {
     const v = closes[i];
     if (!Number.isFinite(v)) continue;              // holidays come back null
-    const t = new Date(stamps[i] * 1000).toISOString().slice(0, 10);
-    if (t >= today) continue;                        // today's bar is still moving
+    const t = sessionOf(stamps[i]);
+    if (sessionDate !== null && t >= sessionDate) continue;   // the level's own session, and anything after
     settled.push({ t, v });
   }
   settled.sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
-  const prev = settled.at(-1) ?? null;
+  // NO SESSION FOR THE LEVEL MEANS NO SUBTRACTION. Without it there is nothing
+  // to exclude and the last bar might be the level's own — which is exactly the
+  // defect above, so it refuses rather than guessing.
+  const prev = sessionDate === null ? null : settled.at(-1) ?? null;
 
-  const level = Number.isFinite(meta.regularMarketPrice) ? meta.regularMarketPrice : null;
   // A LEVEL WITH NO PREVIOUS CLOSE IS A LEVEL AND NOT A MOVE. Both halves are
   // reported separately so the strip can print the level and dash the change
   // rather than withholding both or inventing a zero.
@@ -130,6 +178,8 @@ async function readIndex(spec, signal) {
     currency: meta.currency ?? null,
     exchange: meta.fullExchangeName ?? null,
     level,
+    /** The exchange-local session the LEVEL belongs to — the change's own basis. */
+    sessionDate,
     prevClose: prev ? prev.v : null,
     prevCloseDate: prev ? prev.t : null,
     change: changePct === null ? null : level - prev.v,
