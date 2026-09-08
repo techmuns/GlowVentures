@@ -29,7 +29,6 @@ import {
   ALL_LABEL, bucketFor, heldUnderMandate,
 } from "@/lib/groupAxis";
 import { Auditable } from "@/components/Auditable";
-import { BasisPill } from "@/components/BasisPill";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -271,8 +270,14 @@ function ReturnMeasureSelect({ measures, onChange }: { measures: ReturnMeasure[]
         <span className="truncate">{label}</span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
+      {/* RIGHT-ALIGNED PANEL, so it can never extend past the trigger's right
+          edge into horizontal overflow. The picker is the last control on the
+          filter row, so a `left-0` panel opened rightward and ran off the page —
+          the family had to scroll sideways to read it. Anchored to the right, its
+          22rem width grows leftward into the row it already occupies, and the
+          `92vw` cap keeps it on screen at any width. */}
       {open && (
-        <div className="absolute left-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
+        <div className="absolute right-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
           <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
           <ul className="max-h-80 overflow-auto py-1">
             {RETURN_MEASURES.map((m) => {
@@ -431,7 +436,7 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
-  const { rows, totMV, totCost, totPnL, rawMV, costedMV, costedCount, heldCount, weightBase, weightCount, bucketTotals } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV, weightBase, weightCount, bucketTotals } = useMemo(() => {
     let base = positions;
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
@@ -819,10 +824,6 @@ export function PortfolioMonitor() {
   // In the by-entity view the displayed rows include both members' copies of a
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
-  // The market value the Invested and Unrealised P&L columns do NOT stand behind.
-  // Rendered whenever it is worth more than a rupee, because the size of it is
-  // the whole point: 61 of 370 positions here, and 96% of the book's value.
-  const uncostedMV = totMV - costedMV > 1 ? totMV - costedMV : 0;
   /**
    * WHAT THE WEIGHT COLUMN DIVIDES BY, IN WORDS — and by how much that
    * denominator exceeds the rows on screen.
@@ -984,7 +985,14 @@ export function PortfolioMonitor() {
           looking at rather than acting on it, so it belongs beside the headline
           — and moving it here retires the toolbar row it used to sit alone on,
           which is a row of table given back on the page whose tables are the
-          whole point. */}
+          whole point.
+
+          THE HEADER'S FAR-RIGHT SLOT IS THE ONE ACTION, at the family's request:
+          the basis pill, the "N accounts behind" staleness pill and the "N rows"
+          count were all removed from here and Export Excel put in their place, so
+          the top-right of the page is a button rather than three chips. The basis
+          and as-of are still stated on Morning CIO, the landing page, which keeps
+          its `<BasisPill>`. */}
       <PageHeader eyebrow="Daily" title="Portfolio Monitor"
         beside={
           <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
@@ -997,20 +1005,24 @@ export function PortfolioMonitor() {
             ))}
           </div>
         }
-        right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Quantity and cost come from the statements; value, weight and return are rebuilt from live prices where a quote exists." />
-          {view === "holdings" && <Pill tone="info">{rows.length} rows</Pill>}
-        </div>} />
+        right={
+          <button onClick={handleExport} disabled={exporting}
+            className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+            title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
+            <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
+          </button>
+        } />
 
       {/*
-        ONE CHROME ROW, NOT THREE. The filters, the view toggle and the two
+        ONE CHROME ROW, JUST FILTERS. The filters, the view toggle and the two
         export buttons each had a line of their own, so ~130px of the first
         screen was spent on controls before a single holding was drawn — on a
-        table whose whole job is to list holdings. The view switch has since
-        moved up beside the TITLE (it names what you are looking at rather than
-        acting on it), and everything that remains shares one wrapping row at
-        `text-xs`. That is what "use the empty space more efficiently" actually
-        costs: nothing but the chrome's own generosity.
+        table whose whole job is to list holdings. The view switch moved up beside
+        the TITLE (it names what you are looking at rather than acting on it), the
+        one remaining action — Export Excel — moved to the header's far-right slot,
+        and what is left here is filters only, at `text-xs`. That is what "use the
+        empty space more efficiently" actually costs: nothing but the chrome's own
+        generosity.
       */}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense
@@ -1064,16 +1076,6 @@ export function PortfolioMonitor() {
         {view === "holdings" && (
           <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
         )}
-        {/* ONE ACTION, ON THE FILTER ROW. The basis switch and the Review deck
-            button are both gone at the family's request, so Export Excel is the
-            only control left — and it now sits with the filters rather than
-            wrapping onto a row of its own, which is a third row of chrome
-            returned to the table. */}
-        <button onClick={handleExport} disabled={exporting}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
-          title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
-          <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
-        </button>
       </div>
 
       {view === "holdings" ? (
@@ -1808,13 +1810,11 @@ export function PortfolioMonitor() {
               </tfoot>
             </table>
           </div>
-          {uncostedMV > 0 && (
-            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              Invested and Unrealised P&amp;L are struck over the {costedCount} of {heldCount} positions that report a
-              cost; the other {heldCount - costedCount} are held through depository accounts that record no cost, so they
-              sit in the Market value column only.
-            </p>
-          )}
+          {/* The cost-coverage caption that stood here — "Invested and Unrealised
+              P&L are struck over the N of M positions that report a cost" — was
+              removed at the family's request. The fact it stated survives per row:
+              a position with no cost renders an AbsentCell in the Invested and
+              Unrealised P&L columns, each carrying the reason in its title. */}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
@@ -1828,22 +1828,25 @@ export function PortfolioMonitor() {
             </p>
           )}
           {/*
-            ONE CAPTION PER TICKED MEASURE, so the reader is told WHICH return
-            each note is about and how much of the table it can answer — counted
-            rather than claimed. A drop that brings a purchase date or a within-year
-            buy through the lot gate moves these lines on their own, and a column
-            that quietly started guessing would move them the wrong way. Each note
-            is tagged with the measure it describes, the same tag the column uses.
+            ONE CAPTION PER DELIBERATELY-PICKED MEASURE, so the reader is told
+            WHICH return each note is about and how much of the table it can answer
+            — counted rather than claimed. The DEFAULT (auto) methodology view
+            carries no caption: the family asked for it removed, and the fact it
+            stated survives per row, in each cell's own tag (ABS / CAGR / …). A
+            concrete measure a reader ticks still explains itself, because a column
+            of XIRR dashes or a part-year that could not annualise is a genuine
+            absence the reader is owed a reason for. A drop that brings a purchase
+            date or a within-year buy through the lot gate moves these lines on
+            their own, and a column that quietly started guessing would move them
+            the wrong way. Each note is tagged with the measure it describes, the
+            same tag the column uses.
           */}
           {returnMeasures.map((measure) => {
             const def = returnMeasureDef(measure);
             const cov = returnCoverage(rows, measure, portfolio.asOf);
             const year = portfolio.asOf.slice(0, 4);
             let body: React.ReactNode = null;
-            if (measure === "auto") {
-              body = <>Return follows the methodology — equity held a year or more is <span className="text-amber-400/80">CAGR</span>, everything else is the total return on cost, tagged <span className="text-amber-400/80">ABS</span>, and fixed income would be <span className="text-amber-400/80">XIRR</span> (this book holds none).{" "}
-                {cov.cagr > 0 ? <>{cov.cagr} {cov.cagr === 1 ? "row is" : "rows are"} annualised, </> : null}{cov.absolute} on the total return on cost{cov.absent > 0 ? <>, and {cov.absent} report no cost so carry no return</> : null}.</>;
-            } else if (measure === "cagr") {
+            if (measure === "cagr") {
               body = <><span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
                 {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">ABS</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
                 {cov.absent > 0 && <>{cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.</>}</>;

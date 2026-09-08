@@ -932,6 +932,8 @@ let CACHED = null;
 let CHAT = null;
 /** Header geometry, for the single-line headline claim — see `monitor`. */
 let HEAD = null;
+/** The opened return-measure dropdown's alignment/viewport fit — see `monitor`. */
+let RETURN_DROPDOWN = null;
 
 /**
  * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
@@ -4241,11 +4243,19 @@ const INVARIANTS = {
         return HEAD.basisSwitch === 0 && HEAD.deckButton === 0;
       }],
 
-    /** ...and the one action that is left sits on the filter row, not below it. */
-    ["Export Excel is on the filter row rather than wrapping onto its own",
+    /**
+     * ...and the one action that is left is in the HEADER's far-right slot, where
+     * the basis pill, the "N accounts behind" staleness pill and the "N rows"
+     * count used to sit — all three removed at the family's request. Struck on
+     * geometry (the button overlaps the h1's line) AND on the header's own text
+     * (none of the removed pill phrases survive), because the claim is both about
+     * where the button sits and about what no longer sits beside it. The basis
+     * and as-of are still stated on Morning CIO, which keeps its `<BasisPill>`.
+     */
+    ["Export Excel is in the header and the basis / staleness / rows pills are gone",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
-        return HEAD.exportInline === true;
+        return HEAD.exportInHeader === true && HEAD.pillsRemoved === true;
       }],
 
     ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
@@ -4598,10 +4608,40 @@ const INVARIANTS = {
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
       return cells.every((c) => /\b(AUTO|ABS|CAGR|XIRR|YTD|CY)\b/.test(c));
     }],
-    ["the methodology view names its rule",
-      (t) => /Return follows the methodology/.test(t)],
+    /**
+     * ── THE METHODOLOGY CAPTION WAS REMOVED FROM THE DEFAULT VIEW ────────────
+     *
+     * A removal is verified by asserting it happened. The "Return follows the
+     * methodology — equity a year or more is CAGR…" caption under the default
+     * (auto) view went at the family's request; the fact it stated survives in
+     * each cell's own tag (asserted above). So the auto view no longer prints
+     * that sentence — struck on `ctx.main` (the picker is closed there, so this
+     * is the rendered page content). The per-measure captions a reader ticks are
+     * unaffected and are asserted on their own routes (`monitor-cagr`, etc.).
+     */
+    ["the methodology caption is gone from the default view", (t, ctx) => {
+      const txt = ctx?.main ?? t;
+      return !/Return follows the methodology/.test(txt);
+    }],
     ["...and the column is headed Return, not an annual rate — the measure is on the cells, not the header",
       (t) => /\bReturn\b/.test(t) && !/Return p\.a\./.test(t)],
+    /**
+     * ── THE RETURN PICKER OPENS ON SCREEN, NOT OFF THE RIGHT EDGE ────────────
+     *
+     * "Make the return dropdown render correctly so we don't have to scroll
+     * sideways to see it." The panel was `left-0` and, as the last control on the
+     * filter row, opened rightward past the page edge. It is `right-0` now, so its
+     * right edge tracks the trigger's — the geometry this asserts, because a
+     * `right-0` panel and a `left-0` one differ by exactly that even when the
+     * picker has moved and no longer overflows. Measured after `mainText` so the
+     * open panel's option text never leaks into the auto-view checks above.
+     */
+    ["the open return-measure dropdown is right-aligned and on screen", (t, ctx) => {
+      const d = ctx?.returnDropdown;
+      if (!d) return { notChecked: "the return dropdown was not measured on this pass" };
+      if (!d.opened) return { notChecked: "the return dropdown did not open on this pass" };
+      return d.rightAligned === true && d.withinViewport === true;
+    }],
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -6285,19 +6325,62 @@ for (const theme of THEMES) {
             // this page's prose, and fail a page that is correct.
             basisSwitch: btn.filter((b) => /^By (security|entity)$/i.test((b.textContent ?? "").trim())).length,
             deckButton: btn.filter((b) => /review deck/i.test(b.textContent ?? "")).length,
-            // Export Excel shares a line with the last filter control, rather
-            // than wrapping below it — which is the space the family asked for.
-            exportInline: (() => {
+            // Export Excel moved to the header's far-right slot: its button
+            // overlaps the h1's line rather than sitting on the filter row below.
+            exportInHeader: (() => {
               const ex = btn.find((b) => /export excel/i.test(b.textContent ?? ""));
-              const sel = [...document.querySelectorAll("main select")].at(-1);
-              if (!ex || !sel) return false;
-              const a = ex.getBoundingClientRect(), b = sel.getBoundingClientRect();
-              return a.top < b.bottom && b.top < a.bottom;
+              if (!ex || !r.h1) return false;
+              const a = ex.getBoundingClientRect();
+              return a.top < r.h1.bottom && r.h1.top < a.bottom;
+            })(),
+            // The basis pill, the "N accounts behind" staleness pill and the
+            // "N rows" count were removed from the header at the family's request.
+            // Struck on the header container's own text, so a pill drifting back
+            // in fails here. "as of" and "accounts behind" are the basis and
+            // staleness phrases; "\d+ rows" is the count.
+            pillsRemoved: (() => {
+              const header = bar?.parentElement;
+              const txt = header?.textContent ?? "";
+              return !/accounts behind/i.test(txt) && !/\bas of\b/i.test(txt) && !/\d+\s*rows\b/i.test(txt);
             })(),
           };
         });
       }
       const mainText = FAST ? "" : await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
+      /**
+       * THE RETURN-MEASURE DROPDOWN IS RIGHT-ALIGNED AND ON SCREEN. Measured
+       * AFTER `mainText` on purpose: opening the picker puts its option text
+       * ("Year to date", "Calendar year") into the DOM, and the auto-view checks
+       * assert the word "YTD" appears nowhere — so the panel must not be open
+       * when `mainText` is read. The panel was `left-0` and, as the last control
+       * on the filter row, opened rightward off the page; it is `right-0` now, so
+       * its right edge tracks the trigger's. That difference is what this catches,
+       * and it holds even where the picker has moved and no longer overflows.
+       */
+      if (!FAST && name === "monitor" && theme === THEMES[0] && width === WIDTHS[0]) {
+        const trig = page.locator("[data-return-measures] > button").first();
+        if (await trig.count()) {
+          await trig.click();
+          await page.waitForTimeout(150);   // let the panel mount
+          RETURN_DROPDOWN = await page.evaluate(() => {
+            const wrap = document.querySelector("[data-return-measures]");
+            const trigger = wrap?.querySelector(":scope > button");
+            const list = wrap?.querySelector('[role="listbox"]');
+            if (!wrap || !trigger || !list) return { opened: false };
+            const t = trigger.getBoundingClientRect();
+            const l = list.getBoundingClientRect();
+            return {
+              opened: true,
+              // right-0 → the panel's right edge sits on the trigger's; left-0
+              // would put its LEFT edge there and, being wider, overhang the right.
+              rightAligned: Math.abs(l.right - t.right) <= 2,
+              withinViewport: l.left >= -1 && l.right <= window.innerWidth + 1,
+            };
+          });
+          await page.keyboard.press("Escape").catch(() => {});
+          await page.waitForTimeout(60);    // let it close before anything else reads the DOM
+        }
+      }
       /**
        * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
        *
@@ -6364,7 +6447,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
