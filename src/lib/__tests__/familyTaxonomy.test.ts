@@ -13,6 +13,9 @@
 // So the assertions below are RELATIONS against the generated book rather than
 // literals. When the next drop moves the book both sides move together, and a
 // map entry that stops matching anything fails loudly instead of going quiet.
+import path from "node:path";
+import fs from "node:fs";
+import XLSX from "xlsx";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, MANDATE_BUCKET, dedupedPositions } from "@/lib/analytics";
@@ -146,6 +149,127 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   ok("...and every unclassified holding can be named, so the page can say which",
      un.every((p) => typeof p.security === "string" && p.security.length > 0),
      un.map((p) => p.security).slice(0, 3).join("; "));
+}
+
+// ── 9. THE MAP IS CHECKED AGAINST THE FAMILY'S OWN WORKBOOK ────────────────
+// Sections 1-8 assert that the map is INTERNALLY sound: no dead keys, a total
+// partition, the rule as a fallback. Not one of them can see a well-formed
+// entry that files a real holding under the wrong basket — which is the most
+// dangerous defect this map can carry, because a basket heading looks exactly
+// as authoritative whichever rows sit under it.
+//
+// So this reads the family's committed workbook and holds every entry to the
+// row it cites. It is the same discipline `review-reconcile.mjs` applies to the
+// book: an INDEPENDENT cross-check against the family's own document, never a
+// second source the app reads at runtime. The workbook is test-only — nothing
+// under `src/pages` may import `xlsx`.
+{
+  // The bundle runs from a temp dir, so `import.meta.url` resolves next to the
+  // BUNDLE. `GLOW_FIXTURES` is the repo-anchored path the runner passes in.
+  const ROOT = process.env.GLOW_FIXTURES
+    ? path.resolve(process.env.GLOW_FIXTURES, "../../../..")
+    : process.cwd();
+  const WB = path.join(ROOT, "source/august-2026-d",
+    "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx");
+
+  // A MISSING WORKBOOK IS A FAILURE, NEVER A QUIET PASS. This map's entire
+  // authority is that document; a suite that skipped when it could not find it
+  // would claim confidence nobody earned (`golden.mjs`'s rule).
+  ok("the family's consolidated review is on disk to check against", fs.existsSync(WB), WB);
+
+  if (fs.existsSync(WB)) {
+    const wb = XLSX.readFile(WB);
+    const grid = (n: string) =>
+      XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, blankrows: false, defval: "" }) as unknown[][];
+    const S = (x: unknown) => String(x ?? "").replace(/\s+/g, " ").trim();
+    const num = (x: unknown) => (typeof x === "number" ? x : Number(String(x).replace(/,/g, "")) || 0);
+
+    type Say = { basket?: string; assetClass?: string; where: string[] };
+    const W = new Map<string, Say>();
+    // FIRST WRITER WINS, and the ORDER OF THE THREE LOOPS BELOW IS THE WHOLE
+    // RULE — there is deliberately no second mechanism. A `num(cost) === 0`
+    // guard was written first and removed: with first-writer-wins it could
+    // never fire, so it was a branch that documented a rule it did not enforce,
+    // which is this repo's dead-code-that-looks-alive failure. What the order
+    // does is asserted below instead.
+    const say = (p: string, patch: Partial<Say>, where: string) => {
+      const e = W.get(p) ?? { where: [] as string[] };
+      if (patch.basket && !e.basket) e.basket = patch.basket;
+      if (patch.assetClass && !e.assetClass) e.assetClass = patch.assetClass;
+      e.where.push(where);
+      W.set(p, e);
+    };
+    // The four BASKET sheets: the sheet a product is listed on IS its basket.
+    for (const [sheet, basket] of [
+      ["Stable Growth", "Stable Growth"], ["Entrepreneruial Growth", "Entrepreneurial Growth"],
+      ["Thematic,Tactical", "Thematic & Tactical"], ["Liquid", "Liquidity"],
+    ] as const)
+      for (const r of grid(sheet).slice(1)) {
+        const p = S(r[0]);
+        if (p && p !== "Total") say(p, { basket }, `basket:${sheet}`);
+      }
+    // The four ASSET-CLASS sheets, whose product name is the SECOND column
+    // (the first carries the basket code).
+    for (const [sheet, cls] of [
+      ["Equity", "Equity"], ["Cash", "Cash"], ["Debt", "Debt"], ["Alternate", "Alternate"],
+    ] as const)
+      for (const r of grid(sheet)) {
+        const p = S(r[1]);
+        if (p && !/^(Product|Total|Note|\*Note|\d\.)/i.test(p)) say(p, { assetClass: cls }, `class:${sheet}`);
+      }
+    // THE PRIVATE-EQUITY TAB LAST, so it can only fill gaps — see the block of
+    // the same name in `familyTaxonomy.ts` for why that order is load-bearing.
+    const contested: { p: string; live: string; cost: number }[] = [];
+    for (const r of grid("Private Investments ").slice(1)) {
+      const p = S(r[0]);
+      if (!p || p === "Total" || p === "Private Equity" || p === "Product") continue;
+      const live = W.get(p)?.basket;
+      if (live) contested.push({ p, live, cost: num(r[2]) });
+      say(p, { basket: "Entrepreneurial Growth", assetClass: "Alternate" }, "privateEquity");
+    }
+    ok("the workbook parses into a product classification", W.size > 100, `${W.size} products`);
+
+    // THE TWO WITNESSES DISAGREE ON EXACTLY THE PRODUCTS THAT LEFT PRIVATE
+    // CAPITAL WHEN THEY LISTED, and the live sheet has to win. Both are ₹0 on
+    // the private tab and carry real figures on Thematic,Tactical; Parth's own
+    // remark there reads "Listed in Aug'25". Read the other way round this
+    // refiles ₹5.31 Cr of listed equity as Alternate — so the order is asserted
+    // rather than commented, and this fails the moment the loops are swapped.
+    ok("the private-equity tab is contested by a live sheet, so the order below can bite",
+       contested.length > 0, contested.map((c) => `${c.p} (live ${c.live}, private ₹${c.cost} Cr)`).join("; "));
+    ok("...and on every contested product the live sheet wins",
+       contested.every((c) => W.get(c.p)?.basket === c.live),
+       contested.map((c) => `${c.p} → ${W.get(c.p)?.basket}`).join("; "));
+    ok("...each of them a zeroed private stub, which is why it is a stub and not a rival",
+       contested.every((c) => c.cost === 0));
+
+    // (a) EVERY CITATION RESOLVES. A `reviewProduct` naming no row in the
+    // family's document is a citation nobody can follow — which is exactly the
+    // defect that prompted this section (a stray double space).
+    const entries = Object.entries(FAMILY_TAXONOMY);
+    const unfound = entries.filter(([, e]) => !W.has(e.reviewProduct));
+    ok("every entry cites a product the workbook actually carries",
+       unfound.length === 0,
+       unfound.length ? unfound.map(([k, e]) => `${k} → "${e.reviewProduct}"`).join("; ") : `${entries.length} citations`);
+
+    // (b) AND THE WORKBOOK'S ANSWER IS OURS, on both axes, wherever it speaks.
+    const wrong: string[] = [];
+    let sawBasket = 0, sawClass = 0;
+    for (const [key, e] of entries) {
+      const w = W.get(e.reviewProduct);
+      if (!w) continue;
+      if (w.basket) { sawBasket++; if (w.basket !== e.basket) wrong.push(`${key}: basket ours ${e.basket} vs workbook ${w.basket} [${w.where.join(",")}]`); }
+      if (w.assetClass) { sawClass++; if (w.assetClass !== e.assetClass) wrong.push(`${key}: class ours ${e.assetClass} vs workbook ${w.assetClass} [${w.where.join(",")}]`); }
+    }
+    ok("...and every basket and asset class matches what the family's sheet says",
+       wrong.length === 0, wrong.length ? wrong.join("; ") : `${sawBasket} baskets and ${sawClass} classes witnessed`);
+
+    // (c) THE COMPARISON ACTUALLY HAPPENED. A workbook whose sheets were renamed
+    // parses to an empty map, every lookup misses, and (b) passes over nothing.
+    ok("...over essentially every entry, so (b) cannot pass by matching nothing",
+       sawBasket >= entries.length - 1 && sawClass >= entries.length - 1,
+       `${sawBasket}/${sawClass} of ${entries.length}`);
+  }
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

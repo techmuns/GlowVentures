@@ -5276,7 +5276,7 @@ Nothing below changed except where it is defined.)*
 | --- | --- | --- |
 | **Category** (default) | Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash | `holdingBucket` — the book. Unchanged |
 | **Asset class** | Equity ₹640.9 Cr · Alternate ₹28.5 Cr · Cash ₹14.1 Cr · Debt ₹5.6 Cr | the family's review |
-| **Basket** | Stable Growth ₹412.7 Cr · Thematic & Tactical ₹243.7 Cr · Liquidity ₹27.5 Cr · Entrepreneurial Growth ₹5.1 Cr | the family's review |
+| **Basket** | Stable Growth ₹412.7 Cr · Thematic & Tactical ₹243.7 Cr · Liquidity ₹27.5 Cr · Entrepreneurial Growth ₹5.1 Cr | the family's review — audited back against it, see Stage 10ae |
 
 **ALL THREE SUM TO ₹710.39 Cr**, which is `BOOK_SUMMARY.totalValue` — the same
 holdings rearranged, on the deduped basis the footer is on.
@@ -5320,6 +5320,11 @@ and the basket sheets are INDEPENDENT witnesses, cross-checked before a line of
 the map was written: **33 of 33 agree, zero disagreements**, and all 82
 basket-sheet products appear on an asset-class sheet. That is what earns this a
 committed map rather than one reading of a spreadsheet.
+
+*(The map has since been AUDITED back against that workbook, and the workbook is
+now part of the suite rather than only its source — 57 entries, zero mismatched.
+See **Stage 10ae**, which also records the three private-equity holdings this
+first pass did not reach and the near misses it deliberately still refuses.)*
 
 **THE REVIEW IS STILL NOT A SOURCE FOR FIGURES.** §"the consolidated review
 workbook is not a source — by decision" is unchanged: every figure here is
@@ -5742,10 +5747,10 @@ to `BOOK_SUMMARY.totalValue` **to the rupee**:
 | Category | | Family asset class | | Basket | |
 | --- | ---: | --- | ---: | --- | ---: |
 | AIF | ₹352.3 Cr | Equity | ₹640.9 Cr | Stable Growth | ₹412.7 Cr |
-| PMS mandates | ₹138.7 Cr | Alternate | ₹28.4 Cr | Thematic & Tactical | ₹243.7 Cr |
+| PMS mandates | ₹138.7 Cr | Alternate | ₹28.5 Cr | Thematic & Tactical | ₹243.7 Cr |
 | Mutual Fund | ₹99.9 Cr | Not classified | ₹21.4 Cr | Liquidity | ₹27.5 Cr |
 | Direct Equity | ₹94.9 Cr | Cash | ₹14.1 Cr | Not classified | ₹21.4 Cr |
-| ETF | ₹24.6 Cr | Debt | ₹5.55 Cr | Entrepreneurial Growth | ₹5.07 Cr |
+| ETF | ₹24.6 Cr | Debt | ₹5.55 Cr | Entrepreneurial Growth | ₹5.08 Cr |
 | Cash | ₹0 | | | | |
 
 **NOTHING ABOUT THE ARITHMETIC CHANGES WHEN THE AXIS DOES.** Invested, Current,
@@ -5844,6 +5849,145 @@ change` is the movers card's settled-absence line and its noun moves with the
 tab. The previous attempt at this enumerated the spellings — and lapsed the moment
 the ETFs came back — so the pattern is anchored on the two ends of the sentence
 instead.
+
+### Stage 10ae — THE TAXONOMY IS AUDITED AGAINST THE WORKBOOK, AND THE WORKBOOK IS NOW THE TEST
+
+*"make sure the basket as well as asset class categorization is correct and
+matching as per the consolidated excel sheet information … do an audit and make
+everything matching as per the classification provided in this excel sheet."*
+
+Stage 10z built `familyTaxonomy.ts` by reading the family's consolidated review
+and hand-verifying every line. This is that map audited back against the same
+document, product by product — and the headline finding is that **the
+classifications were already right**: 54 entries, 53 baskets and 53 asset
+classes witnessed by the workbook, **zero mismatches**. What the audit found
+instead were a broken CITATION, three holdings the review names and the map had
+not reached, and — the part worth keeping — that nothing in the repo could have
+told us any of that.
+
+**THE WORKBOOK IS A TEST NOW, NOT ONLY A SOURCE.** `familyTaxonomy.test.ts`'s
+eight existing sections assert the map is INTERNALLY sound: no dead keys, a
+total partition on both axes, the rule as a fallback. Not one of them can see a
+well-formed entry that files a real holding under the wrong basket — which is
+the most dangerous defect this map can carry, because **a basket heading looks
+exactly as authoritative whichever rows sit under it.** So the suite now reads
+the committed workbook and holds every entry to the row it cites. That is
+`review-reconcile.mjs`'s standing, applied to a map instead of to the book: an
+independent cross-check against the family's own document, never a second source
+the app reads at runtime. The workbook is TEST-ONLY — nothing under `src/pages`
+may import `xlsx`.
+
+**AND IT IMMEDIATELY CAUGHT A CITATION NOBODY COULD FOLLOW.** One entry read
+`reviewProduct: "Motilal Oswal Founders Fund  II"` — a **DOUBLE SPACE**, which
+matches no row in the family's document. The classification (Stable Growth /
+Equity) was correct and the citation was unverifiable, and `reviewProduct` exists
+for exactly one purpose: *"any one of these can be challenged against the
+family's own document."* A citation that resolves to nothing is that field
+failing silently, and it is invisible to every check that reads only the map.
+
+#### Three holdings the review names, and what licensed each join
+
+The review's `Private Equity ₹136.16 Cr` is ONE aggregate line on the Alternate
+sheet — this file already records that the reconciler has to carry it as a block
+with no custodian to ask. **It IS itemised**, on the workbook's own `Private
+Investments` tab, corroborated row for row by `Private Equity Excl Pre IPO`, and
+three of those rows are holdings this book carries. All three are Entrepreneurial
+Growth / Alternate, on no basket sheet, so there is no second answer to weigh:
+
+| Holding | Book value | Review row | Why the join is safe |
+| --- | ---: | --- | --- |
+| `BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26` | ₹70,754.50 | `Borosil Renewables` ₹3.75 Cr | the ARITHMETIC — see below |
+| `BLUE ASHVA VARENYA FUND - BAVF-SER20-C6` | ₹98,742 | `Blue Ashva Varenya Account` ₹0.02 Cr | the distinguishing word |
+| `EVEREST FLEET-EQ1/` | ₹580 | `Everest Fleet Private Ltd - SIDDHARTH LADSARIYA` | an exact company name |
+
+**THE WARRANT IS THE ONE THIS FILE ALREADY FORBADE JOINING BY NAME.** *"a
+Borosil WARRANT against the Borosil EQUITY, which must never be joined"* — and
+this book holds BOTH: 11,495 Borosil Renewables SHARES inside two PMS mandates,
+and 283,018 WARRANTS in the ICICI NSDL demat. On the name they are
+indistinguishable. On the arithmetic they are not:
+
+```
+₹3,74,99,885 ÷ 283,018 warrants = ₹132.5000 each   and   ₹132.50 × 4 = ₹530.00
+```
+
+— the 25% upfront an Indian preferential warrant allotment is subscribed at,
+reproduced to the rupee. **The quantity is the witness**, which is the standard
+`dropDepositoryDuplicates` and `costFor` already hold a join to. The
+mandate-held shares belong to their mandate's own product and never reach this
+map. That is the difference between a name matcher and a reading: the caution
+stands and this join is licensed by evidence the caution was written for the
+absence of.
+
+**TWO BLUE ASHVA VEHICLES ARE IN THE REVIEW and only one is in this book** —
+`Blue Ashva Varenya Account` (₹0.02 Cr) and `Blue Ashva India Pool Account`
+(₹3.74 Cr). The demat holds BAVF-SER20-C6, whose own name carries VARENYA.
+Matched on "Blue Ashva" there would have been two candidates and no way to
+choose; the earlier normaliser missed the row entirely, which is the safer of
+the two failures and still a failure.
+
+**WHAT MOVED IS ₹1.70 L, AND THE POINT IS NOT THE MONEY.** Entrepreneurial
+Growth ₹5.07 → **₹5.08 Cr** (3 → 6 rows), Alternate ₹28.44 → **₹28.46 Cr**, and
+the basket axis's unclassified section loses the Blue Ashva row. All three axes
+still sum to `BOOK_SUMMARY.totalValue` to the rupee. Two of the three also move
+on the ASSET-CLASS axis from `Equity` to `Alternate`, which is derivation being
+overridden by the review — an unlisted company's shares and a preferential
+warrant are private capital that happens to sit in a depository account, and
+`familyAssetClass` consults the map before it derives anything. Check 7 now
+measures that: `Equity → Equity/Alternate`.
+
+#### The tab fills a gap and never overrides, and the workbook itself is why
+
+Two `Private Investments` rows — `M/S Grand Continent Hotels` and `Parth
+Electrical & Engineering` — **also sit on the live `Thematic,Tactical` sheet**,
+with real figures whose share counts tie to this book exactly (262,125 and
+59,000), while their private rows are **₹0** and Parth's carries the remark
+*"Listed in Aug'25"*. The family moved both out of private capital when they
+listed. Read the tab as authoritative and it drags them back, refiling ₹5.31 Cr
+of listed equity as Alternate. So the live sheets are read FIRST and the private
+tab writes only into a gap.
+
+**THE FIRST DRAFT ENFORCED THAT TWICE AND ONE OF THE TWO WAS DEAD.** A
+`cost === 0` guard skipped the zeroed stubs explicitly — and the reader is
+first-writer-wins, so the guard could never fire. Removing it changed nothing,
+which is how it was found: **reintroducing the bug produced a clean run.** A
+branch that documents a rule it does not enforce is the
+dead-code-that-looks-alive failure this file keeps naming, so it is gone and the
+LOOP ORDER is what the suite asserts instead — the contested products are
+listed, the live sheet must win on each, and swapping the loops fails four
+checks by name.
+
+#### What the review names and the map deliberately does NOT join
+
+Each is a near miss LISTED rather than committed, which is the rule
+`shared/nameMatch.mjs` already holds for the register reconciler:
+
+- **`EMA Preferred Shares`** (₹0.46 Cr) against this book's `EMA PARTNERS INDIA
+  LIMITED - EQ NEW FV RS 5/` (₹0.37 Cr). PREFERENCE shares are not the EQUITY,
+  and this file already names that exact pair as a near miss a human must
+  commit. The equity falls to the direct-stock rule, which is where the review's
+  own `Direct Equity - Non MO` block — coded **TT** — puts the demat's direct
+  holdings anyway, so the answer on screen is unchanged and now corroborated.
+- **`National Stock Exchange`** (Stable Growth / Equity, ₹41.5 Cr on 200,000
+  shares). This book's ICICI NSDL statement carries 125,000 of them at an implied
+  **Re 1.00** — a PAR row, so it carries its quantity and NO market value and is
+  not in `BOOK_POSITIONS` at all. An entry would match no holding and fail the
+  map's own no-dead-entries check. The answer is recorded for the drop that first
+  values it.
+- **`SKS Fastener`, `Incred Holdings`, `Swapeco Solutions`, `Aksum Trademart`,
+  `EDUGORILLA`, `Blue Ashva India Pool Account`** — private investments this book
+  carries no valued position for, by the same par/quantity-only rule.
+
+**AND `Motilal Oswal Active Momentum Fund` ₹21.42 Cr IS GENUINELY ABSENT** from
+the whole workbook, checked across all 25 tabs rather than assumed: the review is
+drawn 30 June 2026 and that folio's statement is dated 6 August. It is 3.0% of
+the book and it is the whole of the unclassified section on both axes. That is a
+stale review, not a gap in the map, and the section already names its own cause.
+
+**FIVE BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the double space back in a
+citation, Carnelian refiled as Thematic & Tactical, the private-equity tab read
+first, the asset-class sheets read from the wrong column (which fired the
+can't-pass-by-matching-nothing gate at `57/5 of 57`), and the workbook moved out
+from under the suite.
 
 ### Stage 10k — News & Announcements: REMOVED
 
