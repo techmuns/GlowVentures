@@ -4610,6 +4610,120 @@ tagged ABS), `monitor-ytd` (drawn ties to `YTD_MEASURABLE` off `glowData.ts`),
 methodology arithmetic is in `holdingReturn.test.ts` (`npm run test:family`),
 anchored on the generated book so it cannot go stale when the next drop moves it.
 
+### Stage 10ag — A FOURTH AXIS THAT IS NOT AN ALLOCATION AXIS: ONE ROW PER SECURITY
+
+*"Remove sectors selector drop down."* And: *"Portfolio monitor is right now
+based on category wise, asset class wise, and then the basket… Not stock wise. So
+just incorporate this into THIS PAGE ONLY. Then you give a simple view where
+whatever stock, like HDFC Bank, if Yamini wants to click on, she can click on and
+then drill down. So based on every single investment direct/PMS/ETF/AIF etc etc.
+we will club and show which stock has the highest exposure and thru what means in
+the drill down page."*
+
+**THE GAP WAS REAL AND IT WAS THE MANDATE ROLL-UP.** Stage 10L lifted the PMS
+mandates out of the table into ONE ROW EACH — the right answer to "stop mixing
+what I bought with what a manager bought", and the reason a reader cannot see a
+name's total exposure at all: **₹138.7 Cr of this book's shares are inside ten
+mandate rows**, and 140 names live ONLY there. On every existing axis Carnelian's
+Jammu Kashmir Bank is not a row; it is a line inside a mandate's expansion.
+
+**SO THE SECURITY AXIS CHANGES THE ROW BUILD, NOT A SECTION KEY.** It is the only
+one that does, and that is why it is not a `GroupAxis`. Mandates are NOT lifted
+out, and every position is clubbed on `securityKey` alone. Measured:
+
+| | category axis | security axis |
+| --- | ---: | ---: |
+| rows | 85 | **214** |
+| names visible only through a mandate | 0 | **140** |
+| clubbed across more than one account | — | **130** |
+| footer | ₹710.4 Cr | ₹710.4 Cr |
+
+The footer does not move by a rupee, because it is struck over the POSITIONS and
+regrouping cannot touch it — the same construction all three older axes rely on.
+
+**IT IS THE MONITOR'S ALONE, BECAUSE THE FAMILY SCOPED IT IN THE SAME SENTENCE.**
+`GroupAxis`, `GROUP_AXES` and `GROUP_VIEWS` are UNTOUCHED and Morning CIO still
+offers three. Widening them would have put this axis on that page's allocation
+card **by construction** — `AXIS_SCOPE` in `drilldown.ts` and `DECLARED` /
+`ALLOC_TITLE` on Morning CIO are all `Record<GroupAxis, …>`, so a fourth key
+would have forced four entries into each. `MonitorAxis` is a SUPERSET used by one
+screen; the shared helpers take it, so every existing caller keeps passing a
+`GroupAxis` unchanged and there is still one definition of "which section is
+this holding in". An allocation table on this axis would draw 214
+single-holding sections and mean nothing.
+
+**AND IT FILES NOTHING, SO IT DRAWS NOTHING.** `groupKeyFor` returns one constant
+(`SECURITY_SECTION`) for every row, so the table — which needs two keys to draw
+headings — draws none, and the section filter is hidden rather than offered as a
+control with a single option that changes nothing.
+
+#### Two of the four vehicles can be clubbed and two cannot
+
+The request named "direct/PMS/ETF/AIF". **A SHARE IS CLUBBED HOWEVER IT WAS
+ARRIVED AT** — the family's own demat and a discretionary manager's mandate both
+REPORT THE SHARE, so both are positions carrying the same `securityKey`.
+
+**A SHARE HELD INSIDE A FUND CANNOT BE.** An AIF folio, a mutual-fund scheme and
+an ETF are each ONE PURCHASE of a manager's portfolio, and no statement in this
+book reports the companies inside the folios the family holds. So a fund is its
+own row at its own value — **36 rows worth ₹479.98 Cr** — and the page says so in
+as many words rather than drawing a look-through nobody published. That is the
+same answer `/mandate/:accountId` already gives for a fund folio, and the same
+reason: a constituent table there would be the fabrication this book exists to
+prevent. (`public/lookthrough/` carries scheme disclosures for 21 of 22 mutual
+funds — see Stage 10s — and it is deliberately NOT summed into a book figure for
+exactly this reason: the fund's value already stands for it, and counting both
+would count the same money twice.)
+
+#### The drill-down, and where "thru what means" actually lives
+
+`/stock/:securityKey` already carries a **Held via** column and a Position-by-account
+card, and every security row already links there through `StockLink` — so the
+drill-down PAGE needed nothing. What was missing is the answer in place, so a row
+held through more than one account expands to a **venue table**: held via, the
+vehicle, the owning entity, quantity, value, its share of the holding, P&L and
+return, with each mandate linking to its own page.
+
+**`venuesOf` IS NOT `entityParts`, AND THE DIFFERENCE IS THE POINT.** That helper
+answers which family MEMBER holds a name and lumps every route into a Set, so a
+name held through three mandates by one member collapses to one line reading
+"manager's mandate". "Through what means" is a fact about the ACCOUNT — its
+engagement names the route, its strategy or provider names the vehicle — so the
+account is the unit. **The venues are NOT deduped**: the row's value counts each
+`dedupeGroup` once and the breakdown lists every statement as printed
+(§"consolidated counts once, per-account does not"), so `share` divides by the
+PRINTED sum and the expansion names the gap when the two differ.
+
+#### The sector dropdown is gone and the sector filter is not
+
+The same treatment the Holdings basis switch got in Stage 10q. Pinning the value
+to `"All"` would have left every branch that reads it unreachable — the weight
+denominator's scope caption, the base filter, and the sector handed to the
+Transactions tape — which is the dead-code-that-looks-alive failure this file
+keeps naming. It lives at **`?sector=`** like every other view on this page, and
+`monitor-sector` WALKS it, because a param nothing exercises is indistinguishable
+from a deleted feature. Sector remains a COLUMN on every row, and Sector
+Composition is still the page that analyses the book by sector.
+
+#### The checks are struck on the DOM, because this axis's row TEXT cannot be split
+
+**130 OF THE 214 ROWS CONTAIN A NEWLINE INSIDE A CELL.** The "N entities" pill is
+an `inline-flex`, so its chevron is a flex ITEM and `innerText` breaks the line
+there. That is pre-existing — the category axis has 12 such rows and 10 mandate
+rows besides — and harmless until an axis makes it the majority. So the rows
+carry `data-security-key` and `data-venues`, the sweep captures every cell as an
+array read by `COL`, and no invariant here splits a row on newlines. It is named
+rather than fixed: making the pill `inline-block` is a visual change to every
+table in the app and is not what was asked for.
+
+**SIX BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the mandates rolled up
+again (fires three, from three directions — the row count, the mandate-only
+names, and the venue counts), the sector dropdown restored, the honesty caption
+deleted, the section filter shown anyway, the ranking reversed, and the
+`?sector=` param ignored. Every expectation is derived from `glowData.ts` on each
+run — the row count, the clubbed count, the largest name and the book's own NAV —
+so none of it goes stale when the next drop moves the book.
+
 ### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 
 *"We should also be able to see each holding of every mutual fund."* … *"For all

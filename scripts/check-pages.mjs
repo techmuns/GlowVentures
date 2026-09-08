@@ -153,6 +153,87 @@ const MANDATE_COUNT = (() => {
   } catch { return null; }
 })();
 /**
+ * ── WHAT THE SECURITY AXIS MUST PRODUCE, DERIVED FROM THE BOOK ──────────────
+ *
+ * "Based on every single investment direct/PMS/ETF/AIF etc etc. we will club and
+ * show which stock has the highest exposure and thru what means."
+ *
+ * The axis collapses the book to one row per `securityKey` and — unlike every
+ * other axis — does NOT lift the PMS mandates out into one row each, so a share
+ * a discretionary manager chose is clubbed with the same name held directly.
+ * These are the figures that follow from that, computed here the way the page
+ * must compute them: a literal would be a second source for a number `build-book`
+ * generates, and this book moves on every drop.
+ *
+ * `names` is the row count. `clubbed` is how many of those are held through more
+ * than one ACCOUNT — the rows whose expansion has something to say. `mandateOnly`
+ * is the payoff: names visible ONLY on this axis, because on every other one they
+ * are inside a mandate's roll-up and cannot be seen at all.
+ */
+const SECURITY_AXIS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const byKey = new Map();
+    for (const p of positions) {
+      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
+      byKey.get(p.securityKey).push(p);
+    }
+    let clubbed = 0, mandateOnly = 0, top = null;
+    for (const [key, ps] of byKey) {
+      const accts = new Set(ps.map((x) => x.accountId));
+      if (accts.size > 1) clubbed++;
+      if (ps.every((x) => acc.get(x.accountId)?.engagement === "PMS")) mandateOnly++;
+      // The clubbed value counts each dedupeGroup ONCE, as the page's rows do.
+      const seen = new Set();
+      let mv = 0;
+      for (const x of ps) {
+        if (x.dedupeGroup) { if (seen.has(x.dedupeGroup)) continue; seen.add(x.dedupeGroup); }
+        mv += x.marketValue;
+      }
+      if (!top || mv > top.mv) top = { key, mv, name: ps[0].security };
+    }
+    // The book's own consolidated NAV, in crore — each dedupeGroup counted once,
+    // which is what the footer is struck over whatever the rows are grouped by.
+    const seenAll = new Set();
+    let total = 0;
+    for (const x of positions) {
+      if (x.dedupeGroup) { if (seenAll.has(x.dedupeGroup)) continue; seenAll.add(x.dedupeGroup); }
+      total += x.marketValue;
+    }
+    return { names: byKey.size, clubbed, mandateOnly, top, totalCr: total / 1e7 };
+  } catch { return null; }
+})();
+
+/**
+ * THE SECTOR THE SWEEP FILTERS ON — the book's own largest, never a literal.
+ *
+ * The dropdown that used to set it is gone at the family's request, and the
+ * filter survives at `?sector=`. That is only true if something exercises it:
+ * a param no page reads is indistinguishable from a deleted feature, and the
+ * branches behind it (the base filter, the weight-scope caption, the sector
+ * handed to the Transactions tape) would be the dead code this file keeps
+ * naming. `monitor-sector` walks it, and this is what it walks.
+ */
+const FILTER_SECTOR = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const mv = new Map();
+    for (const p of positions) {
+      if (!p.sector || p.sector === "Unclassified") continue;
+      mv.set(p.sector, (mv.get(p.sector) ?? 0) + p.marketValue);
+    }
+    const best = [...mv.entries()].sort((a, b) => b[1] - a[1])[0];
+    return best ? best[0] : null;
+  } catch { return null; }
+})();
+
+/**
  * THE OWNER WHOSE FAMILY DRILL-DOWN IS WALKED — resolved from the book, not typed.
  *
  * `/family`'s entity view is where a holding finally says WHO CHOSE IT, and until
@@ -547,6 +628,26 @@ const ROUTES = [
   // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
   // column shows both, each on its own labelled line.
   ["monitor-returns-multi", "/monitor?ret=absolute,cagr"],
+  /**
+   * ...AND THE FOURTH AXIS, WHICH IS NOT AN ALLOCATION AXIS AT ALL.
+   *
+   *   "Portfolio monitor is right now based on category wise, asset class wise,
+   *    and then the basket… Not stock wise… we will club and show which stock
+   *    has the highest exposure and thru what means in the drill down."
+   *
+   * It is walked because it is the only axis that changes the ROW BUILD rather
+   * than a section key: the mandates are not lifted out, so a name a manager
+   * chose is clubbed with the same name held directly. Reached by URL like every
+   * other view on this page.
+   */
+  ["monitor-security", "/monitor?group=security"],
+  /**
+   * ...AND THE SECTOR FILTER, WHOSE DROPDOWN IS GONE BUT WHOSE BRANCHES ARE NOT.
+   * Walked on the security axis, where every row is a security and therefore
+   * prints a sector of its own — on the category axis a mandate row spans many
+   * and correctly prints an em dash, which would make the claim untestable.
+   */
+  ["monitor-sector", FILTER_SECTOR ? `/monitor?group=security&sector=${encodeURIComponent(FILTER_SECTOR)}` : "/monitor?group=security"],
   /**
    * ...AND THE SAME HOLDINGS SLICED THE FAMILY'S OTHER TWO WAYS.
    *
@@ -4255,6 +4356,24 @@ const INVARIANTS = {
      * where the button sits and about what no longer sits beside it. The basis
      * and as-of are still stated on Morning CIO, which keeps its `<BasisPill>`.
      */
+    /**
+     * ── THE SECTOR DROPDOWN IS GONE, AND THE SECTOR FILTER IS NOT ────────────
+     *
+     * The family asked for the control off the filter row. Struck on the SELECTS
+     * a reader can operate rather than on the word "sector", which is still a
+     * COLUMN on every row and still names its own absent reasons — a text match
+     * would fail a page that is correct.
+     *
+     * The filter itself survives at `?sector=`, the same treatment the removed
+     * Holdings basis switch got: pinning it to a literal would have left the
+     * weight-scope caption, the base filter and the tape's sector unreachable,
+     * which is the dead-code-that-looks-alive failure this file keeps naming.
+     */
+    ["the sector dropdown is gone from the filter row", (t, ctx) => {
+      const selects = ctx?.selectLabels;
+      if (!selects) return { notChecked: "the filter row was not captured on this run" };
+      return !selects.some((s) => /^All sectors$/i.test(s));
+    }],
     ["Export Excel is in the header and the basis / staleness / rows pills are gone",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -4645,6 +4764,151 @@ const INVARIANTS = {
       if (!d.opened) return { notChecked: "the return dropdown did not open on this pass" };
       return d.rightAligned === true && d.withinViewport === true;
     }],
+  ],
+  /**
+   * ── THE SECTOR FILTER SURVIVES ITS DROPDOWN ────────────────────────────────
+   *
+   * The control went at the family's request; the filter stayed in the URL. This
+   * is what makes that a capability rather than a claim — it NARROWS the table
+   * and every row it draws carries the sector asked for.
+   */
+  "monitor-sector": [
+    ["the ?sector= filter narrows the table", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!FILTER_SECTOR) return { notChecked: "this book carries no classified sector to filter on" };
+      if (!rows) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      return rows.length > 0 && rows.length < SECURITY_AXIS_BOOK.names;
+    }],
+    ["...and every row it draws is in that sector", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!FILTER_SECTOR) return { notChecked: "this book carries no classified sector to filter on" };
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      // A fund prints an em dash for sector by design — it spans many and its
+      // statement names none — so the claim is struck on the rows that print one.
+      const printed = rows.map((r) => r.cells?.[COL.sector]).filter((v) => v && v !== "—");
+      return printed.length > 0 && printed.every((v) => v === FILTER_SECTOR);
+    }],
+  ],
+  /**
+   * ── THE SECURITY AXIS: ONE ROW PER NAME, RANKED BY EXPOSURE ────────────────
+   *
+   * Everything here is struck on the DOM rather than on row TEXT. That is not a
+   * preference: 130 of this axis's 214 rows carry the "N entities" pill, which is
+   * an `inline-flex` whose chevron is a flex ITEM, so `innerText` breaks the line
+   * inside that cell and a row split on newlines would be reading fragments. The
+   * page carries `data-security-key`, `data-venues` and a per-cell array for
+   * exactly this, and `COL` names the column each figure is read from.
+   *
+   * The expectations come from `SECURITY_AXIS_BOOK`, computed off `glowData.ts`
+   * by the same rule the page applies. A literal would be a second source for a
+   * generated figure and would go stale on the next drop.
+   */
+  "monitor-security": [
+    ["the axis is offered as a fourth segment and is the one selected", (t, ctx) => {
+      const axes = ctx?.axisButtons;
+      if (!axes?.length) return { notChecked: "the axis segments were not captured on this run" };
+      const want = ["category", "assetClass", "basket", "security"];
+      return want.every((k) => axes.some((a) => a.key === k))
+        && axes.find((a) => a.selected)?.key === "security";
+    }],
+    /**
+     * ONE ROW PER SECURITY, and the count is the book's own. This is also the
+     * check that the mandates were NOT lifted out: with them rolled up the table
+     * draws ~85 rows, and every name inside them is invisible.
+     */
+    ["one row per security in the book, mandates flattened rather than rolled up", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read, so the row count could not be derived" };
+      return rows.length === SECURITY_AXIS_BOOK.names;
+    }],
+    /**
+     * THE PAYOFF, ASSERTED DIRECTLY. A name held ONLY through PMS mandates has no
+     * row of its own on any other axis — it is inside a mandate's roll-up. If
+     * this axis stopped flattening them, these rows would vanish and the count
+     * above would fall to the category axis's; both checks fire, from two
+     * different directions.
+     */
+    ["names held only through a manager's mandate are visible as their own rows", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.mandateOnly) return { notChecked: "this book holds no name exclusively through a mandate" };
+      // No row on this axis is a mandate roll-up: every one carries a security key.
+      return rows.every((r) => r.securityKey) && rows.every((r) => !r.mandate);
+    }],
+    /** ...and every row is a clubbed security, so each carries its venue count. */
+    ["every row states how many accounts hold it", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const clubbed = rows.filter((r) => (r.venues ?? 0) > 1).length;
+      return rows.every((r) => Number.isFinite(r.venues) && r.venues >= 1)
+        && clubbed === SECURITY_AXIS_BOOK.clubbed;
+    }],
+    /**
+     * RANKED BY EXPOSURE, WHICH IS THE QUESTION — "which stock has the highest
+     * exposure". Read off the Market value column by its own index, and the top
+     * row must be the book's own largest clubbed name.
+     */
+    ["the rows are ranked by exposure, largest first", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      const mv = rows.map((r) => moneyCell(r.cells?.[COL.mv]));
+      if (mv.some((v) => v === null || !Number.isFinite(v))) return false;
+      for (let i = 1; i < mv.length; i++) if (mv[i] > mv[i - 1] + 0.05) return false;
+      return true;
+    }],
+    ["...and the largest is the book's own largest clubbed name", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.top) return { notChecked: "the book could not be read" };
+      return rows[0].securityKey === SECURITY_AXIS_BOOK.top.key;
+    }],
+    /**
+     * THE FOOTER STILL TIES TO THE BOOK'S OWN NAV. Regrouping must not move a
+     * rupee — the footer is struck over the POSITIONS, so a row build that
+     * double-counted a clubbed name (or dropped one) shows up here.
+     */
+    ["the footer still ties to the book's consolidated NAV", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book's total could not be read" };
+      const foot = ctx?.footerCells;
+      if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
+      const printed = moneyCell(foot[COL.mv]);
+      if (!Number.isFinite(printed)) return false;
+      // TWO INDEPENDENT COMPARISONS, because either alone can pass a wrong page:
+      // against the BOOK catches a row build that dropped or doubled a name, and
+      // against the ROWS ON SCREEN catches a footer computed independently of
+      // them. The bound is the page's own printing precision — one decimal in Cr
+      // per cell, so n rows carry n half-digits of rounding.
+      const mv = rows.map((r) => moneyCell(r.cells?.[COL.mv])).filter((v) => Number.isFinite(v));
+      const drawn = mv.reduce((a, b) => a + b, 0);
+      return Math.abs(printed - SECURITY_AXIS_BOOK.totalCr) <= 0.15
+        && Math.abs(drawn - printed) <= 0.05 * (mv.length + 1);
+    }],
+    /**
+     * IT FILES NOTHING, so it draws no section headings and offers no section
+     * filter — a control with one option changes nothing and is worse than none.
+     */
+    ["it draws no section headings and offers no section filter", (t, ctx) => {
+      const secs = ctx?.sectionRows;
+      const selects = ctx?.selectLabels;
+      if (!selects) return { notChecked: "the filter row was not captured on this run" };
+      return (secs?.length ?? 0) === 0 && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
+    }],
+    /**
+     * AND IT SAYS WHAT IT CANNOT CLUB. Two of the four vehicles the request named
+     * can be clubbed and two cannot: this book reports the SHARE for a direct
+     * holding and for a mandate, and reports only the FUND for an AIF, a scheme
+     * or an ETF. Drawing a look-through nobody published is the fabrication the
+     * whole book exists to prevent, so the page states the boundary.
+     */
+    ["the caption names what a fund row does not dissolve into",
+      (t) => /one row per security, ranked by exposure/i.test(t)
+        && /a fund is its own row/i.test(t)
+        && /no statement in this book reports what those managers hold/i.test(t)],
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -6076,6 +6340,14 @@ for (const theme of THEMES) {
           accountNo: tr.getAttribute("data-account"),
           holdings: Number(tr.getAttribute("data-holdings")),
           accountHoldings: Number(tr.getAttribute("data-account-holdings")),
+          // The security axis's handles, absent on every other axis — see the
+          // note beside them in PortfolioMonitor for why this row's TEXT cannot
+          // be split reliably on that axis.
+          securityKey: tr.getAttribute("data-security-key"),
+          venues: tr.hasAttribute("data-venues") ? Number(tr.getAttribute("data-venues")) : null,
+          // Every cell, so a claim about a COLUMN is read at its own index
+          // (`COL`) rather than by position in a line of text.
+          cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
@@ -6131,6 +6403,34 @@ for (const theme of THEMES) {
        * failure is invisible when it happens. So a heading declares itself, the
        * same contract `data-mandate` and `data-row` already carry.
        */
+      /**
+       * THE AXIS SEGMENTS, THE FOOTER'S CELLS AND THE FILTER ROW'S SELECTS.
+       *
+       * All three are what the SECURITY axis is asserted on: that it is offered
+       * and selected, that regrouping moved no money, and that it draws neither a
+       * section heading nor a section filter. Read off the DOM because this axis's
+       * row TEXT cannot be split on newlines — see the note on `tableRows`.
+       */
+      const axisButtons = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("[data-group-axis]")].map((b) => ({
+          key: b.getAttribute("data-group-axis"),
+          selected: b.getAttribute("aria-selected") === "true",
+        })));
+      const footerCells = FAST ? null : await page.evaluate(() => {
+        const tr = document.querySelector("tfoot tr");
+        if (!tr) return null;
+        // Accumulated by colSpan: the footer's label spans three columns, so
+        // cell-for-cell it does not line up with a data row and a positional
+        // read would put Invested under the name.
+        const out = [];
+        for (const td of tr.cells) {
+          out.push((td.innerText ?? "").replace(/\s+/g, " ").trim());
+          for (let i = 1; i < (td.colSpan || 1); i++) out.push("");
+        }
+        return out;
+      });
+      const selectLabels = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
       const sectionRows = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-section]")].map((tr) => ({
           key: tr.getAttribute("data-section"),
@@ -6450,7 +6750,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

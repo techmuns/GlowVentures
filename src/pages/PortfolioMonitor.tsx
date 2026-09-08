@@ -21,11 +21,13 @@ import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
-// THE THREE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the
-// same three; see the header of `groupAxis.ts` for why they cannot be a local
-// definition on either screen.
+// THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
+// three; see the header of `groupAxis.ts` for why they cannot be a local
+// definition on either screen — and for why the FOURTH one, SECURITY, is this
+// page's alone and is deliberately not in `GROUP_VIEWS`.
 import {
-  GROUP_VIEWS, type GroupAxis, groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
+  MONITOR_GROUP_VIEWS, type MonitorAxis, SECURITY_AXIS,
+  groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
   ALL_LABEL, bucketFor, heldUnderMandate,
 } from "@/lib/groupAxis";
 import { Auditable } from "@/components/Auditable";
@@ -53,6 +55,32 @@ type EntityPart = {
   /** How the entity came to hold it — a manager's mandate, or its own account. */
   routes: string[];
 };
+/**
+ * ── THROUGH WHAT MEANS A NAME IS HELD — one entry per ACCOUNT ───────────────
+ *
+ * Set only on the SECURITY axis, where a name is clubbed across every vehicle
+ * that holds it and the reader's next question is "held how?".
+ *
+ * `EntityPart` above answers a DIFFERENT question — which family MEMBER holds
+ * it — and lumps every route into a Set, so a name held through three mandates
+ * by one member collapses to one line reading "manager's mandate". "Through
+ * what means" is a fact about the ACCOUNT: its engagement names the route, its
+ * strategy or provider names the vehicle. So the account is the unit here.
+ */
+type Venue = {
+  accountId: string; accountNo: string;
+  /** The strategy the manager runs, or the platform that holds the account. */
+  vehicle: string;
+  owner: string;
+  /** `ROUTE_LABEL` — a manager's mandate, the family's own account, a fund. */
+  route: string;
+  isMandate: boolean;
+  quantity: number; marketValue: number;
+  costBasis: number | null; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
+  /** This venue's share of the name as PRINTED across the statements. */
+  share: number;
+};
+
 /**
  * One share inside a mandate — a constituent of the roll-up, shown when the
  * mandate row is expanded and nowhere else on this table.
@@ -155,6 +183,12 @@ type Row = {
   groupSource: "review" | "rule" | "derived" | null;
   /** Set on `kind === "mandate"` and nowhere else. */
   mandate?: MandateInfo;
+  /**
+   * Set on the SECURITY axis and nowhere else — the accounts this clubbed name
+   * is held through, largest first. Undefined on every other axis, where a
+   * mandate-held share is inside its mandate's row rather than clubbed at all.
+   */
+  venues?: Venue[];
 };
 type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "weight" | "dayChange";
 
@@ -333,11 +367,27 @@ export function PortfolioMonitor() {
    * asked for three ways to read one table, and "send me the basket view" has
    * to be a link rather than an instruction.
    */
-  const [groupAxis, setGroupAxisParam] = useViewParam(GROUP_VIEWS, {}, "group");
+  const [groupAxis, setGroupAxisParam] = useViewParam(MONITOR_GROUP_VIEWS, {}, "group");
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [sector, setSector] = useState("All");
+  /**
+   * THE SECTOR DROPDOWN IS GONE AND THE SECTOR FILTER IS NOT — the same
+   * treatment the Holdings basis switch got when it was removed (Stage 10q).
+   *
+   * The family asked for the control off the filter row. Pinning the value to
+   * the literal "All" would have left every branch that reads it unreachable —
+   * the weight denominator's scope caption, the base filter, and the sector the
+   * Transactions tape is handed — which is the dead-code-that-looks-alive
+   * failure this repo keeps naming. So it lives in the URL like every other view
+   * on this page (`?view=`, `?group=`, `?ret=`): `?sector=Financials` still
+   * narrows the table, and a link is shareable. Nothing on screen sets it.
+   *
+   * Sector remains a COLUMN on every row, and Sector Composition is the page
+   * that analyses the book by sector; only the picker left this row.
+   */
+  const [sectorParams] = useSearchParams();
+  const sector = sectorParams.get("sector") ?? "All";
   const [entity, setEntity] = useState("All");
   // Category filter — Direct Equity / PMS mandates / AIF / Mutual Fund / ETF /
   // Cash were shown in one flat list, so a ₹176 Cr AIF folio sat between two
@@ -354,7 +404,27 @@ export function PortfolioMonitor() {
    * a screen renders perfectly and shows nothing. Every entry point to the axis
    * goes through this, so no caller can reintroduce it.
    */
-  const setGroupAxis = useCallback((k: GroupAxis) => { setBucket("All"); setGroupAxisParam(k); }, [setGroupAxisParam]);
+  const setGroupAxis = useCallback((k: MonitorAxis) => { setBucket("All"); setGroupAxisParam(k); }, [setGroupAxisParam]);
+  /**
+   * ── THE SECURITY AXIS CHANGES THE ROW BUILD, NOT JUST A SECTION KEY ────────
+   *
+   *   "Based on every single investment direct/PMS/ETF/AIF etc etc. we will club
+   *    and show which stock has the highest exposure and thru what means."
+   *
+   * On every other axis the PMS mandates are lifted out of the table into one
+   * row each (§"the mandates come out of the table first"), so a share a
+   * discretionary manager chose is inside a mandate row and a reader cannot see
+   * the name's total exposure at all — ₹138.7 Cr of this book's shares sit that
+   * way. Here they are NOT lifted out, and every position is clubbed on
+   * `securityKey` alone, so Carnelian's HDFC Bank and the family's own HDFC Bank
+   * are one ranked row with a breakdown behind it.
+   *
+   * IT ALSO IGNORES THE BY-ENTITY VIEW. `?view=entity` splits a consolidated
+   * name back into the statements that reported it, which is the exact opposite
+   * of clubbing; on this axis that split is what the row's own expansion shows,
+   * so the rows stay clubbed and the per-statement detail moves inside them.
+   */
+  const bySecurity = groupAxis === SECURITY_AXIS;
   /**
    * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — the picker that replaced the
    * Absolute/CAGR toggle. Default is `auto`, the methodology (equity under a year
@@ -383,7 +453,6 @@ export function PortfolioMonitor() {
   // Owner comes from the account registry, never from the account string.
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
-  const sectors = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => p.sector))).sort()], [positions]);
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
   // Buckets present, in a fixed reading order (own → mandates → wrappers → cash).
   /**
@@ -490,7 +559,11 @@ export function PortfolioMonitor() {
     const mandateOf = new Map<string, Position[]>();
     const rest: Position[] = [];
     for (const p of base) {
-      if (heldUnderMandate(accIdx, p)) (mandateOf.get(p.accountId) ?? mandateOf.set(p.accountId, []).get(p.accountId)!).push(p);
+      // ...EXCEPT ON THE SECURITY AXIS, where clubbing the manager-chosen share
+      // with the same name bought directly is the whole request. `mandateOf`
+      // stays empty there, so `mandateRows` below is [] and nothing is hidden
+      // inside a roll-up.
+      if (!bySecurity && heldUnderMandate(accIdx, p)) (mandateOf.get(p.accountId) ?? mandateOf.set(p.accountId, []).get(p.accountId)!).push(p);
       else rest.push(p);
     }
     const mandateRows: Row[] = [...mandateOf.entries()].map(([accountId, ps]) => {
@@ -563,7 +636,7 @@ export function PortfolioMonitor() {
     });
 
     let out: Row[];
-    if (consolidate) {
+    if (bySecurity || consolidate) {
       /**
        * Consolidated on (BUCKET, securityKey) — not on securityKey alone.
        *
@@ -578,7 +651,13 @@ export function PortfolioMonitor() {
        */
       const m = new Map<string, Position[]>();
       for (const p of rest) {
-        const k = bucketFor(accIdx, p) + " | " + p.securityKey;
+        // ON THE SECURITY AXIS THE KEY IS THE NAME ALONE. The bucket half exists
+        // to keep a name held BOTH ways reading as two decisions about one
+        // company; here the reader has asked for exactly the opposite — the
+        // name's whole exposure, however it was arrived at — and the route is
+        // named per account in the row's own expansion rather than by splitting
+        // the row in two.
+        const k = bySecurity ? p.securityKey : bucketFor(accIdx, p) + " | " + p.securityKey;
         (m.get(k) ?? m.set(k, []).get(k)!).push(p);
       }
       out = [...m.values()].map((ps) => {
@@ -623,6 +702,7 @@ export function PortfolioMonitor() {
           dayChangePct: ps[0].dayChangePct ?? null,
           liveMV: live ? mv : 0,
           realizedKeys: [ps[0].securityKey],
+          venues: bySecurity ? venuesOf(ps, accIdx) : undefined,
         };
       });
     } else {
@@ -726,7 +806,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, selected, sector, entity, bucket, groupAxis, sortKey, asc]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, selected, sector, entity, bucket, groupAxis, sortKey, asc]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -824,6 +904,16 @@ export function PortfolioMonitor() {
   // In the by-entity view the displayed rows include both members' copies of a
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
+  /**
+   * THE SECURITY AXIS'S OWN TWO FIGURES, both DERIVED from the rows on screen so
+   * the caption cannot go stale: how many names are genuinely clubbed across more
+   * than one account, and how much of the table is a fund whose constituents this
+   * book does not carry. Zero on every other axis, where the caption is not drawn.
+   */
+  const clubbedCount = useMemo(() => rows.filter((r) => (r.venues?.length ?? 0) > 1).length, [rows]);
+  const fundRows = useMemo(() => rows.filter((r) => r.kind === "security" && isFundVehicle(r)), [rows]);
+  const fundRowCount = fundRows.length;
+  const fundRowMV = useMemo(() => sum(fundRows.map((r) => r.marketValue)), [fundRows]);
   /**
    * WHAT THE WEIGHT COLUMN DIVIDES BY, IN WORDS — and by how much that
    * denominator exceeds the rows on screen.
@@ -1027,9 +1117,6 @@ export function PortfolioMonitor() {
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense
           allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full" />
-        <select value={sector} onChange={(e) => setSector(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-          {sectors.map((s) => <option key={s} value={s}>{s === "All" ? "All sectors" : s}</option>)}
-        </select>
         <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
@@ -1051,7 +1138,7 @@ export function PortfolioMonitor() {
         {view === "holdings" && (
           <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5" role="tablist"
             aria-label="Group holdings by">
-            {GROUP_VIEWS.map((g) => (
+            {MONITOR_GROUP_VIEWS.map((g) => (
               <button key={g.key} type="button" role="tab" aria-selected={groupAxis === g.key} title={g.title}
                 data-group-axis={g.key}
                 onClick={() => setGroupAxis(g.key)}
@@ -1061,9 +1148,14 @@ export function PortfolioMonitor() {
             ))}
           </div>
         )}
-        <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-          {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[groupAxis] : groupLabelFor(groupAxis)(s)}</option>)}
-        </select>
+        {/* THE SECTION FILTER IS HIDDEN ON THE SECURITY AXIS, which files every
+            holding in one section by design — the control would offer a single
+            option and change nothing, which is worse than no control. */}
+        {!bySecurity && (
+          <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
+            {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[groupAxis] : groupLabelFor(groupAxis)(s)}</option>)}
+          </select>
+        )}
         {/*
           THE RETURN-MEASURE PICKER, in place of the Absolute/CAGR toggle. The
           guard still lives in `holdingReturn` and not here: `auto` and CAGR
@@ -1237,8 +1329,21 @@ export function PortfolioMonitor() {
                     : LIVE_CELL;
                   return (
                     <Fragment key={r.key}>
+                      {/* THE SECURITY AXIS'S OWN HANDLES. A structural claim must
+                          not depend on prose — and on this axis it cannot depend on
+                          ROW TEXT either: the "N entities" pill is an `inline-flex`,
+                          so its chevron is a flex ITEM and `innerText` breaks the
+                          line inside that cell. 130 of this axis's 214 rows carry
+                          that pill, so a row-based text check here would be reading
+                          fragments. These attributes — and `nameCell`, whose
+                          whitespace the sweep collapses — are what the invariants
+                          read instead. */}
                       <tr className="hover:bg-ink-700/40"
                         data-bucket={r.bucket}
+                        {...(r.venues ? {
+                          "data-security-key": r.securityKey,
+                          "data-venues": String(r.venues.length),
+                        } : {})}
                         {...(m ? {
                           "data-mandate": m.name,
                           "data-manager": m.manager,
@@ -1292,7 +1397,16 @@ export function PortfolioMonitor() {
                               )}
                             </div>
                           ) : (
-                            <span className="font-medium text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></span>
+                            <span className="font-medium text-slate-100">
+                              {r.venues && r.venues.length > 1 && (
+                                <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
+                                  title={isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} accounts — show which`}
+                                  className="-ml-0.5 mr-1 rounded align-middle text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
+                                  <ChevronRight className={`inline h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                                </button>
+                              )}
+                              <StockLink securityKey={r.securityKey} name={r.security} />
+                            </span>
                           )}
                         </td>
                         <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
@@ -1523,7 +1637,111 @@ export function PortfolioMonitor() {
                           </td>
                         </tr>
                       )}
-                      {!m && multi && isOpen && (
+                      {/* ── THROUGH WHAT MEANS THIS NAME IS HELD ────────────
+                          The security axis's drill-down, in place. It supersedes
+                          the by-entity table below on this axis: that one groups
+                          by MEMBER and lumps the routes into a set, which cannot
+                          answer "held how" for a name three mandates hold for one
+                          member. Every account is listed AS PRINTED — the row's
+                          own value counts each dedupeGroup once — so the share
+                          column divides by the printed sum and the footer names
+                          the gap when the two differ. */}
+                      {!m && isOpen && r.venues && r.venues.length > 1 && (() => {
+                        const vs = r.venues;
+                        const printed = sum(vs.map((v) => v.marketValue));
+                        const gap = printed - r.marketValue;
+                        /**
+                         * THE ROUTE SPLIT, IN WORDS, FIRST.
+                         *
+                         *   "Then I drill down, then you tell me direct you hold
+                         *    X Cr through direct equity, and then you hold
+                         *    another Y crores through these five funds."
+                         *
+                         * That is a sentence about ROUTES, not about accounts, so
+                         * it is answered before the per-account table rather than
+                         * left to be assembled by eye from a Held via column. The
+                         * table below still carries every statement as printed.
+                         */
+                        const byRoute = [...vs.reduce((m, v) => {
+                          const e = m.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
+                          e.mv += v.marketValue; e.n += 1;
+                          return m.set(v.route, e);
+                        }, new Map()).values()].sort((a, b) => b.mv - a.mv);
+                        return (
+                        <tr className="bg-ink-900/60">
+                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-400">
+                              <span className="font-medium text-slate-300">{r.security}</span> —
+                              {" "}<span className="font-medium text-slate-200">{money(r.marketValue)}</span>, {(r.weight * 100).toFixed(2)}% of the book, held{" "}
+                              {byRoute.map((g, i) => (
+                                <span key={g.route}>
+                                  {i > 0 && (i === byRoute.length - 1 ? " and " : ", ")}
+                                  <span className="font-medium text-slate-200">{money(g.mv)}</span> through{" "}
+                                  {g.n === 1 ? "" : `${g.n} `}{g.route}{g.n === 1 ? "" : "s"}
+                                </span>
+                              ))}.
+                            </p>
+                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                              The row above clubs them into one holding; each line here is one statement as printed.
+                            </p>
+                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                              <table className="min-w-full text-[12px]">
+                                <thead>
+                                  <tr className="border-b border-ink-700/70">
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Vehicle</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Owning entity</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">% of holding</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-ink-700/50">
+                                  {vs.map((v) => (
+                                    <tr key={v.accountId} data-venue={v.route}>
+                                      <td className="px-3 py-1.5 text-slate-300 whitespace-nowrap">{v.route}</td>
+                                      <td className="px-3 py-1.5 text-slate-200">
+                                        {v.isMandate
+                                          ? <Link to={`/mandate/${encodeURIComponent(v.accountId)}`}
+                                              title={`Account ${v.accountNo} — open the mandate drill-down`}
+                                              className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                              {v.vehicle}
+                                            </Link>
+                                          : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-slate-400">{v.owner}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(v.quantity)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(v.marketValue, { compact: true })}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400">{(v.share * 100).toFixed(1)}%</td>
+                                      <td className={`px-3 py-1.5 text-right mono ${v.costNA ? "text-slate-500" : changeColor(v.unrealizedPnL)}`}>
+                                        {v.costNA
+                                          ? <AbsentCell reason="this account's statement reports no cost for the holding — a depository holds the shares and did not buy them" />
+                                          : fmtFromBase(v.unrealizedPnL, { compact: true, sign: true })}
+                                      </td>
+                                      <td className={`px-3 py-1.5 text-right mono ${v.costNA ? "text-slate-500" : changeColor(v.returnPct)}`}>
+                                        {v.costNA
+                                          ? <AbsentCell reason="no cost on this statement, so there is nothing to strike a return against" />
+                                          : fmtPct(v.returnPct, { sign: true })}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {gap > 1 && (
+                              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-400/80">
+                                These lines add to {fmtFromBase(printed, { compact: true })} because this holding is reported
+                                under two accounts; the row above counts it once at {fmtFromBase(r.marketValue, { compact: true })}
+                                {" "}(a {fmtFromBase(gap, { compact: true })} overlap).
+                              </p>
+                            )}
+                          </td>
+                        </tr>
+                        );
+                      })()}
+                      {!m && !r.venues && multi && isOpen && (
                         <tr className="bg-ink-900/60">
                           <td colSpan={13} className="px-3 pb-3 pt-1">
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
@@ -1815,6 +2033,41 @@ export function PortfolioMonitor() {
               removed at the family's request. The fact it stated survives per row:
               a position with no cost renders an AbsentCell in the Invested and
               Unrealised P&L columns, each carrying the reason in its title. */}
+          {/*
+            ── WHAT THE SECURITY AXIS CAN CLUB, AND WHAT IT CANNOT ─────────────
+
+            The request was to club "every single investment direct/PMS/ETF/AIF".
+            Two of those four can be clubbed and two cannot, and the difference
+            is a fact about the CORPUS rather than a choice:
+
+            A share is clubbed however it was arrived at — the family's own demat
+            and a discretionary manager's mandate both REPORT THE SHARE, so both
+            are positions in this book and both carry the same `securityKey`.
+
+            A share held INSIDE a fund cannot be. An AIF folio, a mutual-fund
+            scheme and an ETF are each ONE PURCHASE of a manager's portfolio, and
+            no statement in this book reports the companies inside the folios the
+            family holds. So the fund is its own row, at its own value, and the
+            page says so rather than drawing a look-through nobody published —
+            which is the fabrication this whole book exists to prevent.
+
+            Counted rather than claimed, so a drop that changes either side moves
+            the sentence on its own.
+          */}
+          {bySecurity && (
+            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">One row per security, ranked by exposure.</span> A name is
+              clubbed across every account that holds it — the family&rsquo;s own demat and a manager&rsquo;s mandate
+              alike, because both report the share itself
+              {clubbedCount > 0 && <>; {clubbedCount} of {rows.length} names here are held through more than one account</>}.
+              {fundRowMV > 1 && (
+                <> A FUND IS ITS OWN ROW and is not dissolved into the companies inside it: {fundRowCount} rows
+                  worth {money(fundRowMV)} are AIF folios, mutual-fund schemes and ETFs, each ONE purchase of a
+                  manager&rsquo;s portfolio, and no statement in this book reports what those managers hold for these
+                  folios. Their scheme portfolio disclosures would be needed to look through them.</>
+              )}
+            </p>
+          )}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
@@ -1888,6 +2141,46 @@ export function PortfolioMonitor() {
 
 // Roll the constituent positions of one consolidated security up to one row per
 // owning entity, so an expanded row shows exactly who holds it and how much.
+/**
+ * HOW A CLUBBED SECURITY ROW IS ACTUALLY HELD, one row per account.
+ *
+ * NOT DEDUPED, deliberately. The row's own market value counts each
+ * `dedupeGroup` once; this lists every statement as printed — §"a consolidated
+ * figure counts each dedupeGroup ONCE; a per-account or per-owner figure does
+ * not". `share` therefore divides by the RAW sum of these venues so the column
+ * adds to 100%, and the expansion names the gap when the two differ rather than
+ * letting a reader divide one printed cell by another and get a third answer.
+ */
+function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
+  const m = new Map<string, Position[]>();
+  for (const p of ps) (m.get(p.accountId) ?? m.set(p.accountId, []).get(p.accountId)!).push(p);
+  const built: Venue[] = [...m.entries()].map(([accountId, xs]) => {
+    const acc = accIdx.get(accountId);
+    const marketValue = sum(xs.map((x) => x.marketValue));
+    // `sumOrNull` on the cost, as everywhere: a lot whose statement reports none
+    // contributes nothing rather than a zero that would read as free shares.
+    const costBasis = sumOrNull(xs.map((x) => x.costBasis));
+    const costNA = costBasis === null || (costBasis === 0 && marketValue > 0) || xs.some((x) => x.costUnavailable);
+    const pnl = costNA ? null : marketValue - (costBasis as number);
+    return {
+      accountId, accountNo: acc?.accountNo ?? "",
+      // `mandateLabel` is strategy-or-provider, which is the right name for BOTH
+      // a mandate ("Aristos Equity Portfolio") and a demat ("Motilal Oswal demat").
+      vehicle: mandateLabel(acc),
+      owner: ownerOf(accIdx, xs[0]),
+      route: ROUTE_LABEL[holdingRoute(engagementOf(accIdx, xs[0]) || null)],
+      isMandate: heldUnderMandate(accIdx, xs[0]),
+      quantity: sum(xs.map((x) => x.quantity)),
+      marketValue, costBasis, unrealizedPnL: pnl,
+      returnPct: !costNA && pnl !== null && (costBasis as number) > 0 ? (pnl / (costBasis as number)) * 100 : null,
+      costNA, share: 0,
+    };
+  }).sort((a, b) => b.marketValue - a.marketValue);
+  const raw = sum(built.map((v) => v.marketValue));
+  for (const v of built) v.share = raw > 0 ? v.marketValue / raw : 0;
+  return built;
+}
+
 function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
   const m = new Map<string, { entity: string; quantity: number; costs: (number | null)[]; costBasis: number | null; marketValue: number; currentPrice: number | null; costUnavailable: boolean; routes: Set<string> }>();
   for (const x of ps) {
