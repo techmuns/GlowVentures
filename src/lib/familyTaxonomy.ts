@@ -36,6 +36,12 @@
  * ₹480 Cr of this book sits in the three ambiguous classes — so guessing here
  * would misfile most of the money.
  *
+ * DERIVATION FILLS A GAP AND THE REVIEW OVERRIDES IT, which is not a hedge: two
+ * holdings in this book are `Equity` to us and ALTERNATE to the family — an
+ * unlisted company's shares and a preferential WARRANT, both of them private
+ * capital that happens to sit in a depository account. `familyAssetClass`
+ * therefore consults the map before it derives anything.
+ *
  * ── WHERE THESE ASSIGNMENTS COME FROM ───────────────────────────────────────
  *
  * The family supplied their consolidated review workbook (as on 30 June 2026)
@@ -52,6 +58,46 @@
  * agree on all 33 products where both speak, with ZERO disagreements, and all
  * 82 basket-sheet products appear on an asset-class sheet. That check is why
  * this map is committed rather than treated as one reading of a spreadsheet.
+ *
+ * A FOURTH WITNESS, AND IT ONLY EVER FILLS A GAP: the `Private Investments` tab
+ * (corroborated row for row by `Private Equity Excl Pre IPO`) itemises the
+ * aggregate `Private Equity` line the Alternate sheet carries. It is read AFTER
+ * the live sheets and never over them — see the private-equity block below for
+ * the two rows that prove why that order is load-bearing.
+ *
+ * ── AND THE WORKBOOK IS NOW THE TEST, NOT JUST THE SOURCE ───────────────────
+ *
+ * `familyTaxonomy.test.ts` reads the committed workbook and checks EVERY entry
+ * below against the row it names: the product must exist, and the basket and
+ * asset class must both agree wherever the workbook states them. Measured today
+ * that is 57 entries, with 57 baskets and 57 classes witnessed, ZERO mismatches.
+ * It was written because the audit that produced it found a defect nothing else
+ * could see — a `reviewProduct` reading "Motilal Oswal Founders Fund  II" with
+ * a DOUBLE SPACE, which matches no row in the family's document. The
+ * classification was right and the citation was unverifiable, and a citation
+ * nobody can follow is exactly what this field exists to prevent.
+ *
+ * ── WHAT THE REVIEW NAMES AND THIS MAP DELIBERATELY DOES NOT JOIN ───────────
+ *
+ * Each of these is a near miss LISTED rather than committed, which is the rule
+ * `shared/nameMatch.mjs` already holds for the register reconciler:
+ *
+ *   - `EMA Preferred Shares` (₹0.46 Cr, Private Equity) against this book's
+ *     `EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/` (₹0.37 Cr). PREFERENCE
+ *     shares are not the EQUITY, and `CLAUDE.md` already names this exact pair
+ *     as a near miss a human must commit. The equity falls to the direct-stock
+ *     rule below, which is where the review's own `Direct Equity - Non MO`
+ *     block — coded TT — puts the demat's direct holdings anyway.
+ *   - `National Stock Exchange` (Stable Growth / Equity, ₹41.5 Cr on 200,000
+ *     shares). This book's ICICI NSDL statement carries 125,000 of them at an
+ *     implied Re 1.00 — a PAR row, so it carries its quantity and NO market
+ *     value and is not in `BOOK_POSITIONS` at all. An entry for it would match
+ *     no holding and fail this map's own no-dead-entries check. The answer is
+ *     recorded here for the drop that first values it.
+ *   - `SKS Fastener`, `Incred Holdings`, `Swapeco Solutions`, `Aksum Trademart`,
+ *     `EDUGORILLA` and `Blue Ashva India Pool Account` are private investments
+ *     this book carries no valued position for, by the same par/quantity-only
+ *     rule. Nothing to classify until a statement values them.
  *
  * ── AND WHY IT IS A HAND-VERIFIED MAP AND NOT A NAME MATCHER ────────────────
  *
@@ -137,7 +183,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
   "sec:buoyant-opportunities-strategy-category-iii-class-a4":
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Buoyant Opportunities Portfolio AIF" },
   "sec:motilal-oswal-founders-fund-series-ii-class-g1":
-    { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Motilal Oswal Founders Fund  II" },
+    { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Motilal Oswal Founders Fund II" },
   "sec:3p-india-equity-fund-1-class-b1":
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "3P India Equity Fund 1" },
   "sec:3p-india-equity-fund-1-class-b2":
@@ -166,6 +212,57 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Transition Venture Capital fund I" },
   "sec:360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887":
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)" },
+
+  // ── THE PRIVATE-EQUITY BLOCK, ITEMISED ON ITS OWN TAB ────────────────────
+  /**
+   * The review's `Private Equity ₹136.16 Cr` is ONE AGGREGATE LINE on the
+   * Alternate sheet, and `CLAUDE.md` already records that the reconciler has to
+   * carry it as a block with no custodian to ask for it. It IS itemised — on the
+   * workbook's own `Private Investments` tab, corroborated row for row by
+   * `Private Equity Excl Pre IPO` — and three of those rows are holdings this
+   * book carries. All three are Entrepreneurial Growth / Alternate, and none of
+   * them appears on any basket sheet, so there is no second answer to weigh.
+   *
+   * THAT TAB FILLS A GAP AND NEVER OVERRIDES, and the workbook itself is why.
+   * Two of its rows — `M/S Grand Continent Hotels` and `Parth Electrical &
+   * Engineering` — also sit on the live `Thematic,Tactical` sheet with real
+   * figures whose share counts tie to this book exactly (262,125 and 59,000),
+   * while their Private Investments rows are ₹0 and Parth's carries the remark
+   * "Listed in Aug'25". The family moved both out of private capital when they
+   * listed. Reading the tab as authoritative would drag them back and refile
+   * ₹5.31 Cr of listed equity as Alternate — so the live sheets win, and the
+   * private tab speaks only where nothing else does.
+   */
+  /**
+   * THE WARRANT — AND WHY THIS JOIN IS LICENSED WHERE A NAME MATCH IS NOT.
+   * `CLAUDE.md` names "a Borosil WARRANT against the Borosil EQUITY" as a join
+   * that must never be made, and this book holds BOTH: 11,495 Borosil Renewables
+   * SHARES inside two PMS mandates, and these 283,018 WARRANTS in the ICICI NSDL
+   * demat. On the name alone they are indistinguishable. On the ARITHMETIC they
+   * are not: the workbook's ₹3,74,99,885 over 283,018 warrants is ₹132.5000 each,
+   * and ₹132.50 × 4 = ₹530.00 — the 25% upfront an Indian preferential warrant
+   * allotment is subscribed at, reproduced to the rupee. The quantity is the
+   * witness, which is the standard `dropDepositoryDuplicates` and `costFor`
+   * already hold a join to. The mandate-held shares belong to their mandate's
+   * own product and never reach this map.
+   */
+  "sec:borosil-renewables-limited-warrants-13ag26":
+    { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Borosil Renewables" },
+  /**
+   * TWO BLUE ASHVA VEHICLES ARE IN THE REVIEW and only one is in this book:
+   * `Blue Ashva Varenya Account` (₹0.02 Cr) and `Blue Ashva India Pool Account`
+   * (₹3.74 Cr). The demat holds BAVF-SER20-C6, whose own name carries VARENYA,
+   * and that distinguishing word is what joins it — matched on "Blue Ashva"
+   * there would have been two candidates and no way to choose between them.
+   */
+  "sec:blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability":
+    { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Blue Ashva Varenya Account" },
+  // `EVEREST FLEET-EQ1/` is the depository's clipping of Everest Fleet Private
+  // Ltd, an unlisted company marked at its Re 1 face value — so it is worth ₹580
+  // here while the review carries the family's ₹4.76 Cr of it under Private
+  // Equity. The classification is of the COMPANY and holds either way.
+  "sec:everest-fleet-eq1":
+    { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Everest Fleet Private Ltd - SIDDHARTH LADSARIYA" },
 
   // ── PMS mandates ─────────────────────────────────────────────────────────
   /**
