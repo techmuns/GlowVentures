@@ -209,6 +209,84 @@ const SECURITY_AXIS_BOOK = (() => {
 })();
 
 /**
+ * ── WHICH NAME THE FUND LOOK-THROUGH IS WALKED ON, AND WHAT IT MUST SAY ─────
+ *
+ *   "Then I drill down, then you tell me direct you hold X Cr through direct
+ *    equity, and then you hold another Y crores through these five funds."
+ *
+ * The second half of that is DERIVED — the AMC disclosed what the FUND holds and
+ * the family's share is its units times that weight — so it must never be summed
+ * into the book, and the figure on screen must be reproducible from the two
+ * sources independently. This is that reproduction: the book's own fund values
+ * times the store's own disclosed weights, joined ISIN-first exactly as the page
+ * joins them, for whichever company carries the largest such exposure.
+ *
+ * A literal would be a second source for a number two generated artefacts
+ * produce between them, and both move on their own schedule.
+ */
+const FUND_EXPOSURE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const dir = new URL("../public/lookthrough/", import.meta.url);
+    const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
+    if (!idx?.schemes) return null;
+
+    // The family's fund holdings, clubbed by securityKey and deduped, as the page does.
+    const seen = new Set();
+    const funds = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Mutual Fund" && p.assetClass !== "ETF") continue;
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      funds.set(p.securityKey, (funds.get(p.securityKey) ?? 0) + p.marketValue);
+    }
+    // Every disclosed equity line of every scheme the store covers, by ISIN.
+    const byIsin = new Map();
+    let covered = 0;
+    for (const [key, mv] of funds) {
+      const m = idx.schemes[key];
+      if (!m) continue;
+      let pf;
+      try { pf = JSON.parse(readFileSync(new URL(`${m.schemecode}.json`, dir), "utf8")); } catch { continue; }
+      covered++;
+      for (const h of pf.equity ?? []) {
+        const i = (h.isin ?? "").trim().toUpperCase();
+        if (!i || !(h.pctAum > 0)) continue;
+        if (!byIsin.has(i)) byIsin.set(i, []);
+        byIsin.get(i).push({ key, value: (mv * h.pctAum) / 100 });
+      }
+    }
+    // The company with the largest derived exposure — that is what gets walked.
+    let best = null;
+    const equities = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Equity" || !p.isin) continue;
+      equities.set(p.securityKey, { key: p.securityKey, isin: p.isin.trim().toUpperCase(), name: p.security });
+    }
+    for (const e of equities.values()) {
+      const hits = byIsin.get(e.isin);
+      if (!hits?.length) continue;
+      const value = hits.reduce((a, x) => a + x.value, 0);
+      if (!best || value > best.value) best = { ...e, value, funds: hits.length };
+    }
+    if (!best) return null;
+    // What the BOOK says this name is worth — each dedupeGroup once, exactly as
+    // the page's clubbed row computes it. The fence is asserted against this: the
+    // row must still print the book's figure, never the book plus the derived
+    // look-through.
+    const seenName = new Set();
+    let bookValue = 0;
+    for (const p of positions) {
+      if (p.securityKey !== best.key) continue;
+      if (p.dedupeGroup) { if (seenName.has(p.dedupeGroup)) continue; seenName.add(p.dedupeGroup); }
+      bookValue += p.marketValue;
+    }
+    return { ...best, covered, bookValue };
+  } catch { return null; }
+})();
+
+/**
  * THE SECTOR THE SWEEP FILTERS ON — the book's own largest, never a literal.
  *
  * The dropdown that used to set it is gone at the family's request, and the
@@ -647,6 +725,12 @@ const ROUTES = [
    * prints a sector of its own — on the category axis a mandate row spans many
    * and correctly prints an em dash, which would make the claim untestable.
    */
+  /**
+   * ...AND THE DRILL-DOWN THE FEEDBACK ASKED FOR, EXPANDED. The walk opens the
+   * one name carrying the largest fund look-through, because that is the row on
+   * which the derived figure can be reproduced and the fence around it tested.
+   */
+  ["monitor-security-drill", "/monitor?group=security"],
   ["monitor-sector", FILTER_SECTOR ? `/monitor?group=security&sector=${encodeURIComponent(FILTER_SECTOR)}` : "/monitor?group=security"],
   /**
    * ...AND THE SAME HOLDINGS SLICED THE FAMILY'S OTHER TWO WAYS.
@@ -4766,6 +4850,78 @@ const INVARIANTS = {
     }],
   ],
   /**
+   * ── "AND ANOTHER Y CRORES THROUGH THESE FIVE FUNDS" ────────────────────────
+   *
+   * The customer's own sentence, and the half the book cannot answer on its own:
+   * a mutual fund reports what THE FUND holds, so the family's share of a company
+   * inside it is DERIVED. These assert the figure is right, that it is fenced,
+   * and that the fence is stated where a reader forms the belief.
+   */
+  "monitor-security-drill": [
+    ["the drill-down states the route split before the per-account table",
+      (t) => /held\s+₹[\d.,]+\s*(Cr|L|K)?\s+through/i.test(t)],
+    /**
+     * THE DERIVED TOTAL IS REPRODUCED FROM THE TWO SOURCES INDEPENDENTLY — the
+     * book's own fund values times the store's own disclosed weights. A page
+     * that mis-joined, double-counted a scheme or dropped one lands elsewhere.
+     */
+    ["the fund look-through reproduces the book × disclosure arithmetic", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!FUND_EXPOSURE) return { notChecked: "no name in this book is disclosed inside a fund this store covers" };
+      if (!fe) return { notChecked: "the look-through panel was not on screen on this run" };
+      if (fe.state === "loading") return { notChecked: "the store had not answered when the page was read" };
+      if (fe.state === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
+      if (fe.rows !== FUND_EXPOSURE.funds) return false;
+      const printed = moneyCell(fe.total);
+      // The page prints one decimal in Cr, so the bound is that rounding and
+      // nothing wider — a tolerance fitted to the figures would explain anything.
+      return Number.isFinite(printed) && Math.abs(printed - FUND_EXPOSURE.value / 1e7) <= 0.05;
+    }],
+    /**
+     * ...AND IT IS NEVER ADDED TO THE HOLDING. The row's own market value is the
+     * book's; the look-through sits beside it. If the two were ever summed the
+     * page would state a figure no statement supports — the double count this
+     * whole store is fenced against.
+     */
+    ["the derived figure is not summed into the row it opened from", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      const fe = ctx?.fundExposure;
+      if (!FUND_EXPOSURE || !fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      const row = rows?.find((r) => r.securityKey === FUND_EXPOSURE.key);
+      if (!row) return { notChecked: "the walked row was not captured on this run" };
+      const mv = moneyCell(row.cells?.[COL.mv]);
+      const derived = moneyCell(fe.total);
+      if (!Number.isFinite(mv) || !Number.isFinite(derived)) return false;
+      const book = FUND_EXPOSURE.bookValue / 1e7;
+      // THE ROW STILL PRINTS THE BOOK'S OWN FIGURE. Summing the look-through in
+      // would land it at `book + derived`, and this book's derived share of the
+      // walked name is large enough that the two cannot be confused.
+      if (!(Math.abs(mv - book) <= 0.05)) return false;
+      // ...and the check can only bite while the two are actually distinguishable.
+      // `derived` is already in crore, as `moneyCell` returns it.
+      return derived > 0 ? Math.abs(book + derived - mv) > 0.05 : true;
+    }],
+    ["...and it says it is derived, and not in the book's total",
+      (t, ctx) => {
+        const fe = ctx?.fundExposure;
+        if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
+        return /DERIVED, not a position/i.test(fe.text)
+          && /not in the figures above and not in the book/i.test(fe.text);
+      }],
+    /** ...and names what it cannot see: the equity-only limit and the AIF block. */
+    ["...and names the vehicles it cannot look through", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
+      return /EQUITY ONLY/i.test(fe.text) && /AIF folio/i.test(fe.text);
+    }],
+    /** Every match is EXACT — ISIN, or this book's own key. Never a fuzzy tier. */
+    ["every disclosed line was matched exactly, never by resemblance", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      return fe.via.length > 0 && fe.via.every((v) => v === "isin" || v === "name");
+    }],
+  ],
+  /**
    * ── THE SECTOR FILTER SURVIVES ITS DROPDOWN ────────────────────────────────
    *
    * The control went at the family's request; the filter stayed in the URL. This
@@ -5946,6 +6102,22 @@ for (const theme of THEMES) {
           };
         }, intro);
       }
+      /**
+       * EXPAND THE ONE NAME THE FUND LOOK-THROUGH HAS MOST TO SAY ABOUT.
+       *
+       * Selected by `data-security-key` off the book, never by rendered text: a
+       * row is found by what it IS. The wait is long because the expansion
+       * FETCHES — up to 21 scheme files — and asserting on a panel that is still
+       * loading would report an absence that is really a race.
+       */
+      if (name === "monitor-security-drill" && FUND_EXPOSURE) {
+        const row = page.locator(`tr[data-security-key="${FUND_EXPOSURE.key}"] button`).first();
+        if (await row.count()) {
+          await row.click();
+          await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+      }
       if (name === "monitor-txns" || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
@@ -6429,6 +6601,23 @@ for (const theme of THEMES) {
         }
         return out;
       });
+      /**
+       * THE FUND LOOK-THROUGH PANEL, off its own attributes. Its three states are
+       * distinct on purpose — loading, a store that did not answer, and a store
+       * that answered with nothing are three different facts, and only the last
+       * is a statement about the holding.
+       */
+      const fundExposure = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector("[data-fund-exposure]");
+        if (!box) return null;
+        return {
+          state: box.getAttribute("data-fund-exposure"),
+          total: (document.querySelector("[data-fund-exposure-total]")?.textContent ?? "").trim(),
+          rows: [...document.querySelectorAll("[data-fund-exposure-row]")].length,
+          via: [...document.querySelectorAll("[data-fund-exposure-row]")].map((t) => t.getAttribute("data-fund-exposure-row")),
+          text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
+        };
+      });
       const selectLabels = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
       const sectionRows = FAST ? null : await page.evaluate(() =>
@@ -6750,7 +6939,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

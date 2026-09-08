@@ -7,6 +7,8 @@ import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
+import { FundExposure } from "@/components/FundExposure";
+import { canHaveLookthrough, type HeldFund } from "@/lib/lookthrough";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle,
@@ -189,6 +191,13 @@ type Row = {
    * mandate-held share is inside its mandate's row rather than clubbed at all.
    */
   venues?: Venue[];
+  /**
+   * The ISIN, where a statement printed one. Carried on the SECURITY axis for
+   * the fund look-through's join, which is ISIN-first and exact-or-nothing —
+   * 43 of this book's equities have one and it is the only tier that reliably
+   * bridges a depository's "SBI - EQ" to an AMC's "State Bank of India".
+   */
+  isin?: string | null;
 };
 type SortKey = "security" | "marketValue" | "returnPct" | "unrealizedPnL" | "weight" | "dayChange";
 
@@ -703,6 +712,7 @@ export function PortfolioMonitor() {
           liveMV: live ? mv : 0,
           realizedKeys: [ps[0].securityKey],
           venues: bySecurity ? venuesOf(ps, accIdx) : undefined,
+          isin: ps.find((x) => x.isin)?.isin ?? null,
         };
       });
     } else {
@@ -910,6 +920,28 @@ export function PortfolioMonitor() {
    * than one account, and how much of the table is a fund whose constituents this
    * book does not carry. Zero on every other axis, where the caption is not drawn.
    */
+  /**
+   * THE FUND HOLDINGS THE LOOK-THROUGH READS, and the AIF block it cannot.
+   *
+   * Struck over `consolidated` — each dedupeGroup once — because this feeds a
+   * DERIVED exposure and a fund counted twice would double the share derived
+   * from it. Clubbed by `securityKey` so one scheme held by three members is one
+   * fund with one disclosure, at the value the book carries for all of them.
+   */
+  const heldFunds = useMemo<HeldFund[]>(() => {
+    const m = new Map<string, HeldFund>();
+    for (const p of consolidated) {
+      if (!canHaveLookthrough(p)) continue;
+      const e = m.get(p.securityKey) ?? { securityKey: p.securityKey, name: p.security, marketValue: 0 };
+      e.marketValue += p.marketValue;
+      m.set(p.securityKey, e);
+    }
+    return [...m.values()];
+  }, [consolidated]);
+  const aifBlock = useMemo(() => {
+    const ps = consolidated.filter((p) => p.assetClass === "AIF");
+    return { count: new Set(ps.map((p) => p.securityKey)).size, value: sum(ps.map((p) => p.marketValue)) };
+  }, [consolidated]);
   const clubbedCount = useMemo(() => rows.filter((r) => (r.venues?.length ?? 0) > 1).length, [rows]);
   const fundRows = useMemo(() => rows.filter((r) => r.kind === "security" && isFundVehicle(r)), [rows]);
   const fundRowCount = fundRows.length;
@@ -1398,9 +1430,9 @@ export function PortfolioMonitor() {
                             </div>
                           ) : (
                             <span className="font-medium text-slate-100">
-                              {r.venues && r.venues.length > 1 && (
+                              {r.venues && (
                                 <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
-                                  title={isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} accounts — show which`}
+                                  title={isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which, and what your funds hold of it`}
                                   className="-ml-0.5 mr-1 rounded align-middle text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
                                   <ChevronRight className={`inline h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                                 </button>
@@ -1646,7 +1678,7 @@ export function PortfolioMonitor() {
                           own value counts each dedupeGroup once — so the share
                           column divides by the printed sum and the footer names
                           the gap when the two differ. */}
-                      {!m && isOpen && r.venues && r.venues.length > 1 && (() => {
+                      {!m && isOpen && r.venues && r.venues.length > 0 && (() => {
                         const vs = r.venues;
                         const printed = sum(vs.map((v) => v.marketValue));
                         const gap = printed - r.marketValue;
@@ -1736,6 +1768,23 @@ export function PortfolioMonitor() {
                                 under two accounts; the row above counts it once at {fmtFromBase(r.marketValue, { compact: true })}
                                 {" "}(a {fmtFromBase(gap, { compact: true })} overlap).
                               </p>
+                            )}
+                            {/* ...AND THE SECOND HALF OF THE QUESTION: what the
+                                family's FUNDS hold of this name. Derived, fenced,
+                                and never added to anything above — see the
+                                component's own header. Drawn for a COMPANY SHARE
+                                only: a disclosure carries the equity section
+                                alone, so it can never speak for cash, a bond or a
+                                fund row (and a scheme holding itself is not a
+                                look-through anyway). */}
+                            {r.assetClass === "Equity" && (
+                              <FundExposure
+                                target={{ securityKey: r.securityKey, isin: r.isin }}
+                                funds={heldFunds}
+                                money={money}
+                                aifCount={aifBlock.count}
+                                aifValue={aifBlock.value}
+                              />
                             )}
                           </td>
                         </tr>

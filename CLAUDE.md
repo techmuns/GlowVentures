@@ -4694,6 +4694,56 @@ account is the unit. **The venues are NOT deduped**: the row's value counts each
 (§"consolidated counts once, per-account does not"), so `share` divides by the
 PRINTED sum and the expansion names the gap when the two differ.
 
+#### "…and another Y crores through these five funds" — the inverse look-through
+
+*"If today I want to know that my public market portfolio is a thousand crores,
+how much HDFC Bank do I hold in my 1,000 crores? … Then you tell me it is so much
+AUM and this much percentage of the portfolio. Then I drill down, then you tell me
+direct you hold X Cr through direct equity, and then you hold another Y crores
+through these five funds."*
+
+**THE SENTENCE HAS TWO HALVES AND THEY ARE DIFFERENT KINDS OF FIGURE.** The first
+is the book's own: a direct holding and a PMS mandate both REPORT THE SHARE, so
+the clubbed row and its route-split line answer it out of `BOOK_POSITIONS`. The
+second is not reported about this family at all — the AMC disclosed what the FUND
+holds, and the family's share is DERIVED from the units they own.
+
+`loadFundExposure` in `lookthrough.ts` answers the inverse of what that file
+already did: `loadLookthrough` asks *what does this fund hold*, this asks *which
+of my funds hold this name*. Measured on this book: **ICICI Bank ₹2.08 Cr across
+8 of the 21 readable schemes, SBI ₹1.25 Cr across 10** — on top of whatever is
+held directly, and 17 of the 43 ISIN-bearing equities carry some.
+
+**THE JOIN IS EXACT OR IT DOES NOT HAPPEN.** ISIN first, then this book's own
+`securityKeyOf` over the disclosed name. **There is deliberately no fuzzy tier** —
+the same refusal `shared/nameMatch.mjs` records, where a token-overlap rule
+matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES`. Inventing an exposure to
+a company the family does not hold is worse than reporting none. In practice ISIN
+carries almost all of it: the depository prints `SBI - EQ` where an AMC files
+`State Bank of India`, and no name tier bridges that.
+
+**IT IS FENCED FOUR WAYS AND EVERY ONE IS ON SCREEN**, because a derived figure
+beside a measured one is exactly where this book has been bitten:
+
+- it is **never added** to the row, the footer or any book total — the fund's own
+  value already stands for it in NAV, so summing both counts the same money
+  twice. `check:pages` asserts the row still prints the BOOK's figure, verified by
+  reintroducing the double count;
+- it says **DERIVED, not a position**, in words rather than in a tooltip;
+- it is **equity-only and partial**, and says so with counts: N of M fund
+  holdings read, the schemes it could not read named, and **the AIF folios named
+  as publishing nothing this book can join at all**;
+- the disclosure's **own as-of date** rides on every row, because a monthly
+  filing and a statement mark are dated differently.
+
+**AND ITS THREE STATES ARE DISTINCT.** Still loading says so; a store that did not
+answer is a fact about the FETCH and is worded as one; only a store that answered
+with nothing says the funds do not hold this name. Collapsing those is the failure
+Stage 10r records on Today's movers, arriving through a fetch instead of a feed.
+
+**IT LOADS ONLY WHEN A ROW IS OPENED**, and the scheme files are memoised, so a
+table of 214 rows fetches nothing until a reader asks about one name.
+
 #### The sector dropdown is gone and the sector filter is not
 
 The same treatment the Holdings basis switch got in Stage 10q. Pinning the value
