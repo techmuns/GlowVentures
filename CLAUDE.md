@@ -4888,10 +4888,11 @@ seven fire.
 *"remove the book performance section. daily movers/losers should comprise of
 direct equity holdings only. remove the highlighted text from ui."*
 
-*(The ETFs have since come BACK to this card, at the family's request — see
-Stage 10ad. What stands from this section is the mandate half, which is
-unchanged: a share a discretionary manager picked is still not in the movers
-list. The scope is a tab now, and the default is stocks and ETFs together.)*
+*(The ETFs came BACK to this card at the family's request in Stage 10ad and have
+gone again in **Stage 10ai**, along with the tab group that carried them — so THIS
+section's set is the one that stands today, exactly as written: direct equity, and
+never a share a discretionary manager picked. Read 10ad for what the tabs were and
+10ai for why they went; nothing in the paragraphs below has moved.)*
 
 **THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
 `DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
@@ -5911,6 +5912,12 @@ half-right once already.
 
 #### 1. *"ETFs can be a part of stocks… it should actually be stocks and ETFs. Basically, or else… separate tabs, stocks… ETF… mutual fund."*
 
+***THIS HALF IS SUPERSEDED — the selector and all four scopes are REMOVED, see
+Stage 10ai.** It is kept because the reasoning is what a future session needs
+before adding a scope control back: which axis a tab may key on, why an ETF held
+inside a mandate is not in the ETF set, and that every caption has to move with
+the set or it widens. Half 2, the allocation axes, is untouched and live.*
+
 **THE CARD'S OWN HEADER COMMENT HAS QUOTED THE ANSWER SINCE THE DAY IT WAS
 WRITTEN.** The request that built Today's movers was *"MY STOCKS AND ETFS are up,
 Sensex is down this much, Nifty"*; Stage 10t then narrowed the card to
@@ -6231,6 +6238,81 @@ citation, Carnelian refiled as Thematic & Tactical, the private-equity tab read
 first, the asset-class sheets read from the wrong column (which fired the
 can't-pass-by-matching-nothing gate at `57/5 of 57`), and the workbook moved out
 from under the suite.
+
+### Stage 10ai — THE MOVERS SELECTOR GOES, AND THE SET GOES BACK TO DIRECT EQUITY
+
+*"remove these stocks etf mutual funds selectors for this top movers section… we
+will only show direct equity as default."*
+
+Stage 10ad put four tabs on Today's movers and opened it on stocks and ETFs
+together; the family have now asked for the selector to go and the card to cover
+**Direct Equity alone**. That is the Stage 10t set exactly — `DIRECT_EQUITY_BUCKET`,
+shares the family bought in its own demat or broking account — so the change is a
+narrowing back to a set this file has already argued for, not a new axis.
+
+**THE OTHER THREE SCOPES ARE DELETED, NOT LEFT REACHABLE BY URL, AND THAT IS A
+DEPARTURE WORTH STATING.** The Holdings basis switch (Stage 10q) and the sector
+dropdown (Stage 10ah) both kept their param when their control went, and this file
+records the reason each time: *pinning the flag to a literal would leave every one
+of those branches unreachable* — the by-entity build is threaded through fifteen
+sites, the sector filter through the weight denominator and the transactions tape.
+**Nothing here is in that position.** The ETF and Mutual-fund scopes were created
+in 10ad to be tabs and have no other caller, and one declared scope leaves no
+branch behind — so the rule that applies is the other one this repo keeps, the one
+that took `exportDeck.ts` out with the Review deck button: a thing with exactly one
+caller goes with its caller, rather than sitting exported and looking load-bearing.
+
+**EVERY CAPTION STILL READS THE SCOPE RATHER THAN A LITERAL.** The heading, the tile
+label, the coverage line, the index sentence and the excluded footer are five
+statements about which holdings the figure covers. Spelling "Direct equity" into
+each is five places for one of them to be reworded and start describing a set the
+card does not show — the caption-that-widens failure the Capital invested tile
+already cost this book once — so `SCOPE` is one constant and all five read it.
+
+**WHAT THE NARROWING LEAVES OUT IS STILL NAMED, AND THE ETFs JOIN THAT LIST.** The
+footer counts the buckets that moved today and are not in the card, over the
+holdings carrying a live day change: the PMS mandates as before, and now three ETFs
+worth ₹24.6 Cr. A bucket dropped from a card without being named is a scope change
+a reader cannot see, and the ETFs leaving is precisely this change.
+
+**AND THE MUTUAL-FUND CARVE-OUT WENT WITH ITS TAB.** `CANNOT_BE_PRICED` existed to
+say that a scheme has no NSE trading symbol and can NEVER be priced intraday — a
+fact about the INSTRUMENT rather than about the feed, which stops a reader hunting
+a quote-feed fix that cannot exist. With no fund in the set it had no reachable
+branch, so it is deleted and the reasoning is recorded in the component's own
+comment for the day a scope returns.
+
+**THE REMOVAL IS ASSERTED, AND THE OLD CHECK COULD NOT HAVE ASSERTED IT.** Both
+scope invariants returned `notChecked` when they found no tabs — so deleting the
+tab group would have reported a CLEAN sweep with an unchecked line, which is the
+abstention-as-a-pass failure this file already records on the facet toggle. They
+are FAILURES now when the harness captured the card's controls and found a selector,
+and abstain only on a `FAST` run that captured nothing at all — the `null` is what
+tells that apart from an empty group. `cio-movers-etf` and `cio-movers-mf` are gone
+with the tabs: `?movers=` is no longer read, so walking it would walk the default
+page twice and report a filter as working because the URL was ignored.
+
+**AND THE SET IS CHECKED ON A COUNT, WHICH IS THE HALF A RENAMED HEADING PASSES.**
+Every `cio-live` fixture price is the mark × 1.10, so nothing falls and the gainer
+count IS the priced size of the scope — and the three sets are far enough apart that
+none can be produced by another's filter: direct equity, direct equity PLUS the three
+ETFs, and the whole book's 160-odd priceable names. A card that kept the old filter
+and merely renamed itself lands on the second. **The expectation is DERIVED from
+`glowData.ts` on every run and never typed here**, which is why this paragraph states
+the relation rather than the numbers: a figure copied into prose does not regenerate.
+The check also ABSTAINS WITH A REASON on a drop where no ETF is priceable, because
+the two sets would then be identical and a passing count would prove nothing.
+
+(For the record, measured on this book: Direct Equity is **37 holdings, 37 names,
+₹94.9 Cr**, of which **33 names and ₹82.3 Cr** resolve an NSE symbol at all; the ETFs
+are **3 names, ₹24.6 Cr**. Those are the book's own figures, and the tile's coverage
+line prints whatever the live feed actually priced of them.)
+
+Three bugs were reintroduced and each fired exactly its own checks: the ETFs left
+the tabs but not the SET (two, from opposite ends — the gainer count and the
+excluded footer), the selector came back (one on each route), and the caption kept
+saying "Stocks and ETFs" over the narrowed set (three). Full sweep: 134 combinations
+clean.
 
 ### Stage 10ag — WHAT THE FAMILY DID, AND WHAT EACH TRANCHE OF IT EARNED
 
