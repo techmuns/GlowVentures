@@ -394,15 +394,28 @@ export function MandateHoldings() {
             account in full.
           </p>
         </Card>
-        {/* AND THE MANAGER'S DEALING BELONGS HERE TOO, ON A PAGE THAT IS NOT A
-            MANDATE. Buoyant Capital 103473 is an AIF folio — this branch — and
-            it is one of the twelve accounts in this book that DOES issue a
-            transaction statement. Rendering this card only on the mandate
-            branch would have hidden a manager's whole dealing record behind a
-            routing decision about what the account is called, which is the
-            "reason expired" failure this repo has already paid for once. Where
-            a fund genuinely reports none, the card says so in its own words. */}
-        <ManagerTrades account={account} />
+        {/*
+          NO DEALING CARD ON THIS BRANCH ANY MORE, AND THE REASON IT WAS HERE IS
+          WHY IT COULD GO.
+
+          It was added so Buoyant Capital 103473 — an AIF folio, so this branch,
+          and the ONE non-mandate account in this book that issues a transaction
+          statement — would not have its dealing record hidden behind a routing
+          decision about what the account is called. What reached this branch was
+          the Transactions card's own link, and that link is gone: seven of its
+          ten rows are fund folios, and it invited a reader into a page with
+          nothing on it.
+
+          MEASURED BEFORE REMOVING IT: Buoyant is not a row on that card at all
+          (it publishes no dated capital record), so this card was never the way
+          into its dealing; the By manager tab is, and it covers all ten accounts
+          whose statements the tape reads. The other six fund folios reaching
+          this branch report no dealing whatsoever, so the card was an empty box
+          for every one of them — which is what the family pointed at.
+
+          The card stays on the MANDATE branch below, where it is reached from
+          the holdings tables and where nine accounts actually fill it.
+        */}
       </div>
     );
   }
@@ -722,32 +735,17 @@ export function MandateHoldings() {
  * says. `rollup` is reused rather than reimplemented, so this table and the
  * Transactions card cannot disagree about what a manager did.
  *
- * ── AND AN AIF HONESTLY HAS NOTHING HERE ────────────────────────────────────
+ * ── A MANDATE ONLY, NOW, AND THE DEAD BRANCH WENT WITH THE CALLER ───────────
  *
- * A PMS reports every share it holds for the family, so its dealing is data
- * this book actually has. A fund UNIT is one purchase of somebody else's
- * portfolio: the family owns units, the fund owns the shares, and no statement
- * in this drop reports a fund's own dealing. That is a permanent absence rather
- * than a feed that is down, and it is stated as one — the same asymmetry the
- * holdings drill-down already draws between a mandate and a fund.
+ * This carried a second set of words for a FUND folio, because it was rendered
+ * on that branch too. It is not any more (see the note where that call used to
+ * be), so `holdingRoute(...) === "mandate"` was true at the one remaining call
+ * site every time it was asked — a branch that cannot be reached, wearing a
+ * confident explanation, which is exactly how a future session "fixes" a rule
+ * that was never broken. The words for the fund case are recorded in that note
+ * rather than left standing here as code nothing runs.
  */
 function ManagerTrades({ account }: { account: Account }) {
-  /**
-   * THE TITLE HAS TO DESCRIBE WHAT IS UNDER IT, AND ON A FUND IT IS NOT THE
-   * MANAGER'S DEALING.
-   *
-   * A PMS transaction statement prints the shares the manager bought and sold
-   * for the family. Buoyant's AIF folio prints something else entirely under
-   * the same report type: "Buoyant Opportunities Strategy — Class A4, ₹25 Cr" —
-   * the FAMILY subscribing for units. Both are dated rows on a transaction
-   * statement; only one of them is a manager trading.
-   *
-   * Headed "What the manager traded", the second reads as Buoyant having bought
-   * ₹25 Cr of its own strategy, which is not what happened. So the route picks
-   * the words, exactly as `holdingBucket` picks a section heading — the caption
-   * failure this book has already paid for twice, arriving through a card title.
-   */
-  const isMandate = holdingRoute(account.engagement) === "mandate";
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[]>([]);
@@ -774,7 +772,7 @@ function ManagerTrades({ account }: { account: Account }) {
   const instruments = groups[0]?.instruments ?? [];
 
   return (
-    <Card title={isMandate ? "What the manager traded" : "Dated dealing on this account"}
+    <Card title="What the manager traded"
       subtitle={`${account.provider} · account ${account.accountNo}`}>
       {status === "loading" ? (
         <p className="text-sm text-slate-500">Loading the manager&rsquo;s dated trades…</p>
@@ -783,9 +781,7 @@ function ManagerTrades({ account }: { account: Account }) {
           needs="This table reads the extracted transaction statements from /audit. That request didn't come back — refresh to retry. The archive is served alongside the app, so this is the archive being unreachable rather than your session being stale." />
       ) : !instruments.length ? (
         <AbsentSection what="No dealing is reported for this account"
-          needs={isMandate
-            ? `${account.provider} issues no transaction statement for this account in this drop, so what it bought and sold over the period was never reported here. Its HOLDINGS above are what the statement does carry.`
-            : "A fund unit is one purchase of somebody else's portfolio: the family holds units and the fund holds the shares, and no statement in this drop reports a fund's own dealing. This is a decided absence rather than a feed that is down — the capital the family put INTO this fund is on the Transactions card, under My investments."} />
+          needs={`${account.provider} issues no transaction statement for this account in this drop, so what it bought and sold over the period was never reported here. Its HOLDINGS above are what the statement does carry.`} />
       ) : (
         <>
           <div className="overflow-x-auto rounded-lg border border-ink-700">
@@ -860,16 +856,9 @@ function ManagerTrades({ account }: { account: Account }) {
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
             {instruments.length} {instruments.length === 1 ? "line" : "lines"} over the period this account&rsquo;s
-            statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it.{" "}
-            {isMandate ? (
-              <>These are the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own
-                capital into it is on the Transactions card, under My investments.</>
-            ) : (
-              <>This is a FUND FOLIO, so what its transaction statement prints is the family subscribing for units —
-                not the fund dealing in the companies it owns, which no statement in this drop reports. The units
-                bought here are the same money the Transactions card shows under My investments where that account
-                also publishes a capital record.</>
-            )}
+            statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it. These are
+            the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own capital into it
+            is on the Transactions card, under My investments.
           </p>
         </>
       )}

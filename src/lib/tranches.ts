@@ -305,8 +305,6 @@ export function capitalTotals(groups: CapitalGroup[]) {
     tookOut: groups.reduce((a, g) => a + g.tookOut, 0),
     net: groups.reduce((a, g) => a + g.net, 0),
     value: groups.reduce((a, g) => a + g.value, 0),
-    /** How many rows can state a return — the coverage a caption must print. */
-    measurable: groups.filter((g) => g.returnPct !== null).length,
   };
 }
 
