@@ -133,6 +133,14 @@ body {
   .btn-primary { @apply btn bg-champagne-500 text-ink-950 hover:bg-champagne-400; }
   .btn-ghost { @apply btn border border-ink-600 bg-transparent text-slate-200 hover:bg-ink-700/60; }
   .pill { @apply inline-flex items-center gap-1 rounded-full border border-ink-600 bg-ink-700/60 px-2 py-0.5 text-[11px] font-medium text-slate-300; }
+  /* The small tag beside a return figure (HPR / CAGR / XIRR / …) and in the
+     return-measure picker. One definition, because it renders on every row of
+     the Return column and in three places besides — and it must read clearly in
+     BOTH themes. The old `bg-ink-700/60 text-slate-500` did not: `bg-ink-700/70`
+     had no light remap at all (a dark box on the ivory dropdown), and the /60
+     variant washed the pill out to a near-invisible smudge on the page. This
+     carries explicit colours for each theme so neither can drift. */
+  .ret-tag { @apply rounded px-1 text-[9px] font-semibold tracking-wide; background-color: rgba(148, 163, 184, 0.22); color: #cbd5e1; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -336,6 +344,9 @@ html:not(.dark) .text-slate-200 { color: #26233d; }
 html:not(.dark) .text-slate-300 { color: #3d3a52; }
 html:not(.dark) .text-slate-400 { color: #55516b; }
 html:not(.dark) .text-slate-500 { color: #6b6880; }
+/* The return tag, on the ivory page: a warm tan chip with near-ink text, so the
+   short form reads clearly instead of washing into the background. */
+html:not(.dark) .ret-tag { background-color: #e4ddc9; color: #2c2840; }
 html:not(.dark) .text-slate-600 { color: #7c7891; }
 html:not(.dark) input::placeholder, html:not(.dark) textarea::placeholder { color: #9995ad; }
 

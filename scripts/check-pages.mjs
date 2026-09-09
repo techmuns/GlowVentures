@@ -2358,19 +2358,15 @@ const INVARIANTS = {
       }],
 
     /**
-     * A RETURN IS PUBLISHED ONLY WHERE THE CONTRIBUTION LIST PROVABLY REACHES
-     * INCEPTION, and the caption COUNTS how many rows that is rather than
-     * claiming coverage. Both halves: the note states a fraction, and the
-     * fraction matches the rows that actually render one.
+     * THE "These are the family's own movements…" EXPLAINER WAS REMOVED from the
+     * card at the family's request (a declutter). A removal is verified by
+     * asserting it happened, not by deleting the check with the prose. The fact
+     * it summarised survives per row: an account whose contribution list does not
+     * reach inception still renders an AbsentCell with its reason in the return
+     * column, which the row-level checks above already cover.
      */
-    ["the note counts the rows that can state a return, and it matches them",
-      (t, ctx) => {
-        const m = /A return is struck only where the contribution list\s+provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "))
-          || /provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "));
-        if (!m) return false;
-        return Number(m[1]) === ctx.mineRows.filter((r) => r.hasReturn).length
-          && Number(m[2]) === ctx.mineRows.length;
-      }],
+    ["the removed 'own movements / reaches inception' note no longer prints",
+      (t) => !/provably reaches inception/.test(t) && !/these are the family.s own movements/i.test(t)],
 
     /**
      * AND THE NAME OPENS THE MANDATE — the second half of the ask, *"if we
@@ -2463,9 +2459,9 @@ const INVARIANTS = {
     ["every tranche's return is tagged with the basis it is on",
       (t, ctx) => ctx.tranchePanel !== null
         && ctx.tranchePanel.tags.length === ctx.tranchePanel.rows
-        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "ABS")],
+        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "HPR")],
     ["and this book's tranches are not all annualised",
-      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("ABS")],
+      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("HPR")],
 
     /**
      * A ROW SPANNING SEVERAL FOLIOS NAMES WHOSE MONEY EACH CONTRIBUTION WAS.
@@ -2502,11 +2498,12 @@ const INVARIANTS = {
     ["the histories offered count each dedupeGroup once, like the rows do",
       (t, ctx) => TRANCHE_ROWS_TOTAL !== null && ctx.trancheRowsOffered === TRANCHE_ROWS_TOTAL],
 
-    ["the note counts the rows offering a history, and it matches",
-      (t, ctx) => {
-        const m = /(\d+) of (\d+) rows open their Invested/.exec(t.replace(/\s+/g, " "));
-        return !!m && Number(m[1]) === ctx.trancheToggles && Number(m[1]) > 0;
-      }],
+    // THE TRANCHE-COVERAGE NOTE ("N of M rows open their Invested figure…") was
+    // removed from the holdings table at the family's request. The chevrons it
+    // summarised still render — the structural check above counts them — so this
+    // asserts only that the caption stays gone.
+    ["the removed tranche-coverage note no longer prints",
+      (t) => !/rows open their Invested/.test(t)],
   ],
 
   "monitor-txn-manager": [
@@ -5096,14 +5093,14 @@ const INVARIANTS = {
      *
      * The whole point of the picker is that a bare percentage was ambiguous. So
      * every cell in the one Return column carries a tag naming its measure — on
-     * the auto view that is the measure the methodology resolved to (ABS or CAGR),
+     * the auto view that is the measure the methodology resolved to (HPR or CAGR),
      * and it is on the absent cells too, so a reader always knows which return is
      * missing. Read off the cells the page draws (`data-return-cell`).
      */
     ["every return cell is labelled with the measure it shows", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      return cells.every((c) => /\b(AUTO|ABS|CAGR|XIRR|YTD|CY)\b/.test(c));
+      return cells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c));
     }],
     /**
      * ── THE METHODOLOGY CAPTION WAS REMOVED FROM THE DEFAULT VIEW ────────────
@@ -5346,16 +5343,14 @@ const INVARIANTS = {
       return (secs?.length ?? 0) === 0 && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
     }],
     /**
-     * AND IT SAYS WHAT IT CANNOT CLUB. Two of the four vehicles the request named
-     * can be clubbed and two cannot: this book reports the SHARE for a direct
-     * holding and for a mandate, and reports only the FUND for an AIF, a scheme
-     * or an ETF. Drawing a look-through nobody published is the fabrication the
-     * whole book exists to prevent, so the page states the boundary.
+     * THE "one row per security…" CAPTION WAS REMOVED at the family's request (a
+     * declutter). A removal is verified by asserting it happened. What it stated
+     * survives structurally: a fund is still its own row (asserted above, off
+     * `venues` and the footer tie), and each fund row still names in its own
+     * Sector cell that a look-through is not reported for the folio.
      */
-    ["the caption names what a fund row does not dissolve into",
-      (t) => /one row per security, ranked by exposure/i.test(t)
-        && /a fund is its own row/i.test(t)
-        && /no statement in this book reports what those managers hold/i.test(t)],
+    ["the removed 'one row per security' caption no longer prints",
+      (t) => !/one row per security, ranked by exposure/i.test(t)],
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -5405,10 +5400,10 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is the ABS tag now (the cell shows the total return on cost,
-    // tagged ABS) and the caption says "held under a year".
-    ["a holding held under a year is marked as absolute rather than annualised",
-      (t) => /held under a year/.test(t) && /\bABS\b/.test(t)],
+    // The marker is the HPR tag now (the cell shows the total return on cost,
+    // tagged HPR) and the caption says "held under a year".
+    ["a holding held under a year is marked as holding-period rather than annualised",
+      (t) => /held under a year/.test(t) && /\bHPR\b/.test(t)],
   ],
   /**
    * ── YTD IS A MEASURE NOW, AND IT NEVER GUESSES ─────────────────────────────
@@ -5486,8 +5481,8 @@ const INVARIANTS = {
     ["the one Return column shows both picked measures, each labelled", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      // A costed row shows an ABS line and a CAGR line in the one cell.
-      return cells.some((c) => /\bABS\b/.test(c) && /\bCAGR\b/.test(c));
+      // A costed row shows an HPR line and a CAGR line in the one cell.
+      return cells.some((c) => /\bHPR\b/.test(c) && /\bCAGR\b/.test(c));
     }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
@@ -6930,7 +6925,7 @@ for (const theme of THEMES) {
             return m ? Number(m[1].replace(/,/g, "")) : null;
           }),
           tags: rows.map((tr) => {
-            const m = /(CAGR|ABS)/.exec(at(tr, "return") ?? "");
+            const m = /(CAGR|HPR)/.exec(at(tr, "return") ?? "");
             return m ? m[1] : null;
           }),
           entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],

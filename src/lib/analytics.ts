@@ -587,7 +587,7 @@ export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): Hold
     return {
       kind: "absent",
       reason: "annualising needs to know when this holding was bought, and no statement covering it reports a purchase date — "
-        + "the managed accounts publish a capital-account ledger rather than a lot register. Switch to Absolute for its return on cost.",
+        + "the managed accounts publish a capital-account ledger rather than a lot register. Switch to Holding Period Return for its return on cost.",
     };
   }
   // THE GUARD, stated positively: under a year the absolute figure stands, and
@@ -721,11 +721,16 @@ export type ReturnMeasureDef = {
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "auto", label: "By methodology", tag: "AUTO",
-    hint: "Equity held under a year: absolute. A year or more: CAGR. Fixed income: XIRR. Each cell says which one it is." },
-  { key: "absolute", label: "Absolute — holding period", tag: "ABS",
+    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Fixed income: XIRR. Each cell says which one it is." },
+  // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
+  // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
+  // not-annualised basis shares one identifier. Only the reader-facing label and
+  // tag became "Holding Period Return" / "HPR", at the family's request; every
+  // branch that prints the total return on cost is tagged "HPR" below.
+  { key: "absolute", label: "Holding Period Return", tag: "HPR",
     hint: "The total return on cost since the holding was bought, not annualised." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
-    hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays absolute." },
+    hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
     hint: "A money-weighted return across every cash flow. It needs each tranche's date and amount, which the statements here do not carry per holding — so per holding it is shown as absent, and the per-account XIRR is on Performance." },
   { key: "ytd", label: "Year to date", tag: "YTD",
@@ -779,7 +784,7 @@ const noCalendarReason = (asOf: string) =>
  * The return to print for one holding, on the measure the reader picked.
  *
  * `auto` applies the family's rule and tags each cell with the measure it
- * resolved to (ABS or CAGR here — XIRR falls back to the return on cost because
+ * resolved to (HPR or CAGR here — XIRR falls back to the return on cost because
  * this book cannot strike it, and says so in the note). The concrete measures
  * render that measure or a dash naming why this book cannot. `absolute` and
  * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
@@ -788,8 +793,8 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
 
   if (measure === "absolute") {
-    if (noCost) return { shown: false, tag: "ABS", reason: NO_COST_RETURN };
-    return { shown: true, pct: p.returnPct as number, tag: "ABS" };
+    if (noCost) return { shown: false, tag: "HPR", reason: NO_COST_RETURN };
+    return { shown: true, pct: p.returnPct as number, tag: "HPR" };
   }
 
   if (measure === "cagr") {
@@ -800,7 +805,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Annualised over the ${r.heldDays} days since ${r.since}, the oldest unit still held.` };
     }
     // The guard fired: under a year, so the ABSOLUTE figure stands, marked.
-    return { shown: true, pct: r.pct, tag: "ABS",
+    return { shown: true, pct: r.pct, tag: "HPR",
       note: r.heldDays === null
         ? "Held for an unreported period, so this is the total return on cost, not an annual rate."
         : `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
@@ -827,9 +832,9 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
   if (isFixedIncome(p.assetClass)) {
     // The rule routes fixed income to XIRR, which this book cannot strike per
-    // holding — so the return on cost stands, tagged ABS, and the note names the
+    // holding — so the return on cost stands, tagged HPR, and the note names the
     // measure the methodology would use once the cash-flow history exists.
-    return { shown: true, pct: p.returnPct as number, tag: "ABS",
+    return { shown: true, pct: p.returnPct as number, tag: "HPR",
       note: "Fixed income — the methodology would show a money-weighted XIRR, which needs every coupon and tranche this book does not carry per holding, so this is the total return on cost." };
   }
   // Equity and the pooled vehicles: annualise a measured year, otherwise the
@@ -841,7 +846,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     }
     // A total loss has no compound rate — fall through to the absolute figure.
   }
-  return { shown: true, pct: p.returnPct as number, tag: "ABS",
+  return { shown: true, pct: p.returnPct as number, tag: "HPR",
     note: heldDays === null
       ? "No purchase date on file, so this is the total return on cost; a holding a year or older is shown as CAGR once a date is known."
       : `Held ${heldDays} days — under a year, so this is the total return on cost.` };
