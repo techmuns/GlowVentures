@@ -13,9 +13,20 @@
 // portfolio disclosure, as a third party (rupeevest) aggregates it. That is a
 // real source and a different one, so:
 //
-//   • it is never summed into a book total, an allocation, a sector split or a
-//     concentration figure — the fund's value stays whole, exactly as it did
-//     before this store existed;
+//   • it is never summed into a book total or a concentration figure — the
+//     fund's value stays whole, exactly as it did before this store existed.
+//     THIS LINE USED TO SAY "an allocation, a sector split" TOO, and it stopped
+//     being true when the family asked for a Consolidated sector composition
+//     "based on the aggregate securities weightage as per the data from the
+//     security filter in the holdings in portfolio monitor" — the Total exposure
+//     column, which is this. That is the same widening they made on the holdings
+//     table, having been shown the two halves apart first. It is fenced the same
+//     way rather than by being refused: `companyExposure` below keeps the two
+//     halves as separate fields to the last moment, the view is one a reader
+//     picks rather than the default arithmetic of a page, and every surface that
+//     adds them says which half is which. A comment asserting an enforcement
+//     that no longer happens is worse than no enforcement, so it says what is
+//     actually true;
 //   • the scheme, the plan matched, and the portfolio's own as-of date ride on
 //     every record so the screen can print them;
 //   • `pctAum` is the PUBLISHED figure — a share of the FUND. The family's
@@ -23,6 +34,7 @@
 //     derived wherever it is rendered.
 import type { Position } from "./types";
 import { securityKeyOf } from "./securityKey";
+import { resolveSector, UNCLASSIFIED } from "./sectors";
 
 export type LookthroughHolding = {
   name: string;
@@ -252,6 +264,8 @@ export type FundExposureRow = {
    * which, so it rides on every row rather than being averaged into a badge.
    */
   via: "isin" | "name";
+  /** The AMC's own industry label for this line, verbatim — never this book's. */
+  sector: string | null;
   holdingsAsOf: string | null;
   sourceKind: string | null;
 };
@@ -281,6 +295,27 @@ export type StockExposure = {
   rows: FundExposureRow[];
   /** Σ rows.value. Derived, and never added to a book total by this module. */
   total: number;
+  /**
+   * THE COMPANY'S GICS SECTOR, resolved from what the AMCs filed — or null.
+   *
+   * A disclosure prints the AMFI/SEBI INDUSTRY label ("Pharmaceuticals &
+   * Biotechnology", "Capital Markets"), and `shared/sectors.mjs` is the one
+   * committed map that turns a provider's label into a GICS sector. It is the
+   * same map and the same function `build-book` resolves the book's own
+   * positions through, so a company held directly and the same company held
+   * inside a scheme cannot land in two different sectors.
+   *
+   * NULL WHERE THE FILINGS DO NOT AGREE OR THE LABEL IS NOT IN THE MAP. Several
+   * schemes disclose the same company and each prints its own label; where those
+   * resolve to more than one sector there is no answer to pick between them, and
+   * picking one would be the index-cycled-classification failure with a fund's
+   * letterhead on it. A caller renders these as Unclassified and counts them.
+   *
+   * A caller that also holds the company in the BOOK should prefer the BOOK's
+   * sector: that one is the family's own statement rather than a third party's
+   * reading of a fund's filing. `companyExposure` below does exactly that.
+   */
+  sector: string | null;
 };
 
 export type StockExposureState =
@@ -308,6 +343,83 @@ export type StockExposureState =
        */
       nonEquityValue: number;
     };
+
+/**
+ * ── ONE COMPANY, BOTH HALVES, AND ITS SECTOR — read by every surface that adds
+ *    the measured and derived sides together ──────────────────────────────────
+ *
+ * The Portfolio Monitor's stock axis and Sector Composition's Consolidated view
+ * are the same question asked twice: what is this family's exposure to a
+ * COMPANY, counting the shares their statements report and the shares their
+ * funds disclose. Two implementations of that would be two chances for one
+ * screen to put a company in a sector the other puts somewhere else, or to size
+ * it differently — which is the failure `holdingBucket`, `costCoversSet` and
+ * `accountHasOpeningValue` were each extracted for.
+ *
+ * THE TWO HALVES STAY SEPARATE FIELDS. `measured` is what a document says; only
+ * `total` adds the derived half in, so a caller can print either and can never
+ * blend them by accident.
+ *
+ * THE BOOK'S OWN SECTOR WINS WHERE IT HAS ONE. That comes from the family's own
+ * statement through `build-book`; the disclosed one is a third party's reading
+ * of somebody else's filing. But "Unclassified" is the ABSENCE of an answer
+ * rather than an answer, so a book row that carries it falls through to the
+ * disclosed sector rather than overriding it with nothing.
+ */
+export type CompanyExposure = {
+  key: string;
+  name: string;
+  isin: string | null;
+  /** Σ market value of the positions the statements report. Never derived. */
+  measured: number;
+  /** Σ the funds' disclosed share. Derived, and no part of the book's NAV. */
+  derived: number;
+  /** `measured + derived` — the figure the family asked to be ranked on. */
+  total: number;
+  /** GICS, from the book where it has one and from the filings otherwise. */
+  sector: string;
+  /** Where that sector came from, so a caller can count each. */
+  sectorFrom: "book" | "disclosure" | null;
+  /** The book rows behind `measured`, for a drill-down. Empty on a derived-only company. */
+  positions: Position[];
+};
+
+export function companyExposure(
+  /** Consolidated COMPANY SHARES — a sector is a property of a company. */
+  positions: Position[],
+  exposure: StockExposureState,
+): CompanyExposure[] {
+  const byKey = new Map<string, CompanyExposure>();
+  for (const p of positions) {
+    const e = byKey.get(p.securityKey) ?? {
+      key: p.securityKey, name: p.security, isin: p.isin ?? null,
+      measured: 0, derived: 0, total: 0,
+      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+    };
+    e.measured += p.marketValue;
+    e.positions.push(p);
+    if (!e.isin && p.isin) e.isin = p.isin;
+    if (e.sectorFrom !== "book" && p.sector && p.sector !== UNCLASSIFIED) {
+      e.sector = p.sector; e.sectorFrom = "book";
+    }
+    byKey.set(p.securityKey, e);
+  }
+  if (exposure.status === "ok") {
+    for (const x of exposure.byKey.values()) {
+      const e = byKey.get(x.key) ?? {
+        key: x.key, name: x.name, isin: x.isin,
+        measured: 0, derived: 0, total: 0,
+        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+      };
+      e.derived += x.total;
+      if (!e.isin && x.isin) e.isin = x.isin;
+      if (e.sectorFrom === null && x.sector) { e.sector = x.sector; e.sectorFrom = "disclosure"; }
+      byKey.set(x.key, e);
+    }
+  }
+  for (const e of byKey.values()) e.total = e.measured + e.derived;
+  return [...byKey.values()].sort((a, b) => b.total - a.total);
+}
 
 /** The scheme portfolios, memoised: the index must not refetch 20 files per render. */
 const portfolioCache = new Map<string, Promise<FundPortfolio | null>>();
@@ -504,7 +616,7 @@ export async function loadStockExposure(
       if (!(value > 0)) continue;
       takenHere.add(key);
       total += value;
-      const e = byKey.get(key) ?? { key, name: h.name, isin, rows: [], total: 0 };
+      const e = byKey.get(key) ?? { key, name: h.name, isin, rows: [], total: 0, sector: null };
       e.rows.push({
         fundKey: f.securityKey,
         fundName: f.name,
@@ -512,6 +624,7 @@ export async function loadStockExposure(
         pctAum: h.pctAum,
         value,
         via: isin ? "isin" : "name",
+        sector: h.sector ?? null,
         holdingsAsOf: pf.holdingsAsOf ?? null,
         sourceKind: pf.holdingsSource?.kind ?? null,
       });
@@ -521,7 +634,17 @@ export async function loadStockExposure(
     }
   }
 
-  for (const e of byKey.values()) e.rows.sort((a, b) => b.value - a.value);
+  for (const e of byKey.values()) {
+    e.rows.sort((a, b) => b.value - a.value);
+    // Every GICS sector the filings for this company agree on. One means an
+    // answer; none or several means there is not one, and null says so.
+    const agreed = new Set<string>();
+    for (const r of e.rows) {
+      const hit = r.sector ? resolveSector(r.sector) : null;
+      if (hit?.matchedBy) agreed.add(hit.sector);
+    }
+    e.sector = agreed.size === 1 ? [...agreed][0] : null;
+  }
   return {
     status: "ok",
     byKey,

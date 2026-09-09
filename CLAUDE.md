@@ -181,6 +181,13 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's My investments rollup and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag.
+- `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
+  `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
+  halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
+  Composition's Consolidated view. `src/lib/useStockExposure.ts` assembles its
+  three inputs once. See Stage 10am.
+- `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
+  `build-book` and the app resolve a sector through ONE committed table.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
@@ -2327,6 +2334,15 @@ The one bridge is a PREFIX match, because these fact sheets clip the sector
 column to its width and the same sector arrives as `Heavy Electrical Equip`,
 `Heavy Electrical Equipmen` and in full. A prefix must be ≥8 characters and match
 exactly one entry; an ambiguous prefix stays unclassified.
+
+**IT ALSO CARRIES THE AMFI *INDUSTRY* LEVEL NOW, and `src/lib/sectors.ts` is the
+browser's door to the same table.** The block seeded from the PMS fact sheets is
+that taxonomy's MACRO level; a fund's own SEBI monthly disclosure prints the
+INDUSTRY level, and 57 of the 65 labels `public/lookthrough/` carries resolved to
+nothing until they were listed. That is what lets Sector Composition place a
+company by the industry a filing printed against its ISIN — see Stage 10am, which
+also records that the FIRST measurement of the gap was wrong because it compared
+`resolveSector`'s object against a string.
 
 ### NSE symbols — `npm run build-symbols`
 
@@ -7507,6 +7523,170 @@ whose failures match the previous run's exactly is the tell.
 `build` · `test:ingest` 140 + 35 · `test:family` · `check:family` **53/0** ·
 `check:pages` **142 combinations clean**, with the two pre-existing abstentions.
 `glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is untouched.
+
+### Stage 10am — SECTORS FOR TWO SETS, AND THE MAP THAT MADE THEM POSSIBLE
+
+Four asks, and the one that took the work is the one that looked smallest.
+
+#### 1. *"remove the highlighted text from the dashboard ui"* — the Portfolio Monitor's two grey paragraphs
+
+Audited line by line before anything went, the Stage 10aa / 10ai / 10al pattern,
+because most of it carried a FIGURE:
+
+| The claim | Kept? |
+| --- | --- |
+| "One row per company, ranked by total exposure" | chrome — the table is one row per company and sorts on that column |
+| "A FUND IS NOT A STOCK and is no longer a row" | chrome — no fund is in the table to contradict it |
+| **the DERIVED fence** | **moved UP, onto the two columns it is about** |
+| the coverage, the five buckets, the AIF block, the clubbed count | inside a one-line fold |
+| the loading / unreachable states | in the SUMMARY, unfolded |
+| "Weight is a share of the book, not of the holdings you picked" | already on the column — `weightPlain` is the `plain` line of every Weight cell's own popover and the footer's title carries it |
+
+**A COLLAPSED ONE-LINER IS NOT A WALL OF PROSE**, and it is the form this book
+already uses for "the rest are NAMED" (the excluded accounts on the NAV card).
+What the family objected to was seven lines of grey under their table; what they
+must not lose is a table that quietly reads as the whole of their money, so the
+summary still states the one thing they act on — `covers ₹299.6 Cr of the
+₹710.4 Cr book`.
+
+**THE FENCE DOES NOT GO IN THE FOLD, AND NOT IN A HOVER EITHER.** *"It says
+DERIVED, not a position, in words rather than in a tooltip"* is a rule of this
+book. `Th` grew a `note`, so `Via funds` carries **derived** and `Total exposure`
+**incl. derived** under their labels — visible whatever the fold is set to, on
+the column each is about, which is strictly better than the paragraph was.
+`check:pages` reads them structurally through `data-col-note`.
+
+**AND THE PROBE HAD TO LEARN TO OPEN THE FOLD.** Three invariants read that
+text; a collapsed `<details>` is not in `innerText`, so unopened they would have
+reported it unparseable — an ABSTENTION, not a failure, retiring all three in
+silence. The same fix the excluded-accounts block already needed.
+
+#### 2. Sector Composition gets the family's own two sets
+
+*"add a toggle switch for direct equity and consolidated. in direct equity we
+will show only the sector composition of direct equity holdings, and in
+consolidated sector composition we will show sector composition based on the
+aggregate securities weightage as per the data from the security filter in the
+holdings in portfolio monitor."*
+
+**NEITHER IS THE SET THIS PAGE USED TO SHOW.** It was company shares —
+mandate-chosen and self-bought — and the two asked for sit either side of it.
+**Consolidated is the default**, a decision rather than an ordering: it is the
+widest, and opening on Direct Equity would take ₹127 Cr of mandate-held shares
+off the first paint, which this page's own header note has always warned against.
+
+**ONE DEFINITION, AND THE TWO PAGES ARE HELD TO IT.** `companyExposure` in
+`lookthrough.ts` is what the Monitor's stock axis and this view are both built
+on, and `useStockExposure` assembles the three inputs `loadStockExposure` needs
+(which vehicles the family holds and at what value, the ISIN bridge, the
+ring-fence) once instead of per page — two of those fail silently when got
+wrong. Measured, the two pages agree exactly:
+
+| | Monitor · Security axis | Sector Composition · Consolidated |
+| --- | ---: | ---: |
+| Direct + PMS | ₹222 Cr | ₹222 Cr |
+| Via funds | ₹77.6 Cr | ₹77.6 Cr |
+| Total exposure | **₹299.6 Cr** | **₹299.6 Cr** |
+| companies | 565 | 565 |
+
+and the page's three tiles rebuild the book: ₹222 + ₹77.6 + ₹410.8 = ₹710.4 Cr.
+`check:pages` holds both to ONE derivation off `glowData.ts` — if they ever
+diverge, one of them is wrong.
+
+**A RETURN IS REFUSED THROUGHOUT THE CONSOLIDATED VIEW, with its reason.** Its
+value column is part measured and part derived and no statement reports a cost
+for the second, so a percentage would divide a part-measured gain by a cost
+covering a fraction of its own numerator — "a total must tie to its own columns",
+one column wider. `AbsentCell` with that cause, never a bare dash.
+
+#### …and Direct Equity was one grey wedge, which is a finding
+
+**NOT ONE of the 37 company shares the family bought in its own demat or broking
+account carries a sector.** A depository statement prints an ISIN, a quantity and
+a rate and no industry at all, so read off the book alone this view is 100%
+Unclassified — true, and it answers nothing.
+
+What places them is an identifier. Fourteen of those ISINs are named in a monthly
+portfolio disclosure filed by a fund **this same family holds**, and that filing
+prints the company's industry. Joined on the ISIN — exactly, never on a name —
+and resolved through the one committed map: **14 of 37 placed, ₹44.0 Cr of
+₹94.9 Cr, and ZERO where two filings disagree.** The view draws 6 sectors instead
+of 1.
+
+**IT ONLY EVER FILLS AN EMPTY SECTOR** and can never contradict the book: a
+position whose own statement printed one keeps it. So this page places names the
+rest of the app leaves unplaced rather than placing them differently, and it says
+so with the count — 84 from the family's own statements, 364 from a filing. The
+durable fix is a backfill pass in the ingest; it is named here rather than done,
+because `build-lookthrough` reads the book that would consume it.
+
+#### The map is why any of that works, and my first measurement of it was wrong
+
+`shared/sectors.mjs` carried the AMFI taxonomy's MACRO level ("Financial
+Services", "Capital Goods"), which arrived with the PMS fact sheets. A fund's own
+SEBI disclosure prints the INDUSTRY level, and none of it was there: **57 of 65
+distinct labels resolved to nothing, 1,009 of 1,318 disclosed lines Unclassified**
+— a sector table where a fifth of the book says "we could not place this" for want
+of a map entry rather than for want of a source.
+
+**THE FIRST MEASUREMENT SAID THE OPPOSITE, AND IT WAS MINE.** `resolveSector`
+returns `{ sector, matchedBy }`, and a test comparing it against the STRING
+`"Unclassified"` passes on every label — so the first pass reported "all 65 map,
+zero unmapped" and would have shipped a Consolidated view mostly grey. Caught by
+the per-company follow-up printing `[object Object]`. It is the
+plausible-wrong-answer this repo exists to catch, arriving in the measurement
+rather than in the page.
+
+Fifty-seven entries added, one GICS sector each, listed as the disclosures print
+them. Two are deliberately NOT listed: `UNRATED` joins `PROVIDER_UNCLASSIFIED`
+(the filer declined to classify), and `Units of Infrastructure Investment Trusts`
+has no GICS home — GICS names equity REITs and does not name InvITs, so placing
+one in a company sector would assert a classification GICS does not make.
+
+**AND IT MOVED THE BOOK BY EXACTLY ONE POSITION**, which is the check that says
+this was a map extension rather than a re-measurement: Chemfab's `CHEMICALS`
+prefix-matches the new `Chemicals & Petrochemicals` entry and leaves Unclassified
+for **Materials**, ₹3,74,700. That is the map's own documented prefix rule doing
+what it is for. `glowData.ts` is regenerated and idempotent.
+
+#### 3. *"what is uncalled capital? … what is distributions?"*
+
+The client, on two Private Market tiles. Both halves of each are answered **on the
+tile** — `StatTile`'s `hint` renders on screen — because a definition a reader has
+to point at is a definition they will not find. WHAT it is first, because the
+figure means nothing without it; HOW it is arrived at second, including the two
+folios the uncalled figure cannot cover. The second tile is renamed
+**Distributions (cash returned)**: its sub-line had always said "distribution
+figure", so a reader asking what a distribution is was reading a word the tile
+used and never defined.
+
+#### 4. *"rename consolidated NAV as Current Value of Holdings … wherever it is written"*
+
+Every rendered label — the Morning CIO tile, the top bar, NAV & Performance, Data
+Refresh, the drill-down's title and `backs` — **and the prose**, which is where
+the instruction's "wherever" bit: the phrase was in sentences on Compare
+Companies, the stock page, Register, the NAV card, the chat panel and a
+drill-down note. Code comments keep it; nothing there renders.
+
+**AND THE RENAME BROKE FOUR CHECKS, WHICH IS THE POINT.** The sweep reads this
+tile's figure OFF ITS LABEL to feed other invariants, and three more find the
+tile by matching `/consolidated nav/i`. A rename the probe did not follow would
+have made those report NOT CHECKED — an abstention, not a failure, and how a
+check retires itself in silence. The new both-directions assertion is what
+surfaced it, and it is also what found the prose: it failed while the tile was
+already correct, because `NavVsIndex` renders the phrase inside a fold the sweep
+opens.
+
+**Seven bugs reintroduced, each firing its own check**: the Consolidated view
+showing only the measured half (fires the two-page identity), the default view
+moved (5), the disclosed-sector fallback dropped so Direct Equity is one wedge
+again, the derived markers taken off the columns (2), the grey paragraph put
+back, the uncalled-capital tile stripped of its definition, and the tile rename
+reverted (4).
+
+`build` · `test:ingest` 290 · `test:family` · `check:family` 53/0 ·
+`check:pages` **144 combinations clean** (140 plus this page's two views), with
+the same two pre-existing abstentions. `build-book` regenerates idempotently.
 
 ### Stage 10k — News & Announcements: REMOVED
 

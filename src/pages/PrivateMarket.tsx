@@ -170,10 +170,31 @@ export function PrivateMarket() {
             ? `on the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} above`
             : "no statement here reports a cost to measure a gain against"} />
 
+        {/*
+            *"what is uncalled capital? how do we arrive at this uncalled capital
+            number that the dashboard is showing?"* — the client, on this tile.
+
+            Both halves of that are answered ON THE TILE rather than in a hover:
+            `StatTile`'s `hint` renders on screen, and a definition a reader has
+            to discover by pointing at something is a definition they will not
+            find. WHAT it is comes first, because the number means nothing
+            without it, and HOW we get it second — including the two folios this
+            figure cannot cover, which is the half a reader would otherwise take
+            on trust.
+        */}
         <StatTile label="Still to call (uncalled capital)" icon={<Fuel className="h-4 w-4" />}
           value={<span className="text-amber-400">{money(m.ct.undrawn)}</span>}
           sub={`${m.ct.undrawnOf} of ${m.ct.count} capital accounts print an undrawn figure`}
-          hint="Summed exactly as each statement prints it, never derived from committed − drawn. Two folios print a commitment and a drawdown and no undrawn figure at all; a zero there would assert the fund has nothing left to call, so they are skipped and this covers 13 of 15." />
+          hint={<><span className="text-slate-400">What it is:</span> money the family has already PROMISED
+            to these funds and the funds have not yet asked for. A drawdown fund takes its commitment in
+            instalments — it calls the cash when it finds something to buy — so this is a bill that can
+            arrive at any time, not an asset. It is in no total on this page.
+            {" "}<span className="text-slate-400">How this number is arrived at:</span> each fund prints its
+            own uncalled figure on its capital account statement and those are added up, exactly as printed.
+            It is never worked out as committed − drawn: {m.ct.count - m.ct.undrawnOf} of the {m.ct.count} accounts
+            print a commitment and a drawdown and no uncalled line at all, and subtracting there would assert
+            a fund has nothing left to call when its statement simply does not say. So this covers {m.ct.undrawnOf} of {m.ct.count}, and
+            the real figure is this much or more.</>} />
       </div>
 
       {/* ── The capital account, and the gap ── */}
@@ -192,9 +213,23 @@ export function PrivateMarket() {
           sub={`${m.unvaluedNoNav.length} accounts whose fund publishes no NAV · not in the private market value above`}
           hint="These funds report units and the capital drawn against a commitment, and no valuation anywhere. The contributions are what was paid rather than what the stake is worth, so they are stated on their own and never added to a market value." />
 
-        <StatTile label="Cash returned" icon={<Coins className="h-4 w-4" />}
+        {/* *"what is distributions?"* — same treatment, and the label carries the
+            client's own word beside the plain one rather than only the plain one:
+            the sub-line under this tile has always said "distribution figure",
+            so a reader who asks what a distribution is was reading a word the
+            tile used and never defined. */}
+        <StatTile label="Distributions (cash returned)" icon={<Coins className="h-4 w-4" />}
           value={money(m.ct.distributed)}
-          sub={`${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`} />
+          sub={`${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`}
+          hint={<><span className="text-slate-400">What it is:</span> cash these funds have already PAID BACK
+            out — a stake sold or a dividend passed through, returned to the family&rsquo;s bank account. It is
+            money out of the fund and in hand, which is the opposite of the uncalled figure above: that is
+            what may still be asked for, this is what has already come back.
+            {" "}<span className="text-slate-400">How this number is arrived at:</span> summed from the
+            distribution line each capital account statement prints, and {m.ct.distributedOf} of the {m.ct.count} accounts
+            print one. It is NOT part of the value above — a fund&rsquo;s current value is what is still
+            inside it — and it does not reduce the commitment either: capital that has been returned can
+            still be called again where the fund&rsquo;s terms allow it.</>} />
       </div>
 
       {/* Two tiles that would be natural here and are absent by measurement. */}

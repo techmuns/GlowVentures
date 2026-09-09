@@ -370,7 +370,7 @@ export function CompareCompanies() {
                     ? <span className={changeColor(pnl / cost)}>{fmtPct((pnl / cost) * 100, { sign: true })}</span>
                     : <AbsentCell reason="no cost basis" />;
                 })}
-                {metric("Weight in book", "Share of consolidated NAV, each duplicate counted once", (c) =>
+                {metric("Weight in book", "Share of the current value of holdings, each duplicate counted once", (c) =>
                   totalMV > 0 ? fmtPct((sum(c.rows.map((r) => r.marketValue)) / totalMV) * 100, { decimals: 2 }) : <AbsentCell reason="no book value" />)}
                 {metric("Target price", "Our own view — set it on the company page", (c) => {
                   const t = watchlist[c.securityKey]?.targetPrice ?? null;
@@ -400,7 +400,7 @@ export function CompareCompanies() {
               {dualReported.map((c) => c.security).join(", ")}{" "}
               {dualReported.length === 1 ? "is" : "are"} reported on more than one account&rsquo;s statement.
               &ldquo;Held by&rdquo; counts every one of those accounts; quantity, cost, value and weight count
-              the holding once, as the consolidated NAV does. Each account&rsquo;s own row is on Portfolio
+              the holding once, as the current value of holdings does. Each account&rsquo;s own row is on Portfolio
               Monitor.
             </p>
           )}

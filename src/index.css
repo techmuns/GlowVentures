@@ -367,6 +367,15 @@ html:not(.dark) .group:hover .group-hover\:text-champagne-400 { color: #5f4711; 
    over. This covers the Entities pill, the mandate links and the contribution
    chevron, all of which already carried the class. */
 html:not(.dark) .hover\:text-champagne-400:hover { color: #5f4711; }
+/* AND THE OPACITY VARIANTS, which Tailwind emits as their own classes and which
+   therefore need their own remap — the derived-column marker on the Portfolio
+   Monitor's stock axis and Sector Composition's derived tile both carry one, and
+   both came back at rgba(236, 220, 174, 0.9) on white the first time they were
+   swept. The same gold, at the same alpha the dark theme uses, so the marker
+   still reads as a note rather than as a heading. */
+html:not(.dark) .text-champagne-400\/90 { color: rgba(138, 106, 28, 0.9); }
+html:not(.dark) .text-champagne-400\/80 { color: rgba(138, 106, 28, 0.85); }
+html:not(.dark) .text-champagne-400\/70 { color: rgba(138, 106, 28, 0.85); }
 
 /* Gain / loss — darker in light mode for readable contrast (AA) on white rows
    and on the row-hover tint. Dark theme keeps the brighter #10b981 / #ef4444. */

@@ -52,7 +52,7 @@ export const TOP_NAMES = 10;
  * return a class this drop does not carry). Every other id names a fixed set.
  */
 export type DrilldownId =
-  | "book"        // every holding — Consolidated NAV, Positions, Distinct names
+  | "book"        // every holding — Current Value of Holdings, Positions, Distinct names
   | "bucket"      // one allocation row, on the CATEGORY axis
   /**
    * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
@@ -391,7 +391,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         },
         ...(outside.length ? [{
           key: "not-covered", label: "Not covered",
-          note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the consolidated NAV — they are outside this rate, not outside the book.",
+          note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the current value of holdings — they are outside this rate, not outside the book.",
           rows: outside,
         }] : []),
       ]);
@@ -497,7 +497,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
-        backs: ["Consolidated NAV", "Positions", "Distinct names"],
+        backs: ["Current Value of Holdings", "Positions", "Distinct names"],
         lead: `The whole book across ${portfolio.accounts.length} accounts, consolidated — each holding two statements both report counted once. Both concentration counts are read off this one set: the row count is Positions, the name count is Distinct names.`,
         absent: consolidated.length ? null : {
           what: "The book carries no holding",
@@ -629,7 +629,7 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
       const accrued = rows.reduce((a, p) => a + (typeof p.accruedIncome === "number" ? p.accruedIncome : 0), 0);
       const accruedRows = rows.filter((p) => typeof p.accruedIncome === "number" && p.accruedIncome !== 0).length;
       return {
-        title: `Consolidated NAV${of}`,
+        title: `Current Value of Holdings${of}`,
         excel: "= Σ market value of every holding",
         plain: `The market value of every holding in this set, at each account's latest mark. ${basis} The two counts beside it are read off the same set: ${n(rows.length, "position")} is what Morning CIO calls Positions, and ${n(names, "distinct name")} is Distinct names — a name two members both hold is one name and two positions.${
           accruedRows
@@ -752,7 +752,7 @@ export function drilldownFormula(d: Drilldown, money: (n: number) => string): Fo
     case "top-names":
       return {
         title: `Top-${TOP_NAMES} concentration${of}`,
-        excel: `= Σ market value of the ${TOP_NAMES} largest names ÷ Consolidated NAV`,
+        excel: `= Σ market value of the ${TOP_NAMES} largest names ÷ the current value of holdings`,
         plain: `Ranked on \`securityKey\` and on consolidated market value, so a name two members both hold is ONE entry at its combined size rather than two smaller ones. ${basis} The percentage on Morning CIO is this sum over the whole book, so it moves when a name grows and when the book around it does.`,
         worked: `= ${money(mv)} across ${n(names, "name")} · ${n(rows.length, "position")} in ${n(accounts, "account")}`,
       };
