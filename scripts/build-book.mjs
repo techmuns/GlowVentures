@@ -523,6 +523,180 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
   };
 }
 
+// ── The family's own dated investments ───────────────────────────────────────
+//
+// *"in transactions we need to see the transactions we have done, not what the
+// transactions the portfolio manager has done."*
+//
+// The archive carries both, in two different collections, and only one of them
+// was ever read. `transactions` is the manager working a mandate — Green Lantern
+// buying The Anup Engineering on fifty days. `cashFlows` typed `contribution` or
+// `withdrawal` is the family putting money IN and taking it OUT, which is the
+// decision they actually made. Measured over the archive: 20 contributions
+// across 9 accounts and 94 withdrawals across 3.
+//
+// ── THE AMOUNT COLUMN IS A RUNNING BALANCE ON THE ROW THAT CARRIES THE UNITS ──
+//
+// Sanshi prints a contribution as THREE rows on one date, and the third is a
+// cumulative total rather than a movement:
+//
+//   17-06-2025  Drawdown                                       1,00,00,000.00
+//   17-06-2025  Stamp Duty @ 0.005%                                  (499.98)
+//   17-06-2025  Units Allotment  109.4462  91,364.524  1,91,359.524  1,99,98,999.97
+//
+// That last figure is the statement's own `Balance Amount` column — ₹1 Cr paid
+// in June on top of ₹1 Cr paid in March. Summing the rows typed `contribution`
+// would report ₹22 Cr of investment into an account that received ₹11 Cr, and
+// the row LOOKS like the others: same kind, same date, a plausible rupee figure.
+//
+// So a move's `amount` is taken from the GROSS row the statement prints on that
+// date, which is a primitive and needs no arithmetic, and `invested` is that
+// less the same date's printed charges. The balance is then the INDEPENDENT
+// CHECK rather than the source: the running total of `invested` must reproduce
+// the last printed balance. Three things agree on this corpus and each was
+// measured before a line of this was written —
+//
+//   Σ invested            = the position's own costBasis, TO THE PAISA
+//   Σ invested            = the last printed Balance Amount, within ₹0.04
+//   invested ÷ units      = the Allotment NAV the statement prints to 4dp
+//
+// Where a date carries an allotment row and NO gross row the amount is
+// unambiguous only if the account has exactly ONE such row, because a balance
+// after a single contribution IS that contribution. With several and no gross
+// figure to check against, `amount` is null and says so — differencing a
+// sequence that might not be cumulative is how the ₹22 Cr above gets invented.
+const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
+/** Half of the last decimal a unit count is printed to — `dropDepositoryDuplicates`'s rule. */
+const UNIT_TIE = 0.0005;
+
+function capitalMovesFrom(cashFlows, accountId, notes, label) {
+  const all = cashFlows ?? [];
+  const rows = all.filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  if (!rows.length) return [];
+
+  // Charges the SAME statement levies on the SAME date. Read from its own
+  // collection — never a rate applied to the gross, which would be our
+  // arithmetic standing in for the fund's.
+  const chargeOn = new Map();
+  for (const c of all) {
+    if (c.kind !== "expense" || !c.date || !isNum(c.amount)) continue;
+    chargeOn.set(c.date, (chargeOn.get(c.date) ?? 0) + Math.abs(c.amount));
+  }
+
+  const allotments = rows.filter((r) => r.kind === "contribution" && isNum(r.units));
+  const soleAllotment = allotments.length === 1;
+
+  const byDate = new Map();
+  for (const r of rows) {
+    if (!byDate.has(r.date)) byDate.set(r.date, []);
+    byDate.get(r.date).push(r);
+  }
+
+  const moves = [];
+  for (const date of [...byDate.keys()].sort()) {
+    const day = byDate.get(date);
+    const allot = day.filter((r) => r.kind === "contribution" && isNum(r.units));
+    const gross = day.filter((r) => r.kind === "contribution" && !isNum(r.units));
+    const out = day.filter((r) => r.kind === "withdrawal");
+
+    if (gross.length || allot.length) {
+      // The gross row first, because it is a MOVEMENT. The allotment row's
+      // amount is only usable where it cannot be a running balance.
+      let amount = gross.length ? sum(gross.map((r) => r.amount ?? 0)) : null;
+      if (amount === null && allot.length && soleAllotment && isNum(allot[0].amount)) {
+        amount = allot[0].amount;
+      }
+      const units = allot.length ? sum(allot.map((r) => r.units)) : null;
+      const charge = chargeOn.get(date) ?? 0;
+      if (amount === null && allot.length) {
+        notes.push(`${label}: the ${date} contribution prints a running balance and no gross `
+          + `figure, so what moved on that date is not stated — units are carried and the amount is not`);
+      }
+      const named = allot.find((r) => r.securityKey) ?? null;
+      moves.push({
+        accountId, date, direction: "in",
+        label: (gross[0] ?? allot[0]).description ?? "Contribution",
+        amount: r2(amount),
+        // The gross row is what left the bank; the charge is what the fund took
+        // out of it before buying units. Only a gross figure can carry a charge.
+        invested: amount === null ? null : r2(amount - (gross.length ? charge : 0)),
+        units: units === null ? null : units,
+        security: named?.security ?? null,
+        securityKey: named?.securityKey ?? null,
+      });
+    }
+    if (out.length) {
+      const amount = Math.abs(sum(out.map((r) => r.amount ?? 0)));
+      moves.push({
+        accountId, date, direction: "out",
+        label: out[0].description ?? "Withdrawal",
+        amount: r2(amount), invested: null, units: null, security: null, securityKey: null,
+      });
+    }
+  }
+
+  // THE BALANCE IS THE WITNESS, AND A FAILED WITNESS WITHHOLDS THE WHOLE
+  // ACCOUNT. Reproducing the statement's own last Balance Amount is the only
+  // independent evidence that the gross rows were paired to the right dates and
+  // that none was missed. ±₹1 is this book's own settlement tolerance; the
+  // observed residual is ₹0.04, and a dropped or double-counted contribution
+  // moves the figure by crores.
+  const lastBalance = allotments.length && !soleAllotment ? allotments.at(-1).amount : null;
+  if (isNum(lastBalance)) {
+    const running = sum(moves.filter((m) => m.direction === "in" && isNum(m.invested)).map((m) => m.invested));
+    if (Math.abs(running - lastBalance) > 1) {
+      notes.push(`${label}: dated contributions sum to ${r2(running)} against the statement's own `
+        + `closing balance of ${r2(lastBalance)} — the per-contribution breakdown is withheld rather `
+        + `than published against a figure it does not reproduce`);
+      return moves.map((m) => ({ ...m, units: null, securityKey: null, security: null }));
+    }
+  }
+  return moves;
+}
+
+/**
+ * The dated investments behind each position, WHERE THEY ACCOUNT FOR ALL OF IT.
+ *
+ * A tranche's value today is its own units at today's NAV, so the units are what
+ * make a per-tranche return a measurement rather than an allocation. If the
+ * allotted units fall short of the units held, some of the position was bought
+ * by something this book cannot see, and splitting the rest across it would
+ * report a return on a holding that is partly missing — the same failure the
+ * ST/LT split already refuses on Pricol and Belrise.
+ */
+function positionTranchesFrom(capitalMoves, positions, notes) {
+  const byKey = new Map();
+  for (const m of capitalMoves) {
+    if (!m.securityKey || !isNum(m.units)) continue;
+    const k = `${m.accountId}|${m.securityKey}`;
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(m);
+  }
+  const out = {};
+  for (const [k, moves] of [...byKey.entries()].sort()) {
+    const [accountId, securityKey] = k.split("|");
+    const held = positions.filter((p) => p.accountId === accountId && p.securityKey === securityKey);
+    if (held.length !== 1) {
+      notes.push(`no per-contribution breakdown for ${securityKey} in ${accountId}: `
+        + `${held.length} matching position(s) in the book, so the allotted units cannot be tied to one holding`);
+      continue;
+    }
+    const allotted = sum(moves.map((m) => m.units));
+    if (Math.abs(allotted - held[0].quantity) > UNIT_TIE) {
+      notes.push(`no per-contribution breakdown for ${securityKey} in ${accountId}: the statement allots `
+        + `${allotted} unit(s) against ${held[0].quantity} held, so the dated contributions do not account `
+        + `for the position and a per-contribution return would be struck on part of it`);
+      continue;
+    }
+    // Rounded to the 3 decimals a unit count is PRINTED to, so the emitted file
+    // carries no float residue and regenerates byte-identically. It stays an
+    // independently-summed figure rather than a copy of `quantity`, which would
+    // make any check comparing the two a tautology.
+    out[k] = { accountId, securityKey, moves, units: Math.round(allotted * 1e3) / 1e3 };
+  }
+  return out;
+}
+
 // ── Build ────────────────────────────────────────────────────────────────────
 
 function build(docs) {
@@ -633,6 +807,8 @@ function build(docs) {
   const positions = [];
   const capitalGains = [];
   const accountCashFlows = {};
+  /** The family's OWN dated investments — see `capitalMovesFrom`. */
+  const capitalMoves = [];
   const accountReturns = {};
   const corporateActionsAll = [];
   const realisedByClass = new Map();
@@ -1313,6 +1489,13 @@ function build(docs) {
     // assumed: the total is compared against the performance summary's own
     // stated Net Capital In/Out over the same window, and a disagreement is
     // reported rather than absorbed.
+    // WHAT THE FAMILY DID, from the same collection and a different question.
+    // `accountCashFlows` below is built for the XIRR and reads the capital
+    // register or the bank book; this reads the rows the statements type as a
+    // contribution or a withdrawal, wherever they appear, and is the only place
+    // in this book that answers "what did WE buy, and when".
+    capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+
     const register = group.find((d) => d.reportType === "capital-register" && (d.cashFlows ?? []).length);
     const bank = group.find((d) => d.reportType === "bank-book" && (d.cashFlows ?? []).length);
     const src = register ?? bank;
@@ -1543,8 +1726,15 @@ function build(docs) {
     }
   }
 
+  // Sorted by date so the emitted array is deterministic and the file
+  // regenerates byte-identically; the accountId breaks ties within a date.
+  capitalMoves.sort((a, b) =>
+    a.date.localeCompare(b.date) || a.accountId.localeCompare(b.accountId) || a.direction.localeCompare(b.direction));
+  const positionTranches = positionTranchesFrom(capitalMoves, positions, notes);
+
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
+    capitalMoves, positionTranches,
     navHistory, accountNavHistory, navCoverage,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
@@ -1611,9 +1801,9 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CashFlow, Commitment,");
-  L.push("  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, RealisedByClass,");
-  L.push("  StartupInvestment,");
+  L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
+  L.push("  RealisedByClass, StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -1693,6 +1883,24 @@ function emit(book) {
   L.push(" * Sign: amount < 0 = capital in, > 0 = capital out, per `CashFlow` in types.ts.");
   L.push(" */");
   L.push(`export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = ${j(book.accountCashFlows)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE FAMILY'S OWN DATED INVESTMENTS — money they put in and took out.");
+  L.push(" *");
+  L.push(" * Distinct from BOOK_ACCOUNT_CASH_FLOWS above, which exists for the XIRR and");
+  L.push(" * carries a synthetic opening-value entry that is not a transaction anybody");
+  L.push(" * made. These are movements the statements print as such, and they are what");
+  L.push(" * the Transactions card leads with: a share a manager picked is that manager's");
+  L.push(" * decision, and the capital behind the mandate is the family's.");
+  L.push(" */");
+  L.push(`export const BOOK_CAPITAL_MOVES: CapitalMove[] = ${j(book.capitalMoves)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * Per-position contribution history, keyed `<accountId>|<securityKey>`, and");
+  L.push(" * ONLY where the allotted units account for every unit held. Everything else");
+  L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
+  L.push(" */");
+  L.push(`export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = ${j(book.positionTranches)};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");
@@ -1834,6 +2042,43 @@ function report(book) {
     L.push("");
     L.push(`Together **${r2(pv).toLocaleString("en-IN")}**, excluded from the `
       + `${r2(book.summary.totalValue).toLocaleString("en-IN")} consolidated market value above.`);
+  }
+  // WHAT THE FAMILY THEMSELVES DID, AND WHAT IT COVERS. Stated as a count
+  // rather than asserted in prose, so it cannot go stale the way the
+  // navHistory note did for four deliveries.
+  L.push("");
+  L.push("## The family's own dated investments");
+  L.push("");
+  const cin = book.capitalMoves.filter((m) => m.direction === "in");
+  const cout = book.capitalMoves.filter((m) => m.direction === "out");
+  const cinTot = sum(cin.map((m) => m.amount ?? 0));
+  const coutTot = sum(cout.map((m) => m.amount ?? 0));
+  const cAccts = new Set(book.capitalMoves.map((m) => m.accountId));
+  L.push(`**${cin.length}** dated contribution(s) totalling **${r2(cinTot).toLocaleString("en-IN")}** and `
+    + `**${cout.length}** withdrawal(s) totalling **${r2(coutTot).toLocaleString("en-IN")}**, across `
+    + `**${cAccts.size} of ${book.accounts.length}** account(s).`);
+  L.push("");
+  L.push("These are movements the STATEMENTS type as a contribution or a withdrawal — what the family "
+    + "put in and took out — and not the trades their managers made inside a mandate. The other "
+    + `${book.accounts.length - cAccts.size} account(s) publish no dated capital record at all: their `
+    + "subscription happened, and no statement in this drop says when.");
+  L.push("");
+  const trs = Object.values(book.positionTranches);
+  const multi = trs.filter((t) => t.moves.length > 1);
+  L.push(`A per-contribution breakdown is published for **${trs.length}** position(s), of which `
+    + `**${multi.length}** were bought over more than one date. That needs UNITS allotted per `
+    + "contribution, and the allotted units accounting for every unit held — without both, a tranche's "
+    + "value today cannot be struck, and a return on part of a position would read as a return on all of it.");
+  if (trs.length) {
+    L.push("");
+    L.push("| Position | Account | Contributions | Units | Invested |");
+    L.push("| --- | --- | ---: | ---: | ---: |");
+    for (const t of trs) {
+      const p = book.positions.find((x) => x.accountId === t.accountId && x.securityKey === t.securityKey);
+      const inv = sum(t.moves.map((m) => m.invested ?? 0));
+      L.push(`| ${p?.security ?? t.securityKey} | ${t.accountId} | ${t.moves.length} | `
+        + `${t.units.toLocaleString("en-IN")} | ${r2(inv).toLocaleString("en-IN")} |`);
+    }
   }
   L.push("");
   L.push("## Sector allocation");

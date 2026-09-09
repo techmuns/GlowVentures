@@ -349,6 +349,13 @@ html:not(.dark) .text-champagne-500 { color: #7d5f16; }
    pale #ecdcae and all but vanished on the light hover surface. Use a deep gold so
    hovered headlines stay clearly readable. */
 html:not(.dark) .group:hover .group-hover\:text-champagne-400 { color: #5f4711; }
+/* AND THE PLAIN HOVER VARIANT, which had the same gap and was invisible for the
+   same reason it was invisible on `group-hover`: nothing in the sweep hovered
+   one. A route that CLICKS a control leaves it hovered, and the button came back
+   at #ecdcae on white — the exact failure the comment above records, one variant
+   over. This covers the Entities pill, the mandate links and the contribution
+   chevron, all of which already carried the class. */
+html:not(.dark) .hover\:text-champagne-400:hover { color: #5f4711; }
 
 /* Gain / loss — darker in light mode for readable contrast (AA) on white rows
    and on the row-hover tint. Dark theme keeps the brighter #10b981 / #ef4444. */

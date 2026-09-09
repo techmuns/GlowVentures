@@ -59,8 +59,14 @@ export type GroupBy = "manager" | "entity" | "instrument";
  * `direct` is NOT a fourth grouping — it is the `instrument` rollup over a
  * FILTERED tape (the accounts the family runs itself), which is why it lives
  * here as a view rather than as a `GroupBy`. `tape` is the raw dated rows.
+ *
+ * `mine` reads a DIFFERENT SOURCE entirely and touches no `Txn`: the family's
+ * own dated capital into each mandate and fund (`BOOK_CAPITAL_MOVES`, via
+ * `capitalRollup`). It is the default, because the question this card is asked
+ * first is what the FAMILY did — a share a discretionary manager picked is that
+ * manager's decision, and it belongs one level down, inside the mandate.
  */
-export type TxnView = GroupBy | "direct" | "tape";
+export type TxnView = GroupBy | "mine" | "direct" | "tape";
 
 /** A dated row, plus the group it was filed under. */
 export type TrancheRow = Txn;

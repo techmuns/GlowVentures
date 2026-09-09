@@ -378,6 +378,62 @@ export type CorporateAction = {
 // (sale / distribution). The terminal market value is appended at compute time.
 export type CashFlow = { date: string; amount: number; description?: string };
 
+/**
+ * ONE DATED INVESTMENT THE FAMILY MADE — not a trade their manager made.
+ *
+ * *"in transactions we need to see the transactions we have done, not what the
+ * transactions the portfolio manager has done."* A share Carnelian bought is the
+ * manager's decision; the ₹10 Cr the family put INTO Carnelian is theirs. This
+ * is the second, and it is the same axis `holdingBucket` settled for holdings
+ * (Stage 10L) arriving on the transactions side.
+ *
+ * `amount` is what left (or reached) the bank on that date, as the statement
+ * prints it. `invested` is what actually bought units — `amount` less the
+ * charges the SAME statement levies on the SAME date — and is the figure a
+ * return is struck on, because it ties to the position's own cost basis to the
+ * paisa. Both are carried: the family thinks in the gross ("I invested an
+ * additional 10 crores") and the arithmetic needs the net.
+ */
+export type CapitalMove = {
+  accountId: string;
+  date: string;
+  /** `in` is money the family committed; `out` is money that came back or was deducted. */
+  direction: "in" | "out";
+  /** What the STATEMENT called it — "Top Up", "Capital inflow", "Purchase". Never our word for it. */
+  label: string;
+  /**
+   * Gross movement, unsigned. NULL where the statement prints only a running
+   * BALANCE for this date and no gross figure — a balance is not a movement, and
+   * differencing an ambiguous sequence would invent one.
+   */
+  amount: number | null;
+  /** `amount` less the same date's printed charges. Null wherever `amount` is. */
+  invested: number | null;
+  /** Units this contribution was allotted, where the fund allots any. */
+  units: number | null;
+  /** The security those units are in — only a unitised fund names one. */
+  security: string | null;
+  securityKey: string | null;
+};
+
+/**
+ * The dated investments behind ONE position, where they account for ALL of it.
+ *
+ * *"I invested additional 10 crores… previous amount… what was the return? Now
+ * this 10 crores… what it has done."* Answering that per tranche needs units
+ * allotted per contribution, because a tranche's value today is its own units at
+ * today's NAV. So the gate is the same one `costFor` and the ST/LT split already
+ * apply: the allotted units must account for the units held, or the breakdown is
+ * withheld and the reason named. A partial breakdown reads as a whole one.
+ */
+export type PositionTranches = {
+  accountId: string;
+  securityKey: string;
+  moves: CapitalMove[];
+  /** Allotted units, which equal the position's own quantity — that is the gate. */
+  units: number;
+};
+
 export type EntityCG = {
   entity: string;
   /** The account these gains belong to, and its canonical owner. */
