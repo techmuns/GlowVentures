@@ -54,6 +54,23 @@ const read = (text) => {
   ok("a reclassification is neither",
     kinds.filter((k) => k === "reclassification").length === 2, kinds.join(","));
 
+  /**
+   * ...AND THE LABEL IS NOT THE POINT — THE MONEY IS.
+   *
+   * Typed as a contribution and a withdrawal, a class transfer would put its
+   * whole value out of the family's dated record and back into it on one day,
+   * inside one folio, having moved nothing. On the real statement that is
+   * ₹17.85 Cr in each direction. Asserted as the FIGURE rather than the kind, so
+   * a reader of this suite can see what the label is protecting: a check on the
+   * word alone would pass a reader that had renamed the kind and kept the money.
+   */
+  const rs = (k) => rows.filter((r) => r.kind === k).reduce((t, r) => t + Math.abs(r.amount), 0);
+  ok("what a reclassification would have added to each side, had it been one",
+    Math.round(rs("reclassification") / 2) === 11998800, String(rs("reclassification")));
+  ok("...and the two real sides carry only real money",
+    rs("contribution") === 10000000 && rs("withdrawal") === 14998500,
+    `${rs("contribution")} / ${rs("withdrawal")}`);
+
   // The LABEL is the statement's own word, which is what reaches the family's
   // transactions table. "Full Units Redemption", never our "Sell".
   ok("the label is the statement's own",
@@ -75,15 +92,28 @@ const read = (text) => {
 }
 
 // ── each check, proved by breaking the statement ────────────────────────────
+// EACH MUTATION ISOLATES ONE CHECK, and that took measuring rather than
+// reasoning: the first draft changed a unit count, which moves the units x NAV
+// identity AND the running balance, so checks 2 and 3 both fired and neither
+// could be shown to be load-bearing on its own. Every figure below is chosen so
+// that exactly one identity breaks — the reclassification case moves the amount
+// and its NAV TOGETHER, so units x NAV still ties and only the netting fails.
 const breaks = [
   ["(1) the row's own arithmetic",
-   ["99,99,000.00 100.0000 99,990.000 99,990.000", "99,98,000.00 100.0000 99,990.000 99,990.000"]],
+   // Stamp duty alone: gross - charges no longer reaches the printed net, while
+   // units x NAV and the balance are untouched.
+   ["- 1,000.00 99,99,000.00", "- 2,000.00 99,99,000.00"]],
   ["(2) amount is units x NAV",
-   ["100.0000 99,990.000 99,990.000", "100.0000 88,880.000 88,880.000"]],
+   // The NAV alone: the row's own subtraction still ties and so does the balance.
+   ["99,99,000.00 100.0000", "99,99,000.00 110.0000"]],
   ["(3) the running balance",
-   ["99,990.000 99,990.000\n31-03", "99,990.000 88,880.000\n31-03"]],
+   // The printed Balance Units alone, on the first row of Class B1.
+   ["100.0000 99,990.000 99,990.000", "100.0000 99,990.000 88,880.000"]],
   ["(4) the reclassification nets to zero in rupees",
-   ["1,19,98,800.00 96.0000", "1,19,98,000.00 96.0000"]],
+   // The amount AND its NAV together, so units x NAV still holds to the printed
+   // precision (99,990 x 119.9920 = 1,19,98,000.08) and only the two sides stop
+   // cancelling — Rs 800 of money appearing out of a transfer.
+   ["(1,19,98,800.00) 120.0000", "(1,19,98,000.00) 119.9920"]],
   ["(5) page 3 agrees with the tape",
    ["With Effect From 1 April 2026 1,24,987.500", "With Effect From 1 April 2026 1,24,000.000"]],
   ["a transaction type this reader does not declare",

@@ -7445,9 +7445,32 @@ one that matched nothing both draw a table, and only the book says which rows
 belong. The `out` route **opens every row**, because the statement's own word for
 the movement (`Full Units Redemption`) rides in the expansion and the collapsed
 row shows a count — the check has to look where the redemption's own label is.
-`scripts/ingest/__tests__/altFund.test.mjs` (33 cases) exercises the reader
+`scripts/ingest/__tests__/altFund.test.mjs` (35 cases) exercises the reader
 against a SYNTHETIC statement and **breaks it six ways**, one per check plus an
 undeclared transaction type; every one refuses the whole table.
+
+**AND EACH MUTATION ISOLATES ITS OWN CHECK, which took measuring rather than
+reasoning.** The first draft changed a unit count — which moves the units × NAV
+identity AND the running balance, so two checks fired and neither could be shown
+load-bearing on its own. Every figure is now chosen so exactly one identity
+breaks: the reclassification case moves the amount and its NAV TOGETHER
+(99,990 × 119.9920 = ₹1,19,98,000.08, inside the printed precision), so only the
+netting fails. Verified by weakening each of the six in turn: every one produces
+exactly its own two failures and no others.
+
+**AND ONE CASE ASSERTS THE MONEY RATHER THAN THE LABEL.** A check on the word
+"reclassification" alone would pass a reader that renamed the kind and kept the
+figure, so the suite states what the label is protecting — what a class transfer
+would have added to each side had it been typed as a movement. Measured on the
+real statement that is ₹17.85 Cr in each direction; on the synthetic one,
+₹1,19,98,800.
+
+**`CAPITAL_KINDS` TURNED OUT TO BE THE SECOND LOCK, NOT THE FIRST.** Widening it
+to admit `reclassification` and rebuilding the book changes nothing — the day
+split in `capitalMovesFrom` keys on `contribution` and `withdrawal` by name, so a
+row of neither kind is picked up by nothing. The reader's own `kind` is what
+actually decides, which is why the assertion lives in the ingest suite and not in
+a page check that cannot fail.
 
 Three existing checks had to be rewritten, and each was a check that could not
 have failed:
@@ -7467,9 +7490,23 @@ have failed:
   can never be present reads `false` for ever and quietly satisfies whatever asks
   for it.
 
-`build` · `test:ingest` 140 + 33 · `test:family` · `check:family` ·
-`check:pages`. `glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is
-untouched.
+**TEN BUGS WERE REINTRODUCED, EACH FIRING ITS OWN CHECK**: the side never
+reaching `MyInvestments` (the original defect — three checks, from both routes),
+the counter back on the manager's tape, the control back in the tape's
+vocabulary, a net published over one side, the empty side back to ₹0, a closed
+position listed among the holdings (three checks, from three directions), the
+closed note deleted, the note dropping where the money went, the `/holdings`
+marker removed, and the reclassification admitted to `CAPITAL_KINDS`.
+
+**AND A FAILED BUILD SILENTLY REUSES THE OLD BUNDLE**, which is worth naming
+because it produced a confidently wrong result once here: a mutation that did not
+typecheck left `dist/` at the PREVIOUS bug's build, and the sweep dutifully
+reported that bug's failures under the new one's name. A bug-reintroduction run
+whose failures match the previous run's exactly is the tell.
+
+`build` · `test:ingest` 140 + 35 · `test:family` · `check:family` **53/0** ·
+`check:pages` **142 combinations clean**, with the two pre-existing abstentions.
+`glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is untouched.
 
 ### Stage 10k — News & Announcements: REMOVED
 
