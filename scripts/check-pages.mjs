@@ -3979,8 +3979,8 @@ const INVARIANTS = {
     const absent = ctx.kpiTiles.filter((x) => x.absent);
     if (!absent.length) return notChecked("every KPI tile on this book carries a figure");
     // THREE lines, not two: label, the em dash, and the reason. `>= 2` was the
-    // first draft and it could not fail — a tile rendering "DRY POWDER / —" and
-    // nothing else has two lines and is exactly the unexplained dash this is
+    // first draft and it could not fail — a tile rendering "UNCALLED CAPITAL / —"
+    // and nothing else has two lines and is exactly the unexplained dash this is
     // guarding against. Found by reintroducing the bug.
     return absent.every((x) => x.lines >= 3);
   }],
@@ -4302,19 +4302,19 @@ const INVARIANTS = {
      * a holdings drill-down structurally cannot contain it and would open a
      * table that could only ever be empty. Asserted by PAIRING the tile with its
      * destination: an earlier draft counted `/private-market` links instead and
-     * passed while the Dry powder tile pointed at the holdings page, because the
-     * Capital deployment card's own link kept the count up. Reintroducing that
+     * passed while the Uncalled capital tile pointed at the holdings page, because
+     * the Capital deployment card's own link kept the count up. Reintroducing that
      * bug is what found it.
      */
     ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
-      if (!/DRY POWDER[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
+      if (!/UNCALLED CAPITAL[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
       if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
       const links = ctx?.links ?? [];
       // Two of the three are KPI TILES, whose target is the whole card and whose
       // anchor therefore carries no text — see the invariant above. Fund
       // commitments sits on the Capital deployment card and is still a text
       // link, so the same claim is struck in the two places the pairing lives.
-      return [/^dry powder$/i, /^distributions$/i]
+      return [/^uncalled capital$/i, /^distributions$/i]
         .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"))
         && links.some((l) => /^fund commitments$/i.test(l.text) && l.href === "/private-market");
     }],
@@ -5069,8 +5069,8 @@ const INVARIANTS = {
     // PM-4. Undrawn is summed AS PRINTED. Two folios print a commitment and a
     // drawdown and no undrawn figure; a `?? 0`, or deriving committed − drawn,
     // puts a figure on all fifteen and the coverage count gives it away.
-    ["the dry-powder tile covers fewer capital accounts than the register holds", (t) => {
-      const tile = cr(new RegExp(String.raw`STILL TO CALL \(DRY POWDER\)\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+    ["the uncalled-capital tile covers fewer capital accounts than the register holds", (t) => {
+      const tile = cr(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const foot = new RegExp(String.raw`Still to call\s*` + CR + String.raw`\s*\((\d+) of (\d+)\)`, "i").exec(t);
       if (!Number.isFinite(tile) || !foot) return false;
       const total = cr(foot[1]), have = Number(foot[2]), rows = Number(foot[3]);
@@ -8493,7 +8493,7 @@ for (const theme of THEMES) {
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
        * the weaker one passed a bug that was really there. Reintroducing it
-       * proved it: pointing the Dry powder tile at the holdings drill-down left
+       * proved it: pointing the Uncalled capital tile at the holdings drill-down left
        * the sweep green, because another link elsewhere on the page still
        * satisfied a check that only counted addresses. A drill-down invariant
        * has to pair the LABEL with the DESTINATION or it is not asserting the
