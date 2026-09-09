@@ -5058,7 +5058,9 @@ direct equity holdings only. remove the highlighted text from ui."*
 *(The ETFs have since come BACK to this card, at the family's request — see
 Stage 10ad. What stands from this section is the mandate half, which is
 unchanged: a share a discretionary manager picked is still not in the movers
-list. The scope is a tab now, and the default is stocks and ETFs together.)*
+list. The scope was a tab for a while and the default was stocks and ETFs
+together; the family have since removed the tabs and settled the card on Direct
+Equity alone — see Stage 10aj, which is where this narrowing ends up standing.)*
 
 **THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
 `DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
@@ -6078,6 +6080,14 @@ half-right once already.
 
 #### 1. *"ETFs can be a part of stocks… it should actually be stocks and ETFs. Basically, or else… separate tabs, stocks… ETF… mutual fund."*
 
+*(**THE TABS THIS SECTION ADDED HAVE SINCE BEEN REMOVED** — the family asked for
+the selectors to go and for the card to show Direct Equity alone, so the set is
+back to what Stage 10t narrowed it to. See Stage 10aj. Everything below is kept
+because the reasoning about CAPTIONS is unchanged and still governs the card:
+each one states what its figure covers, and the tile label, the coverage line,
+the index sentence and the excluded footer read the set rather than a literal.
+What is gone is only the control that let a reader change it.)*
+
 **THE CARD'S OWN HEADER COMMENT HAS QUOTED THE ANSWER SINCE THE DAY IT WAS
 WRITTEN.** The request that built Today's movers was *"MY STOCKS AND ETFS are up,
 Sensex is down this much, Nifty"*; Stage 10t then narrowed the card to
@@ -6717,6 +6727,123 @@ next drop picks its own.
 `build` · `test:ingest` 140 · `test:family` · `check:family` 53/0 ·
 `check:pages` **140 combinations clean**, with the same two pre-existing
 abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
+
+### Stage 10aj — THREE REMOVALS ON MORNING CIO, AND ONLY ONE OF THEM WAS FREE
+
+Three asks, and they are worth recording together because the SAME instruction —
+take this off the screen — needed three different amounts of work, decided
+entirely by whether what was being removed carried a figure.
+
+#### 1. *"remove these stocks etf mutual funds selectors for this top movers section... we will only show direct equity as default."*
+
+Stage 10ad put four tabs on Today's movers — Stocks & ETFs / Stocks / ETFs /
+Mutual funds, on `?movers=` — after the family read their own first wording
+("my stocks and ETFs are up") as asking for the ETFs back. They have now settled
+it the other way, and the card is the **`DIRECT_EQUITY_BUCKET`** set Stage 10t
+narrowed it to: 37 holdings, ₹94.9 Cr, of which 33 names and ₹82.3 Cr can reach
+the quote feed.
+
+**THE SCOPE IS A CONSTANT, NOT A PINNED VIEW, and that is the OPPOSITE of the
+call Stage 10q made** for the Portfolio Monitor's basis switch — so the two
+belong side by side or the next session will read them as contradictory. There
+the flag was threaded through fifteen render branches, so pinning it to a literal
+would have left every one of them unreachable, and `?view=entity` survived the
+button that set it. **Here each scope was a different SET**, and the family have
+chosen which set the card covers: keeping three unselectable ones alive on a URL
+nobody can reach from the page would keep their captions, their nouns, their
+verbs and a mutual-fund absence essay standing for a card that renders one set
+for ever — the dead-code-that-looks-alive failure, wearing a query parameter. So
+`MOVER_SCOPES`, `CANNOT_BE_PRICED` and the param are deleted with the control.
+
+**EVERY CAPTION STILL READS THE SET** — the tile label, the coverage line, the
+index sentence and the excluded footer each state what the figure covers, off one
+constant instead of an active tab. And **what the narrowing leaves out is still
+NAMED**: the footer now carries the ETFs beside the PMS mandates, which is the
+half a reader could otherwise not see changing.
+
+**THE TWO CONSTITUENT ROUTES WENT WITH THE TABS AND THE ABSENCE IS ASSERTED
+TWICE.** `cio-movers-etf` and `cio-movers-mf` walked sets the card no longer
+offers, so there was nothing at either address to hold to the light; the
+`moverScopes` probe they were checked with is KEPT, and now proves the group is
+gone. That probe is the only thing that can: "Stocks", "ETFs" and "Mutual funds"
+all still appear legitimately in this card's own sentences and in the allocation
+table below it, so a text match would report the tabs absent while they were on
+screen. Asserted on `cio` AND `cio-live`, because the tabs rendered whether or
+not a quote had landed.
+
+#### 2. *"remove the highlighted text from the dashboard ui"* — the NAV card's four paragraphs
+
+**EVERY CLAIM WAS CHECKED AGAINST THE REST OF THE CARD BEFORE ANYTHING WAS
+DELETED**, which is the whole of this one — the Stage 10aa / 10ai pattern, and
+the reason it is not a one-line diff:
+
+| The sentence | Elsewhere? | Where it is now |
+| --- | --- | --- |
+| "Both lines are rebased to 100 at …" | **NO** | the subtitle — this card's basis line |
+| "…nets out ₹11.2 Cr of external capital…" + the Show/Hide control | **NO** | the toggle in the period row, which names the figure it reveals |
+| "…it reads +9.29% against the book's +0.54%…" | **NO** | that toggle's hover, beside the control that draws the line |
+| "₹28.3 Cr of the move is not proven to be performance…" | **NO** | an amber pill beside the Book pill it qualifies, accounts in the hover |
+| "The book's own dated series is N statement dates over A → B" | yes — the subtitle, word for word | — |
+| "…over the period shown it moved +1.80% … market history" | **NO** | the range note, beside the control that chose the window |
+| "The index is taken at its last close *on or before* …" | methodology, no figure | deleted — it is `alignIndexToDates` in `navSeries.ts` |
+
+**THE REBASE WAS THE ONE THAT WOULD HAVE GONE UNNOTICED.** The y-axis reads
+84 / 91 / 98 — a RATIO, not an amount — so without that clause the ticks are
+unitless and the chart quietly stops saying what it is measuring.
+
+**AND THE RANGE'S OWN INDEX RETURN IS THE ONE THAT HAD TO LAND IN A PARTICULAR
+PLACE.** It is the index ALONE over a period the book has no measurement across.
+In the range note it is unmistakably about the selected window; moved up beside
+the Book pill it becomes a pair a reader reads as struck over one period, which
+is the caption-that-widens failure. So the check requires it to be in the note
+**and NOT in the header** — see the defect that check exposed in itself, below.
+
+**THE `<details>` OF EXCLUDED ACCOUNTS IS DELIBERATELY NOT PART OF THIS.** The
+selection ran through it, and it is the other half of the family's own ask ("or
+state the accounts that cannot supply one"), it is a collapsed one-liner rather
+than prose, and §"a figure that exists for SOME accounts is shown for those and
+the rest are NAMED" is a standing rule of this book. It is one line to remove if
+they want it gone, and that is said out loud rather than decided silently.
+
+#### 3. *"remove the placeholder for not live data from the dashboard ui"*
+
+The dashed panel headed "Coming as live data lands — the rest of the CIO vision",
+four chips and a footnote. **NOT ONE OF THEM WAS A MEASUREMENT**, which is why
+this went cleanly where the paragraphs above needed an audit first: a chip named
+a feature that does not exist, so there was nothing on it to move and nothing a
+reader could act on. The gaps it stood for are in the Stage 8 table above, which
+is where an unbuildable feature belongs — four dashed frames on a dashboard read,
+during an upstream outage, as four more things that have broken, which is the
+company page's own lesson applied one page over. Both claims are asserted and
+neither implies the other: the panel is gone, AND the two chips retired earlier
+(the index strip, NAV-vs-benchmark) stay retired in particular, so a build that
+restored the panel with its ORIGINAL list cannot pass on the heading alone.
+
+#### The bug-reintroduction pass found a check that could not fail
+
+Ten bugs were put back one at a time, each rebuilt and swept. Nine fired their
+own check immediately. **The tenth is the point of doing it.**
+
+`navHead` — the slice these invariants read the card's header from — used to be
+bounded on **"Both lines are rebased"**, the opening words of the block that has
+just been removed. `sliceBetween` returns EVERYTHING AFTER its start marker when
+the end marker is absent, so all ten would have gone on running against the rest
+of the page rather than failing. That much was expected and fixed.
+
+**THE FIX WAS BOUNDED ON THE WORD "PERIOD" — the period control's own label — AND
+THAT COULD NOT FAIL EITHER.** Reintroducing the exact bug it exists for (moving
+the range's index-only return up beside the book's figure) left the sweep GREEN:
+the injected sentence reads "alone over this **period**", so the slice ended
+INSIDE the very text it was meant to catch. **A boundary a page is free to print
+is not a boundary.** It reads the card's header ELEMENT now, off the `navChart`
+probe — the same answer `data-movers-scope`, `data-section` and `data-mandate`
+already give: a structural claim must not depend on prose a redesign may reword.
+Re-run against the same bug, it fails.
+
+`build` · `test:ingest` 140 · `test:family` · `check:family` 53/0 ·
+`check:pages` **136 combinations clean** (140 less the two removed movers
+routes), with the same two pre-existing abstentions. `glowData.ts` is untouched —
+nothing here reads the ingest.
 
 ### Stage 10k — News & Announcements: REMOVED
 
