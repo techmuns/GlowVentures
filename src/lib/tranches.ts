@@ -190,8 +190,16 @@ export type CapitalGroup = {
   withdrawals: number;
   paidIn: number;
   tookOut: number;
-  /** Paid in less taken out — the family's own money at work, as reported. */
-  net: number;
+  /**
+   * Paid in less taken out — the family's own money at work, as reported.
+   *
+   * NULL UNDER A SIDE FILTER, and that is the whole of why this is nullable.
+   * `paidIn` and `tookOut` narrow to the movements in view; the net does not
+   * exist over one side of a two-sided record. Publishing `paidIn - 0` under a
+   * Paid-in filter would print a net that ties to its own columns and describes
+   * an account that also took money out.
+   */
+  net: number | null;
   first: string;
   last: string;
   /** More than one dated contribution. A fact about the count, not a judgement. */
@@ -207,7 +215,26 @@ export type CapitalGroup = {
   returnPct: number | null;
   /** Why the return is withheld, when it is. Null when it is published. */
   incompleteReason: string | null;
+  /** True where a side filter is narrowing this row's movements. */
+  sideFiltered: boolean;
 };
+
+/**
+ * WHICH MOVEMENTS ARE IN VIEW.
+ *
+ * *"When I'm clicking on buy filter it should show only the buy transactions.
+ * When I'm clicking on sell filter it should show only the sell transaction.
+ * But nothing on the page is changing when I'm clicking either of the
+ * filters."* The control existed and its value was never passed to this view —
+ * so it moved the counter beside it, which reads the manager's TAPE, while the
+ * table under it did not move at all.
+ *
+ * A family movement has no buy and no sell. It has money in (a subscription)
+ * and money out (a redemption), which is the same distinction under the words
+ * the columns already use — so the CALLER supplies the vocabulary and this
+ * takes the direction.
+ */
+export type CapitalSide = "all" | "in" | "out";
 
 /**
  * IS THE CONTRIBUTION HISTORY THE WHOLE OF WHAT WAS PAID IN?
@@ -255,6 +282,7 @@ export function capitalRollup(
   accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null }[],
   positions: Position[],
   index: Record<string, PositionTranches>,
+  side: CapitalSide = "all",
 ): CapitalGroup[] {
   const byAcct = new Map<string, CapitalMove[]>();
   for (const m of moves) {
@@ -262,16 +290,29 @@ export function capitalRollup(
     byAcct.get(m.accountId)!.push(m);
   }
   const out: CapitalGroup[] = [];
-  for (const [accountId, ms] of byAcct) {
+  for (const [accountId, all] of byAcct) {
+    // WHAT THE FILTER NARROWS, AND WHAT IT MUST NOT. `ms` is the movements in
+    // view — the rows listed, the amounts on each side, the payment count. The
+    // account's WHOLE record still decides whether it can carry a return, so a
+    // reader who narrows to redemptions does not thereby make an account's
+    // contribution history look incomplete.
+    const ms = side === "all" ? all : all.filter((m) => m.direction === side);
+    if (!ms.length) continue;
     const a = accounts.find((x) => x.accountId === accountId);
     const ins = ms.filter((m) => m.direction === "in");
     const outs = ms.filter((m) => m.direction === "out");
     const paidIn = ins.reduce((s, m) => s + (m.amount ?? 0), 0);
     const tookOut = outs.reduce((s, m) => s + (m.amount ?? 0), 0);
-    const net = paidIn - tookOut;
+    const sideFiltered = side !== "all";
+    // A NET OVER ONE SIDE IS NOT A NET. It would tie to the two columns beside
+    // it and describe an account that also moved money the other way, which is
+    // the plausible wrong figure this book exists to refuse — so under a filter
+    // it, the gain and the return all render absent with the reason.
+    const net = sideFiltered ? null : paidIn - tookOut;
     const value = positions.filter((p) => p.accountId === accountId).reduce((s, p) => s + p.marketValue, 0);
     const dates = ms.map((m) => m.date).sort();
-    const incompleteReason = contributionsAreComplete(accountId, ms, positions, index, a?.inceptionDate);
+    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate);
+    const measurable = !sideFiltered && net !== null && net > 0 && !incompleteReason;
     out.push({
       accountId,
       label: a?.strategy || a?.provider || accountId,
@@ -285,9 +326,10 @@ export function capitalRollup(
       first: dates[0], last: dates[dates.length - 1],
       staggered: ins.length > 1,
       value,
-      gain: incompleteReason || net <= 0 ? null : value - net,
-      returnPct: incompleteReason || net <= 0 ? null : ((value - net) / net) * 100,
+      gain: measurable ? value - net! : null,
+      returnPct: measurable ? ((value - net!) / net!) * 100 : null,
       incompleteReason,
+      sideFiltered,
     });
   }
   // Biggest commitment first — the reader's own question is about size.
@@ -303,7 +345,11 @@ export function capitalTotals(groups: CapitalGroup[]) {
     withdrawals: groups.reduce((a, g) => a + g.withdrawals, 0),
     paidIn: groups.reduce((a, g) => a + g.paidIn, 0),
     tookOut: groups.reduce((a, g) => a + g.tookOut, 0),
-    net: groups.reduce((a, g) => a + g.net, 0),
+    // A COLUMN OF DASHES HAS NO TOTAL. Under a side filter every row's net is
+    // absent, and summing them as zero would print a ₹0 net under a table that
+    // is refusing to state one — §"never blend a missing value into a total as
+    // zero", arriving through a footer.
+    net: groups.some((g) => g.net === null) ? null : groups.reduce((a, g) => a + (g.net ?? 0), 0),
     value: groups.reduce((a, g) => a + g.value, 0),
   };
 }

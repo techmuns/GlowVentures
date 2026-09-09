@@ -7276,6 +7276,238 @@ June 2026.xlsx`. It is still not a source (§"the consolidated review workbook i
 not a source — by decision"); it is the cross-check `reconcile:review` runs and
 the classification `familyTaxonomy.ts` cites.
 
+### Stage 10am — THE REDEMPTION WAS ON PAGE 2 ALL ALONG, AND THE SIDE FILTER WAS WIRED TO NOTHING
+
+Three asks, and the first two are one defect seen from both ends: a fund the
+family knows they redeemed was in neither the holdings they hold nor the
+transactions they made.
+
+*"In the holdings page we only need to show the current holdings. Since the 3P
+fund is redeemed, we need to show it in the transactions page as sold
+transaction."* · *"When I'm clicking on sell/buy filter, nothing is changing on
+the page … But nothing on the page is changing when I'm clicking either of the
+filters."* · *"I cannot find the redeemed 3P fund anywhere in the transactions
+page under sell side."*
+
+#### 1. The redemption was never in the archive, and the statement had it all along
+
+`docs/EXTRACTION-REPORT.md` reported the 3P statement READ. It was — the reader
+took its **ACCOUNT SUMMARY** and stopped there, and the account's whole dated
+history sits in a `Financial Transaction(s)` table on **page 2** that nothing had
+ever looked at. `document.json` carried `holdings: [3]` and
+`transactions: [] · cashFlows: [] · capitalGains: []`; `BOOK_CAPITAL_MOVES` had
+114 rows across 10 accounts and **not one mentioning 3P**.
+
+**AND THIS FILE ASSERTED THE OPPOSITE, IN THE READER'S OWN HEADER.** It read
+*"all reclassified out on 31-03-2026 … WHERE THE UNITS WENT IS NOT ON THIS
+STATEMENT and is not guessed at."* Page 2 says exactly where they went. That is
+the **sixth** absence in this book recorded against a premise nobody rechecked —
+after FRED, the RBI, the release calendar, the ISIN tier and the NAV series — and
+it is the most expensive shape of it: an absence asserted about a document
+already in hand.
+
+| Date | Class | Event | |
+| --- | --- | --- | ---: |
+| 04-05-2023 → 15-07-2025 | B1 | four Subscriptions | ₹12.00 Cr |
+| 31-10-2025 | B2 | Subscription | ₹4.50 Cr |
+| 28-11-2025 | B3 | Subscription | ₹12.00 Cr |
+| 31-03-2026 | B1, B2 → B3 | Reclassification Out / In | **₹0 — no money moved** |
+| 31-07-2026 | B3 | **Full Units Redemption** | **₹31,05,82,835.17** |
+
+₹28.50 Cr in, ₹31.06 Cr back — a ₹2.56 Cr gain — and that redemption figure is
+the one on the **ICICI payment advice this book already carries and already
+refuses to attribute on a file name alone**. Three documents agree.
+
+**FIVE CHECKS, AND THE TABLE IS PUBLISHED ONLY IF ALL FIVE PASS.** A dated tape a
+reader acts on is the one thing that must not be published on trust, so
+`threePFlows` emits NOTHING and says why unless the statement's own arithmetic
+witnesses it — `hdfcNsdl.mjs`'s licence, applied to a table rather than a
+rendered page:
+
+1. gross − setup expense − stamp duty = the printed `Amount Invested`, to the
+   paisa, on every subscription;
+2. |amount| = |units| × NAV, within the precision the statement prints those two
+   to (units 3dp, NAV 4dp) — reproduced, never a tolerance widened;
+3. the running unit total reproduces the printed `Balance Units` on every row of
+   every class;
+4. the reclassifications **net to zero in rupees**;
+5. and page 3's own `Reclassification` table — a separately printed witness —
+   agrees with the balance the transaction table runs to.
+
+**CHECK 4 REFUTED ITS OWN FIRST DRAFT, WHICH IS THE CHECK EARNING ITS PLACE.** It
+first required the units to net to zero as well, and failed by 37,368.064 on a
+statement that is perfectly correct: 12,48,630.217 units leave B1 and B2 at
+142.7354 and 143.7190, and 12,85,998.281 arrive in B3 at **138.8041**, because B3
+carries a 0.70% management fee against B1's 1.00% and B2's 1.20% and the same
+money buys more of it. The MONEY is the invariant; each side's unit count is held
+to its own NAV by check 2. Page 3 prints the same 37,368.064 gain independently,
+which is check 5.
+
+**AND A RECLASSIFICATION IS NOT A CAPITAL MOVE.** ₹17.85 Cr left two classes and
+the same ₹17.85 Cr arrived in a third, on one day, inside one folio. Typed as a
+withdrawal and a contribution it would put ₹17.85 Cr of fictitious money out and
+back into this family's dated record. It gets its own `kind`, is archived because
+it is what the statement prints, and sits deliberately outside `CAPITAL_KINDS`.
+
+**AND `capitalMovesFrom` HAD TO LEARN THAT A LAYOUT DECLARES ITSELF.** Its
+ambiguity — *"the allotment row's amount might be a running balance"* — is a fact
+about SANSHI, which prints the gross, the stamp duty and the allotment on three
+lines. 3P prints all of it on ONE line and prints its own net. A row carrying its
+own net **cannot** be a running balance, because a cumulative figure has no
+per-row charge to be net of — so `netAmount` is a primitive the statement prints
+AND a declaration, and the inference ("does it carry units?") that would have made
+every 3P subscription an unusable balance is gone.
+
+**RE-EXTRACTED SAFELY, WITH A CONTROL RUN.** `GLOW_PDF_PASSWORDS` is not set in
+this session, so a full re-extraction would have dropped the eight encrypted
+statements — which is exactly what `guardAgainstShrinkingTheArchive` exists to
+refuse. The 3P PDF alone was extracted into a scratch `GLOW_AUDIT_DIR` and
+**reproduced the committed document byte-identically except for `sourcePath`**
+BEFORE the reader was touched, so every difference afterwards belongs to the
+change. `docs/EXTRACTION-REPORT.md` does not move: the reconciler's dated checks
+do not cover this document's cash flows, and its coverage row is unchanged.
+
+**WHAT THE BOOK GAINED, AND WHAT IT DID NOT.** 6 contributions and 1 redemption;
+`BOOK_CAPITAL_MOVES` 114 → 121 rows across 10 → 11 accounts. **`BOOK_SUMMARY`
+does not move by a rupee** — a dated record of money that has already been paid
+out changes no NAV. `positionTranchesFrom` correctly withholds a per-contribution
+breakdown for all three classes, and now says *why* in the right words: a
+redeemed position is not an unexplained shortfall, and the generic
+"the contributions do not account for the position" would send the next reader
+looking for a missing allotment.
+
+#### 2. The side filter was a control whose value reached nothing
+
+`side` was never passed to `MyInvestments`. Clicking moved the **counter beside
+the table** — which read the manager's TAPE on every view, so the family's own
+ten rows sat under *"284 buys · 178 sells"*, a count of a set the page does not
+draw. That counter moving is the whole reason the dead filter looked alive.
+
+- **`capitalRollup` takes a side**, and the vocabulary is the CALLER's: a family
+  movement has no buy and no sell, it has money in and money out, which is what
+  the columns are already headed. The control reads `Paid in` / `Taken out` here
+  and `Buys` / `Sells` on the tape — `MultiSelectFilter`'s own "No companies
+  match" over a list of countries, one control further on.
+- **A NET OVER ONE SIDE IS NOT A NET.** It would tie to the two columns beside it
+  and describe an account that also moved money the other way — the plausible
+  wrong figure, which is worse than none. Under a filter the net, the gain and
+  the return all render absent with the reason, and the footer's net cell with
+  them: `sumOrNull`'s rule arriving through a side filter.
+- **AND THE EMPTY SIDE IS ABSENT, NEVER ₹0.** Under `Taken out` a row has no
+  contribution in view, and a ₹0 there says the account was never funded — the
+  measured-zero rule failing in the direction that INVENTS a fact rather than
+  hiding one.
+- **ONE FILTERED SET, NOT TWO.** The date and entity filters moved up into
+  `TransactionsView`, so the counter and the table read the same array. Two
+  filterings of one set is two definitions of "the movements in view", free to
+  disagree the first time either changed — which is how this defect looked
+  plausible in the first place.
+
+#### 3. A closed position is not a holding
+
+Dropped at the BASE of the row build — before the filters, the weight
+denominator, the footer set and every section subtotal — which is the one place
+that makes each of those consistent by construction, the way the ring-fence is
+applied one layer up. Measured: **5 rows across 2 accounts, every one ₹0 of
+market value and no reported cost**, so it moves no money on the page; what
+changes is the row count.
+
+**AND THE `redeemed` PILL WENT WITH THE ROW IT EXPLAINED.** That pill was the
+right answer to the LAST round — *"the 3P funds are lacking invested and current
+market value figures"*, where the book was right and the screen could not say the
+₹0 was measured. This supersedes it, and leaving the pill would leave code that
+can never fire. So it is deleted, and `check:pages` **inverts** rather than
+deleting the check with the feature: no closed key may be a row, no row may say
+"redeemed", and the `data-redeemed` handle must be gone.
+
+**WHAT MUST NOT BE LOST WITH IT, and is asserted from both ends:**
+
+- the closed positions are **NAMED under the table** — how many, which funds, how
+  many accounts, that the zero is MEASURED, and that the money is on
+  *Transactions → My investments* under *Taken out*. Dropping a row and saying
+  nothing is the same defect as showing a ₹0 one: a reader who knew they held 3P
+  and cannot find it learns the dashboard lost it;
+- and `/holdings` **still renders them and now marks them**. That page lists the
+  set BEHIND a Morning CIO figure, and Positions counts all 371 — so the ₹0 rows
+  are still there and still need the explanation the monitor's pill used to
+  carry. Without this the two removals cancel into a ₹0 nobody explains anywhere.
+
+**`FUND_CLASS_BOOK` IS NOW STRUCK OVER THE CURRENT HOLDINGS**, because that is
+what the monitor draws: **one** multi-class fund (Sanshi A2/E) where the whole
+book has two. Derived from every position it would demand a clubbed 3P row on a
+page that correctly does not draw one.
+
+#### The checks, and the three that could not fail
+
+`check:pages` gains two routes — `monitor-txn-in` and `monitor-txn-out` — whose
+every expectation comes from `glowData.ts`: a filter that matched everything and
+one that matched nothing both draw a table, and only the book says which rows
+belong. The `out` route **opens every row**, because the statement's own word for
+the movement (`Full Units Redemption`) rides in the expansion and the collapsed
+row shows a count — the check has to look where the redemption's own label is.
+`scripts/ingest/__tests__/altFund.test.mjs` (35 cases) exercises the reader
+against a SYNTHETIC statement and **breaks it six ways**, one per check plus an
+undeclared transaction type; every one refuses the whole table.
+
+**AND EACH MUTATION ISOLATES ITS OWN CHECK, which took measuring rather than
+reasoning.** The first draft changed a unit count — which moves the units × NAV
+identity AND the running balance, so two checks fired and neither could be shown
+load-bearing on its own. Every figure is now chosen so exactly one identity
+breaks: the reclassification case moves the amount and its NAV TOGETHER
+(99,990 × 119.9920 = ₹1,19,98,000.08, inside the printed precision), so only the
+netting fails. Verified by weakening each of the six in turn: every one produces
+exactly its own two failures and no others.
+
+**AND ONE CASE ASSERTS THE MONEY RATHER THAN THE LABEL.** A check on the word
+"reclassification" alone would pass a reader that renamed the kind and kept the
+figure, so the suite states what the label is protecting — what a class transfer
+would have added to each side had it been typed as a movement. Measured on the
+real statement that is ₹17.85 Cr in each direction; on the synthetic one,
+₹1,19,98,800.
+
+**`CAPITAL_KINDS` TURNED OUT TO BE THE SECOND LOCK, NOT THE FIRST.** Widening it
+to admit `reclassification` and rebuilding the book changes nothing — the day
+split in `capitalMovesFrom` keys on `contribution` and `withdrawal` by name, so a
+row of neither kind is picked up by nothing. The reader's own `kind` is what
+actually decides, which is why the assertion lives in the ingest suite and not in
+a page check that cannot fail.
+
+Three existing checks had to be rewritten, and each was a check that could not
+have failed:
+
+- **`a row with no withdrawal shows a dash, never a zero` was a page-wide `₹0`
+  ban**, and passed only for as long as no row legitimately carried one. 3P's
+  account now does — the fund paid out, so its Value today IS zero and the zero
+  is MEASURED. A page-wide ban cannot tell that from a fabricated one and would
+  force the page to hide a real figure. Struck at the Taken-out column now, which
+  is the claim it was always about.
+- **the `in` filter does not narrow the ROW set**, because every funded account in
+  this book has money going in — it narrows the MOVEMENTS. A blanket
+  "the row set must shrink" assertion failed a correct page; it is struck
+  conditionally, off the book, and `out` (4 of 11) is what catches a filter wired
+  to nothing.
+- **and the `redeemed` capture in `tableRows` went with the pill.** A handle that
+  can never be present reads `false` for ever and quietly satisfies whatever asks
+  for it.
+
+**TEN BUGS WERE REINTRODUCED, EACH FIRING ITS OWN CHECK**: the side never
+reaching `MyInvestments` (the original defect — three checks, from both routes),
+the counter back on the manager's tape, the control back in the tape's
+vocabulary, a net published over one side, the empty side back to ₹0, a closed
+position listed among the holdings (three checks, from three directions), the
+closed note deleted, the note dropping where the money went, the `/holdings`
+marker removed, and the reclassification admitted to `CAPITAL_KINDS`.
+
+**AND A FAILED BUILD SILENTLY REUSES THE OLD BUNDLE**, which is worth naming
+because it produced a confidently wrong result once here: a mutation that did not
+typecheck left `dist/` at the PREVIOUS bug's build, and the sweep dutifully
+reported that bug's failures under the new one's name. A bug-reintroduction run
+whose failures match the previous run's exactly is the tell.
+
+`build` · `test:ingest` 140 + 35 · `test:family` · `check:family` **53/0** ·
+`check:pages` **142 combinations clean**, with the two pre-existing abstentions.
+`glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is untouched.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

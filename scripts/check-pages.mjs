@@ -439,7 +439,13 @@ const AXIS_VENUE_BOOK = (() => {
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     // `isMandateHeld`, re-derived rather than imported: a check that imports the
     // helper it is checking agrees with it by construction.
-    const rest = positions.filter((p) => acc.get(p.accountId)?.engagement !== "PMS");
+    // A FUND VEHICLE AT NIL UNITS ITS FUND STILL PRICES — a CLOSED position, and
+    // the Portfolio Monitor lists current holdings only, so its rows draw no
+    // expansion for one and the identity below must not demand one. Re-derived
+    // here rather than imported, on the same terms as `isMandateHeld` beside it.
+    const FV = new Set(["AIF", "Mutual Fund", "ETF"]);
+    const closed = (p) => FV.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const rest = positions.filter((p) => acc.get(p.accountId)?.engagement !== "PMS" && !closed(p));
     const pairs = new Set(rest.map((p) => `${p.securityKey}\u0000${p.accountId}`));
     /**
      * ...AND THE HOLDING WHOSE PANEL HAS THE MOST TO GET WRONG: one reported by
@@ -1038,6 +1044,15 @@ const ROUTES = [
   // itself. Walked separately because a filter that silently matched nothing
   // renders an empty table that looks like a family which does not trade.
   ["monitor-txn-direct", "/monitor"],
+  // ...AND EACH SIDE OF THE FAMILY'S OWN CAPITAL RECORD, which is the defect the
+  // family reported: *"nothing on the page is changing when I'm clicking either
+  // of the filters."* The control was there and its value never reached the
+  // table under it, so clicking moved only the counter beside it — a counter
+  // that was reading the manager's TAPE. Two routes because the two sides are
+  // different sets and a filter that matched everything would satisfy one of
+  // them; the third state (All) is `monitor-txns` above.
+  ["monitor-txn-in", "/monitor"],
+  ["monitor-txn-out", "/monitor"],
   // ...and the BY-ENTITY view of the same table, where every statement's row
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
@@ -2361,21 +2376,30 @@ const axisChecks = (axis, expected) => [
  * fund itself reports as redeemed. Three things the invariants then need and
  * cannot get from the page:
  *
- *   `multi`     — the funds that must club, with their classes. Measured on this
- *                 book: TWO (3P B1/B2/B3, Sanshi A2/E) and no others, so a rule
- *                 that started clubbing on a shared HOUSE rather than a shared
- *                 FUND lands somewhere else immediately.
+ *   `multi`     — the funds that must club, with their classes. Struck over the
+ *                 CURRENT holdings, because that is what the Portfolio Monitor
+ *                 now draws: measured on this book, ONE (Sanshi A2/E), where the
+ *                 whole book carries two — 3P's three classes are all redeemed
+ *                 and the monitor lists no closed position. Deriving this from
+ *                 every position instead would demand a clubbed 3P row on a page
+ *                 that correctly does not draw one.
  *   `single`    — a fund carrying exactly ONE class in the book. It must keep the
  *                 name its own statement prints, so these must NOT club; without
  *                 this the check passes on a build that clubs everything.
- *   `redeemed`  — `isRedeemedToNil` RE-DERIVED rather than imported, on the same
- *                 terms as `isMandateHeld` above: a check that imports the helper
- *                 it is checking agrees with it by construction.
+ *   `closed`    — the positions the fund itself reports at nil units, grouped by
+ *                 fund. `isRedeemedToNil` is RE-DERIVED rather than imported, on
+ *                 the same terms as `isMandateHeld` above: a check that imports
+ *                 the helper it is checking agrees with it by construction. Two
+ *                 invariants read it from opposite ends — the monitor must draw
+ *                 NONE of these and must NAME them under the table; `/holdings`,
+ *                 which lists the set behind a Morning CIO figure and therefore
+ *                 still carries them, must MARK them.
  *
  * The class split is re-derived here too — deliberately a second expression of
  * the same rule rather than an import of `splitFundClass`. Measured, the two
- * agree exactly (16 class-bearing rows, 7 funds, 2 of them multi-class); a
- * disagreement fails, which is the whole point of writing it twice.
+ * agree exactly (16 class-bearing rows over the whole book, 7 funds, 2 of them
+ * multi-class; 6 and 1 over the current holdings); a disagreement fails, which
+ * is the whole point of writing it twice.
  */
 const FUND_CLASS_BOOK = (() => {
   try {
@@ -2387,37 +2411,45 @@ const FUND_CLASS_BOOK = (() => {
     // the ₹0 is what the fund MEASURED, not a figure this book is missing.
     const FUND_CLASSES_OF_ASSET = new Set(["AIF", "Mutual Fund", "ETF"]);
     const nil = (p) => FUND_CLASSES_OF_ASSET.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
-    const byFund = new Map();
+    const fundName = (sec) => {
+      const m = RE.exec(sec);
+      return m && /[A-Za-z]{3}/.test(m[1]) ? { fund: m[1].trim(), cls: m[2].toUpperCase() } : null;
+    };
+    // A key is CLOSED only where every position under it is at nil — one class
+    // redeemed beside another still held is not a closed holding.
     const keyRedeemed = new Map();
     for (const p of positions) {
       const prev = keyRedeemed.get(p.securityKey);
       keyRedeemed.set(p.securityKey, prev === false ? false : nil(p));
-      const m = RE.exec(p.security);
-      if (!m || !/[A-Za-z]{3}/.test(m[1])) continue;
-      const fund = m[1].trim();
-      if (!byFund.has(fund)) byFund.set(fund, { fund, classes: new Set(), keys: new Set(), mv: 0 });
-      const f = byFund.get(fund);
-      f.classes.add(m[2].toUpperCase());
+    }
+    // ── the CURRENT holdings, which is what the monitor draws ───────────────
+    const byFund = new Map();
+    for (const p of positions) {
+      if (nil(p)) continue;
+      const n = fundName(p.security);
+      if (!n) continue;
+      if (!byFund.has(n.fund)) byFund.set(n.fund, { fund: n.fund, classes: new Set(), keys: new Set(), mv: 0 });
+      const f = byFund.get(n.fund);
+      f.classes.add(n.cls);
       f.keys.add(p.securityKey);
       f.mv += p.marketValue ?? 0;
     }
     const shape = (f) => ({ fund: f.fund, classes: [...f.classes].sort(), keys: [...f.keys], mv: f.mv });
     const all = [...byFund.values()].map(shape);
+    // ── and what has been closed, which it must NOT ─────────────────────────
+    const closedRows = positions.filter(nil);
+    const closedFunds = [...new Set(closedRows.map((p) => fundName(p.security)?.fund ?? p.security))];
     return {
       multi: all.filter((f) => f.classes.length > 1),
       single: all.filter((f) => f.classes.length === 1),
       // Every key a clubbed fund covers, so a check can assert no CLASS still
       // stands as a row of its own beside the fund that now clubs it.
       clubbedKeys: new Set(all.filter((f) => f.classes.length > 1).flatMap((f) => f.keys)),
+      closedKeys: new Set(closedRows.map((p) => p.securityKey)),
+      closedCount: closedRows.length,
+      closedAccounts: new Set(closedRows.map((p) => p.accountId)).size,
+      closedFunds,
       redeemedKeys: new Set([...keyRedeemed].filter(([, v]) => v).map(([k]) => k)),
-      // WHICH ROW KEYS MUST CARRY THE PILL. A clubbed row stands for every class
-      // of its fund and says "redeemed" only where the fund reports EVERY one of
-      // them redeemed, so the expectation is per ROW rather than per position.
-      rowRedeemed(rowKey, hasClasses) {
-        const fund = hasClasses ? all.find((f) => f.keys.includes(rowKey)) : null;
-        const keys = fund ? fund.keys : [rowKey];
-        return keys.length > 0 && keys.every((k) => keyRedeemed.get(k) === true);
-      },
     };
   } catch { return null; }
 })();
@@ -2548,40 +2580,81 @@ const FUND_CLASSES = [
       /unit class/i.test(r.cellTitles?.[i] ?? "") && !/is a mandate/i.test(r.cellTitles?.[i] ?? "")));
   }],
   /**
-   * 5. A REDEEMED HOLDING SAYS SO — AND NOTHING ELSE DOES.
+   * 5. A CLOSED POSITION IS NOT A HOLDING, AND NOT ONE IS LISTED HERE.
    *
-   * Both directions, because neither implies the other and the pill is the whole
-   * of the answer to *"the 3P funds are lacking invested and current market
-   * value figures"*: the book was right and the SCREEN was wrong, three rows of
-   * dashes beside a ₹0 reading as data nobody wired. A build that pilled every
-   * row would satisfy the first half; one that pilled none would satisfy the
-   * second. Expectations come from the book, so the next drop picks its own.
+   * *"In the holdings page we only need to show the current holdings. Since the
+   * 3P fund is redeemed, we need to show it in the transactions page as sold
+   * transaction."*
+   *
+   * The previous round's answer was a `redeemed` PILL on the row — the right fix
+   * for *"the 3P funds are lacking invested and current market value figures"*,
+   * where the book was right and the screen could not say the ₹0 was measured.
+   * This supersedes it: the row is gone, so the pill is gone with it, and the
+   * check inverts rather than being deleted with the feature. Struck on the
+   * BOOK's own closed keys, so the next drop picks its own.
    */
-  ["a fund redeemed to nil says so on the row, and no other row claims it", (t, ctx) => {
+  ["no closed position is listed among the holdings", (t, ctx) => {
     const rows = ctx?.tableRows;
     if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
-    if (!FUND_CLASS_BOOK?.redeemedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
-    const want = rows.filter((r) => FUND_CLASS_BOOK.rowRedeemed(r.securityKey, r.fundClasses?.length > 0));
-    if (!want.length) return { notChecked: "no redeemed holding is drawn on this route" };
-    return rows.every((r) => r.redeemed === FUND_CLASS_BOOK.rowRedeemed(r.securityKey, r.fundClasses?.length > 0));
+    if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+    return rows.every((r) => !FUND_CLASS_BOOK.closedKeys.has(r.securityKey))
+      // AND the pill it replaced is gone. A build that kept both would list no
+      // closed row and still carry code that can never fire, which is the
+      // dead-code-that-looks-alive failure — invisible to the half above.
+      && !t.includes("data-redeemed")
+      && rows.every((r) => !/\bredeemed\b/i.test(r.cells?.[COL.name] ?? ""));
   }],
   /**
-   * 6. ...AND ITS ₹0 IS A MEASURED ZERO, NEVER A DASH.
+   * 6. ...AND WHAT LEFT IS NAMED, WITH WHERE THE MONEY WENT.
    *
-   * The counterpart of the sweep's own stray-₹0 lead: here the zero is CORRECT
-   * and must stay, because the fund measured it. A build that "fixed" the dashes
-   * by absenting the money columns would hide the redemption instead of naming
-   * it, and would read as the very gap the family reported.
+   * Dropping a row and saying nothing is the same defect as showing a ₹0 one: a
+   * reader who knew the family held 3P and cannot find it learns the dashboard
+   * lost it. Neither half implies the other — a page that dropped the rows and
+   * the note passes 5 and fails this; one that kept both fails 5 and passes
+   * this. Every expectation comes from the book.
    */
-  ["...and its market value is the measured zero, not another dash", (t, ctx) => {
-    const rows = (ctx?.tableRows ?? []).filter((r) => r.redeemed);
-    if (!rows.length) return { notChecked: "no redeemed holding is drawn on this route" };
-    // `moneyCell` reads an em dash as `null` and anything unparseable as NaN, so
-    // an exact `=== 0` fails in both of the directions that matter: a dash where
-    // the zero should be, and a figure that is not zero at all.
-    return rows.every((r) => moneyCell(r.cells?.[COL.mv]) === 0);
+  ["...and the closed positions are named under the table, with where the money went", (t, ctx) => {
+    if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
+    const note = ctx?.closedNote;
+    if (!note) return false;
+    const n = FUND_CLASS_BOOK.closedCount;
+    return note.includes(String(n))
+      // The FUNDS by name, so a reader can tell which of their holdings closed.
+      && FUND_CLASS_BOOK.closedFunds.every((f) => note.includes(f))
+      && note.includes(FUND_CLASS_BOOK.closedAccounts === 1 ? "one account" : `${FUND_CLASS_BOOK.closedAccounts} accounts`)
+      // The zero is MEASURED — the claim the deleted pill carried.
+      && /measured zero/i.test(note)
+      // And where the redemption is, which is the whole of the family's ask.
+      && /My investments/i.test(note) && /Taken out/i.test(note);
   }],
 ];
+
+/**
+ * HOW MANY ACCOUNTS PUBLISH EACH SIDE OF A DATED CAPITAL RECORD.
+ *
+ * The expectations for the side filter come from `glowData.ts`, never from the
+ * page: a filter that matched everything and one that matched nothing both draw
+ * a table, and only the book says which rows should be there. `out` is the
+ * smaller set by construction here — most accounts have never taken money back
+ * — which is why a filter that quietly did nothing looked plausible.
+ */
+const CAPITAL_SIDES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    if (!Array.isArray(moves) || !moves.length) return null;
+    const of = (d) => new Set(moves.filter((m) => m.direction === d).map((m) => m.accountId));
+    return {
+      in: of("in"), out: of("out"),
+      all: new Set(moves.map((m) => m.accountId)),
+      // The redemption the family went looking for: *"I cannot find the redeemed
+      // 3P fund anywhere in the transactions page under sell side."* Named from
+      // the book so the next drop picks its own, and asserted as a LABEL because
+      // the statement's own word for it is what reaches the screen.
+      outLabels: [...new Set(moves.filter((m) => m.direction === "out").map((m) => m.label))],
+    };
+  } catch { return null; }
+})();
 
 const UNCLASSIFIED_KEY = "Not classified in the family's review";
 const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
@@ -2905,6 +2978,40 @@ const INVARIANTS = {
       }],
 
     /**
+     * THE COUNTER COUNTS WHAT IS ON SCREEN.
+     *
+     * It read the manager's TAPE on every view, so this one — the family's own
+     * capital, ten rows — sat under "284 buys · 178 sells", a count of a set it
+     * does not draw. That is the caption-does-not-describe-its-figure failure
+     * arriving in a counter, and it is also why the dead side filter looked
+     * alive: clicking moved this number and nothing else on the page.
+     *
+     * Struck against the BOOK's own move counts, so a counter that started
+     * reading the rows it sits over — which would be right here and wrong the
+     * moment a filter narrowed them — still has to agree with the record.
+     */
+    ["the counter beside the table counts the family's movements, not the manager's trades",
+      (t, ctx) => {
+        if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
+        const c = ctx.txnCounter;
+        if (!c) return false;
+        const m = /([\d,]+) paid in · ([\d,]+) taken out/.exec(c);
+        if (!m) return false;
+        const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+        const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
+        return Number(m[1].replace(/,/g, "")) === moves.filter((x) => x.direction === "in").length
+          && Number(m[2].replace(/,/g, "")) === moves.filter((x) => x.direction === "out").length
+          // ...and it is NOT the tape's own vocabulary, which is what it printed
+          // here before.
+          && !/buys|sells/i.test(c);
+      }],
+    /**
+     * THE SIDE CONTROL IS PRESENT AND SET TO ALL by default, which is what the
+     * two side routes are narrowing FROM. A default of one side would show the
+     * family a partial record under a heading that claims the whole of it.
+     */
+    ["the side control opens on All", (t, ctx) => ctx.sideFilter?.active === "all"],
+    /**
      * AND THE EXPLANATORY FOOTER IS GONE — *"remove the highlighted text from
      * the dashboard UI"*. Asserted, never merely deleted along with the text:
      * a removal this book verifies is a removal that stays removed.
@@ -2961,8 +3068,24 @@ const INVARIANTS = {
      * NO SIDE THAT DID NOT MOVE IS PRINTED AS ₹0. An account that took nothing
      * out took nothing out; ₹0 says a withdrawal was measured at nothing.
      */
-    ["a row with no withdrawal shows a dash, never a zero",
-      (t) => /—/.test(t) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t)],
+    /**
+     * A ROW WITH NO WITHDRAWAL SHOWS A DASH, NEVER A ZERO — struck on the COLUMN
+     * it is about.
+     *
+     * It read the whole page for a `₹0` and passed for as long as no row
+     * legitimately carried one. 3P now does: the fund redeemed every unit and
+     * paid the family out, so its account's Value today IS zero and the zero is
+     * MEASURED. A page-wide ban cannot tell that from a fabricated one and would
+     * force the page to hide a real figure — the wrong direction of the same
+     * rule. Read at `tookOutCell`, which is the claim that was always meant.
+     */
+    ["a row with no withdrawal shows a dash, never a zero", (t, ctx) => {
+      if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
+      const none = ctx.mineRows.filter((r) => r.withdrawals === 0);
+      if (!none.length) return { notChecked: "every account in this book has taken money back out" };
+      return none.every((r) => r.tookOutCell === "—")
+        && ctx.mineRows.filter((r) => r.withdrawals > 0).every((r) => r.tookOutCell !== "—");
+    }],
   ],
 
   /**
@@ -3128,6 +3251,153 @@ const INVARIANTS = {
       (t) => !/rows open their Invested/.test(t)],
   ],
 
+  "monitor-txn-in": [
+  /**
+   * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
+   *
+   * *"When I'm clicking on sell/buy filter, nothing is changing on the page …
+   * But nothing on the page is changing when I'm clicking either of the
+   * filters."*
+   *
+   * It was true, and on the DEFAULT view: `side` was never passed to
+   * `MyInvestments`, so clicking moved the counter beside the table — which was
+   * reading the manager's TAPE — while the table did not move at all. Every
+   * expectation here comes from `glowData.ts`: a filter that matched everything
+   * and one that matched nothing both draw a table, and only the book says which
+   * rows belong.
+   */
+  ["the side filter is set to in and the rows are the accounts that have one", (t, ctx) => {
+    if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
+    if (!ctx.sideFilter) return false;
+    const want = CAPITAL_SIDES["in"];
+    if (!want.size) return { notChecked: "no account in this book publishes this side" };
+    const got = new Set(ctx.mineRows.map((r) => r.accountId));
+    return ctx.sideFilter.active === "in"
+      && got.size === want.size && [...want].every((a) => got.has(a))
+      // AND WHERE THE BOOK SAYS THIS SIDE IS A SMALLER SET, THE PAGE MUST SHOW
+      // A SMALLER SET. Struck conditionally rather than always: every funded
+      // account in this book has money going IN, so the `in` filter narrows the
+      // MOVEMENTS and not the rows — asserting a row drop there would fail a
+      // correct page. `out` is 4 of 11, and it is what catches a filter wired to
+      // nothing. The other three checks below hold on both sides.
+      && (want.size === CAPITAL_SIDES.all.size || got.size < CAPITAL_SIDES.all.size);
+  }],
+  /**
+   * ...AND THE OTHER SIDE IS ABSENT ON EVERY ROW, NEVER ₹0.
+   *
+   * A row filtered to one side has nothing to report on the other, and a ₹0
+   * there says the account was never funded (or never paid out) — a fabricated
+   * fact rather than a hidden one, which is the worse direction of the
+   * measured-zero rule.
+   */
+  ["...the other side's cell is absent on every row, not a zero", (t, ctx) => {
+    if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
+    const col = (r) => ("in" === "in" ? r.tookOutCell : r.paidInCell);
+    return ctx.mineRows.every((r) => col(r) === "—");
+  }],
+  /**
+   * ...AND THE NET IS WITHHELD, because a net over one side is not a net. It
+   * would tie to the two columns beside it and describe an account that also
+   * moved money the other way.
+   */
+  ["...and the net is withheld with its reason", (t, ctx) => {
+    if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
+    return ctx.mineRows.every((r) => r.netCell === "—");
+  }],
+  /**
+   * ...AND THE CONTROL SPEAKS THIS VIEW'S VOCABULARY. A family movement has no
+   * buy and no sell; the columns are headed Paid in / Taken out, and a control
+   * asserting the tape's words over them is `MultiSelectFilter`'s own "No
+   * companies match" over a list of countries, one control further on.
+   */
+  ["...and the control is labelled for the family's own record", (t, ctx) => {
+    if (!ctx.sideFilter) return false;
+    const l = ctx.sideFilter.options.map((o) => o.label.toLowerCase());
+    return l.includes("paid in") && l.includes("taken out") && !l.includes("buys") && !l.includes("sells");
+  }],
+  ],
+  "monitor-txn-out": [
+  /**
+   * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
+   *
+   * *"When I'm clicking on sell/buy filter, nothing is changing on the page …
+   * But nothing on the page is changing when I'm clicking either of the
+   * filters."*
+   *
+   * It was true, and on the DEFAULT view: `side` was never passed to
+   * `MyInvestments`, so clicking moved the counter beside the table — which was
+   * reading the manager's TAPE — while the table did not move at all. Every
+   * expectation here comes from `glowData.ts`: a filter that matched everything
+   * and one that matched nothing both draw a table, and only the book says which
+   * rows belong.
+   */
+  ["the side filter is set to out and the rows are the accounts that have one", (t, ctx) => {
+    if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
+    if (!ctx.sideFilter) return false;
+    const want = CAPITAL_SIDES["out"];
+    if (!want.size) return { notChecked: "no account in this book publishes this side" };
+    const got = new Set(ctx.mineRows.map((r) => r.accountId));
+    return ctx.sideFilter.active === "out"
+      && got.size === want.size && [...want].every((a) => got.has(a))
+      // AND WHERE THE BOOK SAYS THIS SIDE IS A SMALLER SET, THE PAGE MUST SHOW
+      // A SMALLER SET. Struck conditionally rather than always: every funded
+      // account in this book has money going IN, so the `in` filter narrows the
+      // MOVEMENTS and not the rows — asserting a row drop there would fail a
+      // correct page. `out` is 4 of 11, and it is what catches a filter wired to
+      // nothing. The other three checks below hold on both sides.
+      && (want.size === CAPITAL_SIDES.all.size || got.size < CAPITAL_SIDES.all.size);
+  }],
+  /**
+   * ...AND THE OTHER SIDE IS ABSENT ON EVERY ROW, NEVER ₹0.
+   *
+   * A row filtered to one side has nothing to report on the other, and a ₹0
+   * there says the account was never funded (or never paid out) — a fabricated
+   * fact rather than a hidden one, which is the worse direction of the
+   * measured-zero rule.
+   */
+  ["...the other side's cell is absent on every row, not a zero", (t, ctx) => {
+    if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
+    const col = (r) => ("out" === "in" ? r.tookOutCell : r.paidInCell);
+    return ctx.mineRows.every((r) => col(r) === "—");
+  }],
+  /**
+   * ...AND THE NET IS WITHHELD, because a net over one side is not a net. It
+   * would tie to the two columns beside it and describe an account that also
+   * moved money the other way.
+   */
+  ["...and the net is withheld with its reason", (t, ctx) => {
+    if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
+    return ctx.mineRows.every((r) => r.netCell === "—");
+  }],
+  /**
+   * ...AND THE CONTROL SPEAKS THIS VIEW'S VOCABULARY. A family movement has no
+   * buy and no sell; the columns are headed Paid in / Taken out, and a control
+   * asserting the tape's words over them is `MultiSelectFilter`'s own "No
+   * companies match" over a list of countries, one control further on.
+   */
+  ["...and the control is labelled for the family's own record", (t, ctx) => {
+    if (!ctx.sideFilter) return false;
+    const l = ctx.sideFilter.options.map((o) => o.label.toLowerCase());
+    return l.includes("paid in") && l.includes("taken out") && !l.includes("buys") && !l.includes("sells");
+  }],
+  /**
+   * ...AND THE REDEMPTION THE FAMILY WENT LOOKING FOR IS ON IT.
+   *
+   * *"I cannot find the redeemed 3P fund anywhere in the transactions page under
+   * sell side."* It was not there because the reader took only the ACCOUNT
+   * SUMMARY off that statement and never the `Financial Transaction(s)` table
+   * beneath it, so the archive carried the holdings and not one dated row. The
+   * label is the STATEMENT's own word, taken from the book so the next drop
+   * picks its own.
+   */
+  ["the redemption is on the taken-out side, under the statement's own word for it", (t, ctx) => {
+    if (!CAPITAL_SIDES?.outLabels.length) return { notChecked: "this book records no money coming back out" };
+    // Struck on the expanded rows if any are open, else on the page text — the
+    // labels ride into the row expansions, and the account row itself carries
+    // the fund name. Either way it must be the statement's word, not ours.
+    return CAPITAL_SIDES.outLabels.some((l) => t.includes(l));
+  }],
+  ],
   "monitor-txn-manager": [
     /**
      * THE DEFAULT IS THE ROLLUP. Struck on the arithmetic rather than on the
@@ -4473,6 +4743,29 @@ const INVARIANTS = {
   ],
 
   "holdings-book": [
+    /**
+     * ── A CLOSED POSITION IS STILL BEHIND THE FIGURE, AND SAYS SO ───────────
+     *
+     * The Portfolio Monitor lists CURRENT holdings and leaves a closed position
+     * out. This page lists the set BEHIND a Morning CIO figure, and Positions
+     * counts every one of the book's rows — so the closed ones still render
+     * here, still at ₹0, and still need to say the zero is a MEASUREMENT rather
+     * than a feed nobody wired. That is where the monitor's own pill went when
+     * its row stopped existing, and asserting it here is what stops the two
+     * removals cancelling into a ₹0 nobody explains anywhere.
+     *
+     * Both directions: every closed key must be drawn AND marked, and no other
+     * row may claim it.
+     */
+    ["a closed position still renders here and is marked as measured", (t, ctx) => {
+      if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+      if (ctx.hbRedeemed === null) return { notChecked: "markers not captured on this run" };
+      // The page groups by SECURITY, so a group's key is its securityKey — the
+      // same key the book's closed set is built on.
+      const marked = new Set(ctx.hbRedeemed);
+      const want = [...FUND_CLASS_BOOK.closedKeys];
+      return want.length > 0 && want.every((k) => marked.has(k)) && marked.size === want.length;
+    }],
     /**
      * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────
      *
@@ -7611,7 +7904,8 @@ for (const theme of THEMES) {
         }
       }
       if (name === "monitor-txns" || name === "monitor-txn-manager"
-        || name === "monitor-txn-drill" || name === "monitor-txn-direct") {
+        || name === "monitor-txn-drill" || name === "monitor-txn-direct"
+        || name === "monitor-txn-in" || name === "monitor-txn-out") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
         // THE VIEW IS A TAB NOW, AND THE DEFAULT MOVED. `monitor-txns` walks
@@ -7620,10 +7914,31 @@ for (const theme of THEMES) {
         // the manager rollup's invariants against a table of the family's own
         // contributions and abstain on every one of them.
         const tab = name === "monitor-txn-direct" ? /^Direct Equity$/
-          : name === "monitor-txns" ? null : /^By manager$/;
+          : name === "monitor-txns" || name === "monitor-txn-in" || name === "monitor-txn-out" ? null
+          : /^By manager$/;
         if (tab) {
           const v = page.getByRole("button", { name: tab }).first();
           if (await v.count()) { await v.click(); await page.waitForTimeout(900); }
+        }
+        // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL — the label follows
+        // the active view on purpose ("Paid in" here, "Buys" on the tape), so a
+        // walk that clicked the WORD would stop finding the control the moment
+        // the vocabulary was right.
+        const want = name === "monitor-txn-in" ? "in" : name === "monitor-txn-out" ? "out" : null;
+        if (want) {
+          const b = page.locator(`[data-side-option="${want}"]`).first();
+          if (await b.count()) { await b.click(); await page.waitForTimeout(900); }
+        }
+        // ...AND THE TAKEN-OUT SIDE OPENS ITS ROWS. The statement's own word for
+        // a movement ("Full Units Redemption") rides in the row EXPANSION; the
+        // collapsed row shows a count. The family's complaint was that they
+        // could not find the redemption, so the check has to look where the
+        // redemption's own label is.
+        if (name === "monitor-txn-out") {
+          const rows = page.locator("tr[data-mine-row]");
+          const n = await rows.count();
+          for (let i = 0; i < n; i++) await rows.nth(i).click();
+          await page.waitForTimeout(600);
         }
       }
       /**
@@ -8166,13 +8481,15 @@ for (const theme of THEMES) {
           /**
            * ONE FUND, ONE ROW. Both handles are read off the row's own markup and
            * deliberately not off its TEXT: the fund base and its class names share
-           * every word but the last, and "redeemed" is a word the page is free to
-           * reword. `data-fund-classes` sits on the name span rather than the row,
-           * because the row is not the thing that clubs — the name is.
+           * every word but the last. `data-fund-classes` sits on the name span
+           * rather than the row, because the row is not the thing that clubs —
+           * the name is. `redeemed` was captured here beside it and is GONE with
+           * the pill: the monitor lists current holdings only, so a handle that
+           * can never be present would read `false` for ever and quietly satisfy
+           * whatever asked for it.
            */
           fundClasses: (tr.querySelector("[data-fund-classes]")?.getAttribute("data-fund-classes") || "")
             .split(",").map((x) => x.trim()).filter(Boolean),
-          redeemed: !!tr.querySelector("[data-redeemed]"),
           // Every cell, so a claim about a COLUMN is read at its own index
           // (`COL`) rather than by position in a line of text.
           cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
@@ -8188,6 +8505,19 @@ for (const theme of THEMES) {
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
+       * THE CLOSED-POSITION NOTE, and the redeemed markers on `/holdings`.
+       *
+       * Read as their own slices rather than out of the page text: the note
+       * names funds whose names also appear in the table above it on other
+       * routes, and the marker is a pill whose word ("redeemed") the surrounding
+       * prose is free to use — so a page-wide match would be satisfied by either
+       * without the thing itself being there.
+       */
+      const closedNote = FAST ? null : await page.evaluate(() =>
+        (document.querySelector("[data-closed-note]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null);
+      const hbRedeemed = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("[data-hb-redeemed]")].map((e) => e.getAttribute("data-hb-redeemed")));
+      /**
        * ── MY INVESTMENTS, AND THE MANAGER ROLLUP, READ AS STRUCTURE ───────────
        *
        * Both are tables of rows with a name and figures, and on innerText alone
@@ -8201,7 +8531,14 @@ for (const theme of THEMES) {
         [...document.querySelectorAll("tr[data-mine-row]")].map((tr) => ({
           accountId: tr.getAttribute("data-mine-row"),
           contributions: Number(tr.getAttribute("data-mine-contributions")),
+          withdrawals: Number(tr.getAttribute("data-mine-withdrawals")),
           how: tr.querySelector("[data-mine-how]")?.getAttribute("data-mine-how") ?? null,
+          // The two money cells and the net, as figures or as absences. A side
+          // filter must EMPTY the other side rather than print a ₹0 there, and
+          // must withhold the net — neither is visible in the row count alone.
+          paidInCell: (tr.cells[2]?.innerText ?? "").trim(),
+          tookOutCell: (tr.cells[3]?.innerText ?? "").trim(),
+          netCell: (tr.cells[4]?.innerText ?? "").trim(),
           /**
            * EVERY ANCHOR IN THE ROW, not a named handle.
            *
@@ -8220,6 +8557,27 @@ for (const theme of THEMES) {
           // an `AbsentCell` `title`, which no `innerText` sweep can reach.
           returnReason: tr.cells[7]?.querySelector("[title]")?.getAttribute("title") ?? null,
         })));
+      /**
+       * THE SIDE CONTROL AND THE COUNTER BESIDE IT.
+       *
+       * The control is read by its VALUE and its rendered labels separately: the
+       * value is what the table filters on and the labels are what the reader
+       * picks from, and the defect being guarded against — a control whose value
+       * reaches nothing — leaves both looking perfectly correct.
+       */
+      const sideFilter = FAST ? null : await page.evaluate(() => {
+        const box = document.querySelector("[data-side-filter]");
+        if (!box) return null;
+        return {
+          active: box.getAttribute("data-side-filter"),
+          options: [...box.querySelectorAll("[data-side-option]")].map((b) => ({
+            value: b.getAttribute("data-side-option"),
+            label: (b.textContent ?? "").trim(),
+          })),
+        };
+      });
+      const txnCounter = FAST ? null : await page.evaluate(() =>
+        (document.querySelector("[data-txn-counter]")?.textContent ?? "").trim() || null);
       /**
        * ...AND THE MY-INVESTMENTS COLUMN HEADS, each with its own `title`.
        *
@@ -8779,7 +9137,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -5365,6 +5365,7 @@
   "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
   "pages": 4,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -5374,6 +5375,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 12,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",

@@ -409,7 +409,11 @@ export type CapitalMove = {
   amount: number | null;
   /** `amount` less the same date's printed charges. Null wherever `amount` is. */
   invested: number | null;
-  /** Units this contribution was allotted, where the fund allots any. */
+  /**
+   * Units the fund allotted on the way IN, or redeemed (negative) on the way
+   * OUT, where it prints them. A capital register moves money and names no
+   * units at all, and keeps its null.
+   */
   units: number | null;
   /** The security those units are in — only a unitised fund names one. */
   security: string | null;

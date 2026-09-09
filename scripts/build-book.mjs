@@ -591,7 +591,17 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
     chargeOn.set(c.date, (chargeOn.get(c.date) ?? 0) + Math.abs(c.amount));
   }
 
-  const allotments = rows.filter((r) => r.kind === "contribution" && isNum(r.units));
+  // A SELF-CONTAINED ROW PRINTS ITS OWN NET AND THEREFORE CANNOT BE A RUNNING
+  // BALANCE — a cumulative figure has no per-row charge to be net of. Sanshi
+  // prints the gross, the stamp duty and the allotment on THREE lines and its
+  // allotment row's amount IS the running total; 3P prints Contribution Amount,
+  // Stamp Duty and Amount Invested on ONE line, and its reader will not publish
+  // the table unless the three tie to the paisa. So the ambiguity below is a
+  // fact about a LAYOUT, and the layout declares which it is (`netAmount`)
+  // instead of this function inferring it from whether a row happens to carry
+  // units — which would have made every 3P subscription an unusable balance.
+  const selfContained = (r) => isNum(r.netAmount);
+  const allotments = rows.filter((r) => r.kind === "contribution" && isNum(r.units) && !selfContained(r));
   const soleAllotment = allotments.length === 1;
 
   const byDate = new Map();
@@ -603,31 +613,42 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
   const moves = [];
   for (const date of [...byDate.keys()].sort()) {
     const day = byDate.get(date);
-    const allot = day.filter((r) => r.kind === "contribution" && isNum(r.units));
-    const gross = day.filter((r) => r.kind === "contribution" && !isNum(r.units));
+    const contribs = day.filter((r) => r.kind === "contribution");
+    const self = contribs.filter(selfContained);
+    const allot = contribs.filter((r) => isNum(r.units) && !selfContained(r));
+    const gross = contribs.filter((r) => !isNum(r.units) && !selfContained(r));
     const out = day.filter((r) => r.kind === "withdrawal");
 
-    if (gross.length || allot.length) {
-      // The gross row first, because it is a MOVEMENT. The allotment row's
-      // amount is only usable where it cannot be a running balance.
-      let amount = gross.length ? sum(gross.map((r) => r.amount ?? 0)) : null;
+    if (contribs.length) {
+      // A self-contained row carries both halves itself. Otherwise the gross row
+      // first, because it is a MOVEMENT; the allotment row's amount is only
+      // usable where it cannot be a running balance.
+      let amount = self.length ? sum(self.map((r) => r.amount ?? 0))
+        : gross.length ? sum(gross.map((r) => r.amount ?? 0))
+        : null;
       if (amount === null && allot.length && soleAllotment && isNum(allot[0].amount)) {
         amount = allot[0].amount;
       }
-      const units = allot.length ? sum(allot.map((r) => r.units)) : null;
+      const withUnits = [...self, ...allot].filter((r) => isNum(r.units));
+      const units = withUnits.length ? sum(withUnits.map((r) => r.units)) : null;
       const charge = chargeOn.get(date) ?? 0;
       if (amount === null && allot.length) {
         notes.push(`${label}: the ${date} contribution prints a running balance and no gross `
           + `figure, so what moved on that date is not stated — units are carried and the amount is not`);
       }
-      const named = allot.find((r) => r.securityKey) ?? null;
+      const named = withUnits.find((r) => r.securityKey) ?? contribs.find((r) => r.securityKey) ?? null;
       moves.push({
         accountId, date, direction: "in",
-        label: (gross[0] ?? allot[0]).description ?? "Contribution",
+        label: (self[0] ?? gross[0] ?? allot[0]).description ?? "Contribution",
         amount: r2(amount),
         // The gross row is what left the bank; the charge is what the fund took
-        // out of it before buying units. Only a gross figure can carry a charge.
-        invested: amount === null ? null : r2(amount - (gross.length ? charge : 0)),
+        // out of it before buying units. A self-contained row prints that net
+        // itself, so it is TAKEN rather than derived — the statement's own
+        // figure beats our subtraction, and its reader has already checked the
+        // two agree.
+        invested: self.length ? r2(sum(self.map((r) => r.netAmount)))
+          : amount === null ? null
+          : r2(amount - (gross.length ? charge : 0)),
         units: units === null ? null : units,
         security: named?.security ?? null,
         securityKey: named?.securityKey ?? null,
@@ -635,10 +656,20 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
     }
     if (out.length) {
       const amount = Math.abs(sum(out.map((r) => r.amount ?? 0)));
+      // WHICH HOLDING THE MONEY CAME OUT OF, where the statement says. A capital
+      // register names no security and keeps its null; a fund redemption names
+      // the class it redeemed, and the family's transactions table is the one
+      // surface where "3P, Full Units Redemption" answers the question they
+      // actually asked.
+      const namedOut = out.find((r) => r.securityKey) ?? null;
+      const unitsOut = out.filter((r) => isNum(r.units));
       moves.push({
         accountId, date, direction: "out",
         label: out[0].description ?? "Withdrawal",
-        amount: r2(amount), invested: null, units: null, security: null, securityKey: null,
+        amount: r2(amount), invested: null,
+        units: unitsOut.length ? -Math.abs(sum(unitsOut.map((r) => r.units))) : null,
+        security: namedOut?.security ?? null,
+        securityKey: namedOut?.securityKey ?? null,
       });
     }
   }
@@ -675,7 +706,11 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
 function positionTranchesFrom(capitalMoves, positions, notes) {
   const byKey = new Map();
   for (const m of capitalMoves) {
-    if (!m.securityKey || !isNum(m.units)) continue;
+    // MONEY IN ONLY. A redemption now carries the units it took OUT, and folding
+    // those into the allotted total would net the gate to something that is not
+    // what any tranche bought — and would draw a disposal as a tranche row in a
+    // panel whose whole claim is "what each investment earned".
+    if (m.direction !== "in" || !m.securityKey || !isNum(m.units)) continue;
     const k = `${m.accountId}|${m.securityKey}`;
     if (!byKey.has(k)) byKey.set(k, []);
     byKey.get(k).push(m);
@@ -691,9 +726,26 @@ function positionTranchesFrom(capitalMoves, positions, notes) {
     }
     const allotted = sum(moves.map((m) => m.units));
     if (Math.abs(allotted - held[0].quantity) > UNIT_TIE) {
-      notes.push(`no per-contribution breakdown for ${securityKey} in ${accountId}: the statement allots `
-        + `${allotted} unit(s) against ${held[0].quantity} held, so the dated contributions do not account `
-        + `for the position and a per-contribution return would be struck on part of it`);
+      // A REDEEMED POSITION IS NOT AN UNEXPLAINED SHORTFALL, and saying it is
+      // sends the next reader to look for a missing allotment. The units were
+      // allotted, held and then paid out; there is nothing left to strike a
+      // per-tranche return on, which is a different fact from a breakdown that
+      // covers part of a live holding.
+      // Rounded to the 3 decimals a unit count is PRINTED to — an unrounded
+      // float residue in a committed report reads as a figure nobody struck.
+      const u = Math.round(allotted * 1e3) / 1e3;
+      const paidOut = capitalMoves.some((m) => m.direction === "out" && m.accountId === accountId
+        && m.securityKey === securityKey);
+      notes.push(held[0].quantity === 0
+        ? `no per-contribution breakdown for ${securityKey} in ${accountId}: the ${u} unit(s) allotted `
+          + `are no longer held and the position stands at zero, so there is nothing left to value a `
+          + `tranche at. `
+          + (paidOut
+            ? "The contributions and the redemption that closed it are both carried."
+            : "Where the units went is on the statement's own dated table, in the archive.")
+        : `no per-contribution breakdown for ${securityKey} in ${accountId}: the statement allots `
+          + `${u} unit(s) against ${held[0].quantity} held, so the dated contributions do not account `
+          + `for the position and a per-contribution return would be struck on part of it`);
       continue;
     }
     // Rounded to the 3 decimals a unit count is PRINTED to, so the emitted file

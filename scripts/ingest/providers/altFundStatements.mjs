@@ -42,13 +42,22 @@
 // **Sky Capital Rising Titans Fund I** is a Category I AIF (Angel Fund) with a
 // drawdown structure and NO valuation of any kind — see its layout below.
 //
-// **3P India Equity Fund 1** prints three classes, all reclassified out on
-// 31-03-2026, all standing at 0.000 units and ₹0.000. That is a MEASURED ZERO
-// and it keeps its zero — the fund is telling us the position was moved, not
-// that it forgot to value it. Where the units went is not on this statement and
-// is not guessed at.
+// **3P India Equity Fund 1** prints three classes, all standing at 0.000 units
+// and ₹0.000. That is a MEASURED ZERO and it keeps its zero.
+//
+// AND WHERE THE UNITS WENT *IS* ON THIS STATEMENT — page 2, all along. This
+// paragraph read "where the units went is not on this statement and is not
+// guessed at" while the fund's own `Financial Transaction(s)` table printed the
+// whole history: six Subscriptions totalling ₹28.50 Cr, B1 and B2 reclassified
+// into B3 on 31-03-2026, and B3 a `Full Units Redemption` on 31-07-2026 for
+// ₹31,05,82,835.17 — the exact figure on the ICICI payment advice this book
+// already carries and already refuses to attribute on a file name alone. The
+// family reported the fund "missing" from the transactions page; it was missing
+// because the reader took only the ACCOUNT SUMMARY and never the table beneath
+// it. An absence declared against a premise nobody rechecked, for the sixth
+// time in this book — see `flowsFrom` below for what it takes to read it.
 import { parseNum } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals } from "../lib/document.mjs";
+import { makeHolding, makeTotals, makeCashFlow } from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
 import { panHolderType } from "../../../shared/owners.mjs";
 
@@ -81,6 +90,200 @@ const n = (s) => parseNum(s);
  * in one account — the same mistake as reading WhiteOak's disclosure as a
  * 360 ONE client report, one layer down.
  */
+// ── 3P'S `Financial Transaction(s)` TABLE ───────────────────────────────────
+//
+// The one dated record in this reader, and the only place in the corpus that
+// says what happened to ₹28.50 Cr of the family's money. It is read under FOUR
+// checks the statement itself supplies, and it emits NOTHING unless all four
+// pass — the same licence `hdfcNsdl.mjs` needs to publish a figure read off a
+// rendered page. A dated table nobody can check is worse than no dated table:
+// the tape a reader acts on is the one they cannot verify by opening the PDF.
+//
+//   1. gross − setup expense − stamp duty = the printed `Amount Invested`,
+//      TO THE PAISA, on every subscription. A running balance has no per-row
+//      charge to be net of, so this is also what says the amount column is a
+//      MOVEMENT — see `netAmount` in `lib/document.mjs`.
+//   2. |amount| = |units| × NAV, within the precision the statement PRINTS
+//      those two to (units 3dp, NAV 4dp). Reproduced, never a tolerance widened
+//      until it fits.
+//   3. the running unit total reproduces the printed `Balance Units` on every
+//      row of every class, which is what ties the redemption's 20,53,614.026 to
+//      the four subscriptions and two reclassifications that built it.
+//   4. `Reclassification In` and `Reclassification Out` NET TO ZERO IN RUPEES —
+//      and DELIBERATELY NOT IN UNITS, which is a premise this check refuted on
+//      its first run. 12,48,630.217 units left B1 and B2 and 12,85,998.281
+//      arrived in B3: a gain of 37,368.064, because each side is struck at its
+//      own class NAV (142.7354 and 143.7190 out, 138.8041 in — B3 carries a
+//      0.70% management fee against B1's 1.00% and B2's 1.20%, so the same
+//      money buys more of it). The MONEY is the invariant; the unit counts are
+//      each verified against their own NAV by check 2.
+//   5. and page 3's own `Reclassification` table is an INDEPENDENT WITNESS to
+//      that: it prints the three balances as at 31 March and the single
+//      20,53,614.026 with effect from 1 April, a gain of exactly the same
+//      37,368.064. Where that line is printed it must equal the running balance
+//      check 3 reaches from the transaction table, which is two separately
+//      printed tables agreeing rather than one table agreeing with itself.
+//
+// CHECK 4 IS WHY A RECLASSIFICATION IS NOT A CAPITAL MOVE. B1 and B2 were
+// folded into B3 on 31-03-2026: ₹17.85 Cr left two classes and the same
+// ₹17.85 Cr arrived in a third, on one day, inside one folio. No money moved.
+// Carried as a withdrawal and a contribution it would put ₹17.85 Cr of
+// fictitious money out and back into this family's dated record — so it gets
+// its own `kind`, is archived because it is what the statement prints, and is
+// deliberately outside `CAPITAL_KINDS` in `build-book.mjs`.
+const P3_MONEY = String.raw`(?:-|\(?[\d,]+(?:\.\d+)?\)?)`;
+const P3_CLASS = /^(3P\s+India\s+Equity\s+Fund\s+\d+\s*-\s*Class\s+[A-Z]\d?)\s*$/i;
+const P3_ROW = new RegExp(
+  String.raw`^(\d{2}-\d{2}-\d{4})\s+` +                         // 1 date
+  String.raw`(Subscription|Reclassification\s+(?:In|Out)|` +
+  String.raw`(?:Full|Partial)\s+Units?\s+Redemption|Redemption)\s+` +  // 2 type, DECLARED
+  String.raw`(${P3_MONEY})\s+` +                                // 3 contribution amount
+  String.raw`(${P3_MONEY})\s+` +                                // 4 setup expense incl GST
+  String.raw`(${P3_MONEY})\s+` +                                // 5 stamp duty
+  String.raw`(${P3_MONEY})\s+` +                                // 6 amount invested / redemption
+  String.raw`([\d,]+\.\d+)\s+` +                                // 7 post-tax allotment NAV
+  String.raw`(${P3_MONEY})\s+` +                                // 8 no. of units
+  String.raw`([\d,]+\.\d+)$`,                                   // 9 balance units
+  "i",
+);
+/** A dated line under a class heading that the declared types do not cover. */
+const P3_DATED = /^\d{2}-\d{2}-\d{4}\s+\S/;
+/** Page 3's Reclassification table — the independent witness of check 5. */
+const P3_EFFECTIVE = /With Effect From\s+\d{1,2}\s+\w+\s+\d{4}\s+([\d,]+\.\d+)\s+([A-Z]\d?)\b/gi;
+/** The date the classes merged, as the transaction rows themselves print it. */
+const RECLASS_ASOF = (rows) =>
+  rows.filter((r) => /^Reclassification/i.test(r.type)).map((r) => r.date).sort().at(-1) ?? "9999-12-31";
+const p3n = (v) => (v == null || String(v).trim() === "-" ? null : parseNum(v));
+
+/** Exported for `__tests__/altFund.test.mjs`, which mutates a synthetic
+ *  statement to prove each of the five checks above can actually fail. */
+export function threePFlows(text, warn) {
+  const rows = [];
+  let cls = null;
+  let unmatched = 0;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const head = P3_CLASS.exec(line);
+    if (head) { cls = head[1].replace(/\s+/g, " ").trim(); continue; }
+    if (!cls) continue;
+    const m = P3_ROW.exec(line);
+    if (!m) { if (P3_DATED.test(line)) unmatched += 1; continue; }
+    rows.push({
+      cls, date: toIso(m[1].replace(/-/g, "/")), type: m[2].replace(/\s+/g, " ").trim(),
+      gross: p3n(m[3]), setup: p3n(m[4]), stamp: p3n(m[5]),
+      net: p3n(m[6]), nav: p3n(m[7]), units: p3n(m[8]), balance: p3n(m[9]),
+    });
+  }
+  if (!rows.length) return [];
+  // A DATED ROW THIS READER DOES NOT RECOGNISE IS NAMED, NEVER DROPPED. The
+  // transaction types are declared rather than matched loosely, so a fund event
+  // this book has not met — a switch, a distribution — fails to match instead of
+  // being filed under whichever type it happens to resemble. That is only safe
+  // if the miss is reported.
+  if (unmatched) {
+    warn("transaction-type-not-declared",
+      `${unmatched} dated row(s) in the Financial Transaction(s) table carry a transaction type this reader does `
+      + "not declare; the dated record is withheld rather than published with rows missing from it");
+    return [];
+  }
+
+  const fails = [];
+  const money = (v) => Math.round((v ?? 0) * 100) / 100;
+  for (const r of rows) {
+    if (r.net === null || r.nav === null || r.units === null) {
+      fails.push(`${r.date} ${r.type} (${r.cls}) does not print an amount, a NAV and a unit count`);
+      continue;
+    }
+    // (1) the row's own arithmetic, on the rows that carry a gross figure.
+    if (r.gross !== null) {
+      const derived = money(r.gross - (r.setup ?? 0) - (r.stamp ?? 0));
+      if (Math.abs(derived - money(r.net)) > 0.01) {
+        fails.push(`${r.date} ${r.type}: ${r.gross} less charges is ${derived}, against a printed ${r.net}`);
+      }
+    }
+    // (2) amount = units x NAV, to the precision the statement prints them to.
+    //     Half of the last decimal of each, carried through its own multiplier —
+    //     the statement's own printing precision reproduced, never widened.
+    const bound = Math.abs(r.units) * 5e-5 + r.nav * 5e-4;
+    if (Math.abs(Math.abs(r.net) - Math.abs(r.units) * r.nav) > bound + 0.01) {
+      fails.push(`${r.date} ${r.type}: ${r.units} units at ${r.nav} is not the printed ${r.net}`);
+    }
+  }
+  // (3) the running unit total reproduces the printed Balance Units, per class.
+  for (const cls of [...new Set(rows.map((r) => r.cls))]) {
+    let run = 0;
+    for (const r of rows.filter((x) => x.cls === cls)) {
+      run = Math.round((run + (r.units ?? 0)) * 1e3) / 1e3;
+      if (r.balance !== null && Math.abs(run - r.balance) > 0.0005) {
+        fails.push(`${cls}: after ${r.date} the units run to ${run} against a printed balance of ${r.balance}`);
+      }
+    }
+  }
+  // (4) the reclassifications net to zero IN RUPEES. Never in units — each side
+  //     is struck at its own class NAV, so a transfer that moves no money
+  //     legitimately changes the unit count. Check 2 is what holds each side to
+  //     its own NAV.
+  const recl = rows.filter((r) => /^Reclassification/i.test(r.type));
+  if (recl.length) {
+    const dRs = money(recl.reduce((t, r) => t + (r.net ?? 0), 0));
+    if (Math.abs(dRs) > 0.01) {
+      fails.push(`the reclassifications net to ${dRs} rather than to nothing, `
+        + "so they are not a transfer between classes of one folio");
+    }
+    // (5) the statement's OWN Reclassification table, printed on another page,
+    //     against the balance the transaction table runs to. Two separately
+    //     printed tables agreeing is evidence; one table agreeing with itself is
+    //     not — this book's own rule about a check that compares a figure with
+    //     its own copy.
+    for (const w of text.matchAll(P3_EFFECTIVE)) {
+      const units = parseNum(w[1]);
+      const sub = w[2].toUpperCase();
+      const forClass = rows.filter((r) => new RegExp(`Class\\s+${sub}$`, "i").test(r.cls));
+      if (!forClass.length || units === null) continue;
+      const run = Math.round(forClass.reduce((t, r) => t + (r.units ?? 0), 0) * 1e3) / 1e3;
+      // The transaction table runs on to the redemption; the reclassification
+      // table is drawn the day the classes merged. So the witness is the balance
+      // AT THAT DATE — the running total up to and including the last
+      // reclassification row — rather than the closing one.
+      const upTo = forClass.filter((r) => r.date <= RECLASS_ASOF(forClass));
+      const at = Math.round(upTo.reduce((t, r) => t + (r.units ?? 0), 0) * 1e3) / 1e3;
+      if (Math.abs(at - units) > 0.0005 && Math.abs(run - units) > 0.0005) {
+        fails.push(`the Reclassification table prints ${units} unit(s) in Class ${sub} with effect from the `
+          + `merge, against ${at} run from the transaction table`);
+      }
+    }
+  }
+
+  if (fails.length) {
+    warn("dated-table-does-not-tie",
+      "the Financial Transaction(s) table is not published for this account: " + fails.join("; "));
+    return [];
+  }
+
+  return rows.map((r) => makeCashFlow({
+    date: r.date,
+    // WHAT THE STATEMENT CALLED IT, never our word for it — the label reaches
+    // the family's own transactions table verbatim.
+    description: r.type,
+    security: r.cls,
+    kind: /^Reclassification/i.test(r.type) ? "reclassification"
+      : /Redemption/i.test(r.type) ? "withdrawal"
+      : "contribution",
+    // The GROSS is what left the bank; the net is what bought units after the
+    // fund's own charges. A redemption and a reclassification print no gross
+    // column at all, so the amount is the figure in the Amount Invested /
+    // Redemption column — SIGNED AS THE STATEMENT PRINTS IT, parenthesised
+    // negatives included, because the archive is the faithful record and
+    // `capitalMovesFrom` takes the magnitude it needs for itself.
+    amount: r.gross ?? r.net,
+    netAmount: r.gross === null ? null : r.net,
+    units: r.units,
+    // The printed running unit balance — carried as the CHECK it is.
+    balance: r.balance,
+    notes: `post-tax allotment/redemption NAV ${r.nav}`,
+  }));
+}
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -242,7 +445,8 @@ const LAYOUTS = [
     // `AJAY JAISINGHANI Mode of Holding : SINGLE` — the holder shares its
     // printed line with the next label, so it is cut at that label.
     holder: (text) => (/\n\s*([A-Z][A-Z\s]{6,44}?)\s+Mode of Holding/i.exec(text) ?? [])[1],
-    note: "every class on this statement stands at zero units: the fund reclassified them out on 31-03-2026 and prints the zero. Where the units went is not on this document",
+    flowsFrom: threePFlows,
+    note: "every class on this statement stands at zero units, and the statement's own Financial Transaction(s) table says why: B1 and B2 were reclassified into B3 on 31-03-2026, and B3 was a Full Units Redemption on 31-07-2026 for 31,05,82,835.17. The zero is measured and the account is closed",
   },
   {
     key: "indiaSme",
@@ -845,7 +1049,14 @@ export function extract({ grid, meta = {} }) {
       reportType: "holdings",
       engagement: layout.engagement ?? "unknown",
       providerEngagement: layout.providerEngagement ?? undefined,
-      holdings: [], totals: null, commitment: null, warnings,
+      holdings: [], totals: null, commitment: null,
+      // A STATEMENT WITH NO HOLDINGS CAN STILL CARRY ITS OWN DATED RECORD, and
+      // an account that holds nothing is exactly where that record is the whole
+      // of what the document has to say.
+      cashFlows: layout.flowsFrom
+        ? layout.flowsFrom(text, (code, detail) => warn(warnings, code, detail))
+        : [],
+      warnings,
       status: reason ? "ok" : undefined,
     };
   }
@@ -880,6 +1091,14 @@ export function extract({ grid, meta = {} }) {
   // absorbed.
   if (layout.verify) layout.verify(text, holdings, (code, detail) => warn(warnings, code, detail));
 
+  // A layout may also carry a DATED table. It is separate from `verify` because
+  // it produces rows rather than a verdict — and separate from `row`/`rowsFrom`
+  // because those build HOLDINGS, which is a snapshot. A statement can hold
+  // nothing and still be the only record of how the money got there and left.
+  const cashFlows = layout.flowsFrom
+    ? layout.flowsFrom(text, (code, detail) => warn(warnings, code, detail))
+    : [];
+
   if (layout.commitmentFrom) {
     const c = layout.commitmentFrom(text);
     if (c.committed) commitment = c;
@@ -909,6 +1128,20 @@ export function extract({ grid, meta = {} }) {
     engagement: layout.engagement ?? "unknown",
     providerEngagement: layout.providerEngagement ?? undefined,
     holdings,
+    cashFlows,
+    // BROWSABLE PROVENANCE, so a reader who sees a redemption on the dashboard
+    // can open the rows it was read from. A dated table archived only inside
+    // `document.json` is provenance the Data Audit page cannot show.
+    sections: cashFlows.length
+      ? {
+        transactions: {
+          name: "transactions",
+          rows: [["date", "class", "description", "kind", "amount", "net", "units", "balanceUnits"],
+            ...cashFlows.map((c) => [c.date, c.security ?? "", c.description, c.kind,
+              c.amount ?? "", c.netAmount ?? "", c.units ?? "", c.balance ?? ""])],
+        },
+      }
+      : undefined,
     commitment,
     totals: makeTotals({
       totalMarketValue: layout.valuesNothing ? null : holdings.reduce((t, h) => t + (h.printed?.marketValue ?? 0), 0) || null,
