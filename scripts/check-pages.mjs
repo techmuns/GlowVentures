@@ -809,6 +809,22 @@ const DUAL_KEY = (() => {
   } catch { return null; }
 })();
 
+/**
+ * WHICH SECURITIES CARRY A DATED CONTRIBUTION HISTORY AT ALL — the keys, so a
+ * clubbed fund's expected SECTION COUNT is derived rather than counted off the
+ * panel. A blended panel reports one section with no class and would otherwise
+ * satisfy a check that only asks whether the sections it drew are distinct.
+ */
+const TRANCHE_KEYS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const m = /export const BOOK_POSITION_TRANCHES[^=]*=\s*(\{[\s\S]*?\n\});/.exec(src);
+    if (!m) return null;
+    const idx = JSON.parse(m[1]);
+    return new Set(Object.values(idx).filter((v) => v.moves.length).map((v) => v.securityKey));
+  } catch { return null; }
+})();
+
 const RINGFENCED_KEY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -1102,6 +1118,15 @@ const ROUTES = [
    * regression cannot hide behind a URL nobody uses.
    */
   ["monitor-category-drill", "/monitor"],
+  /**
+   * ...AND THE CLUBBED FUND OPENED INTO ITS OWN UNIT CLASSES — the second half
+   * of *"we should only show 3P funds a single line item and then when we click
+   * on it, we should see a drop down list of all the other categories … B1, B2,
+   * B3"*. Clubbing without the way back in is a row that HIDES three holdings;
+   * the classes are where a reader goes to see which of them is which, so the
+   * row and its expansion are one claim and are checked as one.
+   */
+  ["monitor-fund-drill", "/monitor"],
   // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
   // one way to reach the stale-filter defect. See the walk step of this name.
   ["monitor-axis-switch", "/monitor"],
@@ -1473,6 +1498,9 @@ let DIRECT = null;
  * report as NOT CHECKED rather than as a pass.
  */
 let AXIS_DRILL = null;
+// THE CLUBBED FUND'S OWN EXPANSION — its class lines, read off the panel the
+// `monitor-fund-drill` walk opens. Null on every other route.
+let FUND_DRILL = null;
 /** What the reloaded, network-less second open rendered — see `cio-cached`. */
 let CACHED = null;
 /** What the opened chat panel rendered — see the `chat` route. */
@@ -2322,6 +2350,79 @@ const axisChecks = (axis, expected) => [
 ];
 
 /**
+ * ── ONE FUND, ONE ROW, HOWEVER MANY UNIT CLASSES IT WAS ALLOTTED IN ────────
+ *
+ *   "3P Class A B1 B2, all of that should be shown as a single line item as
+ *    just 3P funds like in the excel sheet … and then when we click on it, we
+ *    should see a drop down list of all the other categories."
+ *
+ * Derived from the book on every run, never typed: which funds carry MORE THAN
+ * ONE unit class, which `securityKey` each class holds, and which of them the
+ * fund itself reports as redeemed. Three things the invariants then need and
+ * cannot get from the page:
+ *
+ *   `multi`     — the funds that must club, with their classes. Measured on this
+ *                 book: TWO (3P B1/B2/B3, Sanshi A2/E) and no others, so a rule
+ *                 that started clubbing on a shared HOUSE rather than a shared
+ *                 FUND lands somewhere else immediately.
+ *   `single`    — a fund carrying exactly ONE class in the book. It must keep the
+ *                 name its own statement prints, so these must NOT club; without
+ *                 this the check passes on a build that clubs everything.
+ *   `redeemed`  — `isRedeemedToNil` RE-DERIVED rather than imported, on the same
+ *                 terms as `isMandateHeld` above: a check that imports the helper
+ *                 it is checking agrees with it by construction.
+ *
+ * The class split is re-derived here too — deliberately a second expression of
+ * the same rule rather than an import of `splitFundClass`. Measured, the two
+ * agree exactly (16 class-bearing rows, 7 funds, 2 of them multi-class); a
+ * disagreement fails, which is the whole point of writing it twice.
+ */
+const FUND_CLASS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions) || !positions.length) return null;
+    const RE = /^(.*?)[\s,\-–—]*(?:sub[-\s]?)?class\s+([a-z]{1,2}\d{0,2}|\d{1,2})\s*$/i;
+    // A FUND VEHICLE at zero units that its own fund still publishes a NAV for:
+    // the ₹0 is what the fund MEASURED, not a figure this book is missing.
+    const FUND_CLASSES_OF_ASSET = new Set(["AIF", "Mutual Fund", "ETF"]);
+    const nil = (p) => FUND_CLASSES_OF_ASSET.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const byFund = new Map();
+    const keyRedeemed = new Map();
+    for (const p of positions) {
+      const prev = keyRedeemed.get(p.securityKey);
+      keyRedeemed.set(p.securityKey, prev === false ? false : nil(p));
+      const m = RE.exec(p.security);
+      if (!m || !/[A-Za-z]{3}/.test(m[1])) continue;
+      const fund = m[1].trim();
+      if (!byFund.has(fund)) byFund.set(fund, { fund, classes: new Set(), keys: new Set(), mv: 0 });
+      const f = byFund.get(fund);
+      f.classes.add(m[2].toUpperCase());
+      f.keys.add(p.securityKey);
+      f.mv += p.marketValue ?? 0;
+    }
+    const shape = (f) => ({ fund: f.fund, classes: [...f.classes].sort(), keys: [...f.keys], mv: f.mv });
+    const all = [...byFund.values()].map(shape);
+    return {
+      multi: all.filter((f) => f.classes.length > 1),
+      single: all.filter((f) => f.classes.length === 1),
+      // Every key a clubbed fund covers, so a check can assert no CLASS still
+      // stands as a row of its own beside the fund that now clubs it.
+      clubbedKeys: new Set(all.filter((f) => f.classes.length > 1).flatMap((f) => f.keys)),
+      redeemedKeys: new Set([...keyRedeemed].filter(([, v]) => v).map(([k]) => k)),
+      // WHICH ROW KEYS MUST CARRY THE PILL. A clubbed row stands for every class
+      // of its fund and says "redeemed" only where the fund reports EVERY one of
+      // them redeemed, so the expectation is per ROW rather than per position.
+      rowRedeemed(rowKey, hasClasses) {
+        const fund = hasClasses ? all.find((f) => f.keys.includes(rowKey)) : null;
+        const keys = fund ? fund.keys : [rowKey];
+        return keys.length > 0 && keys.every((k) => keyRedeemed.get(k) === true);
+      },
+    };
+  } catch { return null; }
+})();
+
+/**
  * ── A HOLDING OPENS THE SAME WAY WHICHEVER AXIS IT IS FILED UNDER ──────────
  *
  * *"just like how you have show individual investments return in the drop down
@@ -2360,6 +2461,128 @@ const AXIS_EXPANSION = [
     return rest.reduce((a, r) => a + (r.venues ?? 0), 0) === AXIS_VENUE_BOOK.pairs;
   }],
 ];
+/**
+ * ── THE CLUBBED FUND, AND THE ONE THAT MUST NOT CLUB ───────────────────────
+ *
+ * Struck on `data-fund-classes` and on the row's own `data-security-key`, never
+ * on the rendered name: the fund base and the class name share every word but
+ * the last, so a prose match is satisfied by exactly the un-clubbed table this
+ * exists to catch. Spread into all three consolidated axes, because clubbing is
+ * a property of the ROW and an axis only decides which section it sits in — a
+ * fix on one is precisely the regression to catch.
+ */
+const FUND_CLASSES = [
+  /**
+   * 1. EVERY MULTI-CLASS FUND CLUBS, AND EXACTLY THOSE.
+   *
+   * An identity against the book in BOTH directions: the page must draw one
+   * clubbed row per multi-class fund (removing the clubbing drops it to zero)
+   * and no more (a rule keying on the fund HOUSE rather than the fund would
+   * club Motilal Oswal's Founders and Active Momentum funds together, which is
+   * the false positive `splitFundClass`'s own note records). The class SETS are
+   * compared too, so a row that clubbed two of three classes fails here rather
+   * than silently printing two thirds of a fund under the fund's name.
+   */
+  ["a fund's unit classes stand as ONE row, and only a multi-class fund does", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    if (!FUND_CLASS_BOOK) return { notChecked: "the book could not be read" };
+    const want = FUND_CLASS_BOOK.multi;
+    if (!want.length) return { notChecked: "no fund in this book carries more than one unit class" };
+    const got = rows.filter((r) => r.fundClasses?.length);
+    if (got.length !== want.length) return false;
+    // Set-for-set, keyed on the row the page actually drew.
+    return want.every((f) => got.some((r) =>
+      f.keys.includes(r.securityKey) && r.fundClasses.join(",") === f.classes.join(",")));
+  }],
+  /**
+   * 2. ...AND NO CLASS IS LEFT STANDING BESIDE THE FUND THAT NOW CLUBS IT.
+   *
+   * The dangerous half, and invisible in every figure: a build that DREW the
+   * clubbed row while leaving its classes in place would print 3P's money twice
+   * and pass check 1. Struck on the keys, which is exact — the classes' own
+   * `securityKey`s are known from the book and exactly one of them may appear,
+   * as the clubbed row's own handle.
+   */
+  ["...and no unit class of a clubbed fund still stands as a row of its own", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    if (!FUND_CLASS_BOOK?.clubbedKeys.size) return { notChecked: "no fund in this book carries more than one unit class" };
+    const seen = rows.filter((r) => FUND_CLASS_BOOK.clubbedKeys.has(r.securityKey));
+    return seen.length === FUND_CLASS_BOOK.multi.length && seen.every((r) => r.fundClasses?.length > 0);
+  }],
+  /**
+   * 3. A FUND WITH ONE CLASS KEEPS ITS OWN NAME.
+   *
+   * Baring's Class A1, Neo Infra's A5, Buoyant's A4: the statement prints the
+   * class because the class is the holding, and dropping it would rename a
+   * position to something no document calls it. This is the direction check 1
+   * cannot fail on — a build that clubbed every class-bearing name would still
+   * draw one row per fund.
+   */
+  ["a fund carrying one unit class is not clubbed, and keeps the name its statement prints", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    if (!FUND_CLASS_BOOK?.single.length) return { notChecked: "every class-bearing fund here is multi-class" };
+    const byKey = new Map(rows.map((r) => [r.securityKey, r]));
+    const hit = FUND_CLASS_BOOK.single.filter((f) => f.keys.some((k) => byKey.has(k)));
+    if (!hit.length) return { notChecked: "no single-class fund is drawn on this route" };
+    return hit.every((f) => f.keys.every((k) => !(byKey.get(k)?.fundClasses?.length)));
+  }],
+  /**
+   * 4. THE CLUBBED ROW'S PER-UNIT CELLS NAME THE CLASSES.
+   *
+   * Units of two classes are not the same unit — 3P's are marked at 169.221 /
+   * 170.447 / 163.484 — so Qty, Avg cost and CMP are absent BY CONSTRUCTION and
+   * the money columns beside them are ordinary sums. An em dash with no reason
+   * is the failure `Absent.tsx` exists to prevent, and the mandate row's wording
+   * ("this row is a mandate") would be a confidently wrong one.
+   */
+  ["the clubbed row's per-unit cells say WHY, naming the unit classes", (t, ctx) => {
+    const rows = (ctx?.tableRows ?? []).filter((r) => r.fundClasses?.length);
+    if (!rows.length) return { notChecked: "no clubbed row was drawn on this route" };
+    // Struck at each column's OWN index rather than by counting matches
+    // anywhere on the row: the chevron's `title` names the classes too, so a
+    // page-wide count is satisfied by the affordance while the cells stay mute.
+    return rows.every((r) => [COL.qty, COL.avgCost, COL.cmp].every((i) =>
+      /unit class/i.test(r.cellTitles?.[i] ?? "") && !/is a mandate/i.test(r.cellTitles?.[i] ?? "")));
+  }],
+  /**
+   * 5. A REDEEMED HOLDING SAYS SO — AND NOTHING ELSE DOES.
+   *
+   * Both directions, because neither implies the other and the pill is the whole
+   * of the answer to *"the 3P funds are lacking invested and current market
+   * value figures"*: the book was right and the SCREEN was wrong, three rows of
+   * dashes beside a ₹0 reading as data nobody wired. A build that pilled every
+   * row would satisfy the first half; one that pilled none would satisfy the
+   * second. Expectations come from the book, so the next drop picks its own.
+   */
+  ["a fund redeemed to nil says so on the row, and no other row claims it", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    if (!FUND_CLASS_BOOK?.redeemedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+    const want = rows.filter((r) => FUND_CLASS_BOOK.rowRedeemed(r.securityKey, r.fundClasses?.length > 0));
+    if (!want.length) return { notChecked: "no redeemed holding is drawn on this route" };
+    return rows.every((r) => r.redeemed === FUND_CLASS_BOOK.rowRedeemed(r.securityKey, r.fundClasses?.length > 0));
+  }],
+  /**
+   * 6. ...AND ITS ₹0 IS A MEASURED ZERO, NEVER A DASH.
+   *
+   * The counterpart of the sweep's own stray-₹0 lead: here the zero is CORRECT
+   * and must stay, because the fund measured it. A build that "fixed" the dashes
+   * by absenting the money columns would hide the redemption instead of naming
+   * it, and would read as the very gap the family reported.
+   */
+  ["...and its market value is the measured zero, not another dash", (t, ctx) => {
+    const rows = (ctx?.tableRows ?? []).filter((r) => r.redeemed);
+    if (!rows.length) return { notChecked: "no redeemed holding is drawn on this route" };
+    // `moneyCell` reads an em dash as `null` and anything unparseable as NaN, so
+    // an exact `=== 0` fails in both of the directions that matter: a dash where
+    // the zero should be, and a figure that is not zero at all.
+    return rows.every((r) => moneyCell(r.cells?.[COL.mv]) === 0);
+  }],
+];
+
 const UNCLASSIFIED_KEY = "Not classified in the family's review";
 const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
 const ALL_LABEL_RE = { "asset class": "All asset classes", basket: "All baskets" };
@@ -2768,7 +2991,10 @@ const INVARIANTS = {
      */
     ["the combined units are the sum of the rows' units",
       (t, ctx) => ctx.tranchePanel !== null
-        && Math.abs(ctx.tranchePanel.unitsFooter - ctx.tranchePanel.unitsRows) <= 0.001],
+        // PER SECTION. Units of two unit classes are not the same unit, so a
+        // footer adding them would state a quantity in no unit — the same rule
+        // the clubbed row's own Qty cell follows, one level down.
+        && ctx.tranchePanel.sections.every((x) => Math.abs(x.unitsFooter - x.unitsRows) <= 0.001)],
 
     /**
      * THE EARLIER RUPEE IS WORTH MORE, WHICH IS THE WHOLE QUESTION — and the
@@ -2783,13 +3009,17 @@ const INVARIANTS = {
      * ACROSS accounts and the set-size test passed happily while every tranche
      * within an account showed the identical figure.
      */
-    ["a cheaper entry NAV always shows the higher return",
-      (t, ctx) => {
-        const p = ctx.tranchePanel;
-        if (!p || p.navs.some((n) => n === null) || p.returns.some((r) => r === null)) return false;
-        const pairs = p.navs.map((n, i) => [n, p.returns[i]]).sort((a, b) => a[0] - b[0]);
+    ["a cheaper entry NAV always shows the higher return", (t, ctx) => {
+      const p = ctx.tranchePanel;
+      if (!p) return false;
+      // WITHIN ONE UNIT CLASS. Across two, each marked at its own NAV, the
+      // claim is simply false — which is why the panel sections by class.
+      return p.sections.every((x) => {
+        if (x.navs.some((n) => n === null) || x.returns.some((r) => r === null)) return false;
+        const pairs = x.navs.map((n, i) => [n, x.returns[i]]).sort((a, b) => a[0] - b[0]);
         return pairs.every(([, r], i) => i === 0 || r <= pairs[i - 1][1] + 1e-9);
-      }],
+      });
+    }],
     ["...and two contributions at the SAME entry NAV show the same return",
       (t, ctx) => {
         const p = ctx.tranchePanel;
@@ -2812,9 +3042,11 @@ const INVARIANTS = {
      * windows onto a year.
      */
     ["every tranche's return is tagged with the basis it is on",
+      // Over EVERY section, not just the biggest — `rows` is the panel's total
+      // across its unit classes, so a per-section claim must count per section.
       (t, ctx) => ctx.tranchePanel !== null
-        && ctx.tranchePanel.tags.length === ctx.tranchePanel.rows
-        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "HPR")],
+        && ctx.tranchePanel.sections.every((x) => x.tags.length === x.rows
+          && x.tags.every((g) => g === "CAGR" || g === "HPR"))],
     ["and this book's tranches are not all annualised",
       (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("HPR")],
 
@@ -2831,12 +3063,47 @@ const INVARIANTS = {
       (t, ctx) => {
         if (BIGGEST_TRANCHE === null || ctx.tranchePanel === null) return false;
         if (BIGGEST_TRANCHE.accounts <= 1) return true;   // nothing to disambiguate
-        return ctx.tranchePanel.spansEntities
-          && ctx.tranchePanel.entities.filter(Boolean).length === ctx.tranchePanel.rows;
+        // Struck on the BIGGEST section, which is the one `BIGGEST_TRANCHE`
+        // counts the folios of. A section drawn from one folio needs no Entity
+        // column, so requiring it everywhere would fail a correct page.
+        const big = ctx.tranchePanel;
+        return big.spansEntities && big.entities.filter(Boolean).length === big.rowsBiggest;
       }],
+    /**
+     * ...AND THE PANEL REALLY IS THE BOOK'S LARGEST HISTORY.
+     *
+     * Struck on the biggest SECTION, because `BIGGEST_TRANCHE` is keyed on the
+     * `securityKey` — which is the unit class — and a clubbed row's panel is
+     * sectioned on exactly that. Comparing the panel's TOTAL would silently
+     * accept a build that folded two classes into one blended table.
+     */
     ["...and the panel really is the book's largest history",
       (t, ctx) => BIGGEST_TRANCHE !== null && ctx.tranchePanel !== null
-        && ctx.tranchePanel.rows === BIGGEST_TRANCHE.moves],
+        && ctx.tranchePanel.rowsBiggest === BIGGEST_TRANCHE.moves],
+    /**
+     * ...AND A CLUBBED ROW'S PANEL IS SECTIONED BY CLASS, NEVER BLENDED.
+     *
+     * The check that says the three above are being applied to the right thing:
+     * a single blended table would satisfy "one row per contribution the toggle
+     * claims" while putting two NAVs under one footer. Anchored on the book —
+     * the walk opens the largest history, and this asserts it draws as many
+     * sections as that fund has classes carrying one.
+     */
+    ["a fund's classes are sectioned rather than blended into one table", (t, ctx) => {
+      const p = ctx.tranchePanel;
+      if (!p || !FUND_CLASS_BOOK || !TRANCHE_KEYS) return false;
+      const fund = FUND_CLASS_BOOK.multi.find((f) => f.keys.includes(p.key));
+      // A single-class row draws one unlabelled section, and that is correct.
+      if (!fund) return p.sections.length === 1 && p.sections[0].cls === null;
+      // A CLUBBED row draws one per class that carries a history — derived from
+      // the book, so a blended table (one section, no class) fails here on its
+      // own rather than only through the three figure checks above.
+      const want = fund.keys.filter((k) => TRANCHE_KEYS.has(k)).length;
+      return want > 1
+        && p.sections.length === want
+        && p.sections.every((x) => x.cls)
+        && new Set(p.sections.map((x) => x.cls)).size === want;
+    }],
 
     /**
      * AND THE COVERAGE IS COUNTED RATHER THAN CLAIMED. A chevron on some rows
@@ -5584,6 +5851,10 @@ const INVARIANTS = {
     // rewritten: the fix was that one axis had it and three did not, so a check
     // written once and applied to all four is the shape of the claim.
     ...AXIS_EXPANSION,
+    // ...AND CLUBS A FUND'S UNIT CLASSES INTO ONE ROW, for the same reason: the
+    // clubbing is a property of the ROW, so a build that did it on one axis and
+    // not another is exactly what these catch.
+    ...FUND_CLASSES,
   ],
   /**
    * ── "AND ANOTHER Y CRORES THROUGH THESE FIVE FUNDS" ────────────────────────
@@ -6153,8 +6424,8 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION],
-  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION],
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES],
+  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES],
   /**
    * ── AND ONE OF THEM ACTUALLY OPENED, ON THE DEFAULT AXIS ──────────────────
    *
@@ -6275,6 +6546,139 @@ const INVARIANTS = {
       const pcts = d.rows.map((r) => pctCell(r[i]));
       if (pcts.some((v) => !Number.isFinite(v))) return false;
       return Math.abs(pcts.reduce((a, b) => a + b, 0) - 100) <= 0.1 * d.rows.length;
+    }],
+  ],
+  /**
+   * ── AND THE CLUBBED FUND OPENED INTO ITS CLASSES ───────────────────────────
+   *
+   *   "we should only show 3P funds a single line item and then when we click
+   *    on it, we should see a drop down list of all the other categories of the
+   *    3P funds, B1, B2, B3, so and so on."
+   *
+   * Clubbing without the way back in is a row that HIDES three holdings, so the
+   * row and its expansion are one claim. Everything here is struck against the
+   * ROW A READER CLICKED and against the book's own class set — never against
+   * the panel's own copy of a figure, which is the tautology the Private Market
+   * page's PM-1 records.
+   */
+  "monitor-fund-drill": [
+    ...FUND_CLASSES,
+    /**
+     * EVERY CLUBBED FUND OPENS — all of them, not the widest.
+     *
+     * Reintroducing a truncated panel proved a widest-row walk blind: 3P clubs
+     * the most classes and every one of them is redeemed to ₹0, so a panel cut
+     * to one line still reconciled against the row's own ₹0. Sanshi is where
+     * the money adds up. Anchored on the book's own count so a build that
+     * stopped opening one of them fails here rather than quietly checking one.
+     */
+    ["every clubbed fund really opens", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!FUND_CLASS_BOOK?.multi.length) return { notChecked: "no fund in this book carries more than one unit class" };
+      if (!d) return false;
+      return d.funds.length === FUND_CLASS_BOOK.multi.length && d.funds.every((f) => f.lines.length > 0);
+    }],
+    /**
+     * ONE LINE PER STATEMENT, AND EVERY CLASS THE ROW ADVERTISED.
+     *
+     * Two claims, because neither implies the other: the panel must draw every
+     * CLASS the pill promised (a truncation that dropped B3 leaves the row still
+     * reading "3 unit classes"), and the classes drawn must be the ones the BOOK
+     * carries, so a page agreeing with its own pill cannot pass. Sanshi's five
+     * lines over two classes are why the count is struck on the class SET rather
+     * than on the number of lines: several members hold the same class.
+     */
+    ["each draws every unit class the row advertised", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!d?.funds.length) return { notChecked: "no clubbed fund was opened on this run" };
+      return d.funds.every((f) => {
+        const want = FUND_CLASS_BOOK?.multi.find((x) => x.keys.includes(f.key));
+        if (!want) return false;
+        const drawn = [...new Set(f.lines.map((l) => l.cls).filter(Boolean))].sort();
+        return drawn.join(",") === want.classes.join(",")
+          && f.classes.slice().sort().join(",") === want.classes.join(",");
+      });
+    }],
+    /**
+     * ...AND EACH CLASS IS THE LINK, BECAUSE THE CLASS IS WHAT `/stock/` SERVES.
+     *
+     * The clubbed row above deliberately is NOT one: `/stock/:securityKey`
+     * resolves a single holding, so a link on the fund name would open one class
+     * and title it with the fund. A build that put the link back on the row and
+     * dropped it here would leave a reader unable to reach two of three classes
+     * at all.
+     */
+    ["each class line links to its own holding page", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!d?.funds.length) return { notChecked: "no clubbed fund was opened on this run" };
+      const lines = d.funds.flatMap((f) => f.lines).filter((l) => l.cls);
+      if (!lines.length) return false;
+      return lines.every((l) => /^\/stock\//.test(l.href ?? ""));
+    }],
+    /**
+     * THE PANEL LEADS WITH THE CLASS COLUMN, which is the whole difference
+     * between this expansion and the per-account one every other row draws.
+     */
+    ["the expansion leads with a Class column", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!d?.funds.length) return { notChecked: "no clubbed fund was opened on this run" };
+      return d.funds.every((f) => /^class$/i.test(f.head[0] ?? ""));
+    }],
+    /**
+     * ...AND THE LINES ADD TO THE ROW THEY OPENED FROM.
+     *
+     * Summed FROM the rendered lines against the row's own printed Market value
+     * cell — the construction the Private Market page had to be corrected to,
+     * after a footer computed independently of its rows went on printing the
+     * right total while every row beneath it carried a double count. Bounded by
+     * the page's own printing precision (one decimal in Cr per cell), never by a
+     * tolerance widened until the figures fit.
+     *
+     * IT MUST HAVE SOMETHING TO ADD. 3P's classes are all ₹0, so on that row the
+     * comparison is 0 === 0 whatever the panel does; the check therefore
+     * requires at least one clubbed fund carrying money, which on this book is
+     * Sanshi at ₹204.48 Cr — the review's own figure for that fund.
+     */
+    ["the class lines add to the row a reader clicked", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!d?.funds.length) return { notChecked: "no clubbed fund was opened on this run" };
+      let withMoney = 0;
+      const ok = d.funds.every((f) => {
+        const i = f.head.findIndex((h) => /market value/i.test(h));
+        if (i < 0) return false;
+        const parts = f.lines.map((l) => moneyCell(l.cells[i]));
+        const row = moneyCell(f.rowCells?.[COL.mv]);
+        if (parts.some((v) => !Number.isFinite(v)) || !Number.isFinite(row)) return false;
+        if (row > 0) withMoney++;
+        return Math.abs(parts.reduce((a, b) => a + b, 0) - row) <= 0.05 * (f.lines.length + 1);
+      });
+      // A suite that passes over nothing claims confidence nobody earned.
+      return ok && withMoney > 0;
+    }],
+    /**
+     * AND A REDEEMED CLASS SAYS SO ON ITS OWN LINE.
+     *
+     * The row-level pill says the FUND is redeemed; this says WHICH classes are,
+     * which is the question a reader opens the row to answer. Both directions
+     * are exercised on this book by walking both funds: all three of 3P's
+     * classes are redeemed and none of Sanshi's is, so a build that pilled every
+     * line and one that pilled none each fail on one of the two.
+     */
+    ["a redeemed class says so on its own line, and no other class claims it", (t, ctx) => {
+      const d = ctx?.fundDrill;
+      if (!d?.funds.length) return { notChecked: "no clubbed fund was opened on this run" };
+      if (!FUND_CLASS_BOOK?.redeemedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+      return d.funds.every((f) => {
+        const want = FUND_CLASS_BOOK.multi.find((x) => x.keys.includes(f.key));
+        if (!want) return false;
+        // Struck per CLASS, off the book: a fund with some classes redeemed and
+        // some live is the case a row-level flag cannot describe.
+        return f.lines.every((l) => {
+          const key = want.keys.find((k) => k.toLowerCase().endsWith("-class-" + (l.cls || "").toLowerCase()));
+          if (!key) return false;
+          return /\bredeemed\b/i.test(l.cells[0] ?? "") === FUND_CLASS_BOOK.redeemedKeys.has(key);
+        });
+      });
     }],
   ],
   "monitor-entity": [
@@ -7271,6 +7675,68 @@ for (const theme of THEMES) {
           if (AXIS_DRILL) AXIS_DRILL.expected = pick.venues;
         }
       }
+      /**
+       * THE CLUBBED FUND, OPENED INTO ITS CLASSES.
+       *
+       * Picks the row clubbing the MOST classes off the DOM rather than naming
+       * 3P here: a walk pinned to one fund stops exercising the case the moment
+       * the next drop moves the book, and the widest row is the one with the
+       * most to truncate — the same rule as `data-days` and `data-tranche-rows`.
+       */
+      if (name === "monitor-fund-drill") {
+        /**
+         * EVERY CLUBBED ROW, NOT THE WIDEST ONE.
+         *
+         * The first draft opened whichever fund clubbed the most classes, and
+         * reintroducing a TRUNCATED panel proved that blind: 3P is the widest
+         * and every one of its classes is redeemed to ₹0, so a panel cut to one
+         * line still summed to the row's own ₹0 and the reconciliation passed.
+         * Sanshi is the row where the money actually adds up (₹204.48 Cr over
+         * five statements), so both are walked and each is reconciled against
+         * the row a reader would have clicked.
+         */
+        const picks = await page.evaluate(() =>
+          [...document.querySelectorAll("[data-fund-classes]")].map((span) => {
+            const tr = span.closest("tr[data-security-key]");
+            if (!tr) return null;
+            return {
+              key: tr.getAttribute("data-security-key"),
+              classes: (span.getAttribute("data-fund-classes") || "").split(",").filter(Boolean),
+              fund: (span.innerText || "").trim(),
+            };
+          }).filter(Boolean));
+        FUND_DRILL = { funds: [] };
+        for (const pick of picks) {
+          const btn = page.locator(`tr[data-security-key="${pick.key}"] td:first-child button`).first();
+          if (!(await btn.count())) continue;
+          await btn.click();
+          await page.waitForTimeout(500);
+          const got = await page.evaluate((k) => {
+            const row = document.querySelector(`tr[data-security-key="${k}"]`);
+            const panel = row?.nextElementSibling;
+            const cells = (tr) => [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim());
+            return {
+              key: k,
+              // The row a reader clicked, so the panel is reconciled against the
+              // figure they clicked rather than against the book — a panel that
+              // dropped a line from both would reconcile with itself.
+              rowCells: row ? cells(row) : null,
+              head: panel ? [...panel.querySelectorAll("th")].map((th) => (th.innerText ?? "").trim()) : [],
+              lines: panel ? [...panel.querySelectorAll("tr[data-venue]")].map((tr) => ({
+                cls: tr.getAttribute("data-venue-class") ?? "",
+                // The CLASS cell's own link, which is what makes a class the
+                // thing `/stock/:securityKey` serves and the clubbed row not.
+                href: tr.cells[0]?.querySelector("a")?.getAttribute("href") ?? null,
+                cells: cells(tr),
+              })) : [],
+            };
+          }, pick.key);
+          if (got) FUND_DRILL.funds.push({ ...got, classes: pick.classes, fund: pick.fund });
+          // Closed again, so the next row's panel is the only one on the page.
+          await btn.click();
+          await page.waitForTimeout(200);
+        }
+      }
       // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
       // contributions rather than the first, so a regression that truncates a
       // breakdown cannot be satisfied by a single-tranche row that has nothing
@@ -7697,9 +8163,28 @@ for (const theme of THEMES) {
           // cannot be split reliably on the security axis.
           securityKey: tr.getAttribute("data-security-key"),
           venues: tr.hasAttribute("data-venues") ? Number(tr.getAttribute("data-venues")) : null,
+          /**
+           * ONE FUND, ONE ROW. Both handles are read off the row's own markup and
+           * deliberately not off its TEXT: the fund base and its class names share
+           * every word but the last, and "redeemed" is a word the page is free to
+           * reword. `data-fund-classes` sits on the name span rather than the row,
+           * because the row is not the thing that clubs — the name is.
+           */
+          fundClasses: (tr.querySelector("[data-fund-classes]")?.getAttribute("data-fund-classes") || "")
+            .split(",").map((x) => x.trim()).filter(Boolean),
+          redeemed: !!tr.querySelector("[data-redeemed]"),
           // Every cell, so a claim about a COLUMN is read at its own index
           // (`COL`) rather than by position in a line of text.
           cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
+          /**
+           * ...AND THE REASON BEHIND EACH DASH, which `innerText` cannot see:
+           * `AbsentCell` puts its cause in a `title`, and a reason is a REQUIRED
+           * argument precisely so a reader can tell a withheld figure from a
+           * broken one. Read per row rather than page-wide, so a claim about one
+           * row's cell cannot be satisfied by another row printing the sentence.
+           */
+          cellTitles: [...tr.cells].map((td) =>
+            td.querySelector("[title]")?.getAttribute("title") ?? td.getAttribute("title") ?? ""),
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
@@ -7769,11 +8254,28 @@ for (const theme of THEMES) {
       const trancheRowsOffered = FAST ? 0 : await page.evaluate(() =>
         [...document.querySelectorAll("[data-tranche-toggle]")]
           .reduce((a, b) => a + (Number(b.getAttribute("data-tranche-rows")) || 0), 0));
+      /**
+       * ── THE PANEL, READ AS ITS SECTIONS ────────────────────────────────────
+       *
+       * One `[data-tranche-panel]` per UNIT CLASS. A tranche is valued as its own
+       * units at today's NAV, so the two claims this suite makes about a panel —
+       * that the footer's units add up, and that a cheaper entry NAV always shows
+       * the higher return — hold WITHIN one class and not across two marked at
+       * NAVs of their own. Clubbing a fund's classes into one row is what made
+       * that visible: a single blended panel failed exactly those two plus the
+       * one comparing it against the book's largest single history.
+       *
+       * So `sections` is the unit of every within-panel claim, `rows` is the
+       * total the toggle promises, and `biggest` is the section the book's own
+       * `BIGGEST_TRANCHE` is keyed to — which is per `securityKey`, i.e. per
+       * class, and lines up with a section by construction.
+       */
       const tranchePanel = FAST ? null : await page.evaluate(() => {
-        const panel = document.querySelector("[data-tranche-panel]");
-        if (!panel) return null;
-        const key = panel.getAttribute("data-tranche-panel");
+        const panels = [...document.querySelectorAll("[data-tranche-panel]")];
+        if (!panels.length) return null;
+        const key = panels[0].getAttribute("data-tranche-panel");
         const toggle = document.querySelector(`[data-tranche-toggle="${key}"]`);
+        const readOne = (panel) => {
         const rows = [...panel.querySelectorAll("tr[data-tranche-row]")];
         const foot = panel.querySelector("tr[data-tranche-total]");
         const head = [...panel.querySelectorAll("thead th")].map((th) => th.textContent.trim().toLowerCase());
@@ -7802,8 +8304,8 @@ for (const theme of THEMES) {
         const num = (v) => (v === null ? NaN : Number(v.replace(/[^\d.-]/g, "")));
         const spansEntities = head.includes("entity");
         return {
+          cls: panel.getAttribute("data-tranche-class") || null,
           rows: rows.length,
-          claimed: Number(toggle?.getAttribute("data-tranche-rows") ?? -1),
           unitsRows: rows.reduce((a, tr) => a + num(at(tr, "units")), 0),
           unitsFooter: foot ? num(at(foot, "units")) : NaN,
           // THE FIGURE, NOT THE CELL. A return cell reads "CAGR39.50%", so
@@ -7825,6 +8327,26 @@ for (const theme of THEMES) {
           }),
           entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],
           spansEntities,
+        };
+        };
+        const sections = panels.map(readOne);
+        // The biggest section, which is what `BIGGEST_TRANCHE` names — and the
+        // one whose figures the reader compares. Ties break on nothing: the page
+        // already orders its sections largest first.
+        const biggest = sections.reduce((a, b) => (b.rows > a.rows ? b : a));
+        return {
+          // Every within-panel figure comes from the BIGGEST section, which is
+          // the one a reader compares and the one `BIGGEST_TRANCHE` is keyed to.
+          ...biggest,
+          sections,
+          rowsBiggest: biggest.rows,
+          // ...and `rows` is the TOTAL across sections, set after the spread
+          // because that is what the toggle promises and what the coverage sums.
+          rows: sections.reduce((a, x) => a + x.rows, 0),
+          claimed: Number(toggle?.getAttribute("data-tranche-rows") ?? -1),
+          // WHICH ROW OPENED IT, so the sectioning claim can be anchored on the
+          // book rather than on the panel's own account of itself.
+          key,
         };
       });
       /**
@@ -8257,7 +8779,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

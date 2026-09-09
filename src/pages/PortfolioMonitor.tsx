@@ -16,12 +16,14 @@ import {
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure,
   costCoversSet,
+  isRedeemedToNil,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
+import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
-import { trancheTable, capitalRollup, capitalTotals } from "@/lib/tranches";
+import { trancheTable, capitalRollup, capitalTotals, type TrancheTable } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_POLYCAB } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
@@ -70,6 +72,15 @@ import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absen
  */
 type Venue = {
   accountId: string; accountNo: string;
+  /**
+   * The unit CLASS this line is, on a row that clubs several — see
+   * `splitFundClass`. Null on every other row, which is every row whose fund
+   * issues one class, so a Class column is drawn only where there is one.
+   */
+  cls: string | null;
+  securityKey: string;
+  /** This line's fund still publishes a NAV and the family holds no units of it. */
+  redeemed: boolean;
   /** The strategy the manager runs, or the platform that holds the account. */
   vehicle: string;
   owner: string;
@@ -131,6 +142,25 @@ type Row = {
   // not a security, and its constituents are what carry quantities. A 0 would
   // read as a mandate holding nothing.
   entities: string[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
+  /**
+   * THE UNIT CLASSES THIS ROW CLUBS, on a row that clubs more than one.
+   *
+   * *"3P Class A B1 B2, all of that should be shown as a single line item as
+   * just 3P funds like in the excel sheet."* Empty on every other row.
+   *
+   * A fund with ONE class is deliberately NOT clubbed: its row keeps the name
+   * its statement prints, class and all. Dropping "— Class G1" from a row that
+   * has only a G1 removes something the statement said and buys a reader
+   * nothing, where clubbing three rows into one is the whole request.
+   */
+  fundClasses: string[];
+  /**
+   * EVERY holding behind this row is redeemed to nil units — all of them, never
+   * some. A row where one class has been redeemed and another is still held is
+   * not a redeemed row, and saying so would write off money the family still
+   * has; the per-class lines in the expansion carry it individually.
+   */
+  redeemed: boolean;
   // Cost and the two figures derived from it are NULLABLE for the same reason
   // the per-unit ones are: a depository holding statement reports a value and no
   // cost. `costNA` stays the flag the cells switch on; the values themselves are
@@ -762,6 +792,9 @@ export function PortfolioMonitor() {
         // in any one share, so it carries no per-contribution breakdown either.
         // That money is on the Transactions card, under My investments.
         heldSince: null,
+        // A MANDATE IS NEVER "REDEEMED": it is an account, and an account that
+        // holds nothing says so through `noPositionsReason` on its own page.
+        fundClasses: [], redeemed: false,
         trancheSet: [],
         key: "mandate:" + accountId,
         /**
@@ -822,6 +855,61 @@ export function PortfolioMonitor() {
        * equity names), so nothing on screen moves today; the key is what stops a
        * future drop merging them without a word.
        */
+      /**
+       * ── ONE ROW PER FUND, NOT PER UNIT CLASS ──────────────────────────────
+       *
+       * *"3P Class A B1 B2, all of that should be shown as a single line item
+       * as just 3P funds like in the excel sheet, we can only see 3P funds in
+       * the stable growth basket … and then when we click on it we should see a
+       * drop down list of all the other categories."*
+       *
+       * A Category-III AIF issues ONE portfolio under several unit classes that
+       * differ by management fee: 3P's statement prints B1 1.20%, B2 1.00%,
+       * B3 0.70% and a Reclassification table that moved every unit out of B1
+       * and B2 into B3 on one day. The family's review carries one line per
+       * FUND, and this table drew one per class.
+       *
+       * TWO GUARDS, AND THE SECOND IS THE ONE THAT KEEPS A FIGURE HONEST:
+       *
+       *  - the BOOK must carry more than one class of the fund. A fund with a
+       *    single class keeps the name its statement prints — see `fundClasses`.
+       *  - and the FILTERED SET must hold every class the book has. Under a
+       *    filter that picks one class, a row headed with the fund's name would
+       *    print one class's figures as the fund's — the "caption asserts what a
+       *    named counterparty reports" failure a mandate row is already guarded
+       *    against, arriving through a unit class.
+       *
+       * Measured over all 220 names in the book: 10 carry a class suffix and
+       * exactly TWO funds carry more than one — 3P (B1/B2/B3) and Sanshi
+       * (A2/E). Sanshi clubs to ₹204.48 Cr, which is the family review's own
+       * `Sanshi Fund 1` line to the rupee, and that is the independent witness
+       * that this grouping is the one they asked for.
+       */
+      const classesInBook = new Map<string, Set<string>>();
+      for (const p of positions) {
+        const f = splitFundClass(p.security);
+        if (f) (classesInBook.get(f.fund) ?? classesInBook.set(f.fund, new Set()).get(f.fund)!).add(f.cls);
+      }
+      const classesShown = new Map<string, Set<string>>();
+      for (const p of rest) {
+        const f = splitFundClass(p.security);
+        if (f) (classesShown.get(f.fund) ?? classesShown.set(f.fund, new Set()).get(f.fund)!).add(f.cls);
+      }
+      const clubbed = new Set<string>();
+      for (const [fund, inBook] of classesInBook) {
+        if (inBook.size < 2) continue;
+        const shown = classesShown.get(fund);
+        if (shown && shown.size === inBook.size) clubbed.add(fund);
+      }
+      // The key a row groups on: the FUND where its classes are clubbed, and the
+      // security otherwise. `securityKey` is untouched by any of this — it is
+      // still the join, still what a class links to, and still what every
+      // drill-down resolves on.
+      const rowKeyOf = (p: Position) => {
+        const f = splitFundClass(p.security);
+        return f && clubbed.has(f.fund) ? "fund\u0000" + f.fund : p.securityKey;
+      };
+
       const m = new Map<string, Position[]>();
       for (const p of rest) {
         // ON THE SECURITY AXIS THE KEY IS THE NAME ALONE. The bucket half exists
@@ -830,7 +918,7 @@ export function PortfolioMonitor() {
         // name's whole exposure, however it was arrived at — and the route is
         // named per account in the row's own expansion rather than by splitting
         // the row in two.
-        const k = bySecurity ? p.securityKey : bucketFor(accIdx, p) + " | " + p.securityKey;
+        const k = bySecurity ? rowKeyOf(p) : bucketFor(accIdx, p) + " | " + rowKeyOf(p);
         (m.get(k) ?? m.set(k, []).get(k)!).push(p);
       }
       out = [...m.values()].map((ps) => {
@@ -859,12 +947,30 @@ export function PortfolioMonitor() {
         const heldSince = dps.every((x) => x.heldSince)
           ? dps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), dps[0].heldSince!)
           : null;
+        /**
+         * A CLUBBED FUND ROW HAS NO SINGLE UNIT, so its per-unit columns behave
+         * exactly as a MANDATE row's do — and for the same reason.
+         *
+         * 3P's three classes are marked at 169.221 / 170.447 / 163.484 and
+         * Sanshi's two at NAVs of their own: units of different classes are not
+         * fungible, so a summed quantity has no price and a blended average cost
+         * and CMP are figures no statement prints. Money IS additive across
+         * classes — invested, market value, weight, P&L and return are ordinary
+         * sums — so those stay, and the three per-unit cells render an
+         * `AbsentCell` naming the cause rather than a plausible blend.
+         */
+        const fundClasses = clubbedClassesOf(ps);
+        const perUnit = fundClasses.length === 0;
+        const redeemed = ps.every((x) => isRedeemedToNil(x));
         return {
           kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
-          key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
-          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: qty,
-          avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
+          key: ps[0].securityKey, security: fundClasses.length ? splitFundClass(ps[0].security)!.fund : ps[0].security,
+          securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
+          fundClasses, redeemed,
+          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: perUnit ? qty : null,
+          avgCost: perUnit && !costNA && qty > 0 ? (cost as number) / qty : null,
+          currentPrice: perUnit ? ps[0].currentPrice : null,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
           weight: weightBase > 0 ? mv / weightBase : 0,
@@ -876,7 +982,11 @@ export function PortfolioMonitor() {
           dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
           dayChangePct: ps[0].dayChangePct ?? null,
           liveMV: live ? mv : 0,
-          realizedKeys: [ps[0].securityKey],
+          // EVERY KEY THE ROW CLUBS. A realised gain is reported per SECURITY, so
+          // a row standing for three classes claims all three or none — one key
+          // would silently drop two classes' realised figures from the cell.
+          // Identical to the old single-key form on every unclubbed row.
+          realizedKeys: [...new Set(ps.map((x) => x.securityKey))],
           /**
            * ON EVERY AXIS, NOT JUST THE SECURITY ONE.
            *
@@ -914,7 +1024,7 @@ export function PortfolioMonitor() {
         kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, p),
         groupSource: groupSourceFor(groupAxis, accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
-        entities: [ownerOf(accIdx, p)], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
+        entities: [ownerOf(accIdx, p)], fundClasses: [], redeemed: isRedeemedToNil(p), quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
@@ -993,6 +1103,9 @@ export function PortfolioMonitor() {
             key: "derived:" + e.key,
             security: e.name,
             securityKey: e.key,
+            // A derived look-through row stands for a company inside a fund, so
+            // there is no unit class to club and none to name.
+            fundClasses: [], redeemed: false,
             sector: "",
             assetClass: "Equity",
             entities: [],
@@ -1690,10 +1803,24 @@ export function PortfolioMonitor() {
                    * book with a real purchase date, and the picker's other
                    * measures (XIRR, YTD, calendar) are absent on every row here.
                    */
-                  const tranches = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+                  /**
+                   * ONE SECTION PER UNIT CLASS, AND THAT IS NOT A LAYOUT CHOICE.
+                   *
+                   * A tranche is valued as ITS OWN units at TODAY'S NAV, so a
+                   * panel's whole claim — cheaper entry, higher return, always —
+                   * holds only where every row shares one NAV. Clubbing Sanshi's
+                   * Class E and Class A2 into one row put two NAVs under one
+                   * footer: each row stayed arithmetically right, the combined
+                   * UNITS became a number with no unit, and the comparison a
+                   * reader opens the panel to make stopped being valid. The
+                   * per-unit cells on the row above go absent for exactly this
+                   * reason; a tranche panel is a per-unit measurement, so it gets
+                   * the same treatment one level down. Found by `check:pages`
+                   * rather than by reading — see the note in `trancheGroupsOf`.
+                   */
+                  const trancheGroups = trancheGroupsOf(r, portfolio.asOf);
+                  const trancheCount = trancheGroups.reduce((a, g) => a + g.table.rows.length, 0);
                   const trancheOpen = openTranches.has(r.key);
-                  const trancheSpansEntities = !!tranches
-                    && new Set(tranches.rows.map((t) => t.move.accountId)).size > 1;
                   /**
                    * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
                    * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
@@ -1817,22 +1944,64 @@ export function PortfolioMonitor() {
                             <span className="font-medium text-slate-100">
                               {r.venues && (
                                 <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
-                                  title={isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which, and what your funds hold of it`}
+                                  title={r.fundClasses.length
+                                    ? (isOpen ? "Hide this fund's unit classes" : `One fund, ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}) — show each`)
+                                    : (isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which, and what your funds hold of it`)}
                                   className="-ml-0.5 mr-1 rounded align-middle text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
                                   <ChevronRight className={`inline h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                                 </button>
                               )}
-                              <StockLink securityKey={r.securityKey} name={r.security} />
+                              {/*
+                                A CLUBBED FUND ROW IS NOT A LINK, AND THAT IS THE
+                                POINT. `/stock/:securityKey` serves ONE class, so
+                                a row reading "3P India Equity Fund 1" that opened
+                                Class B3's page would name one thing and show
+                                another. The classes are each linked inside the
+                                expansion, where each is itself again.
+                              */}
+                              {r.fundClasses.length
+                                ? <span data-fund-classes={r.fundClasses.join(",")}>{r.security}</span>
+                                : <StockLink securityKey={r.securityKey} name={r.security} />}
+                              {/* THE SPACE IS LOAD-BEARING, not cosmetic. These pills are
+                                  INLINE — a flex wrapper would put a newline inside the
+                                  cell and shatter every row-based check that splits the
+                                  page on newlines (Stage 10af) — and an inline element
+                                  contributes no whitespace to `innerText`, so without it
+                                  the row reads "Fund 13 unit classesredeemed". */}
+                              {r.fundClasses.length > 0 && (
+                                <>{" "}<span className="ml-1 align-middle"><Pill>{r.fundClasses.length} unit classes</Pill></span></>
+                              )}
+                              {/*
+                                WHY THE ROW IS ALL ZEROS, ON THE ROW.
+
+                                *"the 3P funds … are lacking invested and current
+                                market value figures, so please check why they
+                                are missing."* They are not missing: the fund
+                                redeemed every unit and still publishes a NAV, so
+                                the ₹0 is a MEASUREMENT. Without this the row is
+                                a line of dashes that reads as a broken feed —
+                                which is exactly how it was read.
+                              */}
+                              {r.redeemed && (
+                                <>{" "}<span className="ml-1 align-middle" data-redeemed={r.securityKey}
+                                  title={`Every unit of this fund has been redeemed: its own statement reports zero units held and still publishes a NAV, so the ₹0 is what the fund measured rather than a figure this book is missing.${r.fundClasses.length ? " Open the row for each class." : ""}`}>
+                                  <Pill tone="warn">redeemed</Pill>
+                                </span></>
+                              )}
                             </span>
                           )}
                         </td>
                         <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                           {r.quantity === null
-                            ? <AbsentCell reason="a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing." />
+                            ? <AbsentCell reason={r.fundClasses.length
+                                ? `this row is one fund under ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}), and their units are not the same unit: each class is allotted at its own NAV. Adding them would give a quantity no NAV prices. Open the row for each class's own units.`
+                                : "a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing."} />
                             : fmtNum(r.quantity)}
                         </td>
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {m ? <AbsentCell reason="an average cost per unit needs one security; this row rolls up the mandate's holdings, each with a cost of its own" />
+                            : r.fundClasses.length
+                            ? <AbsentCell reason={`an average cost per unit needs one unit, and this row clubs ${r.fundClasses.length} unit classes allotted at NAVs of their own. The money below it is additive across classes; a per-unit figure is not.`} />
                             : r.costNA ? "—"
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
                             : fmtFromBase(r.avgCost)}
@@ -1843,10 +2012,10 @@ export function PortfolioMonitor() {
                             date by date. Drawn only where a breakdown exists —
                             a chevron that opens nothing is worse than none. */}
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
-                          {r.costNA ? "—" : tranches ? (
+                          {r.costNA ? "—" : trancheCount > 0 ? (
                             <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
-                              data-tranche-toggle={r.key} data-tranche-rows={tranches.rows.length}
-                              title={`Bought over ${tranches.rows.length} dated contribution${tranches.rows.length === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.`}
+                              data-tranche-toggle={r.key} data-tranche-rows={trancheCount}
+                              title={`Bought over ${trancheCount} dated contribution${trancheCount === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.${trancheGroups.length > 1 ? ` Shown per unit class, because each class is marked at its own NAV.` : ""}`}
                               className="inline-flex items-center gap-1 rounded ring-focus transition-colors hover:text-champagne-400">
                               <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${trancheOpen ? "rotate-90" : ""}`} />
                               {fmtFromBase(r.costBasis, { compact: true })}
@@ -1859,6 +2028,8 @@ export function PortfolioMonitor() {
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {m
                             ? <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />
+                            : r.fundClasses.length
+                            ? <AbsentCell reason={`each unit class of this fund is marked at its OWN NAV — ${r.fundClasses.join(", ")} — so there is no one price for the row. Open it for each class's own mark.`} />
                             : r.currentPrice === null
                             ? <AbsentCell reason="marked at a total value, not a per-unit price" />
                             : r.live
@@ -2012,19 +2183,37 @@ export function PortfolioMonitor() {
                           done what's the overall portfolio return."* Both
                           questions, one table: a row per contribution and a
                           footer that ties to the cell it opened from. */}
-                      {tranches && trancheOpen && (
-                        <tr className="bg-ink-900/60" data-tranche-panel={r.key}>
+                      {trancheOpen && trancheGroups.map((g, gi) => {
+                        const tranches = g.table;
+                        const trancheSpansEntities = g.spansEntities;
+                        return (
+                        <tr key={"tr-" + r.key + "|" + (g.cls ?? "")} className="bg-ink-900/60"
+                          data-tranche-panel={r.key} data-tranche-class={g.cls ?? ""}>
                           <td colSpan={COL_COUNT} className="px-3 pb-3 pt-1">
+                            {/* THE CLASS IS NAMED WHERE THERE IS MORE THAN ONE, because
+                                a second table under one row with no heading reads as a
+                                continuation of the first — and the two are marked at
+                                different NAVs, which is the whole reason they are apart. */}
+                            {g.cls && (
+                              <p className="mb-1 text-[11px] font-medium text-slate-300">
+                                Class {g.cls} <span className="font-normal text-slate-500">— marked at its own NAV, so its contributions are compared only with each other</span>
+                              </p>
+                            )}
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                               {tranches.rows.length === 1
                                 ? <>This holding was bought in ONE contribution, so its return and the row&rsquo;s are the same figure.</>
                                 : <>The {tranches.rows.length} dated contributions behind this holding. Each carries its OWN units,
                                     so each is valued at today&rsquo;s NAV on the units IT bought — the earlier money bought cheaper
                                     units and is worth more per rupee, which is what a single blended return hides.</>}
-                              {" "}Entry NAV is derived as invested &divide; units allotted and reproduces the allotment NAV the
-                              statement prints. A contribution held a year or more is annualised and tagged CAGR; anything
-                              shorter shows the absolute return, because a rate for a year the money has not seen is a claim
-                              about a year.
+                              {/* THE METHOD IS STATED ONCE. It is a fact about how every
+                                  section is computed, not about this one, and repeating it
+                                  under each class turns a sectioned panel into a wall. */}
+                              {gi === 0 && <>
+                                {" "}Entry NAV is derived as invested &divide; units allotted and reproduces the allotment NAV the
+                                statement prints. A contribution held a year or more is annualised and tagged CAGR; anything
+                                shorter shows the absolute return, because a rate for a year the money has not seen is a claim
+                                about a year.
+                              </>}
                             </p>
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
@@ -2111,7 +2300,8 @@ export function PortfolioMonitor() {
                             </div>
                           </td>
                         </tr>
-                      )}
+                        );
+                      })}
                       {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
                           asked for, in place. Each share appears here and in the
                           mandate's row above, and nowhere beside the shares the
@@ -2271,6 +2461,14 @@ export function PortfolioMonitor() {
                               <table className="min-w-full text-[12px]">
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
+                                    {/* THE CLASS COLUMN, ONLY WHERE THE ROW CLUBS MORE THAN ONE.
+                                        Drawn from the row rather than from the venues: a
+                                        column headed Class over a table where every line
+                                        says the same thing is chrome, and over a table
+                                        where none does it is empty. */}
+                                    {r.fundClasses.length > 0 && (
+                                      <th className="label-xs px-3 py-1.5 text-left font-medium">Class</th>
+                                    )}
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Vehicle</th>
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Owning entity</th>
@@ -2283,7 +2481,20 @@ export function PortfolioMonitor() {
                                 </thead>
                                 <tbody className="divide-y divide-ink-700/50">
                                   {vs.map((v) => (
-                                    <tr key={v.accountId} data-venue={v.route}>
+                                    <tr key={v.securityKey + "@" + v.accountId} data-venue={v.route} data-venue-class={v.cls ?? ""}>
+                                      {/* AND THE CLASS ITSELF IS THE LINK, because a class
+                                          is what `/stock/:securityKey` actually serves. The
+                                          clubbed row above deliberately is not one. */}
+                                      {r.fundClasses.length > 0 && (
+                                        <td className="px-3 py-1.5 whitespace-nowrap">
+                                          {v.cls
+                                            ? <StockLink securityKey={v.securityKey} name={v.cls} />
+                                            : <AbsentCell reason="this line's statement names no unit class for the holding" />}
+                                          {v.redeemed && (
+                                            <>{" "}<span className="ml-1 align-middle"><Pill tone="warn">redeemed</Pill></span></>
+                                          )}
+                                        </td>
+                                      )}
                                       <td className="px-3 py-1.5 text-slate-300 whitespace-nowrap">{v.route}</td>
                                       <td className="px-3 py-1.5 text-slate-200">
                                         {v.isMandate
@@ -2766,10 +2977,83 @@ export function PortfolioMonitor() {
  * adds to 100%, and the expansion names the gap when the two differ rather than
  * letting a reader divide one printed cell by another and get a third answer.
  */
+/**
+ * The unit CLASSES a group of positions clubs, or [] where it clubs none.
+ *
+ * Derived from what is actually in the group rather than from the `clubbed` set
+ * that formed it, so a row can never claim a class it does not carry: the two
+ * agree by construction and this is the one a figure is struck over.
+ */
+/**
+ * ── A CONTRIBUTION HISTORY IS PER UNIT CLASS ───────────────────────────────
+ *
+ * `trancheTable` values every tranche as its OWN units at TODAY'S NAV, taken
+ * from the position the tranche belongs to. That is right per row whatever the
+ * set — and the PANEL makes two further claims that are only true within one
+ * class: its footer adds the units up, and its whole point is that a cheaper
+ * entry NAV shows a higher return. Two classes are marked at NAVs of their own,
+ * so a combined footer states a quantity in no unit and the comparison a reader
+ * opens the panel to make stops holding.
+ *
+ * This was NOT reasoned out in advance — clubbing shipped with one blended
+ * panel and `check:pages` failed three of its tranche invariants at once
+ * (combined units, monotonicity, and the panel matching the book's largest
+ * single history). It is the same rule the clubbed row's own Qty, Avg cost and
+ * CMP cells already follow, one level down.
+ *
+ * Groups are ordered by size so the largest history is the first panel a reader
+ * — and the sweep — sees. A class whose statements carry no dated contribution
+ * yields no section rather than an empty one.
+ */
+type TrancheGroup = { cls: string | null; table: TrancheTable; spansEntities: boolean };
+
+function trancheGroupsOf(r: Row, asOf: string): TrancheGroup[] {
+  const spans = (t: TrancheTable) => new Set(t.rows.map((x) => x.move.accountId)).size > 1;
+  if (!r.fundClasses.length) {
+    const table = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", asOf);
+    return table ? [{ cls: null, table, spansEntities: spans(table) }] : [];
+  }
+  const byClass = new Map<string, Position[]>();
+  for (const p of r.trancheSet) {
+    const cls = splitFundClass(p.security)?.cls;
+    if (!cls) continue;
+    (byClass.get(cls) ?? byClass.set(cls, []).get(cls)!).push(p);
+  }
+  const out: TrancheGroup[] = [];
+  for (const [cls, ps] of byClass) {
+    const table = trancheTable(ps, BOOK_POSITION_TRANCHES, "cagr", asOf);
+    if (table) out.push({ cls, table, spansEntities: spans(table) });
+  }
+  return out.sort((a, b) => b.table.rows.length - a.table.rows.length || a.cls!.localeCompare(b.cls!));
+}
+
+function clubbedClassesOf(ps: Position[]): string[] {
+  const cls = new Set<string>();
+  for (const p of ps) {
+    const f = splitFundClass(p.security);
+    if (!f) return [];
+    cls.add(f.cls);
+  }
+  return cls.size > 1 ? [...cls].sort() : [];
+}
+
 function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
   const m = new Map<string, Position[]>();
-  for (const p of ps) (m.get(p.accountId) ?? m.set(p.accountId, []).get(p.accountId)!).push(p);
-  const built: Venue[] = [...m.entries()].map(([accountId, xs]) => {
+  /**
+   * KEYED ON (SECURITY, ACCOUNT), NOT ON THE ACCOUNT ALONE.
+   *
+   * Identical to the old account-only grouping on every row that carries one
+   * security — which is every row but the two clubbed funds. It matters on
+   * those: 3P's three classes all sit in ONE folio, so an account-keyed panel
+   * would collapse the very classes the row was clubbed to reveal, and the
+   * expansion would open onto a single line.
+   */
+  for (const p of ps) {
+    const k = p.securityKey + "\u0000" + p.accountId;
+    (m.get(k) ?? m.set(k, []).get(k)!).push(p);
+  }
+  const built: Venue[] = [...m.values()].map((xs) => {
+    const accountId = xs[0].accountId;
     const acc = accIdx.get(accountId);
     const marketValue = sum(xs.map((x) => x.marketValue));
     // `sumOrNull` on the cost, as everywhere: a lot whose statement reports none
@@ -2779,6 +3063,9 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
     const pnl = costNA ? null : marketValue - (costBasis as number);
     return {
       accountId, accountNo: acc?.accountNo ?? "",
+      cls: splitFundClass(xs[0].security)?.cls ?? null,
+      securityKey: xs[0].securityKey,
+      redeemed: xs.every((x) => isRedeemedToNil(x)),
       // `mandateLabel` is strategy-or-provider, which is the right name for BOTH
       // a mandate ("Aristos Equity Portfolio") and a demat ("Motilal Oswal demat").
       vehicle: mandateLabel(acc),

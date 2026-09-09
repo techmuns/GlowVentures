@@ -2449,6 +2449,15 @@ merges (three keys, each corroborated by evidence outside the name) and what it
 still leaves apart (a clipped name, which only an ISIN can bridge and which no
 rule here may invent).
 
+**`splitFundClass` SITS BESIDE IT ON THE SAME TERMS** — the fund's own name and
+the unit class the statement appends to it (`3P India Equity Fund 1 - Class B3`),
+so the Portfolio Monitor can draw ONE row per fund and open it into its classes.
+Display only, anchored at the end, only ever removes, and `securityKeyOf` is not
+routed through it: each class keeps its own key, its own `/stock/` page and its
+own row everywhere else. **It is not a name matcher** — the fund base must match
+character for character, which is what keeps two funds of one HOUSE apart. See
+Stage 10ak.
+
 ### Income — split by EVENT TYPE, not by preferred document
 
 The dividend statement is authoritative for **cash** dividends; the corporate
@@ -7054,6 +7063,217 @@ Re-run against the same bug, it fails.
 `check:pages` **136 combinations clean** (140 less the two removed movers
 routes), with the same two pre-existing abstentions. `glowData.ts` is untouched —
 nothing here reads the ingest.
+
+### Stage 10ak — 3P'S ₹0 WAS RIGHT AND THE SCREEN WAS WRONG; AND A FUND IS ONE ROW
+
+*"The figures in the dashboard and the consolidated excel sheet are not matching
+… the 3P funds on the dashboard stable growth basket are lacking invested and
+current market value figures, so please check why they are missing … Also 3P
+Class B1 B2, all of that should be shown as a single line item as just 3P funds
+like in the excel sheet … and then when we click on it, we should see a drop down
+list of all the other categories, B1, B2, B3."*
+
+Two asks that look like one bug and are not. The first is answered by the
+statements and needed no arithmetic changed; the second is a grouping.
+
+#### The first ask: the book was right, and it was still a defect
+
+**3P'S OWN STATEMENT PRINTS `0.000` UNITS AND `0.000` VALUE ON ALL THREE
+CLASSES.** Read from the archive rather than reasoned about
+(`public/audit/3p-investment-managers-3000048-2026-07-31-holdings/pages.json`),
+the account's own transaction history says what happened:
+
+| Date | Class | Event |
+| --- | --- | --- |
+| 31-03-2026 | B1, B2 | `Reclassification Out` — both folded into Class B3 |
+| 31-07-2026 | B3 | **`Full Units Redemption`, ₹31,05,82,835.17** |
+
+That is the exact figure on the ICICI payment advice this book already carries
+and already refuses to attribute (§"the two ICICI payment advices"). So three
+documents agree: the fund's own statement, its own transaction tape, and the
+bank's receipt for the money leaving.
+
+**THE REVIEW IS DRAWN 30 JUNE 2026 AND CARRIES 3P AT ₹52.12 Cr.** The redemption
+is 31 July. The workbook is not wrong and the book is not wrong; they are five
+weeks apart, and **the newer document is the statement.** A dashboard matched to
+a review would have to un-redeem a position the fund says is gone.
+
+**WHAT WAS ACTUALLY BROKEN IS THAT THE SCREEN COULD NOT SAY SO.** Three rows of
+em dashes beside a ₹0 look exactly like three rows nobody wired — which is this
+file's founding rule (*a measured zero and an absent measurement must never look
+the same*) failing in the one direction it had never been tested in: **the zero
+was correct and the reader could not tell.** `isRedeemedToNil` in
+`analytics.ts` names it, and the row says **redeemed** in words.
+
+**SCOPED TO A FUND VEHICLE, AND THAT IS A MEASUREMENT.** Eight positions in this
+book stand at zero units and only five are redemptions: the other three are a
+`Cash` sleeve at nil and a `Tax Deducted at Source` line, which are balances
+rather than holdings and have nothing to be redeemed. The predicate is
+`isFundVehicle && quantity === 0 && currentPrice != null` — **the NAV is the
+witness**: a fund still publishing one has measured the zero, where a holding
+with no price and no units is an absence.
+
+#### The second ask: one fund, one row, and the classes one click in
+
+`splitFundClass` in `shared/securityKey.mjs`, beside `stripDepositoryTail` and on
+exactly the same terms: **DISPLAY ONLY, and `securityKeyOf` never routes through
+it**, so each class keeps its own key, its own join, its own `/stock/` page and
+its own row in every drill-down. Anchored at the END and it only ever removes.
+
+**IT IS NOT A NAME MATCHER, AND THAT DISTINCTION IS LOAD-BEARING.** The fund base
+must match CHARACTER FOR CHARACTER; nothing here resembles anything. Stage 10z
+already recorded what a similarity rule does to this corpus — `Motilal Oswal
+Active Momentum Fund` matched to `Motilal Oswal Founders Fund II`, sharing a
+HOUSE rather than a fund — and a basket heading looks equally authoritative
+whichever rows sit under it. Measured over the whole book: **220 distinct names,
+16 rows carrying a class suffix across 7 funds, and exactly TWO of those funds
+carry more than one class** — 3P (B1/B2/B3) and Sanshi (A2/E). **Zero false
+positives.**
+
+**SANSHI IS THE INDEPENDENT WITNESS THAT THE GROUPING IS THE RIGHT ONE.** Clubbed
+it reads **₹204,48,04,459.29 — ₹204.48 Cr — which is the review's own
+`Sanshi Fund 1` line to the rupee.** The family asked for the shape the workbook
+uses and the workbook's own figure falls out of it.
+
+**TWO GUARDS, AND THE SECOND IS THE ONE THAT IS NOT OBVIOUS.** A fund clubs only
+where the BOOK carries more than one class of it — a single-class fund keeps the
+name its statement prints (Baring's A1, Neo Infra's A5, Buoyant's A4) — AND where
+the FILTERED set holds every class the book has. Under a filter that reaches only
+two of three, a row headed `3P India Equity Fund 1` would print two classes'
+figures as the fund's, which is the *"a caption asserts what a named counterparty
+reports"* failure arriving through a filter.
+
+**THE PER-UNIT COLUMNS GO ABSENT, EXACTLY AS A MANDATE ROW'S DO, AND FOR THE SAME
+REASON.** 3P's classes are marked at 169.221 / 170.4473 / 163.4835: units of two
+classes are not the same unit, so a summed quantity has no price and a blended
+average cost and CMP are figures no statement prints. **Money IS additive across
+classes** — invested, market value, weight, P&L and return are ordinary sums and
+stay. Each dash names the classes rather than borrowing the mandate's wording,
+because a confidently wrong reason sends the next reader to the wrong document.
+
+**AND THE CLUBBED ROW IS DELIBERATELY NOT A `StockLink`.** `/stock/:securityKey`
+resolves ONE holding, so a link on the fund name would open one class under the
+fund's title. The link moves INTO the expansion, where each class is the link —
+which is what the family asked for, and is also the only place it is true.
+
+**`venuesOf` IS RE-KEYED ON (SECURITY, ACCOUNT).** Identical to the old
+account-only grouping on every row in the book but these two, and it matters on
+them: **3P's three classes all sit in ONE folio**, so an account-keyed panel would
+collapse the very classes the row was clubbed to reveal and open onto a single
+line. Sanshi's five statement lines over two classes are the other direction —
+several members holding the same class — which is why the expansion's identity is
+the statement and its Class column is drawn from the ROW rather than the lines.
+
+**`realizedKeys` IS EVERY KEY THE ROW CLUBS**, not `ps[0]`. A realised gain is
+reported per SECURITY, so a row standing for three classes claims all three or
+none; one key silently drops two classes' realised figures.
+
+#### Thirteen bugs reintroduced, and one of them exposed a blind check
+
+`FUND_CLASS_BOOK` in `check-pages.mjs` derives the expectations from
+`glowData.ts` on every run — which funds club, which must not, and which classes
+the fund reports redeemed — with the class split and `isRedeemedToNil` both
+**re-derived rather than imported**, on the same terms as `isMandateHeld`: a
+check that imports the helper it is checking agrees with it by construction. The
+two expressions of the split agree exactly on this corpus, which is the whole
+point of writing it twice.
+
+| Bug put back | Fires |
+| --- | --- |
+| clubbing removed | clubs / no-class-alone on all four routes, and the fund never opens |
+| a single-class fund clubbed too | clubs / a one-class fund keeps its name |
+| two of three classes clubbed | clubs / no-class-alone |
+| the per-unit dashes fall back to the mandate reason | the cells name the classes |
+| the redeemed pill removed | redeemed, both directions |
+| the pill on every row | redeemed / the measured zero |
+| the ₹0 absented instead of named | the measured zero / the lines add up |
+| the Class column dropped | the class link / leads with Class / per-class redeemed |
+| a class rendered as text, not a link | the class link |
+| the panel truncated to one line | draws every class / the lines add up |
+| ONE statement line dropped | draws every class / the lines add up |
+| only the widest row opens | every fund opens, and three more |
+| `venuesOf` keyed on the account alone | the venue-count identity ×3 |
+| the tranche panel blended across unit classes | combined units / monotonicity / largest history / sectioning |
+
+**AND THE FULL SWEEP CAUGHT A DEFECT IN THE CHANGE ITSELF — THE ONE THING THE
+SUBSET RUNS COULD NOT SEE.** Clubbing shipped with the CONTRIBUTION HISTORY
+still drawn as one blended panel, and `monitor-tranche` failed three invariants
+at once: the combined units, the monotonicity claim, and the panel matching the
+book's largest single history.
+
+Nothing was miscalculated. `trancheTable` values every tranche as ITS OWN units
+at ITS OWN position's NAV, so each ROW stayed right. What broke is the panel's
+two claims, and both hold only WITHIN one class:
+
+- its footer ADDS THE UNITS UP, and units of two classes are not the same unit;
+- **cheaper entry NAV, higher return, always** — which is the whole reason the
+  panel exists, and which is simply false across two classes marked at NAVs of
+  their own. Sanshi's Class E carries 9 dated contributions and Class A2 one,
+  and the blended panel drew 10 under one footer against a book that knows the
+  largest single history is 9.
+
+**It is the same rule the clubbed row's own Qty, Avg cost and CMP cells already
+follow, one level down**, and it was not reasoned out in advance — it was
+measured. `trancheGroupsOf` sections the panel by class, each with its own
+heading, its own footer and its own NAV; the three invariants moved to per
+SECTION, and a fourth now asserts the sectioning itself against the book (how
+many of that fund's classes carry a history), because a blended table reports
+one section with no class and would otherwise satisfy a check that merely asks
+whether the sections drawn are distinct. Reintroducing the blend fires all four.
+
+**AND THE WALK HAD TO OPEN BOTH CLUBBED ROWS, NOT THE WIDEST.** The first draft
+picked the row clubbing the most classes — 3P — and reintroducing a truncated
+panel proved that blind: **every one of 3P's classes is redeemed to ₹0, so a
+panel cut to one line still summed to the row's own ₹0 and the reconciliation
+passed.** Sanshi is where the money adds up, so both are walked and the check
+additionally requires at least one clubbed fund CARRYING money, which is
+`golden.mjs`'s rule arriving through a drill-down: a suite that passes over
+nothing claims confidence nobody earned. Re-run against the same bug, it fails.
+
+#### What still does not tie to the review, measured line by line
+
+Stable Growth reads **₹412.71 Cr** here against the review's **₹541.90 Cr**, and
+the bridge was struck ROW BY ROW rather than asserted — because two of the five
+steps are settled and three are open, and a single "it's the abbreviations"
+sentence would bury that:
+
+| | Δ vs the review |
+| --- | ---: |
+| **3P India Equity Fund 1** — redeemed 31 July, five weeks after the review's date | **−₹52.12 Cr** |
+| **National Stock Exchange** — 125,000 unlisted shares the ICICI NSDL statement values at an implied **Re 1.00**, so a PAR row carrying its quantity and NO value (§"the value column is a mark on 14 rows and par on 24"). It is not in `BOOK_POSITIONS` at all | **−₹41.50 Cr** |
+| **four depository-clipped mutual funds** — `ICICI IOPPF D-GRW` ₹6.37 Cr against the review's ICICI Pru India Opportunities ₹25.42 Cr, `BNDH L&MCF DP GR` ₹2.53 against Bandhan Large & Mid Cap ₹24.78, `KOTAK MTCF D-GROW` ₹1.27 against Kotak Multicap ₹10.24, and Kotak Large & Midcap ₹2.50 with no counterpart in the book at all | **−₹52.77 Cr** |
+| **Helios**, where THE BOOK IS HIGHER — Ajay's AMC folio ₹31.00 Cr plus Ankita's ₹7.23 Cr and Bharat's ₹3.79 Cr demat rows | **+₹14.85 Cr** |
+| Neo Infra +₹1.78 Cr, Buoyant +₹0.95 Cr, Carnelian −₹0.55 Cr, and two under ₹10 L | **+₹2.31 Cr** |
+| | **−₹129.23 Cr**, against a printed gap of ₹129.19 Cr |
+
+**THE FIRST TWO ARE SETTLED AND NEITHER IS A DEFECT.** 3P is answered above by
+three documents; NSE is this book's own par rule, and inventing a mark for an
+unlisted share the depository prices at a rupee is the fabrication that rule
+exists to stop.
+
+**THE OTHER THREE ARE OPEN, AND THIS SESSION DID NOT CLOSE THEM.** They are one
+question in two directions: the review writes each scheme out in full while the
+depository clips it (`WOC MAAF D-GROW`), so a family basket reaches some of a
+scheme's rows and not others — which is the hand-checked abbreviation table this
+file already names, not another statement, and **no tier above a prefix may join
+them.** The Helios line is the same question running the other way and carries a
+second one beside it: the three rows are marked at **₹16.21, ₹15.74 and ₹14.18
+for one ISIN** (`INF0R8701046`), which no scheme can be on one day, so at least
+two of the three statements are drawn on different dates. Both need the archive
+rather than the screen, and both are named here rather than papered over.
+
+**A SUSPECTED DOUBLE COUNT WAS CHECKED AND CLEARED, AND IT IS NOT THAT.**
+`HELIOS FCF D-GROW` and `Helios Flexi Cap Fund - Direct Growth` share that ISIN
+and are DIFFERENT HOLDERS in different accounts: Ajay 1,91,23,041 units in the
+AMC folio, Ankita 51,00,985 and Bharat 24,07,981 in their own demats, from
+separate documents. Not a duplicate — recorded so the next session does not
+re-open it as one.
+
+**AND THE WORKBOOK THE CLIENT ATTACHED IS ALREADY IN `source/`** — md5-identical
+to `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30
+June 2026.xlsx`. It is still not a source (§"the consolidated review workbook is
+not a source — by decision"); it is the cross-check `reconcile:review` runs and
+the classification `familyTaxonomy.ts` cites.
 
 ### Stage 10k — News & Announcements: REMOVED
 
