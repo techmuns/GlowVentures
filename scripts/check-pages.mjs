@@ -2739,9 +2739,9 @@ const INVARIANTS = {
     ["every tranche's return is tagged with the basis it is on",
       (t, ctx) => ctx.tranchePanel !== null
         && ctx.tranchePanel.tags.length === ctx.tranchePanel.rows
-        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "ABS")],
+        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "HPR")],
     ["and this book's tranches are not all annualised",
-      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("ABS")],
+      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("HPR")],
 
     /**
      * A ROW SPANNING SEVERAL FOLIOS NAMES WHOSE MONEY EACH CONTRIBUTION WAS.
@@ -2778,11 +2778,12 @@ const INVARIANTS = {
     ["the histories offered count each dedupeGroup once, like the rows do",
       (t, ctx) => TRANCHE_ROWS_TOTAL !== null && ctx.trancheRowsOffered === TRANCHE_ROWS_TOTAL],
 
-    ["the note counts the rows offering a history, and it matches",
-      (t, ctx) => {
-        const m = /(\d+) of (\d+) rows open their Invested/.exec(t.replace(/\s+/g, " "));
-        return !!m && Number(m[1]) === ctx.trancheToggles && Number(m[1]) > 0;
-      }],
+    // THE TRANCHE-COVERAGE NOTE ("N of M rows open their Invested figure…") was
+    // removed from the holdings table at the family's request. The chevrons it
+    // summarised still render — the structural check above counts them — so this
+    // asserts only that the caption stays gone.
+    ["the removed tranche-coverage note no longer prints",
+      (t) => !/rows open their Invested/.test(t)],
   ],
 
   "monitor-txn-manager": [
@@ -5461,14 +5462,14 @@ const INVARIANTS = {
      *
      * The whole point of the picker is that a bare percentage was ambiguous. So
      * every cell in the one Return column carries a tag naming its measure — on
-     * the auto view that is the measure the methodology resolved to (ABS or CAGR),
+     * the auto view that is the measure the methodology resolved to (HPR or CAGR),
      * and it is on the absent cells too, so a reader always knows which return is
      * missing. Read off the cells the page draws (`data-return-cell`).
      */
     ["every return cell is labelled with the measure it shows", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      return cells.every((c) => /\b(AUTO|ABS|CAGR|XIRR|YTD|CY)\b/.test(c));
+      return cells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c));
     }],
     /**
      * ── THE METHODOLOGY CAPTION WAS REMOVED FROM THE DEFAULT VIEW ────────────
@@ -5923,10 +5924,10 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is the ABS tag now (the cell shows the total return on cost,
-    // tagged ABS) and the caption says "held under a year".
-    ["a holding held under a year is marked as absolute rather than annualised",
-      (t) => /held under a year/.test(t) && /\bABS\b/.test(t)],
+    // The marker is the HPR tag now (the cell shows the total return on cost,
+    // tagged HPR) and the caption says "held under a year".
+    ["a holding held under a year is marked as holding-period rather than annualised",
+      (t) => /held under a year/.test(t) && /\bHPR\b/.test(t)],
   ],
   /**
    * ── YTD IS A MEASURE NOW, AND IT NEVER GUESSES ─────────────────────────────
@@ -6004,8 +6005,8 @@ const INVARIANTS = {
     ["the one Return column shows both picked measures, each labelled", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      // A costed row shows an ABS line and a CAGR line in the one cell.
-      return cells.some((c) => /\bABS\b/.test(c) && /\bCAGR\b/.test(c));
+      // A costed row shows an HPR line and a CAGR line in the one cell.
+      return cells.some((c) => /\bHPR\b/.test(c) && /\bCAGR\b/.test(c));
     }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
@@ -7703,7 +7704,7 @@ for (const theme of THEMES) {
             return m ? Number(m[1].replace(/,/g, "")) : null;
           }),
           tags: rows.map((tr) => {
-            const m = /(CAGR|ABS)/.exec(at(tr, "return") ?? "");
+            const m = /(CAGR|HPR)/.exec(at(tr, "return") ?? "");
             return m ? m[1] : null;
           }),
           entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],

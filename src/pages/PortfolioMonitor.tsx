@@ -378,7 +378,7 @@ function ReturnMeasureSelect({ measures, onChange }: { measures: ReturnMeasure[]
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5">
                       <span className="font-medium">{m.label}</span>
-                      <span className="rounded bg-ink-700/70 px-1 text-[9px] font-semibold tracking-wide text-slate-400">{m.tag}</span>
+                      <span className="ret-tag">{m.tag}</span>
                     </span>
                     <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{m.hint}</span>
                   </span>
@@ -1295,14 +1295,6 @@ export function PortfolioMonitor() {
   const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
   const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
   /**
-   * How many rows on screen can open a contribution history — struck on the
-   * ROWS THE TABLE DREW, never on the book. Read off `BOOK_POSITION_TRANCHES`
-   * directly it would claim a coverage the filtered table does not have, and
-   * would keep claiming it on a view (mandate rows, a filter) where no row
-   * carries one.
-   */
-  const trancheShown = rows.filter((r) => trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf) !== null).length;
-  /**
    * THE REALISED COLUMN CANNOT ADD UP TO ITS OWN FOOTER, AND THE PAGE SAYS SO.
    *
    * The footer sums the realised gain over the UNION of every row's keys, which
@@ -1575,7 +1567,7 @@ export function PortfolioMonitor() {
                   {/*
                     ONE RETURN COLUMN, headed just "Return" — the measure it shows
                     is chosen in the picker on the filter row and named on every
-                    cell (ABS / CAGR / XIRR / YTD), so the header does not carry
+                    cell (HPR / CAGR / XIRR / YTD), so the header does not carry
                     it. The separate YTD column is gone: YTD is one of the measures
                     now, shown in this column when it is ticked.
                   */}
@@ -1944,7 +1936,7 @@ export function PortfolioMonitor() {
                           THE ONE RETURN COLUMN — the ticked measure(s), each
                           labelled with its tag. `measuredReturn` decides; this
                           cell only draws. `auto` resolves per row to the
-                          methodology's measure and tags it (ABS / CAGR); the
+                          methodology's measure and tags it (HPR / CAGR); the
                           concrete measures show that measure or a dash naming why
                           this book cannot strike it (XIRR per holding, YTD outside
                           a within-year purchase, calendar year). The guard is
@@ -1964,16 +1956,16 @@ export function PortfolioMonitor() {
                         <td data-return-cell="" className="px-2 py-1.5 text-right mono" title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                           {returnMeasures.map((measure) => {
                             const res = measuredReturn(r, measure, portfolio.asOf);
-                            // Tag "ABS" is always the raw return on cost (res.pct === returnPct),
+                            // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                             // so its audit popover ties to the workbook; CAGR/other are derived.
                             const value = !res.shown
                               ? <AbsentCell reason={res.reason} />
-                              : res.tag === "ABS" && !r.live
+                              : res.tag === "HPR" && !r.live
                                 ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
                                 : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                             return (
                               <span key={measure} className="ml-1 whitespace-nowrap first:ml-0">
-                                <span className="mr-0.5 rounded bg-ink-700/60 px-1 text-[9px] font-semibold tracking-wide text-slate-500">{res.tag}</span>
+                                <span className="ret-tag mr-0.5">{res.tag}</span>
                                 {value}
                               </span>
                             );
@@ -2076,7 +2068,7 @@ export function PortfolioMonitor() {
                                           ? <AbsentCell reason={t.ret.reason} />
                                           : <span className={t.ret.pct >= 0 ? "text-emerald-400" : "text-rose-400"}>
                                               <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">
-                                                {t.ret.kind === "cagr" ? "CAGR" : "ABS"}
+                                                {t.ret.kind === "cagr" ? "CAGR" : "HPR"}
                                               </span>
                                               {fmtPct(t.ret.pct)}
                                             </span>}
@@ -2103,7 +2095,7 @@ export function PortfolioMonitor() {
                                       {fmtFromBase(tranches.value - tranches.invested, { compact: true })}
                                     </td>
                                     <td className={`px-3 py-1.5 text-right mono font-medium whitespace-nowrap ${tranches.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                      <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">ABS</span>{fmtPct(tranches.returnPct)}
+                                      <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(tranches.returnPct)}
                                     </td>
                                   </tr>
                                 </tfoot>
@@ -2676,22 +2668,12 @@ export function PortfolioMonitor() {
               )}
             </p>
           )}
-          {/* HOW FAR THE CONTRIBUTION HISTORY REACHES, COUNTED RATHER THAN
-              CLAIMED. A chevron on some Invested cells and not others is a fact
-              a reader is owed a reason for — otherwise the row they care about
-              looks broken rather than unreported. Derived from what the table
-              actually drew, so it cannot describe a coverage the page does not
-              have; it disappears entirely when nothing on screen carries one. */}
-          {trancheShown > 0 && (
-            <p data-tranche-note className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              <span className="font-medium text-slate-400">{trancheShown} of {rows.length} rows open their Invested
-              figure into the dated contributions behind it.</span> That needs the fund to allot UNITS against each
-              contribution and those units to account for every unit held — without both, a tranche&rsquo;s value today
-              cannot be struck and a return on part of a holding would read as a return on all of it. The managed
-              mandates publish a capital-account ledger rather than unit allotments, and a depository records what is
-              held and never what was paid for it, so most of this book has no dated purchase to open.
-            </p>
-          )}
+          {/* The tranche-coverage note ("N of M rows open their Invested figure…")
+              was removed from the holdings table at the family's request, a
+              declutter. The chevrons it summarised still render — an Invested cell
+              with a dated history still opens its contribution breakdown — so
+              nothing measurable was lost. `check:pages` asserts the note stays
+              gone rather than deleting the check with the prose. */}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
@@ -2709,7 +2691,7 @@ export function PortfolioMonitor() {
             WHICH return each note is about and how much of the table it can answer
             — counted rather than claimed. The DEFAULT (auto) methodology view
             carries no caption: the family asked for it removed, and the fact it
-            stated survives per row, in each cell's own tag (ABS / CAGR / …). A
+            stated survives per row, in each cell's own tag (HPR / CAGR / …). A
             concrete measure a reader ticks still explains itself, because a column
             of XIRR dashes or a part-year that could not annualise is a genuine
             absence the reader is owed a reason for. A drop that brings a purchase
@@ -2725,7 +2707,7 @@ export function PortfolioMonitor() {
             let body: React.ReactNode = null;
             if (measure === "cagr") {
               body = <><span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
-                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">ABS</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
+                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">HPR</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
                 {cov.absent > 0 && <>{cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.</>}</>;
             } else if (measure === "ytd") {
               body = <><span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
@@ -2738,12 +2720,12 @@ export function PortfolioMonitor() {
             } else if (measure === "calendar") {
               body = <>A <span className="font-medium text-slate-400">calendar-year</span> return needs the holding&rsquo;s value at the start and end of that year, and the book&rsquo;s earliest statement is dated in {year}, after the current year began — so it is absent on all {cov.total} rows.</>;
             } else if (measure === "absolute" && cov.absent > 0) {
-              body = <><span className="font-medium text-slate-400">Absolute is the total return on cost since purchase, not annualised.</span> It is shown on {cov.shown} of {cov.total} rows; the other {cov.absent} report no cost, so there is nothing to strike a return against.</>;
+              body = <><span className="font-medium text-slate-400">Holding Period Return is the total return on cost since purchase, not annualised.</span> It is shown on {cov.shown} of {cov.total} rows; the other {cov.absent} report no cost, so there is nothing to strike a return against.</>;
             }
             if (!body) return null;
             return (
               <p key={measure} className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
-                <span className="mr-1 rounded bg-ink-700/60 px-1 text-[9px] font-semibold tracking-wide text-slate-400">{def.tag}</span>{body}
+                <span className="ret-tag mr-1">{def.tag}</span>{body}
               </p>
             );
           })}
@@ -2992,7 +2974,7 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
                     <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.returnPct === null ? "" : changeColor(g.returnPct)}`}>
                       {g.returnPct === null
                         ? <AbsentCell reason={g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
-                        : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">ABS</span>{fmtPct(g.returnPct)}</>}
+                        : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(g.returnPct)}</>}
                     </td>
                     <td className="px-3 py-2 text-[12px] text-slate-400 whitespace-nowrap">{ownerDisplayName(accIdx.get(g.accountId)?.ownerId ?? null) || g.owner}</td>
                     <td className="px-3 py-2 text-[12px] mono text-slate-500 whitespace-nowrap">

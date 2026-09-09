@@ -60,7 +60,7 @@ ok("365 days IS annualised", holdingReturn(h(40, atYear), "cagr", ASOF).kind ===
   const r = holdingReturn(h(40, null), "cagr", ASOF);
   ok("an unknown start is ABSENT, never annualised and never silently absolute", r.kind === "absent");
   ok("...and the reason names what is missing and what to do",
-     r.kind === "absent" && /purchase date/i.test(r.reason) && /Absolute/.test(r.reason));
+     r.kind === "absent" && /purchase date/i.test(r.reason) && /Holding Period Return/.test(r.reason));
 }
 ok("no cost basis is absent", holdingReturn(h(null, "2020-01-01"), "cagr", ASOF).kind === "absent");
 // A holding worth nothing against its cost has no compound rate: (1 + −1)^x is 0
@@ -201,10 +201,22 @@ ok("the book still carries a report date for the window to close against", !!BOO
      RETURN_MEASURES[0].key === "auto"
      && ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"].every((k) => RETURN_MEASURES.some((m) => m.key === k)));
 
+  // The former "Absolute — holding period" is the Holding Period Return now: same
+  // figure (return on cost, not annualised), reader-facing label and tag renamed
+  // at the family's request. The key stays "absolute" — the URL (`?ret=absolute`)
+  // and the internal not-annualised basis share the one identifier — and NOTHING
+  // prints the old "ABS" tag any more, in any branch.
+  {
+    const hpr = RETURN_MEASURES.find((m) => m.key === "absolute")!;
+    ok("the holding-period measure is labelled 'Holding Period Return' and tagged HPR",
+       hpr.label === "Holding Period Return" && hpr.tag === "HPR");
+    ok("no measure is still tagged ABS", RETURN_MEASURES.every((m) => m.tag !== "ABS"));
+  }
+
   // ABSOLUTE — the return on cost, whatever the window, never annualised.
   for (const [label, since] of [["long", long], ["short", short], ["no date", null]] as const) {
     const r = measuredReturn(mr(40, since), "absolute", ASOF);
-    ok(`absolute shows the return on cost, tagged ABS — ${label}`, r.shown && r.pct === 40 && r.tag === "ABS");
+    ok(`absolute shows the return on cost, tagged HPR — ${label}`, r.shown && r.pct === 40 && r.tag === "HPR");
   }
   ok("absolute with no cost is absent, naming the depository",
      (() => { const r = measuredReturn(mr(null, long), "absolute", ASOF); return !r.shown && /cost/.test(r.reason); })());
@@ -212,25 +224,25 @@ ok("the book still carries a report date for the window to close against", !!BOO
   // CAGR — annualised at a year or more, absolute under a year, absent with no date.
   ok("CAGR annualises a two-year hold and tags it CAGR",
      (() => { const r = measuredReturn(mr(21, twoYears), "cagr", ASOF); return r.shown && r.tag === "CAGR" && Math.abs(r.pct - 10) <= 0.05; })());
-  ok("CAGR under a year shows the absolute figure, tagged ABS (the guard, visible)",
-     (() => { const r = measuredReturn(mr(40, short), "cagr", ASOF); return r.shown && r.tag === "ABS" && r.pct === 40; })());
+  ok("CAGR under a year shows the absolute figure, tagged HPR (the guard, visible)",
+     (() => { const r = measuredReturn(mr(40, short), "cagr", ASOF); return r.shown && r.tag === "HPR" && r.pct === 40; })());
   ok("CAGR with no purchase date is absent, never silently absolute",
      (() => { const r = measuredReturn(mr(40, null), "cagr", ASOF); return !r.shown && /purchase date/i.test(r.reason); })());
 
   // AUTO — the methodology, tagging each cell with the measure it resolved to.
   ok("auto annualises a year-old equity holding (CAGR)",
      (() => { const r = measuredReturn(mr(21, twoYears, "Equity"), "auto", ASOF); return r.shown && r.tag === "CAGR" && Math.abs(r.pct - 10) <= 0.05; })());
-  ok("auto shows a sub-year equity holding as the absolute figure (ABS), never annualised",
-     (() => { const r = measuredReturn(mr(40, short, "Equity"), "auto", ASOF); return r.shown && r.tag === "ABS" && r.pct === 40; })());
-  ok("auto with no purchase date shows the return on cost (ABS), because it cannot know the window",
-     (() => { const r = measuredReturn(mr(40, null, "Equity"), "auto", ASOF); return r.shown && r.tag === "ABS" && r.pct === 40; })());
+  ok("auto shows a sub-year equity holding as the absolute figure (HPR), never annualised",
+     (() => { const r = measuredReturn(mr(40, short, "Equity"), "auto", ASOF); return r.shown && r.tag === "HPR" && r.pct === 40; })());
+  ok("auto with no purchase date shows the return on cost (HPR), because it cannot know the window",
+     (() => { const r = measuredReturn(mr(40, null, "Equity"), "auto", ASOF); return r.shown && r.tag === "HPR" && r.pct === 40; })());
   ok("auto with no cost is absent",
      (() => { const r = measuredReturn(mr(null, long, "Equity"), "auto", ASOF); return !r.shown; })());
   // FIXED INCOME → the rule wants XIRR, which this book cannot strike per holding,
-  // so the return on cost stands, tagged ABS, and the note names the ideal measure.
+  // so the return on cost stands, tagged HPR, and the note names the ideal measure.
   ok("Bond is fixed income and routes to XIRR in the methodology", isFixedIncome("Bond") && !isFixedIncome("Equity"));
-  ok("auto on fixed income shows the return on cost (ABS) and its note names XIRR",
-     (() => { const r = measuredReturn(mr(6, long, "Bond"), "auto", ASOF); return r.shown && r.tag === "ABS" && !!r.note && /XIRR/.test(r.note); })());
+  ok("auto on fixed income shows the return on cost (HPR) and its note names XIRR",
+     (() => { const r = measuredReturn(mr(6, long, "Bond"), "auto", ASOF); return r.shown && r.tag === "HPR" && !!r.note && /XIRR/.test(r.note); })());
 
   // XIRR — never a per-holding figure on this book; a dash with the reason.
   {
