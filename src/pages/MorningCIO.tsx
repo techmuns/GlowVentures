@@ -1348,23 +1348,30 @@ export function MorningCIO() {
         <NavVsIndex />
       </div>
 
-      {/* Roadmap — deferred live-data panels */}
-      <div className="mt-5 rounded-xl border border-dashed border-ink-600 bg-ink-900/60 p-4">
-        <div className="text-[12.5px] font-semibold text-slate-400">Coming as live data lands — the rest of the CIO vision</div>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          {/* "Market overview — Nifty / Sensex / global" and "NAV vs benchmark
-              (dynamic)" WERE ON THIS LIST and have been removed, because both now
-              exist: the persistent index strip carries four live NSE levels on
-              every route, and the card above charts the book's dated NAV against
-              the Nifty 500. A roadmap chip promising a feature that shipped is the
-              same defect as an absence recorded against a premise that changed —
-              it tells a reader to wait for something already on their screen. */}
-          {["Consensus & target prices", ">10% weekly-drop risk flags", "Technical & concall scanners", "Earnings hub & catalyst tracker"].map((c) => (
-            <span key={c} className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-[11.5px] text-slate-400">◷ {c}</span>
-          ))}
-        </div>
-        <p className="mt-2.5 text-[11px] text-slate-500">These activate once the live market-data feed &amp; fundamentals source are wired in. Everything above is built from the ingested statements alone.</p>
-      </div>
+      {/* ── THE ROADMAP PLACEHOLDER IS GONE ─────────────────────────────────
+          *"remove the placeholder for not live data from the dashboard ui."*
+
+          It was a dashed panel headed "Coming as live data lands — the rest of
+          the CIO vision" carrying four chips — consensus and target prices, a
+          >10% weekly-drop risk flag, technical and concall scanners, and an
+          earnings hub — over a line saying they activate once the live
+          market-data feed and fundamentals source are wired in.
+
+          NOT ONE OF THEM WAS A MEASUREMENT, which is why this goes cleanly
+          where the paragraphs above needed an audit first: a chip named a
+          feature that does not exist, so there was nothing on it to move and
+          nothing a reader could act on. The gaps it stood for are recorded in
+          CLAUDE.md's Stage 8 table, which is where an unbuildable feature
+          belongs — a dashed frame on the dashboard reads, during an upstream
+          outage, as four more things that have broken. That is the company
+          page's own lesson (its four permanently-absent cards were removed for
+          exactly this) applied one page over.
+
+          Two of the chips that used to be here — "Market overview — Nifty /
+          Sensex / global" and "NAV vs benchmark (dynamic)" — had already been
+          removed when both shipped. `check:pages` asserts the whole panel STAYS
+          gone, and it still asserts those two in particular, so a future edit
+          cannot reintroduce a promise for something already on screen. */}
     </div>
   );
 }

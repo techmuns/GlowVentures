@@ -107,6 +107,34 @@ function sliceBetween(text, from, to) {
   return text.slice(i, j < 0 ? text.length : j);
 }
 
+/**
+ * ── THE NAV CARD'S OWN HEADER — title, subtitle, headline pills, nothing below.
+ *
+ * Read as an ELEMENT (`ctx.navChart.head`, the card's own header node) rather
+ * than sliced out of the page text, and BOTH of those decisions were forced by
+ * a bug this file caught in itself:
+ *
+ * These invariants used to bound the slice on "Both lines are rebased", the
+ * opening words of the paragraph block under the chart. The family asked for
+ * that block to go, and `sliceBetween` returns EVERYTHING AFTER its start marker
+ * when the end marker is absent — so every one of them would have gone on
+ * running against the whole rest of the page rather than failing.
+ *
+ * THE FIRST FIX BOUNDED IT ON THE WORD "PERIOD", the period control's own
+ * label, and that could not fail either. Reintroducing the bug it exists for —
+ * moving the range's index-only return up beside the book's own figure, which
+ * is the caption-that-widens failure that placement prevents — the sweep stayed
+ * GREEN: the injected sentence reads "alone over this period", so the slice
+ * ended INSIDE the very text it was meant to catch. A boundary that a page is
+ * free to print is not a boundary.
+ *
+ * The header node cannot be reworded out from under it, which is the same rule
+ * the movers tabs, `data-section` and `data-mandate` already answer: a
+ * structural claim must not depend on prose a redesign may reword. Callers
+ * report NOT CHECKED when the probe did not run, never pass.
+ */
+const navHead = (ctx) => ctx?.navChart?.head ?? null;
+
 function bookArray(src, name) {
   const i = src.indexOf(`export const ${name}`);
   if (i < 0) return null;
@@ -941,21 +969,15 @@ const ROUTES = [
   /**
    * ...AND THE MOVERS CARD'S OTHER TABS, ON THE SAME FULFILLED FEED.
    *
-   * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
-   * Basically, or else… separate tabs, stocks… ETF… mutual fund."* The default
-   * is the two together and is asserted on `cio-live`; these walk the
-   * constituents, because a tab group that renders is not a tab group that
-   * FILTERS — the whole defect available here is a segment that changes the
-   * heading and leaves the rows alone, which reads as a working control.
-   *
-   * The ETF tab is walked because it is the set that came BACK, and the mutual
-   * fund tab because it is the one whose reason for being nearly empty is a
-   * fact about the instrument rather than about the feed: a scheme has no NSE
-   * trading symbol and can never have one, and a card that told a reader
-   * otherwise would send them looking for a quote-feed fix that cannot exist.
+   * `cio-movers-etf` and `cio-movers-mf` WERE HERE and went with the tabs the
+   * family asked to be rid of — *"remove these stocks etf mutual funds
+   * selectors for this top movers section... we will only show direct equity as
+   * default."* Those routes walked two constituent SETS that the card no longer
+   * offers, so there is nothing at either address to hold to the light; what
+   * replaces them is an ABSENCE check on `cio` and `cio-live` asserting the tab
+   * group is gone and the one set is Direct Equity. A removal is verified by
+   * asserting it happened, never by deleting the route alongside the feature.
    */
-  ["cio-movers-etf", "/cio?movers=etf"],
-  ["cio-movers-mf", "/cio?movers=mf"],
   /**
    * ...AND THE ALLOCATION CARD ON THE FAMILY'S OTHER TWO AXES.
    *
@@ -1551,24 +1573,22 @@ function cioAllocationRows(text) {
 }
 
 /**
- * THE GAINER COUNT ON ONE MOVERS TAB, AGAINST THE SCOPE'S OWN PRICED SIZE.
+ * THE GAINER COUNT ON THE MOVERS CARD, AGAINST DIRECT EQUITY'S OWN PRICED SIZE.
  *
- * Shared by the four scope routes because the claim is the same claim and only
- * the expected number differs — and because a copy per route is four chances for
- * one tab's expectation to drift onto another's set. Every fixture price is the
- * mark × 1.10, so nothing falls: losers must be nil and the gainers must account
- * for the whole priced scope.
+ * Every fixture price is the mark × 1.10, so nothing falls: losers must be nil
+ * and the gainers must account for the whole priced scope. This is the check
+ * that says the card really covers the set its heading names — a widened scope
+ * lands on a different count and cannot pass.
  */
-function moversGainersAre(text, scopeKey) {
-  if (PRICED_NAMES_IN_SCOPE == null) {
+function moversGainersAreDirectEquity(text) {
+  if (PRICED_DIRECT_EQUITY_NAMES == null) {
     return { notChecked: "the book could not be read, so the expected count could not be derived" };
   }
-  const want = PRICED_NAMES_IN_SCOPE[scopeKey];
   const card = sliceBetween(text, "Today’s movers", "Allocation by");
   const g = /(\d+)\s+GAINERS?/i.exec(card);
   const l = /(\d+)\s+LOSERS?/i.exec(card);
   if (!g || !l) return false;
-  return Number(l[1]) === 0 && Number(g[1]) === want;
+  return Number(l[1]) === 0 && Number(g[1]) === PRICED_DIRECT_EQUITY_NAMES;
 }
 
 /** `₹352.3 Cr` / `₹68.3 L` / `—` -> a number in ₹ Cr, or NaN for an em dash. */
@@ -1651,30 +1671,28 @@ const MARK_BY_SYMBOL = (() => {
 })();
 
 /**
- * HOW MANY NAMES THE MOCKED FEED CAN PRICE IN EACH MOVERS SCOPE — the exact
- * number of gainers the card must show on the `cio-live` walk, per tab.
+ * HOW MANY NAMES THE MOCKED FEED CAN PRICE IN DIRECT EQUITY — the exact number
+ * of gainers the card must show on the `cio-live` walk.
  *
- * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
- * Basically, or else… separate tabs, stocks… ETF… mutual fund."* The card opens
- * on stocks and ETFs together and offers the constituents as tabs, and the
- * claim that each tab covers ITS OWN SET cannot be checked on the ROWS: the
- * lists show six, and on any day the mandate names happen not to move a
- * rows-only assertion passes over a broken filter.
+ * *"we will only show direct equity as default."* The claim that the card
+ * covers THAT SET cannot be checked on the ROWS: the lists show six, and on any
+ * day the mandate names happen not to move a rows-only assertion passes over a
+ * card that had quietly widened.
  *
  * It can be checked on the COUNT. Every fixture price is the mark × 1.10, so
  * every priceable name rises and the gainer count is exactly the size of the
- * priced scope. Measured on this book: 36 for stocks and ETFs, 33 for stocks
- * alone, 3 for the ETFs. Fold the PMS mandates back in and the first is 160-odd;
- * drop the ETFs from the default and it is 33 — neither can pass. Derived from
- * the book on every run rather than typed, so the next drop brings its own
- * expectation.
+ * priced scope. Measured on this book: 33 for Direct Equity. Fold the PMS
+ * mandates back in and it is 160-odd; add the ETFs back and it is 36 — neither
+ * can pass, which is what makes this the check that the narrowing really
+ * happened. Derived from the book on every run rather than typed, so the next
+ * drop brings its own expectation.
  *
  * The bucket is recomputed here from `assetClass` + the ACCOUNT's engagement,
  * deliberately duplicating `holdingBucket` rather than importing it: this file
  * is the independent check, and a check that imports the helper it is checking
  * agrees with itself by construction.
  */
-const PRICED_NAMES_IN_SCOPE = (() => {
+const PRICED_DIRECT_EQUITY_NAMES = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
@@ -1702,12 +1720,7 @@ const PRICED_NAMES_IN_SCOPE = (() => {
       }
       return names.size;
     };
-    return {
-      "stocks-etfs": count([DIRECT_EQUITY_BUCKET, "ETF"]),
-      stocks: count([DIRECT_EQUITY_BUCKET]),
-      etf: count(["ETF"]),
-      mf: count(["Mutual Fund"]),
-    };
+    return count([DIRECT_EQUITY_BUCKET]);
   } catch { return null; }
 })();
 
@@ -2801,9 +2814,9 @@ const INVARIANTS = {
     ["every tranche's return is tagged with the basis it is on",
       (t, ctx) => ctx.tranchePanel !== null
         && ctx.tranchePanel.tags.length === ctx.tranchePanel.rows
-        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "ABS")],
+        && ctx.tranchePanel.tags.every((g) => g === "CAGR" || g === "HPR")],
     ["and this book's tranches are not all annualised",
-      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("ABS")],
+      (t, ctx) => ctx.tranchePanel !== null && ctx.tranchePanel.tags.includes("HPR")],
 
     /**
      * A ROW SPANNING SEVERAL FOLIOS NAMES WHOSE MONEY EACH CONTRIBUTION WAS.
@@ -2840,11 +2853,12 @@ const INVARIANTS = {
     ["the histories offered count each dedupeGroup once, like the rows do",
       (t, ctx) => TRANCHE_ROWS_TOTAL !== null && ctx.trancheRowsOffered === TRANCHE_ROWS_TOTAL],
 
-    ["the note counts the rows offering a history, and it matches",
-      (t, ctx) => {
-        const m = /(\d+) of (\d+) rows open their Invested/.exec(t.replace(/\s+/g, " "));
-        return !!m && Number(m[1]) === ctx.trancheToggles && Number(m[1]) > 0;
-      }],
+    // THE TRANCHE-COVERAGE NOTE ("N of M rows open their Invested figure…") was
+    // removed from the holdings table at the family's request. The chevrons it
+    // summarised still render — the structural check above counts them — so this
+    // asserts only that the caption stays gone.
+    ["the removed tranche-coverage note no longer prints",
+      (t) => !/rows open their Invested/.test(t)],
   ],
 
   "monitor-txn-manager": [
@@ -2922,16 +2936,15 @@ const INVARIANTS = {
      * earned yet, and either one on a loading card is the bug.
      */
     /**
-     * THE WORDING MOVED WITH THE CARD'S SCOPE, AND SO DOES THIS.
+     * THE WORDING NAMES THE CARD'S SCOPE, AND THIS TAKES ANY NOUN.
      *
-     * The settled-absence line NAMES THE SCOPE — "No direct-equity and ETF
-     * holding carries a day change right now" — and the scope is now a tab, so
-     * that noun changes with it. Matching one spelling here would pass because
-     * the STRING is gone rather than because the CLAIM is, which is a check that
-     * has quietly stopped checking; enumerating the spellings was the previous
-     * attempt at that and it lapsed the moment the ETFs came back. So the
-     * pattern is anchored on the two ends of the sentence and takes ANY noun
-     * between them.
+     * The settled-absence line names the set — "No direct-equity holding
+     * carries a day change right now" — and that noun has now changed three
+     * times: enumerating the spellings lapsed when the ETFs arrived, and
+     * matching the current one alone would pass because the STRING moved rather
+     * than because the CLAIM went, which is a check that has quietly stopped
+     * checking. So the pattern is anchored on the two ends of the sentence and
+     * takes ANY noun between them, whatever the next round calls the set.
      */
     ["...and asserts neither an empty book nor a failed feed while it is in flight",
       (t) => !/\bNo\b[^\n]{0,80}?carries a day change/i.test(t)
@@ -3327,9 +3340,13 @@ const INVARIANTS = {
    * one. Each was verified by reintroducing its bug.
    */
   ["the NAV card renders a dated series with its date range and its coverage",
-    (t) => /Portfolio NAV vs Nifty 500/.test(t)
-      && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
-      && /\d+ of \d+ accounts/.test(sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /Portfolio NAV vs Nifty 500/.test(t)
+        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+        && /\d+ of \d+ accounts/.test(head);
+    }],
   /**
    * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
    *
@@ -3343,11 +3360,27 @@ const INVARIANTS = {
    * "the guard must be load-bearing" rule, on a chart.
    */
   ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
-    (t) => {
-      const note = sliceBetween(t, "Both lines are rebased", "The index is taken");
-      const pcts = [...note.matchAll(/([+-]\d+\.\d+)%/g)].map((m) => Number(m[1]));
-      if (pcts.length < 2) return false;
-      return Math.max(...pcts) - Math.min(...pcts) > 1;
+    (t, ctx) => {
+      /**
+       * BOTH FIGURES SURVIVED THE PARAGRAPH THAT CARRIED THEM. They were one
+       * sentence under the chart until the family asked the paragraphs to go;
+       * the adjusted one is the Book pill in the header and the unadjusted one
+       * is on the raw-NAV toggle's hover, beside the control that draws it.
+       * Read from the TWO PLACES rather than from one line, which is the
+       * stronger claim: a build that lost either half now fails.
+       */
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      const raw = (ctx?.titles ?? [])
+        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*against the book's\s*([+-]\d+\.\d+)%/.exec(x))
+        .find(Boolean);
+      if (!book || !raw) return false;
+      // The pill and the hover must agree about the adjusted figure…
+      if (Number(book[1]) !== Number(raw[2])) return false;
+      // …and the two measurements must DIFFER, or the adjustment is doing
+      // nothing and this check is asserting nothing.
+      return Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
     }],
   /**
    * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
@@ -3420,15 +3453,56 @@ const INVARIANTS = {
    * asserted here; the SHADED BAND needs a window wider than the book's own and
    * is therefore asserted on `cio-live`, where one exists.
    */
-  ["the card names the book's own window and calls the rest market history",
-    (t) => /The book.s own dated series is \d+ statement dates over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
-      && /market history rather than a comparison/.test(t)],
+  ["the card names the book's own window, in its own header",
+    // MOVED WITH THE PARAGRAPHS. "The book's own dated series is N statement
+    // dates over A → B" was the third of the four removed paragraphs and said
+    // what the SUBTITLE already said word for word, so only the subtitle is
+    // left to assert. The range's own index return — the one thing in that
+    // paragraph that was nowhere else — is checked on `cio-live`, where a feed
+    // exists to produce it.
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head);
+    }],
+  /**
+   * ...AND THE REBASE BASIS CAME WITH IT.
+   *
+   * The y-axis reads 84 / 91 / 98 and is a RATIO rather than an amount, so
+   * without this clause those ticks are unitless — which is why it is the one
+   * sentence of the removed block that had to land somewhere rather than go.
+   * It is on the card's own basis line now, beside the window and the coverage.
+   */
+  ["the NAV card states what its axis is rebased to",
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /rebased to 100 at \d{4}-\d{2}-\d{2}/.test(head);
+    }],
+  /**
+   * ── AND THE FOUR REMOVED PARAGRAPHS STAY REMOVED ──────────────────────────
+   *
+   * *"remove the highlighted text from the dashboard ui."* Struck on phrases
+   * only that block ever printed, so a check cannot be satisfied by wording the
+   * card legitimately still carries — and never on a figure, because every
+   * figure that mattered was re-homed rather than dropped and is asserted above
+   * at its new address.
+   */
+  ["the NAV card's explanatory paragraphs stay removed",
+    (t) => !/Both lines are rebased to 100 at/.test(t)
+      && !/because money added is not money earned/.test(t)
+      && !/market history rather than a comparison/.test(t)
+      && !/never the nearest in either\s+direction/.test(t)],
   ["the NAV card names the external capital it nets out, in rupees",
-    // MONEY IN ANY SCALE. `CR` matches crore alone, and a drop whose only flow
-    // was a few lakh would fail a check about a page that was correct — the
-    // "a check that cannot read the figure it asserts on" failure this file
-    // already names twice.
-    (t) => /nets out\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+of external capital/.test(t)],
+    // ON THE CONTROL THAT DRAWS THE OTHER LINE, since the paragraph that said
+    // it went. The SIZE is the load-bearing half — a reader deciding whether to
+    // show the unadjusted NAV has to see how much of the move is deposit — so
+    // it is on the button's face and not in its hover.
+    //
+    // MONEY IN ANY SCALE. `Cr` alone would fail a drop whose only flow was a
+    // few lakh, about a page that was correct — the "a check that cannot read
+    // the figure it asserts on" failure this file already names twice.
+    (t) => /NAV incl\.\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+added/.test(t)],
   /**
    * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
    *
@@ -3436,9 +3510,24 @@ const INVARIANTS = {
    * security. Silence there would present their whole restatement as a return.
    */
   ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
-    (t) => /not proven to be performance/.test(t)
-      && /₹[\d,.]+\s*(?:Cr|L|K)?[\s\S]{0,80}?not proven to be performance/.test(t)
-      && /publish no dated capital record/.test(t)],
+    (t, ctx) => {
+      /**
+       * A DISCLOSURE, RE-HOMED RATHER THAN DROPPED. It was a paragraph under the
+       * chart; it is an amber pill beside the Book pill it qualifies, with the
+       * accounts in the hover. Both halves are required — a pill with no
+       * accounts behind it is a number a reader cannot act on, and a hover with
+       * no pill is a disclosure nobody will find.
+       */
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const pill = /₹[\d,.]+\s*(?:Cr|L|K)?\s+not proven/.test(head);
+      const why = (ctx?.titles ?? []).find((x) => /Not proven to be performance:/.test(x)) ?? "";
+      return pill
+        && /publish no dated capital record/.test(why)
+        // …and it NAMES them. A sentence that said "4 accounts" and listed none
+        // would satisfy every word above while telling a reader nothing.
+        && /—\s*\S[^—]*·[^—]*—/.test(why);
+    }],
   /**
    * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
    * asserted as a PARTITION rather than as a count. The three lists must account
@@ -3457,7 +3546,8 @@ const INVARIANTS = {
        * failed a page that was correct. Two figures of the same SHAPE describing
        * different sets is exactly what a page-wide regex cannot tell apart.
        */
-      const card = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Book performance");
+      const card = navHead(ctx);
+      if (card == null) return notChecked("the NAV card's header was not on screen on this run");
       const cov = /(\d+) of (\d+) accounts/.exec(card);
       const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
       const parts = /(\d+) publish exactly one dated valuation/.exec(t);
@@ -3483,32 +3573,40 @@ const INVARIANTS = {
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t) => {
       const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-      if (!/No direct-equity and ETF holding carries a day change/.test(card)) return false;
+      if (!/No direct-equity holding carries a day change/.test(card)) return false;
       if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/STOCKS & ETFS · TODAY/i.test(card);
+      return !/DIRECT EQUITY · TODAY/i.test(card);
     }],
   /**
-   * ── TODAY'S MOVERS IS STOCKS AND ETFs, AND THE HEADING SAYS SO ────────────
+   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
    *
-   * *"ETFs can be a part of stocks… it should actually be stocks and ETFs."*
-   * The scope is asserted on the HEADING and the TILE rather than on the rows,
-   * because a rows-only check passes on any day the mandate names happen not to
-   * move — and that is most days for a book whose PMS half is 131 names. The
-   * COUNT that proves the set is right lives on `cio-live`, where a feed exists.
+   * *"we will only show direct equity as default."* The scope is asserted on
+   * the HEADING and the TILE rather than on the rows, because a rows-only check
+   * passes on any day the mandate names happen not to move — and that is most
+   * days for a book whose PMS half is 131 names. The COUNT that proves the set
+   * is right lives on `cio-live`, where a feed exists.
    */
   ["Today's movers names its scope in the heading and on the tile",
-    (t) => /Today’s movers\s*·\s*Stocks & ETFs/i.test(t)
-      && /STOCKS & ETFS · TODAY|No direct-equity and ETF holding carries a day change/i.test(t)],
+    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
+      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
   /**
-   * ...AND THE SCOPE TABS ARE THERE WITH NO FEED TOO. They are a control rather
-   * than a figure, so a page that hid them until a quote landed would leave a
-   * reader on a cold open unable to reach the ETF or fund view at all.
+   * ...AND THE SCOPE TABS ARE GONE, WITH NO FEED TOO.
+   *
+   * A removal is verified by asserting it happened. Struck on the tab group's
+   * own `data-movers-scope` attribute rather than on the words "Stocks", "ETFs"
+   * or "Mutual funds", every one of which still appears legitimately — in this
+   * card's own absent-state sentence and in the allocation table below it — so
+   * a text match would report the tabs gone while they were on screen, and
+   * would go on passing if they came back.
+   *
+   * ASSERTED WITH NO FEED AS WELL AS WITH ONE, because the tabs were a CONTROL
+   * and rendered whether or not a quote had landed: a build that restored them
+   * only on the cold-open branch would pass a live-only check.
    */
-  ["the movers scope tabs render with no feed, defaulting to stocks-and-ETFs", (t, ctx) => {
+  ["the movers scope tabs are gone", (t, ctx) => {
     const tabs = ctx?.moverScopes;
-    if (!tabs || !tabs.length) return { notChecked: "the movers scope tabs were not on screen on this run" };
-    return ["stocks-etfs", "stocks", "etf", "mf"].every((k) => tabs.some((x) => x.key === k))
-      && tabs.find((x) => x.active)?.key === "stocks-etfs";
+    if (tabs == null) return { notChecked: "the tab probe did not run on this pass" };
+    return tabs.length === 0;
   }],
   /**
    * ...AND THE ALLOCATION CARD STILL OPENS ON CATEGORY. *"Default view will
@@ -3722,7 +3820,32 @@ const INVARIANTS = {
     if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
     return ctx.allocTable.links >= 2;
   }],
-  ["the roadmap no longer lists the index strip or NAV-vs-benchmark as pending",
+  /**
+   * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
+   *
+   * *"remove the placeholder for not live data from the dashboard ui."* A
+   * dashed panel headed "Coming as live data lands" carried four chips for
+   * features nothing here can build, over a line saying they activate once the
+   * live market-data feed is wired in.
+   *
+   * NOTHING ON IT WAS A MEASUREMENT, so unlike the NAV paragraphs there was
+   * nothing to re-home: a chip named a feature that does not exist. The gaps it
+   * stood for are in CLAUDE.md's Stage 8 table, which is where an unbuildable
+   * feature belongs — four dashed frames on the dashboard read, during an
+   * upstream outage, as four more things that have broken.
+   *
+   * BOTH CLAIMS ARE KEPT AND NEITHER IMPLIES THE OTHER. The panel must be gone;
+   * and the two chips removed earlier, when the index strip and this page's own
+   * NAV chart shipped, must stay gone in particular — a build that restored the
+   * panel with its ORIGINAL chip list would satisfy a check that only looked for
+   * the heading.
+   */
+  ["the roadmap placeholder for not-yet-live data is gone",
+    (t) => !/Coming as live data lands/i.test(t)
+      && !/These activate once the live market-data feed/i.test(t)
+      && !/weekly-drop risk flags/i.test(t)
+      && !/Earnings hub & catalyst tracker/i.test(t)],
+  ["...and it does not come back listing the index strip or NAV-vs-benchmark as pending",
     (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
 
 
@@ -4780,21 +4903,21 @@ const INVARIANTS = {
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
       (t) => {
         const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-        // The tile's label is the SCOPE's, and the default scope is stocks and
-        // ETFs together — *"it should actually be stocks and ETFs."*
-        const m = /STOCKS & ETFS · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        // The tile's label is the SCOPE's, and the scope is Direct Equity —
+        // *"we will only show direct equity as default."*
+        const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
         return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
       }],
     /**
      * ...AND THE TILE SAYS WHAT IT COVERS, on its face rather than in a hover —
      * in NAMES and in RUPEES, both. A name count alone hides how much of a scope
-     * a percentage stands on: the mutual-fund tab prices one of twenty schemes
-     * and that one is worth ₹18,822 of ₹99.9 Cr, so "1 of 20" and "₹18,822 of
-     * ₹99.9 Cr" disclose the same fact very differently, and the second is the
-     * one a reader needs beside a figure printed at 22px.
+     * a percentage stands on: four of this book's Direct Equity names resolve
+     * to no NSE symbol, so "33 of 37" and the value behind it disclose the same
+     * fact very differently, and the second is the one a reader needs beside a
+     * figure printed at 22px.
      */
     ["the day-move tile names its own coverage, in rupees and in names",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ direct-equity and ETF names/.test(t)],
+      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ direct-equity names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -4813,55 +4936,52 @@ const INVARIANTS = {
      */
     ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
       (t) => {
-        // The SUBJECT of that sentence is the active scope's own, so it moves
-        // with the tab — a sentence still reading "Direct equity" over a set
-        // that now includes the ETFs would be the caption-that-widens failure.
-        const m = /Stocks and ETFs are\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /Stocks and ETFs are\s*([+-]\d+\.\d+)%/.exec(t);
+        // The SUBJECT of that sentence is the scope's own — a sentence reading
+        // "Stocks and ETFs" over a set that no longer holds the ETFs would be
+        // the caption-that-widens failure this card has already paid for.
+        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
+          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
         return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
       }],
     /**
-     * THE MOVERS SET IS STOCKS AND ETFs, CHECKED ON A COUNT RATHER THAN ON NAMES.
+     * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
      *
      * Every fixture price is the mark × 1.10, so every priceable name in scope
      * rises: the gainer count IS the size of the priced scope. Widening the
-     * filter back to the whole book takes it from 36 to 160-odd; dropping the
-     * ETFs back out takes it to 33 — neither can pass, which is what makes this
-     * the check that the family's actual request landed. The expectation is
-     * derived from the book on every run (`PRICED_NAMES_IN_SCOPE`), never typed.
+     * filter back to the whole book takes it from 33 to 160-odd; putting the
+     * ETFs back takes it to 36 — neither can pass, which is what makes this the
+     * check that the family's actual request landed. The expectation is derived
+     * from the book on every run (`PRICED_DIRECT_EQUITY_NAMES`), never typed.
      */
-    ["the gainers are exactly the priced STOCK-AND-ETF names, not the whole book",
-      (t) => moversGainersAre(t, "stocks-etfs")],
+    ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
+      (t) => moversGainersAreDirectEquity(t)],
     /**
      * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
-     * mandates are the bulk of the book's priceable value; a card that stopped
-     * covering them without saying so is a scope change a reader cannot see.
+     * mandates are the bulk of the book's priceable value and the ETFs have just
+     * left this card; a card that stopped covering them without saying so is a
+     * scope change a reader cannot see. Both are required, because the ETFs are
+     * the bucket this round removed and a footer that quietly dropped them from
+     * its own list would hide exactly what changed.
      */
     ["the card names the buckets it does not cover, with their value",
-      (t) => /Stocks and ETFs only\. Also moved today and not counted here:/.test(t)
-        && /\d+ PMS mandates ₹[\d,.]+/.test(t)],
+      (t) => /Direct equity only\. Also moved today and not counted here:/.test(t)
+        && /\d+ PMS mandates ₹[\d,.]+/.test(t)
+        && /\d+ ETF ₹[\d,.]+/.test(t)],
     /**
-     * ...AND THE SCOPE TABS ARE ON THE CARD, ALL FOUR, WITH THE COMBINED ONE
-     * ACTIVE.
+     * ...AND THE SCOPE TABS ARE GONE, WITH A FEED TOO.
      *
-     * *"ETFs can be a part of stocks… it should actually be stocks and ETFs.
-     * Basically, or else… separate tabs, stocks… ETF… mutual fund."* Both halves
-     * of that sentence are delivered — the card opens on the two together, and
-     * each constituent has a tab — so both are asserted, and the DEFAULT is
-     * asserted separately because a build that shipped the tabs and opened on
-     * the wrong one would satisfy a count of them.
-     *
-     * Struck on the CONTROLS rather than on words: every one of these labels
-     * also appears in the card's own prose, so a text match would pass over a
-     * page that had lost the tab group entirely.
+     * *"remove these stocks etf mutual funds selectors for this top movers
+     * section... we will only show direct equity as default."* Asserted on both
+     * walks and not just this one: the tab group rendered whether or not a quote
+     * had landed, so a build that restored it on only one branch has to fail
+     * somewhere. Struck on `data-movers-scope` rather than on the labels, every
+     * one of which still appears legitimately in this card's own sentences and
+     * in the allocation table below it.
      */
-    ["the movers card offers all four scopes and opens on stocks-and-ETFs", (t, ctx) => {
+    ["the movers scope tabs are gone", (t, ctx) => {
       const tabs = ctx?.moverScopes;
-      if (!tabs || !tabs.length) return { notChecked: "the movers scope tabs were not on screen on this run" };
-      const keys = tabs.map((x) => x.key);
-      return ["stocks-etfs", "stocks", "etf", "mf"].every((k) => keys.includes(k))
-        && tabs.filter((x) => x.active).length === 1
-        && tabs.find((x) => x.active)?.key === "stocks-etfs";
+      if (tabs == null) return { notChecked: "the tab probe did not run on this pass" };
+      return tabs.length === 0;
     }],
     /**
      * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
@@ -4927,7 +5047,10 @@ const INVARIANTS = {
         if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
         const note = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}) · \d+ index closes/.exec(ctx.navChart.rangeNote ?? "");
         if (!note) return false;
-        const book = /statement dates over (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(t);
+        // THE BOOK'S OWN WINDOW, OFF THE SUBTITLE. It was read out of the
+        // paragraph block ("statement dates over A → B") until that block was
+        // removed; the subtitle has always carried the same pair.
+        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navHead(ctx) ?? "");
         if (!book) return false;
         // The window really is wider than the book's own — otherwise the band's
         // absence would be correct and this check would be asserting nothing.
@@ -4935,8 +5058,29 @@ const INVARIANTS = {
       }],
     /** And with a price history in hand the NAV card draws the comparison. */
     ["the NAV card draws the Nifty 500 line and states its return",
-      (t) => new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(
-        sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased"))],
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+        return new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(head);
+      }],
+    /**
+     * ...AND THE SELECTED PERIOD'S OWN INDEX RETURN SITS WITH THE PERIOD.
+     *
+     * This was the one fact in the removed paragraphs that lived nowhere else:
+     * the index ALONE over a window the book has no measurement across. It is
+     * in the range note now, beside the control that chose the window — and
+     * that placement is the honesty, because set beside the Book pill a reader
+     * would take the two for a pair struck over one period. So it is required
+     * to be in the range note and required NOT to be in the header.
+     */
+    ["the range's own index return is stated with the range, not beside the book's",
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+        const note = ctx.navChart.rangeNote ?? "";
+        if (!/Nifty 500 alone over this period\s*[+-]\d+\.\d+%/.test(note)) return false;
+        return !/alone over this period/.test(head);
+      }],
     /**
      * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
      * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
@@ -4945,78 +5089,37 @@ const INVARIANTS = {
      * which is the whole reason the adjustment exists.
      */
     ["the headline compares the flow-adjusted book against the index, not the raw NAV",
-      (t) => {
-        const head = sliceBetween(t, "Portfolio NAV vs Nifty 500", "Both lines are rebased");
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
         const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
         const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
         if (!book || !idx) return false;
-        const raw = /it reads\s*([+-]\d+\.\d+)%\s*against the book/.exec(t);
+        // The raw NAV moved onto the toggle's hover with the paragraph that
+        // carried it; the claim is unchanged.
+        const raw = (ctx?.titles ?? [])
+          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*against the book/.exec(x))
+          .find(Boolean);
         return !!raw && Number(book[1]) !== Number(raw[1]) && Number(book[1]) < Number(idx[1]);
       }],
   ],
 
   /**
-   * ── A MOVERS TAB COVERS ITS OWN SET, AND ITS CAPTIONS SAY WHICH ─────────────
+   * ── THE FOUR CONSTITUENT-TAB BLOCKS ARE GONE WITH THE TABS ─────────────────
    *
-   * *"or else… separate tabs, stocks… ETF… mutual fund."*
+   * `cio-movers-etf` and `cio-movers-mf` held one block each — that a tab
+   * changed the ROWS and not merely the heading, that every caption moved with
+   * it, and that the mutual-fund tab's emptiness was blamed on the instrument
+   * rather than on the feed. All three claims were about SETS the card no longer
+   * offers, so there is nothing left for them to be true or false about.
    *
-   * The defect available here is a segment that changes the HEADING and leaves
-   * the rows alone — a control that looks alive and filters nothing, which is
-   * the failure this file keeps naming in other forms. So the count is struck
-   * against the scope's own priced size, derived from the book: the ETF tab has
-   * three names and the default has thirty-six, and neither number can be
-   * produced by the other's filter.
+   * WHAT REPLACES THEM IS AN ABSENCE, ASSERTED TWICE — "the movers scope tabs
+   * are gone", on `cio` and on `cio-live`, struck on the tab group's own
+   * `data-movers-scope` attribute. The probe that reads it (`moverScopes`) is
+   * deliberately KEPT for exactly that: it is the only thing that can tell a
+   * page with no tabs from a page whose tabs a text match cannot see, and the
+   * labels it used to read all still appear legitimately on this page.
    */
-  "cio-movers-etf": [
-    ["the ETF tab shows exactly the priced ETF names", (t) => moversGainersAre(t, "etf")],
-    // ...AND EVERY CAPTION ON THE CARD MOVED WITH IT. A heading that narrowed
-    // while the tile below it still said "Stocks & ETFs" would be the
-    // caption-that-widens failure inside one card.
-    /**
-     * ...AND THE TILE'S LABEL IS ANCHORED TO THE START OF ITS OWN LINE.
-     *
-     * `/ETFS · TODAY/` is SATISFIED BY "STOCKS & ETFS · TODAY" — so the first
-     * draft of this check passed with the tile pinned to the default scope while
-     * the tab beside it narrowed, which is precisely the bug it was written to
-     * catch. Found by reintroducing that bug. A caption claim has to be struck
-     * on the WHOLE caption.
-     */
-    ["the ETF tab's heading, tile and index sentence all name the ETFs",
-      (t) => /Today’s movers\s*·\s*ETFs/i.test(t)
-        && /(?:^|\n)\s*ETFS · TODAY/i.test(t)
-        && /(?:^|\n|\s)ETFs are\s*[+-]\d+\.\d+%\s*against the/.test(t)],
-    // ...AND WHAT IT LEAVES OUT IS NAMED, including the stocks it no longer
-    // covers — the footer is struck over the ACTIVE scope, not over a literal.
-    ["the ETF tab names the stocks and mandates it does not cover",
-      (t) => /ETFs only\. Also moved today and not counted here:/.test(t)
-        && /\d+ Direct Equity ₹[\d,.]+/.test(t)],
-  ],
-
-  /**
-   * ── AND THE MUTUAL-FUND TAB, WHOSE ABSENCE IS ABOUT THE INSTRUMENT ──────────
-   *
-   * A fund unit has no NSE trading symbol and the quote feed is keyed on one, so
-   * this tab covers almost nothing and always will. Told the generic "no live
-   * quote" reason a reader goes looking for a feed fix that cannot exist — THE
-   * CAUSE PICKS THE HEADLINE, and this is the one scope on the card whose cause
-   * is the instrument rather than the service.
-   */
-  "cio-movers-mf": [
-    ["the mutual-fund tab shows exactly the priced mutual-fund names", (t) => moversGainersAre(t, "mf")],
-    ["the mutual-fund tab names its own scope in the heading and on the tile",
-      (t) => /Today’s movers\s*·\s*Mutual funds/i.test(t)
-        && /(?:^|\n)\s*(?:MUTUAL FUNDS · TODAY|No mutual-fund holding carries a day change)/i.test(t)],
-    /**
-     * THE COVERAGE IS STATED IN RUPEES, WHICH IS THE HALF THAT MATTERS HERE. One
-     * scheme of twenty is priced and it is worth a five-figure sum against a
-     * ₹99.9 Cr scope, so a percentage printed at 22px stands on 0.002% of what
-     * the tab is named after. "1 of 20" alone does not say that; the value does.
-     */
-    ["the mutual-fund tab states the value its percentage stands on, not just a name count",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ mutual-fund names/.test(t)
-        || /No mutual-fund holding carries a day change/.test(t)],
-  ],
-
   /**
    * ── THE ALLOCATION CARD, SLICED THE FAMILY'S OWN TWO WAYS ──────────────────
    *
@@ -5434,14 +5537,14 @@ const INVARIANTS = {
      *
      * The whole point of the picker is that a bare percentage was ambiguous. So
      * every cell in the one Return column carries a tag naming its measure — on
-     * the auto view that is the measure the methodology resolved to (ABS or CAGR),
+     * the auto view that is the measure the methodology resolved to (HPR or CAGR),
      * and it is on the absent cells too, so a reader always knows which return is
      * missing. Read off the cells the page draws (`data-return-cell`).
      */
     ["every return cell is labelled with the measure it shows", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      return cells.every((c) => /\b(AUTO|ABS|CAGR|XIRR|YTD|CY)\b/.test(c));
+      return cells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c));
     }],
     /**
      * ── THE METHODOLOGY CAPTION WAS REMOVED FROM THE DEFAULT VIEW ────────────
@@ -5937,10 +6040,10 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is the ABS tag now (the cell shows the total return on cost,
-    // tagged ABS) and the caption says "held under a year".
-    ["a holding held under a year is marked as absolute rather than annualised",
-      (t) => /held under a year/.test(t) && /\bABS\b/.test(t)],
+    // The marker is the HPR tag now (the cell shows the total return on cost,
+    // tagged HPR) and the caption says "held under a year".
+    ["a holding held under a year is marked as holding-period rather than annualised",
+      (t) => /held under a year/.test(t) && /\bHPR\b/.test(t)],
   ],
   /**
    * ── YTD IS A MEASURE NOW, AND IT NEVER GUESSES ─────────────────────────────
@@ -6018,8 +6121,8 @@ const INVARIANTS = {
     ["the one Return column shows both picked measures, each labelled", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      // A costed row shows an ABS line and a CAGR line in the one cell.
-      return cells.some((c) => /\bABS\b/.test(c) && /\bCAGR\b/.test(c));
+      // A costed row shows an HPR line and a CAGR line in the one cell.
+      return cells.some((c) => /\bHPR\b/.test(c) && /\bCAGR\b/.test(c));
     }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
@@ -6986,7 +7089,7 @@ for (const theme of THEMES) {
       // scope tabs are only meaningful with a feed behind them: unfulfilled,
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
-      if (name === "cio-live" || name === "cio-movers-etf" || name === "cio-movers-mf") await installLiveMocks(page);
+      if (name === "cio-live") await installLiveMocks(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
       // The first load answers, so the snapshot is written; the reload below
@@ -7489,6 +7592,15 @@ for (const theme of THEMES) {
        * and in the allocation table below it, so a text match would pass over a
        * page that had lost the tab group entirely — the "a check that cannot
        * fail" failure this file exists to prevent.
+       *
+       * IT NOW PROVES THE OPPOSITE, AND IT IS KEPT FOR EXACTLY THAT. The family
+       * asked for the tabs to go (*"remove these stocks etf mutual funds
+       * selectors… we will only show direct equity as default"*), so this probe
+       * is what makes "they are gone" a finding rather than a phrase nobody can
+       * check: the labels it used to read all still appear legitimately on this
+       * page, so only the CONTROL can answer whether the group is there. An
+       * empty array is the passing state; `null` means the probe did not run and
+       * reports NOT CHECKED rather than passing.
        */
       const moverScopes = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main [data-movers-scope][role='tab']")].map((b) => ({
@@ -7555,6 +7667,11 @@ for (const theme of THEMES) {
           ranges,
           activeRange: ranges.find((r) => r.active)?.key ?? null,
           rangeNote: (card?.querySelector('[data-testid="nav-range-note"]')?.textContent ?? "").trim(),
+          // THE CARD'S OWN HEADER NODE — `Card` renders title, subtitle and the
+          // `right` slot as the first child, and everything else after it. Taken
+          // as an element because every text boundary tried here turned out to
+          // be something the page is free to print; see `navHead`.
+          head: (card?.firstElementChild?.innerText ?? "").trim(),
         };
       });
       /**
@@ -7703,7 +7820,7 @@ for (const theme of THEMES) {
             return m ? Number(m[1].replace(/,/g, "")) : null;
           }),
           tags: rows.map((tr) => {
-            const m = /(CAGR|ABS)/.exec(at(tr, "return") ?? "");
+            const m = /(CAGR|HPR)/.exec(at(tr, "return") ?? "");
             return m ? m[1] : null;
           }),
           entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],
