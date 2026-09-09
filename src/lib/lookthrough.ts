@@ -238,37 +238,78 @@ export type FundExposureRow = {
   fundName: string;
   /** What the family holds of the FUND, from its own statement. */
   holdingValue: number;
-  /** The disclosed share of the FUND that is the target company. */
+  /** The disclosed share of the FUND that is this company. */
   pctAum: number;
   /** DERIVED: holdingValue x pctAum. Never a reported figure. */
   value: number;
-  /** How the disclosed row was matched to the target — never a guess. */
+  /**
+   * How the disclosed row was KEYED — never a guess.
+   *
+   * `isin` means the row carried one and was joined on it, which is the only
+   * tier that can bridge a depository's `SBI - EQ` to an AMC's `State Bank of
+   * India`. `name` means it carried none and was keyed through this book's own
+   * `securityKeyOf`. A reader judging whether to trust a line needs to know
+   * which, so it rides on every row rather than being averaged into a badge.
+   */
   via: "isin" | "name";
   holdingsAsOf: string | null;
   sourceKind: string | null;
 };
 
-/** A scheme the family holds that this store could not speak for, and why. */
-export type FundExposureSkip = { fundKey: string; fundName: string; reason: string };
+/** A vehicle the family holds that this store could not speak for, and why. */
+export type FundExposureSkip = {
+  fundKey: string;
+  fundName: string;
+  marketValue: number;
+  reason: string;
+};
 
-export type FundExposureState =
+/** One fund the family holds, as the caller sees it in the book. */
+export type HeldFund = {
+  securityKey: string;
+  name: string;
+  marketValue: number;
+  assetClass: string;
+};
+
+/** One company, and the family's DERIVED exposure to it through the funds. */
+export type StockExposure = {
+  /** The canonical key — the book's own where the book holds the company. */
+  key: string;
+  name: string;
+  isin: string | null;
+  rows: FundExposureRow[];
+  /** Σ rows.value. Derived, and never added to a book total by this module. */
+  total: number;
+};
+
+export type StockExposureState =
   | { status: "loading" }
   | { status: "unreachable" }
   | {
       status: "ok";
-      rows: FundExposureRow[];
-      /** Derived total across `rows` — for display beside the book's own figure, never inside it. */
+      /** canonical key → the company's derived exposure across every fund. */
+      byKey: Map<string, StockExposure>;
+      /** Derived equity across every fund the store could speak for. */
       total: number;
-      /** How many of the family's fund holdings this store could actually speak for. */
       covered: number;
       considered: number;
       skipped: FundExposureSkip[];
+      /** Value of the funds this store DID speak for. */
+      disclosedValue: number;
+      /** Value of the funds it could not — the AIF block, and any unresolved scheme. */
+      skippedValue: number;
+      /**
+       * `disclosedValue - total`: the part of a disclosed fund that is NOT
+       * disclosed equity — its cash and debt sleeves, a gold or silver ETF's
+       * metal, and the disclosure's own rounding. Named rather than dropped,
+       * because a reader who sees only the equity half reads the remainder as
+       * missing rather than as something else.
+       */
+      nonEquityValue: number;
     };
 
-/** One fund the family holds, as the caller sees it in the book. */
-export type HeldFund = { securityKey: string; name: string; marketValue: number };
-
-/** The scheme portfolios, memoised: a row expanded twice must not refetch 20 files. */
+/** The scheme portfolios, memoised: the index must not refetch 20 files per render. */
 const portfolioCache = new Map<string, Promise<FundPortfolio | null>>();
 const loadPortfolio = (schemecode: string): Promise<FundPortfolio | null> => {
   let hit = portfolioCache.get(schemecode);
@@ -281,59 +322,215 @@ const loadPortfolio = (schemecode: string): Promise<FundPortfolio | null> => {
   return hit;
 };
 
-export async function loadFundExposure(
-  target: { securityKey: string; isin?: string | null },
+/**
+ * WHY AN AIF IS SKIPPED IS A FACT ABOUT THE INSTRUMENT, NOT A GAP IN THIS STORE.
+ *
+ * A mutual fund and an ETF file a monthly SEBI portfolio disclosure; the store
+ * carries one for 21 of the 22 this book holds. An AIF files nothing that joins
+ * to a folio the family holds, so no drop of the current statements can ever
+ * fill it — and told the generic "no disclosure here" a reader goes looking for
+ * a store fix that cannot exist. The two send someone to completely different
+ * places, which is `upstreamStatus.ts`'s rule arriving through a fund.
+ */
+const skipReason = (f: HeldFund, indexReason: string | null): string =>
+  f.assetClass === "AIF"
+    ? "an AIF files no monthly portfolio disclosure that joins to a folio this family holds, so what it owns is not reported to this book at all"
+    : indexReason ?? "this store carries no portfolio disclosure for this holding";
+
+/**
+ * ── THE INVERSE QUESTION, ANSWERED FOR THE WHOLE BOOK AT ONCE ───────────────
+ *
+ *   "If today I want to know that my public market portfolio is a thousand
+ *    crores, how much HDFC Bank do I hold in my 1,000 crores? … Then I drill
+ *    down, then you tell me direct you hold X Cr through direct equity, and then
+ *    you hold another Y crores through these five funds."
+ *
+ * `loadLookthrough` above answers "what does THIS FUND hold". This answers the
+ * other direction for EVERY company at once: given the schemes the family holds,
+ * which companies do they disclose and what is the family's derived share.
+ *
+ * IT IS ONE INDEX RATHER THAN ONE CALL PER COMPANY, AND THAT IS THE POINT. The
+ * table's row figure and the figure inside that row's expansion are now read
+ * from the same map, so they cannot disagree — the failure `drilldown.ts` exists
+ * to stop for the book's own numbers, arriving through a derived one. It costs
+ * no more than a single expansion did: the same 21 files, memoised.
+ *
+ * FOUR THINGS THIS IS NOT, and every one of them is printed beside the figure:
+ *
+ *   • IT IS NOT A POSITION. `pctAum` is a share of the FUND, disclosed by the
+ *     AMC about the fund. The family's exposure is DERIVED from it and was
+ *     never a holding anybody reported about this family.
+ *   • IT IS NEVER ADDED TO NAV, an allocation or a concentration figure. The
+ *     fund's own value already stands for it in the book, so summing both counts
+ *     the same money twice — the rule this whole store is fenced by. A caller
+ *     that shows it beside the book's own figure must say which is which.
+ *   • IT IS EQUITY-ONLY AND PARTIAL. `skipped`, `skippedValue` and
+ *     `nonEquityValue` are returned so a caller can state exactly what it does
+ *     not cover, rather than implying completeness.
+ *   • IT IS DATED DIFFERENTLY FROM THE BOOK. A disclosure is monthly; a holding
+ *     is valued on its own statement's date. Both ride on every row.
+ *
+ * THE JOIN IS EXACT OR IT DOES NOT HAPPEN. A disclosed row carrying an ISIN is
+ * keyed on it — mapped to the BOOK's own key where the book holds that ISIN, so
+ * a depository's `SBI - EQ` and an AMC's `State Bank of India` become one row —
+ * and otherwise through this book's own `securityKeyOf`. There is deliberately
+ * no fuzzy tier: a token-overlap rule on this corpus matched KIRANAKART to TATA
+ * TECHNOLOGIES and MAN INDUSTRIES to Deep Industries, and inventing an exposure
+ * to a company the family does not hold is worse than reporting none.
+ *
+ * WHAT THAT LEAVES, STATED RATHER THAN PAPERED OVER: a book row with no ISIN and
+ * a depository's furniture in its name (`RBL BNK-EQ RE 10`) cannot be reached by
+ * either tier, so its fund exposure would stand as a SEPARATE row rather than
+ * joining it. The caller counts those and says so.
+ */
+export async function loadStockExposure(
   funds: HeldFund[],
-): Promise<FundExposureState> {
+  isinToBookKey: ReadonlyMap<string, string>,
+  /**
+   * ── THE RING-FENCE REACHES THE DERIVED SIDE TOO ────────────────────────────
+   *
+   *   "Polycab must not be included in any data set information and any
+   *    calculation in any other part of the dashboard."
+   *
+   * That decision is applied at the BOOK layer, which takes the promoter block
+   * out of `BOOK_POSITIONS` — and it would not have held here, because the fence
+   * is about a SECURITY and a mutual fund the family holds discloses that same
+   * company. Measured on this book: ₹88,891 of Polycab India inside a scheme,
+   * which would have drawn a Polycab row on a page the fence says must not name
+   * it at all.
+   *
+   * IT IS DROPPED SILENTLY AND NOT NAMED, which is the one place this file
+   * departs from "an absence is stated". Naming it would put the word on the
+   * page, which is precisely what the family asked to be rid of. The decision is
+   * recorded in CLAUDE.md instead, where the rest of the fence is.
+   *
+   * Keyed on the ISIN as well as the key, because they do not agree: the
+   * depository prints `POLYCAB INDIA LIMITED - EQ` and an AMC files `Polycab
+   * India Ltd.`, so the fenced key and the disclosed one normalise apart and
+   * only the identifier bridges them.
+   */
+  ringFenced: { keys: ReadonlySet<string>; isins: ReadonlySet<string> } = { keys: new Set(), isins: new Set() },
+): Promise<StockExposureState> {
   const idx = await loadIndex();
   if (!idx) return { status: "unreachable" };
 
-  const wantIsin = (target.isin ?? "").trim().toUpperCase() || null;
-  const rows: FundExposureRow[] = [];
-  const skipped: FundExposureSkip[] = [];
-  let covered = 0;
+  const loaded = await Promise.all(
+    funds.map(async (f) => {
+      const match = idx.schemes?.[f.securityKey];
+      if (!match) {
+        const miss = idx.unresolved?.find((u) => u.securityKey === f.securityKey);
+        return { f, pf: null as FundPortfolio | null, skip: skipReason(f, miss?.reason ?? null) };
+      }
+      const pf = await loadPortfolio(match.schemecode);
+      return pf
+        ? { f, pf, skip: null as string | null }
+        : { f, pf: null as FundPortfolio | null, skip: "the store did not answer for this scheme" };
+    }),
+  );
 
-  await Promise.all(funds.map(async (f) => {
-    const match = idx.schemes?.[f.securityKey];
-    if (!match) {
-      const miss = idx.unresolved?.find((u) => u.securityKey === f.securityKey);
-      skipped.push({
-        fundKey: f.securityKey, fundName: f.name,
-        reason: miss?.reason ?? "this store carries no portfolio disclosure for this holding",
-      });
-      return;
+  const byKey = new Map<string, StockExposure>();
+  const skipped: FundExposureSkip[] = [];
+  /** An ISIN the BOOK does not carry still keys consistently across funds. */
+  const isinSeen = new Map<string, string>();
+  /**
+   * ── AND A NAME AN AMC FILED *WITH* AN ISIN KEYS THE SAME AS ONE IT DID NOT ──
+   *
+   * 18% of the disclosed lines carry no ISIN, and the same company arrives both
+   * ways: one scheme files `ICICI Bank Ltd.` with INE090A01021, another files
+   * `ICICI Bank Ltd.` with nothing. On a single pass the first lands on the
+   * BOOK's key (`icici-bank-eq`, joined by identifier) and the second on its own
+   * normalised name — so the family's own question, how much of this company do
+   * I hold, gets two answers. Measured: it split ICICI Bank, State Bank of
+   * India, Axis Bank and IndusInd Bank.
+   *
+   * So the ISIN-BEARING FILINGS ARE READ FIRST and each records the key for its
+   * normalised name; an ISIN-less filing of that name then follows it. The
+   * evidence is the store's own — one AMC supplied the identifier for the name
+   * another omitted — so this is not a fuzzy tier and not a re-derivation of the
+   * BOOK's identity. Where no filing carries an ISIN, the name still stands
+   * alone, exactly as before.
+   */
+  const nameToKey = new Map<string, string>();
+  for (const { pf } of loaded) {
+    if (!pf) continue;
+    for (const h of pf.equity ?? []) {
+      const isin = (h.isin ?? "").trim().toUpperCase();
+      if (!isin || !(h.pctAum > 0)) continue;
+      const nameKey = securityKeyOf(h.name);
+      if (!nameKey || ringFenced.isins.has(isin) || ringFenced.keys.has(nameKey)) continue;
+      const key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+      if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
+      if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, key);
     }
-    const pf = await loadPortfolio(match.schemecode);
+  }
+  let covered = 0;
+  let total = 0;
+  let disclosedValue = 0;
+  let skippedValue = 0;
+
+  for (const { f, pf, skip } of loaded) {
     if (!pf) {
-      skipped.push({ fundKey: f.securityKey, fundName: f.name, reason: "the store did not answer for this scheme" });
-      return;
+      skipped.push({ fundKey: f.securityKey, fundName: f.name, marketValue: f.marketValue, reason: skip! });
+      skippedValue += f.marketValue;
+      continue;
     }
     covered += 1;
-    // EXACT OR NOTHING. ISIN is the stronger identifier and is tried first; the
-    // name tier goes through the book's own `securityKeyOf`, which is the same
-    // normalisation the extractor keyed the position with.
+    disclosedValue += f.marketValue;
+    // ONE DISCLOSED LINE PER FUND PER COMPANY. A scheme listing two share
+    // classes of one company would otherwise contribute twice to that name.
+    const takenHere = new Set<string>();
     for (const h of pf.equity ?? []) {
-      const hIsin = (h.isin ?? "").trim().toUpperCase() || null;
-      const via: "isin" | "name" | null =
-        wantIsin && hIsin ? (hIsin === wantIsin ? "isin" : null)
-        : securityKeyOf(h.name) === target.securityKey ? "name"
-        : null;
-      if (!via || !(h.pctAum > 0)) continue;
-      rows.push({
-        fundKey: f.securityKey, fundName: f.name,
-        holdingValue: f.marketValue, pctAum: h.pctAum,
-        value: familyValue(f.marketValue, h.pctAum), via,
+      if (!(h.pctAum > 0)) continue;
+      const isin = (h.isin ?? "").trim().toUpperCase() || null;
+      const nameKey = securityKeyOf(h.name);
+      if (!nameKey) continue;
+      if ((isin && ringFenced.isins.has(isin)) || ringFenced.keys.has(nameKey)) continue;
+      let key: string;
+      if (isin) {
+        key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+        if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
+      } else {
+        key = nameToKey.get(nameKey) ?? nameKey;
+      }
+      if (takenHere.has(key)) continue;
+
+      const value = familyValue(f.marketValue, h.pctAum);
+      // A FUND THE FAMILY HOLDS AT ₹0 GIVES ₹0 OF EVERYTHING INSIDE IT. Five
+      // schemes here are redeemed to nil, and carrying their disclosed lines
+      // would draw 40 companies at an exposure of exactly nothing — a COMPUTED
+      // zero, so not a fabrication, but a row that says the family holds a
+      // company when what it holds is none of it. The line is dropped; a company
+      // any funded scheme also discloses keeps that scheme's share.
+      if (!(value > 0)) continue;
+      takenHere.add(key);
+      total += value;
+      const e = byKey.get(key) ?? { key, name: h.name, isin, rows: [], total: 0 };
+      e.rows.push({
+        fundKey: f.securityKey,
+        fundName: f.name,
+        holdingValue: f.marketValue,
+        pctAum: h.pctAum,
+        value,
+        via: isin ? "isin" : "name",
         holdingsAsOf: pf.holdingsAsOf ?? null,
         sourceKind: pf.holdingsSource?.kind ?? null,
       });
-      break;   // one disclosed line per fund per company
+      e.total += value;
+      if (!e.isin && isin) e.isin = isin;
+      byKey.set(key, e);
     }
-  }));
+  }
 
-  rows.sort((a, b) => b.value - a.value);
+  for (const e of byKey.values()) e.rows.sort((a, b) => b.value - a.value);
   return {
-    status: "ok", rows,
-    total: rows.reduce((a, r) => a + r.value, 0),
-    covered, considered: funds.length, skipped,
+    status: "ok",
+    byKey,
+    total,
+    covered,
+    considered: funds.length,
+    skipped,
+    disclosedValue,
+    skippedValue,
+    nonEquityValue: disclosedValue - total,
   };
 }

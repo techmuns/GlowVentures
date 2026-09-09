@@ -254,8 +254,21 @@ const okGroups = capitalRollup(gateMoves,
   gatePos, {});
 ok("an accepted group does publish one", okGroups[0].returnPct !== null);
 eq("...with no reason attached", okGroups[0].incompleteReason, null);
-eq("and the totals count only the measurable rows",
-  capitalTotals([...gateGroups, ...okGroups]).measurable, 1);
+/**
+ * `capitalTotals` NO LONGER COUNTS THE MEASURABLE ROWS, and this asserts the
+ * removal rather than deleting the case with the field.
+ *
+ * It existed for one caption, which the family asked to have removed — and a
+ * COUNT of rows that can state a return has no other reader, because a row that
+ * cannot renders `AbsentCell` with its own reason (the two cases above), which
+ * is the per-row claim rather than a page-wide fraction. A totals field nothing
+ * renders is the dead-code-that-looks-alive failure this repo keeps naming, so
+ * it went with its caller; the two cases that give it meaning stay above.
+ */
+ok("the totals no longer carry a measurable count",
+  !("measurable" in capitalTotals([...gateGroups, ...okGroups])));
+eq("...and still sum what was paid in across both",
+  capitalTotals([...gateGroups, ...okGroups]).paidIn, 2e7);
 
 console.log("\n── coverage is counted, never claimed ──");
 const cov = trancheCoverage(BOOK_POSITIONS, BOOK_POSITION_TRANCHES);
