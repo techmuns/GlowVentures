@@ -5164,7 +5164,8 @@ own printing precision reproduced, 0.005 Cr, never a tolerance widened until the
 figure fits.
 
 `build` · `test:ingest` 304 · `test:family` · `check:family` 53/0 ·
-`check:pages` **136 combinations clean**, with the same two pre-existing
+`check:pages` **138 combinations clean** — re-run against the merged main, whose
+own two new routes account for the count moving — with the same two pre-existing
 abstentions. `npm run rekey:archive --check` is a no-op, which is what says the
 archive on disk is what the extractor would write.
 
