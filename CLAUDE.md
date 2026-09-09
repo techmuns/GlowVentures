@@ -2805,8 +2805,15 @@ violate any of them.**
 6. **STATEMENT vs LIVE basis.** Live prices may move market value, day change,
    unrealised P&L and return on cost — and nothing else. Never quantity, cost
    basis, realised gains, dividends, fees or a dated cash flow. Every
-   consolidated figure carries a `<BasisPill>`; Capital Gains, Data Audit and
-   Ledger Insights read `statementPortfolio` and pass `statement`.
+   consolidated figure carried a `<BasisPill>` until Stage 10am, when the family
+   asked for it off Morning CIO and off the `/holdings` drill-down; **the half
+   that is a correctness guarantee is unchanged and is not negotiable** — Capital
+   Gains, Data Audit, Ledger Insights and Private Market read
+   `statementPortfolio` and pass `statement`, because a reader checks those
+   against the PDF and a total that drifted with the market could not be checked
+   at all. `check:pages` asserts the two removals AND that these four keep
+   theirs, which are separate claims: a build that deleted the component
+   everywhere would satisfy both absences and take this with it.
 7. **`src/data/glowData.ts` is GENERATED. Never hand-edit it.** It regenerates
    byte-identically from `source/`; an edit is reverted by the next
    `build-book`, and until then the book no longer matches its own archive.
@@ -2910,8 +2917,12 @@ violate any of them.**
   serves is unchanged. A future session that wants a figure traceable again
   should read this paragraph first rather than reinventing `holdingHref`.
 - Large holdings lists get a `SearchInput` (filter by security name or ISIN).
-- Pages showing a consolidated total should carry a `<BasisPill>` so the reader
-  knows what the figure is actually based on.
+- Pages that must RECONCILE to a source document carry a `<BasisPill statement>`
+  so the reader knows the figure is the printed one — Capital Gains, Data Audit,
+  Ledger Insights, Private Market. Morning CIO and `/holdings` no longer carry
+  one at the family's request (Stage 10am), which is the one place this file's
+  own §6 has been narrowed rather than upheld; what that costs is recorded
+  there, not softened here.
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
@@ -7275,6 +7286,106 @@ to `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30
 June 2026.xlsx`. It is still not a source (§"the consolidated review workbook is
 not a source — by decision"); it is the cross-check `reconcile:review` runs and
 the classification `familyTaxonomy.ts` cites.
+
+### Stage 10am — THE BASIS PILL GOES, AND THE DRILL-DOWN LOSES ITS PROSE
+
+*"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part from
+the UI."* And: *"Remove all the highlighted text and the sections from the
+dashboard UI"* — the `/holdings` lead paragraph, its facet note, its pill row
+and the whole "How this figure is worked out" card.
+
+**THIS IS THE FIRST REMOVAL IN THIS FILE THAT CROSSES ONE OF THE SEVEN RULES,
+AND IT IS RECORDED RATHER THAN GLOSSED.** §6 says every consolidated figure
+carries a `<BasisPill>`, because a reader who cannot tell a statement mark from
+a live one cannot check anything, and because a consolidated total here is a
+BLEND of report dates that `portfolio.asOf` states only the newest of. Morning
+CIO and the drill-down no longer print one. The family asked for it by name and
+that is their decision; what this section owes them is an accurate account of
+what it costs and of what was kept.
+
+**THE HALF OF §6 THAT IS A CORRECTNESS GUARANTEE IS UNTOUCHED.** Capital Gains,
+Data Audit, Ledger Insights and Private Market read `statementPortfolio` and
+pass `<BasisPill statement>` — a reader checks those against the PDF, and a
+total that drifted with the market could not be checked at all. That is asserted
+on `private-market` now, and it is a SEPARATE claim from the two absences:
+a build that deleted the component everywhere would satisfy both removals and
+silently take this with it. Verified by making `BasisPill` return null for
+`statement`, which fires exactly that check and nothing else.
+
+#### Every claim was checked before it was deleted, and three had no second home
+
+The same audit Stage 10aa and 10ai ran, on nine items this time:
+
+| Removed | Elsewhere? | Where it is now |
+| --- | --- | --- |
+| `LIVE · …` + `N accounts behind`, Morning CIO | **NO** | gone — see above |
+| the same pill on `/holdings` | **NO** | gone, same request |
+| the `lead` paragraph | the heading + the four tiles' own captions | deleted, and `Drilldown.lead` with it |
+| the active facet's NOTE paragraph | **the chip's own `title`** | the hover, which already had it |
+| `behind Consolidated NAV · …` | the crumb, and each tile's own hover | deleted, and `Drilldown.backs` with it |
+| `consolidated · each holding once` | **the holdings table's own subtitle** | already there, in the same two branches |
+| the accrued income the NAV excludes | **NO** | the NAV tile's hover |
+| the XIRR's window and its refusal to annualise | **NO** | the money-weighted tile's hover |
+| cross-held is not the duplicate policy | **NO** | the Cross-held link's hover |
+
+**THE THREE WITH NO SECOND HOME WENT INTO HOVERS, AND THAT IS WEAKER THAN A
+CAPTION.** Said plainly because it is true: a hover is not read by someone
+scanning. Each was kept anyway, because each is a figure a reader ACTS on —
+
+- **accrued income** is exactly the amount by which a manager's printed total
+  runs above ours. It has now been moved twice: it was this tile's caption,
+  Stage 10aa moved it to the arithmetic card as *"the ONE line among the six
+  that no other surface repeated"*, and the card has now gone too.
+- **the XIRR window** is Stage 10g(ii)'s guard. This tile once read **+99.0%**
+  with nothing miscalculated, against the managers' own 7–31% since-inception
+  figures for the same accounts. `moneyWeightedReturn` refuses to annualise a
+  sub-year window and **the caller must say so**; the hover is the caller now.
+- **cross-held is not the duplicate policy** — two members each genuinely owning
+  some of a name, counted once per member, against ONE holding two statements
+  both report (this book's ₹3.17 Cr), which the consolidated set has already
+  collapsed. A reader who conflates them misreads the concentration figure.
+
+**AND `drilldownFormula` IS DELETED, NOT ORPHANED** — 240 lines with one caller,
+plus `Drilldown.lead`, `Drilldown.backs`, `Drilldown.windowDays`, the window
+local that fed it and the `FormulaDef` import. The shape `exportDeck.ts`,
+`entityParts` and `holdingHref` were each removed in.
+
+#### The bug-reintroduction pass, and the four checks it corrected
+
+Eight bugs were put back one at a time. Five fired immediately; the other three
+were defects in the checks, and a fourth turned up in the full sweep:
+
+- **THE HARNESS ITSELF LOST A DAY'S WORK.** Two patches produced a JSX syntax
+  error, `set -e` skipped the restore, and the bugged file sat there while the
+  next sweep read a stale `dist` and reported CLEAN. The harness now restores on
+  a `trap … EXIT` and reports a failed build as a failed PATCH rather than as a
+  result. **A sweep that cannot build is not a sweep that passed.**
+- **`it opened the row Morning CIO linked, and says which figure it stands
+  behind`** read the `backs` pill on SEVEN routes, and `it opened a section
+  Morning CIO's axis actually drew…` on two more — all nine would have failed
+  the moment the pill went, and did. The half that still has an answer (the
+  address resolved to the section the reader clicked) is what is left; the other
+  half is the absence check.
+- **`the page separates cross-held from the duplicate policy`** read the lead
+  paragraph. That is the claim re-homed above — found by the sweep, not by
+  reading, which is why the full walk runs before the commit and not after.
+- **THE FACET-NOTE CHECK REQUIRED A NOTE ON EVERY CHIP, AND ONE HAS NONE.**
+  `holdings-winners`' "Showing a gain" facet carries `note: ""` in the book,
+  correctly — the label says the whole of it, and inventing a sentence to
+  satisfy a check is the wrong direction. It is `some` rather than `every`, and
+  it is spread ONLY into the eight scopes that draw a toggle: in the shared
+  block it abstained on ten routes that have no facets at all, and **ten
+  evidenced abstentions are how a real one gets missed.**
+
+One more was found by the sweep rather than by a reintroduced bug: the
+money-weighted hover's sub-year branch SHOUTS its sentence (`THE WINDOW IS 150
+DAYS AND THE RATE IS NOT ANNUALISED`) and the annualised branch does not, so a
+case-sensitive check failed a page that was right — `label-xs`'s trap arriving
+through a template literal instead of a CSS transform.
+
+`build` · `tsc` · `test:ingest` 140 · `test:family` · `check:family` 53/0 ·
+`check:pages` **138 combinations clean**, with the same two pre-existing
+abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
 
 ### Stage 10k — News & Announcements: REMOVED
 
