@@ -25,6 +25,9 @@
 //         WIDTHS=1440,1280,1024 npm run check:pages   (responsive sweep)
 import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+// The book's own normalisation, so the checker keys a disclosed name exactly as
+// the extractor keyed a position — the same file both sides of the app read.
+import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
@@ -177,34 +180,166 @@ const SECURITY_AXIS_BOOK = (() => {
     const positions = bookArray(src, "BOOK_POSITIONS");
     if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
-    const byKey = new Map();
-    for (const p of positions) {
-      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
-      byKey.get(p.securityKey).push(p);
-    }
-    let clubbed = 0, mandateOnly = 0, top = null;
-    for (const [key, ps] of byKey) {
-      const accts = new Set(ps.map((x) => x.accountId));
-      if (accts.size > 1) clubbed++;
-      if (ps.every((x) => acc.get(x.accountId)?.engagement === "PMS")) mandateOnly++;
-      // The clubbed value counts each dedupeGroup ONCE, as the page's rows do.
-      const seen = new Set();
-      let mv = 0;
-      for (const x of ps) {
-        if (x.dedupeGroup) { if (seen.has(x.dedupeGroup)) continue; seen.add(x.dedupeGroup); }
-        mv += x.marketValue;
-      }
-      if (!top || mv > top.mv) top = { key, mv, name: ps[0].security };
-    }
-    // The book's own consolidated NAV, in crore — each dedupeGroup counted once,
-    // which is what the footer is struck over whatever the rows are grouped by.
+
+    // Deduped once, and every figure below is struck over this — each
+    // dedupeGroup counted a single time, exactly as the page's rows are.
     const seenAll = new Set();
-    let total = 0;
-    for (const x of positions) {
-      if (x.dedupeGroup) { if (seenAll.has(x.dedupeGroup)) continue; seenAll.add(x.dedupeGroup); }
-      total += x.marketValue;
+    const ded = [];
+    for (const p of positions) {
+      if (p.dedupeGroup) { if (seenAll.has(p.dedupeGroup)) continue; seenAll.add(p.dedupeGroup); }
+      ded.push(p);
     }
-    return { names: byKey.size, clubbed, mandateOnly, top, totalCr: total / 1e7 };
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    const nav = sum(ded.map((p) => p.marketValue));
+    const stocks = ded.filter((p) => p.assetClass === "Equity");
+    const measured = sum(stocks.map((p) => p.marketValue));
+    const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
+
+    // ── The look-through, recomputed here rather than imported ──────────────
+    // A check that calls the helper it is checking agrees with it by
+    // construction. So the join is written out again: ISIN to the BOOK's key
+    // where the book carries that ISIN, then a first-seen ISIN keyed on its own
+    // normalised name, then the name alone. One disclosed line per fund per
+    // company, which is what stops a scheme listing two share classes counting
+    // its company twice.
+    const dir = new URL("../public/lookthrough/", import.meta.url);
+    const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
+    const isinToBookKey = new Map();
+    for (const p of stocks) {
+      const i = (p.isin ?? "").trim().toUpperCase();
+      if (i && !isinToBookKey.has(i)) isinToBookKey.set(i, p.securityKey);
+    }
+    // THE RING-FENCE APPLIES TO THE DERIVED SIDE. A scheme discloses the
+    // promoter block's own company, and the fence is about a SECURITY wherever
+    // it is reported — including inside somebody else's portfolio. Recomputed
+    // here off `BOOK_POLYCAB` rather than trusted from the page.
+    const fenced = bookArray(src, "BOOK_POLYCAB") ?? [];
+    const fencedKeys = new Set(fenced.map((p) => p.securityKey));
+    const fencedIsins = new Set(fenced.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean));
+    const vehicles = new Map();
+    for (const p of ded) {
+      if (!["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)) continue;
+      const e = vehicles.get(p.securityKey) ?? { key: p.securityKey, name: p.security, mv: 0, cls: p.assetClass };
+      e.mv += p.marketValue;
+      vehicles.set(p.securityKey, e);
+    }
+    const derivedByKey = new Map();
+    const isinSeen = new Map();
+    // An ISIN-bearing filing settles the key for its normalised NAME, so a
+    // scheme that files the same company without one does not split it. Read
+    // first, as the page reads it — see `loadStockExposure`.
+    const nameToKey = new Map();
+    const portfolios = new Map();
+    for (const v of vehicles.values()) {
+      const m = idx.schemes?.[v.key];
+      if (!m) continue;
+      try { portfolios.set(v.key, JSON.parse(readFileSync(new URL(`${m.schemecode}.json`, dir), "utf8"))); } catch { /* skipped below */ }
+    }
+    for (const pf of portfolios.values()) {
+      for (const h of pf.equity ?? []) {
+        const isin = (h.isin ?? "").trim().toUpperCase();
+        if (!isin || !(h.pctAum > 0)) continue;
+        const nameKey = securityKeyOf(h.name);
+        if (!nameKey || fencedIsins.has(isin) || fencedKeys.has(nameKey)) continue;
+        const key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+        if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
+        if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, key);
+      }
+    }
+    let covered = 0, derived = 0, disclosedValue = 0, skippedValue = 0, aifCount = 0, aifValue = 0;
+    for (const v of vehicles.values()) {
+      const pf = portfolios.get(v.key) ?? null;
+      if (!pf) {
+        skippedValue += v.mv;
+        if (v.cls === "AIF") { aifCount++; aifValue += v.mv; }
+        continue;
+      }
+      covered++;
+      disclosedValue += v.mv;
+      const taken = new Set();
+      for (const h of pf.equity ?? []) {
+        if (!(h.pctAum > 0)) continue;
+        const isin = (h.isin ?? "").trim().toUpperCase() || null;
+        const nameKey = securityKeyOf(h.name);
+        if (!nameKey) continue;
+        if ((isin && fencedIsins.has(isin)) || fencedKeys.has(nameKey)) continue;
+        let key;
+        if (isin) {
+          key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+          if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
+        } else key = nameToKey.get(nameKey) ?? nameKey;
+        if (taken.has(key)) continue;
+        const value = (v.mv * h.pctAum) / 100;
+        // A scheme the family holds at ₹0 gives ₹0 of everything in it — the
+        // page drops those lines rather than drawing a company at no exposure.
+        if (!(value > 0)) continue;
+        taken.add(key);
+        derived += value;
+        const e = derivedByKey.get(key) ?? { key, name: h.name, value: 0, funds: 0 };
+        e.value += value;
+        e.funds += 1;
+        derivedByKey.set(key, e);
+      }
+    }
+
+    // The rows the page must draw: one per company the book reports, plus one
+    // per company only a fund discloses.
+    const measuredKeys = new Map();
+    for (const p of stocks) {
+      const e = measuredKeys.get(p.securityKey) ?? { key: p.securityKey, name: p.security, mv: 0, accts: new Set() };
+      e.mv += p.marketValue;
+      e.accts.add(p.accountId);
+      measuredKeys.set(p.securityKey, e);
+    }
+    const derivedOnly = [...derivedByKey.keys()].filter((k) => !measuredKeys.has(k)).length;
+    let top = null;
+    for (const e of measuredKeys.values()) {
+      const total = e.mv + (derivedByKey.get(e.key)?.value ?? 0);
+      if (!top || total > top.total) top = { key: e.key, name: e.name, total };
+    }
+    for (const e of derivedByKey.values()) {
+      if (measuredKeys.has(e.key)) continue;
+      if (!top || e.value > top.total) top = { key: e.key, name: e.name, total: e.value };
+    }
+
+    // ONE COMPANY UNDER TWO BOOK KEYS — a real, pre-existing extractor join the
+    // page must NAME rather than repair on screen.
+    const byStripped = new Map();
+    for (const p of stocks) {
+      const k = securityKeyOf(stripDepositoryTail(p.security));
+      (byStripped.get(k) ?? byStripped.set(k, new Set()).get(k)).add(p.securityKey);
+    }
+    const splitCount = [...byStripped.values()].filter((v) => v.size > 1).length;
+
+    return {
+      nav, navCr: nav / 1e7,
+      measured, measuredCr: measured / 1e7,
+      derived, derivedCr: derived / 1e7,
+      totalCr: (measured + derived) / 1e7,
+      opaqueCr: skippedValue / 1e7,
+      nonEquityCr: (disclosedValue - derived) / 1e7,
+      cashCr: cash / 1e7,
+      // The five buckets are a PARTITION: they must reconstruct NAV exactly.
+      residualCr: (nav - (measured + derived + skippedValue + (disclosedValue - derived) + cash)) / 1e7,
+      names: measuredKeys.size,
+      derivedOnly,
+      rows: measuredKeys.size + derivedOnly,
+      clubbed: [...measuredKeys.values()].filter((e) => e.accts.size > 1).length,
+      mandateOnly: [...measuredKeys.values()].filter((e) =>
+        stocks.filter((p) => p.securityKey === e.key).every((p) => acc.get(p.accountId)?.engagement === "PMS")).length,
+      top,
+      covered, considered: vehicles.size,
+      // The per-company derived index, so the drill-down's expectation is read
+      // from the SAME join rather than computed a third time — two copies of
+      // "which disclosed line belongs to which company" is two chances for the
+      // sweep to disagree with the page about a figure they both derive.
+      derivedByKey,
+      measuredByKey: measuredKeys,
+      aifCount, aifValueCr: aifValue / 1e7,
+      splitCount,
+      // Every fund name that must NOT stand as a row on this axis.
+      fundNames: [...vehicles.values()].sort((a, b) => b.mv - a.mv).map((v) => v.name),
+    };
   } catch { return null; }
 })();
 
@@ -225,65 +360,18 @@ const SECURITY_AXIS_BOOK = (() => {
  * produce between them, and both move on their own schedule.
  */
 const FUND_EXPOSURE = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS");
-    if (!Array.isArray(positions)) return null;
-    const dir = new URL("../public/lookthrough/", import.meta.url);
-    const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
-    if (!idx?.schemes) return null;
-
-    // The family's fund holdings, clubbed by securityKey and deduped, as the page does.
-    const seen = new Set();
-    const funds = new Map();
-    for (const p of positions) {
-      if (p.assetClass !== "Mutual Fund" && p.assetClass !== "ETF") continue;
-      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
-      funds.set(p.securityKey, (funds.get(p.securityKey) ?? 0) + p.marketValue);
-    }
-    // Every disclosed equity line of every scheme the store covers, by ISIN.
-    const byIsin = new Map();
-    let covered = 0;
-    for (const [key, mv] of funds) {
-      const m = idx.schemes[key];
-      if (!m) continue;
-      let pf;
-      try { pf = JSON.parse(readFileSync(new URL(`${m.schemecode}.json`, dir), "utf8")); } catch { continue; }
-      covered++;
-      for (const h of pf.equity ?? []) {
-        const i = (h.isin ?? "").trim().toUpperCase();
-        if (!i || !(h.pctAum > 0)) continue;
-        if (!byIsin.has(i)) byIsin.set(i, []);
-        byIsin.get(i).push({ key, value: (mv * h.pctAum) / 100 });
-      }
-    }
-    // The company with the largest derived exposure — that is what gets walked.
-    let best = null;
-    const equities = new Map();
-    for (const p of positions) {
-      if (p.assetClass !== "Equity" || !p.isin) continue;
-      equities.set(p.securityKey, { key: p.securityKey, isin: p.isin.trim().toUpperCase(), name: p.security });
-    }
-    for (const e of equities.values()) {
-      const hits = byIsin.get(e.isin);
-      if (!hits?.length) continue;
-      const value = hits.reduce((a, x) => a + x.value, 0);
-      if (!best || value > best.value) best = { ...e, value, funds: hits.length };
-    }
-    if (!best) return null;
-    // What the BOOK says this name is worth — each dedupeGroup once, exactly as
-    // the page's clubbed row computes it. The fence is asserted against this: the
-    // row must still print the book's figure, never the book plus the derived
-    // look-through.
-    const seenName = new Set();
-    let bookValue = 0;
-    for (const p of positions) {
-      if (p.securityKey !== best.key) continue;
-      if (p.dedupeGroup) { if (seenName.has(p.dedupeGroup)) continue; seenName.add(p.dedupeGroup); }
-      bookValue += p.marketValue;
-    }
-    return { ...best, covered, bookValue };
-  } catch { return null; }
+  const b = SECURITY_AXIS_BOOK;
+  if (!b?.derivedByKey) return null;
+  // The company with the largest derived exposure that the BOOK also holds — so
+  // there is a row to click, and so the fence between the measured figure and
+  // the derived one is asserted where both are large enough to tell apart.
+  let best = null;
+  for (const [key, e] of b.derivedByKey) {
+    const m = b.measuredByKey.get(key);
+    if (!m) continue;
+    if (!best || e.value > best.value) best = { key, name: e.name, value: e.value, funds: e.funds, bookValue: m.mv };
+  }
+  return best;
 })();
 
 /**
@@ -1652,6 +1740,13 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
 // the Return measure picker. Return is now third from the end (Sector, Entity
 // close the row). There is no YTD column, so no COL.ytd.
 const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, weight: 7, pnl: 8, realised: 9, ret: 10, sector: 11, entity: 12 };
+/**
+ * THE STOCK AXIS DRAWS TWO MORE COLUMNS, so everything after Market value sits
+ * two places right. Read positionally against `COL` a Weight assertion would be
+ * struck on `Via funds` — a real percentage against a real money figure, which
+ * is the plausible-wrong-answer this sweep exists to catch rather than commit.
+ */
+const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, viaFunds: 7, exposure: 8, weight: 9, pnl: 10, realised: 11, ret: 12, sector: 13, entity: 14 };
 /**
  * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
  * is a different answer from an unparseable one; NaN for anything else, so a
@@ -5180,7 +5275,7 @@ const INVARIANTS = {
       if (!FUND_EXPOSURE || !fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
       const row = rows?.find((r) => r.securityKey === FUND_EXPOSURE.key);
       if (!row) return { notChecked: "the walked row was not captured on this run" };
-      const mv = moneyCell(row.cells?.[COL.mv]);
+      const mv = moneyCell(row.cells?.[COL_STOCK.mv]);
       const derived = moneyCell(fe.total);
       if (!Number.isFinite(mv) || !Number.isFinite(derived)) return false;
       const book = FUND_EXPOSURE.bookValue / 1e7;
@@ -5190,14 +5285,19 @@ const INVARIANTS = {
       if (!(Math.abs(mv - book) <= 0.05)) return false;
       // ...and the check can only bite while the two are actually distinguishable.
       // `derived` is already in crore, as `moneyCell` returns it.
-      return derived > 0 ? Math.abs(book + derived - mv) > 0.05 : true;
+      if (!(derived > 0 ? Math.abs(book + derived - mv) > 0.05 : true)) return false;
+      // AND THE COMBINED FIGURE IS THE ONE THAT CARRIES IT, in its own column
+      // under its own heading. The family asked for the two added; what must
+      // never happen is the MEASURED column quietly carrying a derived rupee.
+      const exposure = moneyCell(row.cells?.[COL_STOCK.exposure]);
+      return Number.isFinite(exposure) && Math.abs(exposure - (book + derived)) <= 0.11;
     }],
     ["...and it says it is derived, and not in the book's total",
       (t, ctx) => {
         const fe = ctx?.fundExposure;
         if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
         return /DERIVED, not a position/i.test(fe.text)
-          && /not in the figures above and not in the book/i.test(fe.text);
+          && /no part of the book.s own NAV/i.test(fe.text);
       }],
     /** ...and names what it cannot see: the equity-only limit and the AIF block. */
     ["...and names the vehicles it cannot look through", (t, ctx) => {
@@ -5225,7 +5325,7 @@ const INVARIANTS = {
       if (!FILTER_SECTOR) return { notChecked: "this book carries no classified sector to filter on" };
       if (!rows) return { notChecked: "no holdings rows captured on this run" };
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
-      return rows.length > 0 && rows.length < SECURITY_AXIS_BOOK.names;
+      return rows.length > 0 && rows.length < SECURITY_AXIS_BOOK.rows;
     }],
     ["...and every row it draws is in that sector", (t, ctx) => {
       const rows = ctx?.tableRows;
@@ -5233,15 +5333,24 @@ const INVARIANTS = {
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
       // A fund prints an em dash for sector by design — it spans many and its
       // statement names none — so the claim is struck on the rows that print one.
-      const printed = rows.map((r) => r.cells?.[COL.sector]).filter((v) => v && v !== "—");
+      const printed = rows.map((r) => r.cells?.[COL_STOCK.sector]).filter((v) => v && v !== "—");
       return printed.length > 0 && printed.every((v) => v === FILTER_SECTOR);
     }],
   ],
   /**
-   * ── THE SECURITY AXIS: ONE ROW PER NAME, RANKED BY EXPOSURE ────────────────
+   * ── THE STOCK AXIS: ONE ROW PER COMPANY, RANKED BY TOTAL EXPOSURE ──────────
    *
-   * Everything here is struck on the DOM rather than on row TEXT. That is not a
-   * preference: 130 of this axis's 214 rows carry the "N entities" pill, which is
+   *   "In the security selected page we should only see the aggregate stock
+   *    position across the portfolio thru various channels… AIF itself shouldn't
+   *    show up as a security. We need to calculate cumulative stocks position
+   *    held in the whole portfolio together."
+   *
+   * A fund has stopped being a row and what it holds is looked through instead,
+   * so this axis covers 42% of the book rather than all of it — which is why the
+   * partition check below matters more than any single figure here.
+   *
+   * Everything is struck on the DOM rather than on row TEXT. That is not a
+   * preference: most of this axis's rows carry the "N entities" pill, which is
    * an `inline-flex` whose chevron is a flex ITEM, so `innerText` breaks the line
    * inside that cell and a row split on newlines would be reading fragments. The
    * page carries `data-security-key`, `data-venues` and a per-cell array for
@@ -5260,80 +5369,222 @@ const INVARIANTS = {
         && axes.find((a) => a.selected)?.key === "security";
     }],
     /**
-     * ONE ROW PER SECURITY, and the count is the book's own. This is also the
-     * check that the mandates were NOT lifted out: with them rolled up the table
-     * draws ~85 rows, and every name inside them is invisible.
+     * "AIF ITSELF SHOULDN'T SHOW UP AS A SECURITY." Struck on the fund NAMES the
+     * book carries, every one of them, rather than on a count: a table that
+     * dropped the AIFs and kept the schemes would satisfy any count-based test
+     * that happened to land on the right number.
      */
-    ["one row per security in the book, mandates flattened rather than rolled up", (t, ctx) => {
+    ["no fund stands as a row — not an AIF folio, not a scheme, not an ETF", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.fundNames?.length) return { notChecked: "the book could not be read" };
+      const drawn = new Set(rows.map((r) => String(r.cells?.[COL_STOCK.name] ?? "").trim().toLowerCase()));
+      return !SECURITY_AXIS_BOOK.fundNames.some((n) => drawn.has(String(n).trim().toLowerCase()));
+    }],
+    /**
+     * ONE ROW PER COMPANY — the book's own stock names PLUS the companies only a
+     * fund discloses. This is also the check that the mandates were NOT lifted
+     * out: with them rolled up, 137 of this book's names are inside a roll-up and
+     * invisible, and the count collapses.
+     */
+    ["one row per company — the book's own names plus the ones only a fund holds", (t, ctx) => {
       const rows = ctx?.tableRows;
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read, so the row count could not be derived" };
-      return rows.length === SECURITY_AXIS_BOOK.names;
+      return rows.length === SECURITY_AXIS_BOOK.rows;
     }],
-    /**
-     * THE PAYOFF, ASSERTED DIRECTLY. A name held ONLY through PMS mandates has no
-     * row of its own on any other axis — it is inside a mandate's roll-up. If
-     * this axis stopped flattening them, these rows would vanish and the count
-     * above would fall to the category axis's; both checks fire, from two
-     * different directions.
-     */
     ["names held only through a manager's mandate are visible as their own rows", (t, ctx) => {
       const rows = ctx?.tableRows;
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
       if (!SECURITY_AXIS_BOOK?.mandateOnly) return { notChecked: "this book holds no name exclusively through a mandate" };
-      // No row on this axis is a mandate roll-up: every one carries a security key.
       return rows.every((r) => r.securityKey) && rows.every((r) => !r.mandate);
     }],
-    /** ...and every row is a clubbed security, so each carries its venue count. */
-    ["every row states how many accounts hold it", (t, ctx) => {
-      const rows = ctx?.tableRows;
-      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
-      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
-      const clubbed = rows.filter((r) => (r.venues ?? 0) > 1).length;
-      return rows.every((r) => Number.isFinite(r.venues) && r.venues >= 1)
-        && clubbed === SECURITY_AXIS_BOOK.clubbed;
-    }],
     /**
-     * RANKED BY EXPOSURE, WHICH IS THE QUESTION — "which stock has the highest
-     * exposure". Read off the Market value column by its own index, and the top
-     * row must be the book's own largest clubbed name.
+     * RANKED BY TOTAL EXPOSURE — "which stock has the highest exposure" — so the
+     * ordering is read off the Total exposure column, not off Market value. On
+     * this book the two disagree: a company held only inside funds sorts by a
+     * figure its Market value cell does not carry at all.
      */
-    ["the rows are ranked by exposure, largest first", (t, ctx) => {
+    ["the rows are ranked by TOTAL exposure, largest first", (t, ctx) => {
       const rows = ctx?.tableRows;
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
-      const mv = rows.map((r) => moneyCell(r.cells?.[COL.mv]));
-      if (mv.some((v) => v === null || !Number.isFinite(v))) return false;
-      for (let i = 1; i < mv.length; i++) if (mv[i] > mv[i - 1] + 0.05) return false;
+      const v = rows.map((r) => moneyCell(r.cells?.[COL_STOCK.exposure]));
+      if (v.some((x) => x === null || !Number.isFinite(x))) return false;
+      for (let i = 1; i < v.length; i++) if (v[i] > v[i - 1] + 0.05) return false;
       return true;
     }],
-    ["...and the largest is the book's own largest clubbed name", (t, ctx) => {
+    ["...and the largest is the book's own largest total exposure", (t, ctx) => {
       const rows = ctx?.tableRows;
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
       if (!SECURITY_AXIS_BOOK?.top) return { notChecked: "the book could not be read" };
       return rows[0].securityKey === SECURITY_AXIS_BOOK.top.key;
     }],
     /**
-     * THE FOOTER STILL TIES TO THE BOOK'S OWN NAV. Regrouping must not move a
-     * rupee — the footer is struck over the POSITIONS, so a row build that
-     * double-counted a clubbed name (or dropped one) shows up here.
+     * ── THE THREE MONEY COLUMNS EACH TIE TO THEIR OWN ROWS ──────────────────
+     *
+     * Direct + PMS is the MEASURED half and must reproduce the book's own stock
+     * total; Via funds is the DERIVED half and must reproduce the store's; Total
+     * exposure must be the two, and must equal the rows above it. Three
+     * comparisons because any one alone passes a wrong page: a footer computed
+     * independently of its rows ties to the book and not to the screen, and a
+     * row build that dropped a name ties to the screen and not to the book.
      */
-    ["the footer still ties to the book's consolidated NAV", (t, ctx) => {
-      const rows = ctx?.tableRows;
-      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
-      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book's total could not be read" };
-      const foot = ctx?.footerCells;
-      if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
-      const printed = moneyCell(foot[COL.mv]);
+    ["the Direct + PMS footer is the book's own stock total, and ties to its column", (t, ctx) => {
+      const rows = ctx?.tableRows, foot = ctx?.footerCells;
+      if (!rows?.length || !foot?.length) return { notChecked: "the table or its footer was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const printed = moneyCell(foot[COL_STOCK.mv]);
       if (!Number.isFinite(printed)) return false;
-      // TWO INDEPENDENT COMPARISONS, because either alone can pass a wrong page:
-      // against the BOOK catches a row build that dropped or doubled a name, and
-      // against the ROWS ON SCREEN catches a footer computed independently of
-      // them. The bound is the page's own printing precision — one decimal in Cr
-      // per cell, so n rows carry n half-digits of rounding.
-      const mv = rows.map((r) => moneyCell(r.cells?.[COL.mv])).filter((v) => Number.isFinite(v));
-      const drawn = mv.reduce((a, b) => a + b, 0);
-      return Math.abs(printed - SECURITY_AXIS_BOOK.totalCr) <= 0.15
-        && Math.abs(drawn - printed) <= 0.05 * (mv.length + 1);
+      const drawn = rows.map((r) => moneyCell(r.cells?.[COL_STOCK.mv])).filter((v) => Number.isFinite(v));
+      return Math.abs(printed - SECURITY_AXIS_BOOK.measuredCr) <= 0.15
+        && Math.abs(drawn.reduce((a, b) => a + b, 0) - printed) <= 0.05 * (drawn.length + 1);
+    }],
+    ["the Via funds footer is the store's own derived total, and ties to its column", (t, ctx) => {
+      const rows = ctx?.tableRows, foot = ctx?.footerCells;
+      if (!rows?.length || !foot?.length) return { notChecked: "the table or its footer was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const printed = moneyCell(foot[COL_STOCK.viaFunds]);
+      if (printed === null) return { notChecked: "the look-through did not answer on this run" };
+      if (!Number.isFinite(printed)) return false;
+      const drawn = rows.map((r) => moneyCell(r.cells?.[COL_STOCK.viaFunds])).filter((v) => Number.isFinite(v));
+      return Math.abs(printed - SECURITY_AXIS_BOOK.derivedCr) <= 0.15
+        && Math.abs(drawn.reduce((a, b) => a + b, 0) - printed) <= 0.05 * (drawn.length + 1);
+    }],
+    ["Total exposure is Direct + PMS plus Via funds, on the footer and on every row", (t, ctx) => {
+      const rows = ctx?.tableRows, foot = ctx?.footerCells;
+      if (!rows?.length || !foot?.length) return { notChecked: "the table or its footer was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const total = moneyCell(foot[COL_STOCK.exposure]);
+      const mv = moneyCell(foot[COL_STOCK.mv]);
+      const via = moneyCell(foot[COL_STOCK.viaFunds]);
+      if (![total, mv].every(Number.isFinite)) return false;
+      if (Math.abs(total - SECURITY_AXIS_BOOK.totalCr) > 0.15) return false;
+      if (Number.isFinite(via) && Math.abs(mv + via - total) > 0.15) return false;
+      // ...and per row, which is what catches a total that is right in aggregate
+      // and wrong on the rows a reader actually looks at.
+      return rows.every((r) => {
+        const a = moneyCell(r.cells?.[COL_STOCK.mv]) ?? 0;
+        const b = moneyCell(r.cells?.[COL_STOCK.viaFunds]) ?? 0;
+        const c = moneyCell(r.cells?.[COL_STOCK.exposure]);
+        return Number.isFinite(c) && Math.abs(a + b - c) <= 0.11;
+      });
+    }],
+    /**
+     * ── THE PARTITION, WHICH IS THE HONESTY OF THE WHOLE AXIS ────────────────
+     *
+     * The rows are companies, so the footer no longer describes the book: this
+     * table covers 42% of it. A reader takes a table's total for the whole of
+     * their money unless told otherwise, so the page states five buckets that
+     * reconstruct NAV — and the sweep holds each to a figure derived from
+     * `glowData.ts` and the store, never to a literal.
+     */
+    ["the page states what it covers and what it cannot, and the five buckets rebuild NAV", (t, ctx) => {
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const cov = ctx?.stockCoverage;
+      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
+      const cr = (re) => { const m = re.exec(cov); return m ? crU(m[1], m[2]) : NaN; };
+      const covers   = cr(/covers ₹([\d,.]+)\s*(Cr|L|K)? of the/i);
+      const directly = cr(/₹([\d,.]+)\s*(Cr|L|K)? the statements report\s*directly/i);
+      const derived  = cr(/and ₹([\d,.]+)\s*(Cr|L|K)? DERIVED/i);
+      const opaque   = cr(/₹([\d,.]+)\s*(Cr|L|K)? sits inside vehicles that publish no holdings/i);
+      const nonEq    = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the part of a disclosed fund that is not equity/i);
+      const cash     = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the book/i);
+      const all = [covers, directly, derived, opaque, nonEq, cash];
+      if (all.some((v) => !Number.isFinite(v))) return false;
+      // Each figure against its own independently-derived expectation...
+      if (Math.abs(covers - SECURITY_AXIS_BOOK.totalCr) > 0.15) return false;
+      if (Math.abs(directly - SECURITY_AXIS_BOOK.measuredCr) > 0.15) return false;
+      if (Math.abs(derived - SECURITY_AXIS_BOOK.derivedCr) > 0.15) return false;
+      if (Math.abs(opaque - SECURITY_AXIS_BOOK.opaqueCr) > 0.15) return false;
+      if (Math.abs(nonEq - SECURITY_AXIS_BOOK.nonEquityCr) > 0.15) return false;
+      if (Math.abs(cash - SECURITY_AXIS_BOOK.cashCr) > 0.15) return false;
+      // ...and the five together must rebuild the book, which is the claim a
+      // reader acts on and which no single figure can make on its own.
+      const rebuilt = directly + derived + opaque + nonEq + cash;
+      return Math.abs(rebuilt - SECURITY_AXIS_BOOK.navCr) <= 0.5
+        && Math.abs(covers - (directly + derived)) <= 0.15;
+    }],
+    /**
+     * THE AIF BLOCK IS NAMED WITH ITS VALUE AND ITS CAUSE. Half this book by
+     * value has no look-through and never will: an AIF files no disclosure that
+     * joins to a folio the family holds. Told "no data" a reader goes looking
+     * for a store fix that cannot exist.
+     */
+    ["the AIF block is named, valued, and its absence attributed to the instrument", (t, ctx) => {
+      const cov = ctx?.stockCoverage;
+      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.aifCount) return { notChecked: "this book holds no AIF folio" };
+      if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
+      const m = /(\d+) AIF folios?, ₹([\d,.]+)\s*(Cr|L|K)?/i.exec(cov);
+      if (!m) return false;
+      return Number(m[1]) === SECURITY_AXIS_BOOK.aifCount
+        && Math.abs(crU(m[2], m[3]) - SECURITY_AXIS_BOOK.aifValueCr) <= 0.15
+        && /files no portfolio disclosure/i.test(cov)
+        && /no future statement fills it/i.test(cov);
+    }],
+    /**
+     * A COMPANY THE BOOK SPLITS ACROSS TWO KEYS IS NAMED, NOT MERGED ON SCREEN.
+     * "If a join fails, fix the EXTRACTOR — never re-derive a key in the
+     * presentation layer, which hides the defect from the reconciler."
+     */
+    ["a company the book keys twice is named rather than quietly joined", (t, ctx) => {
+      const cov = ctx?.stockCoverage;
+      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.splitCount) return { notChecked: "this book keys no company twice" };
+      return /stands\s+here as (two rows|more than one row)/i.test(cov)
+        && /the fix belongs in the extractor/i.test(cov);
+    }],
+    /**
+     * A DERIVED-ONLY COMPANY HAS NO MEASURED ANYTHING, and ₹0 there would say
+     * the family holds none of it directly as a MEASUREMENT. It is an absence,
+     * and `AbsentCell` carries the reason in a `title`.
+     */
+    ["a company held only inside a fund renders its measured cells absent, never zero", (t, ctx) => {
+      const rows = ctx?.tableRows, titles = ctx?.titles;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      if (!SECURITY_AXIS_BOOK?.derivedOnly) return { notChecked: "every company here is reported by a statement" };
+      const only = rows.filter((r) => moneyCell(r.cells?.[COL_STOCK.mv]) === null
+        && Number.isFinite(moneyCell(r.cells?.[COL_STOCK.viaFunds])));
+      if (only.length !== SECURITY_AXIS_BOOK.derivedOnly) return false;
+      // No such row may print a zero where a measurement would go.
+      if (only.some((r) => /₹0(\D|$)/.test(String(r.cells?.[COL_STOCK.mv] ?? "")))) return false;
+      return (titles ?? []).some((x) => /no statement in this book reports this company as a holding/i.test(x));
+    }],
+    /**
+     * WEIGHT IS THE FAMILY'S OWN QUESTION — "this much percentage of the
+     * portfolio" — so it divides TOTAL exposure by the book, and the column
+     * therefore sums to the book's stock share rather than to 100. The footer
+     * must print that same figure, or the column and its total are on two bases.
+     */
+    ["Weight is total exposure over the whole book, and the footer says so", (t, ctx) => {
+      const foot = ctx?.footerCells, rows = ctx?.tableRows;
+      if (!foot?.length || !rows?.length) return { notChecked: "the table or its footer was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const printed = pctCell(foot[COL_STOCK.weight]);
+      if (!Number.isFinite(printed)) return false;
+      const want = (SECURITY_AXIS_BOOK.totalCr / SECURITY_AXIS_BOOK.navCr) * 100;
+      // It must NOT read 100%: that is what a weight over the rows' own total
+      // would print, and it would tell a reader this table is the whole book.
+      if (!(Math.abs(printed - want) <= 0.2 && printed < 99)) return false;
+      /**
+       * ...AND EVERY ROW'S OWN CELL IS ON THAT BASIS TOO. Struck on the footer
+       * alone this passed while each ROW divided the measured half instead —
+       * the footer is summed from `totalExposure` independently, so the two can
+       * disagree with nothing to notice. It is the reader's row that matters.
+       *
+       * Only rows big enough for one printed decimal to mean something: at
+       * ₹1 Cr against a ₹710 Cr book a weight is 0.1%, and below that the
+       * comparison is all rounding.
+       */
+      const big = rows.filter((r) => (moneyCell(r.cells?.[COL_STOCK.exposure]) ?? 0) >= 1);
+      if (big.length === 0) return { notChecked: "no row here is large enough for its weight to carry a decimal" };
+      return big.every((r) => {
+        const exp = moneyCell(r.cells?.[COL_STOCK.exposure]);
+        const w = pctCell(r.cells?.[COL_STOCK.weight]);
+        return Number.isFinite(exp) && Number.isFinite(w)
+          && Math.abs(w - (exp / SECURITY_AXIS_BOOK.navCr) * 100) <= 0.15;
+      });
     }],
     /**
      * IT FILES NOTHING, so it draws no section headings and offers no section
@@ -5345,17 +5596,10 @@ const INVARIANTS = {
       if (!selects) return { notChecked: "the filter row was not captured on this run" };
       return (secs?.length ?? 0) === 0 && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
     }],
-    /**
-     * AND IT SAYS WHAT IT CANNOT CLUB. Two of the four vehicles the request named
-     * can be clubbed and two cannot: this book reports the SHARE for a direct
-     * holding and for a mandate, and reports only the FUND for an AIF, a scheme
-     * or an ETF. Drawing a look-through nobody published is the fabrication the
-     * whole book exists to prevent, so the page states the boundary.
-     */
-    ["the caption names what a fund row does not dissolve into",
-      (t) => /one row per security, ranked by exposure/i.test(t)
-        && /a fund is its own row/i.test(t)
-        && /no statement in this book reports what those managers hold/i.test(t)],
+    ["the caption states the axis and that a fund is not a stock",
+      (t) => /one row per company, ranked by total exposure/i.test(t)
+        && /a fund is not a stock and is no longer a row/i.test(t)
+        && /is no part of the book.s NAV/i.test(t)],
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -7033,6 +7277,13 @@ for (const theme of THEMES) {
           text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
         };
       });
+      // THE STOCK AXIS'S COVERAGE STATEMENT, read off its own handle rather than
+      // out of the page text: the partition sits in one paragraph among several
+      // and a page-wide regex would happily match a figure from another card.
+      const stockCoverage = FAST ? null : await page.evaluate(() => {
+        const p = document.querySelector("[data-stock-coverage]");
+        return p ? (p.innerText ?? "").replace(/\s+/g, " ").trim() : null;
+      });
       const selectLabels = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
       const sectionRows = FAST ? null : await page.evaluate(() =>
@@ -7354,7 +7605,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

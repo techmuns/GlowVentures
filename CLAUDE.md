@@ -4662,21 +4662,27 @@ control with a single option that changes nothing.
 
 #### Two of the four vehicles can be clubbed and two cannot
 
+*(**THE SECOND HALF OF THIS WAS OVERTURNED BY THE FAMILY — see Stage 10ai.** A
+fund is no longer a row: what it discloses is looked through and added, and the
+₹353.53 Cr that discloses nothing is stated as a bucket instead. The FIRST half
+stands unchanged and is why the axis exists at all. The passage is kept because
+the boundary it draws — what this book REPORTS versus what it can only DERIVE —
+is the same boundary Stage 10ai had to state on screen; what changed is that the
+derived side is now shown rather than withheld.)*
+
 The request named "direct/PMS/ETF/AIF". **A SHARE IS CLUBBED HOWEVER IT WAS
 ARRIVED AT** — the family's own demat and a discretionary manager's mandate both
 REPORT THE SHARE, so both are positions carrying the same `securityKey`.
 
-**A SHARE HELD INSIDE A FUND CANNOT BE.** An AIF folio, a mutual-fund scheme and
-an ETF are each ONE PURCHASE of a manager's portfolio, and no statement in this
-book reports the companies inside the folios the family holds. So a fund is its
-own row at its own value — **36 rows worth ₹479.98 Cr** — and the page says so in
-as many words rather than drawing a look-through nobody published. That is the
-same answer `/mandate/:accountId` already gives for a fund folio, and the same
-reason: a constituent table there would be the fabrication this book exists to
-prevent. (`public/lookthrough/` carries scheme disclosures for 21 of 22 mutual
-funds — see Stage 10s — and it is deliberately NOT summed into a book figure for
-exactly this reason: the fund's value already stands for it, and counting both
-would count the same money twice.)
+**A SHARE HELD INSIDE A FUND IS NOT REPORTED AT ALL.** An AIF folio, a
+mutual-fund scheme and an ETF are each ONE PURCHASE of a manager's portfolio, and
+no statement in this book reports the companies inside the folios the family
+holds. `/mandate/:accountId` still refuses to draw a constituent table for a fund
+folio for exactly that reason. What Stage 10ai adds is the one source that CAN
+speak to it — `public/lookthrough/`, the AMCs' own monthly disclosures for 21 of
+the 22 schemes here — carried as a DERIVED figure in its own column, never summed
+into NAV, because the fund's value already stands for it there and counting both
+would count the same money twice.
 
 #### The drill-down, and where "thru what means" actually lives
 
@@ -4785,6 +4791,167 @@ deleted, the section filter shown anyway, the ranking reversed, and the
 `?sector=` param ignored. Every expectation is derived from `glowData.ts` on each
 run — the row count, the clubbed count, the largest name and the book's own NAV —
 so none of it goes stale when the next drop moves the book.
+
+### Stage 10ai — A SECURITY IS A COMPANY: THE CUMULATIVE STOCK POSITION
+
+*"In the security selected page we should only see the aggregate stock position
+across the portfolio thru various channels — direct equity / AIFs / PMS / ETFs.
+AIF itself shouldn't show up as a security. We need to calculate cumulative
+stocks position held in the whole portfolio together."*
+
+Stage 10ah built the axis and drew a fund as a row. **The family say that is
+wrong, and they are right**: a fund is not a security, it is one purchase of
+somebody else's portfolio, and a screenshot of that table answered "which stock
+do I hold most of" with `Sanshi Fund-I ₹175.1 Cr`.
+
+**AND THEY HAD ALREADY BEEN SHOWN THE ALTERNATIVE AND CHOSE IT.** The PR before
+this one delivered the measured and derived halves SIDE BY SIDE and named the
+combination as their call; they repeated the sentence. So the two are added, in
+a column of their own, and every surface that prints the sum says which half is
+which.
+
+#### The five buckets, because this table no longer covers the book
+
+A fund leaving the table takes its money with it, and the honest problem is that
+**half this book has no look-through and never will.** So every rupee of NAV is
+placed in exactly one bucket and all five are printed under the table:
+
+| | | |
+| --- | ---: | --- |
+| stocks the statements REPORT (direct + PMS) | ₹222.00 Cr | 31.3% |
+| stocks DERIVED from what the funds disclose | ₹77.61 Cr | 10.9% |
+| inside vehicles that publish NOTHING | ₹353.53 Cr | 49.8% |
+| inside a disclosed fund and not equity | ₹45.68 Cr | 6.4% |
+| the book's own cash | ₹11.58 Cr | 1.6% |
+
+They sum to `BOOK_SUMMARY.totalValue` **to the rupee**, and both the suite and
+the sweep hold them to it — the parts reconstructing the whole is the claim a
+reader acts on, and no single figure can make it alone. **The table covers
+₹299.61 Cr of ₹710.39 Cr**, 42.2%, and says so in the first sentence.
+
+**₹353.53 Cr IS ALMOST ENTIRELY THE AIF BLOCK, AND THAT IS A FACT ABOUT THE
+INSTRUMENT.** A mutual fund and an ETF file a monthly SEBI portfolio disclosure
+— the store carries one for 21 of the 22 this book holds. **An AIF files nothing
+that joins to a folio the family holds**, so no drop of the current statements
+can ever fill it. Told the generic "no disclosure here" a reader goes looking for
+a store fix that cannot exist, so `skipReason` in `lookthrough.ts` words the two
+apart — `upstreamStatus.ts`'s rule arriving through a fund.
+
+#### Three columns, because a measured rupee and a derived one are different claims
+
+`Direct + PMS` is the MEASURED value and is what `Market value` means on every
+other axis. `Via funds` is DERIVED. `Total exposure` is the two, and is what the
+rows are ranked on. They are separate fields on the row rather than one blended
+`marketValue` **because every other money column can only ever be struck on the
+measured half** — Invested, Unrealised P&L, Realised and Return all come from
+statements. Blending would put a return over a cost covering one half of its own
+numerator, which is "a total must tie to its own columns" one column wider.
+
+**THE FOOTER NARROWS WITH THE ROWS.** `footerSet` is the company shares alone on
+this axis, so Invested, P&L and Return cover the rows above them. Left on the
+whole book the footer printed **₹710.4 Cr under a column whose cells add to
+₹222 Cr** — caught by reading the rendered page rather than by reasoning.
+
+**AND WEIGHT IS THE FAMILY'S OWN QUESTION** — *"this much percentage of the
+portfolio"* — so it divides TOTAL exposure by the whole book. The column
+therefore sums to **42.2%, not 100%**, and the footer prints that. A weight over
+the rows' own total would read 100% and tell a reader this table is their whole
+portfolio, which is the one thing it is not.
+
+**A COMPANY ONLY A FUND HOLDS IS STILL EXPOSURE**, so it gets a row: 395 of them
+against the 174 the statements report. Every measured cell on such a row is
+`AbsentCell` WITH ITS REASON, never ₹0 — no document reports a quantity, a cost
+or a price for a share the family owns through somebody else's portfolio.
+
+**A SCHEME THE FAMILY HOLDS AT ₹0 GIVES ₹0 OF EVERYTHING IN IT.** Five schemes
+here are redeemed to nil, and carrying their disclosed lines drew 40 companies at
+an exposure of exactly nothing — a computed zero, so not a fabrication, but a row
+saying the family holds a company when what they hold is none of it. The line is
+dropped; a company any funded scheme also discloses keeps that scheme's share.
+
+#### One join, read by the row and by the card beneath it
+
+`loadFundExposure` answered "which of my funds hold THIS name" one company at a
+time. It is **replaced** by `loadStockExposure`, which builds the whole index
+once: the row's `Via funds` cell and the itemised card inside that row's
+expansion now read the same map, so they cannot disagree. It costs no more — the
+same 21 files, memoised — and the deleted function left no orphan, which is this
+file's own rule about a builder nothing calls.
+
+**THE JOIN IS EXACT OR IT DOES NOT HAPPEN.** ISIN first, mapped to the BOOK's own
+key where the book carries that ISIN — the only tier that bridges a depository's
+`SBI - EQ` to an AMC's `State Bank of India`, and measured to be doing so for 10
+companies. Otherwise this book's own `securityKeyOf`. **There is still no fuzzy
+tier.**
+
+**AND AN ISIN-BEARING FILING SETTLES THE KEY FOR ITS NAME.** 18% of disclosed
+lines carry no ISIN, and the same company arrives both ways — one scheme files
+`ICICI Bank Ltd.` with `INE090A01021`, another files `ICICI Bank Ltd.` with
+nothing. On a single pass the first landed on the book's key and the second on
+its own normalised name, so **the family's own question got two answers**:
+measured on this store it split ICICI Bank, State Bank of India, Axis Bank and
+IndusInd Bank. The ISIN-bearing filings are read FIRST and each records the key
+for its normalised name. The evidence is the store's own — one AMC supplied the
+identifier another omitted — so this is neither a fuzzy tier nor a re-derivation
+of the book's identity.
+
+**WHAT IT DELIBERATELY DOES NOT REPAIR:** the BOOK carries ICICI Bank under TWO
+`securityKey`s — `icici-bank` from a PMS statement and `icici-bank-eq` from the
+depository — because a key is derived from the RAW name and is not routed through
+`stripDepositoryTail`. So the table draws two rows with almost the same name.
+Merging them on screen would give a reader one tidy row and leave the reconciler
+none the wiser, which this file forbids in as many words: *"if a join fails, fix
+the EXTRACTOR."* It is COUNTED and STATED instead, and the sweep asserts the
+sentence — that is what tells the next session there is an extractor join to
+make.
+
+#### The ring-fence had to be carried onto the derived side
+
+**A MUTUAL FUND THIS FAMILY HOLDS DISCLOSES POLYCAB.** ₹88,891 of it — so the
+look-through drew a Polycab row on a page the fence says must not name it at all,
+and `check:pages`'s existing absence check fired on the first sweep. The fence is
+a decision about a SECURITY and has to hold wherever that security is reported,
+including inside somebody else's portfolio, so `loadStockExposure` takes the
+fenced keys and ISINs and drops those lines. Both, because they disagree: the
+depository prints `POLYCAB INDIA LIMITED - EQ` and an AMC files `Polycab India
+Ltd.`, which normalise apart.
+
+**IT IS DROPPED SILENTLY AND NOT NAMED**, the one place this book departs from
+"an absence is stated": naming it would put the word on the page, which is
+exactly what the family asked to be rid of. `PortfolioMonitor` reads
+`BOOK_POLYCAB` to take a name OUT and never to put a figure in — `Polycab.tsx`
+remains its only reader for DISPLAY.
+
+#### Eight bugs reintroduced, and one of them was a bug in a check
+
+Each was put back on its own, rebuilt and swept: the funds back as rows (fires
+six checks, from six directions), the fence dropped from the index (three,
+including the pre-existing Polycab absence check), the footer back on the whole
+book (two), Weight back on the measured half, the derived half summed into the
+MEASURED column (three), the opaque bucket halved so the five no longer rebuild
+NAV, a derived-only row printing ₹0 instead of an absence, and the two-pass
+keying removed.
+
+**THE WEIGHT CHECK DID NOT FIRE THE FIRST TIME.** It was struck on the FOOTER,
+which is summed from `totalExposure` independently — so every ROW could divide
+the measured half instead and the footer would go on printing 42.2% with nothing
+to notice. It reads every row large enough for a printed decimal to mean
+something now. That is this file's own *"a check that compares a figure with its
+own copy cannot fail"*, arriving through a column.
+
+**AND THE SWEEP READS A NEW COLUMN MAP.** `COL_STOCK` — this axis draws two more
+columns, so everything after Market value sits two places right, and a Weight
+assertion read against `COL` would have been struck on `Via funds`: a real
+percentage against a real money figure, which is the plausible-wrong-answer this
+sweep exists to catch rather than commit.
+
+**THE ARITHMETIC IS `stockExposure.test.ts`** (`npm run test:family`), anchored
+on `BOOK_SUMMARY.totalValue` and on the committed store rather than on a fixture
+— a hand-written pair would prove only that two inventions agree. It asserts the
+partition rebuilds NAV, that no company stands under two keys, that the ISIN tier
+is doing work, and that the fence is LOAD-BEARING: the same store run WITHOUT it
+must put Polycab back, or the guard would pass on a book where no scheme
+discloses it and go on passing after the guard was deleted.
 
 ### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 

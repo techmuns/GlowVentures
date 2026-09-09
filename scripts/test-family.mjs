@@ -35,6 +35,7 @@ const SUITES = [
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
+  ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
 ];
 
 let failed = 0;
