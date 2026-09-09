@@ -5154,6 +5154,11 @@ fires the absence check) — and the bound on the money comparison is the page's
 own printing precision reproduced, 0.005 Cr, never a tolerance widened until the
 figure fits.
 
+`build` · `test:ingest` 304 · `test:family` · `check:family` 53/0 ·
+`check:pages` **136 combinations clean**, with the same two pre-existing
+abstentions. `npm run rekey:archive --check` is a no-op, which is what says the
+archive on disk is what the extractor would write.
+
 ### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 
 *"We should also be able to see each holding of every mutual fund."* … *"For all
@@ -5261,7 +5266,7 @@ Stage 10ad. What stands from this section is the mandate half, which is
 unchanged: a share a discretionary manager picked is still not in the movers
 list. The scope was a tab for a while and the default was stocks and ETFs
 together; the family have since removed the tabs and settled the card on Direct
-Equity alone — see Stage 10aj, which is where this narrowing ends up standing.)*
+Equity alone — see Stage 10al, which is where this narrowing ends up standing.)*
 
 **THE MOVERS CARD NOW COVERS A DIFFERENT SET, NOT A RENAMED ONE.**
 `DIRECT_EQUITY_BUCKET` is this app's answer to WHO CHOSE A HOLDING — settled in
@@ -6283,7 +6288,7 @@ half-right once already.
 
 *(**THE TABS THIS SECTION ADDED HAVE SINCE BEEN REMOVED** — the family asked for
 the selectors to go and for the card to show Direct Equity alone, so the set is
-back to what Stage 10t narrowed it to. See Stage 10aj. Everything below is kept
+back to what Stage 10t narrowed it to. See Stage 10al. Everything below is kept
 because the reasoning about CAPTIONS is unchanged and still governs the card:
 each one states what its figure covers, and the tile label, the coverage line,
 the index sentence and the excluded footer read the set rather than a literal.
@@ -6929,7 +6934,11 @@ next drop picks its own.
 `check:pages` **140 combinations clean**, with the same two pre-existing
 abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
 
-### Stage 10aj — THREE REMOVALS ON MORNING CIO, AND ONLY ONE OF THEM WAS FREE
+### Stage 10al — THREE REMOVALS ON MORNING CIO, AND ONLY ONE OF THEM WAS FREE
+
+*(Numbered `10al` rather than `10aj`: that letter was already taken by the
+cumulative stock position further up, and two branches picked it in parallel.
+The references below were repointed with it.)*
 
 Three asks, and they are worth recording together because the SAME instruction —
 take this off the screen — needed three different amounts of work, decided
