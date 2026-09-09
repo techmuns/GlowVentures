@@ -1744,10 +1744,22 @@ export function PortfolioMonitor() {
                           that pill, so a row-based text check here would be reading
                           fragments. These attributes — and `nameCell`, whose
                           whitespace the sweep collapses — are what the invariants
-                          read instead. */}
+                          read instead.
+
+                          AND THE KEY RIDES ON EVERY ROW THAT HAS ONE, on every
+                          axis. Gated on `venues` it was absent from the 395
+                          stock-axis rows no statement reports; gated on
+                          `bySecurity` it was right only while that axis was the
+                          sole one drawing venue panels, and the moment every axis
+                          drew them the category axis's clubbed rows carried a
+                          venue count and NO KEY TO FIND THEM BY — six of that
+                          route's checks then ABSTAINED rather than failed,
+                          because the walk could not pick a row to open. Gated on
+                          the key itself it cannot go stale again; a mandate row
+                          carries none, which is why the guard is not dropped. */}
                       <tr className="hover:bg-ink-700/40"
                         data-bucket={r.bucket}
-                        {...(bySecurity ? { "data-security-key": r.securityKey } : {})}
+                        {...(r.securityKey ? { "data-security-key": r.securityKey } : {})}
                         {...(r.venues ? { "data-venues": String(r.venues.length) } : {})}
                         {...(m ? {
                           "data-mandate": m.name,
