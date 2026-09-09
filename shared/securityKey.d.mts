@@ -11,3 +11,11 @@ export declare function securityKeyOf(name: string): string;
 /** A security name with trailing depository series/face-value furniture removed.
  *  DISPLAY ONLY — `securityKeyOf` is derived from the raw name, never from this. */
 export declare function stripDepositoryTail(name: string): string;
+
+/** A fund's base name and the unit class split off the end of it, or `null`
+ *  where the name carries no class. DISPLAY ONLY, on the same terms as
+ *  `stripDepositoryTail`: `securityKeyOf` never routes through it, so a class
+ *  keeps its own key, its own join and its own row in every drill-down. */
+export declare function splitFundClass(
+  name: string,
+): { fund: string; cls: string } | null;
