@@ -1283,7 +1283,6 @@ const ROUTES = [
   // the scope now lives in the URL so this route can exist at all.
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
-  ["compare", "/compare"],
   // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
   // family's request, so they are no longer walked — there is no page at any of
   // those three addresses to hold to the light-mode, overflow and stray-zero
@@ -1827,6 +1826,42 @@ const MOCK_INDICES = [
   ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
   ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
 ];
+
+/**
+ * HOW MANY PRIVATE HOLDINGS COULD BE PRICED BY THE QUOTE FEED — the premise
+ * that licenses Private Market losing its `<BasisPill statement>`.
+ *
+ * The family asked for the page's header pills to go. `statementPortfolio` is
+ * still the source and that is where §6's correctness guarantee actually lives,
+ * but the reader is no longer TOLD, and this is the measurement that says what
+ * that costs on THIS page rather than asserting it costs nothing:
+ *
+ *   an AIF folio, an unlisted share and a structured note resolve NO NSE
+ *   trading symbol, and every live endpoint is keyed on one. So not a single
+ *   row here could move with the feed even if the page read the live
+ *   portfolio — the label was describing a difference that does not arise.
+ *
+ * Measured on this book: 0. It is a PREMISE, not a decoration, so it is checked
+ * every run — a drop bringing a quotable private holding fires this and the next
+ * session has to decide again, instead of the page silently becoming a place
+ * where a live figure could appear unlabelled.
+ *
+ * `isPrivateClass` is re-derived here rather than imported, like every other
+ * expectation in this file: a check that imports the helper it is checking
+ * agrees with it by construction.
+ */
+const PRIVATE_QUOTABLE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const PRIVATE = new Set(["AIF", "Unlisted", "Structured Product"]);
+    return positions
+      .filter((p) => PRIVATE.has(p.assetClass))
+      .filter((p) => p.symbol || symbols[p.securityKey])
+      .map((p) => p.security);
+  } catch { return null; }   // an unreadable book fails the route's own checks, loudly
+})();
 
 /** A linear daily ramp, so the index's return between any two dates is exact. */
 const PRICE_SLOPE = 0.0004;
@@ -2766,6 +2801,31 @@ const INVARIANTS = {
      */
     ["the removed second-statement card stays removed, and no figure is claimed from the scan",
       (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
+
+    /**
+     * THE PER-DEMAT CARD'S SUBTITLE AND FOOTER ARE GONE, AND WHAT THEY SAID IS
+     * NOT — two claims, and the second is the one that could fail quietly.
+     *
+     * Removed at the family's request. Between them they carried the mark's
+     * DERIVATION (value ÷ units, because an NSDL statement prints no rate
+     * column), that it is therefore a statement figure rather than a live
+     * quote, and WHY cost is absent. All three are re-stated above — the first
+     * two on the `STATEMENT · as of` pill's hover, the third on the Cost basis
+     * tile's own sub, which is where the em dash is.
+     *
+     * Asserting only the absence would pass a page that had lost the lot, and
+     * asserting only the survivors would pass one that never removed anything.
+     * Both, and neither implies the other.
+     */
+    ["the per-demat prose stays removed",
+      (t) => !/One row per depository account/i.test(t)
+        && !/Cost is absent because a depository holds the shares/i.test(t)
+        && !/divided by the units it prints/i.test(t)],
+    ["…and the mark still says how it is derived, on the pill that dates it",
+      (_t, ctx) => (ctx?.titles ?? []).some((x) =>
+        /divided by the units it prints/i.test(x)
+        && /no rate column/i.test(x)
+        && /not a live price/i.test(x))],
 
     /**
      * ── THE FIVE THINGS THE FAMILY ASKED THIS PAGE FOR ──────────────────────
@@ -5209,8 +5269,56 @@ const INVARIANTS = {
    * both absence checks and silently take this with it.
    */
   "private-market": [
-    ["a page pinned to statement figures still says so", (t) =>
-      /\bSTATEMENT\s*·\s*as of\s*\d{4}-\d{2}-\d{2}/i.test(t)],
+    /**
+     * ── THE HEADER PROSE AND BOTH PILLS ARE GONE ────────────────────────────
+     *
+     * At the family's request, and this INVERTS the check added one release ago
+     * rather than being deleted with the feature. Three claims, and the second
+     * and third are the ones that could go wrong quietly.
+     */
+    ["the lead paragraph and the header pills stay removed", (t) =>
+      !/Every private-market holding the statements in this drop report/i.test(t)
+      && !/\bSTATEMENT\s*·\s*as of/i.test(t)
+      && !/\d+\s+accounts? behind/i.test(t)
+      && !/\d+ funds\s*·\s*\d+ accounts/i.test(t)],
+
+    /**
+     * …AND THE ONE COUNT THAT HAD NO OTHER HOME MOVED RATHER THAN GOING.
+     *
+     * The subtitle counted funds, accounts and owners. The fund table's footer
+     * already prints `Total · N funds` and the By-owner rollup enumerates the
+     * owners; the ACCOUNTS count was nowhere else, so it is on the tile whose
+     * breadth it describes. Struck against the folio table's own row count so
+     * it cannot be satisfied by re-printing a number the page already had:
+     * every private row sits in an account, so accounts ≥ nothing useful — what
+     * matters is that a real figure is there and the tile still names its book.
+     */
+    ["the private value tile names how many accounts it spans", (t) => {
+      const m = /PRIVATE MARKET VALUE[\s\S]{0,240}?across (\d+) accounts · each holding counted once/i.exec(t);
+      return !!m && Number(m[1]) > 0;
+    }],
+
+    /**
+     * …AND THE PREMISE THAT MADE LOSING THE BASIS LABEL CHEAP IS CHECKED, NOT
+     * ASSUMED.
+     *
+     * `statementPortfolio` is still the source, so the guarantee holds; what
+     * went is the reader being told. That is only harmless because nothing here
+     * can be quoted — see `PRIVATE_QUOTABLE`. The day one can, this fires by
+     * name and the decision gets made again, which is the difference between a
+     * measured absence and one recorded against a premise nobody rechecked.
+     */
+    /*
+     * The offenders ride in the DESCRIPTION rather than the return value: a
+     * truthy object PASSES here (only `{notChecked}` is special), so a
+     * `{fail: …}` would report a green sweep over a red page. Built at module
+     * load, where `PRIVATE_QUOTABLE` already is.
+     */
+    [`no private holding could be priced by the feed, which is why the basis label costs nothing here${
+      PRIVATE_QUOTABLE?.length
+        ? ` — but ${PRIVATE_QUOTABLE.length} now resolve an NSE symbol: ${PRIVATE_QUOTABLE.slice(0, 3).join(", ")}`
+        : ""}`,
+      () => PRIVATE_QUOTABLE != null && PRIVATE_QUOTABLE.length === 0],
 
     // PM-1. The per-folio table shows every statement as printed; the fund table
     // counts each holding once. The difference is the double count, and the page
@@ -5325,6 +5433,124 @@ const INVARIANTS = {
     // The failure this replaced: a fund standing at the head of a sector table.
     // No wrapper may appear as a holding here at all.
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
+
+    /**
+     * ── THE FOOTER PARAGRAPH IS GONE, AND ITS TWO LOAD-BEARING FIGURES ARE NOT
+     *
+     * Removed at the family's request. It carried eight claims; six were
+     * already elsewhere on the page (the subtitle, the donut, the three
+     * who-chose cards, the Held via column) and two were not, so those two
+     * moved onto the figures they describe. Asserted separately from the
+     * absence, because a page that lost the lot passes an absence check.
+     */
+    ["the footer paragraph stays removed", (t) =>
+      !/That is\s+not\s+the same set as/i.test(t)
+      && !/a look-through into a mandate is a gain/i.test(t)
+      && !/Within company shares, ₹/i.test(t)],
+
+    /**
+     * THE COVERAGE OF THIS TABLE, ON THE FIGURE ITSELF. A sector page over
+     * ₹221 Cr of a ₹710 Cr book is an unexplained narrowing unless it says how
+     * many holdings it spans and that the set is deduped — and neither was
+     * anywhere but that paragraph. Struck against the sector rows' OWN counts,
+     * which is what makes it able to fail: the donut's count and the table's
+     * positions column are computed from the same set by different paths, so a
+     * filter that widens one and not the other is caught here.
+     */
+    ["the donut names how many holdings it spans, and that each is counted once", (t) => {
+      const m = /Company shares\s*\n\s*₹[^\n]+\n\s*(\d+) holdings · each counted once/i.exec(t);
+      if (!m) return false;
+      const stated = Number(m[1]);
+      /*
+       * A ROW'S NAME IS ON ITS OWN LINE HERE. The name cell is a flex container
+       * and the chevron and colour swatch are flex ITEMS, so `innerText` breaks
+       * before the figures — the shape is `\nUnclassified\n\t₹129.7 Cr\t58.4%\t143\t…`.
+       * Matched from the leading TAB rather than from the name, so the check
+       * does not depend on a name it has no business knowing.
+       */
+      const rows = [...t.matchAll(/\n\t₹[^\t\n]+\t[\d.]+%\t(\d+)\t/g)].map((x) => Number(x[1]));
+      if (rows.length < 2) return false;
+      return stated > 0 && rows.reduce((a, b) => a + b, 0) === stated;
+    }],
+
+    /**
+     * …AND WHAT IT LEAVES OUT RECONSTRUCTS THE BOOK.
+     *
+     * The excluded classes moved from a sentence into a labelled partition
+     * card, which is also what lets this be struck on FIGURES rather than on
+     * prose — the failure `exposure`'s own first draft made, where matching the
+     * static caption passed while the filter had been reverted and ₹52.4 Cr of
+     * mutual funds were back in the sector table.
+     *
+     * The bound is the printing precision reproduced: every cell renders to one
+     * decimal in Cr, so the covered figure plus N named classes can round by at
+     * most (N+1) half-digits. A class dropped or double-counted moves it by
+     * whole crores.
+     */
+    ["company shares + the classes named as excluded reconstructs the consolidated NAV", (t) => {
+      /*
+       * `cr()` RETURNS NaN FOR A MISSING MATCH, so `a ?? b` never falls back —
+       * NaN is neither null nor undefined. The first draft of this line was
+       * written that way and reported "the figures could not be read" on a page
+       * rendering all of them. This page has no `Consolidated NAV` label; the
+       * top bar's own figure is the first ₹…Cr on it.
+       */
+      const nav = cr(new RegExp(CR).exec(t)?.[1]);
+      const covered = cr(new RegExp(String.raw`Company shares\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const parts = [...card[1].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
+      if (![nav, covered].every(Number.isFinite) || parts.length < 2) return false;
+      return Math.abs(covered + parts.reduce((a, b) => a + b, 0) - nav) <= 0.1 * (parts.length + 1);
+    }],
+
+    /**
+     * …AND THAT CARD'S OWN TOTAL TIES TO THE CLASSES IT NAMES.
+     *
+     * The other end of the same claim, and the one that catches the failure the
+     * reconstruction above cannot: a total struck independently of the list
+     * beneath it. Drop a class from the list and the reconstruction fails
+     * because the page no longer accounts for the book — but a version that
+     * SUMMED the same shortened list into its headline would satisfy the
+     * reconstruction while printing a figure that ties to nothing. "A total must
+     * tie to its own columns", on a card of four.
+     *
+     * A FIRST DRAFT OF THIS SLOT COULD NOT FAIL and was replaced rather than
+     * kept: it asserted that no class named as excluded appears as a sector row,
+     * and the two name spaces never collide — sectors are GICS, classes are
+     * `AssetClass`. What actually guards that is the fund-name check above,
+     * which is struck on the wrappers' own names.
+     */
+    ["the excluded card's total ties to the classes it lists", (t) => {
+      const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const total = crU(card[1], card[2]);
+      const parts = [...card[3].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
+      if (!Number.isFinite(total) || parts.length < 2) return false;
+      // The page's own printing precision reproduced: every figure renders to
+      // three significant digits in Cr, so N parts plus the headline can round
+      // by at most (N+1) half-digits. A class dropped moves it by crores.
+      return Math.abs(parts.reduce((a, b) => a + b, 0) - total) <= 0.1 * (parts.length + 1);
+    }],
+
+    /**
+     * AND THE UNCLASSIFIED ROW STILL NAMES ITS CAUSE. It is an absence — a
+     * company share whose own statement printed no sector — and `Absent.tsx`'s
+     * rule is that a reason is a REQUIRED argument, because "no data" tells a
+     * reader nothing about whether to go and find something. It was in the
+     * removed paragraph; it is on the row now, so it is read off `ctx.titles`.
+     * Abstains only where the book HAS no unclassified share, which is a fact
+     * about the rows the page drew rather than about the check.
+     */
+    ["the Unclassified row names why it is unclassified", (t, ctx) => {
+      // The name is on its own line, the figures on the next — see the shape
+      // note above. Matching `Unclassified\t` found nothing and ABSTAINED on a
+      // page whose largest sector is exactly that, which is the evidenced-
+      // abstention trap this file names: a gate that cannot see its own subject
+      // reports "not applicable" rather than failing.
+      if (!/\nUnclassified\n\t₹/i.test(t)) return notChecked("no company share in this book is unsectored");
+      return (ctx?.titles ?? []).some((x) => /statement printed no sector/i.test(x) && /rather than assigned/i.test(x));
+    }],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
   // holdings are sectioned by BUCKET (who chose the position), the sections must
@@ -7462,14 +7688,23 @@ const INVARIANTS = {
       return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum|Liquid ?Bees)/i.test(table);
     }],
   ],
-  // "Compare companies" compares COMPANIES. A fund unit has no PE, no filings and
-  // no peer set, and offering one in the picker put "Sanshi Fund-I (Open Ended
-  // AIF CAT-III) — Class E" and "Cash" side by side under that heading.
-  compare: [
-    ["the picker offers companies only, and names what it left out",
-      (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
-        && /company shares only/i.test(t)],
-  ],
+  /*
+   * COMPARE COMPANIES IS REMOVED, at the family's request, and its block goes
+   * with the page it described — there is nothing at `/compare` any more to hold
+   * to the light-mode, overflow and stray-₹0 bar, so keeping a route here would
+   * only walk a redirect.
+   *
+   * The claim it made — that the picker offered COMPANIES and not fund units,
+   * after a draft had put "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E" and
+   * "Cash" side by side under that heading — is not lost: `isCompanyShare` is
+   * still the filter behind Sector Composition and Exposure & IPS, and the
+   * `sectors` and `exposure` blocks above both assert that no fund wrapper
+   * appears as a company row. THE REMOVAL ITSELF is asserted in
+   * `check-family-inputs.mjs`: the redirect lands, the nav entry is gone, the
+   * now-empty RESEARCH group heading with it, and the page renders none of its
+   * own content at its old address. A removal is verified by asserting it
+   * happened, never by deleting the test alongside the feature.
+   */
   /**
    * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
    *

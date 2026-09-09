@@ -30,7 +30,6 @@ const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linu
 
 const PAGES = [
   ["company", "/stock/aditya-birla-capital"],
-  ["compare", "/compare"],
   ["news", "/news"],
   ["cio", "/cio"],
   ["macro", "/macro"],

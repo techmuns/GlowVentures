@@ -270,12 +270,34 @@ export function Polycab() {
         />
       </div>
 
-      {/* The holding, per demat account */}
+      {/*
+        The holding, per demat account.
+
+        ITS SUBTITLE AND ITS FOOTER PARAGRAPH ARE REMOVED at the family's
+        request, and every claim they carried is still on this page — checked
+        line by line before either went, which is the only thing that makes a
+        removal like this safe:
+
+          · "one row per depository account"      the card's own title, and its
+                                                  Depository account column
+          · "the per-share mark is value ÷ units" the `STATEMENT · as of` pill's
+            (and that an NSDL statement has       hover, above, which states the
+            no rate column)                       derivation in those words
+          · "a statement figure, not a live       the same hover, and the pill
+            quote"                                itself
+          · "cost is absent because a depository  the Cost basis tile's own sub,
+            holds the shares; it did not buy      which is where the em dash is
+            them"
+
+        A hover is weaker than a caption and that is said out loud rather than
+        glossed: a reader scanning does not read it. It is where these belong
+        anyway — a derivation belongs on the figure it derives, and an absence's
+        reason belongs on the tile that renders the dash (`Absent.tsx`'s rule).
+      */}
       <Card
         className="mt-5"
         pad={false}
         title="Per demat account"
-        subtitle="One row per depository account that reports the holding. Quantity and value are the depository's; the per-share mark is value ÷ units."
       >
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
@@ -345,11 +367,6 @@ export function Polycab() {
               </tfoot>
             )}
           </table>
-        </div>
-        <div className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-          The mark is the value the NSDL depository prints divided by the units it prints — an NSDL statement has no rate
-          column{asOf ? <> — so it is a {fmtDate(asOf)} statement figure, not a live quote</> : ""}. Cost is absent because a
-          depository holds the shares; it did not buy them.
         </div>
       </Card>
 

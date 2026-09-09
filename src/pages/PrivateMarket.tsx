@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
-import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
 import { StockLink } from "@/components/StockLink";
 import { Auditable } from "@/components/Auditable";
@@ -53,11 +52,17 @@ import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 //
 // STATEMENT BASIS THROUGHOUT. A reader checks this page by opening a fund's own
 // capital account, which is the Capital Gains / Data Audit / Ledger Insights
-// contract — so it reads `statementPortfolio` and passes `<BasisPill statement>`.
-// Passing the pill without switching the source is the trap: the label would be
-// a claim the page does not honour. (No AIF unit resolves an NSE symbol, so no
-// quote would ever touch these rows anyway — but the source is what makes the
-// label true, not the coincidence.)
+// contract — so it reads `statementPortfolio`, and that has NOT changed.
+//
+// What HAS changed is that it no longer says so: the `<BasisPill statement>` was
+// removed at the family's request (see the note above the header below). The
+// pill was the LABEL; `statementPortfolio` is the guarantee, and swapping the
+// source while keeping the label was always the trap — the label would be a
+// claim the page does not honour. Removing the label leaves the claim true and
+// unstated, which is weaker and is recorded rather than glossed. What makes it
+// cost almost nothing HERE is measurable: no AIF unit resolves an NSE symbol, so
+// no quote would ever touch these rows even on the live portfolio, and
+// `check:pages` asserts that premise instead of trusting it.
 
 export function PrivateMarket() {
   const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
@@ -136,13 +141,42 @@ export function PrivateMarket() {
 
   return (
     <div>
-      <PageHeader eyebrow="Daily" title="Private Market"
-        subtitle={`Every private-market holding the statements in this drop report — ${m.funds.length} funds across ${m.scope.accounts.length} accounts and ${m.owners.length} owners — the capital committed to them, and the folios whose fund publishes no valuation at all.`}
-        right={<div className="flex flex-wrap items-center gap-2">
-          <BasisPill statement liveText="Statement marks"
-            hint="Every mark here is the fund's own, from its capital account or unit statement. No quote feed prices an AIF unit, so nothing on this page moves with the market." />
-          <Pill tone="info">{m.funds.length} funds · {m.scope.accounts.length} accounts</Pill>
-        </div>} />
+      {/*
+        NO SUBTITLE AND NO PILL ROW, at the family's request — and the audit that
+        preceded the removal is the whole of why it was safe.
+
+        The subtitle said what the page is (its title does) and counted its
+        funds, accounts and owners. TWO OF THE THREE were already stated by the
+        tables: the fund table's footer reads `Total · N funds`, and the By-owner
+        rollup ENUMERATES the owners, which is stronger than counting them. The
+        ACCOUNTS count was nowhere else, so it moved onto the Private market
+        value tile — a fact about that figure's breadth belongs on the figure.
+
+        THE PILLS WERE `<BasisPill statement>` AND A COUNT, AND LOSING THE FIRST
+        COSTS LESS HERE THAN ANYWHERE ELSE IN THE APP — measured, not assumed:
+
+          · the LABEL. `statementPortfolio` is still the source and that is what
+            the guarantee actually rests on (§6's correctness half). What the
+            label added was the reader being TOLD. On this page no row could
+            drift even if it read the live portfolio: not one private holding
+            resolves an NSE symbol, so no quote would ever touch these rows.
+            `check:pages` asserts that premise rather than trusting it, so a
+            drop that brings a quotable private holding fires rather than
+            silently making this paragraph false.
+          · the DATE. `<BasisPill>` dates a consolidated figure `portfolio.asOf`
+            — the newest report date in the whole book, two weeks ahead of every
+            mark on this page. The derived spread below ("Marks span … → …")
+            was always the truer statement, and it stays. Losing the pill's date
+            is a gain here, which is the same argument `Polycab.tsx` makes at
+            length for never having used the component at all.
+          · `N accounts behind` is about the BOOK's accounts, not this page's.
+
+        Capital Gains, Data Audit and Ledger Insights keep theirs, and
+        `check:pages` still asserts one of them: a build that deleted the
+        component everywhere would satisfy this removal and silently take the
+        guarantee with it.
+      */}
+      <PageHeader eyebrow="Daily" title="Private Market" />
 
       {/* THE DATE SPREAD, DERIVED — never `portfolio.asOf`, which is newer than
           every mark on this page. */}
@@ -158,7 +192,7 @@ export function PrivateMarket() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Private market value" icon={<Handshake className="h-4 w-4" />}
           value={<Auditable formula={weightFormula(m.privMV, m.bookMV, m.bookMV > 0 ? (m.privMV / m.bookMV) * 100 : null, money, "the consolidated book")}>{money(m.privMV)}</Auditable>}
-          sub={`${m.bookMV > 0 ? fmtPct((m.privMV / m.bookMV) * 100, { decimals: 2 }) : DASH} of the ${money(m.bookMV)} book · each holding counted once`} />
+          sub={`${m.bookMV > 0 ? fmtPct((m.privMV / m.bookMV) * 100, { decimals: 2 }) : DASH} of the ${money(m.bookMV)} book · across ${m.scope.accounts.length} accounts · each holding counted once`} />
 
         <StatTile label="Capital invested" icon={<Wallet className="h-4 w-4" />}
           value={money(m.privCost)}
