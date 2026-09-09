@@ -11663,6 +11663,39 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
  */
 export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
   {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2023-05-04",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 50000000,
+    "invested": 49985550.72,
+    "units": 499855.507,
+    "security": "3P India Equity Fund 1 - Class B1",
+    "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2024-05-31",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 20000000,
+    "invested": 19999000.05,
+    "units": 144363.028,
+    "security": "3P India Equity Fund 1 - Class B1",
+    "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2024-08-14",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "units": 67543.607,
+    "security": "3P India Equity Fund 1 - Class B1",
+    "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2024-09-03",
     "direction": "in",
@@ -12024,6 +12057,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2025-07-15",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 40000000,
+    "invested": 39998000.1,
+    "units": 254130.624,
+    "security": "3P India Equity Fund 1 - Class B1",
+    "securityKey": "3p-india-equity-fund-1-class-b1"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -12532,6 +12576,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2025-10-31",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 45000000,
+    "invested": 44997750.11,
+    "units": 282737.451,
+    "security": "3P India Equity Fund 1 - Class B2",
+    "securityKey": "3p-india-equity-fund-1-class-b2"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-11-11",
     "direction": "out",
@@ -12585,6 +12640,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2025-11-28",
+    "direction": "in",
+    "label": "Subscription",
+    "amount": 120000000,
+    "invested": 119994000.3,
+    "units": 767615.745,
+    "security": "3P India Equity Fund 1 - Class B3",
+    "securityKey": "3p-india-equity-fund-1-class-b3"
   },
   {
     "accountId": "green-lantern-capital-llp-510861",
@@ -12893,6 +12959,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "3p-investment-managers-3000048",
+    "date": "2026-07-31",
+    "direction": "out",
+    "label": "Full Units Redemption",
+    "amount": 310582835.17,
+    "invested": null,
+    "units": -2053614.026,
+    "security": "3P India Equity Fund 1 - Class B3",
+    "securityKey": "3p-india-equity-fund-1-class-b3"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",

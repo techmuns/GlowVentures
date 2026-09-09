@@ -116,9 +116,9 @@ Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated
 
 ## The family's own dated investments
 
-**20** dated contribution(s) totalling **1,93,00,00,000** and **94** withdrawal(s) totalling **2,85,903.85**, across **10 of 51** account(s).
+**26** dated contribution(s) totalling **2,21,50,00,000** and **95** withdrawal(s) totalling **31,08,68,739.02**, across **11 of 51** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 41 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 40 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **7** position(s), of which **2** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
@@ -425,3 +425,6 @@ never guessed into the nearest plausible bucket.
 - unrealised short/long-term split is populated on 3 of 371 position(s), across 1 of 51 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
+- no per-contribution breakdown for 3p-india-equity-fund-1-class-b1 in 3p-investment-managers-3000048: the 965892.766 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. Where the units went is on the statement's own dated table, in the archive.
+- no per-contribution breakdown for 3p-india-equity-fund-1-class-b2 in 3p-investment-managers-3000048: the 282737.451 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. Where the units went is on the statement's own dated table, in the archive.
+- no per-contribution breakdown for 3p-india-equity-fund-1-class-b3 in 3p-investment-managers-3000048: the 767615.745 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.

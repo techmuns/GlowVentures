@@ -7,7 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, isRedeemedToNil, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
@@ -522,6 +522,33 @@ export function HoldingsBehind() {
                                 )}
                                 {showBucket && (
                                   <span className="text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(g.rows[0], engagementOf(accIdx, g.rows[0])))}</span>
+                                )}
+                                {/*
+                                  WHY THIS ROW IS ALL ZEROS, ON THE ROW.
+
+                                  The Portfolio Monitor lists CURRENT holdings and
+                                  leaves a closed position out; this page lists the
+                                  set behind a figure, and Positions counts 371
+                                  including the closed ones — so the ₹0 rows still
+                                  render here and still need to say the zero is a
+                                  MEASUREMENT rather than a feed nobody wired. That
+                                  is where the monitor's own pill went when its row
+                                  stopped existing. It fires only where EVERY line
+                                  behind the row is closed: one class redeemed
+                                  beside another still held is not a closed row,
+                                  and saying so would write off money the family
+                                  still has.
+                                */}
+                                {g.rows.every(isRedeemedToNil) && (
+                                  // Keyed on the SECURITY, not on `g.key`, which
+                                  // carries an `S:`/`M:` prefix that says how the
+                                  // row was grouped rather than what it is. The
+                                  // claim is about a security the book reports at
+                                  // nil, so it is struck on the book's own key.
+                                  <span data-hb-redeemed={g.rows[0].securityKey}
+                                    title="Every unit of this fund has been redeemed: its own statement reports zero units held and still publishes a NAV, so the ₹0 is what the fund measured rather than a figure this book is missing. It is not listed on the Portfolio Monitor, which shows current holdings; the money that came back is on Transactions → My investments.">
+                                    <Pill tone="warn">redeemed</Pill>
+                                  </span>
                                 )}
                               </div>
                             </td>

@@ -23,7 +23,7 @@ import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
-import { trancheTable, capitalRollup, capitalTotals, type TrancheTable } from "@/lib/tranches";
+import { trancheTable, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_POLYCAB } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
@@ -50,7 +50,7 @@ import { Auditable } from "@/components/Auditable";
 // for that, and a future session that gives `weightFormula` a way to express a
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
-import type { Position } from "@/lib/types";
+import type { CapitalMove, Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 
 /**
@@ -80,7 +80,6 @@ type Venue = {
   cls: string | null;
   securityKey: string;
   /** This line's fund still publishes a NAV and the family holds no units of it. */
-  redeemed: boolean;
   /** The strategy the manager runs, or the platform that holds the account. */
   vehicle: string;
   owner: string;
@@ -154,13 +153,6 @@ type Row = {
    * nothing, where clubbing three rows into one is the whole request.
    */
   fundClasses: string[];
-  /**
-   * EVERY holding behind this row is redeemed to nil units — all of them, never
-   * some. A row where one class has been redeemed and another is still held is
-   * not a redeemed row, and saying so would write off money the family still
-   * has; the per-class lines in the expansion carry it individually.
-   */
-  redeemed: boolean;
   // Cost and the two figures derived from it are NULLABLE for the same reason
   // the per-unit ones are: a depository holding statement reports a value and no
   // cost. `costNA` stays the flag the cells switch on; the values themselves are
@@ -676,8 +668,42 @@ export function PortfolioMonitor() {
     for (const p of positions) m.set(p.securityKey, p.sector);
     return m;
   }, [positions]);
+  /**
+   * WHAT THE FAMILY NO LONGER HOLDS, AND WHY IT LEAVES THIS TABLE.
+   *
+   * *"In the holdings page we only need to show the current holdings. Since the
+   * 3P fund is redeemed, we need to show it in the transactions page as sold
+   * transaction."*
+   *
+   * A fund that has paid the family out reports 0.000 units at a NAV it goes on
+   * publishing. That zero is MEASURED and it stays in the book — it is what
+   * `isRedeemedToNil` was written to say out loud, and it is what lets the
+   * redemption be shown as a movement rather than as a hole. What the family are
+   * saying is that a closed position is not a holding, and a table headed
+   * Holdings should not list one.
+   *
+   * SO IT IS DROPPED AT THE BASE OF THE ROW BUILD, before the filters, the
+   * weight denominator, the footer set and the section subtotals — the one place
+   * that makes every figure below it consistent by construction, which is how
+   * the ring-fence is applied one layer up.
+   *
+   * IT MOVES NO MONEY. Measured on this book: 5 rows across 2 accounts, every
+   * one of them ₹0 of market value and no reported cost. What changes is the row
+   * count and the section counts, and the rows are NAMED under the table rather
+   * than silently gone — this book shows what it can and names the rest.
+   */
+  const closed = useMemo(() => positions.filter(isRedeemedToNil), [positions]);
+  const closedNote = useMemo(() => {
+    if (!closed.length) return null;
+    const funds = [...new Set(closed.map((p) => splitFundClass(p.security)?.fund ?? p.security))];
+    return { count: closed.length, accounts: new Set(closed.map((p) => p.accountId)).size, funds };
+  }, [closed]);
+
   const { rows, totMV, totCost, totPnL, rawMV, weightBase, weightCount, bucketTotals } = useMemo(() => {
-    let base = positions;
+    // Closed positions first, so nothing downstream has to remember to exclude
+    // them: the filters, the weight base, the footer and every section subtotal
+    // are struck over what the family actually holds.
+    let base = positions.filter((p) => !isRedeemedToNil(p));
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
     /**
@@ -794,7 +820,7 @@ export function PortfolioMonitor() {
         heldSince: null,
         // A MANDATE IS NEVER "REDEEMED": it is an account, and an account that
         // holds nothing says so through `noPositionsReason` on its own page.
-        fundClasses: [], redeemed: false,
+        fundClasses: [],
         trancheSet: [],
         key: "mandate:" + accountId,
         /**
@@ -961,13 +987,12 @@ export function PortfolioMonitor() {
          */
         const fundClasses = clubbedClassesOf(ps);
         const perUnit = fundClasses.length === 0;
-        const redeemed = ps.every((x) => isRedeemedToNil(x));
         return {
           kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
           key: ps[0].securityKey, security: fundClasses.length ? splitFundClass(ps[0].security)!.fund : ps[0].security,
           securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
-          fundClasses, redeemed,
+          fundClasses,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: perUnit ? qty : null,
           avgCost: perUnit && !costNA && qty > 0 ? (cost as number) / qty : null,
           currentPrice: perUnit ? ps[0].currentPrice : null,
@@ -1024,7 +1049,7 @@ export function PortfolioMonitor() {
         kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, p),
         groupSource: groupSourceFor(groupAxis, accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
-        entities: [ownerOf(accIdx, p)], fundClasses: [], redeemed: isRedeemedToNil(p), quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
+        entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
@@ -1105,7 +1130,7 @@ export function PortfolioMonitor() {
             securityKey: e.key,
             // A derived look-through row stands for a company inside a fund, so
             // there is no unit class to club and none to name.
-            fundClasses: [], redeemed: false,
+            fundClasses: [],
             sector: "",
             assetClass: "Equity",
             entities: [],
@@ -1972,22 +1997,25 @@ export function PortfolioMonitor() {
                                 <>{" "}<span className="ml-1 align-middle"><Pill>{r.fundClasses.length} unit classes</Pill></span></>
                               )}
                               {/*
-                                WHY THE ROW IS ALL ZEROS, ON THE ROW.
+                                THE `redeemed` PILL WAS HERE AND IS GONE, BECAUSE
+                                THE ROW IT EXPLAINED IS GONE.
 
+                                It was the right answer to the previous round —
                                 *"the 3P funds … are lacking invested and current
-                                market value figures, so please check why they
-                                are missing."* They are not missing: the fund
-                                redeemed every unit and still publishes a NAV, so
-                                the ₹0 is a MEASUREMENT. Without this the row is
-                                a line of dashes that reads as a broken feed —
-                                which is exactly how it was read.
+                                market value figures"* — where the fix was to say
+                                ON THE ROW that the ₹0 is a MEASUREMENT. The
+                                family's next answer supersedes it: *"in the
+                                holdings page we only need to show the current
+                                holdings"*, so a closed position is not listed
+                                here at all and there is no row left to pill.
+                                Left as code it could never fire — the row build
+                                filters those positions out before anything sees
+                                them — which is the dead-code-that-looks-alive
+                                failure this book keeps naming. The measured zero
+                                is still stated under the table by `closedNote`,
+                                and a closed row still RENDERS on `/holdings`,
+                                where it carries the explanation instead.
                               */}
-                              {r.redeemed && (
-                                <>{" "}<span className="ml-1 align-middle" data-redeemed={r.securityKey}
-                                  title={`Every unit of this fund has been redeemed: its own statement reports zero units held and still publishes a NAV, so the ₹0 is what the fund measured rather than a figure this book is missing.${r.fundClasses.length ? " Open the row for each class." : ""}`}>
-                                  <Pill tone="warn">redeemed</Pill>
-                                </span></>
-                              )}
                             </span>
                           )}
                         </td>
@@ -2490,9 +2518,6 @@ export function PortfolioMonitor() {
                                           {v.cls
                                             ? <StockLink securityKey={v.securityKey} name={v.cls} />
                                             : <AbsentCell reason="this line's statement names no unit class for the holding" />}
-                                          {v.redeemed && (
-                                            <>{" "}<span className="ml-1 align-middle"><Pill tone="warn">redeemed</Pill></span></>
-                                          )}
                                         </td>
                                       )}
                                       <td className="px-3 py-1.5 text-slate-300 whitespace-nowrap">{v.route}</td>
@@ -2894,6 +2919,26 @@ export function PortfolioMonitor() {
               with a dated history still opens its contribution breakdown — so
               nothing measurable was lost. `check:pages` asserts the note stays
               gone rather than deleting the check with the prose. */}
+          {/*
+            A CLOSED POSITION IS NAMED, NEVER SILENTLY GONE.
+
+            Dropping a row and saying nothing is the same defect as showing a ₹0
+            one: a reader who knew the family held 3P and cannot find it learns
+            the dashboard lost it. This says what left, what it was worth, and
+            where the money went — which is the sentence the family's own
+            complaint was made of.
+          */}
+          {closedNote && (
+            <p data-closed-note className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">{closedNote.count === 1 ? "One position is" : `${closedNote.count} positions are`} closed
+              and not listed above</span> — {closedNote.funds.join(", ")}, across {closedNote.accounts === 1 ? "one account" : `${closedNote.accounts} accounts`}. Each
+              stands at zero units at a NAV its fund still publishes, so it is a MEASURED zero rather than a figure
+              nobody struck, and it is worth nothing: leaving it out moves no total on this page. What the family
+              paid in and what came back out is on{" "}
+              <span className="font-medium text-slate-400">Transactions → My investments</span>, where a redemption
+              is a dated movement under <span className="font-medium text-slate-400">Taken out</span>.
+            </p>
+          )}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
@@ -3065,7 +3110,6 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       accountId, accountNo: acc?.accountNo ?? "",
       cls: splitFundClass(xs[0].security)?.cls ?? null,
       securityKey: xs[0].securityKey,
-      redeemed: xs.every((x) => isRedeemedToNil(x)),
       // `mandateLabel` is strategy-or-provider, which is the right name for BOTH
       // a mandate ("Aristos Equity Portfolio") and a demat ("Motilal Oswal demat").
       vehicle: mandateLabel(acc),
@@ -3144,7 +3188,7 @@ const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
  * merge, and simpler here because the family asked the question in exactly
  * those terms.
  */
-function MyInvestments({ from, to, entity }: { from: string; to: string; entity: string }) {
+function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSide }) {
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const toggle = (k: string) =>
@@ -3155,29 +3199,23 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
   const positions = portfolio?.positions ?? [];
   const accIdx = useMemo(() => accountIndex(accounts), [accounts]);
 
-  // The page's own date and entity filters apply here too — a reader who has
-  // narrowed to one member must not be shown another's capital.
-  const moves = useMemo(() => BOOK_CAPITAL_MOVES.filter((m) => {
-    if (from && m.date < from) return false;
-    if (to && m.date > to) return false;
-    if (entity !== "All") {
-      const a = accIdx.get(m.accountId);
-      if (!a || ownerDisplayName(a.ownerId) !== entity) return false;
-    }
-    return true;
-  }), [from, to, entity, accIdx]);
-
+  // THE DATE AND ENTITY FILTERS ARE APPLIED BY THE CALLER, and the moves arrive
+  // already narrowed. They used to be applied here, which made the counter above
+  // this table a SECOND filtering of the same set — two definitions of "the
+  // movements in view", free to disagree the first time either changed.
   const groups = useMemo(
-    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES),
-    [moves, accounts, positions],
+    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES, side),
+    [moves, accounts, positions, side],
   );
   const totals = useMemo(() => capitalTotals(groups), [groups]);
 
   if (!groups.length) {
     return (
       <Card className="flex min-h-0 flex-1 items-center justify-center">
-        <AbsentSection what="No dated contribution matches these filters"
-          needs="This view reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund. Widen the dates or clear the entity filter; and note that 41 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
+        <AbsentSection what={side === "out" ? "No money came back out of any account under these filters"
+          : side === "in" ? "No dated contribution matches these filters"
+          : "No dated movement matches these filters"}
+          needs="This view reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund, and what came back. Widen the dates, clear the entity filter or switch the side back to All; and note that 40 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
       </Card>
     );
   }
@@ -3213,6 +3251,7 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
               return (
                 <Fragment key={g.accountId}>
                   <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
+                    data-mine-withdrawals={g.withdrawals}
                     className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
                     <td className="px-3 py-2">
                       {/*
@@ -3250,26 +3289,64 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
                     {/* THE ASK, ANSWERED IN ONE CELL. A count of dated
                         contributions is the whole of "lumpsum or staggered". */}
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <span className="pill" data-mine-how={g.staggered ? "staggered" : "lumpsum"}>
-                        {g.staggered ? `staggered · ${g.contributions} payments` : "lumpsum"}
-                      </span>
+                      {side === "out"
+                        // "Lumpsum or staggered" is a fact about how the money
+                        // went IN. Under a redemptions filter there is no
+                        // contribution in view to describe, so the cell counts
+                        // what IS in view rather than printing "lumpsum" over a
+                        // row showing no purchase at all.
+                        ? <span className="pill" data-mine-how="withdrawals">
+                          {g.withdrawals === 1 ? "1 withdrawal" : `${g.withdrawals} withdrawals`}
+                        </span>
+                        : <span className="pill" data-mine-how={g.staggered ? "staggered" : "lumpsum"}>
+                          {g.staggered ? `staggered · ${g.contributions} payments` : "lumpsum"}
+                        </span>}
                     </td>
-                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">{money(g.paidIn)}</td>
+                    {/* A SIDE WITH NOTHING IN VIEW IS ABSENT, NEVER ₹0. Under a
+                        Taken-out filter this row has no contribution in view, and
+                        a ₹0 there reads as an account that was never funded —
+                        which is the measured-zero rule failing in the direction
+                        that invents a fact rather than hides one. */}
+                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
+                      {g.contributions === 0
+                        ? <AbsentCell reason="no contribution is in view — the movements are filtered to what came back out, and this account's paid-in figure is not struck over that" />
+                        : money(g.paidIn)}
+                    </td>
                     <td className="px-3 py-2 text-right mono text-slate-400 whitespace-nowrap">
                       {g.withdrawals === 0
-                        ? <span className="text-slate-600">—</span>
+                        ? <AbsentCell reason={g.sideFiltered
+                          ? "no withdrawal is in view — the movements are filtered to what was paid in"
+                          : "no statement for this account reports money coming back out"} />
                         : money(g.tookOut)}
                     </td>
-                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">{money(g.net)}</td>
-                    <td className="px-3 py-2 text-right mono text-slate-100 whitespace-nowrap">{money(g.value)}</td>
+                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
+                      {g.net === null
+                        ? <AbsentCell reason="the movements are filtered to one side, and a net over one side of a two-sided record is not a net — clear the side filter to strike it" />
+                        : money(g.net)}
+                    </td>
+                    {/* A CLOSED ACCOUNT IS WORTH ₹0 AND THE ZERO IS MEASURED.
+                        It keeps its zero — the fund reports nil units at a NAV
+                        it still publishes — and says so, because a ₹0 beside a
+                        ₹31.1 Cr redemption is exactly where a reader needs to
+                        know whether the figure is the arithmetic or a gap. */}
+                    <td className="px-3 py-2 text-right mono text-slate-100 whitespace-nowrap"
+                      title={g.value === 0
+                        ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                        : undefined}>
+                      {money(g.value)}
+                    </td>
                     <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.gain === null ? "" : changeColor(g.gain)}`}>
                       {g.gain === null
-                        ? <AbsentCell reason={g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                        ? <AbsentCell reason={g.sideFiltered
+                          ? "the movements are filtered to one side; a gain is struck against the account's whole capital record, so it is not published over part of it"
+                          : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
                         : money(g.gain)}
                     </td>
                     <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.returnPct === null ? "" : changeColor(g.returnPct)}`}>
                       {g.returnPct === null
-                        ? <AbsentCell reason={g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                        ? <AbsentCell reason={g.sideFiltered
+                          ? "the movements are filtered to one side; a return is struck against the account's whole capital record, so it is not published over part of it"
+                          : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
                         : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(g.returnPct)}</>}
                     </td>
                     <td className="px-3 py-2 text-[12px] text-slate-400 whitespace-nowrap">{ownerDisplayName(accIdx.get(g.accountId)?.ownerId ?? null) || g.owner}</td>
@@ -3339,10 +3416,24 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
                 title={`${totals.accounts} of this book's ${accounts.length} accounts publish a dated capital record. The other ${accounts.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so this total is not the whole of what the family has committed.`}>
                 Total · {totals.accounts} of {accounts.length} accounts
               </td>
-              <td className="px-3 py-2 text-right text-[12px] text-slate-400 whitespace-nowrap">{totals.contributions} payments</td>
-              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.paidIn)}</td>
-              <td className="px-3 py-2 text-right mono font-medium text-slate-400 whitespace-nowrap">{money(totals.tookOut)}</td>
-              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.net)}</td>
+              <td className="px-3 py-2 text-right text-[12px] text-slate-400 whitespace-nowrap">
+                {side === "out" ? `${totals.withdrawals} withdrawals` : `${totals.contributions} payments`}
+              </td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">
+                {totals.contributions === 0
+                  ? <AbsentCell reason="no contribution is in view under this side filter" />
+                  : money(totals.paidIn)}
+              </td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-400 whitespace-nowrap">
+                {totals.withdrawals === 0
+                  ? <AbsentCell reason="no withdrawal is in view under this side filter" />
+                  : money(totals.tookOut)}
+              </td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">
+                {totals.net === null
+                  ? <AbsentCell reason="every row's net is withheld under a side filter, so there is nothing to total" />
+                  : money(totals.net)}
+              </td>
               <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.value)}</td>
               <td className="px-3 py-2" colSpan={4} />
             </tr>
@@ -3364,7 +3455,15 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[] | null>(null);
   const [meta, setMeta] = useState({ buys: 0, sells: 0 });
-  const [side, setSide] = useState<"all" | "Buy" | "Sell">("all");
+  /**
+   * WHICH SIDE OF THE RECORD IS IN VIEW — one state, read by every view.
+   *
+   * It is kept in the DIRECTION vocabulary (`in`/`out`) rather than the tape's
+   * (`Buy`/`Sell`) because the tape is one of five views and the other four are
+   * not trades. The tape maps it at the point it filters; the labels are chosen
+   * where they are rendered.
+   */
+  const [side, setSide] = useState<CapitalSide>("all");
   /**
    * WHAT THE FAMILY DID IS THE DEFAULT — not what their managers did.
    *
@@ -3422,10 +3521,31 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
     setPreset("custom");
   };
 
+  /**
+   * THE FAMILY'S OWN MOVEMENTS IN VIEW — filtered ONCE, here, and read by both
+   * the counter above the table and the table itself. The side is NOT applied:
+   * the counter states both sides so a reader can see what the filter would do
+   * before they click it.
+   */
+  const mineIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio?.accounts]);
+  const mineMoves = useMemo(() => BOOK_CAPITAL_MOVES.filter((m) => {
+    if (from && m.date < from) return false;
+    if (to && m.date > to) return false;
+    if (entity !== "All") {
+      const a = mineIdx.get(m.accountId);
+      if (!a || ownerDisplayName(a.ownerId) !== entity) return false;
+    }
+    return true;
+  }), [from, to, entity, mineIdx]);
+  const mineCount = useMemo(() => ({
+    in: mineMoves.filter((m) => m.direction === "in").length,
+    out: mineMoves.filter((m) => m.direction === "out").length,
+  }), [mineMoves]);
+
   const filtered = useMemo(() => {
     if (!txns) return [];
     return txns.filter((t) =>
-      (side === "all" || t.side === side) &&
+      (side === "all" || t.side === (side === "in" ? "Buy" : "Sell")) &&
       // Matched on the CANONICAL owner, not on the account label: the label
       // prints the owner's name as that statement spelled it ("Ajay Thakurdas
       // Jaisinghani"), and the filter offers the canonical one ("Ajay
@@ -3538,11 +3658,30 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             </optgroup>
           ))}
         </select>
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm">
-          {(["all", "Buy", "Sell"] as const).map((v) => (
-            <button key={v} type="button" onClick={() => setSide(v)}
+        {/*
+          ONE FILTER, TWO VOCABULARIES, AND THE CONTROL TAKES THE CALLER'S.
+
+          *"When I'm clicking on sell/buy filter, nothing is changing on the
+          page."* It was true, and on the DEFAULT view: `side` was never passed
+          to `MyInvestments`, so clicking moved the counter beside it — which
+          reads the manager's tape — while the table under it did not move.
+
+          A family movement has no buy and no sell. It has money in (a
+          subscription) and money out (a redemption, which is what the family
+          went looking for 3P under). Those are the same two sides under the
+          words the columns already use, so the labels follow the view rather
+          than asserting the tape's vocabulary over a table headed Paid in /
+          Taken out — `MultiSelectFilter`'s own `unit` lesson, one control over.
+        */}
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm"
+          data-side-filter={side}
+          title={groupBy === "mine"
+            ? "Paid in is money the family put into an account; Taken out is money that came back — a redemption or a payout, as the statement types it."
+            : "Buys and sells as the transaction statements print them."}>
+          {(["all", "in", "out"] as const).map((v) => (
+            <button key={v} type="button" data-side-option={v} onClick={() => setSide(v)}
               className={`rounded px-3 py-1.5 font-medium transition-colors ${side === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
-              {v === "all" ? "All" : v === "Buy" ? "Buys" : "Sells"}
+              {v === "all" ? "All" : groupBy === "mine" ? (v === "in" ? "Paid in" : "Taken out") : (v === "in" ? "Buys" : "Sells")}
             </button>
           ))}
         </div>
@@ -3559,11 +3698,23 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-slate-500">{filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells</span>
+        {/*
+          A COUNTER MUST COUNT WHAT IS ON SCREEN. This read the manager's TAPE
+          on every view, so the default view — the family's own capital, ten
+          rows — sat under "284 buys · 178 sells", a count of a set it does not
+          draw. It is the caption-does-not-describe-its-figure failure arriving
+          in a counter, and it is also why the dead side filter looked alive:
+          clicking moved this number and nothing else.
+        */}
+        <span className="ml-auto text-xs text-slate-500" data-txn-counter>
+          {groupBy === "mine"
+            ? `${mineCount.in.toLocaleString("en-IN")} paid in · ${mineCount.out.toLocaleString("en-IN")} taken out`
+            : `${filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · ${filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells`}
+        </span>
       </div>
 
       {groupBy === "mine" ? (
-        <MyInvestments from={from} to={to} entity={entity} />
+        <MyInvestments moves={mineMoves} side={side} />
       ) : groupBy !== "tape" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">

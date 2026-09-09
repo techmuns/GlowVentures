@@ -1,0 +1,125 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2023-05-04",
+   "3P India Equity Fund 1 - Class B1",
+   "Subscription",
+   "contribution",
+   50000000,
+   49985550.72,
+   499855.507,
+   499855.507
+  ],
+  [
+   "2024-05-31",
+   "3P India Equity Fund 1 - Class B1",
+   "Subscription",
+   "contribution",
+   20000000,
+   19999000.05,
+   144363.028,
+   644218.535
+  ],
+  [
+   "2024-08-14",
+   "3P India Equity Fund 1 - Class B1",
+   "Subscription",
+   "contribution",
+   10000000,
+   9999500.02,
+   67543.607,
+   711762.142
+  ],
+  [
+   "2025-07-15",
+   "3P India Equity Fund 1 - Class B1",
+   "Subscription",
+   "contribution",
+   40000000,
+   39998000.1,
+   254130.624,
+   965892.766
+  ],
+  [
+   "2026-03-31",
+   "3P India Equity Fund 1 - Class B1",
+   "Reclassification Out",
+   "reclassification",
+   -137867090.31,
+   "",
+   -965892.766,
+   0
+  ],
+  [
+   "2025-10-31",
+   "3P India Equity Fund 1 - Class B2",
+   "Subscription",
+   "contribution",
+   45000000,
+   44997750.11,
+   282737.451,
+   282737.451
+  ],
+  [
+   "2026-03-31",
+   "3P India Equity Fund 1 - Class B2",
+   "Reclassification Out",
+   "reclassification",
+   -40634743.72,
+   "",
+   -282737.451,
+   0
+  ],
+  [
+   "2025-11-28",
+   "3P India Equity Fund 1 - Class B3",
+   "Subscription",
+   "contribution",
+   120000000,
+   119994000.3,
+   767615.745,
+   767615.745
+  ],
+  [
+   "2026-03-31",
+   "3P India Equity Fund 1 - Class B3",
+   "Reclassification In",
+   "reclassification",
+   40634743.72,
+   "",
+   292748.872,
+   1060364.617
+  ],
+  [
+   "2026-03-31",
+   "3P India Equity Fund 1 - Class B3",
+   "Reclassification In",
+   "reclassification",
+   137867090.31,
+   "",
+   993249.409,
+   2053614.026
+  ],
+  [
+   "2026-07-31",
+   "3P India Equity Fund 1 - Class B3",
+   "Full Units Redemption",
+   "withdrawal",
+   -310582835.17,
+   "",
+   -2053614.026,
+   0
+  ]
+ ]
+}
