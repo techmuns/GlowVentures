@@ -209,6 +209,58 @@ const SECURITY_AXIS_BOOK = (() => {
 })();
 
 /**
+ * ── WHAT A NON-SECURITY AXIS MUST OFFER, off the book ──────────────────────
+ *
+ * Every axis but `security` lifts the PMS mandates out into one row each and
+ * clubs everything ELSE by security, so the statements those rows are built
+ * from are exactly the non-mandate positions. Each row's expansion lists one
+ * line per ACCOUNT, so:
+ *
+ *     Σ (venue counts over the non-mandate rows) === non-mandate positions
+ *
+ * — an EXACT identity, measured 90 = 90 on this book, needing no re-derivation
+ * of the bucket key. A row build that dropped a statement or listed one twice
+ * lands elsewhere; so does one that stopped offering the expansion at all,
+ * because the sum then falls to zero.
+ *
+ * `multi` is the count with something to say — more than one account behind the
+ * row — which is what the walk below opens.
+ */
+const AXIS_VENUE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    // `isMandateHeld`, re-derived rather than imported: a check that imports the
+    // helper it is checking agrees with it by construction.
+    const rest = positions.filter((p) => acc.get(p.accountId)?.engagement !== "PMS");
+    const pairs = new Set(rest.map((p) => `${p.securityKey}\u0000${p.accountId}`));
+    /**
+     * ...AND THE HOLDING WHOSE PANEL HAS THE MOST TO GET WRONG: one reported by
+     * TWO accounts under one `dedupeGroup`, so the row counts it ONCE and the
+     * panel lists it TWICE. Every other row's raw and deduped totals coincide,
+     * which is exactly the condition under which a panel dividing by the wrong
+     * one still prints 100% — so the walk opens this row rather than whichever
+     * happens to sort first. Named from the book, so the next drop picks its own.
+     */
+    const byKey = new Map();
+    for (const p of rest) {
+      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
+      byKey.get(p.securityKey).push(p);
+    }
+    let overlapKey = null;
+    for (const [key, ps] of byKey) {
+      const accts = new Set(ps.map((x) => x.accountId));
+      const groups = new Set(ps.filter((x) => x.dedupeGroup).map((x) => x.dedupeGroup));
+      if (accts.size > 1 && groups.size > 0) { overlapKey = key; break; }
+    }
+    return { statements: rest.length, pairs: pairs.size, overlapKey };
+  } catch { return null; }
+})();
+
+/**
  * ── WHICH NAME THE FUND LOOK-THROUGH IS WALKED ON, AND WHAT IT MUST SAY ─────
  *
  *   "Then I drill down, then you tell me direct you hold X Cr through direct
@@ -485,6 +537,22 @@ const FUNDED_ACCOUNTS = (() => {
     const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
     if (!Array.isArray(moves)) return null;
     return new Set(moves.map((m) => m.accountId)).size;
+  } catch { return null; }
+})();
+
+/**
+ * ...AND HOW MANY ACCOUNTS THE BOOK HOLDS ALTOGETHER — the denominator the
+ * My-investments total now prints beside its own count.
+ *
+ * Off `glowData.ts` for the reason above: the page derives BOTH halves of
+ * "10 of 51" from the same two arrays, so comparing them with each other could
+ * not fail. Only the book can say whether either is right.
+ */
+const BOOK_ACCOUNT_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accs = bookArray(src, "BOOK_ACCOUNTS");
+    return Array.isArray(accs) ? accs.length : null;
   } catch { return null; }
 })();
 
@@ -838,6 +906,17 @@ const ROUTES = [
    */
   ["monitor-assetclass", "/monitor?group=assetClass"],
   ["monitor-basket", "/monitor?group=basket"],
+  /**
+   * ...AND ONE OF THOSE SLICES WITH A HOLDING OPENED — *"just like how you have
+   * show individual investments return in the drop down for securities you need
+   * to implement the same for category/asset class/basket as well."*
+   *
+   * The DEFAULT axis, because that is where the family reported it: on Category
+   * the name cell drew no chevron at all, and the per-account expansion was
+   * reachable only on `?group=security`. Walked on the plain route so a
+   * regression cannot hide behind a URL nobody uses.
+   */
+  ["monitor-category-drill", "/monitor"],
   // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
   // one way to reach the stale-filter defect. See the walk step of this name.
   ["monitor-axis-switch", "/monitor"],
@@ -1203,6 +1282,12 @@ let MANDATE_PATH = null;
 let DRILL = null;
 /** The same, for the Direct Equity view — see `monitor-txn-direct`. */
 let DIRECT = null;
+/**
+ * The per-account expansion opened on a NON-SECURITY axis — see
+ * `monitor-category-drill`. Null on every other route, which its invariants
+ * report as NOT CHECKED rather than as a pass.
+ */
+let AXIS_DRILL = null;
 /** What the reloaded, network-less second open rendered — see `cio-cached`. */
 let CACHED = null;
 /** What the opened chat panel rendered — see the `chat` route. */
@@ -2052,6 +2137,46 @@ const axisChecks = (axis, expected) => [
   //    and empty the table without a message.
   [`the section filter offers this axis's own options`, (t) => new RegExp(ALL_LABEL_RE[axis], "i").test(t)],
 ];
+
+/**
+ * ── A HOLDING OPENS THE SAME WAY WHICHEVER AXIS IT IS FILED UNDER ──────────
+ *
+ * *"just like how you have show individual investments return in the drop down
+ * for securities you need to implement the same for category/asset class/basket
+ * as well … so we can see individual investments returns in any selected
+ * filter."*
+ *
+ * The axis decides which SECTION a row sits in and nothing else, so the row's
+ * own expansion cannot be a property of the axis — and it was: `venues` was
+ * computed only on `?group=security`, so on the other three the name cell drew
+ * no chevron and the older per-ENTITY panel below it could not be reached at
+ * all. Spread into all three axis routes, because a fix on one is exactly the
+ * regression this exists to catch.
+ */
+const AXIS_EXPANSION = [
+  ["every clubbed row offers the per-account expansion on this axis", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    const rest = rows.filter((r) => !r.mandate);
+    if (!rest.length) return { notChecked: "this axis drew no clubbed rows" };
+    return rest.every((r) => Number.isFinite(r.venues) && r.venues >= 1);
+  }],
+  /**
+   * ...AND THE COUNTS ADD TO THE STATEMENTS BEHIND THEM — an EXACT identity
+   * against the book (90 = 90 here), not a tolerance. Every non-mandate
+   * position is one line in exactly one row's expansion, so a row build that
+   * dropped a statement or listed one twice lands elsewhere; so does one that
+   * stopped offering the expansion, because the sum falls to zero.
+   */
+  ["...and the venue counts account for every statement behind them", (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+    if (!AXIS_VENUE_BOOK) return { notChecked: "the book could not be read" };
+    const rest = rows.filter((r) => !r.mandate);
+    if (!rest.length) return { notChecked: "this axis drew no clubbed rows" };
+    return rest.reduce((a, r) => a + (r.venues ?? 0), 0) === AXIS_VENUE_BOOK.pairs;
+  }],
+];
 const UNCLASSIFIED_KEY = "Not classified in the family's review";
 const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
 const ALL_LABEL_RE = { "asset class": "All asset classes", basket: "All baskets" };
@@ -2351,37 +2476,80 @@ const INVARIANTS = {
      */
     ["the footer's payment count is the sum of the rows'",
       (t, ctx) => {
-        const m = /Total · (\d+) accounts\t(\d+) payments/.exec(t);
+        const m = /Total · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
         if (!m) return false;
         const rows = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
-        return Number(m[1]) === ctx.mineRows.length && Number(m[2]) === rows;
+        return Number(m[1]) === ctx.mineRows.length && Number(m[3]) === rows;
       }],
 
     /**
-     * A RETURN IS PUBLISHED ONLY WHERE THE CONTRIBUTION LIST PROVABLY REACHES
-     * INCEPTION, and the caption COUNTS how many rows that is rather than
-     * claiming coverage. Both halves: the note states a fraction, and the
-     * fraction matches the rows that actually render one.
+     * ...AND THE FOOTER SAYS HOW MUCH OF THE BOOK IT COVERS, which is the one
+     * thing the removed caption carried that the page did not say anywhere else.
+     *
+     * Read as "Total · 10 accounts", ₹193 Cr is the whole of what this family
+     * has put in. It is not — 41 more accounts were funded and no statement in
+     * this drop says when — so the denominator is on the label the total sits
+     * on, and it is checked against the BOOK's own account count rather than
+     * against another figure the page prints.
      */
-    ["the note counts the rows that can state a return, and it matches them",
+    ["the total names the fraction of the book's accounts it covers",
       (t, ctx) => {
-        const m = /A return is struck only where the contribution list\s+provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "))
-          || /provably reaches inception — (\d+) of (\d+) rows here/.exec(t.replace(/\s+/g, " "));
-        if (!m) return false;
-        return Number(m[1]) === ctx.mineRows.filter((r) => r.hasReturn).length
-          && Number(m[2]) === ctx.mineRows.length;
+        const m = /Total · (\d+) of (\d+) accounts/.exec(t);
+        return !!m && Number(m[1]) === ctx.mineRows.length && Number(m[2]) === BOOK_ACCOUNT_COUNT;
       }],
 
     /**
-     * AND THE NAME OPENS THE MANDATE — the second half of the ask, *"if we
-     * click and open the drill down page of one AIF/PMS then inside that we
-     * should see what all transactions the portfolio manager of that fund has
-     * made"*. Paired label-to-href, never a count of links: a row pointing at
-     * the wrong account satisfies any tally.
+     * AND THE EXPLANATORY FOOTER IS GONE — *"remove the highlighted text from
+     * the dashboard UI"*. Asserted, never merely deleted along with the text:
+     * a removal this book verifies is a removal that stays removed.
      */
-    ["every row's name links to its own mandate",
-      (t, ctx) => ctx.mineRows.length > 0
-        && ctx.mineRows.every((r) => r.href === `/mandate/${r.accountId}`)],
+    ["the removed footer does not come back",
+      (t) => !/These are the family/i.test(t)
+        && !/is not the whole of what the family has committed/i.test(t)
+        && !/provably reaches inception/i.test(t)],
+
+    /**
+     * WHAT THAT FOOTER SAID ABOUT THE RETURN COLUMN IS NOW A PER-ROW CLAIM,
+     * which is the stronger one: a page-wide fraction tells a reader nothing
+     * about the row they are looking at. Every row that withholds a return must
+     * name its own reason — `Absent.tsx`'s contract, and the reason lives in a
+     * `title`, so it is read off the cell rather than the page text.
+     */
+    ["the Return column names the condition it is published under, and every withheld row names its own",
+      (t, ctx) => {
+        if (!ctx.mineRows.length) return { notChecked: "no My-investments rows on this run" };
+        /**
+         * TWO HALVES, AND THE FIRST IS WHY THIS IS NOT VACUOUS.
+         *
+         * Every row in THIS book states a return, so a per-row clause alone
+         * could never fail here — the `golden.mjs` rule, arriving through an
+         * `||`. The general condition therefore has to be somewhere a reader
+         * meeting the FIRST dash can find it, and that is the column head; the
+         * per-row reason is the specific case on top of it. The refusal itself
+         * is exercised on constructed inputs in `tranches.test.ts`, because this
+         * corpus cannot produce a row that fails the gate.
+         */
+        const cols = ctx.mineHead ?? [];
+        if (!cols.length) return { notChecked: "the My-investments header did not parse on this run" };
+        // AT THE COLUMN, not off a page-wide title list — see `mineHead`.
+        const named = (label) => cols.some((c) => new RegExp(`^${label}$`, "i").test(c.text)
+          && /provably reaches the account's inception/i.test(c.title));
+        const rows = ctx.mineRows.every((r) => r.hasReturn || (r.returnReason ?? "").length > 20);
+        return named("Return") && named("Gain") && rows;
+      }],
+
+    /**
+     * AND NO ROW OFFERS A DRILL-DOWN ANY MORE — *"remove the drill down pages
+     * for transactions page in portfolio monitor … since they're empty"*.
+     *
+     * MEASURED: seven of these ten rows are FUND folios (the five Sanshi
+     * accounts and both Transition Venture trusts), and `/mandate/:id` for one
+     * of those can only say it is not a mandate. Struck on every `a[href]` in
+     * the row, not on the handle the link used to carry — that attribute went
+     * with the link, so a check reading it would pass by finding nothing.
+     */
+    ["no row invites a click into a drill-down",
+      (t, ctx) => ctx.mineRows.length > 0 && ctx.mineRows.every((r) => r.links.length === 0)],
 
     /**
      * NO SIDE THAT DID NOT MOVE IS PRINTED AS ₹0. An account that took nothing
@@ -5139,6 +5307,10 @@ const INVARIANTS = {
       if (!d.opened) return { notChecked: "the return dropdown did not open on this pass" };
       return d.rightAligned === true && d.withinViewport === true;
     }],
+    // AND THE DEFAULT AXIS OFFERS THE EXPANSION TOO. Spread rather than
+    // rewritten: the fix was that one axis had it and three did not, so a check
+    // written once and applied to all four is the shape of the claim.
+    ...AXIS_EXPANSION,
   ],
   /**
    * ── "AND ANOTHER Y CRORES THROUGH THESE FIVE FUNDS" ────────────────────────
@@ -5518,8 +5690,130 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS],
-  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS],
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION],
+  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION],
+  /**
+   * ── AND ONE OF THEM ACTUALLY OPENED, ON THE DEFAULT AXIS ──────────────────
+   *
+   * The offer is asserted above on all three axes; this is the panel behind it.
+   * Everything here is struck against the ROW A READER CLICKED — its own printed
+   * market value and its own advertised venue count — rather than against the
+   * book, because the claim is that the expansion accounts for the row it opened
+   * from. A panel that dropped a line from both would reconcile with itself,
+   * which is the Private Market page's PM-1.
+   */
+  "monitor-category-drill": [
+    [...AXIS_EXPANSION[0]],
+    ["the row a reader clicks really opens", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d) return { notChecked: "no clubbed row was opened on this run" };
+      return d.rows.length > 0;
+    }],
+    /**
+     * ONE LINE PER ACCOUNT, matching the count the chevron advertised. The
+     * toggle's own `title` promises "held through N accounts"; a panel drawing
+     * fewer has quietly truncated the very thing it was opened for.
+     */
+    ["it draws exactly the lines its own count advertised", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d) return { notChecked: "no clubbed row was opened on this run" };
+      return d.rows.length === d.expected && d.expected > 1;
+    }],
+    /**
+     * IT IS THE PER-ACCOUNT PANEL, NOT THE PER-ENTITY ONE IT REPLACED.
+     *
+     * Struck on the column headings, which is the only thing that tells them
+     * apart: both list an owning entity and a market value, and the old one led
+     * with "Owning entity" and carried an Avg cost column built from the DEDUPED
+     * positions — so a name reported by two trusts showed a pill reading "2
+     * entities" over a table of one row. This one leads with "Held via", names
+     * the vehicle, and lists every statement as printed.
+     */
+    ["the panel is keyed on the ACCOUNT, with the route and vehicle named", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d) return { notChecked: "no clubbed row was opened on this run" };
+      const head = d.head.map((h) => h.toLowerCase());
+      return head[0] === "held via" && head.includes("vehicle") && head.includes("owning entity")
+        && !head.includes("avg cost");
+    }],
+    /**
+     * AND ITS LINES ACCOUNT FOR THE ROW'S OWN MARKET VALUE — the reconciliation
+     * that makes the panel worth opening. Where the two differ the page must SAY
+     * so, because that gap is a real fact about this book (a holding reported
+     * under two accounts is counted once in the row and listed twice here), and
+     * a reader who divides one printed cell by another and gets a third answer
+     * has found a contradiction no popover rescues.
+     */
+    ["its lines account for the market value the row prints", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d?.rows.length) return { notChecked: "no clubbed row was opened on this run" };
+      const row = moneyCell(d.rowCells?.[COL.mv]);
+      // The panel's Market value column, located by the HEADER rather than by a
+      // literal index — `lib/table.mjs`'s own rule, on the reading side.
+      const i = d.head.findIndex((h) => /^market value$/i.test(h));
+      if (i < 0 || !Number.isFinite(row)) return false;
+      const drawn = d.rows.map((r) => moneyCell(r[i]));
+      if (drawn.some((v) => !Number.isFinite(v))) return false;
+      const printed = drawn.reduce((a, b) => a + b, 0);
+      // One decimal in Cr per cell, so n lines plus the row carry n+1 half-digits.
+      const tol = 0.05 * (drawn.length + 1);
+      /**
+       * WHERE THE TWO DIFFER, THE PANEL'S OWN RECONCILIATION IS WHAT IS CHECKED
+       * — never waived because it exists.
+       *
+       * The first draft passed on `/reported under two accounts/`, which turned
+       * the sentence into an ESCAPE: a panel that dropped a line kept printing
+       * it and reconciled with nothing. Truncating the lines proved it — the
+       * count check fired and this one did not. So the sentence's three figures
+       * are parsed and each is held to what is on screen: the lines add to the
+       * figure it claims, the row is the figure it says the row is, and the
+       * overlap is the difference between them.
+       */
+      const m = /These lines add to ₹([\d,.]+)\s*(Cr|L|K)?\s+because this holding is reported\s+under two accounts; the row above counts it once at ₹([\d,.]+)\s*(Cr|L|K)?\s*\(a ₹([\d,.]+)\s*(Cr|L|K)? overlap\)/i
+        .exec(t.replace(/\s+/g, " "));
+      if (!m) return Math.abs(printed - row) <= tol;
+      const says = crU(m[1], m[2]), once = crU(m[3], m[4]), over = crU(m[5], m[6]);
+      if (![says, once, over].every(Number.isFinite)) return false;
+      return Math.abs(printed - says) <= tol
+        && Math.abs(row - once) <= tol
+        && Math.abs((says - once) - over) <= tol;
+    }],
+    /**
+     * ...AND EACH LINE'S SHARE OF THE HOLDING ADDS TO 100. Struck on the column
+     * the page prints rather than re-derived from the values beside it: a panel
+     * dividing by the ROW's deduped total instead of the lines' own printed sum
+     * lands at 200% on exactly the two holdings this book reports twice.
+     */
+    /**
+     * AND WHERE THE ROW AND ITS LINES DIFFER, THE LEAD SAYS SO — not only the
+     * reconciliation three lines below it.
+     *
+     * The walk opens the book's own overlap row, where the head of the sentence
+     * prints ₹1.71 Cr and the route split in the SAME sentence adds to ₹3.43 Cr.
+     * A reader stops at the first sentence, and two figures for one holding a
+     * clause apart is the contradiction this book's own footer rule names. Only
+     * asserted when the panel really carries an overlap, evidenced by the
+     * reconciliation the page prints rather than by a literal.
+     */
+    ["an overlap is named in the lead, not only in the reconciliation", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d?.rows.length) return { notChecked: "no clubbed row was opened on this run" };
+      if (!/reported\s+under two accounts/i.test(t)) {
+        return { notChecked: "the row opened on this run carries no overlap" };
+      }
+      return /as the statements print it, of which .* is the same holding\s+reported twice/i.test(d.lead.replace(/\s+/g, " "))
+        || /as the statements print it, of which .* is the same holding reported twice/i.test(d.lead.replace(/\s+/g, " "));
+    }],
+    ["the share-of-holding column adds to 100", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d?.rows.length) return { notChecked: "no clubbed row was opened on this run" };
+      const i = d.head.findIndex((h) => /% of holding/i.test(h));
+      if (i < 0) return false;
+      const pcts = d.rows.map((r) => pctCell(r[i]));
+      if (pcts.some((v) => !Number.isFinite(v))) return false;
+      return Math.abs(pcts.reduce((a, b) => a + b, 0) - 100) <= 0.1 * d.rows.length;
+    }],
+  ],
   "monitor-entity": [
     ...CATEGORY_TOTALS,
     ...CATEGORY_TOTAL_NOT_A_HOLDING,
@@ -5925,6 +6219,21 @@ const INVARIANTS = {
     // the table they came from. Each constituent keeps its own page.
     ["each constituent still links to its own company page",
       (t, ctx) => (ctx?.hrefs ?? []).filter((h) => /^\/stock\/./.test(h)).length > 1],
+    /**
+     * AND THE MANAGER'S OWN DEALING IS ON THIS BRANCH — the half of the earlier
+     * ask that put it here (*"if we click and open the drill down page of one
+     * AIF/PMS then inside that we should see what all transactions the portfolio
+     * manager of that fund has made"*). It renders either the collapsed lines or
+     * an absence naming the statement that would carry them, so the card's own
+     * heading is the stable claim; its ROWS are checked on the Transactions
+     * card, which reads the same `rollup`.
+     *
+     * Paired with the `mandate-fund` check below, which requires the opposite.
+     * Neither implies the other: a build that dropped the card everywhere passes
+     * that one, and a build that kept it everywhere passes this one.
+     */
+    ["the manager's own dated dealing is on the mandate branch",
+      (t) => /What the manager traded/i.test(t)],
   ],
   /**
    * ── THE SAME ROUTE, SERVING A FUND FOLIO ──────────────────────────────────
@@ -5942,6 +6251,12 @@ const INVARIANTS = {
    * run — nothing in `src/` links to it, because every `/mandate/` link is
    * gated on `isMandateHeld`. If it resolves to nothing, or to an account that
    * is not on the fund route, these fail rather than skipping.
+   *
+   * THAT SENTENCE WAS BRIEFLY FALSE and is true again. The Transactions card's
+   * My-investments rows linked here for a while, and SEVEN OF ITS TEN ROWS are
+   * fund folios — so a reader following one landed on this branch, under an
+   * empty dealing card. Both are gone; the last check in this block is what
+   * holds the card gone.
    */
   "mandate-fund": [
     ["the address resolved to a fund folio this book carries, not the not-found state",
@@ -5986,6 +6301,25 @@ const INVARIANTS = {
       const links = (ctx?.hrefs ?? []).filter((h) => /^\/stock\/./.test(h)).length;
       return Number.isFinite(named) && named > 0 && named === links && Number.isFinite(crU(m[3], m[4]));
     }],
+    /**
+     * AND NO DEALING CARD ON THIS BRANCH — *"just remove the full drill down
+     * pages since they're empty"*.
+     *
+     * Six of the seven fund folios that reached here report no dealing at all,
+     * so the card was an empty box under an empty page. The seventh, Buoyant
+     * Capital 103473, is the one non-mandate account in this book that issues a
+     * transaction statement — and it is not a My-investments row either, so this
+     * card was never the way into its record. That record is the By manager tab,
+     * which covers all ten accounts the tape reads.
+     *
+     * Struck on all three of the card's own strings, because the removal deleted
+     * a title, an absence and a footer between them: matching only the title
+     * would pass a page still drawing the empty state under a different heading.
+     */
+    ["no dealing card is drawn on a fund folio",
+      (t) => !/What the manager traded/i.test(t)
+        && !/Dated dealing on this account/i.test(t)
+        && !/No dealing is reported for this account/i.test(t)],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
   // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
@@ -6425,6 +6759,55 @@ for (const theme of THEMES) {
           if (await v.count()) { await v.click(); await page.waitForTimeout(900); }
         }
       }
+      /**
+       * A HOLDING OPENED ON THE DEFAULT (CATEGORY) AXIS.
+       *
+       * Picks the row held through the MOST accounts, chosen off the DOM rather
+       * than named here — the same rule as `data-days` and `data-tranche-rows`:
+       * a walk pinned to one security stops exercising the case the moment the
+       * next drop moves the book, and a single-account row has nothing that
+       * could be truncated.
+       */
+      if (name === "monitor-category-drill") {
+        const pick = await page.evaluate((want) => {
+          const rows = [...document.querySelectorAll("tbody tr[data-venues]")]
+            .filter((r) => !r.hasAttribute("data-mandate"));
+          const of = (r) => ({ key: r.getAttribute("data-security-key"), venues: Number(r.getAttribute("data-venues")) });
+          // THE BOOK'S OWN OVERLAP ROW FIRST — the one case where the row's
+          // market value and its lines' printed sum genuinely differ.
+          const named = want && rows.find((r) => r.getAttribute("data-security-key") === want);
+          if (named) return of(named);
+          let best = null;
+          for (const r of rows) {
+            const c = of(r);
+            if (!best || c.venues > best.venues) best = c;
+          }
+          return best;
+        }, AXIS_VENUE_BOOK?.overlapKey ?? null);
+        if (pick?.key) {
+          const btn = page.locator(`tr[data-security-key="${pick.key}"] td:first-child button`).first();
+          if (await btn.count()) { await btn.click(); await page.waitForTimeout(600); }
+          AXIS_DRILL = await page.evaluate((k) => {
+            const row = document.querySelector(`tr[data-security-key="${k}"]`);
+            const panel = row?.nextElementSibling;
+            const cells = (tr) => [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim());
+            return {
+              key: k,
+              // The row's OWN market-value cell, so the panel is reconciled
+              // against the figure a reader clicked rather than against the book.
+              rowCells: row ? cells(row) : null,
+              // Column headings, which is what tells the per-ACCOUNT panel apart
+              // from the per-ENTITY one it replaced: that one led with "Owning
+              // entity" and carried an Avg cost column, this one leads with
+              // "Held via" and carries none.
+              head: panel ? [...panel.querySelectorAll("th")].map((th) => (th.innerText ?? "").trim()) : [],
+              rows: panel ? [...panel.querySelectorAll("tr[data-venue]")].map(cells) : [],
+              lead: (panel?.innerText ?? "").split("\n")[0] ?? "",
+            };
+          }, pick.key);
+          if (AXIS_DRILL) AXIS_DRILL.expected = pick.venues;
+        }
+      }
       // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
       // contributions rather than the first, so a regression that truncates a
       // breakdown cannot be satisfied by a single-tranche row that has nothing
@@ -6830,9 +7213,11 @@ for (const theme of THEMES) {
           accountNo: tr.getAttribute("data-account"),
           holdings: Number(tr.getAttribute("data-holdings")),
           accountHoldings: Number(tr.getAttribute("data-account-holdings")),
-          // The security axis's handles, absent on every other axis — see the
-          // note beside them in PortfolioMonitor for why this row's TEXT cannot
-          // be split reliably on that axis.
+          // THE CLUBBED ROW'S HANDLES, on every axis now — the expansion stopped
+          // being a property of `?group=security`, so these are present wherever
+          // a row is a clubbed security and absent only on a mandate roll-up.
+          // See the note beside them in PortfolioMonitor for why that row's TEXT
+          // cannot be split reliably on the security axis.
           securityKey: tr.getAttribute("data-security-key"),
           venues: tr.hasAttribute("data-venues") ? Number(tr.getAttribute("data-venues")) : null,
           // Every cell, so a claim about a COLUMN is read at its own index
@@ -6855,12 +7240,40 @@ for (const theme of THEMES) {
           accountId: tr.getAttribute("data-mine-row"),
           contributions: Number(tr.getAttribute("data-mine-contributions")),
           how: tr.querySelector("[data-mine-how]")?.getAttribute("data-mine-how") ?? null,
-          href: tr.querySelector("[data-mine-link]")?.getAttribute("href") ?? null,
+          /**
+           * EVERY ANCHOR IN THE ROW, not a named handle.
+           *
+           * This read `[data-mine-link]` — an attribute that lived on the link
+           * itself — so once the link went the selector matched nothing and any
+           * check asserting "no drill-down" would have passed by being unable to
+           * find one, whether or not one was there. The claim is about what a
+           * reader can click, so it is struck on `a[href]`.
+           */
+          links: [...tr.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")),
           // A return renders as a figure; withheld, it renders an AbsentCell
           // whose reason is in a `title`. Read the CELL rather than the text, so
           // "does this row state a return" is answered structurally.
           hasReturn: /%/.test((tr.cells[7]?.innerText ?? "")),
+          // ...and where it is withheld, the cell must NAME why — the reason is
+          // an `AbsentCell` `title`, which no `innerText` sweep can reach.
+          returnReason: tr.cells[7]?.querySelector("[title]")?.getAttribute("title") ?? null,
         })));
+      /**
+       * ...AND THE MY-INVESTMENTS COLUMN HEADS, each with its own `title`.
+       *
+       * A claim about a COLUMN is read at that column, never off a page-wide
+       * list: the first draft of the return-condition check searched every
+       * `title` on the page, and stripping it from the Return head left the
+       * identical sentence on Gain, so the check passed against exactly the
+       * regression it exists for.
+       */
+      const mineHead = FAST ? [] : await page.evaluate(() => {
+        const table = document.querySelector("[data-mine-table]");
+        return table ? [...table.querySelectorAll("thead th")].map((th) => ({
+          text: (th.innerText ?? "").trim(),
+          title: th.getAttribute("title") ?? "",
+        })) : [];
+      });
       const managerRows = FAST ? [] : await page.evaluate(() =>
         [...document.querySelectorAll('tr[data-row="group"]')].map((tr) => ({
           trades: Number(tr.getAttribute("data-trades")),
@@ -7354,7 +7767,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

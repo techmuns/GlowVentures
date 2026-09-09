@@ -6301,26 +6301,22 @@ dated contribution is a lumpsum, more than one is not. No cadence, no tolerance,
 no minimum, which is `txnRollup`'s own reasoning arriving at a question the
 family asked in exactly those terms.
 
-The manager's own dealing keeps its tab AND now sits inside the mandate
-drill-down, which is where the ask puts it. `ManagerTrades` reuses `rollup`
-rather than reimplementing it, so the two surfaces cannot disagree about what a
-manager did.
+The manager's own dealing keeps its tab AND sits inside the MANDATE drill-down,
+which is where the ask puts it. `ManagerTrades` reuses `rollup` rather than
+reimplementing it, so the two surfaces cannot disagree about what a manager did.
 
-**AND IT IS RENDERED ON THE FUND BRANCH TOO, WHICH IS NOT A TIDY-UP.** That page
-early-returns for anything that is not a PMS mandate, and **Buoyant Capital
-103473 is an AIF folio that DOES issue a transaction statement** — one of the
-twelve accounts in this book that does. Rendering the card only on the mandate
-branch would have hidden a whole dealing record behind a routing decision about
-what the account is called.
-
-**AND THE TITLE FOLLOWS THE ROUTE, BECAUSE ON A FUND IT IS NOT THE MANAGER'S
-DEALING.** Buoyant's transaction statement prints `Buoyant Opportunities
-Strategy — Class A4, ₹25 Cr`: the FAMILY subscribing for units, not Buoyant
-trading. Headed *"What the manager traded"* that reads as the manager buying
-₹25 Cr of its own strategy, which is not what happened. A mandate gets that
-heading; everything else gets *"Dated dealing on this account"* and a caption
-saying what the rows are. The caption-does-not-describe-its-figure failure, one
-card title over.
+*(IT WAS ALSO RENDERED ON THE FUND BRANCH, WITH ITS OWN WORDS, AND BOTH HAVE
+SINCE BEEN REMOVED — see Stage 10ai.* The reasoning is kept because it is what
+had to be re-measured before removing it: **Buoyant Capital 103473 is an AIF
+folio that DOES issue a transaction statement**, the one non-mandate account in
+this book that does, and hiding a manager's whole record behind a routing
+decision about what the account is called would have been a real loss. And the
+title followed the route, because Buoyant's statement prints `Buoyant
+Opportunities Strategy — Class A4, ₹25 Cr` — the FAMILY subscribing for units,
+not Buoyant trading — so *"What the manager traded"* over those rows asserts
+something that did not happen. What Stage 10ai measured is that Buoyant is not a
+My-investments row at all, so that card was never the way into its dealing; the
+**By manager** tab is. *The removal is asserted rather than assumed.)*
 
 #### Ask 2 — each investment separately, and why UNITS are the whole of it
 
@@ -6409,6 +6405,151 @@ and the `group-hover` variant did — so a hovered control came back at `#ecdcae
 on white. The sweep had never caught it because nothing in it hovered one; a
 route that CLICKS a toggle leaves it hovered. It covers the Entities pill and
 the mandate links too, which have carried that class all along.
+
+### Stage 10ai — A HOLDING OPENS THE SAME WAY EVERYWHERE, AND THE TRANSACTIONS PAGE STOPS OFFERING AN EMPTY ONE
+
+Three asks, and the first two are the same request seen from either end: the
+Transactions card was offering a way OUT of itself that led nowhere, while the
+Holdings table was refusing one that led somewhere.
+
+#### 1. *"remove the drill down pages for transactions page in portfolio monitor… since they're empty"*
+
+Stage 10ag put a link on each My-investments row, on the reasoning that the
+chevron opens what the FAMILY paid in and the name opens the mandate, where the
+MANAGER's dealing is. That reasoning was right about a mandate and wrong about
+this card, and the difference is measurable rather than aesthetic: **seven of its
+ten rows are FUND FOLIOS** — the five Sanshi accounts and both Transition Venture
+trusts — and `/mandate/:accountId` for one of those can only say it is not a
+mandate and draw an empty dealing card underneath. The family screenshotted
+exactly that page.
+
+**THE LINK IS GONE AND THE THREE PMS ROWS LOSE NOTHING.** Their pages are still
+reached from Holdings, Family & Entities, a company page and every holdings
+drill-down — and every one of those links is gated on `isMandateHeld`, so none of
+them could ever route a fund folio there. That is why `check-pages.mjs`'s own
+comment beside the `mandate-fund` route says nothing in `src/` links to it: the
+sentence was true, went false for one release, and is true again.
+
+**AND THE DEALING CARD CAME OFF THE FUND BRANCH WITH IT.** It was put there
+because **Buoyant Capital 103473 is an AIF folio that DOES issue a transaction
+statement** — the one non-mandate account in this book that does — and hiding a
+manager's whole record behind a routing decision would have been the "reason
+expired" failure. Measured before removing it: Buoyant is **not a My-investments
+row at all** (it publishes no dated capital record), so this card was never the
+way into its dealing; the **By manager** tab is, and that covers all ten accounts
+whose statements the tape reads. For the other six fund folios the card was an
+empty box under an empty page.
+
+`ManagerTrades` then had ONE caller, on the mandate branch, so
+`holdingRoute(...) === "mandate"` was true every time it was asked — a title, an
+absence and a footer sentence that could not be reached, each wearing a confident
+explanation. All three collapsed to the mandate case; the words for the fund case
+are recorded in the note where that call used to be, not left standing as code
+nothing runs.
+
+**BOTH DIRECTIONS ARE CHECKED, AND NEITHER IMPLIES THE OTHER.** `mandate` asserts
+the card IS there; `mandate-fund` asserts it is NOT, on all three of its strings
+— a build that dropped it everywhere passes the second, one that kept it
+everywhere passes the first. Verified by reintroducing each.
+
+#### 2. *"remove the highlighted text from the dashboard UI"*
+
+The paragraph under the My-investments table. Checked line by line before
+anything was deleted, which is the whole of this entry, because **one of its five
+claims was nowhere else on the page**:
+
+| The claim | Elsewhere? |
+| --- | --- |
+| "These are the family's own movements, not their managers'" | yes — the tab is called My investments, the columns are Paid in / Taken out, and each expanded row says it |
+| **"10 of this book's 51 accounts publish a dated capital record"** | **NO** |
+| "Value today is the account's own market value from the book" | no — a BASIS, and it moved |
+| "A return is struck only where the contribution list provably reaches inception — 10 of 10" | the CONDITION moved; the per-row case was already on the cell |
+| "see By manager, or open the mandate itself" | chrome, and its second half was about to become false |
+
+**"10 OF 51" IS ON THE TOTAL NOW, WHERE THE MISLEADING FIGURE IS.** Read as
+"Total · 10 accounts", ₹193 Cr is the whole of what this family has put in. It is
+not — 41 more accounts were funded and no statement in this drop says when — so
+the denominator sits on the label that total is printed against, with the reason
+in its hover. A caption is chrome; a COUNT inside one is not.
+
+**THE TWO BASES MOVED TO THE COLUMNS THEY DESCRIBE.** What a column means belongs
+on the column, so Value today, Gain and Return each carry their own definition,
+and the per-row `AbsentCell` reason stays exactly where it was — which is the
+STRONGER claim, because a page-wide fraction tells a reader nothing about the row
+they are looking at.
+
+**AND `capitalTotals` LOST ITS `measurable` COUNT.** It existed for that one
+caption and had no other reader. A totals field nothing renders is the
+dead-code-that-looks-alive failure this file keeps naming, so it went with its
+caller — and `tranches.test.ts` **asserts the removal** rather than deleting the
+case alongside it, keeping the two constructed cases that give the gate meaning.
+
+#### 3. *"just like how you have show individual investments return in the drop down for securities you need to implement the same for category/asset class/basket as well"*
+
+**THE ROW WAS ALREADY THE SAME ROW; ONLY ITS EXPANSION WAS AXIS-DEPENDENT.** A
+grouping axis decides which SECTION a holding is filed under and nothing else —
+`groupKeyFor` is the whole of it — so the per-account panel `venues` had no
+business being computed only when `?group=security`. On Category, Asset class and
+Basket the name cell drew **no chevron at all**, and the older per-ENTITY panel
+underneath could be reached only from an "N entities" pill at the far right end
+of the row, past the horizontal scroller.
+
+`venuesOf(ps, accIdx)` now runs on every consolidated row. Measured: **75 rows on
+a non-security axis, 12 held through more than one account, 90 statements behind
+them.**
+
+**AND IT REPLACES THE OLD PANEL RATHER THAN SITTING BESIDE IT, BECAUSE THE OLD
+ONE WAS WRONG WHERE THE TWO DIFFERED.** `entityParts` was built from the
+**DEDUPED** positions while the pill offering it counted the **RAW** ones — so
+Transition Venture Fund I, held by two family trusts and reported by both, showed
+a pill reading "2 entities" over a table of ONE row. §"a consolidated figure
+counts each `dedupeGroup` ONCE; a per-account or per-owner figure does not",
+failing inside a drill-down. `venuesOf` lists every statement as printed and
+NAMES the overlap. `EntityPart`, `entityParts` and the `parts` field are deleted,
+not left exported and uncalled.
+
+**AND THE PANEL'S LEAD SENTENCE WAS CONTRADICTING ITSELF, WHICH ONLY SHOWED UP
+BECAUSE THE CHECK WALKED THE HARD ROW.** It read *"— ₹1.71 Cr, 0.24% of the book,
+held ₹3.43 Cr through 2 fund vehicles"*: the head of the sentence on the deduped
+basis and the route split three words later on the printed one. The
+reconciliation under the table was correct and three lines too late — a reader
+stops at the first sentence, and two figures for one holding a clause apart is
+the contradiction the footer rule already names. The clause now says so inline,
+and only where the two really differ.
+
+#### Thirteen bugs reintroduced, and THREE were defects in the checks
+
+- **The market-value reconciliation waived itself.** It passed on
+  `/reported under two accounts/` — so the panel's own overlap sentence became an
+  ESCAPE, and a panel that dropped a line kept printing it and reconciled with
+  nothing. Truncating the lines proved it: the count check fired and this one did
+  not. It parses that sentence's three figures now and holds each to what is on
+  screen — the lines add to the figure it claims, the row is the figure it says
+  the row is, and the overlap is the difference.
+- **A claim about a COLUMN was read off a page-wide title list.** Stripping the
+  condition from the Return head left the identical sentence on Gain, so the
+  check passed against exactly the regression it exists for. Read at the column
+  now (`mineHead`).
+- **And the inverted link check would have passed by finding nothing.**
+  `mineRows.href` read `[data-mine-link]` — an attribute that lived on the link
+  and went with it — so "no row invites a click" could not have failed whether or
+  not a link was there. Struck on every `a[href]` in the row.
+
+**A CHECK THAT ABSTAINS MUST NEVER ABSTAIN ALONE.** The five panel invariants
+report NOT CHECKED when no row opened — and that only ever happens alongside the
+offer check FAILING, because `AXIS_DRILL` is captured whether or not the click
+landed, so a missing button yields an empty panel and a failure rather than
+silence. Verified by removing the chevron: three fire, three abstain.
+
+**THE WALK OPENS THE BOOK'S OWN OVERLAP ROW**, not whichever sorts first. Every
+other row's raw and deduped totals coincide, which is exactly the condition under
+which a panel dividing by the wrong one still prints 100% — so `AXIS_VENUE_BOOK`
+names the one holding reported by two accounts under one `dedupeGroup`, and the
+next drop picks its own.
+
+`build` · `test:ingest` 140 · `test:family` · `check:family` 53/0 ·
+`check:pages` **140 combinations clean**, with the same two pre-existing
+abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
 
 ### Stage 10k — News & Announcements: REMOVED
 
