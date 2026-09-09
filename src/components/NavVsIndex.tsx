@@ -241,7 +241,14 @@ export function NavVsIndex() {
             which counts that holding once. A per-account numerator over a
             consolidated denominator is two bases in one fraction, which is the
             mistake the allocation footer already cost this book once. */}
-        {" "}Each point holds every account at its most recent mark on that date and counts each duplicated holding once.
+        {" "}Each point holds every account at its most recent mark on that date and counts each duplicated holding once,
+        and both lines are rebased to 100 at {cov.from}.
+        {/* THE REBASE IS A BASIS, AND A BASIS BELONGS ON THE CARD'S BASIS LINE.
+            It used to open the paragraph block under the chart, which is gone;
+            the y-axis reads 84 / 91 / 98 and is a ratio rather than an amount,
+            so without this clause those ticks are unitless. Same reasoning as
+            `<BasisPill>` elsewhere in the app — the basis rides with the figure,
+            never in a tooltip. */}
       </>}
       right={
         /* THE HEADLINE IS THE LIKE-FOR-LIKE PAIR, AND ONLY THAT.
@@ -258,6 +265,25 @@ export function NavVsIndex() {
           {indexRet == null
             ? <span title="The index history could not be fetched, so no comparison is drawn."><Pill>— {NIFTY_500_LABEL}</Pill></span>
             : <Pill tone="info">{NIFTY_500_LABEL} {fmtPct(indexRet, { sign: true })}</Pill>}
+          {/* ── A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE, BESIDE THE
+                 FIGURE IT QUALIFIES ─────────────────────────────────────────
+              This was a paragraph under the chart and the family asked for the
+              paragraphs to go. It is a DISCLOSURE rather than chrome — four
+              covered accounts publish no dated capital record and hold more
+              than one security, so a subscription inside one of them would
+              appear in the Book pill directly above as a return — and a
+              disclosure that qualifies a figure belongs against that figure.
+              Amber and in words on the pill, with the accounts in the hover:
+              the same treatment `AbsentCell` gives a reason that would make a
+              table unreadable if it were set out in full on screen. */}
+          {unproven.length > 0 && (
+            <span data-testid="nav-unproven"
+              title={`Not proven to be performance: ${stats.unreportedFlowAccounts.length} covered account(s) publish no dated capital record and hold more than one security — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — so a subscription or redemption inside one of them would appear here as a return. The other covered accounts either publish a capital register or hold a single security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.`}>
+              <Pill tone="warn" className="whitespace-nowrap">
+                {fmtFromBase(Math.max(...unproven.map((u) => u.unreportedFlowValue)), { compact: true })} not proven
+              </Pill>
+            </span>
+          )}
           <span className="text-[10px] uppercase tracking-wide text-slate-500">
             over {cov.from} → {cov.to}
           </span>
@@ -290,9 +316,44 @@ export function NavVsIndex() {
             </button>
           ))}
         </div>
+        {/* ── THE UNADJUSTED NAV IS A CONTROL, AND THE CONTROL NAMES THE
+               ADJUSTMENT ────────────────────────────────────────────────────
+            This toggle used to sit inside the paragraph that explained it, and
+            the family asked for the paragraphs to go — so it moves to the row
+            that already holds this chart's controls, and it carries the one
+            fact the paragraph had that nothing else does: HOW MUCH capital the
+            book line nets out. That figure is load-bearing. Over this window
+            the covered set's raw NAV runs +9.29% against the book's +0.54%,
+            and the whole of the difference is a deposit into V.E.C 128005 —
+            money added is not money earned, and a chart of the raw NAV would
+            show eight points of outperformance, none of it earned. The two
+            returns are in the hover; the SIZE is on the control, where a
+            reader deciding whether to draw the line can see it. */}
+        {flowMarks.length > 0 && (
+          <button type="button" data-testid="nav-raw-toggle" aria-pressed={showRaw}
+            onClick={() => setShowRaw((v) => !v)}
+            title={`With the capital left in, the covered set reads ${fmtPct(model.book[model.book.length - 1].navIndex - 100, { sign: true })} against the book's ${bookRet == null ? "—" : fmtPct(bookRet, { sign: true })}. The difference is the deposit rather than performance. The intervals that took it are circled on the chart.`}
+            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+              showRaw
+                ? "border-ink-600 bg-champagne-500 text-ink-950"
+                : "border-ink-700 bg-ink-800/60 text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+            }`}>
+            NAV incl. {fmtFromBase(flowMarks.reduce((a, f) => a + Math.max(f.flowIn, 0), 0), { compact: true })} added
+          </button>
+        )}
         {indexState === "ok" && indexRuns > 0 && (
+          /* THE RANGE'S OWN INDEX RETURN SITS WITH THE RANGE CONTROL, which is
+             the only place it describes. It is the INDEX ALONE over a period
+             the book has no measurement across — market history rather than a
+             comparison — so it must never sit beside the book's figure in the
+             headline, where a reader would read the two as a pair struck over
+             one window. Here it is unmistakably about the selected period. */
           <span className="text-[11px] text-slate-500" data-testid="nav-range-note">
             {rangeFrom} → {rangeTo} · {indexRuns} index closes
+            {rangeRet != null && (
+              <> · {NIFTY_500_LABEL} alone over this period{" "}
+                <span className={changeColor(rangeRet)}>{fmtPct(rangeRet, { sign: true })}</span></>
+            )}
           </span>
         )}
       </div>
@@ -378,65 +439,33 @@ export function NavVsIndex() {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-3 space-y-2 text-[11.5px] leading-relaxed text-slate-400">
-        <p data-testid="nav-flow-note">
-          <strong className="text-slate-300">Both lines are rebased to 100 at {cov.from}.</strong>{" "}
-          {flowMarks.length > 0 ? (
-            <>The book line nets out{" "}
-              <strong className="text-slate-300">{fmtFromBase(flowMarks.reduce((a, f) => a + Math.max(f.flowIn, 0), 0), { compact: true })}</strong>{" "}
-              of external capital that entered over the window (circled), because money added is not money earned.
-              The dashed line is the NAV with it left in — it reads{" "}
-              {/* OFF THE BOOK'S OWN LAST POINT. `rows` now runs to the index's
-                  last close, which is weeks past the book's final statement and
-                  carries no NAV at all — reading the last row here would print
-                  a dash where the unadjusted return belongs. */}
-              {fmtPct(model.book[model.book.length - 1].navIndex - 100, { sign: true })} against the book&rsquo;s{" "}
-              {bookRet == null ? "—" : fmtPct(bookRet, { sign: true })}, and the difference is the deposit rather than performance.{" "}
-              <button type="button" onClick={() => setShowRaw((v) => !v)}
-                className="underline decoration-dotted underline-offset-2 hover:text-champagne-400">
-                {showRaw ? "Hide" : "Show"} the unadjusted NAV line
-              </button>.
-            </>
-          ) : (
-            <>No external capital entered or left the covered accounts over this window, so the book line and the raw NAV are the same measurement.</>
-          )}
-        </p>
-        {unproven.length > 0 && (
-          <p data-testid="nav-unproven-note">
-            <strong className="text-amber-400">
-              {fmtFromBase(Math.max(...unproven.map((u) => u.unreportedFlowValue)), { compact: true })}
-            </strong>{" "}
-            of the move is not proven to be performance: it was restated by{" "}
-            {stats.unreportedFlowAccounts.length} covered account(s) that publish no dated capital record and hold more than one
-            security — {stats.unreportedFlowAccounts.map(nameOf).join(", ")} — so a subscription or redemption inside one of
-            them would appear here as a return. The other covered accounts either publish a capital register or hold a single
-            security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.
-          </p>
-        )}
-        <p data-testid="nav-window-note">
-          {/* ── WHAT THE WIDER WINDOW IS, AND WHAT IT IS NOT ─────────────────
-              The family asked for a longer period than the book's five weeks.
-              The index can supply one; the book cannot, and saying so is the
-              whole of the honesty here. So the range's return is stated as the
-              INDEX'S OWN over that period and never set beside a book figure
-              struck over a different window — the "a caption that widens a
-              figure it does not narrow" rule, on a period rather than on a set. */}
-          <strong className="text-slate-300">The book&rsquo;s own dated series is {model.dates.length} statement dates
-            over {cov.from} → {cov.to}</strong>{" "}
-          and cannot reach further back: the earliest holdings statement in this archive is dated 2026-03-31 and only{" "}
-          {stats.coveredCount} accounts are valued more than once. Everything outside the shaded band is the{" "}
-          {NIFTY_500_LABEL} alone — over the period shown it moved{" "}
-          {rangeRet == null ? DASH : <span className={changeColor(rangeRet)}>{fmtPct(rangeRet, { sign: true })}</span>}{" "}
-          ({rangeFrom} → {rangeTo}), which is market history rather than a comparison, because the book has no measurement
-          across it. A monthly valuation from any of the {stats.singleCount + stats.unvaluedCount} accounts below extends
-          the measured window; nothing else does.
-        </p>
-        <p>
-          The index is taken at its last close <em>on or before</em> each statement date, never the nearest in either
-          direction — a book date is a statement date and an index date is a trading session, and taking the nearer close
-          would credit the index with a move that had not happened when the mark was struck.
-        </p>
-      </div>
+      {/* ── THE FOUR EXPLANATORY PARAGRAPHS ARE GONE, AND THREE FACTS MOVED ──
+          *"remove the highlighted text from the dashboard ui."*
+
+          Every claim was checked against the rest of the card before anything
+          was deleted, which is the whole of this change:
+
+          · "Both lines are rebased to 100 at …" — a BASIS, and nowhere else on
+            the card. Moved into the subtitle, which is this card's basis line.
+          · "…nets out ₹11.2 Cr of external capital …" plus the Show/Hide
+            control — the size is load-bearing and the control had to survive.
+            Both are now the toggle in the period row above, which names the
+            figure it reveals; the legend already says which line is which.
+          · "₹28.3 Cr of the move is not proven to be performance …" — a
+            DISCLOSURE about the Book pill. Moved to an amber pill beside it.
+          · "The book's own dated series is N statement dates over A → B …" —
+            already in the subtitle, word for word. The range's own index
+            return, which was NOT elsewhere, moved to the range note.
+          · "The index is taken at its last close on or before each statement
+            date …" — methodology with no figure in it, and the only one of the
+            five that went without a home. It is `alignIndexToDates` in
+            `navSeries.ts` and is recorded in CLAUDE.md.
+
+          The `<details>` below is deliberately NOT part of this removal: it is
+          the other half of the family's own ask ("or state the accounts that
+          cannot supply one"), it is a collapsed one-liner rather than prose,
+          and §"a figure that exists for SOME accounts is shown for those and
+          the rest are NAMED" is a standing rule of this book. */}
 
       {indexState === "down" && (
         <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400">
