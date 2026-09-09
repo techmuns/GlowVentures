@@ -49,7 +49,6 @@ import { Auditable } from "@/components/Auditable";
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
-import { securityKeyOf, stripDepositoryTail } from "@/lib/securityKey";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 
 /**
@@ -1252,26 +1251,35 @@ export function PortfolioMonitor() {
       /**
        * ONE COMPANY THE BOOK ITSELF CARRIES UNDER TWO KEYS — named, never merged.
        *
-       * A PMS statement prints `ICICI Bank Ltd.` and the depository prints
-       * `ICICI BANK-EQ`; `securityKey` is derived from the RAW name and is
-       * deliberately not routed through `stripDepositoryTail` (§"it only ever
-       * removes"), so the two are different identities in the book and this
-       * table draws two rows with almost the same name.
+       * THIS USED TO BE THE ICICI CASE AND IT IS FIXED IN THE EXTRACTOR NOW. A
+       * PMS statement printed `ICICI Bank Ltd.` and the depository printed
+       * `ICICI BANK-EQ`, and the key was derived from the RAW name, so ₹3.00 Cr
+       * of one company stood here as two rows. `securityKeyOf` removes the
+       * depository's own furniture before taking the key, which is where the
+       * repair belongs: "if a join fails, fix the EXTRACTOR — never re-derive a
+       * key in the presentation layer, which hides the defect from the
+       * reconciler." The sentence below is what stayed.
        *
-       * IT IS NOT REPAIRED HERE. "If a join fails, fix the EXTRACTOR — never
-       * re-derive a key in the presentation layer, which hides the defect from
-       * the reconciler." Re-keying on screen would give a reader one tidy row
-       * and leave `docs/EXTRACTION-REPORT.md` none the wiser. So it is COUNTED
-       * against the stripped name and stated, which is what tells the next
-       * session there is an extractor join to make.
+       * IT IS KEYED ON THE ISIN NOW, BECAUSE THE NAME TEST BECAME A TAUTOLOGY.
+       * Counting against `securityKeyOf(stripDepositoryTail(name))` compared the
+       * key with its own definition once the strip moved inside it — a check
+       * that cannot fail. What CAN still split a company is a name one issuer
+       * CLIPS and another spells out (`HELIOS FCF D-GROW` against `Helios Flexi
+       * Cap Fund - Direct Growth`), and no rule here bridges that: the strip
+       * only ever removes, and it never supplies a name the statement did not
+       * print. The ISIN is evidence neither NAME controls, so it is the witness
+       * — and where it says two keys are one security, that is a defect this
+       * page STATES rather than repairs. `build-book` prints the whole list,
+       * over every holding rather than only the company shares this table
+       * draws, so the ask reaches `docs/BOOK-REPORT.md` intact.
        */
       splitNames: (() => {
-        const byName = new Map<string, Set<string>>();
+        const byIsin = new Map<string, Set<string>>();
         for (const p of stocks) {
-          const k = securityKeyOf(stripDepositoryTail(p.security));
-          (byName.get(k) ?? byName.set(k, new Set()).get(k)!).add(p.securityKey);
+          if (!p.isin) continue;
+          (byIsin.get(p.isin) ?? byIsin.set(p.isin, new Set()).get(p.isin)!).add(p.securityKey);
         }
-        const split = [...byName.values()].filter((v) => v.size > 1);
+        const split = [...byIsin.values()].filter((v) => v.size > 1);
         const keys = new Set(split.flatMap((v) => [...v]));
         return {
           count: split.length,
@@ -2669,10 +2677,11 @@ export function PortfolioMonitor() {
               )}
               {stockCoverage.splitNames.count > 0 && (
                 <> {" "}<span className="text-amber-400/80">{stockCoverage.splitNames.count === 1 ? "One company" : `${stockCoverage.splitNames.count} companies`} stands
-                  here as {stockCoverage.splitNames.count === 1 ? "two rows" : "more than one row"} ({money(stockCoverage.splitNames.value)}): a manager&rsquo;s statement
-                  and the depository print its name differently, and the book keys a holding on the name its statement
-                  printed. Joining them on screen would hide that from the reconciler, so it is said here instead — the
-                  fix belongs in the extractor.</span></>
+                  here as {stockCoverage.splitNames.count === 1 ? "two rows" : "more than one row"} ({money(stockCoverage.splitNames.value)}): one issuer CLIPS
+                  its name where another spells it out, and the book keys a holding on the name its own statement
+                  printed. Their ISINs say they are one security — which is the evidence, and it is also the only
+                  thing that could supply the name neither statement prints in full. Joining them on screen would
+                  hide that from the reconciler, so it is said here instead — the fix belongs in the extractor.</span></>
               )}
             </p>
           )}

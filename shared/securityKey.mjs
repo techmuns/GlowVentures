@@ -90,19 +90,7 @@ export function normalizeSecurityName(name) {
 }
 
 /**
- * Stable slug for a security name — `Position.securityKey`.
- *
- * URL-safe (it is a route segment) and idempotent: feeding a key back through
- * returns the same key. Returns "unknown" for a name that normalises to nothing,
- * so a nameless row still groups somewhere visible rather than crashing a lookup.
- */
-export function securityKeyOf(name) {
-  const norm = normalizeSecurityName(name);
-  return norm ? norm.replace(/ /g, "-") : "unknown";
-}
-
-/**
- * DEPOSITORY FURNITURE, STRIPPED FOR DISPLAY ONLY.
+ * DEPOSITORY FURNITURE — REMOVED BEFORE THE NAME IS READ AS AN IDENTITY.
  *
  * A demat statement prints the SERIES and the FACE VALUE after the company name,
  * because that is what identifies a line in a depository's own books:
@@ -127,10 +115,36 @@ export function securityKeyOf(name) {
  * print, so a row still reads as its document does — which is why the clipped
  * `THE KARUR VYS-EQ` becomes `The Karur Vys` and not "Karur Vysya Bank".
  *
- * DISPLAY ONLY. `securityKeyOf` is derived from the RAW name and is NOT routed
- * through this, so nothing here can move a position between groups or break a
- * join. It lives beside the key so the two rules are read together, and it is
- * shared with the Node side so the symbol report and the screen agree.
+ * IT IS ROUTED INTO `securityKeyOf`, and that is the whole of the ICICI fix.
+ * This paragraph used to say the opposite — "DISPLAY ONLY … nothing here can
+ * move a position between groups" — and the price of that was one company
+ * standing in the book as two: Goldstandard's appraisal prints `ICICI Bank
+ * Ltd.` and the Motilal demat prints `ICICI BANK-EQ`, so ₹3.00 Cr of one
+ * company was two identities that never added up. The furniture is not part of
+ * the security's identity; it is the depository's own bookkeeping, exactly as a
+ * glued-on ISIN is another provider's, and `splitSecurityName` above already
+ * strips THAT before the key is taken so "the key comes from the CLEAN name".
+ * This is the same rule, one column over.
+ *
+ * WHAT THAT COSTS WAS MEASURED, NOT ASSUMED, over every security name in the
+ * archive with the ISIN as the witness. 49 keys change and exactly THREE
+ * merges follow, each corroborated by evidence outside the name:
+ *
+ *   icici-bank      `ICICI Bank Ltd.` + `ICICI BANK-EQ` — and NSE's own name
+ *                   for the depository row's INE090A01021 is "ICICI Bank
+ *                   Limited", which normalises to that same key. An identifier
+ *                   nobody in this join controls agrees.
+ *   everest-fleet   two spellings carrying the SAME ISIN, INE0LTR01029.
+ *   buoyant-…-a4    three spellings of one class, the third carrying the
+ *                   broker's own `[BOUYA388]` code.
+ *
+ * and ZERO pairs whose ISINs disagree — which is the test that says a merge is
+ * a merge of two NAMES and not of two SECURITIES. `build-book.mjs` runs that
+ * test on every build and prints it even when it is zero, because a guard that
+ * only speaks when it fires is indistinguishable from one that was deleted.
+ *
+ * It lives beside the key so the two rules are read together, and it is shared
+ * with the Node side so the symbol report, the archive and the screen agree.
  */
 const DEPOSITORY_TAIL = new RegExp(
   String.raw`[\s,]*(?:[-\u2013\u2014]\s*)?(?:`
@@ -154,4 +168,26 @@ export function stripDepositoryTail(name) {
     out = cut;
   }
   return out;
+}
+
+/**
+ * Stable slug for a security name — `Position.securityKey`.
+ *
+ * URL-safe (it is a route segment) and idempotent: feeding a key back through
+ * returns the same key. Returns "unknown" for a name that normalises to nothing,
+ * so a nameless row still groups somewhere visible rather than crashing a lookup.
+ *
+ * DERIVED FROM THE NAME WITH THE DEPOSITORY FURNITURE REMOVED — see
+ * `stripDepositoryTail` above for what that is, what it measurably merges and
+ * what proves each merge. A `-EQ` or a face value is the depository's own
+ * bookkeeping about a line in its books; it is not what the security IS, and
+ * keying on it split one company into two identities.
+ *
+ * `normalizeSecurityName` is NOT routed through the strip, deliberately: it is
+ * the name normaliser the reconcilers compare a review line against, and both
+ * sides of that comparison already reach it through this function.
+ */
+export function securityKeyOf(name) {
+  const norm = normalizeSecurityName(stripDepositoryTail(name));
+  return norm ? norm.replace(/ /g, "-") : "unknown";
 }

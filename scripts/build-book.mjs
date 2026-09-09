@@ -66,8 +66,16 @@ const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
  * and it reverses in one line: remove the key and the holding folds back into every
  * total. Keyed on `securityKey` (the canonical join key), so it holds wherever the
  * security is reported, not just this one account.
+ *
+ * THE KEY MOVED WITH THE DEPOSITORY STRIP, and it is the most expensive literal
+ * in this file to get wrong: the statement prints `POLYCAB INDIA LIMITED - EQ`,
+ * which keyed `polycab-india-limited-eq` until `securityKeyOf` began removing
+ * the depository's own furniture (see `shared/securityKey.mjs`). Left on the old
+ * spelling the fence matches nothing and ₹12,351 Cr of promoter stock walks back
+ * into every total on the dashboard, silently, on pages computing correctly.
+ * `check:pages` asserts the absence on nine routes and is what catches it.
  */
-const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india-limited-eq"]);
+const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india"]);
 
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
@@ -725,6 +733,20 @@ function build(docs) {
   // A securityKey that two documents give DIFFERENT ISINs for is left with none
   // and reported — two identifiers for one key means the key is wrong, and
   // guessing which is right would bake that error in.
+  //
+  // THAT SECOND HALF WAS A CLAIM THIS FILE DID NOT HONOUR. `isinConflicts` was
+  // built, used to delete from `isinByKey`, and printed nowhere — a comment
+  // asserting an enforcement that never happened, which is worse than no
+  // enforcement because the next session reads it and stops looking. It is
+  // reported below, AND ON A CLEAN RUN TOO: a guard that only speaks when it
+  // fires is indistinguishable, on a book with no conflicts, from one that was
+  // quietly deleted.
+  //
+  // It also stopped being decorative. `securityKeyOf` now removes the
+  // depository's series and face-value furniture before taking the key, which
+  // is exactly the operation that could land two DIFFERENT securities on one
+  // key — and this is the test that tells a merge of two NAMES from a merge of
+  // two SECURITIES, because the ISIN is evidence neither name controls.
   const isinByKey = new Map();
   const isinConflicts = new Map();
   for (const d of docs) {
@@ -741,6 +763,39 @@ function build(docs) {
     }
   }
   for (const k of isinConflicts.keys()) isinByKey.delete(k);
+  // ── THE OTHER HALF OF THE SAME QUESTION ──────────────────────────────────
+  //
+  // The check above asks "does one KEY carry two ISINs" — a key naming two
+  // securities. This asks the reverse: does one ISIN carry two KEYS — one
+  // security keyed twice, so its rows never add up. An ISIN is evidence neither
+  // NAME controls, which is what makes it a witness rather than a guess.
+  //
+  // IT WOULD NOT HAVE CAUGHT THE ICICI SPLIT, and that is worth stating rather
+  // than implying: the depository row carried INE090A01021 and the PMS row
+  // carried no ISIN at all, so there was nothing to compare. The two guards are
+  // complementary — this one names what an identifier can prove, and the
+  // depository strip in `securityKeyOf` closes what only the name can show.
+  const keysByIsin = new Map();
+  for (const d of docs) {
+    for (const h of d.holdings ?? []) {
+      if (!h?.isin || !h.securityKey) continue;
+      (keysByIsin.get(h.isin) ?? keysByIsin.set(h.isin, new Map()).get(h.isin)).set(h.securityKey, h.security);
+    }
+  }
+  const splitByIsin = [...keysByIsin].filter(([, v]) => v.size > 1);
+  notes.push(splitByIsin.length === 0
+    ? "identity: 0 ISIN(s) are held under two securityKeys — no security in this archive is keyed twice."
+    : `identity: ${splitByIsin.length} ISIN(s) are held under TWO OR MORE securityKeys — one security keyed `
+      + `twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no `
+      + `rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the `
+      + `statement did not print. Closing them needs a hand-checked alias, not another statement: `
+      + splitByIsin.map(([i, v]) => `${i} (${[...v.keys()].join(" / ")})`).join("; "));
+
+  notes.push(isinConflicts.size === 0
+    ? "identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities."
+    : `identity: ${isinConflicts.size} securityKey(s) carry TWO DIFFERENT ISINs and are left with none — `
+      + `two identifiers for one key means the key names two securities: `
+      + [...isinConflicts].map(([k, v]) => `${k} (${v.join(", ")})`).join("; "));
 
   /**
    * THE DEDUPE TAG MUST SURVIVE THE SUPERSEDE RULE.

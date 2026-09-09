@@ -292,6 +292,36 @@ const SECURITY_AXIS_BOOK = (() => {
       measuredKeys.set(p.securityKey, e);
     }
     const derivedOnly = [...derivedByKey.keys()].filter((k) => !measuredKeys.has(k)).length;
+    // ── THE COMPANY THE ICICI FIX CLUBBED ───────────────────────────────────
+    //
+    // Derived, never named: the company share whose statements spell it the
+    // most different ways. On this book that is ICICI Bank — `ICICI Bank Ltd.`
+    // on both Goldstandard appraisals and `ICICI BANK-EQ` on the Motilal demat,
+    // three statements and ₹3.00 Cr — and the next drop picks its own.
+    //
+    // GROUPED BY THE STRIPPED NAME, NOT BY THE BOOK'S KEY, which is what makes
+    // the check able to fail. Those two coincide only BECAUSE the extractor
+    // strips: an extractor that stopped would put this group's rows under two
+    // keys, the page would draw two rows for it, and the row-count assertion
+    // below is what catches that. Grouping on the book's own key instead would
+    // hand the checker the page's own answer.
+    const spelledGroups = new Map();
+    for (const p of stocks) {
+      const g = securityKeyOf(stripDepositoryTail(p.security));
+      const e = spelledGroups.get(g) ?? { names: new Set(), keys: new Set(), accts: new Set(), mv: 0 };
+      e.names.add(p.security); e.keys.add(p.securityKey); e.accts.add(p.accountId); e.mv += p.marketValue;
+      spelledGroups.set(g, e);
+    }
+    let spelled = null;
+    for (const [g, e] of spelledGroups) {
+      if (e.names.size < 2) continue;
+      if (!spelled || e.names.size > spelled.spellings
+        || (e.names.size === spelled.spellings && e.mv > spelled.mv)) {
+        spelled = { group: g, keys: [...e.keys], spellings: e.names.size,
+          accts: e.accts.size, mv: e.mv, mvCr: e.mv / 1e7 };
+      }
+    }
+
     let top = null;
     for (const e of measuredKeys.values()) {
       const total = e.mv + (derivedByKey.get(e.key)?.value ?? 0);
@@ -302,14 +332,24 @@ const SECURITY_AXIS_BOOK = (() => {
       if (!top || e.value > top.total) top = { key: e.key, name: e.name, total: e.value };
     }
 
-    // ONE COMPANY UNDER TWO BOOK KEYS — a real, pre-existing extractor join the
-    // page must NAME rather than repair on screen.
-    const byStripped = new Map();
+    // ── ONE COMPANY UNDER TWO BOOK KEYS ─────────────────────────────────────
+    //
+    // STRUCK ON THE ISIN, BECAUSE THE NAME TEST BECAME A TAUTOLOGY. This used to
+    // group on `securityKeyOf(stripDepositoryTail(name))` and compare that with
+    // the book's key — which was a real check while the strip was display-only,
+    // and is the key compared with its own definition now that `securityKeyOf`
+    // strips. A check that compares a figure with its own copy cannot fail.
+    //
+    // The ISIN is evidence neither NAME controls, so it is what remains: two
+    // company shares carrying one ISIN under two keys ARE one security keyed
+    // twice, whatever their names say. Measured on this book: zero, which is
+    // what lets the absence check below be a finding rather than an abstention.
+    const byIsin = new Map();
     for (const p of stocks) {
-      const k = securityKeyOf(stripDepositoryTail(p.security));
-      (byStripped.get(k) ?? byStripped.set(k, new Set()).get(k)).add(p.securityKey);
+      if (!p.isin) continue;
+      (byIsin.get(p.isin) ?? byIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
     }
-    const splitCount = [...byStripped.values()].filter((v) => v.size > 1).length;
+    const splitCount = [...byIsin.values()].filter((v) => v.size > 1).length;
 
     return {
       nav, navCr: nav / 1e7,
@@ -337,6 +377,7 @@ const SECURITY_AXIS_BOOK = (() => {
       measuredByKey: measuredKeys,
       aifCount, aifValueCr: aifValue / 1e7,
       splitCount,
+      spelled,
       // Every fund name that must NOT stand as a row on this axis.
       fundNames: [...vehicles.values()].sort((a, b) => b.mv - a.mv).map((v) => v.name),
     };
@@ -703,6 +744,40 @@ const TRANCHE_ROWS_TOTAL = (() => {
       }
     }
     return n;
+  } catch { return null; }
+})();
+
+/**
+ * THE HOLDING TWO ACCOUNTS BOTH REPORT, derived rather than typed.
+ *
+ * `stock-aif-dual` walks the one page where "carry both, count once" either
+ * reads correctly or contradicts itself on one screen. Its address used to be a
+ * securityKey written out in full — and a key is GENERATED, so a typed one is a
+ * second source for it. The depository strip moved this very key (the statement
+ * prints `…(AIF CATEGORY II)[DISTAIF887]` and the broker's bracketed code is
+ * furniture), the route landed on the not-found page, and three invariants
+ * failed on a build that was correct. Read off `dedupeGroup` — the book's own
+ * mark for a holding reported twice — it moves with the book instead.
+ */
+const DUAL_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const byGroup = new Map();
+    for (const p of positions) {
+      if (!p.dedupeGroup || !p.securityKey) continue;
+      const e = byGroup.get(p.dedupeGroup) ?? { key: p.securityKey, accts: new Set(), mv: 0 };
+      e.accts.add(p.accountId); e.mv += p.marketValue ?? 0;
+      byGroup.set(p.dedupeGroup, e);
+    }
+    // The largest group reported by more than one account; null if the next
+    // drop carries no duplicate, which the route below then says out loud.
+    let best = null;
+    for (const e of byGroup.values()) {
+      if (e.accts.size < 2) continue;
+      if (!best || e.mv > best.mv) best = e;
+    }
+    return best?.key ?? null;
   } catch { return null; }
 })();
 
@@ -1132,7 +1207,7 @@ const ROUTES = [
   // either reads correctly or contradicts itself on one screen: the pill said
   // "Held in 1 entity" over a table listing two, because a per-owner COUNT was
   // taken from the deduped set.
-  ["stock-aif-dual", "/stock/360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887"],
+  ["stock-aif-dual", () => (DUAL_KEY ? `/stock/${encodeURIComponent(DUAL_KEY)}` : "/stock/no-holding-reported-twice-in-the-book")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -5699,13 +5774,54 @@ const INVARIANTS = {
      * A COMPANY THE BOOK SPLITS ACROSS TWO KEYS IS NAMED, NOT MERGED ON SCREEN.
      * "If a join fails, fix the EXTRACTOR — never re-derive a key in the
      * presentation layer, which hides the defect from the reconciler."
+     *
+     * BOTH DIRECTIONS, AND A MISSING SPLIT IS A FINDING RATHER THAN AN
+     * ABSTENTION. The ICICI split IS fixed in the extractor now — `securityKeyOf`
+     * removes the depository's own furniture before taking the key — so on this
+     * book the sentence must be GONE, and a removal is verified by asserting it
+     * happened. The gate is the ISIN (see `SECURITY_AXIS_BOOK`), not the name:
+     * the name test became the key compared with its own definition.
      */
-    ["a company the book keys twice is named rather than quietly joined", (t, ctx) => {
+    ["a company the book keys twice is named, and none is keyed twice here", (t, ctx) => {
       const cov = ctx?.stockCoverage;
       if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
-      if (!SECURITY_AXIS_BOOK?.splitCount) return { notChecked: "this book keys no company twice" };
-      return /stands\s+here as (two rows|more than one row)/i.test(cov)
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
+      const said = /stands\s+here as (two rows|more than one row)/i.test(cov)
         && /the fix belongs in the extractor/i.test(cov);
+      return SECURITY_AXIS_BOOK.splitCount > 0 ? said : !said;
+    }],
+    /**
+     * AND THE COMPANY THE FIX CLUBBED STANDS AS ONE ROW.
+     *
+     * ICICI Bank is reported by three statements under two spellings — `ICICI
+     * Bank Ltd.` on both Goldstandard appraisals and `ICICI BANK-EQ` on the
+     * Motilal demat. Before the extractor stripped the depository's furniture
+     * those were two identities and this table drew two rows for ₹3.00 Cr of one
+     * company. The pick is DERIVED (the company share whose statements spell it
+     * the most ways) so the next drop chooses its own, and it is struck on
+     * SPELLINGS rather than on the key: a regressed extractor gives each
+     * identity one spelling, so the pick itself changes and this cannot pass by
+     * finding nothing — which is why the absence of a candidate FAILS.
+     */
+    ["a company its statements spell two ways stands as one row over all its accounts", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      const want = SECURITY_AXIS_BOOK?.spelled;
+      // NOT an abstention: every book this dashboard has carried has at least
+      // one company two statements spell differently, and a book with none
+      // would mean the pick itself stopped working.
+      if (!want) return false;
+      const hit = rows.filter((r) => want.keys.includes(r.securityKey));
+      // `moneyCell` RETURNS CRORES — it runs the cell through `crU` — so the
+      // comparison is in Cr, and the bound is the PAGE'S OWN PRINTING PRECISION
+      // reproduced: money renders to two decimals in Cr, so half of the last
+      // printed digit is 0.005. Never a tolerance widened until the figure fits
+      // — the smallest statement row behind this company is ₹28.6 L, which is
+      // fifty-seven times the bound and cannot hide inside it.
+      return want.keys.length === 1
+        && hit.length === 1
+        && hit[0].venues === want.accts
+        && Math.abs(moneyCell(hit[0].cells?.[COL_STOCK.mv]) - want.mvCr) <= 0.005;
     }],
     /**
      * A DERIVED-ONLY COMPANY HAS NO MEASURED ANYTHING, and ₹0 there would say
@@ -6601,14 +6717,14 @@ const INVARIANTS = {
     // count for this folio is a generated figure and a copy of it here would be
     // a second source for it. The bug was exactly this disagreement: a pill
     // reading 1 above a table listing 2.
-    ["the entity count agrees with the account rows rendered", (t) => {
+    ["the entity count agrees with the account rows rendered", (t, ctx) => {
       const pill = Number(/Held in (\d+) entit/i.exec(t)?.[1] ?? NaN);
-      const i = t.search(/^ENTITY\tMANAGED BY/m);
-      if (!Number.isFinite(pill) || i < 0) return false;
-      const body = t.slice(i).split("\n").slice(1);
-      const end = body.findIndex((l) => /^Total\t/.test(l));
-      if (end < 0) return false;
-      return body.slice(0, end).filter((l) => l.trim()).length === pill;
+      const rows = ctx?.accountRows;
+      if (!Number.isFinite(pill)) return false;
+      // NOT an abstention: this route is the dually-reported holding, so a page
+      // that drew no account rows at all is the failure this check exists for.
+      if (!Number.isFinite(rows)) return false;
+      return rows === pill;
     }],
     // Both rows show and the Total counts the holding once, so the column does
     // NOT add to its own footer — which is only honest because the page says so.
@@ -7693,6 +7809,12 @@ for (const theme of THEMES) {
       // THE STOCK AXIS'S COVERAGE STATEMENT, read off its own handle rather than
       // out of the page text: the partition sits in one paragraph among several
       // and a page-wide regex would happily match a figure from another card.
+      // THE STOCK PAGE'S ACCOUNT TABLE, COUNTED ON ITS ROWS. Splitting its
+      // innerText on newlines counts a row twice whenever a cell wraps a
+      // sub-line — the MANAGED BY cell does exactly that when the account
+      // prints a strategy — so the entity-count check below reads `<tr>`s.
+      const accountRows = FAST ? null : await page.evaluate(() =>
+        document.querySelectorAll("tr[data-account-row]").length);
       const stockCoverage = FAST ? null : await page.evaluate(() => {
         const p = document.querySelector("[data-stock-coverage]");
         return p ? (p.innerText ?? "").replace(/\s+/g, " ").trim() : null;
@@ -8018,7 +8140,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

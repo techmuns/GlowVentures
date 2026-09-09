@@ -535,9 +535,9 @@ const SECURITY_ALIASES = new Map([
   // one line so it can be challenged on its own.
   // The review's trading name against the depository's registered one. Both
   // were read off their own documents; neither was inferred from the other.
-  ["jaro-education", "jaro-institute-of-technology-management-and-research-limited-eq"],
-  ["parth-electrical-and-engineering", "parth-electricals-and-engineering-limited-eq"],
-  ["m-s-grand-continent-hotels", "grand-continent-hotels-limited-eq"],
+  ["jaro-education", "jaro-institute-of-technology-management-and-research"],
+  ["parth-electrical-and-engineering", "parth-electricals-and-engineering"],
+  ["m-s-grand-continent-hotels", "grand-continent-hotels"],
 ]);
 
 /**

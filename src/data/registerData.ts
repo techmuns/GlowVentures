@@ -1737,7 +1737,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
       "AJAY",
       "ANKITA"
     ],
-    "heldAs": "clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1"
+    "heldAs": "clean-max-enviro-energy-solutions"
   },
   {
     "name": "INSOLATION ENERGY LIMITED",
@@ -1751,7 +1751,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
       "AJAY",
       "BHARAT"
     ],
-    "heldAs": "insolation-energy-limited-eq-new-fv-re-1"
+    "heldAs": "insolation-energy"
   },
   {
     "name": "SMARTWORKS COWORKING SPACES",
@@ -1763,7 +1763,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
     "owners": [
       "AJAY"
     ],
-    "heldAs": "smartworks-coworking-spaces-limited-eq"
+    "heldAs": "smartworks-coworking-spaces"
   },
   {
     "name": "EVEREST FLEET PRIVATE LIMITED",
@@ -1778,7 +1778,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
       "ANKITA",
       "BHARAT"
     ],
-    "heldAs": "everest-fleet-eq1"
+    "heldAs": "everest-fleet"
   },
   {
     "name": "PARTH ELECTRICALS & ENGINEERING LIMITED",
@@ -1790,7 +1790,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
     "owners": [
       "AJAY"
     ],
-    "heldAs": "parth-electricals-and-engineering-limited-eq"
+    "heldAs": "parth-electricals-and-engineering"
   },
   {
     "name": "EMA PARTNERS INDIA PVT LTD",
@@ -1802,7 +1802,7 @@ export const REGISTER_IN_BOOK_POSITION: RegisterLine[] = [
     "owners": [
       "AJAY"
     ],
-    "heldAs": "ema-partners-india-limited-eq-new-fv-rs-5"
+    "heldAs": "ema-partners-india"
   },
   {
     "name": "BLUE ASHVA VARENYA FUND-",
@@ -1903,35 +1903,35 @@ export const REGISTER_EXITED: RegisterLine[] = [
 export const REGISTER_COST_CANDIDATES: RegisterCostCandidate[] = [
   {
     "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
-    "securityKey": "clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1",
+    "securityKey": "clean-max-enviro-energy-solutions",
     "custodian": "ICICI Bank (NSDL demat)",
     "marketValue": 126923395.5,
     "paid": 187715982
   },
   {
     "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
-    "securityKey": "smartworks-coworking-spaces-limited-eq",
+    "securityKey": "smartworks-coworking-spaces",
     "custodian": "ICICI Bank (NSDL demat)",
     "marketValue": 91269496.9,
     "paid": 84500100
   },
   {
     "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
-    "securityKey": "parth-electricals-and-engineering-limited-eq",
+    "securityKey": "parth-electricals-and-engineering",
     "custodian": "ICICI Bank (NSDL demat)",
     "marketValue": 26252050,
     "paid": 10030000
   },
   {
     "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
-    "securityKey": "insolation-energy-limited-eq-new-fv-re-1",
+    "securityKey": "insolation-energy",
     "custodian": "ICICI Bank (NSDL demat)",
     "marketValue": 25251320,
     "paid": 99596100
   },
   {
     "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
-    "securityKey": "ema-partners-india-limited-eq-new-fv-rs-5",
+    "securityKey": "ema-partners-india",
     "custodian": "ICICI Bank (NSDL demat)",
     "marketValue": 3660726,
     "paid": 4642872
@@ -1945,7 +1945,7 @@ export const REGISTER_COST_CANDIDATES: RegisterCostCandidate[] = [
   },
   {
     "security": "EVEREST FLEET-EQ1/",
-    "securityKey": "everest-fleet-eq1",
+    "securityKey": "everest-fleet",
     "custodian": "Motilal Oswal Financial Services (demat)",
     "marketValue": 580,
     "paid": 47607824

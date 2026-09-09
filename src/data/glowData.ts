@@ -852,7 +852,7 @@ export const BOOK_OWNERS = [
 
 export const BOOK_POSITIONS: Position[] = [
   {
-    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
     "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
     "symbol": null,
     "accountId": "360-one-private-wealth-37702",
@@ -874,13 +874,13 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
     "alsoReportedUnder": [
       "bharat-jaisinghani"
     ]
   },
   {
-    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
     "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
     "symbol": null,
     "accountId": "360-one-private-wealth-60117",
@@ -902,7 +902,7 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887-2",
+    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
     "alsoReportedUnder": [
       "ajay-jaisinghani"
     ]
@@ -1682,6 +1682,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "icici-bank",
     "security": "ICICI Bank Ltd.",
     "symbol": "ICICIBANK",
+    "isin": "INE090A01021",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Financials",
@@ -2450,6 +2451,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "icici-bank",
     "security": "ICICI Bank Ltd.",
     "symbol": "ICICIBANK",
+    "isin": "INE090A01021",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Financials",
@@ -4718,7 +4720,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1",
+    "securityKey": "clean-max-enviro-energy-solutions",
     "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
     "symbol": "CLEANMAX",
     "isin": "INE647U01026",
@@ -4743,7 +4745,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "ema-partners-india-limited-eq-new-fv-rs-5",
+    "securityKey": "ema-partners-india",
     "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
     "symbol": "EMAPARTNER",
     "isin": "INE0ZOL01023",
@@ -4768,7 +4770,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "fractal-analytics-limited-eq",
+    "securityKey": "fractal-analytics",
     "security": "FRACTAL ANALYTICS LIMITED - EQ",
     "symbol": "FRACTAL",
     "isin": "INE212S01015",
@@ -4793,7 +4795,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "grand-continent-hotels-limited-eq",
+    "securityKey": "grand-continent-hotels",
     "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
     "symbol": "GCHOTELS",
     "isin": "INE12E301017",
@@ -4818,7 +4820,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "insolation-energy-limited-eq-new-fv-re-1",
+    "securityKey": "insolation-energy",
     "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
     "symbol": "INA",
     "isin": "INE0LGX01024",
@@ -4843,7 +4845,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "jaro-institute-of-technology-management-and-research-limited-eq",
+    "securityKey": "jaro-institute-of-technology-management-and-research",
     "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
     "symbol": "JARO",
     "isin": "INE00YJ01010",
@@ -4868,7 +4870,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "parth-electricals-and-engineering-limited-eq",
+    "securityKey": "parth-electricals-and-engineering",
     "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
     "symbol": "PARTH",
     "isin": "INE1H7V01011",
@@ -4893,7 +4895,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "smartworks-coworking-spaces-limited-eq",
+    "securityKey": "smartworks-coworking-spaces",
     "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
     "symbol": "SMARTWORKS",
     "isin": "INE0NAZ01010",
@@ -4918,7 +4920,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "yash-highvoltage-limited-eq-new-fv-rs-5",
+    "securityKey": "yash-highvoltage",
     "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
     "symbol": null,
     "isin": "INE00GK01023",
@@ -5514,7 +5516,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "axis-bank-eq",
+    "securityKey": "axis-bank",
     "security": "AXIS BANK EQ",
     "symbol": "AXISBANK",
     "isin": "INE238A01034",
@@ -5539,7 +5541,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "bharat-parenteral-eq",
+    "securityKey": "bharat-parenteral",
     "security": "BHARAT PARENTERAL-EQ",
     "symbol": "BPLPHARMA",
     "isin": "INE365Y01019",
@@ -5589,7 +5591,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "city-union-eq-re1",
+    "securityKey": "city-union",
     "security": "CITY UNION -EQ RE1/",
     "symbol": "CUB",
     "isin": "INE491A01021",
@@ -5616,7 +5618,7 @@ export const BOOK_POSITIONS: Position[] = [
   {
     "securityKey": "dsp-gold-etf",
     "security": "DSP GOLD ETF",
-    "symbol": "GOLDADD",
+    "symbol": null,
     "isin": "INF740KA1SW3",
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "memberId": null,
@@ -5641,7 +5643,7 @@ export const BOOK_POSITIONS: Position[] = [
   {
     "securityKey": "dsp-silver-etf",
     "security": "DSP SILVER ETF",
-    "symbol": "SILVERADD",
+    "symbol": null,
     "isin": "INF740KA1RE3",
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "memberId": null,
@@ -5689,7 +5691,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "everest-fleet-eq1",
+    "securityKey": "everest-fleet",
     "security": "EVEREST FLEET-EQ1/",
     "symbol": null,
     "isin": "INE0LTR01029",
@@ -5714,7 +5716,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "federal-bank-eq-2",
+    "securityKey": "federal-bank",
     "security": "FEDERAL BANK EQ 2/",
     "symbol": "FEDERALBNK",
     "isin": "INE171A01029",
@@ -5789,7 +5791,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "icici-bank-eq",
+    "securityKey": "icici-bank",
     "security": "ICICI BANK-EQ",
     "symbol": "ICICIBANK",
     "isin": "INE090A01021",
@@ -5839,7 +5841,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "indian-bank-eq",
+    "securityKey": "indian-bank",
     "security": "INDIAN BANK - EQ",
     "symbol": "INDIANB",
     "isin": "INE562A01011",
@@ -5864,7 +5866,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "indusind-bank-equity",
+    "securityKey": "indusind-bank",
     "security": "INDUSIND BANK EQUITY",
     "symbol": "INDUSINDBK",
     "isin": "INE095A01012",
@@ -5889,7 +5891,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "infinium-pharma-eq",
+    "securityKey": "infinium-pharma",
     "security": "INFINIUM PHARMA-EQ",
     "symbol": "INFINIUM",
     "isin": "INE0MRE01011",
@@ -5914,7 +5916,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "kaynes-technology-eq",
+    "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY-EQ",
     "symbol": "KAYNES",
     "isin": "INE918Z01012",
@@ -5964,7 +5966,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "rbl-bnk-eq-re-10",
+    "securityKey": "rbl-bnk",
     "security": "RBL BNK-EQ RE 10",
     "symbol": "RBLBANK",
     "isin": "INE976G01028",
@@ -5989,7 +5991,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "sbi-eq",
+    "securityKey": "sbi",
     "security": "SBI - EQ",
     "symbol": "SBIN",
     "isin": "INE062A01020",
@@ -6014,7 +6016,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "the-karur-vys-eq",
+    "securityKey": "the-karur-vys",
     "security": "THE KARUR VYS-EQ",
     "symbol": "KARURVYSYA",
     "isin": "INE036D01028",
@@ -6064,7 +6066,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "zaggle-prepaid-eq1",
+    "securityKey": "zaggle-prepaid",
     "security": "ZAGGLE PREPAID-EQ1/",
     "symbol": "ZAGGLE",
     "isin": "INE07K301024",
@@ -6139,7 +6141,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "birla-cable-ltd-eq",
+    "securityKey": "birla-cable",
     "security": "BIRLA CABLE LTD-EQ",
     "symbol": "BIRLACABLE",
     "isin": "INE800A01015",
@@ -6389,7 +6391,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "onesource-special-eq",
+    "securityKey": "onesource-special",
     "security": "ONESOURCE SPECIAL-EQ",
     "symbol": "ONESOURCE",
     "isin": "INE013P01021",
@@ -6466,7 +6468,7 @@ export const BOOK_POSITIONS: Position[] = [
   {
     "securityKey": "dsp-gold-etf",
     "security": "DSP GOLD ETF",
-    "symbol": "GOLDADD",
+    "symbol": null,
     "isin": "INF740KA1SW3",
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "memberId": null,
@@ -6564,7 +6566,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "pg-electro-eq1",
+    "securityKey": "pg-electro",
     "security": "PG ELECTRO-EQ1/",
     "symbol": "PGEL",
     "isin": "INE457L01029",
@@ -9876,7 +9878,7 @@ export const BOOK_POSITIONS: Position[] = [
  */
 export const BOOK_POLYCAB: Position[] = [
   {
-    "securityKey": "polycab-india-limited-eq",
+    "securityKey": "polycab-india",
     "security": "POLYCAB INDIA LIMITED - EQ",
     "symbol": "POLYCAB",
     "isin": "INE455K01017",

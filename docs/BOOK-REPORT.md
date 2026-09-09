@@ -166,6 +166,8 @@ never guessed into the nearest plausible bucket.
 
 ## What this corpus does not support
 
+- identity: 8 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3)
+- identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities.
 - account 1000632: no time-weighted return series in any statement
 - account 1000632: no flow block in any statement, so no value bridge
 - account 1000632: no external capital movements found, so no money-weighted return series

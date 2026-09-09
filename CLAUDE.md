@@ -2426,9 +2426,10 @@ that identifies a line in the depository's own books:
 equity — and it pushes the real name out of the column.
 
 `stripDepositoryTail` in `shared/securityKey.mjs` removes it, and lives there for
-two reasons: beside the key it must never affect, and shared with the Node side so
-the screen and `docs/SECURITY-IDENTIFIERS.md` clean a name with ONE
-implementation. **Anchored at the END, and only there** — three funds here are
+two reasons: beside the key, which it now feeds (see Stage 10ak — it was
+display-only until the ICICI split proved that the furniture is not identity),
+and shared with the Node side so the screen and `docs/SECURITY-IDENTIFIERS.md`
+clean a name with ONE implementation. **Anchored at the END, and only there** — three funds here are
 named "…Equity Fund" (3P India, Baring Private Equity, Motilal Oswal Delphi) and
 a rule matching "EQUITY" anywhere amputates all three. Measured over every name
 in the book: **28 change, and those five fund names are untouched.**
@@ -2443,8 +2444,10 @@ print, so a row still reads as its document does — which is why the clipped
 exchange's own name for that ISIN is now known for every ISIN-resolved security,
 and substituting it is a SEPARATE decision the family has not been asked: it
 would read better and would break the visual tie between a row and the PDF it
-came from. `securityKey` is derived from the RAW name and is not routed through
-any of this, so no join moves.
+came from. **The key IS routed through this now** — see Stage 10ak for what that
+merges (three keys, each corroborated by evidence outside the name) and what it
+still leaves apart (a clipped name, which only an ISIN can bridge and which no
+rule here may invent).
 
 ### Income — split by EVENT TYPE, not by preferred document
 
@@ -4895,15 +4898,16 @@ for its normalised name. The evidence is the store's own — one AMC supplied th
 identifier another omitted — so this is neither a fuzzy tier nor a re-derivation
 of the book's identity.
 
-**WHAT IT DELIBERATELY DOES NOT REPAIR:** the BOOK carries ICICI Bank under TWO
-`securityKey`s — `icici-bank` from a PMS statement and `icici-bank-eq` from the
-depository — because a key is derived from the RAW name and is not routed through
-`stripDepositoryTail`. So the table draws two rows with almost the same name.
-Merging them on screen would give a reader one tidy row and leave the reconciler
-none the wiser, which this file forbids in as many words: *"if a join fails, fix
-the EXTRACTOR."* It is COUNTED and STATED instead, and the sweep asserts the
-sentence — that is what tells the next session there is an extractor join to
-make.
+**WHAT IT DELIBERATELY DID NOT REPAIR — AND THE EXTRACTOR HAS SINCE FIXED, see
+Stage 10ak.** The BOOK carried ICICI Bank under TWO `securityKey`s: `icici-bank`
+from a PMS statement and `icici-bank-eq` from the depository. Merging them ON
+SCREEN would have given a reader one tidy row and left the reconciler none the
+wiser, which this file forbids in as many words — *"if a join fails, fix the
+EXTRACTOR"* — so it was COUNTED and STATED instead, and that sentence is what
+told the next session there was an extractor join to make. The next session made
+it: `securityKeyOf` removes the depository's own furniture before taking the key,
+₹3.00 Cr of one company is one row, and the sentence's own detector is re-struck
+on the ISIN because the name test became a tautology.
 
 #### The ring-fence had to be carried onto the derived side
 
@@ -4952,6 +4956,203 @@ partition rebuilds NAV, that no company stands under two keys, that the ISIN tie
 is doing work, and that the fence is LOAD-BEARING: the same store run WITHOUT it
 must put Polycab back, or the guard would pass on a book where no scheme
 discloses it and go on passing after the guard was deleted.
+
+### Stage 10ak — ONE COMPANY, ONE KEY: THE DEPOSITORY FURNITURE LEAVES THE IDENTITY
+
+*"fix the ICICI Bank double key in the extractor."*
+
+Stage 10aj found it and refused to repair it on screen. This is the repair, in the
+place that file's own rule names: **"if a join fails, fix the EXTRACTOR — never
+re-derive a key in the presentation layer, which hides the defect from the
+reconciler."**
+
+**THE DEFECT WAS ONE LINE OF DOCTRINE.** `securityKeyOf` took the RAW name and
+`stripDepositoryTail` was documented as DISPLAY ONLY — *"nothing here can move a
+position between groups or break a join"*. So Goldstandard's appraisal printing
+`ICICI Bank Ltd.` and the Motilal demat printing `ICICI BANK-EQ` were two
+identities, and **₹3.00 Cr of one company across three statements never added
+up.** The furniture is the depository's own bookkeeping about a line in ITS
+books; it is not what the security IS — exactly as a glued-on ISIN is another
+provider's, which `splitSecurityName` has always stripped before the key is taken
+*"so the key comes from the CLEAN name"*. This is that rule, one column over.
+
+**WHAT IT COSTS WAS MEASURED WITH THE ISIN AS THE WITNESS, over every security
+name in the archive.** 49 keys change and exactly THREE merges follow — and a
+merge of two NAMES is only safe if it is not a merge of two SECURITIES, which is
+a question an identifier answers and a name cannot:
+
+| Merged | Corroborated by |
+| --- | --- |
+| `icici-bank` — `ICICI Bank Ltd.` + `ICICI BANK-EQ` | **NSE's own name for the depository row's INE090A01021 is "ICICI Bank Limited", which normalises to that same key.** An identifier nobody in this join controls agrees |
+| `everest-fleet` — two spellings | the SAME ISIN on both, INE0LTR01029 |
+| `buoyant-…-class-a4` — three spellings | the third carries the broker's own `[BOUYA388]` code |
+
+and **ZERO pairs whose ISINs disagree.** The strip keeps what names a DIFFERENT
+instrument, which the same measurement confirms rather than assumes: Borosil's
+`WARRANTS 13AG26` stays apart from the Borosil equity, EFPL's and URB's preference
+lines stay apart from theirs, and Vedanta's four spin-offs stay four companies.
+
+**NOT ONE FIGURE IN THE BOOK MOVES.** `BOOK_SUMMARY` is byte-identical —
+consolidated ₹710.39 Cr, listed ₹358.04 Cr, private ₹352.35 Cr, 371 positions, 51
+accounts. That is what a change to IDENTITY alone must look like, and it is the
+check that says this was a rename rather than a re-measurement.
+
+**AND THE FAMILY'S OWN REVIEW TIES TO ₹41.09 Cr MORE OF THEIR BOOK.**
+`reconcile:review`'s "book positions no review line matches" falls from **65
+positions / ₹166.43 Cr to 59 / ₹125.34 Cr** — ICICI NSDL from 11 to 8 — because
+the depository's furnished names finally meet the review's plain ones on the key
+both sides already reach through `securityKeyOf`. Nothing about the reconciler
+changed.
+
+#### `npm run rekey:archive` — how a key change lands without the passwords
+
+`securityKey` is stored in `public/audit/*/document.json`, and `build-book` reads
+it verbatim. Changing the function would therefore need `npm run extract` — which
+needs `GLOW_PDF_PASSWORDS` for eight encrypted statements and `pdftoppm` +
+`tesseract` for two outlined-text ones, and which `guardAgainstShrinkingTheArchive`
+correctly refuses without them. **That would make this fix unlandable on any
+machine without the family's passwords, which is most of them.**
+
+It does not have to be. **The key is not READ off a page: it is DERIVED, by one
+function, from a field the archive already carries verbatim** — the name the
+statement printed. Measured before a line was written: **4,041 keys across six row
+kinds, ZERO that are not `securityKeyOf(security)`.** So re-deriving it from the
+committed archive is a faithful partial replay of extraction, and the next full
+`npm run extract` calls the same function on the same name and writes the same
+bytes. `scripts/rekey-archive.mjs` does exactly that and nothing else: it rewrites
+`securityKey` and the key embedded in `dedupeGroup` (`dg-<securityKey>-<n>`), in
+`extract.mjs`'s own `JSON.stringify(doc, null, 1) + "\n"`, and every figure,
+warning and piece of provenance is written back unchanged. The diff was 57 lines
+across 10 files, all of them one of those two fields.
+
+**THE CONTROL RUN IS WHAT MAKES IT VERIFIABLE**, the same discipline the
+`august-2026-b` delivery established: run BEFORE changing the function and the
+tree must come back byte-identical, so every difference afterwards belongs to the
+change and to nothing else. `--check` is that control, and a second run is a
+no-op.
+
+**AND ITS GATE IS STRUCK ON THE ARCHIVE, NOT ON A FUNCTION — because the first
+one was one-way.** It began by asking "does the previous version of
+`securityKeyOf` reproduce the stored key", which goes stale the moment the
+function changes — the only occasion this script ever runs. Measured: after the
+first re-key it refused every row, so the pass could not be reversed and a SECOND
+change to the rule would have been unlandable. What stays true whatever the rule
+is, is the PROPERTY the rule must have: **the key is a FUNCTION of the name, so
+one name never carries two stored keys.** (The converse is not required and must
+not be — two names sharing a key is exactly what a merge IS.) An archive that
+violates it has a key that came from somewhere other than the name, so nothing is
+written and the run exits non-zero. Verified by tampering with one row in a
+scratch tree: it names the document, the name and both keys, and refuses.
+
+#### Two identity guards, and only one of them could ever have seen this
+
+`build-book` reports both on every run, **and prints them when they are zero** —
+a guard that only speaks when it fires is indistinguishable, on a clean run, from
+one that was quietly deleted:
+
+- **one KEY carrying two ISINs** — a key naming two securities. It existed, and
+  its own comment claimed it was "left with none and reported": `isinConflicts`
+  was built, used to delete from `isinByKey`, and **printed nowhere.** A comment
+  asserting an enforcement that never happened is worse than no enforcement,
+  because the next session reads it and stops looking. It became load-bearing
+  here, since stripping furniture is precisely the operation that could land two
+  different securities on one key. Measured: **0.**
+- **one ISIN carried under two KEYS** — one security keyed twice. **8**, and
+  every one is a name one issuer CLIPS where another spells it out: `HELIOS FCF
+  D-GROW` against `Helios Flexi Cap Fund - Direct Growth`, `CLEAN MAX ENV`
+  against `Clean Max Enviro Energy Solutions`, `NATIONAL STOCK EX` against the
+  full name. **No rule here bridges that and none may invent one**: the strip
+  only ever REMOVES, and `backfillSecurityNames`'s ISIN-anchored rename needs the
+  short form to be a per-word PREFIX of the long one, which an acronym is not.
+  Each is now NAMED with its ISIN in `docs/BOOK-REPORT.md`, which turns the vague
+  "there is an extractor join to make" into eight specific ones.
+
+**AND THE SECOND GUARD WOULD NOT HAVE CAUGHT ICICI, which is worth stating rather
+than implying:** the depository row carried INE090A01021 and the PMS row carried
+no ISIN at all, so there was nothing to compare. The two are complementary — one
+names what an identifier can prove, the other closes what only the name can show.
+
+#### The literals that had to move with the key, and the one that would have cost ₹12,351 Cr
+
+A key change breaks every typed literal keyed on the old spelling, silently, on
+pages computing correctly. Four sets moved, and a fifth is the section below:
+
+- **`RINGFENCED_SECURITY_KEYS`** — `polycab-india-limited-eq` → `polycab-india`.
+  Left stale the fence matches nothing and the promoter block walks back into
+  every total. Verified by reintroducing it: **nine invariants fire across four
+  route/theme combinations**, both the `/polycab` page's own and the absence
+  checks on `cio` and `monitor`.
+- **`src/lib/familyTaxonomy.ts`** — **17** `sec:` entries, each a holding that
+  would have fallen out of its basket and its family asset class. The suite's own
+  no-dead-keys check catches it and names the key.
+- **`scripts/review-reconcile.mjs`'s committed aliases** — three, and leaving
+  them stale moved ₹11.10 Cr of review lines into "no counterpart in this book".
+  The reconciler is what found them.
+- **`src/data/nseSymbols.json`** — regenerated. **Zero symbols lost or gained by
+  the key change**, measured by resolving BOTH keyings against ONE fetched master
+  set, because two `build-symbols` runs differ by which NSE master answered.
+  (Two symbols DID leave, and neither is this change: NSE has moved the DSP Gold
+  and Silver ETFs to new ISINs — `INF740KA1ZP2` / `INF740KA1ZQ0` against the
+  `INF740KA1SW3` / `INF740KA1RE3` the statements carry — so both are correctly
+  reported as "on no NSE master" rather than joined on a name. One arrived: ESDS
+  Software, a new listing the ISIN tier picked up.)
+
+#### And a fifth literal was a ROUTE, whose check then turned out to be fixture-shaped
+
+`check:pages` walks `stock-aif-dual` — the drill-down for a holding two accounts
+both report, where *"carry both, count once"* either reads correctly or
+contradicts itself on one screen. **Its address was a securityKey typed out in
+full**, so the key moving landed it on the not-found page and three invariants
+failed on a build that was correct. It is read off `dedupeGroup` now — the book's
+own mark for a holding reported twice — so it moves with the book, and a drop
+with no duplicate says so in the address rather than resolving to nothing.
+
+**AND THAT EXPOSED A CHECK SHAPED BY ITS OWN FIXTURE.** Derived, the route picks
+the LARGER duplicate — Transition Venture Fund I across two family trusts rather
+than 360 ONE across two CRNs — and the entity-count invariant failed on it. The
+page was right: pill "Held in 2 entities" over two rows. The CHECK counted those
+rows by splitting the table's `innerText` on newlines, which works only while
+every cell is one line — and the MANAGED BY cell carries a strategy sub-line
+whenever the account prints one, which Transition Venture does and 360 ONE does
+not. **The page's own comment already named this failure**, three columns to the
+right: *"ONE LINE. A second `<div>` here becomes a newline in innerText, which
+splits every account row in two and breaks the entity-count check."* The rule had
+been applied to the HELD VIA column and not to the one column that actually
+breaks it.
+
+Fixed on the CHECK rather than by flattening the cell, because the sub-line is
+real information and *"a structural claim must not depend on prose a redesign is
+free to reword"*: the rows carry `data-account-row` and the sweep counts `<tr>`s.
+Verified by reintroducing Stage 10j's original bug — the pill counting the
+DEDUPED set — which fires it by name.
+
+#### The on-screen detector had become a check that cannot fail
+
+Stage 10aj's sentence counted a split by grouping on
+`securityKeyOf(stripDepositoryTail(name))` and comparing that against the book's
+key. That was a real check while the strip was display-only, and **the moment the
+strip moved inside `securityKeyOf` it became the key compared with its own
+definition** — this file's own *"a check that compares a figure with its own copy
+cannot fail"*, arriving through a fix rather than a bug.
+
+It is keyed on the ISIN now, on the page and in the sweep alike: two company
+shares carrying one ISIN under two keys ARE one security keyed twice, whatever
+their names say. The caption states that cause rather than the old one, because a
+caption asserting a cause that is not the cause is the failure this file already
+records twice.
+
+**AND THE SWEEP ASSERTS BOTH DIRECTIONS, NEITHER OF WHICH IMPLIES THE OTHER.**
+The sentence must be GONE — a removal is verified by asserting it happened — and
+ICICI Bank must stand as ONE row over its three accounts at ₹3.00 Cr. That second
+check is grouped by the STRIPPED NAME rather than by the book's key, which is
+what makes it able to fail: the two coincide only BECAUSE the extractor strips,
+so an extractor that stopped puts the group's rows under two keys and the
+row-count assertion catches it. A missing candidate FAILS rather than abstaining.
+Both verified by reintroducing their bug — the strip reverted (the original
+defect, which fires the row check), and the sentence forced to render (which
+fires the absence check) — and the bound on the money comparison is the page's
+own printing precision reproduced, 0.005 Cr, never a tolerance widened until the
+figure fits.
 
 ### Stage 10s — MUTUAL FUND DATA, FROM THE FAMILY'S OWN AmfiBeas REPO
 
@@ -7587,6 +7788,14 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run harvest` refreshes `public/series/` and `docs/SERIES-REPORT.md`.
   Idempotent; `--only <ids>` limits it. Runs nightly via `.github/workflows/harvest.yml`.
 - `npm run inventory` regenerates the ingest inventory.
+- `npm run rekey:archive` re-derives `securityKey` across the committed archive
+  from each row's own stored NAME, through the same `securityKeyOf` the extractor
+  uses — a faithful partial replay of extraction, not a repair layer. It is how a
+  change to that function lands WITHOUT `GLOW_PDF_PASSWORDS` (see Stage 10ak);
+  `--check` writes nothing and is the control run, which must be a no-op against
+  an unchanged function. It refuses outright if any name carries more than one
+  stored key, because then the key is not a function of the name and this pass
+  cannot reproduce it. Follow it with `build-symbols` and `build-book`.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
   **It takes no options** — a stray argument is IGNORED, not rejected, so
   `extract.mjs --help` runs a full extraction. Without `GLOW_PDF_PASSWORDS` that

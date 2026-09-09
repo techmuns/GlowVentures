@@ -119,7 +119,7 @@
   },
   {
    "security": "AXIS BANK EQ",
-   "securityKey": "axis-bank-eq",
+   "securityKey": "axis-bank",
    "isin": "INE238A01034",
    "symbol": null,
    "printedSecurity": null,
@@ -199,7 +199,7 @@
   },
   {
    "security": "BHARAT PARENTERAL-EQ",
-   "securityKey": "bharat-parenteral-eq",
+   "securityKey": "bharat-parenteral",
    "isin": "INE365Y01019",
    "symbol": null,
    "printedSecurity": null,
@@ -399,7 +399,7 @@
   },
   {
    "security": "CHEELIZZA IND-EQ1/",
-   "securityKey": "cheelizza-ind-eq1",
+   "securityKey": "cheelizza-ind",
    "isin": "INE0MSX01027",
    "symbol": null,
    "printedSecurity": null,
@@ -439,7 +439,7 @@
   },
   {
    "security": "CITY UNION -EQ RE1/",
-   "securityKey": "city-union-eq-re1",
+   "securityKey": "city-union",
    "isin": "INE491A01021",
    "symbol": null,
    "printedSecurity": null,
@@ -479,7 +479,7 @@
   },
   {
    "security": "CLEAN MAX ENV-EQ 1/",
-   "securityKey": "clean-max-env-eq-1",
+   "securityKey": "clean-max-env",
    "isin": "INE647U01026",
    "symbol": null,
    "printedSecurity": null,
@@ -639,7 +639,7 @@
   },
   {
    "security": "EVEREST FLEET-EQ1/",
-   "securityKey": "everest-fleet-eq1",
+   "securityKey": "everest-fleet",
    "isin": "INE0LTR01029",
    "symbol": null,
    "printedSecurity": null,
@@ -679,7 +679,7 @@
   },
   {
    "security": "FEDERAL BANK EQ 2/",
-   "securityKey": "federal-bank-eq-2",
+   "securityKey": "federal-bank",
    "isin": "INE171A01029",
    "symbol": null,
    "printedSecurity": null,
@@ -799,7 +799,7 @@
   },
   {
    "security": "ICICI BANK-EQ",
-   "securityKey": "icici-bank-eq",
+   "securityKey": "icici-bank",
    "isin": "INE090A01021",
    "symbol": null,
    "printedSecurity": null,
@@ -879,7 +879,7 @@
   },
   {
    "security": "INDIAN BANK - EQ",
-   "securityKey": "indian-bank-eq",
+   "securityKey": "indian-bank",
    "isin": "INE562A01011",
    "symbol": null,
    "printedSecurity": null,
@@ -919,7 +919,7 @@
   },
   {
    "security": "INDUSIND BANK EQUITY",
-   "securityKey": "indusind-bank-equity",
+   "securityKey": "indusind-bank",
    "isin": "INE095A01012",
    "symbol": null,
    "printedSecurity": null,
@@ -959,7 +959,7 @@
   },
   {
    "security": "INFINIUM PHARMA-EQ",
-   "securityKey": "infinium-pharma-eq",
+   "securityKey": "infinium-pharma",
    "isin": "INE0MRE01011",
    "symbol": null,
    "printedSecurity": null,
@@ -1079,7 +1079,7 @@
   },
   {
    "security": "KAYNES TECHNOLOGY-EQ",
-   "securityKey": "kaynes-technology-eq",
+   "securityKey": "kaynes-technology",
    "isin": "INE918Z01012",
    "symbol": null,
    "printedSecurity": null,
@@ -1199,7 +1199,7 @@
   },
   {
    "security": "NATIONAL STOCK EX-EQ",
-   "securityKey": "national-stock-ex-eq",
+   "securityKey": "national-stock-ex",
    "isin": "INE721I01024",
    "symbol": null,
    "printedSecurity": null,
@@ -1319,7 +1319,7 @@
   },
   {
    "security": "RBL BNK-EQ RE 10",
-   "securityKey": "rbl-bnk-eq-re-10",
+   "securityKey": "rbl-bnk",
    "isin": "INE976G01028",
    "symbol": null,
    "printedSecurity": null,
@@ -1399,7 +1399,7 @@
   },
   {
    "security": "SBI - EQ",
-   "securityKey": "sbi-eq",
+   "securityKey": "sbi",
    "isin": "INE062A01020",
    "symbol": null,
    "printedSecurity": null,
@@ -1439,7 +1439,7 @@
   },
   {
    "security": "THE KARUR VYS-EQ",
-   "securityKey": "the-karur-vys-eq",
+   "securityKey": "the-karur-vys",
    "isin": "INE036D01028",
    "symbol": null,
    "printedSecurity": null,
@@ -1639,7 +1639,7 @@
   },
   {
    "security": "ZAGGLE PREPAID-EQ1/",
-   "securityKey": "zaggle-prepaid-eq1",
+   "securityKey": "zaggle-prepaid",
    "isin": "INE07K301024",
    "symbol": null,
    "printedSecurity": null,
