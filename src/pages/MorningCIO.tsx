@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Briefcase, Wallet, TrendingUp, Percent, Fuel, Coins } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -36,7 +35,7 @@ import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { TodaysMovers } from "@/components/TodaysMovers";
-import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
+import { CHART_COLORS } from "@/lib/chartTheme";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -765,7 +764,6 @@ export function MorningCIO() {
    */
   const sections = m.bucketsByAxis[allocAxis] ?? m.buckets;
   const sectionLabel = (key: string) => (allocAxis === "category" ? bucketLabel(key) : key);
-  const donutData = sections.map((b) => ({ name: sectionLabel(b.key), value: convertFromBase(b.current) }));
   /**
    * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
    * rows on screen rather than recomputed from the book — a caption struck on a
@@ -952,15 +950,17 @@ export function MorningCIO() {
             : undefined}
           icon={<Percent className="h-4 w-4" />} />
 
-        {/* Dry powder and Distributions are COMMITMENT facts. With no commitment
-            in the book they have no denominator — "₹0 undrawn" would assert a
-            schedule that draws nothing, which is a different claim entirely. */}
-        <Kpi label="Dry powder"
+        {/* Uncalled capital and Distributions are COMMITMENT facts. With no
+            commitment in the book they have no denominator — "₹0 undrawn" would
+            assert a schedule that draws nothing, a different claim entirely.
+            (The label read "Dry powder" until the family asked for that jargon
+            off the dashboard; the figure is unchanged.) */}
+        <Kpi label="Uncalled capital"
           href={hasCommitments ? "/private-market" : undefined}
           hrefTitle="Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
           /* THIS TILE'S POPOVER WAS ALSO WRONG, WHICH REMOVING IT FIXES. It
              read `= Σ (Committed − Called) across funds` — and the book does
-             not derive dry powder that way. Private Market's own tile says so
+             not derive uncalled capital that way. Private Market's own tile says so
              in as many words: it is "summed exactly as each statement prints
              it, never derived from committed − drawn", because two folios
              print a commitment and a drawdown and NO undrawn figure, and
@@ -1047,7 +1047,7 @@ export function MorningCIO() {
             this table's row count out of the pill, so the count is not chrome —
             but "6 buckets held" over a table of baskets would be wrong about
             what it counted. `groupCount` supplies the noun per axis. */}
-        <Card className="lg:col-span-2" title={ALLOC_TITLE[allocAxis]}
+        <Card className="lg:col-span-2 self-start" title={ALLOC_TITLE[allocAxis]}
           right={
             <div className="flex flex-wrap items-center gap-2">
               <div role="tablist" aria-label="Group the allocation by"
@@ -1064,24 +1064,14 @@ export function MorningCIO() {
               <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
             </div>
           }>
-          <div className="flex flex-col gap-6 md:flex-row md:items-center">
-            <div className="relative mx-auto shrink-0" style={{ width: 160, height: 160 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={74} stroke="none">
-                    {sections.map((b, i) => <Cell key={i} fill={b.color} />)}
-                  </Pie>
-                  <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                    formatter={(v: number) => fmtCurrency(v, displayCurrency, { compact: true })} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <div className="label-xs">Total NAV</div>
-                <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(m.totalValue, { compact: true })}</div>
-                <div className="mt-0.5 text-[10px] text-slate-500">current value</div>
-              </div>
-            </div>
-            <div className="min-w-0 flex-1 overflow-x-auto">
+          {/* THE PIE CHART IS GONE, at the family's request, and the table now
+              fills the card. The donut restated the Weight column as a wedge and
+              its centre restated the NAV tile above — no figure a reader could
+              not already read off the rows. Removing it left the card stretching
+              to the taller right column and a band of blank space below the
+              table; `self-start` on the Card sizes it to its own content, so the
+              table covers the section rather than floating in it. */}
+          <div className="overflow-x-auto">
               {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
                   this table is asserted through. `check:pages` used to find it
                   by matching the words "ASSET CLASS" in its header, which is a
@@ -1228,12 +1218,11 @@ export function MorningCIO() {
                   )}
                 </p>
               )}
-            </div>
           </div>
         </Card>
 
         <div className="grid gap-5 content-start lg:col-span-1">
-          <Card title="Capital deployment" subtitle="Fund commitments &amp; dry powder">
+          <Card title="Capital deployment" subtitle="Fund commitments &amp; uncalled capital">
             {hasCommitments ? (
               <>
                 {/* Each line is a figure off a drawdown fund's capital account.
@@ -1245,7 +1234,7 @@ export function MorningCIO() {
                     <Link to="/private-market" title="Open the capital accounts these four figures come from — committed, called and still to call, folio by folio"
                       className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400">Fund commitments</Link></span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
                   <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
-                  <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn — dry powder</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
+                  <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn — uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
                   <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
                 </ul>
                 <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
@@ -1259,7 +1248,7 @@ export function MorningCIO() {
             ) : (
               <AbsentSection
                 what="No fund commitments"
-                needs="Commitments, capital calls, undrawn dry powder and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
+                needs="Commitments, capital calls, undrawn capital and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
             )}
           </Card>
 

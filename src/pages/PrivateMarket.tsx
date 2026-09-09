@@ -170,7 +170,7 @@ export function PrivateMarket() {
             ? `on the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} above`
             : "no statement here reports a cost to measure a gain against"} />
 
-        <StatTile label="Still to call (dry powder)" icon={<Fuel className="h-4 w-4" />}
+        <StatTile label="Still to call (uncalled capital)" icon={<Fuel className="h-4 w-4" />}
           value={<span className="text-amber-400">{money(m.ct.undrawn)}</span>}
           sub={`${m.ct.undrawnOf} of ${m.ct.count} capital accounts print an undrawn figure`}
           hint="Summed exactly as each statement prints it, never derived from committed − drawn. Two folios print a commitment and a drawdown and no undrawn figure at all; a zero there would assert the fund has nothing left to call, so they are skipped and this covers 13 of 15." />
