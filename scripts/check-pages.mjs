@@ -2247,8 +2247,11 @@ const ALLOC_AXIS = [
     const a = ctx?.allocTable;
     if (!a) return { notChecked: "the allocation table was not on screen on this run" };
     const want = { category: "bucket", basket: "basket", assetClass: "family-class" }[a.axis];
-    const rows = (ctx?.hrefs ?? []).filter((h) => new RegExp(`^/holdings\\?of=${want}&key=.`).test(h));
-    return rows.length === a.rows.length && new Set(rows).size === rows.length;
+    // Read the destinations off the ROWS, not page-wide `hrefs`: the bar chart
+    // above the table now draws a second link to each of these, so a raw count
+    // over the page would see every destination twice.
+    const dests = a.rows.map((k) => a.rowHrefs[k]).filter((h) => h && new RegExp(`^/holdings\\?of=${want}&key=.`).test(h));
+    return dests.length === a.rows.length && new Set(dests).size === dests.length;
   }],
   /** ...AND THE TABLE STILL UNDERLINES NOTHING AND HIDES NO ARITHMETIC. */
   ["the allocation table underlines nothing and hides no arithmetic, on every axis", (t, ctx) => {
@@ -4358,6 +4361,30 @@ const INVARIANTS = {
     return ctx.allocTable.links >= 2;
   }],
   /**
+   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
+   *
+   * *"the bar graphs should also be clickable just like the rows in the table
+   * and should show the same drill down pages as the table ones do."* So the
+   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
+   * its row's href — both null where the row is a non-clickable fund-of-funds
+   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
+   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
+   * a page that still renders every figure correctly. Verified by reintroducing
+   * both bugs — a bar with a wrong href, and a bar that is not a link.
+   */
+  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    if (!a.bars || !a.bars.length) return false;   // the chart must be there
+    const rowKeys = Object.keys(a.rowHrefs);
+    // one bar per row (keys are unique per section, so equal counts plus every
+    // bar key being a row key means the two sets coincide), and each bar's
+    // destination is its row's — null against null for a non-clickable line.
+    if (a.bars.length !== rowKeys.length) return false;
+    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
+      && b.href === a.rowHrefs[b.key]);
+  }],
+  /**
    * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
    *
    * *"remove the placeholder for not live data from the dashboard ui."* A
@@ -4482,9 +4509,11 @@ const INVARIANTS = {
      */
     ["every allocation row links to its own holdings", (t, ctx) => {
       const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(held)) return false;
-      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
-      return rows.length === held;
+      if (!Number.isFinite(held) || !ctx?.allocTable) return false;
+      // Off the rows, not page-wide `hrefs`: the bar chart draws a parallel link
+      // per destination (asserted to match it, below), which doubles a raw count.
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length === held;
     }],
     // ...AND THE SWEEP HAS AN ADDRESS FOR EVERY ONE OF THEM. `holdings-row-N`
     // walks the Nth allocation row; a book with more buckets than slots would
@@ -4498,8 +4527,9 @@ const INVARIANTS = {
     // ...AND EACH ONE NAMES A DIFFERENT SET. Six links to one address would
     // satisfy the count above while opening the same holdings six times.
     ["each allocation row opens a different set", (t, ctx) => {
-      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
-      return rows.length > 0 && new Set(rows).size === rows.length;
+      if (!ctx?.allocTable) return false;
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length > 0 && new Set(dests).size === dests.length;
     }],
     /**
      * THE KPI TILES AND THE CONCENTRATION FIGURES ARE THE SAME FIX, so they are
@@ -8360,6 +8390,20 @@ for (const theme of THEMES) {
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
           buttons: t.querySelectorAll("button").length,
           links: t.querySelectorAll("a[href]").length,
+          // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
+          // bar carries `data-alloc-bar` (its section key) and IS the same
+          // `<Link>` its row is, so a bar and its row must open the same
+          // drill-down — and a fund-of-funds row that is not a link has a bar
+          // that is not one either. `rowHrefs` is the row's own destination per
+          // key; the invariant holds `bars` to it.
+          bars: [...document.querySelectorAll("main [data-alloc-bars] [data-alloc-bar]")].map((el) => ({
+            key: el.getAttribute("data-alloc-bar"),
+            href: el.matches("a[href]") ? el.getAttribute("href") : null,
+          })),
+          rowHrefs: Object.fromEntries([...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => {
+            const a = r.querySelector("a[href]");
+            return [r.getAttribute("data-alloc-row"), a ? a.getAttribute("href") : null];
+          })),
           // The axis segments, so "the selector exists and offers all three" is
           // a claim about controls rather than about words on the page.
           axes: [...document.querySelectorAll("main [data-alloc-axis][role='tab']")].map((b) => ({
