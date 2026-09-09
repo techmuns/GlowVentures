@@ -139,24 +139,24 @@ review names the custodian per line, which is what makes this joinable at all.
 | --- | --- | ---: | ---: | ---: | --- |
 | National Stock Exchange | ICICI Bank / MOPWM | 2,00,000 | — | — | in the archive, **not valued** — 1,25,000 unit(s) recorded at a face value of 1 |
 | Man Industries | HDFC Bank / MOPWM | 5,83,020 | — | — | **no statement in `source/` reports this** |
-| Clean Max Enviro Energy Solutions Ltd | ICICI Bank / MOPWM | 1,89,934 | 94,967 | ₹12.69 Cr | book holds 94,967 of 1,89,934 <br><sub>joined: prefix</sub> |
+| Clean Max Enviro Energy Solutions Ltd | ICICI Bank / MOPWM | 1,89,934 | 94,967 | ₹12.69 Cr | book holds 94,967 of 1,89,934 <br><sub>joined: exact</sub> |
 | Manorama Industries Ltd. | HDFC Bank / MOPWM | 1,51,270 | — | — | **no statement in `source/` reports this** |
 | Zepto | MOPWM | 4,716 | — | — | **no statement in `source/` reports this** |
-| Fractal Analytics Limited | ICICI Bank | 1,80,185 | 1,80,185 | ₹15.17 Cr | quantity ties exactly <br><sub>joined: prefix</sub> |
+| Fractal Analytics Limited | ICICI Bank | 1,80,185 | 1,80,185 | ₹15.17 Cr | quantity ties exactly <br><sub>joined: exact</sub> |
 | BSE Ltd. | MOPWM | 40,000 | — | — | **no statement in `source/` reports this** |
 | Onesource Specialty Pharma | MOPWM | 91,000 | — | — | **no statement in `source/` reports this** |
 | Smart Works | HDFC Bank | 2,88,889 | 1,87,778 | ₹9.13 Cr | book holds 1,87,778 of 2,88,889 <br><sub>joined: same letters, different spacing</sub> |
 | Vedanta Aluminium Metal Ltd | HDFC Bank / MOPWM | 2,30,000 | 12,909 | ₹0.56 Cr | book holds 12,909 of 2,30,000 <br><sub>joined: exact</sub> |
 | Yash High Voltage Ltd. | ICICI Bank | 1,16,462 | 1,38,462 | ₹12.54 Cr | **book holds MORE** — 1,38,462 against the review's 1,16,462 <br><sub>joined: same letters, different spacing</sub> |
 | Kingfa Science & Technology Ltd. | HDFC Bank / MOPWM | 19,483 | — | — | **no statement in `source/` reports this** |
-| PG Electro. | MOPWM | 1,80,000 | 1,80,000 | ₹9.04 Cr | quantity ties exactly <br><sub>joined: prefix</sub> |
+| PG Electro. | MOPWM | 1,80,000 | 1,80,000 | ₹9.04 Cr | quantity ties exactly <br><sub>joined: exact</sub> |
 | Neuland Labs. | MOPWM | 4,625 | — | — | **no statement in `source/` reports this** |
 | Vedanta | HDFC Bank / MOPWM | 2,92,000 | 12,909 | ₹0.34 Cr | book holds 12,909 of 2,92,000 <br><sub>joined: exact</sub> |
 | Kaynes Technology India ltd | MOPWM | 21,175 | — | — | **no statement in `source/` reports this** |
 | Jaro Education | ICICI Bank | 1,16,979 | 1,16,979 | ₹5.78 Cr | quantity ties exactly <br><sub>joined: committed alias</sub> |
 | Deepak Fert | HDFC Bank / MOPWM | 25,930 | — | — | **no statement in `source/` reports this** |
 | Parth Electrical & Engineering | ICICI Bank | 59,000 | 59,000 | ₹2.63 Cr | quantity ties exactly <br><sub>joined: committed alias</sub> |
-| Insolation Energy Ltd | ICICI Bank | 3,03,260 | 2,12,000 | ₹2.53 Cr | book holds 2,12,000 of 3,03,260 <br><sub>joined: prefix</sub> |
+| Insolation Energy Ltd | ICICI Bank | 3,03,260 | 2,12,000 | ₹2.53 Cr | book holds 2,12,000 of 3,03,260 <br><sub>joined: exact</sub> |
 | Tech Mahindra Ltd. | MOPWM | 21,750 | 2,322 | ₹0.37 Cr | book holds 2,322 of 21,750 <br><sub>joined: exact</sub> |
 | Tatva Chintan Pharma Chem Limi | MOPWM | 21,185 | — | — | **no statement in `source/` reports this** |
 | IFB Inds. | MOPWM | 15,772 | — | — | **no statement in `source/` reports this** |
@@ -168,7 +168,7 @@ review names the custodian per line, which is what makes this joinable at all.
 | MPS | MOPWM | 4,878 | 4,550 | ₹1.30 Cr | book holds 4,550 of 4,878 <br><sub>joined: exact</sub> |
 | Vedanta Iron & Steel Ltd | HDFC Bank / MOPWM | 2,30,000 | — | — | **no statement in `source/` reports this** |
 | Vedanta Oil & Gas Ltd | HDFC Bank / MOPWM | 2,30,000 | — | — | **no statement in `source/` reports this** |
-| Birla Cable Ltd. | MOPWM | 15,193 | 11,900 | ₹0.20 Cr | book holds 11,900 of 15,193 <br><sub>joined: prefix</sub> |
+| Birla Cable Ltd. | MOPWM | 15,193 | 11,900 | ₹0.20 Cr | book holds 11,900 of 15,193 <br><sub>joined: exact</sub> |
 | Infinium Pharmachem Ltd. | MOPWM | 8,000 | — | — | **no statement in `source/` reports this** |
 | Sterlite Tech | HDFC Bank | 1,850 | — | — | in the archive, **not valued** — 14,000 unit(s), no price published |
 | Bharat Parenterals Ltd | MOPWM | 603 | — | — | **no statement in `source/` reports this** |
@@ -191,7 +191,7 @@ reported rather than requested.
 | DSP Gold ETF | Alternate tab | ₹48.31 Cr | ₹19.98 Cr <br><sub>DSP GOLD ETF +1 more row(s)</sub> | exact |
 | DSP Silver ETF | Alternate tab | ₹6.54 Cr | ₹3.40 Cr <br><sub>DSP SILVER ETF</sub> | exact |
 | Assetgro Fintech Private Limited | Alternate tab | ₹5.00 Cr | — <br><sub>in the archive, 636 unit(s), no value published</sub> | prefix |
-| 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) | Alternate tab | ₹2.92 Cr | ₹1.47 Cr <br><sub>360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]</sub> | prefix |
+| 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) | Alternate tab | ₹2.92 Cr | ₹1.47 Cr <br><sub>360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]</sub> | exact |
 
 **₹62.77 Cr of review lines were on the ask list and should not have been.**
 
@@ -260,8 +260,8 @@ Every figure in that last column is the REVIEW's, not this book's — it is what
 review says those holdings are worth at 30 June, and it is the size of the ask rather
 than a number this book will publish when the statements arrive.
 
-**THE MOTILAL FIGURE IS AN UPPER BOUND.** The book already carries **₹78.78 Cr
-across 40 Motilal demat positions** that no review line matches (section E), against
+**THE MOTILAL FIGURE IS AN UPPER BOUND.** The book already carries **₹69.54 Cr
+across 38 Motilal demat positions** that no review line matches (section E), against
 the ₹244.59 Cr asked for here. The two lists certainly overlap: the depository clips a
 scheme name to `WOC MAAF D-GROW` and `ICICI IOPPF D-GRW` where the review writes them out in
 full, so neither string prefixes the other and no tier above may join them. Closing that gap
@@ -274,13 +274,12 @@ can responsibly state.
 
 | Provider | Positions | Market value |
 | --- | ---: | ---: |
-| Motilal Oswal Financial Services (demat) | 40 | ₹78.78 Cr |
-| ICICI Bank (NSDL demat) | 11 | ₹63.78 Cr |
+| Motilal Oswal Financial Services (demat) | 38 | ₹69.54 Cr |
+| ICICI Bank (NSDL demat) | 8 | ₹33.39 Cr |
 | Motilal Oswal Active Momentum Fund | 1 | ₹21.42 Cr |
-| 360 ONE Private Wealth | 1 | ₹1.47 Cr |
 | LKP Securities | 10 | ₹0.99 Cr |
 | HDFC Mutual Fund | 2 | ₹0.00 Cr |
-| **Total** | **65** | **₹166.43 Cr** |
+| **Total** | **59** | **₹125.34 Cr** |
 
 A holding here and not in the review is not automatically an error on either side: the
 review is a quarter older, and it excludes the promoter block and the Hope India Trust

@@ -16,8 +16,8 @@ or a name, so a security reaches the APIs if and only if a symbol resolved:
 | `/api/research` — `/financials` | `<SYMBOL>.NS` | NSE symbol |
 | `/api/ratios` | `tickers` | NSE symbol |
 
-**176 reachable · 88 not reachable · 8 not securities at all**
-(cash and receivables) — 176 + 88 + 8 = 272, every distinct
+**174 reachable · 89 not reachable · 8 not securities at all**
+(cash and receivables) — 174 + 89 + 8 = 271, every distinct
 security the archive carries.
 
 ## Reachable — a symbol resolved
@@ -62,14 +62,13 @@ security the archive carries.
 | DCW LIMITED | `DCW` | — | name |
 | Deep Industries Ltd. | `DEEPINDS` | — | name |
 | Dilip Buildcon Ltd | `DBL` | — | name |
-| DSP GOLD ETF | `GOLDADD` | `INF740KA1SW3` | ISIN (etf) |
-| DSP SILVER ETF | `SILVERADD` | `INF740KA1RE3` | ISIN (etf) |
 | eClerx Services Ltd. | `ECLERX` | — | name |
 | Edelweiss Financial Services Ltd | `EDELWEISS` | — | name |
 | EIH Ltd. | `EIHOTEL` | — | override |
 | Electronics Mart India Limited | `EMIL` | `INE02YR01019` | ISIN (mainboard) |
 | EMA PARTNERS INDIA LIMITED | `EMAPARTNER` | `INE0ZOL01023` | ISIN (sme) |
 | Engineers India Ltd | `ENGINERSIN` | — | override |
+| ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/ | `ESDS` | `INE0DRI01029` | ISIN (mainboard) |
 | Ester Industries Limited | `ESTER` | — | name |
 | Eureka Forbes Ltd | `EUREKAFORB` | — | name |
 | Exide Industries Ltd | `EXIDEIND` | — | name |
@@ -90,8 +89,7 @@ security the archive carries.
 | HDFC Asset Management Co. Ltd. | `HDFCAMC` | — | override |
 | HEG Ltd | `HEG` | — | name |
 | Hindustan Aeronautics Ltd | `HAL` | — | override |
-| ICICI Bank Ltd. | `ICICIBANK` | — | override |
-| ICICI BANK | `ICICIBANK` | `INE090A01021` | ISIN (mainboard) |
+| ICICI Bank Ltd. | `ICICIBANK` | `INE090A01021` | override |
 | IFB Industries Ltd | `IFBIND` | — | name |
 | INDIAN BANK | `INDIANB` | `INE562A01011` | ISIN (mainboard) |
 | Indian Energy Exchange Ltd. | `IEX` | — | override |
@@ -225,12 +223,12 @@ security the archive carries.
 | CHEELIZZA IND | `INE0MSX01027` | **ISIN `INE0MSX01027` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | Cosmo Films Ltd | — | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | Credit Access Grameen Limited | — | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
+| DSP GOLD ETF | `INF740KA1SW3` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| DSP SILVER ETF | `INF740KA1RE3` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | EFPL PREF 18042043 | `INE0LTR03090` | **ISIN `INE0LTR03090` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | ELECTROMECH INFRAPROJECTS LIMITED | `INE1B3701036` | **ISIN `INE1B3701036` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
-| ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/ | `INE0DRI01029` | **ISIN `INE0DRI01029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 | `INE0LTR03090` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | EVEREST FLEET PRIVATE LIMITED | `INE0LTR01029` | **ISIN `INE0LTR01029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
-| EVEREST FLEET | `INE0LTR01029` | **ISIN `INE0LTR01029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | HDFC BAF D-GROW | `INF179K01WA6` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | HDFC BAF R-GROW | `INF179K01830` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
@@ -283,6 +281,7 @@ security the archive carries.
 | SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability | `INF1V9N22050` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | SOTEFIN BHARAT LIMITED | `INE12Z301012` | **ISIN `INE12Z301012` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | SPRAY ENGINEERING DEVICES LIMITED | `INE528I01015` | **ISIN `INE528I01015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| SWAPECO SOLUTIONS PRIVATE LIMITED | `INE2DT103015` | **ISIN `INE2DT103015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | TOCF-I — Class A2 | `INF0RSB22019` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Transition Venture Capital Fund I — Class A1 | `INF0VIS22016` | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 | `INE0Q8703029` | **ISIN `INE0Q8703029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |

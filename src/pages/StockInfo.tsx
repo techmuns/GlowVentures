@@ -490,7 +490,15 @@ export function StockInfo() {
                   const eng = engagementOf(accIdx, r) || null;
                   const route = holdingRoute(eng);
                   return (
-                    <tr key={r.accountId} className="hover:bg-ink-700/40">
+                    /* COUNTED STRUCTURALLY, NEVER BY LINE. `check:pages` used to
+                       count these rows by splitting the table's innerText on
+                       newlines, which works only while every cell is one line —
+                       and the MANAGED BY cell below carries a strategy sub-line
+                       whenever the account prints one. The entity-count check
+                       therefore passed on a dually-reported holding whose
+                       accounts name no strategy and failed on one that does,
+                       which is a fact about the fixture rather than the page. */
+                    <tr key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
                       <td className="px-4 py-2.5 text-[12px] text-slate-400">
                         {providerOf(accIdx, r)}

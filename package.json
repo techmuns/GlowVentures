@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "inventory": "node scripts/ingest/inventory.mjs",
     "extract": "node scripts/ingest/extract.mjs",
+    "rekey:archive": "node scripts/rekey-archive.mjs",
     "test:ingest": "node scripts/ingest/__tests__/run.mjs",
     "test:family": "node scripts/test-family.mjs",
     "check:family": "node scripts/dev/check-family-inputs.mjs",

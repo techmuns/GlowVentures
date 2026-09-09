@@ -111,7 +111,7 @@
   },
   {
    "security": "BIRLA CABLE LTD-EQ",
-   "securityKey": "birla-cable-ltd-eq",
+   "securityKey": "birla-cable",
    "isin": "INE800A01015",
    "symbol": null,
    "printedSecurity": null,
@@ -511,7 +511,7 @@
   },
   {
    "security": "ONESOURCE SPECIAL-EQ",
-   "securityKey": "onesource-special-eq",
+   "securityKey": "onesource-special",
    "isin": "INE013P01021",
    "symbol": null,
    "printedSecurity": null,

@@ -207,7 +207,7 @@
   },
   {
    "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
-   "securityKey": "clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1",
+   "securityKey": "clean-max-enviro-energy-solutions",
    "isin": "INE647U01026",
    "symbol": null,
    "printedSecurity": null,
@@ -247,7 +247,7 @@
   },
   {
    "security": "ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/",
-   "securityKey": "electromech-infraprojects-limited-eq-new-fv-rs-5",
+   "securityKey": "electromech-infraprojects",
    "isin": "INE1B3701036",
    "symbol": null,
    "printedSecurity": null,
@@ -287,7 +287,7 @@
   },
   {
    "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
-   "securityKey": "ema-partners-india-limited-eq-new-fv-rs-5",
+   "securityKey": "ema-partners-india",
    "isin": "INE0ZOL01023",
    "symbol": null,
    "printedSecurity": null,
@@ -407,7 +407,7 @@
   },
   {
    "security": "EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/",
-   "securityKey": "everest-fleet-private-limited-eq-new-fv-rs-1",
+   "securityKey": "everest-fleet",
    "isin": "INE0LTR01029",
    "symbol": null,
    "printedSecurity": null,
@@ -447,7 +447,7 @@
   },
   {
    "security": "FRACTAL ANALYTICS LIMITED - EQ",
-   "securityKey": "fractal-analytics-limited-eq",
+   "securityKey": "fractal-analytics",
    "isin": "INE212S01015",
    "symbol": null,
    "printedSecurity": null,
@@ -487,7 +487,7 @@
   },
   {
    "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
-   "securityKey": "grand-continent-hotels-limited-eq",
+   "securityKey": "grand-continent-hotels",
    "isin": "INE12E301017",
    "symbol": null,
    "printedSecurity": null,
@@ -607,7 +607,7 @@
   },
   {
    "security": "INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ",
-   "securityKey": "innoviti-technologies-private-limited-eq",
+   "securityKey": "innoviti-technologies",
    "isin": "INE0NV501016",
    "symbol": null,
    "printedSecurity": null,
@@ -647,7 +647,7 @@
   },
   {
    "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
-   "securityKey": "insolation-energy-limited-eq-new-fv-re-1",
+   "securityKey": "insolation-energy",
    "isin": "INE0LGX01024",
    "symbol": null,
    "printedSecurity": null,
@@ -687,7 +687,7 @@
   },
   {
    "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
-   "securityKey": "integris-medtech-limited-eq-new-fv-re-1",
+   "securityKey": "integris-medtech",
    "isin": "INE05GT01023",
    "symbol": null,
    "printedSecurity": null,
@@ -727,7 +727,7 @@
   },
   {
    "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
-   "securityKey": "jaro-institute-of-technology-management-and-research-limited-eq",
+   "securityKey": "jaro-institute-of-technology-management-and-research",
    "isin": "INE00YJ01010",
    "symbol": null,
    "printedSecurity": null,
@@ -767,7 +767,7 @@
   },
   {
    "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
-   "securityKey": "matrix-gas-and-renewables-limited-eq",
+   "securityKey": "matrix-gas-and-renewables",
    "isin": "INE0PO201010",
    "symbol": null,
    "printedSecurity": null,
@@ -807,7 +807,7 @@
   },
   {
    "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
-   "securityKey": "national-stock-exchange-of-india-ltd-eq-new-fv-re-1",
+   "securityKey": "national-stock-exchange-of-india",
    "isin": "INE721I01024",
    "symbol": null,
    "printedSecurity": null,
@@ -847,7 +847,7 @@
   },
   {
    "security": "OILMAX ENERGY PRIVATE LIMITED - EQ",
-   "securityKey": "oilmax-energy-private-limited-eq",
+   "securityKey": "oilmax-energy",
    "isin": "INE069601016",
    "symbol": null,
    "printedSecurity": null,
@@ -887,7 +887,7 @@
   },
   {
    "security": "ONIX RENEWABLE LIMITED - EQ",
-   "securityKey": "onix-renewable-limited-eq",
+   "securityKey": "onix-renewable",
    "isin": "INE0TG701015",
    "symbol": null,
    "printedSecurity": null,
@@ -927,7 +927,7 @@
   },
   {
    "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
-   "securityKey": "parth-electricals-and-engineering-limited-eq",
+   "securityKey": "parth-electricals-and-engineering",
    "isin": "INE1H7V01011",
    "symbol": null,
    "printedSecurity": null,
@@ -967,7 +967,7 @@
   },
   {
    "security": "POLYCAB INDIA LIMITED - EQ",
-   "securityKey": "polycab-india-limited-eq",
+   "securityKey": "polycab-india",
    "isin": "INE455K01017",
    "symbol": null,
    "printedSecurity": null,
@@ -1007,7 +1007,7 @@
   },
   {
    "security": "RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/",
-   "securityKey": "radiant-innovative-manufacturing-limited-eq-new-fv-rs-10",
+   "securityKey": "radiant-innovative-manufacturing",
    "isin": "INE007Z01022",
    "symbol": null,
    "printedSecurity": null,
@@ -1047,7 +1047,7 @@
   },
   {
    "security": "RAYS POWER EXPERTS PRIVATE LIMITED - EQ",
-   "securityKey": "rays-power-experts-private-limited-eq",
+   "securityKey": "rays-power-experts",
    "isin": "INE0WSH01011",
    "symbol": null,
    "printedSecurity": null,
@@ -1167,7 +1167,7 @@
   },
   {
    "security": "SKS FASTENERS LIMITED - EQ",
-   "securityKey": "sks-fasteners-limited-eq",
+   "securityKey": "sks-fasteners",
    "isin": "INE593N01019",
    "symbol": null,
    "printedSecurity": null,
@@ -1247,7 +1247,7 @@
   },
   {
    "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
-   "securityKey": "smartworks-coworking-spaces-limited-eq",
+   "securityKey": "smartworks-coworking-spaces",
    "isin": "INE0NAZ01010",
    "symbol": null,
    "printedSecurity": null,
@@ -1287,7 +1287,7 @@
   },
   {
    "security": "SOTEFIN BHARAT LIMITED - EQ",
-   "securityKey": "sotefin-bharat-limited-eq",
+   "securityKey": "sotefin-bharat",
    "isin": "INE12Z301012",
    "symbol": null,
    "printedSecurity": null,
@@ -1327,7 +1327,7 @@
   },
   {
    "security": "SPRAY ENGINEERING DEVICES LIMITED - EQ",
-   "securityKey": "spray-engineering-devices-limited-eq",
+   "securityKey": "spray-engineering-devices",
    "isin": "INE528I01015",
    "symbol": null,
    "printedSecurity": null,
@@ -1407,7 +1407,7 @@
   },
   {
    "security": "URB VENTURES PRIVATE LIMITED - EQ",
-   "securityKey": "urb-ventures-private-limited-eq",
+   "securityKey": "urb-ventures",
    "isin": "INE0Q8701015",
    "symbol": null,
    "printedSecurity": null,
@@ -1447,7 +1447,7 @@
   },
   {
    "security": "WEVOIS LABS PRIVATE LIMITED - EQ",
-   "securityKey": "wevois-labs-private-limited-eq",
+   "securityKey": "wevois-labs",
    "isin": "INE0Z6Z01013",
    "symbol": null,
    "printedSecurity": null,
@@ -1487,7 +1487,7 @@
   },
   {
    "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
-   "securityKey": "yash-highvoltage-limited-eq-new-fv-rs-5",
+   "securityKey": "yash-highvoltage",
    "isin": "INE00GK01023",
    "symbol": null,
    "printedSecurity": null,
@@ -1527,7 +1527,7 @@
   },
   {
    "security": "ZENITH LEISURE HOLIDAYS LIMITED - EQ",
-   "securityKey": "zenith-leisure-holidays-limited-eq",
+   "securityKey": "zenith-leisure-holidays",
    "isin": "INE0ETS01014",
    "symbol": null,
    "printedSecurity": null,

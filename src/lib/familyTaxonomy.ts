@@ -210,7 +210,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Baring PE India Fund 6" },
   "sec:transition-venture-capital-fund-i-class-a1":
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Transition Venture Capital fund I" },
-  "sec:360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-distaif887":
+  "sec:360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii":
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)" },
 
   // ── THE PRIVATE-EQUITY BLOCK, ITEMISED ON ITS OWN TAB ────────────────────
@@ -261,7 +261,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
   // Ltd, an unlisted company marked at its Re 1 face value — so it is worth ₹580
   // here while the review carries the family's ₹4.76 Cr of it under Private
   // Equity. The classification is of the COMPANY and holds either way.
-  "sec:everest-fleet-eq1":
+  "sec:everest-fleet":
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Everest Fleet Private Ltd - SIDDHARTH LADSARIYA" },
 
   // ── PMS mandates ─────────────────────────────────────────────────────────
@@ -341,37 +341,37 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
   // ── Direct equity the review names individually ──────────────────────────
   // Every one of these is Thematic & Tactical on the family's own sheet, which
   // is what licenses the rule below for the ones it does not name.
-  "sec:fractal-analytics-limited-eq":
+  "sec:fractal-analytics":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Fractal Analytics Limited" },
-  "sec:clean-max-enviro-energy-solutions-limited-eq-new-fv-re-1":
+  "sec:clean-max-enviro-energy-solutions":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Clean Max Enviro Energy Solutions Ltd" },
-  "sec:yash-highvoltage-limited-eq-new-fv-rs-5":
+  "sec:yash-highvoltage":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Yash High Voltage Ltd." },
-  "sec:smartworks-coworking-spaces-limited-eq":
+  "sec:smartworks-coworking-spaces":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Smart Works" },
-  "sec:pg-electro-eq1":
+  "sec:pg-electro":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "PG Electro." },
-  "sec:onesource-special-eq":
+  "sec:onesource-special":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Onesource Specialty Pharma" },
   // "Jaro Education" is the review's name for Jaro Institute of Technology
   // Management and Research Limited — the brand, not a different company.
-  "sec:jaro-institute-of-technology-management-and-research-limited-eq":
+  "sec:jaro-institute-of-technology-management-and-research":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Jaro Education" },
-  "sec:grand-continent-hotels-limited-eq":
+  "sec:grand-continent-hotels":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "M/S Grand Continent Hotels" },
-  "sec:parth-electricals-and-engineering-limited-eq":
+  "sec:parth-electricals-and-engineering":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Parth Electrical & Engineering" },
-  "sec:insolation-energy-limited-eq-new-fv-re-1":
+  "sec:insolation-energy":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Insolation Energy Ltd" },
-  "sec:kaynes-technology-eq":
+  "sec:kaynes-technology":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Kaynes Technology India ltd" },
-  "sec:zaggle-prepaid-eq1":
+  "sec:zaggle-prepaid":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Zaggle Prepaid Ocean Services Ltd." },
-  "sec:birla-cable-ltd-eq":
+  "sec:birla-cable":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Birla Cable Ltd." },
-  "sec:infinium-pharma-eq":
+  "sec:infinium-pharma":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Infinium Pharmachem Ltd." },
-  "sec:bharat-parenteral-eq":
+  "sec:bharat-parenteral":
     { assetClass: "Equity", basket: "Thematic & Tactical", reviewProduct: "Bharat Parenterals Ltd" },
 };
 
