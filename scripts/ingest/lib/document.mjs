@@ -414,6 +414,19 @@ export function makeCashFlow(input) {
     memberId: input.memberId ?? null,
     amount: num(input.amount),
     units: num(input.units),
+    /**
+     * The NET the statement itself printed for THIS row, where it prints one.
+     *
+     * It is a primitive and it is also a DECLARATION: a row carrying its own
+     * net cannot be a running balance, because a cumulative figure has no
+     * per-row charge to be net of. Sanshi prints the gross, the stamp duty and
+     * the allotment on three separate lines and its allotment row's amount IS
+     * the running total; 3P prints Contribution Amount, Stamp Duty and Amount
+     * Invested on ONE line and its reader verifies the three tie to the paisa.
+     * `capitalMovesFrom` reads this to tell the two layouts apart instead of
+     * inferring it from whether a row happens to carry units.
+     */
+    netAmount: num(input.netAmount),
     settlementDate: input.settlementDate ?? null,
     /** Bank-book columns, each a primitive the statement printed. */
     tranAccount: input.tranAccount ?? null,
