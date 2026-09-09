@@ -128,6 +128,34 @@ const FUND_CLASSES = new Set(["AIF", "Mutual Fund", "ETF"]);
 export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.assetClass);
 
 /**
+ * ── A FUND HOLDING REDEEMED TO NIL, DERIVED FROM THE BOOK ITSELF ────────────
+ *
+ * *"the 3P funds on the dashboard stable growth basket are lacking invested and
+ * current market value figures, so please check why they are missing."*
+ *
+ * They are not missing. 3P's own statement, dated 05-08-2026 and drawn to
+ * 31-07-2026, prints `0.000` units and `0.000` value against all three unit
+ * classes: B1 and B2 were reclassified into B3 on 31-03-2026 and B3 was a
+ * `Full Units Redemption` on 31-07-2026 for ₹31,05,82,835.17 — the exact figure
+ * on the ICICI payment advice this book already carries. The family's review is
+ * drawn 30 June, five weeks BEFORE that, which is why it still shows ₹52.12 Cr.
+ *
+ * So the book's zero is right and the SCREEN was wrong: a row of dashes beside a
+ * ₹0 reads as a feed that failed, and this book's own rule is that a measured
+ * zero and an absent measurement must never look the same. This is what lets the
+ * row say which it is.
+ *
+ * THE TEST IS THE FUND STILL PRICING WHAT THE FAMILY NO LONGER HOLDS. A NAV with
+ * no units behind it is a redemption; there is no other way for a fund to report
+ * one. Scoped to a fund VEHICLE deliberately — measured over the whole book,
+ * eight positions stand at zero units and three of them are CASH balances
+ * (Buoyant's sleeve twice, Molecule's TDS), which are nil and not redeemed. The
+ * other five are this: 3P's three classes and HDFC's two schemes.
+ */
+export const isRedeemedToNil = (p: { assetClass: string; quantity: number; currentPrice: number | null }) =>
+  isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
+
+/**
  * COMPANY SHARES — a share in a company, whoever pressed the button.
  *
  * A PMS mandate is an ENGAGEMENT, not an asset class (see `Account.engagement`),

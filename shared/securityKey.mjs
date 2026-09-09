@@ -141,6 +141,58 @@ const DEPOSITORY_TAIL = new RegExp(
   "i",
 );
 
+/**
+ * ── A FUND'S UNIT CLASS, SPLIT OFF THE FUND ITSELF — DISPLAY ONLY ───────────
+ *
+ * *"3P Class A B1 B2, all of that should be shown as a single line item as just
+ * 3P funds like in the excel sheet … and then when we click on it we should see
+ * a drop down list of all the other categories."*
+ *
+ * A Category-III AIF issues one PORTFOLIO under several UNIT CLASSES, which
+ * differ by management fee and by nothing else a holder experiences: 3P's own
+ * statement prints B1 1.20%, B2 1.00%, B3 0.70% and a Reclassification table
+ * that moved every unit from B1 and B2 into B3 on one day. The family's own
+ * review carries one line per FUND for exactly that reason, and the dashboard
+ * drew one per class.
+ *
+ * THE BASE MUST MATCH EXACTLY, WHICH IS WHY THIS IS NOT A NAME MATCHER. Only a
+ * recognised class token is removed, from the END, and two holdings group only
+ * where what REMAINS is character-for-character identical. `Motilal Oswal
+ * Founders Fund Series II` and `Motilal Oswal Active Momentum Fund` share a
+ * house and never a base — which is the pair a similarity measure got wrong when
+ * `familyTaxonomy.ts` was first attempted with one (see CLAUDE.md, Stage 10z).
+ *
+ * ANCHORED AT THE END, AND IT ONLY EVER REMOVES — `stripDepositoryTail`'s two
+ * rules, for the same reason. `securityKeyOf` is derived from the RAW name and
+ * is NOT routed through this, so a class keeps its own identity, its own row in
+ * every drill-down and its own join; only the row a reader first sees is
+ * clubbed.
+ *
+ * Returns `null` where the name carries no class, so a caller can tell "this
+ * fund has one class" from "this is not a class name at all" without guessing.
+ */
+const FUND_CLASS_TAIL = new RegExp(
+  // A separator the statements actually print — hyphen, en/em dash, or none —
+  // then the word CLASS (or SERIES/SUB-CLASS), then the class's own label.
+  String.raw`[\s]*[-\u2013\u2014]?\s*`
+  + String.raw`(?:SUB[-\s]?)?CLASS\s+`
+  + String.raw`([A-Z]{1,2}\d{0,2}|\d{1,2})`
+  + String.raw`\s*$`,
+  "i",
+);
+
+export function splitFundClass(name) {
+  const raw = String(name ?? "");
+  const m = FUND_CLASS_TAIL.exec(raw);
+  if (!m || m.index === 0) return null;
+  const fund = raw.slice(0, m.index).replace(/[\s,\-\u2013\u2014]+$/, "");
+  // Never strip a name to nothing, and never call a bare label a fund: the same
+  // floor `stripDepositoryTail` keeps, so a malformed row degrades to ungrouped
+  // rather than to a row named after a class.
+  if (!/[A-Za-z]{3}/.test(fund)) return null;
+  return { fund, cls: m[1].toUpperCase() };
+}
+
 export function stripDepositoryTail(name) {
   let out = String(name ?? "");
   // Repeated because tails stack — `CITY UNION -EQ RE1/` is two of them. Bounded
