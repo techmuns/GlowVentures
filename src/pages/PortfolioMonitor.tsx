@@ -21,6 +21,8 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
+import { trancheTable, capitalRollup, capitalTotals } from "@/lib/tranches";
+import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
@@ -147,6 +149,17 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /**
+   * The positions this row was built from — its own deduped set — carried ONLY
+   * so a per-contribution breakdown can be struck on exactly what the row sums.
+   *
+   * Keying that breakdown on `securityKey` instead would double Transition
+   * Venture Fund I, which two family trusts report as one `dedupeGroup` and this
+   * row counts once. Empty on a mandate row: a mandate is an account, and the
+   * capital behind it bought no units in any one share — that money is on the
+   * Transactions card, under My investments.
+   */
+  trancheSet: Position[];
   // Live-quote fields. `live: false` means CMP is still the workbook mark — the
   // row says so rather than letting a month-old price read as current.
   live: boolean; dayChange: number; dayChangePct: number | null;
@@ -446,6 +459,16 @@ export function PortfolioMonitor() {
   const [sortKey, setSortKey] = useState<SortKey>("marketValue");
   const [asc, setAsc] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  /**
+   * A SECOND EXPANDER, AND DELIBERATELY ITS OWN SET.
+   *
+   * The Entities chevron opens who holds a row; this one opens WHEN it was
+   * bought. Sharing one set would make either chevron toggle both, and a reader
+   * who clicked Entities would get a contribution history they did not ask for.
+   */
+  const [openTranches, setOpenTranches] = useState<Set<string>>(() => new Set());
+  const toggleTranche = (k: string) =>
+    setOpenTranches((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [exporting, setExporting] = useState(false);
   // Realised P&L per security (by securityKey) from the archive's sales —
   // undefined = loading, null = the archive didn't respond. A VALUE of null in
@@ -462,6 +485,14 @@ export function PortfolioMonitor() {
   // Owner comes from the account registry, never from the account string.
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
+  /**
+   * The canonical owner of an ACCOUNT, for surfaces that hold an accountId
+   * rather than a position — the contribution history is one. Falls back to the
+   * id rather than to a blank: an unnamed holder beside a real rupee figure is
+   * exactly the "attributed to nobody" state `excludedAccounts` exists to stop.
+   */
+  const ownerOfAccount = (accountId: string) => accIdx.get(accountId)?.ownerId
+    ? ownerDisplayName(accIdx.get(accountId)!.ownerId) : (accIdx.get(accountId)?.owner ?? accountId);
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
   // Buckets present, in a fixed reading order (own → mandates → wrappers → cash).
   /**
@@ -596,8 +627,12 @@ export function PortfolioMonitor() {
         bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
         // A mandate holds many securities bought on many dates. There is no one
-        // window to annualise it over, so CAGR renders absent on these rows.
+        // window to annualise it over, so CAGR renders absent on these rows —
+        // and for the same reason the capital behind the mandate bought no units
+        // in any one share, so it carries no per-contribution breakdown either.
+        // That money is on the Transactions card, under My investments.
         heldSince: null,
+        trancheSet: [],
         key: "mandate:" + accountId,
         /**
          * THE MANDATE'S NAME ALONE — the owner rides in the Entities column.
@@ -706,6 +741,8 @@ export function PortfolioMonitor() {
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
+          // The DEDUPED set, which is what every other figure on this row sums.
+          trancheSet: dps,
           live,
           dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
           dayChangePct: ps[0].dayChangePct ?? null,
@@ -725,6 +762,7 @@ export function PortfolioMonitor() {
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
+        trancheSet: [p],
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
         liveMV: p.live ? p.marketValue : 0,
         realizedKeys: [p.securityKey],
@@ -960,6 +998,14 @@ export function PortfolioMonitor() {
   const weightScope = [entity !== "All" ? entity : null, sector !== "All" ? sector : null, bucket !== "All" ? groupLabelFor(groupAxis)(bucket) : null].filter(Boolean).join(" · ");
   const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
   const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
+  /**
+   * How many rows on screen can open a contribution history — struck on the
+   * ROWS THE TABLE DREW, never on the book. Read off `BOOK_POSITION_TRANCHES`
+   * directly it would claim a coverage the filtered table does not have, and
+   * would keep claiming it on a view (mandate rows, a filter) where no row
+   * carries one.
+   */
+  const trancheShown = rows.filter((r) => trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf) !== null).length;
   /**
    * THE REALISED COLUMN CANNOT ADD UP TO ITS OWN FOOTER, AND THE PAGE SAYS SO.
    *
@@ -1320,6 +1366,27 @@ export function PortfolioMonitor() {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
+                   * WHEN THIS HOLDING WAS BOUGHT, CONTRIBUTION BY CONTRIBUTION.
+                   *
+                   * Null on all but a handful of rows, and that is the honest
+                   * state rather than a gap: it needs the fund to allot UNITS per
+                   * contribution AND those units to account for every unit held.
+                   * `trancheTable` is handed the row's OWN deduped positions, so
+                   * a holding two members report cannot be counted twice here
+                   * while the row above counts it once.
+                   *
+                   * "cagr" is the family's own rule, not a preference: a year or
+                   * more annualises, anything shorter stands as the absolute
+                   * figure and says so. It deliberately does NOT follow the
+                   * page's measure picker — a tranche is the one thing in this
+                   * book with a real purchase date, and the picker's other
+                   * measures (XIRR, YTD, calendar) are absent on every row here.
+                   */
+                  const tranches = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+                  const trancheOpen = openTranches.has(r.key);
+                  const trancheSpansEntities = !!tranches
+                    && new Set(tranches.rows.map((t) => t.move.accountId)).size > 1;
+                  /**
                    * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
                    * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
                    * price and sector belong to a security; a mandate holds many
@@ -1452,7 +1519,22 @@ export function PortfolioMonitor() {
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
                             : fmtFromBase(r.avgCost)}
                         </td>
-                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{r.costNA ? "—" : fmtFromBase(r.costBasis, { compact: true })}</td>
+                        {/* INVESTED IS THE FIGURE A CONTRIBUTION HISTORY BREAKS
+                            APART, so the affordance lives on it rather than on
+                            the row: what the reader wants apart is the money,
+                            date by date. Drawn only where a breakdown exists —
+                            a chevron that opens nothing is worse than none. */}
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                          {r.costNA ? "—" : tranches ? (
+                            <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
+                              data-tranche-toggle={r.key} data-tranche-rows={tranches.rows.length}
+                              title={`Bought over ${tranches.rows.length} dated contribution${tranches.rows.length === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.`}
+                              className="inline-flex items-center gap-1 rounded ring-focus transition-colors hover:text-champagne-400">
+                              <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${trancheOpen ? "rotate-90" : ""}`} />
+                              {fmtFromBase(r.costBasis, { compact: true })}
+                            </button>
+                          ) : fmtFromBase(r.costBasis, { compact: true })}
+                        </td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
@@ -1581,6 +1663,112 @@ export function PortfolioMonitor() {
                           )}
                         </td>
                       </tr>
+                      {/* EACH INVESTMENT SEPARATELY, AND THE COMBINED BENEATH IT.
+                          *"I invested additional 10 crores… previous amount…
+                          what was the return? Now this 10 crores… what it has
+                          done what's the overall portfolio return."* Both
+                          questions, one table: a row per contribution and a
+                          footer that ties to the cell it opened from. */}
+                      {tranches && trancheOpen && (
+                        <tr className="bg-ink-900/60" data-tranche-panel={r.key}>
+                          <td colSpan={13} className="px-3 pb-3 pt-1">
+                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                              {tranches.rows.length === 1
+                                ? <>This holding was bought in ONE contribution, so its return and the row&rsquo;s are the same figure.</>
+                                : <>The {tranches.rows.length} dated contributions behind this holding. Each carries its OWN units,
+                                    so each is valued at today&rsquo;s NAV on the units IT bought — the earlier money bought cheaper
+                                    units and is worth more per rupee, which is what a single blended return hides.</>}
+                              {" "}Entry NAV is derived as invested &divide; units allotted and reproduces the allotment NAV the
+                              statement prints. A contribution held a year or more is annualised and tagged CAGR; anything
+                              shorter shows the absolute return, because a rate for a year the money has not seen is a claim
+                              about a year.
+                            </p>
+                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                              <table className="min-w-full text-[12px]">
+                                <thead>
+                                  <tr className="border-b border-ink-700/70">
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Invested on</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">As</th>
+                                    {/* ONLY WHERE THE ROW SPANS MORE THAN ONE FOLIO, and
+                                        then it is load-bearing rather than decoration: this
+                                        book's Sanshi Class E row unions four members, and
+                                        two of them contributed on the SAME DAY under the
+                                        same label. Without the holder those read as one
+                                        decision printed twice at different sizes. */}
+                                    {trancheSpansEntities && <th className="label-xs px-3 py-1.5 text-left font-medium">Entity</th>}
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Amount</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Invested</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Units</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Entry NAV</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Value today</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Gain</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-ink-700/50">
+                                  {tranches.rows.map((t) => (
+                                    <tr key={t.date + t.label} data-tranche-row={r.key} className="hover:bg-ink-700/30">
+                                      <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(t.date)}</td>
+                                      <td className="px-3 py-1.5 text-slate-400">{t.label}</td>
+                                      {trancheSpansEntities && (
+                                        <td className="px-3 py-1.5 whitespace-nowrap text-slate-400">{ownerOfAccount(t.move.accountId)}</td>
+                                      )}
+                                      {/* The GROSS the statement prints — what the family
+                                          means by "10 crores" — beside what actually bought
+                                          units after the fund's own charge on the day. */}
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                                        {t.amount === null
+                                          ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
+                                          : fmtFromBase(t.amount, { compact: true })}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">{fmtFromBase(t.invested, { compact: true })}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{fmtNum(t.units)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{fmtFromBase(t.navAtEntry)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(t.value, { compact: true })}</td>
+                                      <td className={`px-3 py-1.5 text-right mono whitespace-nowrap ${t.value - t.invested >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                        {fmtFromBase(t.value - t.invested, { compact: true })}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono whitespace-nowrap">
+                                        {t.ret.kind === "absent"
+                                          ? <AbsentCell reason={t.ret.reason} />
+                                          : <span className={t.ret.pct >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                                              <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">
+                                                {t.ret.kind === "cagr" ? "CAGR" : "ABS"}
+                                              </span>
+                                              {fmtPct(t.ret.pct)}
+                                            </span>}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                                {/* SUMMED FROM THE ROWS ABOVE, never computed beside
+                                    them — so it reconciles to the Invested cell this
+                                    panel opened from by construction rather than by a
+                                    tolerance. The Private Market page's PM-1 is what
+                                    happens when a footer is derived independently. */}
+                                <tfoot className="border-t border-ink-700 bg-ink-900/40">
+                                  <tr data-tranche-total={r.key}>
+                                    <td className="px-3 py-1.5 font-medium text-slate-300" colSpan={trancheSpansEntities ? 3 : 2}>
+                                      Combined · {tranches.rows.length} {tranches.rows.length === 1 ? "contribution" : "contributions"}
+                                    </td>
+                                    <td className="px-3 py-1.5" />
+                                    <td className="px-3 py-1.5 text-right mono font-medium text-slate-200 whitespace-nowrap">{fmtFromBase(tranches.invested, { compact: true })}</td>
+                                    <td className="px-3 py-1.5 text-right mono font-medium text-slate-300 whitespace-nowrap">{fmtNum(tranches.units)}</td>
+                                    <td className="px-3 py-1.5" />
+                                    <td className="px-3 py-1.5 text-right mono font-medium text-slate-100 whitespace-nowrap">{fmtFromBase(tranches.value, { compact: true })}</td>
+                                    <td className={`px-3 py-1.5 text-right mono font-medium whitespace-nowrap ${tranches.value - tranches.invested >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                      {fmtFromBase(tranches.value - tranches.invested, { compact: true })}
+                                    </td>
+                                    <td className={`px-3 py-1.5 text-right mono font-medium whitespace-nowrap ${tranches.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                      <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">ABS</span>{fmtPct(tranches.returnPct)}
+                                    </td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                       {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
                           asked for, in place. Each share appears here and in the
                           mandate's row above, and nowhere beside the shares the
@@ -2117,6 +2305,22 @@ export function PortfolioMonitor() {
               )}
             </p>
           )}
+          {/* HOW FAR THE CONTRIBUTION HISTORY REACHES, COUNTED RATHER THAN
+              CLAIMED. A chevron on some Invested cells and not others is a fact
+              a reader is owed a reason for — otherwise the row they care about
+              looks broken rather than unreported. Derived from what the table
+              actually drew, so it cannot describe a coverage the page does not
+              have; it disappears entirely when nothing on screen carries one. */}
+          {trancheShown > 0 && (
+            <p data-tranche-note className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+              <span className="font-medium text-slate-400">{trancheShown} of {rows.length} rows open their Invested
+              figure into the dated contributions behind it.</span> That needs the fund to allot UNITS against each
+              contribution and those units to account for every unit held — without both, a tranche&rsquo;s value today
+              cannot be struck and a return on part of a holding would read as a return on all of it. The managed
+              mandates publish a capital-account ledger rather than unit allotments, and a depository records what is
+              held and never what was paid for it, so most of this book has no dated purchase to open.
+            </p>
+          )}
           {/* WHY THE WEIGHT COLUMN NO LONGER ADDS TO 100. Only while a company
               filter is on: the denominator is the book the other filters
               describe, so the picked rows are a part of it by design. */}
@@ -2301,6 +2505,215 @@ const HOLDINGS_VIEWS: readonly ViewDef<"security" | "entity">[] = [
 ];
 
 const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
+/**
+ * MY INVESTMENTS — the capital the FAMILY committed, mandate by mandate.
+ *
+ * *"these are five six transactions I executed… how have I executed lumpsum or
+ * through a staggered investment… I want to see it like that."* And: *"in
+ * transactions we need to see the transactions we have done, not what the
+ * transactions the portfolio manager has done."*
+ *
+ * This reads `BOOK_CAPITAL_MOVES` and touches no `Txn`. The two sources answer
+ * different questions and must not be mixed on one table: a manager's trade
+ * moves money INSIDE an account, and a contribution moves money INTO it.
+ * Summing them would count the same rupee twice under one heading.
+ *
+ * ── LUMPSUM OR STAGGERED IS A COUNT, NOT A DETECTOR ─────────────────────────
+ *
+ * One dated contribution is a lumpsum; more than one is not. No cadence, no
+ * tolerance, no minimum — the same reason `txnRollup`'s own `staggered` label
+ * is a label on an already-collapsed row rather than a decision about what to
+ * merge, and simpler here because the family asked the question in exactly
+ * those terms.
+ */
+function MyInvestments({ from, to, entity }: { from: string; to: string; entity: string }) {
+  const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const toggle = (k: string) =>
+    setOpen((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const money = (v: number) => fmtFromBase(v, { compact: true });
+
+  const accounts = portfolio?.accounts ?? [];
+  const positions = portfolio?.positions ?? [];
+  const accIdx = useMemo(() => accountIndex(accounts), [accounts]);
+
+  // The page's own date and entity filters apply here too — a reader who has
+  // narrowed to one member must not be shown another's capital.
+  const moves = useMemo(() => BOOK_CAPITAL_MOVES.filter((m) => {
+    if (from && m.date < from) return false;
+    if (to && m.date > to) return false;
+    if (entity !== "All") {
+      const a = accIdx.get(m.accountId);
+      if (!a || ownerDisplayName(a.ownerId) !== entity) return false;
+    }
+    return true;
+  }), [from, to, entity, accIdx]);
+
+  const groups = useMemo(
+    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES),
+    [moves, accounts, positions],
+  );
+  const totals = useMemo(() => capitalTotals(groups), [groups]);
+
+  if (!groups.length) {
+    return (
+      <Card className="flex min-h-0 flex-1 items-center justify-center">
+        <AbsentSection what="No dated contribution matches these filters"
+          needs="This view reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund. Widen the dates or clear the entity filter; and note that 41 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
+      </Card>
+    );
+  }
+
+  return (
+    <Card pad={false} className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="min-w-full text-sm" data-mine-table>
+          <thead className="sticky top-0 z-10 bg-ink-800">
+            <tr className="border-b border-ink-700">
+              <th className="label-xs px-3 py-2.5 text-left font-medium">Mandate / fund</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">How</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Paid in</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Taken out</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Value today</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Gain</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium">Return</th>
+              <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
+              <th className="label-xs px-3 py-2.5 text-left font-medium">Period</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink-700/70">
+            {groups.map((g) => {
+              const isOpen = open.has(g.accountId);
+              return (
+                <Fragment key={g.accountId}>
+                  <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
+                    className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
+                    <td className="px-3 py-2">
+                      {/* TWO AFFORDANCES, TWO QUESTIONS. The chevron opens what
+                          the FAMILY paid in; the name opens the mandate, where
+                          the MANAGER's own dealing is — which is exactly the
+                          click the ask describes ("if we click and open the
+                          drill down page of one AIF/PMS then inside that we
+                          should see what all transactions the portfolio manager
+                          of that fund has made"). The link stops the row's own
+                          toggle so one click never does both. */}
+                      <div className="flex items-center gap-1.5">
+                        <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                        <Link to={`/mandate/${g.accountId}`} data-mine-link={g.accountId}
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Open ${g.provider} ${g.accountNo} — what the manager did inside it`}
+                          className="font-medium text-slate-100 hover:text-champagne-400 hover:underline">
+                          {g.label}
+                        </Link>
+                      </div>
+                    </td>
+                    {/* THE ASK, ANSWERED IN ONE CELL. A count of dated
+                        contributions is the whole of "lumpsum or staggered". */}
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <span className="pill" data-mine-how={g.staggered ? "staggered" : "lumpsum"}>
+                        {g.staggered ? `staggered · ${g.contributions} payments` : "lumpsum"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">{money(g.paidIn)}</td>
+                    <td className="px-3 py-2 text-right mono text-slate-400 whitespace-nowrap">
+                      {g.withdrawals === 0
+                        ? <span className="text-slate-600">—</span>
+                        : money(g.tookOut)}
+                    </td>
+                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">{money(g.net)}</td>
+                    <td className="px-3 py-2 text-right mono text-slate-100 whitespace-nowrap">{money(g.value)}</td>
+                    <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.gain === null ? "" : changeColor(g.gain)}`}>
+                      {g.gain === null
+                        ? <AbsentCell reason={g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                        : money(g.gain)}
+                    </td>
+                    <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.returnPct === null ? "" : changeColor(g.returnPct)}`}>
+                      {g.returnPct === null
+                        ? <AbsentCell reason={g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                        : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">ABS</span>{fmtPct(g.returnPct)}</>}
+                    </td>
+                    <td className="px-3 py-2 text-[12px] text-slate-400 whitespace-nowrap">{ownerDisplayName(accIdx.get(g.accountId)?.ownerId ?? null) || g.owner}</td>
+                    <td className="px-3 py-2 text-[12px] mono text-slate-500 whitespace-nowrap">
+                      {g.first === g.last ? fmtDate(g.first) : `${fmtDate(g.first)} → ${fmtDate(g.last)}`}
+                    </td>
+                  </tr>
+                  {isOpen && (
+                    <tr className="bg-ink-900/50" data-mine-panel={g.accountId}>
+                      <td colSpan={10} className="px-3 pb-3 pt-1">
+                        <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                          Every dated movement {g.provider} reports on account {g.accountNo}, as its statement types
+                          them. The manager&rsquo;s own trading inside this mandate is a different record and is not
+                          here — open the mandate for that.
+                        </p>
+                        <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                          <table className="min-w-full text-[12px]">
+                            <thead>
+                              <tr className="border-b border-ink-700/70">
+                                <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
+                                <th className="label-xs px-3 py-1.5 text-left font-medium">As</th>
+                                <th className="label-xs px-3 py-1.5 text-right font-medium">In</th>
+                                <th className="label-xs px-3 py-1.5 text-right font-medium">Out</th>
+                                <th className="label-xs px-3 py-1.5 text-right font-medium">Units</th>
+                                <th className="label-xs px-3 py-1.5 text-left font-medium">Into</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-ink-700/50">
+                              {g.moves.map((m, i) => (
+                                <tr key={`${m.date}-${i}`} data-mine-move={g.accountId}>
+                                  <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(m.date)}</td>
+                                  <td className="px-3 py-1.5 text-slate-400">{m.label}</td>
+                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-emerald-400/90">
+                                    {m.direction === "in" ? (m.amount === null
+                                      ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
+                                      : money(m.amount)) : ""}
+                                  </td>
+                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-rose-400/90">
+                                    {m.direction === "out" ? money(m.amount ?? 0) : ""}
+                                  </td>
+                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-slate-400">
+                                    {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
+                                  </td>
+                                  <td className="px-3 py-1.5 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+          {/* SUMMED FROM THE ROWS, never computed beside them. */}
+          <tfoot className="sticky bottom-0 border-t border-ink-700 bg-ink-800">
+            <tr data-mine-total>
+              <td className="px-3 py-2 font-medium text-slate-200">Total · {totals.accounts} accounts</td>
+              <td className="px-3 py-2 text-right text-[12px] text-slate-400 whitespace-nowrap">{totals.contributions} payments</td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.paidIn)}</td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-400 whitespace-nowrap">{money(totals.tookOut)}</td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.net)}</td>
+              <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.value)}</td>
+              <td className="px-3 py-2" colSpan={4} />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p data-mine-note className="border-t border-dashed border-ink-700 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+        <span className="font-medium text-slate-400">These are the family&rsquo;s own movements, not their managers&rsquo;.</span>{" "}
+        {totals.accounts} of this book&rsquo;s {accounts.length} accounts publish a dated capital record; the rest were
+        funded and no statement in this drop says when, so this is not the whole of what the family has committed. Value
+        today is the account&rsquo;s own market value from the book. A return is struck only where the contribution list
+        provably reaches inception — {totals.measurable} of {totals.accounts} rows here — because a return against a
+        partial record of what was paid in overstates itself by everything it missed. The shares each manager bought and
+        sold inside a mandate are a separate record: see By manager, or open the mandate itself.
+      </p>
+    </Card>
+  );
+}
+
 function TransactionsView({ selected, sector, entity, sectorByKey }: {
   selected: Set<string>; sector: string; entity: string; sectorByKey: Map<string, string>;
 }) {
@@ -2314,11 +2727,21 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   const [meta, setMeta] = useState({ buys: 0, sells: 0 });
   const [side, setSide] = useState<"all" | "Buy" | "Sell">("all");
   /**
-   * THE ROLLUP IS THE DEFAULT VIEW. The family's ask was to see the year as one
-   * line per manager and drill down, not to read four hundred dated rows —
-   * "I will only see five items … then I can drill down".
+   * WHAT THE FAMILY DID IS THE DEFAULT — not what their managers did.
+   *
+   * *"in transactions we need to see the transactions we have done, not what
+   * the transactions the portfolio manager has done… and then if we click and
+   * open the drill down page of one AIF/PMS then inside that we should see what
+   * all transactions the portfolio manager of that fund has made."*
+   *
+   * This card opened on the manager rollup, which answered the EARLIER ask
+   * ("I will only see five items … then I can drill down") with the wrong five
+   * items: Carnelian buying Bandhan Bank is Carnelian's decision. The family's
+   * own decision is the capital they put into Carnelian. `mine` is that, and
+   * the manager's trades keep their tab AND now sit inside the mandate
+   * drill-down, which is where the ask puts them.
    */
-  const [groupBy, setGroupBy] = useState<TxnView>("manager");
+  const [groupBy, setGroupBy] = useState<TxnView>("mine");
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
@@ -2409,8 +2832,11 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   const scoped = useMemo(() => (groupBy !== "direct" ? filtered : filtered.filter((t) =>
     ownAccounts.has(acctKey(t.provider, t.accountNo)) && (t.assetClass == null || t.assetClass === "Equity"))),
     [filtered, groupBy, ownAccounts]);
+  // `mine` reads a different source and never reaches this rollup; it maps to
+  // `manager` here only so the memo has a valid grouping to compute against
+  // while that view is showing, exactly as `tape` already does.
   const groups = useMemo(() => rollup(scoped, accountsReg,
-    groupBy === "tape" ? "manager" : groupBy === "direct" ? "instrument" : groupBy),
+    groupBy === "tape" || groupBy === "mine" ? "manager" : groupBy === "direct" ? "instrument" : groupBy),
     [scoped, accountsReg, groupBy]);
   const totals = useMemo(() => rollupTotals(groups), [groups]);
   const shown = filtered.slice(0, TXN_CAP);
@@ -2486,8 +2912,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             asked what each manager did this year. Tape is kept because a
             reconciliation against a PDF needs the printed rows in printed
             order, which no rollup can stand in for. */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="One line per manager or per family member; Direct Equity narrows the tape to the shares the family bought and sold in its own broking account. Expand a line for what is inside it. Tape is the raw dated rows.">
-          {([["manager", "By manager"], ["entity", "By entity"], ["direct", "Direct Equity"], ["tape", "Tape"]] as const).map(([v, label]) => (
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="My investments is the capital the FAMILY committed, mandate by mandate and fund by fund. The rest read the managers' own trading: one line per manager or per family member; Direct Equity narrows it to the shares the family bought and sold in its own broking account; Tape is the raw dated rows.">
+          {([["mine", "My investments"], ["direct", "Direct Equity"], ["manager", "By manager"], ["entity", "By entity"], ["tape", "Tape"]] as const).map(([v, label]) => (
             <button key={v} type="button" onClick={() => setGroupBy(v)}
               className={`rounded px-3 py-1.5 font-medium transition-colors ${groupBy === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
               {label}
@@ -2497,7 +2923,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
         <span className="ml-auto text-xs text-slate-500">{filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells</span>
       </div>
 
-      {groupBy !== "tape" ? (
+      {groupBy === "mine" ? (
+        <MyInvestments from={from} to={to} entity={entity} />
+      ) : groupBy !== "tape" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">
             <table className="min-w-full text-sm">

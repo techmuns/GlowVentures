@@ -114,6 +114,24 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 
 Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated market value above.
 
+## The family's own dated investments
+
+**20** dated contribution(s) totalling **1,93,00,00,000** and **94** withdrawal(s) totalling **2,85,903.85**, across **10 of 51** account(s).
+
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 41 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+
+A per-contribution breakdown is published for **7** position(s), of which **2** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
+
+| Position | Account | Contributions | Units | Invested |
+| --- | --- | ---: | ---: | ---: |
+| Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9039671821 | 1 | 60,45,934.485 | 74,99,62,501.87 |
+| Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9039671854 | 1 | 12,11,186.597 | 14,99,92,500.37 |
+| Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 | sanshi-fund-9039671912 | 1 | 23,41,480.851 | 24,99,87,500.62 |
+| Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9069671554 | 4 | 18,20,926.864 | 21,99,89,000.54 |
+| Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9069671634 | 3 | 17,61,264.629 | 20,49,89,750.51 |
+| Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC262 | 1 | 7,500 | 75,00,000 |
+| Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC263 | 1 | 7,500 | 75,00,000 |
+
 ## Sector allocation
 
 | Sector | Market value | Share |
