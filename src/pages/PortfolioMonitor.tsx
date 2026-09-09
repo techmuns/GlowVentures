@@ -51,25 +51,22 @@ import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 
-type EntityPart = {
-  // Per-unit figures are nullable for the same reason they are on Position:
-  // 360 ONE marks its AIF at a total value and prints no NAV per unit.
-  entity: string; quantity: number; avgCost: number | null; currentPrice: number | null;
-  costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
-  /** How the entity came to hold it — a manager's mandate, or its own account. */
-  routes: string[];
-};
 /**
  * ── THROUGH WHAT MEANS A NAME IS HELD — one entry per ACCOUNT ───────────────
  *
- * Set only on the SECURITY axis, where a name is clubbed across every vehicle
- * that holds it and the reader's next question is "held how?".
+ * Set on every consolidated row, on every grouping axis: the axis decides which
+ * SECTION a row sits in, never what the row is, so a holding opens the same way
+ * whichever heading it is under.
  *
- * `EntityPart` above answers a DIFFERENT question — which family MEMBER holds
- * it — and lumps every route into a Set, so a name held through three mandates
- * by one member collapses to one line reading "manager's mandate". "Through
- * what means" is a fact about the ACCOUNT: its engagement names the route, its
- * strategy or provider names the vehicle. So the account is the unit here.
+ * THE UNIT IS THE ACCOUNT, AND THAT WAS THE SECOND HALF OF THE FIX. This
+ * replaced an `EntityPart` roll-up keyed on the family MEMBER, which lumped
+ * every route into a Set — so a name held through three mandates by one member
+ * collapsed to one line reading "manager's mandate" — and which was built from
+ * the DEDUPED positions while the pill offering it counted the raw ones, so a
+ * holding reported by two trusts showed "2 entities" over a table of one row.
+ * "Through what means" is a fact about the ACCOUNT: its engagement names the
+ * route, its strategy or provider names the vehicle, and every statement is
+ * listed as printed with the overlap named.
  */
 type Venue = {
   accountId: string; accountNo: string;
@@ -133,7 +130,7 @@ type Row = {
   // Quantity is NULL on a mandate row and only there: a mandate is an account,
   // not a security, and its constituents are what carry quantities. A 0 would
   // read as a mandate holding nothing.
-  entities: string[]; parts: EntityPart[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
+  entities: string[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
   // Cost and the two figures derived from it are NULLABLE for the same reason
   // the per-unit ones are: a depository holding statement reports a value and no
   // cost. `costNA` stays the flag the cells switch on; the values themselves are
@@ -654,7 +651,6 @@ export function PortfolioMonitor() {
         security: mandateLabel(acc),
         securityKey: "", sector: "", assetClass: "",
         entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
-        parts: [],
         quantity: null, avgCost: null, currentPrice: null,
         costBasis: cost, marketValue: mv, unrealizedPnL: costNA ? null : pnl,
         returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
@@ -734,7 +730,7 @@ export function PortfolioMonitor() {
           kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
           key: ps[0].securityKey, security: ps[0].security, securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
-          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), parts: entityParts(dps, accIdx), quantity: qty,
+          entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: qty,
           avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, currentPrice: ps[0].currentPrice,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
@@ -748,7 +744,35 @@ export function PortfolioMonitor() {
           dayChangePct: ps[0].dayChangePct ?? null,
           liveMV: live ? mv : 0,
           realizedKeys: [ps[0].securityKey],
-          venues: bySecurity ? venuesOf(ps, accIdx) : undefined,
+          /**
+           * ON EVERY AXIS, NOT JUST THE SECURITY ONE.
+           *
+           * *"just like how you have show individual investments return in the
+           * drop down for securities you need to implement the same for
+           * category/asset class/basket as well … so we can see individual
+           * investments returns in any selected filter."*
+           *
+           * The axis only decides WHICH SECTION a row sits in; the row itself is
+           * the same holding, clubbed from the same statements. So the way it
+           * opens should be the same too — and it was not: this was gated on
+           * `bySecurity`, so on Category, Asset class and Basket the name cell
+           * drew no chevron at all and the older per-ENTITY panel below could
+           * only be reached from an "N entities" pill at the far right end of
+           * the row, off the edge of the table.
+           *
+           * THAT PANEL WAS ALSO WRONG WHERE IT DIFFERED, which is why this
+           * REPLACES it rather than sitting beside it: it was built from the
+           * DEDUPED set while the pill counting entities was built from the raw
+           * one, so Transition Venture Fund I — held by two family trusts and
+           * reported by both — showed a pill reading "2 entities" over a table
+           * of one row. `venuesOf` lists every statement as printed and NAMES
+           * the overlap, which is §"a consolidated figure counts each
+           * dedupeGroup ONCE; a per-account or per-owner figure does not".
+           *
+           * Measured: 75 consolidated rows on a non-security axis, 12 held
+           * through more than one account, 2 carrying that overlap.
+           */
+          venues: venuesOf(ps, accIdx),
           isin: ps.find((x) => x.isin)?.isin ?? null,
         };
       });
@@ -757,7 +781,7 @@ export function PortfolioMonitor() {
         kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, p),
         groupSource: groupSourceFor(groupAxis, accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
-        entities: [ownerOf(accIdx, p)], parts: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
+        entities: [ownerOf(accIdx, p)], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
@@ -1899,7 +1923,27 @@ export function PortfolioMonitor() {
                                   <span className="font-medium text-slate-200">{money(g.mv)}</span> through{" "}
                                   {g.n === 1 ? "" : `${g.n} `}{g.route}{g.n === 1 ? "" : "s"}
                                 </span>
-                              ))}.
+                              ))}
+                              {/*
+                                THE ROUTE SPLIT IS STRUCK OVER THE STATEMENTS AS
+                                PRINTED, and on two rows in this book that is not
+                                the figure at the head of the same sentence.
+
+                                Transition Venture Fund I is reported by both
+                                family trusts, so the row counts it once at
+                                ₹1.71 Cr and this clause adds to ₹3.43 Cr — and a
+                                reader who divides one printed cell by another and
+                                gets a third answer has found a contradiction that
+                                a sentence three lines below does not rescue. The
+                                reconciliation under the table stays; this is the
+                                mark that sends them to it, and it renders only
+                                where the two really differ.
+                              */}
+                              {gap > 1 && (
+                                <> as the statements print it, of which{" "}
+                                  <span className="font-medium text-slate-200">{money(gap)}</span> is the same holding
+                                  reported twice</>
+                              )}.
                             </p>
                             <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                               The row above clubs them into one holding; each line here is one statement as printed.
@@ -1978,44 +2022,6 @@ export function PortfolioMonitor() {
                         </tr>
                         );
                       })()}
-                      {!m && !r.venues && multi && isOpen && (
-                        <tr className="bg-ink-900/60">
-                          <td colSpan={13} className="px-3 pb-3 pt-1">
-                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
-                              <table className="min-w-full text-[12px]">
-                                <thead>
-                                  <tr className="border-b border-ink-700/70">
-                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Owning entity</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Avg cost</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">% of holding</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Unreal. P&L</th>
-                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
-                                    {/* The route is a descriptor, not a figure — the
-                                        owning entity is this table's row identity. */}
-                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-ink-700/50">
-                                  {r.parts.map((pt) => (
-                                    <tr key={pt.entity}>
-                                      <td className="px-3 py-1.5"><span className="text-slate-200">{pt.entity}</span></td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(pt.quantity)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{pt.costNA ? "—" : pt.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(pt.avgCost)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-100">{fmtFromBase(pt.marketValue, { compact: true })}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400">{r.marketValue > 0 ? ((pt.marketValue / r.marketValue) * 100).toFixed(1) : "0.0"}%</td>
-                                      <td className={`px-3 py-1.5 text-right mono ${pt.costNA ? "text-slate-500" : changeColor(pt.unrealizedPnL)}`}>{pt.costNA ? "—" : fmtFromBase(pt.unrealizedPnL, { compact: true, sign: true })}</td>
-                                      <td className={`px-3 py-1.5 text-right mono ${pt.costNA ? "text-slate-500" : changeColor(pt.returnPct)}`}>{pt.costNA ? "—" : fmtPct(pt.returnPct, { sign: true })}</td>
-                                      <td className="px-3 py-1.5 text-slate-400">{pt.routes.join(" + ")}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                     </Fragment>
                   );
                     })}
@@ -2434,37 +2440,6 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
   return built;
 }
 
-function entityParts(ps: Position[], accIdx: AccountIndex): EntityPart[] {
-  const m = new Map<string, { entity: string; quantity: number; costs: (number | null)[]; costBasis: number | null; marketValue: number; currentPrice: number | null; costUnavailable: boolean; routes: Set<string> }>();
-  for (const x of ps) {
-    const who = ownerOf(accIdx, x);
-    const e = m.get(who) ?? { entity: who, quantity: 0, costs: [], costBasis: null, marketValue: 0, currentPrice: x.currentPrice, costUnavailable: false, routes: new Set<string>() };
-    e.routes.add(ROUTE_LABEL[holdingRoute(engagementOf(accIdx, x) || null)]);
-    e.quantity += x.quantity;
-    // Collected and summed with sumOrNull below, not accumulated with `+=`: a
-    // null cost added to a running total silently becomes NaN, and NaN formats
-    // as "—" for the wrong reason on every entity that holds the name.
-    e.costs.push(x.costBasis);
-    e.marketValue += x.marketValue;
-    if (x.costUnavailable || x.costBasis === null) e.costUnavailable = true;
-    m.set(who, e);
-  }
-  for (const e of m.values()) e.costBasis = sumOrNull(e.costs);
-  return [...m.values()].map((e) => {
-    // Cost is "not meaningful" when the source flags it unavailable (even with a
-    // placeholder cost) or when no cost basis is present — mirrors the By-entity view.
-    const cost = e.costBasis;
-    const costNA = e.costUnavailable || cost === null || (cost === 0 && e.marketValue > 0);
-    const pnl = costNA ? null : e.marketValue - (cost as number);
-    return {
-      entity: e.entity, routes: [...e.routes], quantity: e.quantity, currentPrice: e.currentPrice,
-      avgCost: !costNA && e.quantity > 0 ? (cost as number) / e.quantity : null, costBasis: cost,
-      marketValue: e.marketValue, unrealizedPnL: pnl,
-      returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null, costNA,
-    };
-  }).sort((a, b) => b.marketValue - a.marketValue);
-}
-
 function Th({ children, right, onClick }: { children: React.ReactNode; right?: boolean; onClick?: () => void }) {
   return (
     <th className={`label-xs px-2 py-1.5 font-medium ${right ? "text-right" : "text-left"}`}>
@@ -2575,9 +2550,16 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
               <th className="label-xs px-3 py-2.5 text-right font-medium">Paid in</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Taken out</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">Value today</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">Gain</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">Return</th>
+              {/* WHAT A COLUMN MEANS BELONGS ON THE COLUMN. Both of these were
+                  sentences in the footer the family asked to have removed, and
+                  neither is chrome: one names the BASIS of a figure and the
+                  other names the CONDITION under which it is published. */}
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="The account's own market value from the book — the same figure the holdings tables carry for it, not a value re-derived from what was paid in.">Value today</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="Value today less net invested, struck only where the contribution list provably reaches the account's inception.">Gain</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="Struck only where the contribution list provably reaches the account's inception — either the allotted units account for every unit held, or the statement's own printed inception date is on or after the first contribution. A return against a partial record of what was paid in overstates itself by everything it missed, so a row that cannot establish it renders a dash naming the reason.">Return</th>
               <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
               <th className="label-xs px-3 py-2.5 text-left font-medium">Period</th>
             </tr>
@@ -2590,22 +2572,36 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
                   <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
                     className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
                     <td className="px-3 py-2">
-                      {/* TWO AFFORDANCES, TWO QUESTIONS. The chevron opens what
-                          the FAMILY paid in; the name opens the mandate, where
-                          the MANAGER's own dealing is — which is exactly the
-                          click the ask describes ("if we click and open the
-                          drill down page of one AIF/PMS then inside that we
-                          should see what all transactions the portfolio manager
-                          of that fund has made"). The link stops the row's own
-                          toggle so one click never does both. */}
+                      {/*
+                        ONE AFFORDANCE, AND THE ROW IS IT.
+
+                        *"remove the drill down pages for transactions page in
+                        portfolio monitor, we just need to show in drop down
+                        details regarding staggered/lumpsum investments that is
+                        already there, so just remove the full drill down pages
+                        since they're empty."*
+
+                        The name used to link to `/mandate/:accountId`, and
+                        MEASURED, SEVEN OF THESE TEN ROWS ARE FUND FOLIOS — the
+                        five Sanshi accounts and both Transition Venture trusts —
+                        for which that page can only say it is not a mandate and
+                        draw an empty dealing card beneath. A link a reader is
+                        invited to follow into nothing is worse than no link.
+
+                        The three PMS rows keep their page; it is simply not
+                        reached from HERE. Holdings, Family &amp; Entities, a
+                        company page and every holdings drill-down all link a
+                        mandate, and each of those guards on the account really
+                        being one — so nothing that has something to show became
+                        unreachable, and nothing that had nothing is offered.
+                      */}
                       <div className="flex items-center gap-1.5">
                         <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                        <Link to={`/mandate/${g.accountId}`} data-mine-link={g.accountId}
-                          onClick={(e) => e.stopPropagation()}
-                          title={`Open ${g.provider} ${g.accountNo} — what the manager did inside it`}
-                          className="font-medium text-slate-100 hover:text-champagne-400 hover:underline">
+                        <span data-mine-name={g.accountId}
+                          title={`${g.provider} · account ${g.accountNo}`}
+                          className="font-medium text-slate-100">
                           {g.label}
-                        </Link>
+                        </span>
                       </div>
                     </td>
                     {/* THE ASK, ANSWERED IN ONE CELL. A count of dated
@@ -2643,8 +2639,8 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
                       <td colSpan={10} className="px-3 pb-3 pt-1">
                         <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                           Every dated movement {g.provider} reports on account {g.accountNo}, as its statement types
-                          them. The manager&rsquo;s own trading inside this mandate is a different record and is not
-                          here — open the mandate for that.
+                          them. The shares the manager bought and sold inside it are a different record and are not
+                          here — see <span className="font-medium text-slate-400">By manager</span>.
                         </p>
                         <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                           <table className="min-w-full text-[12px]">
@@ -2690,7 +2686,16 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
           {/* SUMMED FROM THE ROWS, never computed beside them. */}
           <tfoot className="sticky bottom-0 border-t border-ink-700 bg-ink-800">
             <tr data-mine-total>
-              <td className="px-3 py-2 font-medium text-slate-200">Total · {totals.accounts} accounts</td>
+              {/* "10 of 51", NOT "10". A caption is chrome; a COUNT inside it is
+                  not — and this one was the whole of what the deleted footer had
+                  that the page did not say elsewhere. Read as "Total · 10
+                  accounts", ₹193 Cr is the whole of what this family has put in.
+                  It is not: 41 of the 51 accounts were funded too and no
+                  statement in this drop says when. */}
+              <td className="px-3 py-2 font-medium text-slate-200"
+                title={`${totals.accounts} of this book's ${accounts.length} accounts publish a dated capital record. The other ${accounts.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so this total is not the whole of what the family has committed.`}>
+                Total · {totals.accounts} of {accounts.length} accounts
+              </td>
               <td className="px-3 py-2 text-right text-[12px] text-slate-400 whitespace-nowrap">{totals.contributions} payments</td>
               <td className="px-3 py-2 text-right mono font-medium text-slate-100 whitespace-nowrap">{money(totals.paidIn)}</td>
               <td className="px-3 py-2 text-right mono font-medium text-slate-400 whitespace-nowrap">{money(totals.tookOut)}</td>
@@ -2701,15 +2706,6 @@ function MyInvestments({ from, to, entity }: { from: string; to: string; entity:
           </tfoot>
         </table>
       </div>
-      <p data-mine-note className="border-t border-dashed border-ink-700 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-400">These are the family&rsquo;s own movements, not their managers&rsquo;.</span>{" "}
-        {totals.accounts} of this book&rsquo;s {accounts.length} accounts publish a dated capital record; the rest were
-        funded and no statement in this drop says when, so this is not the whole of what the family has committed. Value
-        today is the account&rsquo;s own market value from the book. A return is struck only where the contribution list
-        provably reaches inception — {totals.measurable} of {totals.accounts} rows here — because a return against a
-        partial record of what was paid in overstates itself by everything it missed. The shares each manager bought and
-        sold inside a mandate are a separate record: see By manager, or open the mandate itself.
-      </p>
     </Card>
   );
 }
