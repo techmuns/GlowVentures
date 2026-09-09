@@ -1,5 +1,5 @@
 /**
- * ── THE SAME HOLDINGS, SLICED THREE WAYS — IN ONE PLACE ─────────────────────
+ * ── THE SAME HOLDINGS, SLICED SEVERAL WAYS — IN ONE PLACE ───────────────────
  *
  *   "We should also be able to see this information: category wise (MF, direct
  *    equity, Bonds, PMS, AIF etc), asset class wise (Equity, debt etc), my
@@ -40,6 +40,10 @@
  * (the footer, the dedupe gap, the cost-coverage refusal, the weight base) is
  * untouched and stays correct by construction. Measured on this book, all three
  * axes sum to `BOOK_SUMMARY.totalValue` to the rupee.
+ *
+ * A FOURTH AXIS — SECURITY — is the Portfolio Monitor's alone and is NOT an
+ * allocation axis. See `SECURITY_AXIS` below for what it is and why widening
+ * `GroupAxis` to include it would have been the wrong move.
  */
 import type { Position } from "./types";
 import { engagementOf, type AccountIndex } from "./accounts";
@@ -91,8 +95,63 @@ export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: strin
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
 ];
 
-/** The section a holding sits in on the chosen axis. One place, three answers. */
-export const groupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Position): string => {
+/**
+ * ── THE FOURTH AXIS, AND WHY IT IS THE PORTFOLIO MONITOR'S ALONE ────────────
+ *
+ *   "Portfolio monitor is right now based on category wise, asset class wise,
+ *    and then the basket… Not stock wise. So just incorporate this into THIS
+ *    PAGE ONLY. Then you give a simple view where whatever stock, like HDFC
+ *    Bank, if Yamini wants to click on, she can click on and then drill down.
+ *    So based on every single investment direct/PMS/ETF/AIF etc etc. we will
+ *    club and show which stock has the highest exposure and thru what means."
+ *
+ * THE THREE AXES ABOVE ARE ALLOCATION AXES: they file every holding under a
+ * section and both screens sum those sections. THE SECURITY AXIS IS NOT ONE. It
+ * files nothing — it collapses the book to one row per NAME, ranked by exposure
+ * — so an allocation table built on it would draw 214 single-holding "sections"
+ * and mean nothing. That is why `GroupAxis`, `GROUP_AXES` and `GROUP_VIEWS` are
+ * untouched above and Morning CIO still offers exactly three: widening them
+ * would have put this axis on that page's allocation card by construction, and
+ * the family scoped it to the Monitor in the same sentence that asked for it.
+ *
+ * `MonitorAxis` is therefore a SUPERSET used by one screen. The shared helpers
+ * below take it, so `drilldown.ts` and Morning CIO keep passing a `GroupAxis`
+ * unchanged (every `GroupAxis` is a `MonitorAxis`), and there is still exactly
+ * one definition of "which section is this holding in".
+ *
+ * WHAT THE AXIS ACTUALLY CHANGES lives in `PortfolioMonitor` and not here,
+ * because it is a change to the ROW BUILD rather than to a section key: the
+ * mandates are NOT lifted out into one row each, so a share a discretionary
+ * manager chose is clubbed with the same share bought in the family's own
+ * demat. On every other axis those shares are inside a mandate row and a reader
+ * cannot see the name's total exposure at all — which is the gap reported here.
+ */
+export const SECURITY_AXIS = "security" as const;
+export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS;
+
+/**
+ * The single section every holding lands in on the security axis. It exists so
+ * `groupKeyFor` keeps its contract (an axis always answers with a section) while
+ * the table, seeing one key, draws no headings at all.
+ */
+export const SECURITY_SECTION = "All securities";
+
+/** The Portfolio Monitor's four segments. Morning CIO draws `GROUP_VIEWS` — three. */
+export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
+  ...GROUP_VIEWS,
+  { key: SECURITY_AXIS, label: "Security", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
+];
+
+/**
+ * The section a holding sits in on the chosen axis. One place, three answers —
+ * and a fourth that is deliberately not a section at all: the SECURITY axis puts
+ * every holding in one section, because its whole point is that a name is ranked
+ * against every other name rather than filed under anything. With one key the
+ * table draws no headings (`showBucketSections` needs two), which is the flat,
+ * ranked list the family asked for.
+ */
+export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Position): string => {
+  if (axis === SECURITY_AXIS) return SECURITY_SECTION;
   if (axis === "category") return bucketFor(idx, p);
   const isMandate = heldUnderMandate(idx, p);
   return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
@@ -103,28 +162,32 @@ export const groupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Position): st
  * category axis is not "unknown": that axis is derived from the book and asks
  * nothing of the family, so the heading has nothing to disclose.
  */
-export const groupSourceFor = (axis: GroupAxis, idx: AccountIndex, p: Position): TaxonomySource | null => {
-  if (axis === "category") return "review";
+export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Position): TaxonomySource | null => {
+  // Both the category and the security axes are derived from the book itself and
+  // ask nothing of the family, so neither heading has anything to disclose.
+  if (axis === SECURITY_AXIS || axis === "category") return "review";
   const isMandate = heldUnderMandate(idx, p);
   const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
   return r?.source ?? null;
 };
 
 /** Reading order per axis, with the unclassified section last on the two new ones. */
-export const groupOrdFor = (axis: GroupAxis) =>
-  axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
+export const groupOrdFor = (axis: MonitorAxis) =>
+  axis === SECURITY_AXIS ? () => 0
+  : axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
 
 /**
  * The heading. The two family axes are already the family's own words, so they
  * render verbatim; only the category axis has a label function, because that is
  * the axis where the wording was itself the fix (§"Company Shares").
  */
-export const groupLabelFor = (axis: GroupAxis) => (key: string) =>
+export const groupLabelFor = (axis: MonitorAxis) => (key: string) =>
   axis === "category" ? bucketLabel(key) : key;
 
 /** What the "all" option on a section filter says, per axis. */
-export const ALL_LABEL: Record<GroupAxis, string> = {
+export const ALL_LABEL: Record<MonitorAxis, string> = {
   category: "All categories", assetClass: "All asset classes", basket: "All baskets",
+  security: "All securities",
 };
 
 /**
@@ -136,14 +199,15 @@ export const ALL_LABEL: Record<GroupAxis, string> = {
  * ends up captioned "6 buckets held". "Bucket" stays the category word because
  * that is what `holdingBucket` returns and what every existing caption says.
  */
-export const GROUP_NOUN: Record<GroupAxis, { one: string; many: string }> = {
+export const GROUP_NOUN: Record<MonitorAxis, { one: string; many: string }> = {
   category: { one: "bucket", many: "buckets" },
   assetClass: { one: "asset class", many: "asset classes" },
   basket: { one: "basket", many: "baskets" },
+  security: { one: "security", many: "securities" },
 };
 
 /** `3 baskets` / `1 bucket` — a count and its noun, agreeing, per axis. */
-export const groupCount = (axis: GroupAxis, n: number) =>
+export const groupCount = (axis: MonitorAxis, n: number) =>
   `${n} ${n === 1 ? GROUP_NOUN[axis].one : GROUP_NOUN[axis].many}`;
 
 /**
@@ -154,8 +218,9 @@ export const groupCount = (axis: GroupAxis, n: number) =>
  * it is the one a reader has learnt, and renaming it is a change the family has
  * not asked for.
  */
-export const GROUP_COLUMN_HEAD: Record<GroupAxis, string> = {
+export const GROUP_COLUMN_HEAD: Record<MonitorAxis, string> = {
   category: "Asset class / mandate",
   assetClass: "Asset class — the family's own",
   basket: "Basket",
+  security: "Security",
 };

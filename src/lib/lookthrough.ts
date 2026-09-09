@@ -22,6 +22,7 @@
 //     exposure is derived from it here, by `familyValue`, and is labelled as
 //     derived wherever it is rendered.
 import type { Position } from "./types";
+import { securityKeyOf } from "./securityKey";
 
 export type LookthroughHolding = {
   name: string;
@@ -196,3 +197,143 @@ export const disclosedWeight = (pf: FundPortfolio): number =>
 /** Whether a holding could ever have a look-through — mirrors the ingest. */
 export const canHaveLookthrough = (p: Position): boolean =>
   p.assetClass === "Mutual Fund" || p.assetClass === "ETF";
+
+/**
+ * ── THE INVERSE QUESTION: WHICH OF MY FUNDS HOLD THIS NAME? ─────────────────
+ *
+ *   "If today I want to know that my public market portfolio is a thousand
+ *    crores, how much HDFC Bank do I hold in my 1,000 crores? … Then I drill
+ *    down, then you tell me direct you hold X Cr through direct equity, and then
+ *    you hold another Y crores through these five funds."
+ *
+ * `loadLookthrough` above answers "what does THIS FUND hold". This answers the
+ * other direction, which is the one that question actually asks: given a company
+ * and the schemes the family holds, which of them disclose it and what is the
+ * family's derived share of each.
+ *
+ * FOUR THINGS THIS IS NOT, and every one of them is printed beside the figure:
+ *
+ *   • IT IS NOT A POSITION. `pctAum` is a share of the FUND, disclosed by the
+ *     AMC about the fund. The family's exposure is DERIVED from it (`familyValue`)
+ *     and is never a holding anybody reported about this family.
+ *   • IT IS NEVER ADDED TO A BOOK TOTAL, an allocation or a concentration
+ *     figure. The fund's own value already stands for it in the NAV, so summing
+ *     both counts the same money twice — the rule this whole store is fenced by.
+ *   • IT IS EQUITY-ONLY AND PARTIAL. The store carries the equity section alone,
+ *     covers mutual funds and not AIF folios, and leaves a scheme it could not
+ *     resolve out entirely. The caller is handed `covered` / `total` and the
+ *     names it skipped so it can say which, rather than implying completeness.
+ *   • IT IS DATED DIFFERENTLY FROM THE BOOK. A disclosure is monthly; the
+ *     holding is valued on its own statement's date. Both ride on every row.
+ *
+ * THE JOIN IS EXACT OR IT DOES NOT HAPPEN — ISIN first, then this book's own
+ * `securityKey` over the disclosed name. There is deliberately no fuzzy tier:
+ * a token-overlap rule on this corpus matched KIRANAKART to TATA TECHNOLOGIES
+ * and MAN INDUSTRIES to Deep Industries, and inventing an exposure to a company
+ * the family does not hold is worse than reporting none.
+ */
+export type FundExposureRow = {
+  /** The FUND's key in this book — what the family actually holds. */
+  fundKey: string;
+  fundName: string;
+  /** What the family holds of the FUND, from its own statement. */
+  holdingValue: number;
+  /** The disclosed share of the FUND that is the target company. */
+  pctAum: number;
+  /** DERIVED: holdingValue x pctAum. Never a reported figure. */
+  value: number;
+  /** How the disclosed row was matched to the target — never a guess. */
+  via: "isin" | "name";
+  holdingsAsOf: string | null;
+  sourceKind: string | null;
+};
+
+/** A scheme the family holds that this store could not speak for, and why. */
+export type FundExposureSkip = { fundKey: string; fundName: string; reason: string };
+
+export type FundExposureState =
+  | { status: "loading" }
+  | { status: "unreachable" }
+  | {
+      status: "ok";
+      rows: FundExposureRow[];
+      /** Derived total across `rows` — for display beside the book's own figure, never inside it. */
+      total: number;
+      /** How many of the family's fund holdings this store could actually speak for. */
+      covered: number;
+      considered: number;
+      skipped: FundExposureSkip[];
+    };
+
+/** One fund the family holds, as the caller sees it in the book. */
+export type HeldFund = { securityKey: string; name: string; marketValue: number };
+
+/** The scheme portfolios, memoised: a row expanded twice must not refetch 20 files. */
+const portfolioCache = new Map<string, Promise<FundPortfolio | null>>();
+const loadPortfolio = (schemecode: string): Promise<FundPortfolio | null> => {
+  let hit = portfolioCache.get(schemecode);
+  if (!hit) {
+    hit = fetch(`${base()}/${schemecode}.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<FundPortfolio>) : null))
+      .catch(() => null);
+    portfolioCache.set(schemecode, hit);
+  }
+  return hit;
+};
+
+export async function loadFundExposure(
+  target: { securityKey: string; isin?: string | null },
+  funds: HeldFund[],
+): Promise<FundExposureState> {
+  const idx = await loadIndex();
+  if (!idx) return { status: "unreachable" };
+
+  const wantIsin = (target.isin ?? "").trim().toUpperCase() || null;
+  const rows: FundExposureRow[] = [];
+  const skipped: FundExposureSkip[] = [];
+  let covered = 0;
+
+  await Promise.all(funds.map(async (f) => {
+    const match = idx.schemes?.[f.securityKey];
+    if (!match) {
+      const miss = idx.unresolved?.find((u) => u.securityKey === f.securityKey);
+      skipped.push({
+        fundKey: f.securityKey, fundName: f.name,
+        reason: miss?.reason ?? "this store carries no portfolio disclosure for this holding",
+      });
+      return;
+    }
+    const pf = await loadPortfolio(match.schemecode);
+    if (!pf) {
+      skipped.push({ fundKey: f.securityKey, fundName: f.name, reason: "the store did not answer for this scheme" });
+      return;
+    }
+    covered += 1;
+    // EXACT OR NOTHING. ISIN is the stronger identifier and is tried first; the
+    // name tier goes through the book's own `securityKeyOf`, which is the same
+    // normalisation the extractor keyed the position with.
+    for (const h of pf.equity ?? []) {
+      const hIsin = (h.isin ?? "").trim().toUpperCase() || null;
+      const via: "isin" | "name" | null =
+        wantIsin && hIsin ? (hIsin === wantIsin ? "isin" : null)
+        : securityKeyOf(h.name) === target.securityKey ? "name"
+        : null;
+      if (!via || !(h.pctAum > 0)) continue;
+      rows.push({
+        fundKey: f.securityKey, fundName: f.name,
+        holdingValue: f.marketValue, pctAum: h.pctAum,
+        value: familyValue(f.marketValue, h.pctAum), via,
+        holdingsAsOf: pf.holdingsAsOf ?? null,
+        sourceKind: pf.holdingsSource?.kind ?? null,
+      });
+      break;   // one disclosed line per fund per company
+    }
+  }));
+
+  rows.sort((a, b) => b.value - a.value);
+  return {
+    status: "ok", rows,
+    total: rows.reduce((a, r) => a + r.value, 0),
+    covered, considered: funds.length, skipped,
+  };
+}
