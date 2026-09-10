@@ -462,6 +462,16 @@ const SECTOR_VIEW_BOOK = (() => {
       // assertion on this view rather than a truism.
       directWithBookSector: own.filter((p) => p.sector && p.sector !== "Unclassified").length,
       /*
+       * …AND THE SAME COUNTED PER COMPANY, because the Direct Equity view's
+       * rows are companies and its provenance line counts them. Measured 0 on
+       * this book, which is the point: a depository prints no industry, so
+       * every sector that view draws came from a JOIN and the exactness of
+       * this expectation is what stops a vendor answer overruling a statement
+       * without anything noticing.
+       */
+      directNamesWithBookSector: new Set(
+        own.filter((p) => p.sector && p.sector !== "Unclassified").map((p) => p.securityKey)).size,
+      /*
        * HOW MANY COMPANIES THE BOOK ITSELF PLACES — distinct `securityKey`
        * among deduped company shares carrying a real sector. `companyExposure`
        * builds one entry per company and takes the BOOK's sector wherever there
@@ -476,6 +486,81 @@ const SECTOR_VIEW_BOOK = (() => {
     };
   } catch { return null; }
 })();
+
+/**
+ * ── WHERE EVERY SECTOR ON THIS PAGE CAME FROM ────────────────────────────────
+ *
+ * THREE INVARIANTS, RUN BY BOTH VIEWS, and they are a FACTORY rather than two
+ * copies for the reason this repo keeps re-learning: two copies of a claim are
+ * two chances for one screen to assert something the other does not. The only
+ * thing that differs between the views is how many companies the BOOK itself
+ * places — 85 on Consolidated, 0 on Direct Equity, where a depository prints an
+ * ISIN, a quantity and a rate and no industry at all.
+ *
+ * The provenance is the one thing on this page a reader cannot infer from the
+ * chart, and the vendor tier is the whole reason a depository holding can be
+ * placed: without it the Direct Equity view is a single grey wedge over
+ * ₹94.9 Cr. So each tier must be DOING WORK — a tier that placed nothing is
+ * indistinguishable, on a rendered page, from a tier that was quietly unwired.
+ */
+function sectorSourceChecks(bookCount) {
+  return [
+    ["...and so is where each sector came from, across all three tiers", (t, ctx) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      const src = ctx?.sectorSource;
+      if (!src) return false;
+      /*
+       * The book half is EXACT against the book's own count, derived here from
+       * `glowData.ts` by a different path from the page's — the page counts by
+       * classifying its own entries, this counts the positions. That exactness
+       * is also what catches a lower tier OVERRULING a statement, which moves
+       * companies out of `book` and into `vendor` while every wedge still looks
+       * authoritative. The other two only have to be doing work, because each
+       * depends on a store this harness reads at runtime rather than on the
+       * generated book.
+       */
+      return src.book === bookCount(SECTOR_VIEW_BOOK)
+        && src.disclosure > 0 && src.vendor > 0;
+    }],
+    /*
+     * …AND THE FOUR SOURCES PARTITION THE DONUT. Every company on this page was
+     * placed by exactly one tier or by none, so the four counts must rebuild
+     * the row count the hole prints — the claim no single figure can make, and
+     * the one that catches a tier widened or narrowed in isolation. The hole's
+     * count and these four are computed from the same set by different paths,
+     * which is what makes this able to fail at all.
+     */
+    ["the sector sources account for every row the donut counts", (t, ctx) => {
+      const src = ctx?.sectorSource, d = ctx?.donut;
+      if (!src || !d) return false;
+      const parts = [src.book, src.disclosure, src.vendor, src.unplaced];
+      if (!parts.every(Number.isFinite) || !Number.isFinite(d.count)) return false;
+      return parts.reduce((a, b) => a + b, 0) === d.count;
+    }],
+    /*
+     * AND WHAT IS STILL UNPLACED IS NAMED, AT ITS VALUE. A residual a reader
+     * cannot see is a residual they assume is zero — and the VALUE is the half
+     * a count cannot tell: 57 unplaced sounds like a hole, ₹15.4 Cr of a
+     * ₹299.6 Cr page is one a reader can weigh, and 81.6% of it here is ONE
+     * company NSE does not list. "1 of 20" against "₹18,822 of ₹99.9 Cr", one
+     * page over. The reason is the actionable half: nothing keys the lookup
+     * for a company with no NSE symbol, so no further pass would place it.
+     */
+    ["…and the companies it could not place are named, at their value, with the reason", (t, ctx) => {
+      const src = ctx?.sectorSource;
+      if (!src) return false;
+      if (!src.unplaced) return { notChecked: "every company on this page resolves a sector" };
+      const named = src.titles.some((x) =>
+        /no NSE symbol resolves/i.test(x ?? "")
+        && new RegExp(`\\b${src.unplaced} companies\\b`).test(x ?? "")
+        // …and the names really are there, not merely promised by the count.
+        && (x ?? "").split(",").length >= src.unplaced);
+      return named
+        && Number.isFinite(src.unplacedMV) && src.unplacedMV > 0
+        && /unplaced\s*·\s*₹/i.test(src.text ?? "");
+    }],
+  ];
+}
 
 /**
  * ── WHAT A NON-SECURITY AXIS MUST OFFER, off the book ──────────────────────
@@ -6102,15 +6187,20 @@ const INVARIANTS = {
      * would be two chances to disagree, and this is the check that says they do
      * not.
      */
-    ["its total, both halves and its company count are the Monitor's security axis", (t) => {
+    ["its total, both halves and its company count are the Monitor's security axis", (t, ctx) => {
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
       const grab = (re) => { const m = re.exec(t); return m ? crU(m[1], m[2]) : NaN; };
       const total = grab(/TOTAL EXPOSURE\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       const measured = grab(/Reported by their statements\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       const derived = grab(/Derived from what their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
-      // THE COUNT IS ON THE DONUT HOLE NOW, not in a footer sentence — the
-      // paragraph that carried it went with the rest of this page's prose.
-      const rows = Number(/TOTAL EXPOSURE\s*\n\s*₹[^\n]+\n\s*(\d+) companies · each counted once/i.exec(t)?.[1]);
+      /*
+       * THE COUNT IS ON THE DONUT HOLE, AND IT IS READ AS AN ATTRIBUTE. It was
+       * parsed out of a footer sentence, then out of the hole's own rendered
+       * words — and the hole is three stacked lines inside a 112px circle, so
+       * its wording is the first thing a layout fix changes. A count is a
+       * FIGURE a reader acts on; the sentence around it is not.
+       */
+      const rows = ctx?.donut?.count;
       if (![total, measured, derived].every(Number.isFinite) || !Number.isFinite(rows)) return false;
       return Math.abs(total - SECURITY_AXIS_BOOK.totalCr) <= 0.15
         && Math.abs(measured - SECURITY_AXIS_BOOK.measuredCr) <= 0.15
@@ -6165,26 +6255,21 @@ const INVARIANTS = {
       !/This is\s+total exposure per company/i.test(t)
       && !/ranked and weighted exactly as the/i.test(t)
       && !/Switch to\s+Direct Equity\s+for the shares/i.test(t)],
-    ["...and the count and basis it carried are on the figure itself", (t) => {
-      const m = /TOTAL EXPOSURE\s*\n\s*₹[^\n]+\n\s*(\d+) companies · each counted once/i.exec(t);
-      return !!m && Number(m[1]) > 0;
+    ["...and the count and basis it carried are on the figure itself", (t, ctx) => {
+      const d = ctx?.donut;
+      if (!d) return false;
+      /*
+       * BOTH HALVES, AND THE SECOND IS THE ONE THAT DEGRADES QUIETLY. A count
+       * with no basis is a number a reader cannot use: a company two of the
+       * family's statements both report is one row here and would be two on a
+       * raw sum, which is the ₹3.17 Cr this book counts once. The count is the
+       * attribute; the basis is the hover beside it, and it must still SAY so.
+       */
+      return Number.isFinite(d.count) && d.count > 0
+        && /each counted once/i.test(d.basis ?? "")
+        && /never two/i.test(d.basisTitle ?? "");
     }],
-    /*
-     * THE TWO-TIER PROVENANCE IS THE ONE A READER CANNOT INFER, and it is the
-     * whole reason this page can place a depository holding at all. Struck
-     * against the BOOK's own count rather than against the page's other copy of
-     * it — a check that compares a figure with its own copy cannot fail.
-     */
-    ["...and so is where each sector came from, book against fund filing", (t) => {
-      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
-      const m = /(\d+) placed by statement(?: · (\d+) by a fund[\u2019\']s filing)?/i.exec(t);
-      if (!m) return false;
-      const book = Number(m[1]), disc = Number(m[2] ?? 0);
-      // The book half is EXACT against the book's own count; the disclosure
-      // half only has to be doing work, since it depends on a store this
-      // harness reads at runtime rather than on `glowData.ts`.
-      return book === SECTOR_VIEW_BOOK.companySharesWithBookSector && disc > 0;
-    }],
+    ...sectorSourceChecks((b) => b.companySharesWithBookSector),
     /*
      * AND THE UNCLASSIFIED REASON IS ON THE ROW, worded for THIS view. Direct
      * Equity has one place to have looked and Consolidated has two, so a reason
@@ -6214,8 +6299,23 @@ const INVARIANTS = {
       if (!SECTOR_VIEW_BOOK.mandateRows) return { notChecked: "this book holds no mandate-chosen company share" };
       const m = /Left out by this view\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
       if (!m) return false;
+      /*
+       * AND IT SAYS WHERE THEY WENT, STRUCK ON THE CARD RATHER THAN THE PAGE.
+       * "Consolidated" is the name of a view TOGGLE that renders at the top of
+       * this page on every walk, so a page-wide match for the word is satisfied
+       * by a control and could not fail. The claim is that THIS card sends the
+       * reader there, so it is struck on this card's own slice.
+       */
+      /*
+       * `label-xs` IS `uppercase`, AND `innerText` RETURNS THE TRANSFORMED TEXT
+       * — so the card's own heading reads LEFT OUT BY THIS VIEW on screen while
+       * the source says "Left out by this view", and `sliceBetween` is a plain
+       * `indexOf`. This file already records that trap once, on "Listed NAV";
+       * it is why the value regex above carries an `i` flag and this must too.
+       */
+      const card = sliceBetween(t.toLowerCase(), "left out by this view", "not a company share");
       return Math.abs(crU(m[1], m[2]) - SECTOR_VIEW_BOOK.mandateCr) <= 0.15
-        && /in the\s+Consolidated\s+view/i.test(t.replace(/\s+/g, " "));
+        && !!card && /\bconsolidated\b/.test(card);
     }],
     /**
      * AND IT DRAWS REAL SECTORS, which on this book is a claim only an
@@ -6226,19 +6326,34 @@ const INVARIANTS = {
      * fact, so the check cannot pass by asserting nothing: if a future drop
      * brings sectored demat statements the gate flips and the claim still holds.
      */
-    ["it draws sectors rather than one Unclassified wedge", (t) => {
+    ["it draws sectors rather than one Unclassified wedge", (t, ctx) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const n = Number(/(\d+)\s+sectors?/i.exec(t)?.[1]);
       if (!Number.isFinite(n)) return false;
       if (SECTOR_VIEW_BOOK.directWithBookSector > 0) return n >= 2;
-      // No holding here carries a sector of its own, so every sector drawn came
-      // from the ISIN join — and the page must say so rather than leave a reader
-      // to think their custodian supplied it.
-      // The sentence that said so lived in the footer paragraph, which is
-      // gone; the fact is on the donut hole now, as a counted figure.
-      return n >= 2 && /\d+ by a fund[\u2019']?s filing/i.test(t);
+      /*
+       * NO HOLDING HERE CARRIES A SECTOR OF ITS OWN, so every sector drawn came
+       * from a JOIN — and the page must say so rather than leave a reader to
+       * think their custodian supplied it. Two joins can do it on this book: a
+       * fund's own filing by ISIN, and screener.in by NSE symbol. Either
+       * satisfies the claim; NEITHER doing any work does not, which is what
+       * this is for — a page whose lookups quietly stopped resolving draws one
+       * grey wedge and says nothing.
+       */
+      const src = ctx?.sectorSource;
+      if (!src) return false;
+      return n >= 2 && (src.disclosure + src.vendor) > 0;
     }],
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
+    /*
+     * AND THIS VIEW RUNS THE SAME THREE PROVENANCE CHECKS, which matters more
+     * here than on Consolidated: the vendor tier places 22 of these 37
+     * companies and the book places NONE, so unwiring it takes the majority of
+     * this view's sectors with it. Without this, that regression fires only on
+     * the other route — a page losing most of what the family actually asked
+     * for, passing its own checks.
+     */
+    ...sectorSourceChecks((b) => b.directNamesWithBookSector),
 
     /**
      * ── THE FOOTER PARAGRAPH IS GONE, AND ITS TWO LOAD-BEARING FIGURES ARE NOT
@@ -6266,13 +6381,19 @@ const INVARIANTS = {
      * positions column are computed from the same set by different paths, so a
      * filter that widens one and not the other is caught here.
      */
-    ["the donut names how many holdings it spans, and that each is counted once", (t) => {
-      // THE HOLE READS THE ACTIVE VIEW, not "Company shares": this page has
-      // two views and neither is that set. A check on the retired label could
-      // not have passed a correct page.
-      const m = /DIRECT EQUITY\s*\n\s*₹[^\n]+\n\s*(\d+) holdings · each counted once/i.exec(t);
-      if (!m) return false;
-      const stated = Number(m[1]);
+    ["the donut names how many holdings it spans, and that each is counted once", (t, ctx) => {
+      /*
+       * THE HOLE READS THE ACTIVE VIEW, not "Company shares": this page has two
+       * views and neither is that set. And the count is read as an ATTRIBUTE,
+       * with the basis it asserts in the hover beside it — the hole is a label,
+       * a figure and a count inside a 112px circle, so its wording is the first
+       * thing a layout fix touches and the last thing a structural claim should
+       * depend on.
+       */
+      const d = ctx?.donut;
+      if (!d || !Number.isFinite(d.count) || !/each counted once/i.test(d.basis ?? "")) return false;
+      if (!/DIRECT EQUITY\s*\n\s*₹/i.test(t)) return false;   // …and it is THIS view's hole
+      const stated = d.count;
       /*
        * A ROW'S NAME IS ON ITS OWN LINE HERE. The name cell is a flex container
        * and the chevron and colour swatch are flex ITEMS, so `innerText` breaks
@@ -10036,6 +10157,45 @@ for (const theme of THEMES) {
           title: el.getAttribute("title"),
           column: (el.closest("th")?.innerText ?? "").replace(/\s+/g, " ").trim(),
         })));
+      /*
+       * ── SECTOR COMPOSITION'S TWO STRUCTURAL HANDLES ────────────────────────
+       *
+       * Both replace prose these invariants used to read out of `innerText`.
+       * The donut hole is a label, a figure and a count inside a 112px circle —
+       * so its count is an attribute rather than a sentence, and the basis it
+       * asserts ("each counted once") lives in the hover beside it. The sector
+       * provenance is a line of counted figures per TIER, which is exactly the
+       * shape a regex over rendered words cannot read without also knowing how
+       * the page chose to word it.
+       *
+       * A structural claim must not depend on prose a redesign is free to
+       * reword — the contract `data-section`, `data-mandate` and `data-row`
+       * already carry.
+       */
+      const donut = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("main [data-donut-count]");
+        if (!el) return null;
+        return {
+          count: Number(el.getAttribute("data-donut-count")),
+          basis: el.getAttribute("data-donut-basis"),
+          basisTitle: el.getAttribute("title"),
+          text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      const sectorSource = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("main [data-sector-source]");
+        if (!el) return null;
+        const n = (k) => Number(el.getAttribute(k));
+        return {
+          book: n("data-from-book"),
+          disclosure: n("data-from-disclosure"),
+          vendor: n("data-from-vendor"),
+          unplaced: n("data-unplaced"),
+          unplacedMV: n("data-unplaced-mv"),
+          text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+          titles: [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")),
+        };
+      });
       const stockCoverage = FAST ? null : await page.evaluate(() => {
         const p = document.querySelector("[data-stock-coverage]");
         if (!p) return null;
@@ -10363,7 +10523,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

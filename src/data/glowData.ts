@@ -5425,7 +5425,7 @@ export const BOOK_POSITIONS: Position[] = [
     "symbol": null,
     "accountId": "molecule-ventures-llp-7810404",
     "memberId": null,
-    "sector": "Unclassified",
+    "sector": "Information Technology",
     "providerSector": "INFORMATION TECHNOLOGY",
     "assetClass": "Equity",
     "quantity": 100,

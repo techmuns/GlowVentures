@@ -187,7 +187,12 @@ cash holding's genuinely-zero return both match, and both are correct.
   Composition's Consolidated view. `src/lib/useStockExposure.ts` assembles its
   three inputs once. See Stage 10aq.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
-  `build-book` and the app resolve a sector through ONE committed table.
+  `build-book` and the app resolve a sector through ONE committed table. Three
+  TIERS read it: the family's own statement, a fund's SEBI filing joined on the
+  ISIN, and screener.in joined on the NSE symbol (`src/data/screenerSectors.json`,
+  `npm run build-sectors`). A lower tier only ever FILLS AN EMPTY sector and can
+  never overrule a statement — measured, 80 of the 84 companies where both have
+  an answer agree, and the statement wins on all four that differ. See Stage 10ar.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
@@ -8220,6 +8225,209 @@ carried a count struck against its own base. This branch adds one route
 arithmetic — which is the point of re-running the sweep rather than adding to a
 number, and the same reason `docs/BOOK-REPORT.md` counts rather than asserts.
 
+
+### Stage 10ar — THE SECTORS ARE LOOKED UP, AND THE DONUT STOPS RUNNING OVER ITS OWN RING
+
+Three asks on Sector Composition, sent with two screenshots of the page — the
+Consolidated and Direct Equity views, with the grey explainer blocks highlighted:
+
+*"fix the pie chart and text ui overlap."* · *"replace the highlighted explainer
+texts with short and direct language explanation in legible font size. And it
+has to be very short and direct, so it doesn't look cluttered."* · *"majority of
+the classification of the securities is in the unclassified section, look up all
+the holding securities sector classification on the screener.in website or any
+other website and show them in their appropriate sector classification."*
+
+The third is the one with the work in it, and it is the first time this book has
+been asked to take a figure from **a source outside the family's own paperwork**.
+
+#### 1. The Unclassified wedge was a MISSING MAP, not a missing document
+
+Measured before a line was written, which is what says this was solvable at all:
+
+| | Unclassified was | is now |
+| --- | ---: | ---: |
+| **Direct Equity** — 37 shares the family bought themselves | **100%** · one grey wedge over ₹94.9 Cr, 1 sector drawn | **13.2%** · ₹12.6 Cr, **9 sectors** |
+| **Consolidated** — 565 companies, ₹299.6 Cr | **58.4%** · ₹129.7 Cr | **5.1%** · ₹15.4 Cr, **12 sectors** |
+
+**NOT ONE own-account company share carries a sector, and that is a fact about
+the DOCUMENT.** A depository statement prints an ISIN, a quantity and a rate and
+**no industry at all** — so no drop of the current statements would ever fill
+that column, and Stage 10aq's own note beside `directWithBookSector` says so.
+The answer had to come from an identifier, and this book already resolves one:
+`build-symbols` maps `securityKey` → the NSE trading symbol NSE itself issues.
+
+**SO IT IS A LOOKUP, NEVER A JUDGEMENT — and that distinction is the whole of
+why this is allowed.** A model assigning sectors from memory is
+`VAL_METHODS[i % 5]` with better prose: a wedge on a donut carries no
+provenance, so a fabricated classification is indistinguishable on screen from a
+filed one, and sorting the table would change which company is a bank.
+`scripts/build-screener-sectors.mjs` **fetches** each company's page, **proves**
+it is that company, and **commits** what somebody else published.
+
+#### `npm run build-sectors` — and four rules, each a wrong answer avoided
+
+```
+src/data/nseSymbols.json   securityKey → NSE symbol (build-symbols, ISIN-first)
+   |  npm run build-sectors     fetch → guard → resolve → commit
+   v
+src/data/screenerSectors.json   symbol → { gics, screener's own words, joinedBy }
+docs/SCREENER-SECTORS.md        what placed, what disagreed, what carries no symbol
+```
+
+**A PAGE MUST PROVE IT IS THE COMPANY IT WAS ASKED FOR.** A wrong symbol returns
+a **complete, correct, well-formed** classification belonging to somebody else,
+which is the worst fabrication available here because there is nothing on screen
+to catch it by — and this repo has already measured that resolver being wrong
+about a quarter of the time on a different vendor (Stage 10e: Aditya Birla
+Capital → Tata Capital, Bajaj Auto → Bajaj Finance). So each page must **echo
+the symbol back** (`NSE: <SYMBOL>`), and where it prints none — the SME listings
+do not — its own H1 must agree with the book's name through this repo's
+`securityKeyOf(stripDepositoryTail(...))`. **Neither, and the page is refused.**
+Which guard let each entry through rides in the store as `joinedBy`, and the
+suite asserts there is no third form: 156 of 160 by symbol, 4 by name.
+
+**THE GICS ANSWER IS `shared/sectors.mjs`'s, NOT THE SCRIPT'S.** The script
+stores screener's own label AND the GICS one, and the suite requires the second
+to be exactly `resolveSector(the first)` — so the vendor tier extends the ONE
+committed provider-label table rather than growing a second one. Two tables are
+two chances for a company to sit under two headings on two screens, which is the
+failure `holdingBucket`, `costCoversSet` and `companyExposure` were each
+extracted for. Three screener labels are mapped (`Metals & Mining` → Materials,
+`Oil, Gas & Consumable Fuels` → Energy, `Media, Entertainment & Publication` →
+Communication Services) plus the eleven GICS names that are their own answer.
+
+**THE MAP EXTENSION MOVED THE BOOK BY EXACTLY ONE POSITION**, which is the check
+that says this was a map extension rather than a re-measurement: SASKEN
+COMMUNICATION TECHNOLOGIES, ₹0.02 Cr, Unclassified → Information Technology, on
+the `Telecom - Equipment & Accessories` entry that already existed. `BOOK_SUMMARY`
+is byte-identical and `build-book` regenerates the whole file byte-identically.
+
+**AND IT IS THE WEAKEST TIER, SO IT RUNS LAST AND ONLY EVER FILLS AN EMPTY
+SECTOR.** `CompanyExposure.sectorFrom` is `book | disclosure | vendor | null`,
+strongest first — the family's own statement, then a fund's SEBI filing joined on
+the ISIN, then this. **Measured on the 84 companies where the book and the vendor
+BOTH have an answer, they agree on 80 (95.2%)**; the four that differ are genuine
+taxonomy judgements (GICS files a cinema under Communication Services, several
+Indian IT-enabled providers under Industrials) and **the STATEMENT keeps its
+answer on every one of them**. `docs/SCREENER-SECTORS.md` names all four, so any
+one can be challenged.
+
+#### What it still cannot place is NAMED, at its value, with the reason
+
+Ten book companies resolve no NSE symbol and are not looked up. **The residual is
+NOT the size the count suggests, which is exactly why the value has to be
+printed beside it**: ₹12.5 Cr of the Consolidated view's ₹15.4 Cr — **81.6%** —
+is ONE company, YASH HIGHVOLTAGE, a BSE-only SME **NSE does not list at all**.
+No lookup keyed on an NSE symbol will ever reach it. The next four (Cosmo Films,
+CreditAccess Grameen, Punjab Chem, Krishca) are the *"handful of listed COMPANIES
+a PMS statement names without an ISIN"* this file already records as needing a
+hand-checked `OVERRIDES` entry, and everything below them is a fund-disclosed
+line worth lakhs.
+
+**SCREENER'S OWN SEARCH FINDS SOME OF THEM BY NAME, AND THAT IS REFUSED.** Its
+pages print no ISIN, so a name would be the only thing joining them and nothing
+would corroborate it — `shared/nameMatch.mjs`'s rule, where a token-overlap tier
+matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES`. **There is still no
+fuzzy tier.** They are listed in `docs/SCREENER-SECTORS.md` for a human to commit.
+
+#### 2. The hole was three stacked lines inside a 112px circle
+
+*"fix the pie chart and text ui overlap."* Reproduced rather than guessed at: the
+donut hole carried a label, the total, the row count AND the sector provenance,
+at 10.5px, inside an `innerRadius={56}` ring — so `OTAL EXPOSURE` clipped under
+the ring and the lower lines ran over the wedges, which is what the screenshot
+showed.
+
+**THE FIRST GEOMETRY TEST WAS THE WRONG TEST**, and it passed a broken layout:
+it measured the corner distance from the centre, which is far looser than the
+real constraint. **A circle constrains a line of text by its CHORD at that line's
+own height**, and a wide short line high in the hole has far less room than the
+corner test allows. Re-measured on chords: `innerRadius` 56 → **66**,
+`outerRadius` 96 → **98**, `!tracking-normal` on the label, and the two lower
+lines OUT of the hole entirely — tightest slack **13.1px** on Consolidated and
+18.1px on Direct Equity, confirmed by screenshot.
+
+**THE TWO LINES THAT LEFT THE HOLE DID NOT LEAVE THE PAGE.** A figure a reader
+acts on does not go away to fix a layout; it moves somewhere with room. The count
+stays in the hole as one legible line, and the sector provenance became a line of
+its own under the chart — **which made it better, not merely relocated**: it now
+carries all three tiers with a count each, plus the unplaced count AND ITS VALUE.
+
+#### 3. Six explainer blocks, each cut to one short line at a legible size
+
+*"very short and direct, so it doesn't look cluttered."* They were `text-[11px]
+text-slate-500` — small, grey and three or four lines each. They are `text-xs
+leading-snug text-slate-400` now, **one line each**, and every one was audited
+against the rest of the page before a word was cut, the Stage 10aa / 10ai / 10ap
+method. What survives is what a reader ACTS on:
+
+- the DERIVED fence — *"DERIVED, not a position … **No part of the book's NAV.**"*
+  in words rather than a tooltip, which is a rule of this file;
+- the three-way partition's closing claim, *"These three figures cover every
+  rupee"*, because a table's total reads as the whole of a reader's money;
+- and on Direct Equity, where the shares it leaves out are shown.
+
+#### The checks moved off the prose, and two of them could not have failed
+
+Six invariants read the removed paragraphs out of `innerText` and would have
+retired themselves in silence — a regex that matches nothing yields an empty
+result that passes `.every()`. They read **`data-donut-count`**,
+**`data-donut-basis`** and **`data-sector-source`** (with `data-from-book` /
+`-disclosure` / `-vendor`, `data-unplaced` and `data-unplaced-mv`) now: the
+contract `data-section`, `data-mandate` and `data-row` already carry, and the same
+rule — *a structural claim must not depend on prose a redesign is free to reword*.
+
+**THE THREE PROVENANCE CHECKS ARE A FACTORY, RUN BY BOTH VIEWS, AND THE SECOND
+VIEW IS WHY.** They were written for `sectors` alone, and unwiring the vendor
+tier — the single most damaging regression this change can have — left
+`sectors-direct` **GREEN**: its "draws sectors rather than one Unclassified
+wedge" check is satisfied by the disclosure tier's 11 placements, while the 22
+the vendor tier places, on the very view the family complained about, vanished
+unnoticed. `sectorSourceChecks(bookCount)` is parameterised on the one thing that
+differs between the views — how many companies the BOOK itself places, 85 against
+**0** — so both now run all three, and both fire.
+
+**AND THE PARTITION CHECK IS WHAT KEEPS AN ABSTENTION FROM STANDING ALONE.**
+Dropping the unplaced residual makes *"the companies it could not place are
+named"* report NOT CHECKED — correctly, since on that build nothing is unplaced —
+and a suite that abstained there and nowhere else would read CLEAN over a page
+that had silently lost its residual. The four sources must rebuild the donut's
+own count, so that bug is a FAILURE on both views with the abstention beside it.
+
+**TEN BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the vendor tier unwired
+(2), the vendor tier overruling a statement (2 — it moves companies out of `book`
+and the exact count catches it), the donut's count handle deleted (5, across both
+views), its counted-once hover deleted, a company counted by two tiers, the
+unplaced residual dropped (2 + 2 abstentions), the residual keeping its count and
+losing its value (2), the left-out card no longer saying where those shares are
+shown, a stored GICS the committed map does not produce, a page accepted with no
+round-trip guard, and the book and the vendor disagreeing wholesale.
+
+**AND ONE OF THE SIX REPOINTINGS FAILED A CORRECT PAGE FOR A REASON THIS FILE
+ALREADY RECORDS.** `label-xs` is `uppercase` and `innerText` returns the
+TRANSFORMED text, so the left-out card renders `LEFT OUT BY THIS VIEW` while the
+source says "Left out by this view" — and `sliceBetween` is a plain `indexOf`.
+The same trap as "Listed NAV" three stages up, arriving through a slice instead
+of a match.
+
+**AND A FAILED PATCH THAT WRITES NOTHING IS WORSE THAN A FAILED PATCH.** The
+first attempt at these six repointings ran as one script with `open(p,"w")` at
+the end, asserted on the third substitution, and **discarded the two that had
+succeeded** — so the file was untouched and the failure named only the third.
+Each is applied one substitution per invocation now, and the bug harness restores
+**and rebuilds** on a `trap … EXIT`: restoring the source alone leaves `dist/` at
+the bugged build, and the next sweep reads it and reports the previous bug's
+failures under the next one's name. Measured once in this session.
+
+`src/lib/__tests__/screenerSectors.test.ts` carries the arithmetic
+(`npm run test:family`), anchored on **two generated artefacts** — `glowData.ts`
+and the committed store — so every expectation is derived from both on the run or
+written as a relation that survives either moving. Its load-bearing gate is an
+INEQUALITY: the tier must place company shares no statement placed (84 of 84 that
+resolve a symbol), or a store wired to a book it no longer matches would satisfy
+every structural check while placing nothing.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -9148,6 +9356,15 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
+- `npm run build-sectors` refreshes `src/data/screenerSectors.json` and
+  `docs/SCREENER-SECTORS.md` — the THIRD and weakest sector tier, fetched from
+  screener.in per NSE symbol. It is a LOOKUP and never a judgement: each page
+  must echo back the symbol it was asked for (or, where it prints none, agree
+  with the book's own name through `securityKeyOf`), and the GICS answer is
+  whatever `shared/sectors.mjs` returns for the label the page printed — never a
+  value the script decides. Run `build-symbols` first, since it is keyed on that
+  output. `ONLY=<symbols>` limits it; `SCREENER_DELAY_MS` paces the fetch.
+  A company with no NSE symbol is NAMED in the report and never name-matched.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
   `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
   disclosed equity holdings — from a READ-ONLY checkout of `techmuns/amfibeas`

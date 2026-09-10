@@ -1,0 +1,1282 @@
+{
+  "AARTIDRUGS": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "ABCAPITAL": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Investment Company",
+    "joinedBy": "nse-symbol"
+  },
+  "ALIVUS": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "AMRUTANJAN": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "ANUP": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "ARVINDFASN": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Speciality Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "ATHERENERG": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "2/3 Wheelers",
+    "joinedBy": "nse-symbol"
+  },
+  "AUROPHARMA": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "AXISBANK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "BAJAJ-AUTO": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "2/3 Wheelers",
+    "joinedBy": "nse-symbol"
+  },
+  "BANCOINDIA": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "BECTORFOOD": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Packaged Foods",
+    "joinedBy": "nse-symbol"
+  },
+  "BELRISE": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "BHEL": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Heavy Electrical Equipment",
+    "joinedBy": "nse-symbol"
+  },
+  "BIOCON": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "BIRLACABLE": {
+    "gics": "Communication Services",
+    "screenerSector": "Telecommunication",
+    "screenerSectorCode": "IN10/IN1001",
+    "screenerBroadSector": "Telecommunication",
+    "screenerIndustry": "Telecom - Equipment & Accessories",
+    "joinedBy": "nse-symbol"
+  },
+  "BLS": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Tour, Travel Related Services",
+    "joinedBy": "nse-symbol"
+  },
+  "BLUEJET": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "BORORENEW": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Glass - Industrial",
+    "joinedBy": "nse-symbol"
+  },
+  "BPLPHARMA": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "BSOFT": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "BUILDPRO": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Speciality Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "CANFINHOME": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Housing Finance Company",
+    "joinedBy": "nse-symbol"
+  },
+  "CAPLIPOINT": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "CEATLTD": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Tyres & Rubber Products",
+    "joinedBy": "nse-symbol"
+  },
+  "CGCL": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Non Banking Financial Company (NBFC)",
+    "joinedBy": "nse-symbol"
+  },
+  "CHEMFAB": {
+    "gics": "Materials",
+    "screenerSector": "Chemicals",
+    "screenerSectorCode": "IN01/IN0101",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Commodity Chemicals",
+    "joinedBy": "nse-symbol"
+  },
+  "CLEANMAX": {
+    "gics": "Utilities",
+    "screenerSector": "Power",
+    "screenerSectorCode": "IN11/IN1101",
+    "screenerBroadSector": "Utilities",
+    "screenerIndustry": "Power Generation",
+    "joinedBy": "nse-symbol"
+  },
+  "CMLL": {
+    "gics": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadSector": "Energy",
+    "screenerIndustry": "Coal",
+    "joinedBy": "nse-symbol"
+  },
+  "CNL": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Trading & Distributors",
+    "joinedBy": "nse-symbol"
+  },
+  "CROMPTON": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Household Appliances",
+    "joinedBy": "nse-symbol"
+  },
+  "CUB": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "DBL": {
+    "gics": "Industrials",
+    "screenerSector": "Construction",
+    "screenerSectorCode": "IN07/IN0701",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Civil Construction",
+    "joinedBy": "nse-symbol"
+  },
+  "DCW": {
+    "gics": "Materials",
+    "screenerSector": "Chemicals",
+    "screenerSectorCode": "IN01/IN0101",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Petrochemicals",
+    "joinedBy": "nse-symbol"
+  },
+  "DEEPINDS": {
+    "gics": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadSector": "Energy",
+    "screenerIndustry": "Oil Equipment & Services",
+    "joinedBy": "nse-symbol"
+  },
+  "ECLERX": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Business Process Outsourcing (BPO)/ Knowledge Process Outsourcing (KPO)",
+    "joinedBy": "nse-symbol"
+  },
+  "EDELWEISS": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Holding Company",
+    "joinedBy": "nse-symbol"
+  },
+  "EIHOTEL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Hotels & Resorts",
+    "joinedBy": "nse-symbol"
+  },
+  "EMAPARTNER": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Diversified Commercial Services",
+    "joinedBy": "name"
+  },
+  "EMIL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Diversified Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "ENGINERSIN": {
+    "gics": "Industrials",
+    "screenerSector": "Construction",
+    "screenerSectorCode": "IN07/IN0701",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Civil Construction",
+    "joinedBy": "nse-symbol"
+  },
+  "ESTER": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Packaging",
+    "joinedBy": "nse-symbol"
+  },
+  "EUREKAFORB": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Household Appliances",
+    "joinedBy": "nse-symbol"
+  },
+  "EXIDEIND": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "FEDERALBNK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "FRACTAL": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "FUSION": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Microfinance Institutions",
+    "joinedBy": "nse-symbol"
+  },
+  "GAEL": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Other Agricultural Products",
+    "joinedBy": "nse-symbol"
+  },
+  "GATEWAY": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Logistics Solution Provider",
+    "joinedBy": "nse-symbol"
+  },
+  "GCHOTELS": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Hotels & Resorts",
+    "joinedBy": "name"
+  },
+  "GESHIP": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Shipping",
+    "joinedBy": "nse-symbol"
+  },
+  "GHCL": {
+    "gics": "Materials",
+    "screenerSector": "Chemicals",
+    "screenerSectorCode": "IN01/IN0101",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Commodity Chemicals",
+    "joinedBy": "nse-symbol"
+  },
+  "GHCLTEXTIL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Textiles",
+    "screenerSectorCode": "IN02/IN0203",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Other Textile Products",
+    "joinedBy": "nse-symbol"
+  },
+  "GLAND": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "GLENMARK": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "GMMPFAUDLR": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "GRAPHITE": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Electrodes & Refractories",
+    "joinedBy": "nse-symbol"
+  },
+  "GREAVESCOT": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol"
+  },
+  "HAL": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Aerospace & Defense",
+    "joinedBy": "nse-symbol"
+  },
+  "HDFCAMC": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Asset Management Company",
+    "joinedBy": "nse-symbol"
+  },
+  "HEG": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Electrodes & Refractories",
+    "joinedBy": "nse-symbol"
+  },
+  "ICICIBANK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "ICIL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Textiles",
+    "screenerSectorCode": "IN02/IN0203",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Other Textile Products",
+    "joinedBy": "nse-symbol"
+  },
+  "IEX": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Exchange and Data Platform",
+    "joinedBy": "nse-symbol"
+  },
+  "IFBIND": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Household Appliances",
+    "joinedBy": "nse-symbol"
+  },
+  "IMFA": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Ferro & Silica Manganese",
+    "joinedBy": "nse-symbol"
+  },
+  "INA": {
+    "gics": "Utilities",
+    "screenerSector": "Power",
+    "screenerSectorCode": "IN11/IN1101",
+    "screenerBroadSector": "Utilities",
+    "screenerIndustry": "Power Generation",
+    "joinedBy": "nse-symbol"
+  },
+  "INDIANB": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Public Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "INDRAMEDCO": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Hospital",
+    "joinedBy": "nse-symbol"
+  },
+  "INDUSINDBK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "INFINIUM": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "name"
+  },
+  "INGERRAND": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol"
+  },
+  "INTELLECT": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "ISGEC": {
+    "gics": "Industrials",
+    "screenerSector": "Construction",
+    "screenerSectorCode": "IN07/IN0701",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Civil Construction",
+    "joinedBy": "nse-symbol"
+  },
+  "J&KBANK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "JAMNAAUTO": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "JARO": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "E-Learning",
+    "joinedBy": "nse-symbol"
+  },
+  "JAYNECOIND": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Iron & Steel Products",
+    "joinedBy": "nse-symbol"
+  },
+  "JPPOWER": {
+    "gics": "Utilities",
+    "screenerSector": "Power",
+    "screenerSectorCode": "IN11/IN1101",
+    "screenerBroadSector": "Utilities",
+    "screenerIndustry": "Power Generation",
+    "joinedBy": "nse-symbol"
+  },
+  "JSL": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Iron & Steel",
+    "joinedBy": "nse-symbol"
+  },
+  "JYOTHYLAB": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Household Products",
+    "joinedBy": "nse-symbol"
+  },
+  "KALYANKJIL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Gems, Jewellery And Watches",
+    "joinedBy": "nse-symbol"
+  },
+  "KARURVYSYA": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "KAYNES": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "KIRLFER": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Pig Iron",
+    "joinedBy": "nse-symbol"
+  },
+  "KOVAI": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Hospital",
+    "joinedBy": "nse-symbol"
+  },
+  "KPIL": {
+    "gics": "Industrials",
+    "screenerSector": "Construction",
+    "screenerSectorCode": "IN07/IN0701",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Civil Construction",
+    "joinedBy": "nse-symbol"
+  },
+  "KSB": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol"
+  },
+  "KSCL": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Other Agricultural Products",
+    "joinedBy": "nse-symbol"
+  },
+  "LICI": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Life Insurance",
+    "joinedBy": "nse-symbol"
+  },
+  "LUPIN": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "LXCHEM": {
+    "gics": "Materials",
+    "screenerSector": "Chemicals",
+    "screenerSectorCode": "IN01/IN0101",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Specialty Chemicals",
+    "joinedBy": "nse-symbol"
+  },
+  "M&M": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Passenger Cars & Utility Vehicles",
+    "joinedBy": "nse-symbol"
+  },
+  "MASTEK": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "MIDHANI": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Aerospace & Defense",
+    "joinedBy": "nse-symbol"
+  },
+  "MOTILALOFS": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Stockbroking & Allied",
+    "joinedBy": "nse-symbol"
+  },
+  "MPSLTD": {
+    "gics": "Communication Services",
+    "screenerSector": "Media, Entertainment & Publication",
+    "screenerSectorCode": "IN02/IN0204",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Printing & Publication",
+    "joinedBy": "nse-symbol"
+  },
+  "NAVNETEDUL": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Stationary",
+    "joinedBy": "nse-symbol"
+  },
+  "NEULANDLAB": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "NITINSPIN": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Textiles",
+    "screenerSectorCode": "IN02/IN0203",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Other Textile Products",
+    "joinedBy": "nse-symbol"
+  },
+  "NUVAMA": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Stockbroking & Allied",
+    "joinedBy": "nse-symbol"
+  },
+  "OBEROIRLTY": {
+    "gics": "Real Estate",
+    "screenerSector": "Realty",
+    "screenerSectorCode": "IN02/IN0205",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Residential, Commercial Projects",
+    "joinedBy": "nse-symbol"
+  },
+  "ONESOURCE": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "PANACEABIO": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "PARAS": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Aerospace & Defense",
+    "joinedBy": "nse-symbol"
+  },
+  "PARTH": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Other Electrical Equipment",
+    "joinedBy": "name"
+  },
+  "PFC": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Financial Institution",
+    "joinedBy": "nse-symbol"
+  },
+  "PGEL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Consumer Electronics",
+    "joinedBy": "nse-symbol"
+  },
+  "PNB": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Public Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "POKARNA": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Granites & Marbles",
+    "joinedBy": "nse-symbol"
+  },
+  "POLYPLEX": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Packaging",
+    "joinedBy": "nse-symbol"
+  },
+  "PRAJIND": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "PRICOLLTD": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "PURVA": {
+    "gics": "Real Estate",
+    "screenerSector": "Realty",
+    "screenerSectorCode": "IN02/IN0205",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Residential, Commercial Projects",
+    "joinedBy": "nse-symbol"
+  },
+  "PVRINOX": {
+    "gics": "Communication Services",
+    "screenerSector": "Media, Entertainment & Publication",
+    "screenerSectorCode": "IN02/IN0204",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Film Production, Distribution & Exhibition",
+    "joinedBy": "nse-symbol"
+  },
+  "RATNAMANI": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Iron & Steel Products",
+    "joinedBy": "nse-symbol"
+  },
+  "RBLBANK": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Private Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "RECLTD": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Financial Institution",
+    "joinedBy": "nse-symbol"
+  },
+  "SAGILITY": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "IT Enabled Services",
+    "joinedBy": "nse-symbol"
+  },
+  "SANSERA": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "SBFC": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Non Banking Financial Company (NBFC)",
+    "joinedBy": "nse-symbol"
+  },
+  "SBIN": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "Public Sector Bank",
+    "joinedBy": "nse-symbol"
+  },
+  "SGMART": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Trading - Metals",
+    "joinedBy": "nse-symbol"
+  },
+  "SHAKTIPUMP": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol"
+  },
+  "SHANKARA": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Speciality Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "SHARDACROP": {
+    "gics": "Materials",
+    "screenerSector": "Chemicals",
+    "screenerSectorCode": "IN01/IN0101",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Pesticides & Agrochemicals",
+    "joinedBy": "nse-symbol"
+  },
+  "SHARDAMOTR": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "SHOPERSTOP": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Diversified Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "SHREDIGCEM": {
+    "gics": "Materials",
+    "screenerSector": "Construction Materials",
+    "screenerSectorCode": "IN01/IN0102",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Cement & Cement Products",
+    "joinedBy": "nse-symbol"
+  },
+  "SMARTWORKS": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Diversified Commercial Services",
+    "joinedBy": "nse-symbol"
+  },
+  "SONATSOFTW": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "STARHEALTH": {
+    "gics": "Financials",
+    "screenerSector": "Financial Services",
+    "screenerSectorCode": "IN05/IN0501",
+    "screenerBroadSector": "Financial Services",
+    "screenerIndustry": "General Insurance",
+    "joinedBy": "nse-symbol"
+  },
+  "STOVEKRAFT": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Household Appliances",
+    "joinedBy": "nse-symbol"
+  },
+  "SUPRAJIT": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "SURYAROSNI": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Iron & Steel Products",
+    "joinedBy": "nse-symbol"
+  },
+  "SYRMA": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "TATATECH": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "IT Enabled Services",
+    "joinedBy": "nse-symbol"
+  },
+  "TCI": {
+    "gics": "Industrials",
+    "screenerSector": "Services",
+    "screenerSectorCode": "IN09/IN0901",
+    "screenerBroadSector": "Services",
+    "screenerIndustry": "Logistics Solution Provider",
+    "joinedBy": "nse-symbol"
+  },
+  "TECHM": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "TEJASNET": {
+    "gics": "Communication Services",
+    "screenerSector": "Telecommunication",
+    "screenerSectorCode": "IN10/IN1001",
+    "screenerBroadSector": "Telecommunication",
+    "screenerIndustry": "Telecom - Equipment & Accessories",
+    "joinedBy": "nse-symbol"
+  },
+  "TENNIND": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "THERMAX": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Heavy Electrical Equipment",
+    "joinedBy": "nse-symbol"
+  },
+  "TIMETECHNO": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Plastic Products - Industrial",
+    "joinedBy": "nse-symbol"
+  },
+  "TRANSRAILL": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Heavy Electrical Equipment",
+    "joinedBy": "nse-symbol"
+  },
+  "TRITURBINE": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Heavy Electrical Equipment",
+    "joinedBy": "nse-symbol"
+  },
+  "V2RETAIL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Services",
+    "screenerSectorCode": "IN02/IN0206",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Speciality Retail",
+    "joinedBy": "nse-symbol"
+  },
+  "VAIBHAVGBL": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Gems, Jewellery And Watches",
+    "joinedBy": "nse-symbol"
+  },
+  "VAML": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Aluminium",
+    "joinedBy": "nse-symbol"
+  },
+  "VARROC": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "VBL": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Other Beverages",
+    "joinedBy": "nse-symbol"
+  },
+  "VEDL": {
+    "gics": "Materials",
+    "screenerSector": "Metals & Mining",
+    "screenerSectorCode": "IN01/IN0103",
+    "screenerBroadSector": "Commodities",
+    "screenerIndustry": "Diversified Metals",
+    "joinedBy": "nse-symbol"
+  },
+  "VIPIND": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Plastic Products - Consumer",
+    "joinedBy": "nse-symbol"
+  },
+  "VIYASH": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "WAAREEENER": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Other Electrical Equipment",
+    "joinedBy": "nse-symbol"
+  },
+  "WOCKPHARMA": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  },
+  "WPIL": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Industrial Products",
+    "joinedBy": "nse-symbol"
+  },
+  "ZAGGLE": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "IT Enabled Services",
+    "joinedBy": "nse-symbol"
+  },
+  "ZENSARTECH": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "Computers - Software & Consulting",
+    "joinedBy": "nse-symbol"
+  },
+  "ZFCVINDIA": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Automobile and Auto Components",
+    "screenerSectorCode": "IN02/IN0201",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Auto Components & Equipments",
+    "joinedBy": "nse-symbol"
+  },
+  "ZYDUSLIFE": {
+    "gics": "Health Care",
+    "screenerSector": "Healthcare",
+    "screenerSectorCode": "IN06/IN0601",
+    "screenerBroadSector": "Healthcare",
+    "screenerIndustry": "Pharmaceuticals",
+    "joinedBy": "nse-symbol"
+  }
+}

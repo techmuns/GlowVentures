@@ -302,13 +302,22 @@ export function SectorComposition() {
    * at all. Neither is guessed, and a company placed by neither says so.
    */
   const sectorFrom = useMemo(() => {
-    let book = 0, disc = 0, none = 0;
+    let book = 0, disc = 0, vendor = 0;
+    const unplaced: CompanyExposure[] = [];
     for (const e of entries) {
       if (e.sectorFrom === "book") book += 1;
       else if (e.sectorFrom === "disclosure") disc += 1;
-      else none += 1;
+      else if (e.sectorFrom === "vendor") vendor += 1;
+      else unplaced.push(e);
     }
-    return { book, disc, none };
+    /*
+     * AND THE RESIDUAL CARRIES ITS VALUE, NOT ONLY ITS COUNT. "57 unplaced" and
+     * "₹15.4 Cr unplaced" are the same fact told very differently, and the
+     * second is the one a reader can weigh — 81.6% of it here is ONE company
+     * NSE does not list, which a count of 57 hides completely.
+     */
+    const unplacedMV = unplaced.reduce((a, e) => a + e.total, 0);
+    return { book, disc, vendor, unplaced, unplacedMV };
   }, [entries]);
   // Every figure on this page is rebuilt from position market values, so once the
   // quote feed is up they all track live prices — and none of them matches a cell
@@ -410,7 +419,7 @@ export function SectorComposition() {
           <div className="relative shrink-0" style={{ width: 230, height: 230 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={56} outerRadius={96} stroke="none"
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={66} outerRadius={98} stroke="none"
                   className="cursor-pointer" onClick={(d: any) => { const nm = d?.name ?? d?.payload?.name; if (nm) toggle(nm); }}>
                   {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Pie>
@@ -419,23 +428,20 @@ export function SectorComposition() {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <div className="label-xs">{consolidatedView ? "Total exposure" : "Direct Equity"}</div>
+              <div className="label-xs !tracking-normal">{consolidatedView ? "Total exposure" : "Direct Equity"}</div>
               <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(totalMV, { compact: true })}</div>
-              {/* THE COUNT, THE BASIS AND WHERE THE SECTORS CAME FROM, on the
-                  figure they describe. All three were in the removed footer and
-                  nowhere else: the split cards below count each ROUTE, which a
-                  reader would have to add up; nothing at all said the set is
-                  deduped; and the two-tier provenance is the whole reason this
-                  page can place a depository holding, which carries no industry
-                  on any statement. The noun follows the view — Consolidated
-                  rolls up COMPANIES and Direct Equity rolls up HOLDINGS, and a
-                  count under the wrong noun is the caption failure this page
-                  has already paid for. */}
-              <div className="mt-0.5 text-[10.5px] text-slate-500">
-                {consolidatedView ? `${entries.length} companies` : `${ownRows.length} holdings`} · each counted once
-              </div>
-              <div className="mt-0.5 text-[10.5px] text-slate-500">
-                {sectorFrom.book} placed by statement{sectorFrom.disc > 0 && <> · {sectorFrom.disc} by a fund&rsquo;s filing</>}
+              {/* THE HOLE IS A LABEL AND A FIGURE, AND THAT IS ALL IT FITS.
+                  It carried the count and the sector provenance as two more
+                  stacked lines, at 10.5px, inside a 112px circle — so both ran
+                  under the ring and over the wedges, which is what the family
+                  reported. They are not dropped: a figure a reader acts on does
+                  not go away to fix a layout, it moves somewhere with room. Both
+                  are on one legible line under the chart. */}
+              <div className="mt-0.5 text-[11px] text-slate-500"
+                data-donut-count={consolidatedView ? entries.length : ownRows.length}
+                data-donut-basis="each counted once"
+                title="Each counted once — a company two of the family's statements both report is one row here, never two.">
+                {consolidatedView ? entries.length : ownRows.length} {consolidatedView ? "companies" : "holdings"}
               </div>
             </div>
           </div>
@@ -453,6 +459,39 @@ export function SectorComposition() {
             ))}
           </ul>
         </div>
+        {/* ── WHERE EVERY SECTOR ON THIS PAGE CAME FROM ─────────────────────
+            Three tiers, and a reader cannot infer any of them from the chart.
+            The vendor tier is the whole reason a depository holding can be
+            placed at all — a demat statement prints an ISIN, a quantity and a
+            rate and no industry — so this is where it says so, in the family's
+            own words: looked up on screener.in.
+
+            IT NAMES WHAT IS STILL UNPLACED, with the count and the reason. A
+            residual a reader cannot see is a residual they assume is zero. */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-700/70 pt-3 text-xs text-slate-400"
+          data-sector-source
+          data-from-book={sectorFrom.book}
+          data-from-disclosure={sectorFrom.disc}
+          data-from-vendor={sectorFrom.vendor}
+          data-unplaced={sectorFrom.unplaced.length}
+          data-unplaced-mv={Math.round(sectorFrom.unplacedMV)}>
+          <span className="text-slate-500">Sector source</span>
+          <span><span className="mono text-slate-200">{sectorFrom.book}</span> from their statements</span>
+          {sectorFrom.disc > 0 && <span><span className="mono text-slate-200">{sectorFrom.disc}</span> from a fund&rsquo;s filing</span>}
+          {sectorFrom.vendor > 0 && (
+            <span><span className="mono text-slate-200">{sectorFrom.vendor}</span> from screener.in</span>
+          )}
+          {sectorFrom.unplaced.length > 0 && (
+            <span className="text-slate-500"
+              title={`No NSE symbol resolves for these, so nothing keys the lookup — ${
+                sectorFrom.unplaced.length} companies: ${
+                sectorFrom.unplaced.map((e) => e.name).join(", ")}`}>
+              <span className="mono">{sectorFrom.unplaced.length}</span> unplaced ·{" "}
+              <span className="mono">{fmtFromBase(sectorFrom.unplacedMV, { compact: true })}</span>
+            </span>
+          )}
+        </div>
+
         {/* ── WHAT THIS VIEW IS MADE OF, per view, with its figures ────────
             Both views are a NARROWING or a WIDENING of the company shares the
             statements report, and a reader has to be able to see which and by
@@ -466,13 +505,9 @@ export function SectorComposition() {
               <div>
                 <div className="label-xs">Reported by their statements</div>
                 <div className="mono text-sm font-semibold text-slate-100">{fmtFromBase(measuredMV, { compact: true })}</div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  {p.length} company-share holdings — {fmtFromBase(mandateMV, { compact: true })} a discretionary
-                  manager chose across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"},
-                  {" "}{fmtFromBase(ownMV, { compact: true })} the family bought in {ownAccounts} of its
-                  own {ownAccounts === 1 ? "account" : "accounts"}
-                  {otherRows.length > 0 && <>, {fmtFromBase(otherMV, { compact: true })} whose account does not say how it is run</>}.
-                  The sector belongs to the company, not to whoever picked it, so all of it is here.
+                <div className="mt-1 text-xs leading-snug text-slate-400">
+                  {p.length} holdings · {fmtFromBase(mandateMV, { compact: true })} manager-chosen,
+                  {" "}{fmtFromBase(ownMV, { compact: true })} the family&rsquo;s own
                 </div>
               </div>
               <div>
@@ -482,16 +517,16 @@ export function SectorComposition() {
                     ? fmtFromBase(derivedMV, { compact: true })
                     : <span className="text-slate-500">{exposure.status === "loading" ? "loading…" : "—"}</span>}
                 </div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  {exposure.status === "loading" ? <>Still reading the funds&rsquo; disclosures — the figures above cover
-                    the reported half only.</>
+                <div className="mt-1 text-xs leading-snug text-slate-400">
+                  {exposure.status === "loading" ? <>Still reading the funds&rsquo; disclosures.</>
                   : exposure.status === "unreachable" ? <span className="text-amber-400/80">The look-through store did
-                    not answer, so this view is showing the reported half only. That is a fact about the fetch, not
-                    about the book.</span>
-                  : <>DERIVED, not a position: {exposure.covered} of {exposure.considered} fund holdings file a monthly
-                    portfolio disclosure, and this is the family&rsquo;s units&rsquo; share of what those name. It is
-                    <span className="text-slate-400"> no part of the book&rsquo;s NAV</span> — the fund&rsquo;s own
-                    value already stands for it there — so nothing on this page may be added to a book total.</>}
+                    not answer — a fact about the fetch, not the book.</span>
+                  /* "DERIVED, not a position" and "no part of the book's NAV" are
+                     the fence, in words rather than a tooltip. Shortened around,
+                     never dropped. */
+                  : <>DERIVED, not a position — their units&rsquo; share of what {exposure.covered} of
+                    {" "}{exposure.considered} funds disclose.
+                    <span className="text-slate-300"> No part of the book&rsquo;s NAV.</span></>}
                 </div>
               </div>
               <div>
@@ -501,13 +536,10 @@ export function SectorComposition() {
                     ? fmtFromBase(portfolio.totalValue - measuredMV - derivedMV, { compact: true })
                     : <span className="text-slate-500">—</span>}
                 </div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                <div className="mt-1 text-xs leading-snug text-slate-400">
                   {exposure.status === "ok"
-                    ? <>the rest of the {fmtFromBase(portfolio.totalValue, { compact: true })} book, and none of it is a
-                      company share this page can sector: what sits inside vehicles that publish no holdings at all —
-                      an AIF files no disclosure that joins to a folio this family holds — the part of a disclosed fund
-                      that is not equity, and the book&rsquo;s own cash. Named rather than dropped, so the three
-                      figures on this row account for every rupee.</>
+                    ? <>The rest of the {fmtFromBase(portfolio.totalValue, { compact: true })} book — undisclosed
+                      vehicles, non-equity and cash. No sector applies. These three figures cover every rupee.</>
                     : <>Measurable once the funds&rsquo; disclosures answer.</>}
                 </div>
               </div>
@@ -521,23 +553,22 @@ export function SectorComposition() {
                     ? fmtFromBase(ownMV, { compact: true })
                     : <AbsentCell reason="No company share on this page was bought in the family's own demat or broking account. Such accounts may still be in the book — this view counts only their company shares, not the fund or ETF units one may hold." />}
                 </div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                <div className="mt-1 text-xs leading-snug text-slate-400">
                   {ownRows.length > 0
-                    ? <>{ownRows.length} holdings across {ownAccounts} {ownAccounts === 1 ? "account" : "accounts"} · this is
-                      the set the holdings tables call &ldquo;{DIRECT_EQUITY_BUCKET}&rdquo;, and this whole view is it</>
+                    ? <>{ownRows.length} holdings across {ownAccounts} of their own
+                      {" "}{ownAccounts === 1 ? "account" : "accounts"} · the holdings tables call this
+                      {" "}&ldquo;{DIRECT_EQUITY_BUCKET}&rdquo;</>
                     : <>No own-account company share in this book.</>}
                 </div>
               </div>
               <div>
                 <div className="label-xs">Left out by this view</div>
                 <div className="mono text-sm font-semibold text-slate-100">{fmtFromBase(mandateMV + otherMV, { compact: true })}</div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  {mandateRows.length} company shares a discretionary manager chose across {mandateAccounts}
+                <div className="mt-1 text-xs leading-snug text-slate-400">
+                  {mandateRows.length} shares a manager chose across {mandateAccounts}
                   {" "}{mandateAccounts === 1 ? "mandate" : "mandates"}
-                  {otherRows.length > 0 && <>, and {otherRows.length} whose account does not say how it is run</>}. They are
-                  real sector exposure and they are in the <span className="text-slate-400">Consolidated</span> view —
-                  narrowing to what the family picked answers &ldquo;who decided this?&rdquo;, which is a different
-                  question from what this family is exposed to.
+                  {otherRows.length > 0 && <>, {otherRows.length} with no stated route</>} ·
+                  {" "}real exposure, shown in <span className="text-slate-300">Consolidated</span>
                 </div>
               </div>
               <div>
@@ -550,7 +581,7 @@ export function SectorComposition() {
                     small ones, which is the thing they would act on. It is also
                     what lets `check:pages` strike the reconstruction on a
                     labelled figure rather than on a sentence. */}
-                <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                <div className="mt-1 text-xs leading-snug text-slate-400">
                   excluded rather than folded in —{" "}
                   {excluded.length === 0 ? "none" : excluded.map((c, i) => (
                     <Fragment key={c.key}>
@@ -558,10 +589,7 @@ export function SectorComposition() {
                       <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
                     </Fragment>
                   ))}
-                  . A GICS sector is a property of a COMPANY and a fund holds many, so every wrapper would land in
-                  one false &ldquo;Unclassified&rdquo; slice and bury the sectors this view exists to show. A
-                  mandate&rsquo;s cash sleeve is out for the same reason. What the funds hold underneath is the
-                  Consolidated view.
+                  {" "}· a fund holds many companies, so none has a sector of its own
                 </div>
               </div>
             </>
