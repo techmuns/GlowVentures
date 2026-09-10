@@ -59,9 +59,32 @@ ok("every point is dated and monotonically later than the last",
 const covered = BOOK_NAV_COVERAGE.covered;
 ok("every covered account publishes at least two dated valuations",
   covered.length > 0 && covered.every((c) => c.points >= 2));
-ok("no covered account's first valuation is later than the series' start",
-  covered.every((c) => BOOK_NAV_COVERAGE.from !== null && c.first <= BOOK_NAV_COVERAGE.from),
-  "a series that started before every account had reported would climb because accounts ARRIVED");
+// ── THE PANEL, AND WHERE THE OLD RULE MOVED TO ──────────────────────────────
+//
+// This block used to read "no covered account's first valuation is later than
+// the series' start", because the series began where every covered account had
+// published. That protected the LEVEL and it threw away 40 of the archive's 74
+// measured days, which is what the family reported about this card.
+//
+// The rule did not go away; it moved down a level. Each LINK is struck over the
+// accounts valued at BOTH its ends, so an arrival is in neither end of the link
+// ending at it and contributes 0.00%. What must still hold, and what is asserted
+// here, is that `panelCompleteFrom` is exactly where every account HAS reported
+// — because the raw NAV line is rebased there and a level over a growing panel
+// is the one thing chain-linking cannot rescue.
+ok("the series starts at the earliest covered account's first valuation",
+  BOOK_NAV_COVERAGE.from !== null
+  && BOOK_NAV_COVERAGE.from === covered.map((c) => c.first).sort()[0],
+  `${BOOK_NAV_COVERAGE.from}`);
+ok("the panel completes exactly where the last covered account first reports",
+  !!BOOK_NAV_COVERAGE.panelCompleteFrom
+  && BOOK_NAV_COVERAGE.panelCompleteFrom === covered.map((c) => c.first).sort().at(-1),
+  `${BOOK_NAV_COVERAGE.panelCompleteFrom}`);
+ok("every point at or after it is flagged panel-complete, and none before it is",
+  BOOK_NAV_HISTORY.every((p) =>
+    p.panelComplete === (p.date >= (BOOK_NAV_COVERAGE.panelCompleteFrom as string))),
+  "a series that started before every account had reported would climb because accounts ARRIVED — "
+  + "the link is what stops that, and the flag is what keeps the LEVEL off the incomplete stretch");
 eq("the series' first and last dates are the coverage window",
   [BOOK_NAV_HISTORY[0].date, BOOK_NAV_HISTORY[BOOK_NAV_HISTORY.length - 1].date],
   [BOOK_NAV_COVERAGE.from, BOOK_NAV_COVERAGE.to]);
@@ -113,21 +136,59 @@ eq("covered + single + unvalued is every account in the book",
 // INEQUALITY, so it stays meaningful when the next drop changes the amounts.
 const series = navIndexSeries(BOOK_NAV_HISTORY);
 const adjusted = windowReturnPct(series);
-const rawLast = series[series.length - 1].navIndex - 100;
 ok("the series carries external capital worth adjusting for",
   series.some((p) => Math.abs(p.flowIn) > 1e5),
   "if this ever fails, the guard below has stopped being testable on this book and must be re-read");
-ok("the flow-adjusted return is materially below the unadjusted NAV move",
-  adjusted !== null && rawLast - adjusted > 5,
-  `adjusted ${adjusted?.toFixed(2)}% vs unadjusted ${rawLast.toFixed(2)}% — the difference is money added, not money earned`);
 {
-  // …and the adjustment reproduces exactly: chaining (NAV − flow) / prev.
-  let idx = 100;
-  for (let i = 1; i < BOOK_NAV_HISTORY.length; i++) {
-    const prev = BOOK_NAV_HISTORY[i - 1].nav;
-    idx *= (BOOK_NAV_HISTORY[i].nav - (BOOK_NAV_HISTORY[i].flowIn ?? 0)) / prev;
+  /**
+   * STRUCK LIKE FOR LIKE, over the COMPLETE-PANEL segment alone.
+   *
+   * The obvious form of this comparison — the whole series' adjusted return
+   * against the raw NAV line's last value — silently compares two windows now
+   * that the series starts before the panel completes: 74 days against the 34
+   * the raw line is defined over. Both figures would be right on their own terms
+   * and the gap between them would be part window and part capital, which is the
+   * caption-widens-a-figure failure arriving inside a test. So the segment is
+   * taken first and both are struck on it.
+   */
+  const from = series.findIndex((p) => p.panelComplete);
+  ok("the complete-panel segment has at least two points to compare over",
+    from >= 0 && series.length - from >= 2, `${series.length - from} point(s) from ${series[from]?.date}`);
+  let adj = 100;
+  for (let i = from + 1; i < series.length; i++) {
+    const p = BOOK_NAV_HISTORY[i];
+    const open = p.linkOpen ?? BOOK_NAV_HISTORY[i - 1].nav;
+    const close = p.linkClose ?? p.nav;
+    adj *= (close - (p.flowIn ?? 0)) / open;
   }
-  near("the chained index reproduces from the raw points", adjusted, idx - 100, 1e-9);
+  const segAdjusted = adj - 100;
+  const segRaw = (BOOK_NAV_HISTORY[series.length - 1].nav / BOOK_NAV_HISTORY[from].nav - 1) * 100;
+  ok("the flow-adjusted return is materially below the unadjusted NAV move, over the same window",
+    segRaw - segAdjusted > 5,
+    `adjusted ${segAdjusted.toFixed(2)}% vs unadjusted ${segRaw.toFixed(2)}% over `
+    + `${series[from].date} → ${series[series.length - 1].date} — the difference is money added, not money earned`);
+
+  /**
+   * …AND THE WHOLE-SERIES INDEX REPRODUCES FROM THE LINKS.
+   *
+   * Chaining `nav / prevNav` — what this used to do — now reads +398.76% on this
+   * book, because it counts every account that ARRIVED. That is not a broken
+   * reproduction: it is the arrivals-as-performance curve, measured. The index
+   * chains on `linkOpen`/`linkClose` instead, and this asserts the two are
+   * different as well as that the right one reproduces, so a build that quietly
+   * went back to dividing levels fails here rather than drawing a 400% year.
+   */
+  let byLink = 100;
+  let byLevel = 100;
+  for (let i = 1; i < BOOK_NAV_HISTORY.length; i++) {
+    const p = BOOK_NAV_HISTORY[i];
+    byLink *= ((p.linkClose ?? p.nav) - (p.flowIn ?? 0)) / (p.linkOpen ?? BOOK_NAV_HISTORY[i - 1].nav);
+    byLevel *= (p.nav - (p.flowIn ?? 0)) / BOOK_NAV_HISTORY[i - 1].nav;
+  }
+  near("the chained index reproduces from the links", adjusted, byLink - 100, 1e-9);
+  ok("and chaining the LEVELS instead would put every arrival into the return",
+    byLevel - byLink > 50,
+    `by level ${(byLevel - 100).toFixed(2)}% vs by link ${(byLink - 100).toFixed(2)}%`);
 }
 
 // ── Alignment never looks ahead ─────────────────────────────────────────────
