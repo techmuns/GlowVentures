@@ -259,11 +259,132 @@ export type Position = {
 export type NavPoint = {
   period: string;
   date: string;
+  /**
+   * The whole marked panel's value at this date. It CLIMBS as accounts join,
+   * so it is a book NAV only from the point `panelComplete` turns true — see
+   * `navHistoryFrom` in build-book.mjs, and `panelComplete` below.
+   */
   nav: number;
   accountsOnDate?: number;
   accountsCarried?: number;
   flowIn?: number;
   unreportedFlowValue?: number;
+  /**
+   * ── THE LINK, AND WHY THE SERIES CAN START BEFORE THE PANEL IS COMPLETE ────
+   *
+   * The series used to begin where every covered account had published at least
+   * once (2026-07-10 here), because a NAV LEVEL that climbs from ₹27 Cr to
+   * ₹142 Cr as accounts ARRIVE reads as performance. That rule protected the
+   * level and it also threw away 40 of the archive's 74 measured days, which is
+   * what the family reported: *"we are only able to see portfolio NAV for a very
+   * short period of time."*
+   *
+   * A chain-linked index does not need a constant panel across the WHOLE series
+   * — only across each LINK. So each point carries the interval ending at it,
+   * struck over the accounts valued at BOTH of its ends:
+   *
+   *   r = (linkClose − flowIn) / linkOpen − 1
+   *
+   * An account joining at this date is in neither end of the link that ends
+   * here, so its arrival contributes 0.00% rather than a step. Where the panel
+   * is already complete the common set IS the whole panel and `linkClose`
+   * equals `nav` exactly, which is the check `navSeries.test.ts` strikes.
+   */
+  linkOpen?: number | null;
+  linkClose?: number | null;
+  /** How many accounts the link covers — the panel it was struck over. */
+  linkAccounts?: number;
+  /**
+   * True from the date every covered account has published. The RAW NAV line is
+   * drawn only from here: before it, the level is a growing panel and rebasing
+   * it to 100 would draw exactly the arrivals-as-performance curve the link
+   * exists to avoid.
+   */
+  panelComplete?: boolean;
+};
+
+/**
+ * ── RETURN ATTRIBUTION OVER A DATED WINDOW ──────────────────────────────────
+ *
+ * *"What was the attribution to those returns? … which were the biggest
+ * detractors of returns?"*
+ *
+ * Answered from the archive's own reissues: 16 accounts publish a VALUED
+ * holdings statement at two or more dates, so 273 holdings are priced at both
+ * ends of a window and the change in each is measurable. Nothing in this app
+ * read that until now — the seventh absence in this book recorded against a
+ * premise nobody rechecked.
+ *
+ * THE DECOMPOSITION IS EXACT, NOT APPORTIONED. For a holding priced at both
+ * ends, market value is quantity × price (rule 3, and measured: 765 of 765
+ * priced rows in the archive satisfy it to the paisa), so
+ *
+ *   v₁ − v₀  =  q₀·(p₁ − p₀)  +  (q₁ − q₀)·p₁
+ *               └─ price ─┘      └── trading ──┘
+ *
+ * with no residual. `price` is what the units held at the start earned; the
+ * second term is units bought or sold inside the window, valued where they
+ * ended. A position that ENTERED contributes its whole closing value and a
+ * position that EXITED its whole opening value — neither is performance, and
+ * both are their own term rather than being folded into one of the two above.
+ */
+export type AttributionRow = {
+  securityKey: string;
+  security: string;
+  accountId: string;
+  /** `held` | `entered` | `exited` | `unpriced` — which term this row lands in. */
+  kind: string;
+  from: string;
+  to: string;
+  openValue: number | null;
+  closeValue: number | null;
+  openPrice: number | null;
+  closePrice: number | null;
+  openQty: number | null;
+  closeQty: number | null;
+  /** q₀·(p₁ − p₀) — null where the row is not priced at both ends. */
+  priceEffect: number | null;
+  /** (q₁ − q₀)·p₁ — units traded inside the window, at the closing mark. */
+  tradeEffect: number | null;
+  /** priceEffect / p₀q₀ — the holding's own return over the window. */
+  returnPct: number | null;
+};
+
+export type AttributionAccount = {
+  accountId: string;
+  from: string;
+  to: string;
+  days: number;
+  openValue: number;
+  closeValue: number;
+  priceEffect: number;
+  tradeEffect: number;
+  enteredValue: number;
+  exitedValue: number;
+  /** Rows valued at both ends but carrying no price at one of them. */
+  undecomposedValue: number;
+  rowsHeld: number;
+  rowsEntered: number;
+  rowsExited: number;
+  rowsUnpriced: number;
+};
+
+export type Attribution = {
+  from: string | null;
+  to: string | null;
+  /** Σ over the covered accounts, each over ITS OWN window inside that span. */
+  openValue: number;
+  closeValue: number;
+  priceEffect: number;
+  tradeEffect: number;
+  enteredValue: number;
+  exitedValue: number;
+  undecomposedValue: number;
+  /** How much of the BOOK the window covers, and how much it does not. */
+  bookValue: number;
+  coveredBookValue: number;
+  accounts: AttributionAccount[];
+  rows: AttributionRow[];
 };
 
 /**
@@ -297,6 +418,12 @@ export type NavCoverage = {
   unvalued: { accountId: string; provider: string; accountNo: string; bookValue: number }[];
   from: string | null;
   to: string | null;
+  /**
+   * The date every covered account has published by — the old series start, and
+   * still the date from which the RAW NAV level is a book NAV rather than a
+   * growing panel. Points before it carry `panelComplete: false`.
+   */
+  panelCompleteFrom?: string | null;
 };
 
 /**
