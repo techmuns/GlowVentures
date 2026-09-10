@@ -73,9 +73,15 @@ export function MultiSelectFilter({
   const noun = unit === "selected" ? "options" : unit;
 
   return (
-    <div ref={wrapRef} className={`relative ${className}`}>
+    /* STRUCTURAL HANDLES, so a claim about this control is not struck on prose.
+       `data-multiselect` is the control's own "all" label, `data-option` each
+       offered value — which is what lets a sweep assert that a company only a
+       fund holds is OFFERED here at all, the half of the family's ask that no
+       figure on the page can see. */
+    <div ref={wrapRef} className={`relative ${className}`} data-multiselect={allLabel}>
       <button
         type="button"
+        data-multiselect-toggle={allLabel}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -128,6 +134,7 @@ export function MultiSelectFilter({
                 <li
                   key={o}
                   role="option"
+                  data-option={o}
                   aria-selected={on}
                   onMouseDown={(e) => { e.preventDefault(); toggle(o); }}
                   className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}

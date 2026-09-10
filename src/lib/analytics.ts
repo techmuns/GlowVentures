@@ -156,6 +156,37 @@ export const isRedeemedToNil = (p: { assetClass: string; quantity: number; curre
   isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
 
 /**
+ * ── WHAT THE FAMILY STILL HOLDS ─────────────────────────────────────────────
+ *
+ * *"we only need to show the current holdings in these allocation drill down
+ *  pages, if anything has been redeemed or sold completely then remove it from
+ *  these pages since they are supposed to be the current holdings allocation
+ *  only."*
+ *
+ * ONE DEFINITION, READ BY EVERY ALLOCATION SURFACE. The Portfolio Monitor
+ * dropped closed positions at the base of its row build a stage ago; Morning
+ * CIO's Positions tile and the `/holdings` drill-down it opens did not, so the
+ * tile counted 371 and the table it opened listed two redeemed schemes at ₹0. A
+ * second copy of this filter would be a second answer to "what does the family
+ * hold", and the tile and the page it opens are the one pair where that
+ * disagreement is guaranteed to be visible.
+ *
+ * IT MOVES NO MONEY, WHICH IS WHY IT IS SAFE TO APPLY AT THE BASE. A closed
+ * position is a measured ₹0 with no reported cost, so every sum, weight,
+ * denominator and return is identical either way. What changes is the COUNT —
+ * and a count of holdings that includes what was sold is the wrong count.
+ *
+ * THE ZERO IS NOT DELETED, ONLY THE HOLDINGS TABLES. `BOOK_POSITIONS` still
+ * carries every one of these rows, `isRedeemedToNil` still says which they are,
+ * and the redemption itself is a dated movement on Transactions → My
+ * investments. This is a filter on what a CURRENT-holdings page draws, never a
+ * decision to stop being able to see the position.
+ */
+export const currentHoldings = <T extends { assetClass: string; quantity: number; currentPrice: number | null }>(
+  positions: readonly T[],
+): T[] => positions.filter((p) => !isRedeemedToNil(p));
+
+/**
  * COMPANY SHARES — a share in a company, whoever pressed the button.
  *
  * A PMS mandate is an ENGAGEMENT, not an asset class (see `Account.engagement`),

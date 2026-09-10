@@ -58,10 +58,13 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   const money = (n: number) => fmtFromBase(n, { compact: true });
   const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
 
-  const rows = useMemo(() => pf?.equity ?? [], [pf]);
+  const rows = useMemo(() => pf?.holdings ?? [], [pf]);
   const term = q.trim().toLowerCase();
+  // A DEBT ROW IS FOUND BY ITS RATING AND ITS CLASS, not only by a sector it
+  // does not have — the two columns a bond actually fills.
   const shown = term
-    ? rows.filter((r) => r.name.toLowerCase().includes(term) || (r.sector ?? "").toLowerCase().includes(term))
+    ? rows.filter((r) => [r.name, r.sector, r.rating, r.assetClass, r.isin]
+        .some((v) => (v ?? "").toLowerCase().includes(term)))
     : rows;
 
   if (state.status === "loading") {
@@ -218,22 +221,21 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
           </Pill>
         )}
         {rows.length > 30 && (
-          <SearchInput value={q} onChange={setQ} placeholder="Filter by company or sector…" className="ml-auto w-64"
-            suggestions={[...new Set(rows.flatMap((r) => [r.name, r.sector].filter(Boolean) as string[]))].sort()} />
+          <SearchInput value={q} onChange={setQ} placeholder="Filter by name, sector, rating or class…" className="ml-auto w-64"
+            suggestions={[...new Set(rows.flatMap((r) => [r.name, r.sector, r.rating, r.assetClass].filter(Boolean) as string[]))].sort()} />
         )}
       </div>
 
       {rows.length === 0 ? (
-        /* NOT AN EMPTY TABLE, AND NOT A FAILURE. The store carries the EQUITY
-           section alone, so a liquid or debt scheme has no rows — correctly, it
-           holds no equity — and its debt book is simply not here. Those are
-           different facts and a reader acts differently on each. */
+        /* NOT AN EMPTY TABLE, AND NOT A FAILURE. Two of this book's schemes are
+           metal ETFs the AMC files no portfolio for at all; the reason names
+           that rather than implying a fund that holds nothing. */
         <AbsentSection
-          what={`${p.scheme ?? name} discloses no equity holdings`}
-          needs={`This store carries each scheme's EQUITY section${p.section ? ` (“${p.section}”)` : ""} and nothing else. A liquid, debt or commodity scheme holds no equity, so there is correctly nothing to list — and its debt book is NOT in this store rather than being empty. Its NAV, its change and its returns above are complete.`} />
+          what={`${p.scheme ?? name} discloses no portfolio this store could read`}
+          needs={`No monthly portfolio disclosure for this scheme is in the store. Its NAV, its change and its returns above are complete; what it holds is not carried.`} />
       ) : shown.length === 0 ? (
         <AbsentSection what="Nothing matches that filter"
-          needs={`The scheme discloses ${rows.length} equity holdings; none of their names or sectors contains "${q.trim()}".`} />
+          needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
@@ -241,7 +243,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
               <tr>
                 <th className="label-xs px-3 py-2 text-left font-medium">Holding</th>
                 <th className="label-xs px-3 py-2 text-left font-medium">
-                  <span title="The AMC's own sector label, as its disclosure prints it — not this book's GICS taxonomy, which is why it is shown verbatim rather than mapped.">Sector (as disclosed)</span>
+                  <span title="What the AMC filed the instrument as — Equity, Debt, Gold, Silver, Cash. The store used to carry the equity section alone, so a liquid fund had no rows and a hybrid's bonds were absent.">Class</span>
+                </th>
+                <th className="label-xs px-3 py-2 text-left font-medium">
+                  <span title="The AMC files one column for both, and they are different facts: a SECTOR on a share (Finance, Banks) and a CREDIT RATING on a bond (CRISIL - AAA). Each is shown under its own name and never under the other's.">Sector / rating</span>
                 </th>
                 <th className="label-xs px-3 py-2 text-right font-medium">
                   <span title="The scheme's own disclosed weight — a share of the FUND, across every investor in it.">% of fund</span>
@@ -262,7 +267,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
                     {h.isin && <span className="mono ml-2 text-[10px] text-slate-600"> {h.isin}</span>}
                   </td>
                   <td className="px-3 py-2 text-[12px] text-slate-400">
-                    {h.sector ?? <AbsentCell reason="This source does not print a sector for the underlying — the aggregator's copy carries none, only the AMC's own filing does." />}
+                    {h.assetClass ?? <AbsentCell reason="This source does not state what class the instrument is." />}
+                  </td>
+                  <td className="px-3 py-2 text-[12px] text-slate-400">
+                    {h.sector ?? h.rating ?? <AbsentCell reason="The filing prints no sector for this share and no rating for this instrument — an aggregator's copy carries neither, only the AMC's own does." />}
                   </td>
                   <td className="px-3 py-2 text-right mono text-slate-300">{h.pctAum.toFixed(2)}%</td>
                   <td className="px-3 py-2 text-right mono text-slate-400">{money(familyValue(holdingValue, h.pctAum))}</td>
@@ -276,8 +284,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-ink-600 font-semibold">
-                <td className="px-3 py-2 text-slate-200" colSpan={2}>
-                  {fmtNum(shown.length)} of {fmtNum(rows.length)} equity holdings shown
+                <td className="px-3 py-2 text-slate-200" colSpan={3}>
+                  {fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown
                 </td>
                 <td className="px-3 py-2 text-right mono text-slate-300">{shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%</td>
                 <td className="px-3 py-2 text-right mono text-slate-300">{money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>
@@ -294,8 +302,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         counting both would count the same money twice. The look-through column is this holding&rsquo;s value times the
         scheme&rsquo;s published weight, so it is an estimate of exposure rather than a position the family can sell.
         {rows.length > 0 && <>
-          {" "}The disclosed equity weights add to <span className="mono">{weight.toFixed(1)}%</span> of the scheme; the
-          rest is its cash and debt sleeves, which this store does not carry, and the fund&rsquo;s own rounding.
+          {" "}The disclosed weights add to <span className="mono">{weight.toFixed(1)}%</span> of the scheme
+          {p.coveragePct != null && <> — the AMC states its own coverage at <span className="mono">{p.coveragePct.toFixed(1)}%</span></>};
+          {" "}the rest is what a monthly filing rounds and the cash it does not itemise.
         </>}
         {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
         family&rsquo;s own holding of it.

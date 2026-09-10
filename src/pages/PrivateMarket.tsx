@@ -11,7 +11,7 @@ import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { sum, sumOrNull, consolidatedMarketValue, excludedClasses, isPrivateClass, assetClassLabel } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, currentHoldings, excludedClasses, isPrivateClass, assetClassLabel } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
 } from "@/lib/privateMarket";
@@ -73,7 +73,24 @@ export function PrivateMarket() {
   const m = useMemo(() => {
     if (!portfolio) return null;
     const accIdx = accountIndex(portfolio.accounts);
-    const scope = privateScope(portfolio.positions, portfolio.accounts);
+    /**
+     * CURRENT HOLDINGS, LIKE EVERY OTHER ALLOCATION SURFACE — and deliberately
+     * NOT for `unvaluedAccounts` two lines down.
+     *
+     * *"if anything has been redeemed or sold completely then remove it from
+     *  these pages since they are supposed to be the current holdings
+     *  allocation only."* Card A is one row per fund, and 3P's three unit
+     *  classes stood in it at ₹0 apiece — a fund that has already paid the
+     *  family out, taking three of its fourteen rows.
+     *
+     * `unvaluedAccounts` asks a DIFFERENT question — does this account report
+     * any holding at all — and narrowing it would fold 3P's account into the
+     * list of funds that publish no NAV, which is the opposite of true: it
+     * publishes one and redeemed against it. A confidently wrong reason sends
+     * the next reader to ask a fund manager for a NAV no fund owes, which this
+     * book has already recorded once. So it keeps the whole set.
+     */
+    const scope = privateScope(currentHoldings(portfolio.positions), portfolio.accounts);
     const commitments = portfolio.commitments ?? [];
 
     const funds = fundRollup(scope.dedupedRows, accIdx);
@@ -266,7 +283,9 @@ export function PrivateMarket() {
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {fundsShown.map((f) => (
-                <tr key={f.securityKey} className="hover:bg-ink-700/40">
+                /* The fund's own key, so a claim about WHICH funds this table
+                   draws is struck on structure rather than on a rendered name. */
+                <tr key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2.5 font-medium text-slate-100">
                     <StockLink securityKey={f.securityKey} name={f.security} />
                   </td>

@@ -4782,9 +4782,11 @@ beside a measured one is exactly where this book has been bitten:
   twice. `check:pages` asserts the row still prints the BOOK's figure, verified by
   reintroducing the double count;
 - it says **DERIVED, not a position**, in words rather than in a tooltip;
-- it is **equity-only and partial**, and says so with counts: N of M fund
-  holdings read, the schemes it could not read named, and **the AIF folios named
-  as publishing nothing this book can join at all**;
+- it is **partial**, and says so with counts: N of M fund holdings read, the
+  schemes it could not read named, and **the AIF folios named as publishing
+  nothing this book can join at all**. *(It read the EQUITY SECTION alone until
+  Stage 10aq; it now reads each AMC's whole monthly filing — shares, bonds, NCDs
+  and commercial paper — and a row is one ISSUER across every instrument of it.)*;
 - the disclosure's **own as-of date** rides on every row, because a monthly
   filing and a statement mark are dated differently.
 
@@ -5208,7 +5210,7 @@ techmuns/amfibeas (read-only)            npm run build-lookthrough
    |  book ISIN -> mf-latest-nav.json (3,439 schemes, ISIN on every one)
    v
 public/lookthrough/index.json            securityKey -> scheme, plan, as-of
-public/lookthrough/<schemecode>.json     NAV + day change, returns, equity rows
+public/lookthrough/<schemecode>.json     NAV + day change, returns, EVERY disclosed row
 docs/FUND-LOOKTHROUGH.md                 what resolved, what did not, and why
 ```
 
@@ -5260,15 +5262,16 @@ aggregator, with neither. So the filing wins, the aggregator is the fallback, an
 document the fund published, the other is somebody's reading of it. Measured: 14
 schemes from the AMC, 3 from the aggregator.
 
-**AND BOTH ARE EQUITY-ONLY, WHICH IS A REAL LIMIT AND A REGRESSION ON ONE POINT.**
-`meta.section` is "Equity Holdings" on every file, so a liquid, debt or commodity
-scheme resolves to ZERO rows — correctly, it holds no equity — and **its debt
-book is not in this store**. Five of this book's schemes are in that position,
-and the aggregator's live endpoint did carry their debt sleeves (224 rows for one
-liquid fund). That is a step back for those five, taken deliberately: the repo is
-the source the family named, its provenance is better everywhere else, and the
-card states the limit in words rather than drawing an empty table. Wiring the
-debt sleeve back would need a second source beside this one.
+**BOTH WERE EQUITY-ONLY, AND THAT LIMIT IS CLOSED — see Stage 10aq.** This
+paragraph read *"a step back for those five, taken deliberately… wiring the debt
+sleeve back would need a second source beside this one"*, which was TRUE of
+`holdings-direct/` and false of the repo: **`public/amc-portfolio/` is the SAME
+FILING read whole** — identical `sourceUrl`, every asset class, an ISIN on every
+one of 157,125 rows. No second source, and no scheme resolves to zero rows any
+more: the three liquid funds carry 214 / 161 / 151 debt lines each. It is kept
+here in the order it was learnt, because *"we need a source we do not have"* is
+exactly the shape of absence this file has now recorded against an unchecked
+premise seven times — and the answer was in the directory next door.
 
 **NONE OF IT ENTERS A BOOK TOTAL.** These are the only figures on the site that
 are not the family's own — the fund's value already stands for everything the
@@ -7979,6 +7982,224 @@ failing.
 `/compare` route walked), with the same two pre-existing abstentions.
 `glowData.ts` is untouched — nothing here reads the ingest.
 
+### Stage 10aq — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
+
+Four asks, and the last two turned out to be one defect seen from both ends.
+
+*"remove the highlighted text from the dashboard."* · *"we only need to show the
+current holdings in these allocation drill down pages, if anything has been
+redeemed or sold completely then remove it from these pages since they are
+supposed to be the current holdings allocation only."* · *"we also need to
+account for the stock positions held through mutual funds and PMS as well… in
+the security filter page in holdings toggle page."* · *"the Look-through must
+cover bonds, NCDs and every instrument, not just stocks. Any stock or bond. It
+could be a bond. It could be an NCD. **If I type it, it has to first pick up.**
+And then it has to show me how much — not just stocks. For example — there is a
+LIC housing NCD in the market. Now there's some negative news on LIC housing. I
+want to see how much LIC housing I hold through my mutual fund exposure and
+through which mutual fund."*
+
+#### The look-through read one section of a document it already had
+
+`build-lookthrough` read `holdings-direct/` — the AMC's monthly filing, EQUITY
+SECTION ONLY, `meta.section` reading "Equity Holdings" on all 17 schemes. The
+same repo carries **`public/amc-portfolio/`, which is the SAME FILING read
+whole**: identical `sourceUrl`, every asset class, and **an ISIN on every one of
+157,125 rows**. Verified before switching, not assumed. So the equity-only limit
+this book had recorded as a real one was an absence against a document already in
+hand — the **seventh** of those, after FRED, the RBI, the release calendar, the
+ISIN tier, the NAV series and 3P's own page 2.
+
+| | was | now |
+| --- | ---: | ---: |
+| disclosed rows in the store | 1,394 | **2,362** — Equity 1,394 · Debt 964 · Other 4 |
+| schemes resolving to ZERO rows | 3 liquid funds | **0** — 214 / 161 / 151 debt lines each |
+| derived exposure | ₹77.6 Cr | **₹90.56 Cr** |
+| the part of a disclosed fund no line accounts for | ₹45.7 Cr | **₹32.73 Cr** |
+
+**NOTHING ABOUT THE JOIN LOOSENED.** ISIN first, then this book's own
+`securityKeyOf`, and **still no fuzzy tier** — the refusal `shared/nameMatch.mjs`
+already records, where a token-overlap rule matched `KIRANAKART TECHNOLOGIES` to
+`TATA TECHNOLOGIES`.
+
+**AND `techmuns/amfibeas` IS READ-ONLY, as it has been since Stage 10s.** Nothing
+here clones, updates or writes to it; the checkout is an INPUT (`AMFIBEAS_DIR`).
+
+#### An Indian ISIN carries its issuer in characters 1–7, and that is the whole fix
+
+```
+INE115A01026   LIC Housing Finance   —  the equity share
+INE115A07QY1   …the same company     —  an NCD
+INE115A14FW4   …the same company     —  commercial paper, matures in three weeks
+```
+
+Keyed on the FULL ISIN, one company got as many rows as it has instruments. And
+the rule beside it made that worse rather than visible: `takenHere` kept **ONE
+DISCLOSED LINE PER FUND PER COMPANY** and dropped the rest, which was right while
+the store carried the equity section alone — there the only repeat was a second
+share class. On the whole filing it is the difference between an answer and a
+wrong answer: **HDFC Balanced Advantage files TWELVE separate LIC Housing NCDs,
+and keeping the first reports 0.6% of that fund against a true 1.74%.**
+
+A row is one **ISSUER** now and its `instruments` are what it is made of, opened
+underneath — because a reader acting on news about a company needs to know
+whether they hold the equity, the paper, or both. `seenHere` still drops an exact
+repeat: the same ISIN filed twice in one scheme is one holding printed twice.
+
+**THE ISSUER TIER WAS MEASURED BEFORE IT WAS RELIED ON.** 1,052 ISINs collapse to
+557 issuer prefixes; **34 carry more than one spelling and every one of those 34
+is one company written two ways** — NABARD / National Bank for Agriculture and
+Rural Development, REC / Rural Electrification Corporation, Tata Power / The Tata
+Power Company. **None merges two different companies.** And it is load-bearing
+rather than decorative: **100 of 557 issuers have names that normalise to more
+than one key** (HDFC Bank alone to twelve, because each commercial paper carries
+its own maturity in the name).
+
+**AND THE ISSUER'S ISIN IS THE ONE THAT NAMES THE ISSUER.** A row now spans a
+share, an NCD and a CP maturing in three weeks — all real identifiers, and only
+the first still identifies the company after that paper matures. `rankIsin` takes
+the BOOK's own where the book carries one, then the `01` equity series, then
+anything else. It never invents one; every candidate was filed.
+
+**`industry` IS TWO FACTS IN ONE COLUMN**, verified empirically: a SECTOR on an
+equity row (`Finance`, `Banks`) and a CREDIT RATING on a debt one (`CRISIL -
+AAA`, `ICRA A1+`). They are emitted as separate fields and neither is ever
+printed under the other's heading — `upstreamStatus.ts`'s rule arriving through a
+spreadsheet column.
+
+#### …and the row had nothing to open, in three separate ways
+
+*"If I type it, it has to first pick up."* Measured on this book, **553 of the
+615 issuers a fund discloses are ones the book holds no position in** — including
+LIC Housing itself. Every one of the three refusals was invisible on its own:
+
+- **`securityNames` was keyed on `p.security` over the POSITIONS**, so a company
+  only a fund holds was in no option. It unions the look-through's own names on
+  the security axis now.
+- **`derivedShown` was gated on `selected.size === 0`**, so picking a name
+  suppressed the very rows the pick was for. The gate is per-row now.
+- **The row carried no `venues`, so it drew no chevron** — and the expansion was
+  gated on `assetClass === "Equity"`, which refused an issuer reached through its
+  NCDs. It is `canLookThrough` now: an issuer, whatever paper of theirs a fund
+  holds, excluding only a FUND row (a scheme holding itself is not a look-through)
+  and CASH. A derived-only row gets its own expansion branch rather than an empty
+  version of the venue one, because a route-split sentence over zero routes and a
+  table with no rows are both statements about a measurement that does not exist.
+
+**AND THE ROW'S CLASS IS WHAT THE FILINGS SAID.** `assetClass: "Equity"` was
+hardcoded on a derived row; an issuer the family reach only through its bonds is
+not an equity holding, and filing it as one is the fabricated-classification
+failure. It is `e.classes` joined now — `Debt`, `Equity`, or both.
+
+Measured end to end, the family's own example: **LIC Housing Finance across SEVEN
+funds, held as Debt AND Equity**, twelve NCDs inside HDFC Balanced Advantage, CPs
+in two liquid funds, equity in Bandhan, Kotak and ICICI.
+
+#### A closed position is not a holding, on any allocation surface
+
+`currentHoldings` in `analytics.ts`, **one definition read by four surfaces**.
+The monitor had dropped closed positions a stage ago; Morning CIO and the
+`/holdings` table each of its tiles opens had not — so **the Positions tile
+counted 371 while the page it opened listed two schemes the family had already
+been paid out of**. Private Market drew 3P's three unit classes at ₹0 apiece,
+three of its fourteen fund rows.
+
+**IT MOVES NO MONEY, WHICH IS WHY THE COUNT IS THE ONLY THING WORTH ANCHORING.**
+A closed position is a measured ₹0 with no reported cost: NAV, Capital invested,
+every allocation row, every weight and every return are identical either way.
+**369 → 364**, and `check:pages` holds that count against `glowData.ts` rather
+than against the drill-down — comparing the tile with the page it opens passes
+when BOTH revert together, and that is exactly how the regression would arrive.
+
+**`unvaluedAccounts` DELIBERATELY KEEPS THE WHOLE SET.** It asks a different
+question — does this account report any holding at all — and narrowing it would
+fold 3P's account into the list of funds that publish no NAV, which is the
+opposite of true: it publishes one and redeemed against it. A confidently wrong
+reason sends the next reader to ask a fund manager for a NAV no fund owes.
+
+**AND THE `redeemed` PILL WENT WITH THE ROWS IT EXPLAINED.** It was the right
+answer while `/holdings` was the one page that still listed them; a branch that
+can never fire, wearing a confident explanation, is the dead-code-that-looks-alive
+failure. `check:pages` INVERTS rather than being deleted with it.
+
+#### The three paragraphs, checked claim by claim before they went
+
+The Stage 10aa / 10ai pattern, and it mattered here: **one claim in three was
+stated nowhere else.**
+
+| The claim | Elsewhere? | Where it is now |
+| --- | --- | --- |
+| one row per company · ranked by exposure · a fund is not a stock | yes — the table shows all three | — |
+| the clubbing, `N of M rows held through more than one account` | yes — the row's own entities pill and the venue panel | — |
+| the look-through still loading / the store not answering | yes — the `Via funds` footer's own `AbsentCell` reasons | also in the new hover |
+| Via funds and Total exposure are DERIVED and no part of NAV | no | the `Via funds` column header |
+| **the five-bucket partition — what this table covers and where the rest of the book is** | **NO** | **the Total exposure footer cell** |
+| the split-name warning (silent on this book) | `docs/BOOK-REPORT.md` | the same hover |
+| the closed-position note | — | Transactions → My investments, where a redemption belongs |
+| Weight is a share of the book, not of the rows picked | partly — the Weight footer's hover | that hover, corrected |
+
+**THE PARTITION IS THE ONE A READER ACTS ON.** This table covers **₹312.6 Cr of
+₹710.4 Cr** — under half — and without a statement of that it reads as the whole
+portfolio, which is the caption-that-widens failure in its purest form. It rides
+on the cell that PRINTS the figure it is about, and the SHARE stays on the face
+of the table in the Weight footer, which reads 42.2%.
+
+**AND THAT WEIGHT HOVER WAS WRONG.** On this axis every Weight cell divides TOTAL
+EXPOSURE by the book, and the hover explained the printed percentage using the
+MEASURED half alone — a figure a reader could not reproduce from the two numbers
+they were given. It is the cell's own numerator now.
+
+**`nonEquityValue` BECAME `unaccountedValue`, BECAUSE THE NAME STOPPED BEING
+TRUE.** The debt sleeve is INSIDE the derived total now, so the remainder is what
+no line in the filing accounted for — a scheme's cash, a metal ETF's metal, the
+disclosure's own rounding. **A FIELD that misdescribes its own figure is the
+caption failure one layer down, where every caller inherits it.**
+
+#### Sixteen bugs reintroduced, and FOUR of them were defects in the checks
+
+- **The first attempt at the issuer bug changed nothing**, because the keying
+  pass writes `issuerSeen`'s answer into `isinSeen` and the accumulation loop
+  reads that first. The mutation had to move to the keying pass to isolate it —
+  which is the whole point of doing this rather than reasoning about it.
+- **Three checks ABSTAINED where the fact had been DELETED.** Restoring the
+  `assetClass === "Equity"` gate removes the look-through card, and all three of
+  its invariants reported NOT CHECKED over a **clean sweep**; deleting the
+  partition from the footer hover did the same to three more. A missing panel and
+  an absent hover are the defect, not a reason to abstain — `golden.mjs`'s rule,
+  arriving twice in one pass.
+- **Private Market had no invariant on WHICH funds it draws**, so the redeemed
+  fund's ₹0 rows came back to a clean sweep. Every cell of such a row is correct
+  and it adds nothing to any total, so no value check on that page can see it;
+  the rows carry `data-pm-fund` now.
+- **And one check had silently stopped biting.** `stock-mf-lookthrough`'s
+  reconciliation matched a row shape of `name → one column → weight`, and the
+  table gained a `Class` column when the store stopped being equity-only. It
+  abstained on a page rendering perfectly. Anchored on the two adjacent cells it
+  is actually about now.
+
+The twelve that fired first time: the one-line-per-fund rule, the issuer tier,
+the equity-only gate, the derived row's missing expansion, the pick-list dropping
+fund-only names, closed positions back on `/holdings` and on Morning CIO, the
+paragraph restored, the partition deleted, the weight hover's numerator, the
+EQUITY ONLY sentence, a truncated breakdown, a debt line filed as equity, the
+derived half summed into the measured column, and the look-through column on a
+different basis.
+
+**THE WALKED NAME IS DERIVED, NEVER TYPED.** `FUND_INSTRUMENTS` picks the issuer
+ONE fund holds through the most separate instruments — the worst case by
+construction, since a build that kept the old rule reports a twelfth of it — and
+the next drop picks its own. The pick-list grew `data-multiselect` /
+`data-option` and `/holdings` grew `data-hb-key`, because a claim about which
+holdings a page draws must not be struck on prose a redesign is free to reword.
+
+`build` · `tsc` · `test:ingest` 140 + 35 · `test:family` (10 new, anchored on the
+committed store rather than on a fixture) · `check:family` 57/0 · `check:pages`
+**146 combinations clean** — 144 plus `monitor-lookthrough-instruments` across
+both themes — with the same two pre-existing abstentions. `npm run
+build-lookthrough` is a no-op against the committed store, which is what says the
+files on disk are what the builder would write. `glowData.ts` is untouched —
+nothing here reads the ingest.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -8909,7 +9130,9 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
   `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
-  disclosed equity holdings — from a READ-ONLY checkout of `techmuns/amfibeas`
+  **every disclosed holding, not the equity section alone**: shares, bonds, NCDs,
+  commercial paper and each line's own class and rating (see Stage 10aq) — from a
+  READ-ONLY checkout of `techmuns/amfibeas`
   (`AMFIBEAS_DIR`, `DRY=1` to resolve and report without writing). Idempotent.
   Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
   the card prints both as-of dates so staleness is visible rather than silent.

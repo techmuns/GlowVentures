@@ -2,12 +2,11 @@ import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronDown, ChevronRight, Layers, Wallet, Coins, TrendingUp } from "lucide-react";
 import { Card } from "@/components/Card";
-import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, isRedeemedToNil, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, currentHoldings, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
@@ -167,9 +166,29 @@ export function HoldingsBehind() {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
+  /**
+   * ── CURRENT HOLDINGS, AT THE BOUNDARY ─────────────────────────────────────
+   *
+   * *"we only need to show the current holdings in these allocation drill down
+   *  pages, if anything has been redeemed or sold completely then remove it."*
+   *
+   * Applied to BOTH sets `resolveDrilldown` reads, and applied HERE rather than
+   * inside each of its thirteen branches: the per-account scopes read
+   * `portfolio.positions` and the consolidated ones read `consolidated`, so
+   * narrowing one and not the other would leave a closed row reachable through
+   * exactly the facet nobody thought to check. One filter at the base makes
+   * every set, every facet and every count consistent by construction — the
+   * same place, and the same reasoning, as the monitor's own row build and the
+   * ring-fence one layer above it.
+   */
+  const held = useMemo(() => currentHoldings(consolidated), [consolidated]);
+  const heldBook = useMemo(
+    () => (portfolio ? { ...portfolio, positions: currentHoldings(portfolio.positions) } : null),
+    [portfolio],
+  );
   const resolved = useMemo<Drilldown | null>(
-    () => (portfolio && scope ? resolveDrilldown(scope, { portfolio, consolidated }) : null),
-    [portfolio, consolidated, scope],
+    () => (heldBook && scope ? resolveDrilldown(scope, { portfolio: heldBook, consolidated: held }) : null),
+    [heldBook, held, scope],
   );
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -493,7 +512,12 @@ export function HoldingsBehind() {
                       const isOpen = open.has(g.key);
                       return (
                         <Fragment key={g.key}>
-                          <tr className="hover:bg-ink-700/40">
+                          {/* THE ROW'S OWN SECURITY KEY, so a claim about WHICH
+                              holdings this page draws is struck on structure and
+                              not on a rendered name. `g.key` carries an `S:`/`M:`
+                              prefix saying how the row was grouped rather than
+                              what it is, which is why this is the security's. */}
+                          <tr className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-1.5">
                                 {/* THE ROW OPENS THE THING IT NAMES. A mandate
@@ -524,32 +548,22 @@ export function HoldingsBehind() {
                                   <span className="text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(g.rows[0], engagementOf(accIdx, g.rows[0])))}</span>
                                 )}
                                 {/*
-                                  WHY THIS ROW IS ALL ZEROS, ON THE ROW.
+                                  THE `redeemed` PILL IS GONE, AND ITS ROW WITH IT.
 
-                                  The Portfolio Monitor lists CURRENT holdings and
-                                  leaves a closed position out; this page lists the
-                                  set behind a figure, and Positions counts 371
-                                  including the closed ones — so the ₹0 rows still
-                                  render here and still need to say the zero is a
-                                  MEASUREMENT rather than a feed nobody wired. That
-                                  is where the monitor's own pill went when its row
-                                  stopped existing. It fires only where EVERY line
-                                  behind the row is closed: one class redeemed
-                                  beside another still held is not a closed row,
-                                  and saying so would write off money the family
-                                  still has.
+                                  It was the right answer while this page listed
+                                  closed positions and the monitor did not: a ₹0
+                                  row needs to say the zero was MEASURED. The
+                                  family have since asked that a redeemed holding
+                                  leave the allocation pages altogether, so the
+                                  rows are filtered at the ctx boundary above and
+                                  the pill can no longer fire — a branch that can
+                                  never be reached, wearing a confident
+                                  explanation, is the dead-code-that-looks-alive
+                                  failure this book keeps naming. `check:pages`
+                                  INVERTS rather than being deleted with it: no
+                                  closed key may be a row here, and the handle
+                                  must be gone.
                                 */}
-                                {g.rows.every(isRedeemedToNil) && (
-                                  // Keyed on the SECURITY, not on `g.key`, which
-                                  // carries an `S:`/`M:` prefix that says how the
-                                  // row was grouped rather than what it is. The
-                                  // claim is about a security the book reports at
-                                  // nil, so it is struck on the book's own key.
-                                  <span data-hb-redeemed={g.rows[0].securityKey}
-                                    title="Every unit of this fund has been redeemed: its own statement reports zero units held and still publishes a NAV, so the ₹0 is what the fund measured rather than a figure this book is missing. It is not listed on the Portfolio Monitor, which shows current holdings; the money that came back is on Transactions → My investments.">
-                                    <Pill tone="warn">redeemed</Pill>
-                                  </span>
-                                )}
                               </div>
                             </td>
                             <td className="px-4 py-2.5 text-[12px] text-slate-400">

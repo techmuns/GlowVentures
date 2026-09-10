@@ -8,80 +8,2236 @@
   "classification": "Debt : Liquid",
   "isin": "INF209K01VA3",
   "nav": {
-    "value": 458.2557,
-    "date": "2026-09-01",
-    "prev": 458.1371,
-    "prevDate": "2026-08-31",
-    "changePct": 0.025887447229227874
+    "value": 459.0137,
+    "date": "2026-09-09",
+    "prev": 458.8265,
+    "prevDate": "2026-09-08",
+    "changePct": 0.04079973584785569
   },
   "returns": {
     "1M": {
-      "value": 1.2994,
+      "value": 0.6796,
       "kind": "simple",
-      "startDate": "2026-06-21",
-      "endDate": "2026-09-01",
-      "startNav": 452.3773,
-      "endNav": 458.2557
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-09",
+      "startNav": 455.9151,
+      "endNav": 459.0137
     },
     "3M": {
-      "value": 1.7489,
+      "value": 1.7279,
       "kind": "simple",
-      "startDate": "2026-06-01",
-      "endDate": "2026-09-01",
-      "startNav": 450.3789,
-      "endNav": 458.2557
+      "startDate": "2026-06-09",
+      "endDate": "2026-09-09",
+      "startNav": 451.2171,
+      "endNav": 459.0137
     },
     "6M": {
-      "value": 3.4745,
+      "value": 3.5281,
       "kind": "simple",
-      "startDate": "2026-03-01",
-      "endDate": "2026-09-01",
-      "startNav": 442.8682,
-      "endNav": 458.2557
+      "startDate": "2026-03-09",
+      "endDate": "2026-09-09",
+      "startNav": 443.3712,
+      "endNav": 459.0137
     },
     "1Y": {
-      "value": 6.5593,
+      "value": 6.6066,
       "kind": "simple",
-      "startDate": "2025-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 430.0474,
-      "endNav": 458.2557
+      "startDate": "2025-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 430.5678,
+      "endNav": 459.0137
     },
     "3Y": {
-      "value": 7.0271,
+      "value": 7.0341,
       "kind": "cagr",
-      "startDate": "2023-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 373.7719,
-      "endNav": 458.2557
+      "startDate": "2023-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 374.3167,
+      "endNav": 459.0137
     },
     "5Y": {
-      "value": 6.3878,
+      "value": 6.4086,
       "kind": "cagr",
-      "startDate": "2021-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 336.254,
-      "endNav": 458.2557
+      "startDate": "2021-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 336.4808,
+      "endNav": 459.0137
     },
     "10Y": {
-      "value": 6.1882,
+      "value": 6.1898,
       "kind": "cagr",
-      "startDate": "2016-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 251.4099,
-      "endNav": 458.2557
+      "startDate": "2016-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 251.7862,
+      "endNav": 459.0137
     }
   },
-  "returnsAsOf": "2026-09-01",
-  "fundAumCr": 71140.04,
-  "holdingsAsOf": "2026-07-31",
+  "returnsAsOf": "2026-09-09",
+  "fundAumCr": 69292.7,
+  "holdingsAsOf": "2026-08-31",
   "holdingsSource": {
     "kind": "amc",
     "url": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio"
   },
-  "section": "Equity Holdings",
-  "equity": [],
+  "section": "Whole portfolio",
+  "coveragePct": 99.23,
+  "allocation": [
+    {
+      "class": "Debt",
+      "pct": 98.98
+    },
+    {
+      "class": "Other",
+      "pct": 0.25
+    }
+  ],
+  "holdings": [
+    {
+      "name": "91 DAY T-BILL 05.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 3.26,
+      "marketValueCr": 2278.71,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (01/10/2026) **#",
+      "isin": "INE692A16MR3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 2.78,
+      "marketValueCr": 1939.99,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (11/09/2026) **#",
+      "isin": "INE040A16HN4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 2.22,
+      "marketValueCr": 1547.41,
+      "shares": null
+    },
+    {
+      "name": "182 DAY T-BILL 10.09.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.79,
+      "marketValueCr": 1248.41,
+      "shares": null
+    },
+    {
+      "name": "City Union Bank Ltd. (10/09/2026) **#",
+      "isin": "INE491A16169",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.72,
+      "marketValueCr": 1198.04,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 12.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.67,
+      "marketValueCr": 1162.97,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (06/11/2026) **#",
+      "isin": "INE040A16HU9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.63,
+      "marketValueCr": 1136.76,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (11/09/2026) **",
+      "isin": "INE261F14PT0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.43,
+      "marketValueCr": 998.31,
+      "shares": null
+    },
+    {
+      "name": "364 DAY T-BILL 08.10.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.42,
+      "marketValueCr": 994.84,
+      "shares": null
+    },
+    {
+      "name": "Export-Import Bank of India (04/11/2026) **",
+      "isin": "INE514E14TS9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 1.37,
+      "marketValueCr": 959.19,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (01/10/2026) **",
+      "isin": "INE261F14PX2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.32,
+      "marketValueCr": 920.22,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd. (26/11/2026) **#",
+      "isin": "INE238AD6BO6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.27,
+      "marketValueCr": 886.63,
+      "shares": null
+    },
+    {
+      "name": "Government of India (06/09/2026)",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.22,
+      "marketValueCr": 855.19,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 19.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.13,
+      "marketValueCr": 790.99,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 08.10.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.08,
+      "marketValueCr": 756.08,
+      "shares": null
+    },
+    {
+      "name": "7.44% Small Industries Development Bank of India (04/09/2026) **",
+      "isin": "INE556F08KI9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 1.07,
+      "marketValueCr": 745.04,
+      "shares": null
+    },
+    {
+      "name": "Jamnagar Utilities & Power Pvt. Ltd. (29/09/2026) **",
+      "isin": "INE936D14436",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 1.07,
+      "marketValueCr": 746.43,
+      "shares": null
+    },
+    {
+      "name": "Bharat Heavy Electricals Ltd. (29/09/2026) **",
+      "isin": "INE257A14AI4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.07,
+      "marketValueCr": 746.28,
+      "shares": null
+    },
+    {
+      "name": "ICICI Bank Ltd. (15/09/2026) **#",
+      "isin": "INE090AD6378",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.07,
+      "marketValueCr": 748.25,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (30/11/2026) **",
+      "isin": "INE261F14QE0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 1.06,
+      "marketValueCr": 738.29,
+      "shares": null
+    },
+    {
+      "name": "Punjab & Sind Bank (17/11/2026) **#",
+      "isin": "INE608A16TM5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.06,
+      "marketValueCr": 739.89,
+      "shares": null
+    },
+    {
+      "name": "Yes Bank Ltd. (18/11/2026) **#",
+      "isin": "INE528G16Y10",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 1.06,
+      "marketValueCr": 739.62,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (23/09/2026) **#",
+      "isin": "INE692A16MO0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 1.03,
+      "marketValueCr": 722.34,
+      "shares": null
+    },
+    {
+      "name": "182 DAY T-BILL 08.10.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.02,
+      "marketValueCr": 711.31,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (21/09/2026) **#",
+      "isin": "INE692A16MM4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.93,
+      "marketValueCr": 647.84,
+      "shares": null
+    },
+    {
+      "name": "Tata Teleservices Ltd. (17/11/2026) **",
+      "isin": "INE037E14AT9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.92,
+      "marketValueCr": 640.58,
+      "shares": null
+    },
+    {
+      "name": "Export-Import Bank of India (09/09/2026)",
+      "isin": "INE514E14TN0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.89,
+      "marketValueCr": 624.18,
+      "shares": null
+    },
+    {
+      "name": "L&T Metro Rail (Hyderabad) Ltd. [Guaranteed by Larsen & Toubro Ltd.] (21/09/2026) **",
+      "isin": "INE128M14BJ8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.86,
+      "marketValueCr": 597.74,
+      "shares": null
+    },
+    {
+      "name": "DBS Bank Ltd. (07/09/2026) **#",
+      "isin": "INE01GA16293",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.86,
+      "marketValueCr": 599.4,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (10/09/2026) #",
+      "isin": "INE040A16HL8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.86,
+      "marketValueCr": 599.1,
+      "shares": null
+    },
+    {
+      "name": "Canara Bank (15/09/2026) **#",
+      "isin": "INE476A16I18",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.82,
+      "marketValueCr": 573.67,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (21/09/2026) **#",
+      "isin": "INE040A16HR5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.82,
+      "marketValueCr": 573.06,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (12/10/2026) **#",
+      "isin": "INE692A16MS1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.78,
+      "marketValueCr": 546.15,
+      "shares": null
+    },
+    {
+      "name": "IIFL Finance Ltd. (04/09/2026) **",
+      "isin": "INE530B14HS6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.72,
+      "marketValueCr": 499.68,
+      "shares": null
+    },
+    {
+      "name": "PNB Housing Finance Ltd. (08/09/2026) **",
+      "isin": "INE572E14KJ5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.72,
+      "marketValueCr": 499.4,
+      "shares": null
+    },
+    {
+      "name": "LIC Housing Finance Ltd. (09/09/2026) **",
+      "isin": "INE115A14FW4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.72,
+      "marketValueCr": 499.33,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (07/09/2026) **#",
+      "isin": "INE040A16JO8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.72,
+      "marketValueCr": 499.51,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 10.09.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.72,
+      "marketValueCr": 499.36,
+      "shares": null
+    },
+    {
+      "name": "Sundaram Finance Ltd. (11/09/2026) **",
+      "isin": "INE660A14ZC9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 499.1,
+      "shares": null
+    },
+    {
+      "name": "Reliance Retail Ventures Ltd. (21/09/2026) **",
+      "isin": "INE929O14FF4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 498.3,
+      "shares": null
+    },
+    {
+      "name": "Adani Ports and Special Economic Zone Ltd. (06/11/2026) **",
+      "isin": "INE742F14RL2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 493.99,
+      "shares": null
+    },
+    {
+      "name": "JSW Energy Ltd. (17/11/2026) **",
+      "isin": "INE121E14466",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "IND A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 492.78,
+      "shares": null
+    },
+    {
+      "name": "JM Financial Credit Solutions Ltd. (11/11/2026) **",
+      "isin": "INE651J14AZ3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "IND A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 492.44,
+      "shares": null
+    },
+    {
+      "name": "DCB Bank Ltd. (15/09/2026) **#",
+      "isin": "INE503A16IA6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 498.79,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd. (16/09/2026) **#",
+      "isin": "INE238AD6CQ9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 498.74,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (16/09/2026) **#",
+      "isin": "INE040A16JQ3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 498.73,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank (18/09/2026) **#",
+      "isin": "INE160A16VK7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 498.59,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd. (17/11/2026) **#",
+      "isin": "INE036D16KO8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 493.22,
+      "shares": null
+    },
+    {
+      "name": "Yes Bank Ltd. (17/11/2026) **#",
+      "isin": "INE528G16Y02",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 493.17,
+      "shares": null
+    },
+    {
+      "name": "Central Bank of India (27/11/2026) **#",
+      "isin": "INE483A16LD9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.71,
+      "marketValueCr": 492.36,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 17.09.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.71,
+      "marketValueCr": 498.91,
+      "shares": null
+    },
+    {
+      "name": "364 DAY T-BILL 12.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.71,
+      "marketValueCr": 494.88,
+      "shares": null
+    },
+    {
+      "name": "8.25% India Infradebt Ltd. (15/09/2026) **",
+      "isin": "INE537P07752",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.68,
+      "marketValueCr": 475.17,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd. (08/09/2026) **",
+      "isin": "INE763G14K38",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.64,
+      "marketValueCr": 449.42,
+      "shares": null
+    },
+    {
+      "name": "Indian Bank (01/10/2026) **#",
+      "isin": "INE562A16RG0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.64,
+      "marketValueCr": 447.71,
+      "shares": null
+    },
+    {
+      "name": "7.70% Power Finance Corporation Ltd. (15/09/2026) **",
+      "isin": "INE134E08MK0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.57,
+      "marketValueCr": 400.18,
+      "shares": null
+    },
+    {
+      "name": "Larsen & Toubro Ltd. (04/09/2026) **",
+      "isin": "INE018A14LX6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 399.8,
+      "shares": null
+    },
+    {
+      "name": "IIFL Finance Ltd. (07/09/2026) **",
+      "isin": "INE530B14HT4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 399.48,
+      "shares": null
+    },
+    {
+      "name": "ONGC Petro Additions Ltd. (25/09/2026) **",
+      "isin": "INE163N14600",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 398.28,
+      "shares": null
+    },
+    {
+      "name": "IndusInd Bank Ltd. (01/09/2026) **#",
+      "isin": "INE095A167E7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 400,
+      "shares": null
+    },
+    {
+      "name": "The Jammu & Kashmir Bank Ltd. (03/09/2026) **#",
+      "isin": "INE168A16NK7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 399.86,
+      "shares": null
+    },
+    {
+      "name": "The Jammu & Kashmir Bank Ltd. (08/09/2026) **#",
+      "isin": "INE168A16NL5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 399.51,
+      "shares": null
+    },
+    {
+      "name": "Punjab & Sind Bank (15/09/2026) **#",
+      "isin": "INE608A16TK9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 399.07,
+      "shares": null
+    },
+    {
+      "name": "Punjab & Sind Bank (16/09/2026) **#",
+      "isin": "INE608A16TL7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.57,
+      "marketValueCr": 398.99,
+      "shares": null
+    },
+    {
+      "name": "DCB Bank Ltd. (30/11/2026) **#",
+      "isin": "INE503A16ID0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.56,
+      "marketValueCr": 393.39,
+      "shares": null
+    },
+    {
+      "name": "Bharti Telecom Ltd. (03/09/2026) **",
+      "isin": "INE403D14627",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.52,
+      "marketValueCr": 364.87,
+      "shares": null
+    },
+    {
+      "name": "Tata Communications Ltd. (28/09/2026) **",
+      "isin": "INE151A14313",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.5,
+      "marketValueCr": 348.38,
+      "shares": null
+    },
+    {
+      "name": "Tata Housing Development Co. Ltd. (30/11/2026) **",
+      "isin": "INE582L14JX2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.49,
+      "marketValueCr": 344.02,
+      "shares": null
+    },
+    {
+      "name": "Mindspace Business Parks Reit (23/09/2026) **",
+      "isin": "INE0CCU14153",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.48,
+      "marketValueCr": 333.7,
+      "shares": null
+    },
+    {
+      "name": "Standard Chartered Capital Ltd. (04/09/2026) **",
+      "isin": "INE403G14TU6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.47,
+      "marketValueCr": 324.82,
+      "shares": null
+    },
+    {
+      "name": "Export-Import Bank of India (07/09/2026) **",
+      "isin": "INE514E14TM2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.46,
+      "marketValueCr": 324.68,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd. (11/09/2026) **#",
+      "isin": "INE238AD6BQ1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.46,
+      "marketValueCr": 324.46,
+      "shares": null
+    },
+    {
+      "name": "Tata Capital Housing Finance Ltd. (03/09/2026) **",
+      "isin": "INE033L14PA1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 299.9,
+      "shares": null
+    },
+    {
+      "name": "Tata Teleservices (Maharastra) Ltd. (08/09/2026) **",
+      "isin": "INE517B14AJ7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 299.62,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Ltd. (09/09/2026) **",
+      "isin": "INE01C314GA2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 299.56,
+      "shares": null
+    },
+    {
+      "name": "Vedanta Power Ltd. (16/09/2026) **",
+      "isin": "INE694L14GY9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 299,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Ltd. (25/09/2026) **",
+      "isin": "INE01C314GG9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 298.68,
+      "shares": null
+    },
+    {
+      "name": "NTPC Ltd. (05/10/2026) **",
+      "isin": "INE733E14CE1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 298.25,
+      "shares": null
+    },
+    {
+      "name": "Central Bank of India (08/09/2026) **#",
+      "isin": "INE483A16KT7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 299.65,
+      "shares": null
+    },
+    {
+      "name": "Central Bank of India (25/09/2026) **#",
+      "isin": "INE483A16KX9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.43,
+      "marketValueCr": 298.79,
+      "shares": null
+    },
+    {
+      "name": "Knowledge Realty Trust (06/11/2026) **",
+      "isin": "INE1JAR14024",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.42,
+      "marketValueCr": 296.43,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (16/11/2026) **",
+      "isin": "INE522D14PV6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.42,
+      "marketValueCr": 295.45,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (17/11/2026) **",
+      "isin": "INE422H14610",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.42,
+      "marketValueCr": 295.37,
+      "shares": null
+    },
+    {
+      "name": "UCO Bank (04/11/2026) **#",
+      "isin": "INE691A16ML8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.42,
+      "marketValueCr": 296.62,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (10/11/2026) **#",
+      "isin": "INE261F16AC3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.42,
+      "marketValueCr": 296.35,
+      "shares": null
+    },
+    {
+      "name": "Export-Import Bank of India (15/09/2026) **",
+      "isin": "INE514E14TO8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.39,
+      "marketValueCr": 274.36,
+      "shares": null
+    },
+    {
+      "name": "Bharti Telecom Ltd. (18/09/2026) **",
+      "isin": "INE403D14585",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.39,
+      "marketValueCr": 274.12,
+      "shares": null
+    },
+    {
+      "name": "Nuvama Wealth & Investment Ltd. (04/09/2026) **",
+      "isin": "INE523L14BM6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.86,
+      "shares": null
+    },
+    {
+      "name": "Kotak Securities Ltd. (10/09/2026) **",
+      "isin": "INE028E14WZ9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.59,
+      "shares": null
+    },
+    {
+      "name": "Hindustan Petroleum Corporation Ltd. (17/09/2026) **",
+      "isin": "INE094A14KD1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.32,
+      "shares": null
+    },
+    {
+      "name": "CESC Ltd. (17/09/2026) **",
+      "isin": "INE486A14GC9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.31,
+      "shares": null
+    },
+    {
+      "name": "NTPC Ltd. (18/09/2026) **",
+      "isin": "INE733E14CC5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.28,
+      "shares": null
+    },
+    {
+      "name": "Jio Credit Ltd. (18/09/2026) **",
+      "isin": "INE282H14121",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.23,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (17/09/2026) **",
+      "isin": "INE422H14495",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.23,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (18/09/2026) **",
+      "isin": "INE522D14PR4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.18,
+      "shares": null
+    },
+    {
+      "name": "Hindustan Petroleum Corporation Ltd. (23/09/2026) **",
+      "isin": "INE094A14KF6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.07,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (21/09/2026) **",
+      "isin": "INE422H14487",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.03,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (24/09/2026) **",
+      "isin": "INE422H14537",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 248.89,
+      "shares": null
+    },
+    {
+      "name": "Canara Bank (09/09/2026) **#",
+      "isin": "INE476A16J82",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.67,
+      "shares": null
+    },
+    {
+      "name": "City Union Bank Ltd. (11/09/2026) **#",
+      "isin": "INE491A16177",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.55,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd. (18/09/2026) **#",
+      "isin": "INE036D16JD3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.28,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (22/09/2026) **#",
+      "isin": "INE692A16MN2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 249.13,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (01/10/2026) #",
+      "isin": "INE040A16JS9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 248.71,
+      "shares": null
+    },
+    {
+      "name": "The Federal Bank Ltd. (15/10/2026) **#",
+      "isin": "INE171A16OA0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.36,
+      "marketValueCr": 248.07,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 03.09.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.36,
+      "marketValueCr": 249.93,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (13/11/2026) **",
+      "isin": "INE261F14QB6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.35,
+      "marketValueCr": 246.83,
+      "shares": null
+    },
+    {
+      "name": "Tata Communications Ltd. (17/11/2026) **",
+      "isin": "INE151A14339",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.35,
+      "marketValueCr": 246.63,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (01/12/2026) **",
+      "isin": "INE556F14MQ6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.35,
+      "marketValueCr": 246.06,
+      "shares": null
+    },
+    {
+      "name": "Tata Realty and Infrastructure Ltd. (30/11/2026) **",
+      "isin": "INE371K14DW7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.35,
+      "marketValueCr": 245.74,
+      "shares": null
+    },
+    {
+      "name": "Nuvama Wealth & Investment Ltd. (03/12/2026) **",
+      "isin": "INE523L14BZ8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.35,
+      "marketValueCr": 245.18,
+      "shares": null
+    },
+    {
+      "name": "Motilal Oswal Financial Services Ltd. (07/09/2026) **",
+      "isin": "INE338I14MV3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.32,
+      "marketValueCr": 224.75,
+      "shares": null
+    },
+    {
+      "name": "JM Financial Services Ltd. (05/11/2026) **",
+      "isin": "INE012I14SW9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.32,
+      "marketValueCr": 221.96,
+      "shares": null
+    },
+    {
+      "name": "Punjab National Bank (15/09/2026) #",
+      "isin": "INE160A16UT0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.32,
+      "marketValueCr": 224.48,
+      "shares": null
+    },
+    {
+      "name": "Tata Projects Ltd. (03/09/2026) **",
+      "isin": "INE725H14EC0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.93,
+      "shares": null
+    },
+    {
+      "name": "Motilal Oswal Financial Services Ltd. (04/09/2026) **",
+      "isin": "INE338I14MU5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.89,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (04/09/2026) **",
+      "isin": "INE422H14479",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.89,
+      "shares": null
+    },
+    {
+      "name": "Godrej Finance Ltd. (09/09/2026) **",
+      "isin": "INE02KN14713",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.7,
+      "shares": null
+    },
+    {
+      "name": "Kisetsu Saison Finance (India) Pvt Ltd. (09/09/2026) **",
+      "isin": "INE0DZE14404",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.7,
+      "shares": null
+    },
+    {
+      "name": "Sharekhan Ltd. (15/09/2026) **",
+      "isin": "INE211H14AV9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.46,
+      "shares": null
+    },
+    {
+      "name": "Julius Baer Capital (India) Pvt. Ltd. (16/09/2026) **",
+      "isin": "INE824H14UP9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.44,
+      "shares": null
+    },
+    {
+      "name": "Sharekhan Ltd. (22/09/2026) **",
+      "isin": "INE211H14AW7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.18,
+      "shares": null
+    },
+    {
+      "name": "DCB Bank Ltd. (02/09/2026) **#",
+      "isin": "INE503A16HZ5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.97,
+      "shares": null
+    },
+    {
+      "name": "Karur Vysya Bank Ltd. (15/09/2026) **#",
+      "isin": "INE036D16KD1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.29,
+      "marketValueCr": 199.53,
+      "shares": null
+    },
+    {
+      "name": "Tata Projects Ltd. (09/10/2026) **",
+      "isin": "INE725H14EG1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 198.65,
+      "shares": null
+    },
+    {
+      "name": "Angel One Ltd. (04/11/2026) **",
+      "isin": "INE732I14DS2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 197.25,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Ltd. (12/11/2026) **",
+      "isin": "INE01C314GL9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 197.23,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Financial Securities Ltd. (13/11/2026) **",
+      "isin": "INE01C314GT2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 197.2,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (12/11/2026) **",
+      "isin": "INE422H14594",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 197.11,
+      "shares": null
+    },
+    {
+      "name": "Sharekhan Ltd. (27/11/2026) **",
+      "isin": "INE211H14BB9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 196.38,
+      "shares": null
+    },
+    {
+      "name": "DCB Bank Ltd. (02/12/2026) **#",
+      "isin": "INE503A16IE8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.28,
+      "marketValueCr": 196.65,
+      "shares": null
+    },
+    {
+      "name": "91 DAY T-BILL 27.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.28,
+      "marketValueCr": 197.52,
+      "shares": null
+    },
+    {
+      "name": "8.30% Aditya Birla Capital Ltd. (16/09/2026) **",
+      "isin": "INE860H07IJ5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.27,
+      "marketValueCr": 190.11,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (06/11/2026) **#",
+      "isin": "INE556F16BQ4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.27,
+      "marketValueCr": 187.81,
+      "shares": null
+    },
+    {
+      "name": "6.40% Jamnagar Utilities & Power Pvt. Ltd. (29/09/2026)",
+      "isin": "INE936D07174",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.25,
+      "marketValueCr": 174.89,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd. (04/09/2026) **",
+      "isin": "INE763G14K04",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.25,
+      "marketValueCr": 174.91,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda (05/11/2026) **#",
+      "isin": "INE028A16KH5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.25,
+      "marketValueCr": 173.03,
+      "shares": null
+    },
+    {
+      "name": "AU Small Finance Bank Ltd. (06/11/2026) **#",
+      "isin": "INE949L16DZ6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.25,
+      "marketValueCr": 172.92,
+      "shares": null
+    },
+    {
+      "name": "Corporate Debt Mkt Devp. Fund-A2",
+      "isin": "INF0RQ622028",
+      "assetClass": "Other",
+      "sector": null,
+      "rating": null,
+      "pctAum": 0.25,
+      "marketValueCr": 173.78,
+      "shares": null
+    },
+    {
+      "name": "SMFG India Credit Company Ltd. (25/09/2026) **",
+      "isin": "INE535H14JR0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.24,
+      "marketValueCr": 167.27,
+      "shares": null
+    },
+    {
+      "name": "Tata Housing Development Co. Ltd. (11/11/2026) **",
+      "isin": "INE582L14JU8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.23,
+      "marketValueCr": 162.77,
+      "shares": null
+    },
+    {
+      "name": "IIFL Finance Ltd. (08/09/2026) **",
+      "isin": "INE530B14HU2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 149.77,
+      "shares": null
+    },
+    {
+      "name": "Tata Projects Ltd. (11/09/2026) **",
+      "isin": "INE725H14DK5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 149.74,
+      "shares": null
+    },
+    {
+      "name": "Godrej Properties Ltd. (15/09/2026) **",
+      "isin": "INE484J14D32",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 149.63,
+      "shares": null
+    },
+    {
+      "name": "Infina Finance Pvt. Ltd. (17/09/2026) **",
+      "isin": "INE879F14NF3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 149.55,
+      "shares": null
+    },
+    {
+      "name": "Redington Ltd. (24/09/2026) **",
+      "isin": "INE891D14C44",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 149.39,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (30/10/2026) **",
+      "isin": "INE522D14PW4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 148.24,
+      "shares": null
+    },
+    {
+      "name": "Fedbank Financial Services Ltd. (17/11/2026) **",
+      "isin": "INE007N14FO3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 147.71,
+      "shares": null
+    },
+    {
+      "name": "GIC Housing Finance Ltd. (27/11/2026) **",
+      "isin": "INE289B14KH6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 147.62,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda (25/11/2026) #",
+      "isin": "INE028A16KK9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.21,
+      "marketValueCr": 147.8,
+      "shares": null
+    },
+    {
+      "name": "Tata Housing Development Co. Ltd. (16/11/2026) **",
+      "isin": "INE582L14JV6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.2,
+      "marketValueCr": 137.97,
+      "shares": null
+    },
+    {
+      "name": "182 DAY T-BILL 19.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.19,
+      "marketValueCr": 133.48,
+      "shares": null
+    },
+    {
+      "name": "6.35% HDB Financial Services Ltd. (11/09/2026) **",
+      "isin": "INE756I07DX5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.18,
+      "marketValueCr": 124.97,
+      "shares": null
+    },
+    {
+      "name": "Tata Housing Development Co. Ltd. (16/09/2026) **",
+      "isin": "INE582L14JS2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.18,
+      "marketValueCr": 124.67,
+      "shares": null
+    },
+    {
+      "name": "ICICI Securities Ltd. (16/09/2026) **",
+      "isin": "INE763G14K79",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.18,
+      "marketValueCr": 124.66,
+      "shares": null
+    },
+    {
+      "name": "Indian Bank (06/11/2026) **#",
+      "isin": "INE562A16PT7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.18,
+      "marketValueCr": 123.57,
+      "shares": null
+    },
+    {
+      "name": "DSP Finance Pvt. Ltd. (18/09/2026) **",
+      "isin": "INE422H14388",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.15,
+      "marketValueCr": 104.65,
+      "shares": null
+    },
+    {
+      "name": "Export-Import Bank of India (03/09/2026)",
+      "isin": "INE514E14TL4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.97,
+      "shares": null
+    },
+    {
+      "name": "Sharekhan Ltd. (03/09/2026) **",
+      "isin": "INE211H14AT3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.96,
+      "shares": null
+    },
+    {
+      "name": "Julius Baer Capital (India) Pvt. Ltd. (04/09/2026) **",
+      "isin": "INE824H14UM6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.95,
+      "shares": null
+    },
+    {
+      "name": "Mirae Asset Capital Markets (I) Pvt. Ltd. (04/09/2026) **",
+      "isin": "INE0T2V14111",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.95,
+      "shares": null
+    },
+    {
+      "name": "Mirae Asset Financial Service (04/09/2026) **",
+      "isin": "INE0JRU14487",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.94,
+      "shares": null
+    },
+    {
+      "name": "Angel One Ltd. (07/09/2026) **",
+      "isin": "INE732I14CL9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.88,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (08/09/2026) **",
+      "isin": "INE522D14PO1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.87,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (10/09/2026) **",
+      "isin": "INE261F14PS2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.85,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (09/09/2026) **",
+      "isin": "INE522D14PP8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.85,
+      "shares": null
+    },
+    {
+      "name": "SBICAP Securities Ltd. (11/09/2026) **",
+      "isin": "INE212K14EJ8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.82,
+      "shares": null
+    },
+    {
+      "name": "Infina Finance Pvt. Ltd. (11/09/2026) **",
+      "isin": "INE879F14LN1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.81,
+      "shares": null
+    },
+    {
+      "name": "SBICAP Securities Ltd. (15/09/2026) **",
+      "isin": "INE212K14EI0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.74,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (16/09/2026) **",
+      "isin": "INE522D14OT3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.71,
+      "shares": null
+    },
+    {
+      "name": "Cholamandalam Investment & Finance Co. Ltd. (18/09/2026) **",
+      "isin": "INE121A14YU7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.69,
+      "shares": null
+    },
+    {
+      "name": "Nuvama Wealth & Investment Ltd. (18/09/2026) **",
+      "isin": "INE523L14BR5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.66,
+      "shares": null
+    },
+    {
+      "name": "Redington Ltd. (23/09/2026) **",
+      "isin": "INE891D14C51",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.61,
+      "shares": null
+    },
+    {
+      "name": "Godrej Properties Ltd. (24/09/2026) **",
+      "isin": "INE484J14E15",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.59,
+      "shares": null
+    },
+    {
+      "name": "Mirae Asset Financial Service (23/09/2026) **",
+      "isin": "INE0JRU14503",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.56,
+      "shares": null
+    },
+    {
+      "name": "Muthoot Finance Ltd. (23/11/2026) **",
+      "isin": "INE414G14UZ0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 98.37,
+      "shares": null
+    },
+    {
+      "name": "SBICAP Securities Ltd. (27/11/2026) **",
+      "isin": "INE212K14EV3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 98.33,
+      "shares": null
+    },
+    {
+      "name": "Bank of Baroda (07/09/2026) #",
+      "isin": "INE028A16MP4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.9,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (27/10/2026) **#",
+      "isin": "INE556F16BN1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 99.04,
+      "shares": null
+    },
+    {
+      "name": "Axis Bank Ltd. (27/11/2026) #",
+      "isin": "INE238AD6BP3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.14,
+      "marketValueCr": 98.5,
+      "shares": null
+    },
+    {
+      "name": "182 DAY T-BILL 03.09.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.14,
+      "marketValueCr": 99.97,
+      "shares": null
+    },
+    {
+      "name": "182 DAY T-BILL 05.11.26",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.13,
+      "marketValueCr": 94.12,
+      "shares": null
+    },
+    {
+      "name": "HSBC Investdirect Financial Services India Ltd. (03/09/2026) **",
+      "isin": "INE790I14HW3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.97,
+      "shares": null
+    },
+    {
+      "name": "Kotak Mahindra Prime Ltd. (07/09/2026) **",
+      "isin": "INE916D145Y5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.92,
+      "shares": null
+    },
+    {
+      "name": "GIC Housing Finance Ltd. (10/09/2026) **",
+      "isin": "INE289B14KC7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.88,
+      "shares": null
+    },
+    {
+      "name": "Muthoot Finance Ltd. (11/09/2026) **",
+      "isin": "INE414G14UU1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.86,
+      "shares": null
+    },
+    {
+      "name": "Godrej Industries Ltd. (15/09/2026) **",
+      "isin": "INE233A148Y8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.82,
+      "shares": null
+    },
+    {
+      "name": "Godrej Industries Ltd. (16/09/2026) **",
+      "isin": "INE233A148Z5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.81,
+      "shares": null
+    },
+    {
+      "name": "Godrej Industries Ltd. (17/09/2026) **",
+      "isin": "INE233A149A6",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.79,
+      "shares": null
+    },
+    {
+      "name": "Godrej Industries Ltd. (18/09/2026) **",
+      "isin": "INE233A149B4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.78,
+      "shares": null
+    },
+    {
+      "name": "Hindustan Petroleum Corporation Ltd. (25/09/2026) **",
+      "isin": "INE094A14KG4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.11,
+      "marketValueCr": 74.7,
+      "shares": null
+    },
+    {
+      "name": "Nuvama Wealth & Investment Ltd. (09/09/2026) **",
+      "isin": "INE523L14BN4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.1,
+      "marketValueCr": 69.89,
+      "shares": null
+    },
+    {
+      "name": "7.98% Sundaram Home Finance Ltd. (04/09/2026) **",
+      "isin": "INE667F07IT7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.09,
+      "marketValueCr": 65.01,
+      "shares": null
+    },
+    {
+      "name": "7.55% REC Ltd. (31/10/2026) **",
+      "isin": "INE020B08FH7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.09,
+      "marketValueCr": 60.05,
+      "shares": null
+    },
+    {
+      "name": "Tata Teleservices (Maharastra) Ltd. (09/11/2026) **",
+      "isin": "INE517B14AL3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.09,
+      "marketValueCr": 64.15,
+      "shares": null
+    },
+    {
+      "name": "Muthoot Finance Ltd. (08/09/2026) **",
+      "isin": "INE414G14UT3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.93,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (09/09/2026)",
+      "isin": "INE261F14PR4",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.93,
+      "shares": null
+    },
+    {
+      "name": "IDBI Capital Markets & Securities Ltd. (08/09/2026) **",
+      "isin": "INE835F14179",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.93,
+      "shares": null
+    },
+    {
+      "name": "Godrej Finance Ltd. (11/09/2026) **",
+      "isin": "INE02KN14721",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.91,
+      "shares": null
+    },
+    {
+      "name": "Manappuram Finance Ltd. (15/09/2026) **",
+      "isin": "INE522D14OU1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.87,
+      "shares": null
+    },
+    {
+      "name": "REC Ltd. (21/09/2026) **",
+      "isin": "INE020B14706",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.83,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (28/10/2026) **",
+      "isin": "INE556F14MO1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.51,
+      "shares": null
+    },
+    {
+      "name": "IDBI Capital Markets & Securities Ltd. (06/11/2026) **",
+      "isin": "INE835F14195",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.28,
+      "shares": null
+    },
+    {
+      "name": "Mirae Asset Financial Service (03/12/2026) **",
+      "isin": "INE0JRU14545",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.07,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (09/09/2026) **#",
+      "isin": "INE040A16JP5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.93,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (10/11/2026) **#",
+      "isin": "INE556F16BR2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.39,
+      "shares": null
+    },
+    {
+      "name": "HDFC Bank Ltd. (19/11/2026) **#",
+      "isin": "INE040A16HY1",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.31,
+      "shares": null
+    },
+    {
+      "name": "AU Small Finance Bank Ltd. (25/11/2026) **#",
+      "isin": "INE949L16EB5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.07,
+      "marketValueCr": 49.24,
+      "shares": null
+    },
+    {
+      "name": "8.09% Kotak Mahindra Prime Ltd. (09/11/2026) **",
+      "isin": "INE916DA7SL3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.04,
+      "marketValueCr": 25.02,
+      "shares": null
+    },
+    {
+      "name": "7.55% Small Industries Development Bank of India (22/09/2026) **",
+      "isin": "INE556F08KJ7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.04,
+      "marketValueCr": 25.01,
+      "shares": null
+    },
+    {
+      "name": "National Bank for Agriculture and Rural Development (03/09/2026) **",
+      "isin": "INE261F14PN3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.04,
+      "marketValueCr": 24.99,
+      "shares": null
+    },
+    {
+      "name": "Small Industries Development Bank of India (11/09/2026) **",
+      "isin": "INE556F14MK9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL A1+",
+      "pctAum": 0.04,
+      "marketValueCr": 24.96,
+      "shares": null
+    },
+    {
+      "name": "IDBI Capital Markets & Securities Ltd. (11/09/2026) **",
+      "isin": "INE835F14187",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE A1+",
+      "pctAum": 0.04,
+      "marketValueCr": 24.95,
+      "shares": null
+    },
+    {
+      "name": "Bajaj Finance Ltd. (04/11/2026) **",
+      "isin": "INE296A14D13",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.04,
+      "marketValueCr": 24.7,
+      "shares": null
+    },
+    {
+      "name": "Union Bank of India (04/09/2026) **#",
+      "isin": "INE692A16MJ0",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA A1+",
+      "pctAum": 0.04,
+      "marketValueCr": 24.99,
+      "shares": null
+    }
+  ],
   "counts": {
-    "equity": 0
+    "holdings": 214,
+    "byClass": {
+      "Debt": 213,
+      "Other": 1
+    }
   }
 }

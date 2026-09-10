@@ -8,1082 +8,1506 @@
   "classification": "Hybrid : Dynamic Asset Allocation",
   "isin": "INF084M01AB8",
   "nav": {
-    "value": 114.33,
-    "date": "2026-09-01",
-    "prev": 114.42,
-    "prevDate": "2026-08-31",
-    "changePct": -0.07865757734662071
+    "value": 113.02,
+    "date": "2026-09-09",
+    "prev": 113.59,
+    "prevDate": "2026-09-08",
+    "changePct": -0.5018047363324302
   },
   "returns": {
     "1M": {
-      "value": 3.3912,
+      "value": -1.4905,
       "kind": "simple",
-      "startDate": "2026-06-19",
-      "endDate": "2026-09-01",
-      "startNav": 110.58,
-      "endNav": 114.33
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-09",
+      "startNav": 114.73,
+      "endNav": 113.02
     },
     "3M": {
-      "value": 5.773,
+      "value": 4.2524,
       "kind": "simple",
-      "startDate": "2026-06-01",
-      "endDate": "2026-09-01",
-      "startNav": 108.09,
-      "endNav": 114.33
+      "startDate": "2026-06-09",
+      "endDate": "2026-09-09",
+      "startNav": 108.41,
+      "endNav": 113.02
     },
     "6M": {
-      "value": 4.9573,
+      "value": 6.7637,
       "kind": "simple",
-      "startDate": "2026-02-27",
-      "endDate": "2026-09-01",
-      "startNav": 108.93,
-      "endNav": 114.33
+      "startDate": "2026-03-09",
+      "endDate": "2026-09-09",
+      "startNav": 105.86,
+      "endNav": 113.02
     },
     "1Y": {
-      "value": 8.042,
+      "value": 6.3317,
       "kind": "simple",
-      "startDate": "2025-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 105.82,
-      "endNav": 114.33
+      "startDate": "2025-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 106.29,
+      "endNav": 113.02
     },
     "3Y": {
-      "value": 11.3882,
+      "value": 10.4989,
       "kind": "cagr",
-      "startDate": "2023-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 82.72,
-      "endNav": 114.33
+      "startDate": "2023-09-08",
+      "endDate": "2026-09-09",
+      "startNav": 83.74,
+      "endNav": 113.02
     },
     "5Y": {
-      "value": 9.5604,
+      "value": 9.1758,
       "kind": "cagr",
-      "startDate": "2021-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 72.43,
-      "endNav": 114.33
+      "startDate": "2021-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 72.87,
+      "endNav": 113.02
     },
     "10Y": {
-      "value": 10.0463,
+      "value": 9.8446,
       "kind": "cagr",
-      "startDate": "2016-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 43.9,
-      "endNav": 114.33
+      "startDate": "2016-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 44.2,
+      "endNav": 113.02
     }
   },
-  "returnsAsOf": "2026-09-01",
-  "fundAumCr": 9477.55,
-  "holdingsAsOf": "2026-07-31",
+  "returnsAsOf": "2026-09-09",
+  "fundAumCr": 9699.71,
+  "holdingsAsOf": "2026-08-31",
   "holdingsSource": {
     "kind": "amc",
     "url": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio"
   },
-  "section": "Equity Holdings",
-  "equity": [
+  "section": "Whole portfolio",
+  "coveragePct": 95.75,
+  "allocation": [
+    {
+      "class": "Equity",
+      "pct": 80.17
+    },
+    {
+      "class": "Debt",
+      "pct": 15.58
+    }
+  ],
+  "holdings": [
     {
       "name": "ICICI Bank Ltd.",
       "isin": "INE090A01021",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 4.16,
+      "rating": null,
+      "pctAum": 4.08,
+      "marketValueCr": 412.86,
       "shares": 2839476
-    },
-    {
-      "name": "HDFC Bank Ltd.",
-      "isin": "INE040A01034",
-      "sector": "Banks",
-      "pctAum": 2.83,
-      "shares": 3708552
     },
     {
       "name": "Kotak Mahindra Bank Ltd.",
       "isin": "INE237A01036",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 2.78,
+      "rating": null,
+      "pctAum": 2.89,
+      "marketValueCr": 292.85,
       "shares": 6982513
+    },
+    {
+      "name": "HDFC Bank Ltd.",
+      "isin": "INE040A01034",
+      "assetClass": "Equity",
+      "sector": "Banks",
+      "rating": null,
+      "pctAum": 2.6,
+      "marketValueCr": 262.94,
+      "shares": 3708552
     },
     {
       "name": "IndiGrid Infrastructure Trust",
       "isin": "INE219X23014",
+      "assetClass": "Equity",
       "sector": "Power",
-      "pctAum": 2.32,
+      "rating": null,
+      "pctAum": 2.2,
+      "marketValueCr": 223.24,
       "shares": 12713026
     },
     {
       "name": "Reliance Industries Ltd.",
       "isin": "INE002A01018",
+      "assetClass": "Equity",
       "sector": "Petroleum Products",
-      "pctAum": 2.22,
+      "rating": null,
+      "pctAum": 2.09,
+      "marketValueCr": 212.06,
       "shares": 1660633
     },
     {
       "name": "State Bank of India",
       "isin": "INE062A01020",
+      "assetClass": "Equity",
       "sector": "Banks",
+      "rating": null,
       "pctAum": 2.08,
+      "marketValueCr": 210.74,
       "shares": 1988137
+    },
+    {
+      "name": "Axis Bank Ltd.",
+      "isin": "INE238A01034",
+      "assetClass": "Equity",
+      "sector": "Banks",
+      "rating": null,
+      "pctAum": 1.73,
+      "marketValueCr": 175.5,
+      "shares": 1350000
     },
     {
       "name": "Tech Mahindra Ltd.",
       "isin": "INE669C01036",
+      "assetClass": "Equity",
       "sector": "IT - Software",
-      "pctAum": 1.76,
+      "rating": null,
+      "pctAum": 1.68,
+      "marketValueCr": 169.9,
       "shares": 1043641
     },
     {
       "name": "Infosys Ltd.",
       "isin": "INE009A01021",
+      "assetClass": "Equity",
       "sector": "IT - Software",
-      "pctAum": 1.7,
+      "rating": null,
+      "pctAum": 1.65,
+      "marketValueCr": 166.77,
       "shares": 1470922
     },
     {
-      "name": "Axis Bank Ltd.",
-      "isin": "INE238A01034",
-      "sector": "Banks",
-      "pctAum": 1.69,
-      "shares": 1350000
-    },
-    {
-      "name": "7.50% Cholamandalam Investment & Finance Co. Ltd. (30/09/2026) **",
-      "isin": "INE121A08PJ0",
-      "sector": "Finance",
-      "pctAum": 1.54,
-      "shares": 12660
-    },
-    {
-      "name": "Adani Enterprises Ltd.",
-      "isin": "INE423A01024",
-      "sector": "Metals & Minerals Trading",
-      "pctAum": 1.54,
-      "shares": 500889
+      "name": "Government of India (24/07/2037)",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 1.55,
+      "marketValueCr": 157.17,
+      "shares": null
     },
     {
       "name": "Sona Blw Precision Forgings Ltd.",
       "isin": "INE073K01018",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 1.51,
-      "shares": 1923714
+      "rating": null,
+      "pctAum": 1.53,
+      "marketValueCr": 154.48,
+      "shares": 1900000
+    },
+    {
+      "name": "7.50% Cholamandalam Investment & Finance Co. Ltd. (30/09/2026) **",
+      "isin": "INE121A08PJ0",
+      "assetClass": "Equity",
+      "sector": "Finance",
+      "rating": null,
+      "pctAum": 1.5,
+      "marketValueCr": 151.53,
+      "shares": 12660
+    },
+    {
+      "name": "7.70% Axis Finance Ltd. (11/01/2029) (FRN) **",
+      "isin": "INE891K07AM5",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 1.48,
+      "marketValueCr": 150.06,
+      "shares": null
+    },
+    {
+      "name": "Adani Enterprises Ltd.",
+      "isin": "INE423A01024",
+      "assetClass": "Equity",
+      "sector": "Metals & Minerals Trading",
+      "rating": null,
+      "pctAum": 1.41,
+      "marketValueCr": 143.21,
+      "shares": 500889
     },
     {
       "name": "The Federal Bank Ltd.",
       "isin": "INE171A01029",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 1.44,
+      "rating": null,
+      "pctAum": 1.38,
+      "marketValueCr": 139.89,
       "shares": 3921825
     },
     {
       "name": "Bajaj Finserv Ltd.",
       "isin": "INE918I01026",
+      "assetClass": "Equity",
       "sector": "Finance",
-      "pctAum": 1.43,
+      "rating": null,
+      "pctAum": 1.38,
+      "marketValueCr": 139.54,
       "shares": 690449
+    },
+    {
+      "name": "7.79% Tata Capital Housing Finance Ltd. (18/06/2030) **",
+      "isin": "INE033L07IU8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 1.38,
+      "marketValueCr": 139.94,
+      "shares": null
     },
     {
       "name": "Nexus Select Trust",
       "isin": "INE0NDH25011",
+      "assetClass": "Equity",
       "sector": "Realty",
-      "pctAum": 1.32,
+      "rating": null,
+      "pctAum": 1.28,
+      "marketValueCr": 129.98,
       "shares": 7746572
-    },
-    {
-      "name": "Bharti Airtel Ltd.",
-      "isin": "INE397D01024",
-      "sector": "Telecom - Services",
-      "pctAum": 1.26,
-      "shares": 624241
-    },
-    {
-      "name": "Hindalco Industries Ltd.",
-      "isin": "INE038A01020",
-      "sector": "Non - Ferrous Metals",
-      "pctAum": 1.2,
-      "shares": 1208214
-    },
-    {
-      "name": "Godrej Consumer Products Ltd.",
-      "isin": "INE102D01028",
-      "sector": "Personal Products",
-      "pctAum": 1.19,
-      "shares": 1090284
-    },
-    {
-      "name": "Blue Star Ltd.",
-      "isin": "INE472A01039",
-      "sector": "Consumer Durables",
-      "pctAum": 1.19,
-      "shares": 694156
-    },
-    {
-      "name": "GMR Airports Ltd.",
-      "isin": "INE776C01039",
-      "sector": "Transport Infrastructure",
-      "pctAum": 1.16,
-      "shares": 10828645
     },
     {
       "name": "Samvardhana Motherson International Ltd.",
       "isin": "INE775A01035",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 1.14,
+      "rating": null,
+      "pctAum": 1.25,
+      "marketValueCr": 126.73,
       "shares": 7425090
     },
     {
-      "name": "HCL Technologies Ltd.",
-      "isin": "INE860A01027",
-      "sector": "IT - Software",
-      "pctAum": 1.12,
-      "shares": 815311
+      "name": "Hindalco Industries Ltd.",
+      "isin": "INE038A01020",
+      "assetClass": "Equity",
+      "sector": "Non - Ferrous Metals",
+      "rating": null,
+      "pctAum": 1.21,
+      "marketValueCr": 122.69,
+      "shares": 1208214
+    },
+    {
+      "name": "Ather Energy Ltd.",
+      "isin": "INE0LEZ01016",
+      "assetClass": "Equity",
+      "sector": "Automobiles",
+      "rating": null,
+      "pctAum": 1.19,
+      "marketValueCr": 120.24,
+      "shares": 700000
     },
     {
       "name": "Ajanta Pharma Ltd.",
       "isin": "INE031B01049",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
+      "rating": null,
       "pctAum": 1.09,
+      "marketValueCr": 110.82,
       "shares": 307661
+    },
+    {
+      "name": "Bharti Airtel Ltd.",
+      "isin": "INE397D01024",
+      "assetClass": "Equity",
+      "sector": "Telecom - Services",
+      "rating": null,
+      "pctAum": 1.07,
+      "marketValueCr": 108.68,
+      "shares": 599820
+    },
+    {
+      "name": "Embassy Office Parks Reit",
+      "isin": "INE041025011",
+      "assetClass": "Equity",
+      "sector": "Realty",
+      "rating": null,
+      "pctAum": 1.07,
+      "marketValueCr": 108.43,
+      "shares": 2472956
+    },
+    {
+      "name": "HCL Technologies Ltd.",
+      "isin": "INE860A01027",
+      "assetClass": "Equity",
+      "sector": "IT - Software",
+      "rating": null,
+      "pctAum": 1.06,
+      "marketValueCr": 106.99,
+      "shares": 815311
     },
     {
       "name": "Persistent Systems Ltd.",
       "isin": "INE262H01021",
+      "assetClass": "Equity",
       "sector": "IT - Software",
-      "pctAum": 1.04,
+      "rating": null,
+      "pctAum": 1.01,
+      "marketValueCr": 102.64,
       "shares": 183467
     },
     {
       "name": "Larsen & Toubro Ltd.",
       "isin": "INE018A01030",
+      "assetClass": "Equity",
       "sector": "Construction",
+      "rating": null,
       "pctAum": 1.01,
+      "marketValueCr": 102.01,
       "shares": 252190
     },
     {
-      "name": "SBI Life Insurance Co. Ltd.",
-      "isin": "INE123W01016",
-      "sector": "Insurance",
-      "pctAum": 0.97,
-      "shares": 503060
+      "name": "Blue Star Ltd.",
+      "isin": "INE472A01039",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 1,
+      "marketValueCr": 101.61,
+      "shares": 694156
     },
     {
-      "name": "United Spirits Ltd.",
-      "isin": "INE854D01024",
-      "sector": "Beverages",
-      "pctAum": 0.95,
-      "shares": 617615
+      "name": "GMR Airports Ltd.",
+      "isin": "INE776C01039",
+      "assetClass": "Equity",
+      "sector": "Transport Infrastructure",
+      "rating": null,
+      "pctAum": 1,
+      "marketValueCr": 101.39,
+      "shares": 10828645
     },
     {
       "name": "Jindal Steel Ltd.",
       "isin": "INE749A01030",
+      "assetClass": "Equity",
       "sector": "Ferrous Metals",
-      "pctAum": 0.95,
+      "rating": null,
+      "pctAum": 0.99,
+      "marketValueCr": 100.67,
       "shares": 843928
     },
     {
-      "name": "SRF Ltd.",
-      "isin": "INE647A01010",
-      "sector": "Chemicals & Petrochemicals",
-      "pctAum": 0.95,
-      "shares": 353625
+      "name": "8.02% Cholamandalam Investment & Finance Co. Ltd. (27/02/2029) (FRN) **",
+      "isin": "INE121A07SU3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.99,
+      "marketValueCr": 99.82,
+      "shares": null
     },
     {
       "name": "Lenskart Solutions Ltd.",
       "isin": "INE956O01016",
+      "assetClass": "Equity",
       "sector": "Retailing",
-      "pctAum": 0.91,
-      "shares": 1592404
+      "rating": null,
+      "pctAum": 0.98,
+      "marketValueCr": 99.36,
+      "shares": 1500000
     },
     {
-      "name": "Ather Energy Ltd.",
-      "isin": "INE0LEZ01016",
-      "sector": "Automobiles",
-      "pctAum": 0.9,
-      "shares": 700000
+      "name": "8.92% Cholamandalam Investment & Finance Co. Ltd. (02/12/2034) **",
+      "isin": "INE121A08PR3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.98,
+      "marketValueCr": 99.7,
+      "shares": null
     },
     {
-      "name": "Brookfield India Real Estate Trust",
-      "isin": "INE0FDU25010",
-      "sector": "Realty",
-      "pctAum": 0.89,
-      "shares": 2557252
+      "name": "Godrej Consumer Products Ltd.",
+      "isin": "INE102D01028",
+      "assetClass": "Equity",
+      "sector": "Personal Products",
+      "rating": null,
+      "pctAum": 0.97,
+      "marketValueCr": 98.27,
+      "shares": 1090284
     },
     {
       "name": "Balrampur Chini Mills Ltd.",
       "isin": "INE119A01028",
+      "assetClass": "Equity",
       "sector": "Agricultural Food & other Products",
-      "pctAum": 0.81,
+      "rating": null,
+      "pctAum": 0.93,
+      "marketValueCr": 94.47,
       "shares": 1362180
-    },
-    {
-      "name": "Carborundum Universal Ltd.",
-      "isin": "INE120A01034",
-      "sector": "Industrial Products",
-      "pctAum": 0.81,
-      "shares": 742262
     },
     {
       "name": "APL Apollo Tubes Ltd.",
       "isin": "INE702C01027",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
-      "pctAum": 0.78,
+      "rating": null,
+      "pctAum": 0.93,
+      "marketValueCr": 93.91,
       "shares": 422350
     },
     {
-      "name": "Asian Paints Ltd.",
-      "isin": "INE021A01026",
-      "sector": "Consumer Durables",
-      "pctAum": 0.77,
-      "shares": 275755
+      "name": "United Spirits Ltd.",
+      "isin": "INE854D01024",
+      "assetClass": "Equity",
+      "sector": "Beverages",
+      "rating": null,
+      "pctAum": 0.91,
+      "marketValueCr": 92.02,
+      "shares": 617615
     },
     {
-      "name": "Adani Ports and Special Economic Zone Ltd.",
-      "isin": "INE742F01042",
-      "sector": "Transport Infrastructure",
-      "pctAum": 0.77,
-      "shares": 445358
+      "name": "India Universal Trust AL2 (21/11/2030) **",
+      "isin": "INE1CBK15037",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "IND AAA(SO)",
+      "pctAum": 0.9,
+      "marketValueCr": 91.57,
+      "shares": null
     },
     {
-      "name": "ICICI Lombard General Insurance Company Ltd.",
-      "isin": "INE765G01017",
+      "name": "SRF Ltd.",
+      "isin": "INE647A01010",
+      "assetClass": "Equity",
+      "sector": "Chemicals & Petrochemicals",
+      "rating": null,
+      "pctAum": 0.89,
+      "marketValueCr": 90.54,
+      "shares": 353625
+    },
+    {
+      "name": "8.95% Vedanta Ltd. (16/03/2029) **",
+      "isin": "INE205A08095",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AA+",
+      "pctAum": 0.89,
+      "marketValueCr": 90.47,
+      "shares": null
+    },
+    {
+      "name": "SBI Life Insurance Co. Ltd.",
+      "isin": "INE123W01016",
+      "assetClass": "Equity",
       "sector": "Insurance",
-      "pctAum": 0.77,
-      "shares": 464922
+      "rating": null,
+      "pctAum": 0.86,
+      "marketValueCr": 87.56,
+      "shares": 503060
     },
     {
-      "name": "Adani Power Ltd.",
-      "isin": "INE814H01029",
-      "sector": "Power",
-      "pctAum": 0.76,
-      "shares": 3515370
+      "name": "Brookfield India Real Estate Trust",
+      "isin": "INE0FDU25010",
+      "assetClass": "Equity",
+      "sector": "Realty",
+      "rating": null,
+      "pctAum": 0.86,
+      "marketValueCr": 87.38,
+      "shares": 2557252
     },
     {
-      "name": "Eternal Ltd.",
-      "isin": "INE758T01015",
-      "sector": "Retailing",
-      "pctAum": 0.75,
-      "shares": 2435078
+      "name": "JTPM Metal Traders Ltd. (29/09/2028) (ZCB) **",
+      "isin": "INE02PE08036",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AA",
+      "pctAum": 0.82,
+      "marketValueCr": 82.72,
+      "shares": null
+    },
+    {
+      "name": "Carborundum Universal Ltd.",
+      "isin": "INE120A01034",
+      "assetClass": "Equity",
+      "sector": "Industrial Products",
+      "rating": null,
+      "pctAum": 0.81,
+      "marketValueCr": 82.14,
+      "shares": 742262
     },
     {
       "name": "Vodafone Idea Ltd.",
       "isin": "INE669E01016",
+      "assetClass": "Equity",
       "sector": "Telecom - Services",
-      "pctAum": 0.75,
+      "rating": null,
+      "pctAum": 0.8,
+      "marketValueCr": 80.95,
       "shares": 56491916
-    },
-    {
-      "name": "Travel Food Services Ltd.",
-      "isin": "INE103V01028",
-      "sector": "Leisure Services",
-      "pctAum": 0.74,
-      "shares": 559716
-    },
-    {
-      "name": "Hexaware Technologies Ltd.",
-      "isin": "INE093A01041",
-      "sector": "IT - Software",
-      "pctAum": 0.74,
-      "shares": 1290571
-    },
-    {
-      "name": "Sai Life Sciences Ltd.",
-      "isin": "INE570L01029",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.74,
-      "shares": 550126
-    },
-    {
-      "name": "GO Digit General Insurance Ltd.",
-      "isin": "INE03JT01014",
-      "sector": "Insurance",
-      "pctAum": 0.73,
-      "shares": 2819674
-    },
-    {
-      "name": "Adani Energy Solutions Ltd.",
-      "isin": "INE931S01010",
-      "sector": "Power",
-      "pctAum": 0.73,
-      "shares": 435478
     },
     {
       "name": "Brigade Enterprises Ltd.",
       "isin": "INE791I01019",
+      "assetClass": "Equity",
       "sector": "Realty",
-      "pctAum": 0.73,
+      "rating": null,
+      "pctAum": 0.8,
+      "marketValueCr": 80.56,
       "shares": 1228376
+    },
+    {
+      "name": "Sai Life Sciences Ltd.",
+      "isin": "INE570L01029",
+      "assetClass": "Equity",
+      "sector": "Pharmaceuticals & Biotechnology",
+      "rating": null,
+      "pctAum": 0.79,
+      "marketValueCr": 80.3,
+      "shares": 550126
     },
     {
       "name": "Meesho Ltd.",
       "isin": "INE0VDM01015",
+      "assetClass": "Equity",
       "sector": "Retailing",
-      "pctAum": 0.72,
+      "rating": null,
+      "pctAum": 0.79,
+      "marketValueCr": 80.1,
       "shares": 3900000
     },
     {
-      "name": "Mahindra & Mahindra Ltd.",
-      "isin": "INE101A01026",
-      "sector": "Automobiles",
+      "name": "Eternal Ltd.",
+      "isin": "INE758T01015",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.79,
+      "marketValueCr": 79.89,
+      "shares": 2435078
+    },
+    {
+      "name": "Asian Paints Ltd.",
+      "isin": "INE021A01026",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
       "pctAum": 0.72,
-      "shares": 208939
+      "marketValueCr": 73.17,
+      "shares": 275755
+    },
+    {
+      "name": "ICICI Lombard General Insurance Company Ltd.",
+      "isin": "INE765G01017",
+      "assetClass": "Equity",
+      "sector": "Insurance",
+      "rating": null,
+      "pctAum": 0.72,
+      "marketValueCr": 72.85,
+      "shares": 464922
+    },
+    {
+      "name": "Travel Food Services Ltd.",
+      "isin": "INE103V01028",
+      "assetClass": "Equity",
+      "sector": "Leisure Services",
+      "rating": null,
+      "pctAum": 0.72,
+      "marketValueCr": 72.74,
+      "shares": 559716
     },
     {
       "name": "AU Small Finance Bank Ltd.",
       "isin": "INE949L01017",
+      "assetClass": "Equity",
       "sector": "Banks",
+      "rating": null,
       "pctAum": 0.72,
+      "marketValueCr": 72.72,
       "shares": 669507
     },
     {
-      "name": "Embassy Office Parks Reit",
-      "isin": "INE041025011",
-      "sector": "Realty",
-      "pctAum": 0.7,
-      "shares": 1577433
+      "name": "GO Digit General Insurance Ltd.",
+      "isin": "INE03JT01014",
+      "assetClass": "Equity",
+      "sector": "Insurance",
+      "rating": null,
+      "pctAum": 0.72,
+      "marketValueCr": 72.58,
+      "shares": 2819674
     },
     {
-      "name": "Bharat Forge Ltd.",
-      "isin": "INE465A01025",
-      "sector": "Auto Components",
+      "name": "Hexaware Technologies Ltd.",
+      "isin": "INE093A01041",
+      "assetClass": "Equity",
+      "sector": "IT - Software",
+      "rating": null,
+      "pctAum": 0.71,
+      "marketValueCr": 71.59,
+      "shares": 1290571
+    },
+    {
+      "name": "Abbott India Ltd.",
+      "isin": "INE358A01014",
+      "assetClass": "Equity",
+      "sector": "Pharmaceuticals & Biotechnology",
+      "rating": null,
       "pctAum": 0.69,
-      "shares": 307738
-    },
-    {
-      "name": "Gillette India Ltd.",
-      "isin": "INE322A01010",
-      "sector": "Personal Products",
-      "pctAum": 0.64,
-      "shares": 82248
+      "marketValueCr": 69.8,
+      "shares": 27000
     },
     {
       "name": "Ultratech Cement Ltd.",
       "isin": "INE481G01011",
+      "assetClass": "Equity",
       "sector": "Cement & Cement Products",
-      "pctAum": 0.62,
-      "shares": 51065
+      "rating": null,
+      "pctAum": 0.69,
+      "marketValueCr": 69.71,
+      "shares": 60884
+    },
+    {
+      "name": "Adani Power Ltd.",
+      "isin": "INE814H01029",
+      "assetClass": "Equity",
+      "sector": "Power",
+      "rating": null,
+      "pctAum": 0.68,
+      "marketValueCr": 69.3,
+      "shares": 3500000
+    },
+    {
+      "name": "Mahindra & Mahindra Ltd.",
+      "isin": "INE101A01026",
+      "assetClass": "Equity",
+      "sector": "Automobiles",
+      "rating": null,
+      "pctAum": 0.68,
+      "marketValueCr": 68.57,
+      "shares": 208939
+    },
+    {
+      "name": "Bharat Forge Ltd.",
+      "isin": "INE465A01025",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 0.64,
+      "marketValueCr": 64.78,
+      "shares": 307738
     },
     {
       "name": "Jubilant Foodworks Ltd.",
       "isin": "INE797F01020",
+      "assetClass": "Equity",
       "sector": "Leisure Services",
-      "pctAum": 0.62,
-      "shares": 1378672
+      "rating": null,
+      "pctAum": 0.64,
+      "marketValueCr": 64.48,
+      "shares": 1300000
+    },
+    {
+      "name": "8.20% Adani Power Ltd. (25/01/2029) **",
+      "isin": "INE814H07208",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE AA+",
+      "pctAum": 0.64,
+      "marketValueCr": 64.6,
+      "shares": null
     },
     {
       "name": "Shriram Finance Ltd.",
       "isin": "INE721A01047",
+      "assetClass": "Equity",
       "sector": "Finance",
-      "pctAum": 0.61,
+      "rating": null,
+      "pctAum": 0.63,
+      "marketValueCr": 63.88,
       "shares": 575590
     },
     {
-      "name": "United Breweries Ltd.",
-      "isin": "INE686F01025",
-      "sector": "Beverages",
-      "pctAum": 0.6,
-      "shares": 411743
+      "name": "Adani Energy Solutions Ltd.",
+      "isin": "INE931S01010",
+      "assetClass": "Equity",
+      "sector": "Power",
+      "rating": null,
+      "pctAum": 0.61,
+      "marketValueCr": 61.72,
+      "shares": 435478
     },
     {
-      "name": "Computer Age Management Services Ltd.",
-      "isin": "INE596I01020",
-      "sector": "Capital Markets",
+      "name": "Adani Ports and Special Economic Zone Ltd.",
+      "isin": "INE742F01042",
+      "assetClass": "Equity",
+      "sector": "Transport Infrastructure",
+      "rating": null,
+      "pctAum": 0.61,
+      "marketValueCr": 61.63,
+      "shares": 386872
+    },
+    {
+      "name": "Gillette India Ltd.",
+      "isin": "INE322A01010",
+      "assetClass": "Equity",
+      "sector": "Personal Products",
+      "rating": null,
       "pctAum": 0.6,
-      "shares": 733393
+      "marketValueCr": 60.28,
+      "shares": 82248
     },
     {
       "name": "360 ONE WAM Ltd.",
       "isin": "INE466L01038",
+      "assetClass": "Equity",
       "sector": "Capital Markets",
+      "rating": null,
       "pctAum": 0.59,
+      "marketValueCr": 59.63,
       "shares": 507513
     },
     {
-      "name": "Sumitomo Chemical India Ltd.",
-      "isin": "INE258G01013",
-      "sector": "Fertilizers & Agrochemicals",
+      "name": "7.80% Bajaj Housing Finance Ltd. (09/02/2034) **",
+      "isin": "INE377Y07458",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.58,
+      "marketValueCr": 59.04,
+      "shares": null
+    },
+    {
+      "name": "Computer Age Management Services Ltd.",
+      "isin": "INE596I01020",
+      "assetClass": "Equity",
+      "sector": "Capital Markets",
+      "rating": null,
       "pctAum": 0.57,
-      "shares": 1093549
-    },
-    {
-      "name": "Avenue Supermarts Ltd.",
-      "isin": "INE192R01011",
-      "sector": "Retailing",
-      "pctAum": 0.56,
-      "shares": 141176
-    },
-    {
-      "name": "Apollo Hospitals Enterprise Ltd.",
-      "isin": "INE437A01024",
-      "sector": "Healthcare Services",
-      "pctAum": 0.55,
-      "shares": 60426
-    },
-    {
-      "name": "ABB India Ltd.",
-      "isin": "INE117A01022",
-      "sector": "Electrical Equipment",
-      "pctAum": 0.54,
-      "shares": 72766
-    },
-    {
-      "name": "UPL Ltd.",
-      "isin": "INE628A01036",
-      "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 0.53,
-      "shares": 863135
-    },
-    {
-      "name": "Patanjali Foods Ltd.",
-      "isin": "INE619A01035",
-      "sector": "Agricultural Food & other Products",
-      "pctAum": 0.5,
-      "shares": 1392125
-    },
-    {
-      "name": "BlueStone Jewellery & Lifestyle Ltd.",
-      "isin": "INE304W01038",
-      "sector": "Consumer Durables",
-      "pctAum": 0.5,
-      "shares": 600000
-    },
-    {
-      "name": "Home First Finance Company India Ltd.",
-      "isin": "INE481N01025",
-      "sector": "Finance",
-      "pctAum": 0.48,
-      "shares": 394107
-    },
-    {
-      "name": "Tube Investments of India Ltd.",
-      "isin": "INE974X01010",
-      "sector": "Auto Components",
-      "pctAum": 0.47,
-      "shares": 169158
-    },
-    {
-      "name": "Vishal Mega Mart Ltd.",
-      "isin": "INE01EA01019",
-      "sector": "Retailing",
-      "pctAum": 0.45,
-      "shares": 4079329
-    },
-    {
-      "name": "PI Industries Ltd.",
-      "isin": "INE603J01030",
-      "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 0.44,
-      "shares": 155530
-    },
-    {
-      "name": "Sanofi India Ltd.",
-      "isin": "INE058A01010",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.43,
-      "shares": 128457
-    },
-    {
-      "name": "LMW Ltd.",
-      "isin": "INE269B01029",
-      "sector": "Industrial Manufacturing",
-      "pctAum": 0.41,
-      "shares": 24808
-    },
-    {
-      "name": "Havells India Ltd.",
-      "isin": "INE176B01034",
-      "sector": "Consumer Durables",
-      "pctAum": 0.41,
-      "shares": 315000
-    },
-    {
-      "name": "Balkrishna Industries Ltd.",
-      "isin": "INE787D01026",
-      "sector": "Auto Components",
-      "pctAum": 0.4,
-      "shares": 158716
-    },
-    {
-      "name": "IPCA Laboratories Ltd.",
-      "isin": "INE571A01038",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.38,
-      "shares": 211315
+      "marketValueCr": 57.35,
+      "shares": 733393
     },
     {
       "name": "Ambuja Cements Ltd.",
       "isin": "INE079A01024",
+      "assetClass": "Equity",
       "sector": "Cement & Cement Products",
-      "pctAum": 0.37,
-      "shares": 848400
+      "rating": null,
+      "pctAum": 0.56,
+      "marketValueCr": 56.98,
+      "shares": 1420404
     },
     {
-      "name": "Medi Assist Healthcare Services Ltd.",
-      "isin": "INE456Z01021",
-      "sector": "Insurance",
-      "pctAum": 0.37,
-      "shares": 1000000
+      "name": "Sumitomo Chemical India Ltd.",
+      "isin": "INE258G01013",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 0.56,
+      "marketValueCr": 56.59,
+      "shares": 1093549
     },
     {
-      "name": "TATA Capital Ltd.",
-      "isin": "INE976I01016",
+      "name": "UPL Ltd.",
+      "isin": "INE628A01036",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 0.56,
+      "marketValueCr": 56.3,
+      "shares": 1001345
+    },
+    {
+      "name": "Avenue Supermarts Ltd.",
+      "isin": "INE192R01011",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.54,
+      "marketValueCr": 55.06,
+      "shares": 141176
+    },
+    {
+      "name": "7.30% Bharti Telecom Ltd. (01/12/2027) **",
+      "isin": "INE403D08306",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.54,
+      "marketValueCr": 54.43,
+      "shares": null
+    },
+    {
+      "name": "United Breweries Ltd.",
+      "isin": "INE686F01025",
+      "assetClass": "Equity",
+      "sector": "Beverages",
+      "rating": null,
+      "pctAum": 0.53,
+      "marketValueCr": 53.88,
+      "shares": 411743
+    },
+    {
+      "name": "8.31% Aditya Birla Capital Ltd. (11/07/2034) **",
+      "isin": "INE860H08EL8",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.5,
+      "marketValueCr": 50.16,
+      "shares": null
+    },
+    {
+      "name": "ABB India Ltd.",
+      "isin": "INE117A01022",
+      "assetClass": "Equity",
+      "sector": "Electrical Equipment",
+      "rating": null,
+      "pctAum": 0.49,
+      "marketValueCr": 49.65,
+      "shares": 65000
+    },
+    {
+      "name": "7.65% Poonawalla Fincorp Ltd. (19/06/2028) **",
+      "isin": "INE511C07862",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.49,
+      "marketValueCr": 49.54,
+      "shares": null
+    },
+    {
+      "name": "Patanjali Foods Ltd.",
+      "isin": "INE619A01035",
+      "assetClass": "Equity",
+      "sector": "Agricultural Food & other Products",
+      "rating": null,
+      "pctAum": 0.47,
+      "marketValueCr": 48.03,
+      "shares": 1392125
+    },
+    {
+      "name": "LMW Ltd.",
+      "isin": "INE269B01029",
+      "assetClass": "Equity",
+      "sector": "Industrial Manufacturing",
+      "rating": null,
+      "pctAum": 0.46,
+      "marketValueCr": 47.07,
+      "shares": 24808
+    },
+    {
+      "name": "Tube Investments of India Ltd.",
+      "isin": "INE974X01010",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 0.46,
+      "marketValueCr": 47.03,
+      "shares": 169158
+    },
+    {
+      "name": "Home First Finance Company India Ltd.",
+      "isin": "INE481N01025",
+      "assetClass": "Equity",
       "sector": "Finance",
-      "pctAum": 0.35,
-      "shares": 948000
+      "rating": null,
+      "pctAum": 0.45,
+      "marketValueCr": 45.9,
+      "shares": 394107
     },
     {
-      "name": "Anthem Biosciences Ltd.",
-      "isin": "INE0CZ201020",
+      "name": "Vishal Mega Mart Ltd.",
+      "isin": "INE01EA01019",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.45,
+      "marketValueCr": 45.13,
+      "shares": 4079329
+    },
+    {
+      "name": "Government of India (06/10/2035)",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.43,
+      "marketValueCr": 43.7,
+      "shares": null
+    },
+    {
+      "name": "Sanofi India Ltd.",
+      "isin": "INE058A01010",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.35,
-      "shares": 425052
+      "rating": null,
+      "pctAum": 0.4,
+      "marketValueCr": 40.13,
+      "shares": 128457
+    },
+    {
+      "name": "7.95% TATA Capital Ltd. (08/02/2028) **",
+      "isin": "INE306N07NI9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AAA",
+      "pctAum": 0.39,
+      "marketValueCr": 39.97,
+      "shares": null
+    },
+    {
+      "name": "7.64% Bajaj Housing Finance Ltd. (01/07/2030)",
+      "isin": "INE377Y07664",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.39,
+      "marketValueCr": 39.46,
+      "shares": null
+    },
+    {
+      "name": "8.66% Cholamandalam Investment & Finance Co. Ltd. (23/02/2033) **",
+      "isin": "INE121A08PY9",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.39,
+      "marketValueCr": 39.39,
+      "shares": null
+    },
+    {
+      "name": "BlueStone Jewellery & Lifestyle Ltd.",
+      "isin": "INE304W01038",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 0.38,
+      "marketValueCr": 38.73,
+      "shares": 473802
     },
     {
       "name": "Vijaya Diagnostic Centre Ltd.",
       "isin": "INE043W01024",
+      "assetClass": "Equity",
       "sector": "Healthcare Services",
-      "pctAum": 0.34,
+      "rating": null,
+      "pctAum": 0.37,
+      "marketValueCr": 37.96,
       "shares": 250000
+    },
+    {
+      "name": "Anthem Biosciences Ltd.",
+      "isin": "INE0CZ201020",
+      "assetClass": "Equity",
+      "sector": "Pharmaceuticals & Biotechnology",
+      "rating": null,
+      "pctAum": 0.37,
+      "marketValueCr": 37.96,
+      "shares": 425052
+    },
+    {
+      "name": "Havells India Ltd.",
+      "isin": "INE176B01034",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 0.37,
+      "marketValueCr": 37.26,
+      "shares": 299500
+    },
+    {
+      "name": "PI Industries Ltd.",
+      "isin": "INE603J01030",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 0.36,
+      "marketValueCr": 36.86,
+      "shares": 155530
+    },
+    {
+      "name": "Balkrishna Industries Ltd.",
+      "isin": "INE787D01026",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 0.36,
+      "marketValueCr": 36.17,
+      "shares": 158716
+    },
+    {
+      "name": "Apollo Hospitals Enterprise Ltd.",
+      "isin": "INE437A01024",
+      "assetClass": "Equity",
+      "sector": "Healthcare Services",
+      "rating": null,
+      "pctAum": 0.35,
+      "marketValueCr": 35.59,
+      "shares": 40000
+    },
+    {
+      "name": "Milky Mist Dairy Food Ltd.",
+      "isin": "INE00IT01020",
+      "assetClass": "Equity",
+      "sector": "Food Products",
+      "rating": null,
+      "pctAum": 0.35,
+      "marketValueCr": 35.51,
+      "shares": 1683525
+    },
+    {
+      "name": "Medi Assist Healthcare Services Ltd.",
+      "isin": "INE456Z01021",
+      "assetClass": "Equity",
+      "sector": "Insurance",
+      "rating": null,
+      "pctAum": 0.33,
+      "marketValueCr": 32.92,
+      "shares": 1000000
+    },
+    {
+      "name": "Jubilant Bevco Ltd. (31/05/2028) (ZCB) **",
+      "isin": "INE1D4P08019",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AA",
+      "pctAum": 0.33,
+      "marketValueCr": 33.54,
+      "shares": null
+    },
+    {
+      "name": "Government of India (07/07/2040)",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.33,
+      "marketValueCr": 33.79,
+      "shares": null
     },
     {
       "name": "Bank of Maharashtra",
       "isin": "INE457A01014",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 0.34,
-      "shares": 4201424
+      "rating": null,
+      "pctAum": 0.32,
+      "marketValueCr": 32.83,
+      "shares": 4000000
+    },
+    {
+      "name": "L&T Finance Ltd.",
+      "isin": "INE498L01015",
+      "assetClass": "Equity",
+      "sector": "Finance",
+      "rating": null,
+      "pctAum": 0.32,
+      "marketValueCr": 32.1,
+      "shares": 1000000
+    },
+    {
+      "name": "eClerx Services Ltd.",
+      "isin": "INE738I01010",
+      "assetClass": "Equity",
+      "sector": "Commercial Services & Supplies",
+      "rating": null,
+      "pctAum": 0.3,
+      "marketValueCr": 30.76,
+      "shares": 155604
+    },
+    {
+      "name": "Indus Infra Trust",
+      "isin": "INE0NHL23019",
+      "assetClass": "Equity",
+      "sector": "Transport Infrastructure",
+      "rating": null,
+      "pctAum": 0.3,
+      "marketValueCr": 30.25,
+      "shares": 2266789
     },
     {
       "name": "Titagarh Rail Systems Ltd.",
       "isin": "INE615H01020",
+      "assetClass": "Equity",
       "sector": "Industrial Manufacturing",
-      "pctAum": 0.3,
+      "rating": null,
+      "pctAum": 0.29,
+      "marketValueCr": 29.01,
       "shares": 354613
     },
     {
       "name": "ACC Ltd.",
       "isin": "INE012A01025",
+      "assetClass": "Equity",
       "sector": "Cement & Cement Products",
-      "pctAum": 0.3,
+      "rating": null,
+      "pctAum": 0.27,
+      "marketValueCr": 27.37,
       "shares": 214404
     },
     {
-      "name": "Indus Infra Trust",
-      "isin": "INE0NHL23019",
-      "sector": "Transport Infrastructure",
-      "pctAum": 0.3,
-      "shares": 2266789
-    },
-    {
-      "name": "eClerx Services Ltd.",
-      "isin": "INE738I01010",
-      "sector": "Commercial Services & Supplies",
-      "pctAum": 0.29,
-      "shares": 155604
+      "name": "Whirlpool of India Ltd.",
+      "isin": "INE716A01013",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 0.25,
+      "marketValueCr": 25.74,
+      "shares": 320508
     },
     {
       "name": "Aditya Birla Lifestyle Brands Ltd.",
       "isin": "INE14LE01019",
+      "assetClass": "Equity",
       "sector": "Retailing",
-      "pctAum": 0.29,
+      "rating": null,
+      "pctAum": 0.25,
+      "marketValueCr": 25.72,
       "shares": 2966684
     },
     {
       "name": "ITC Ltd.",
       "isin": "INE154A01025",
+      "assetClass": "Equity",
       "sector": "Diversified FMCG",
-      "pctAum": 0.28,
+      "rating": null,
+      "pctAum": 0.25,
+      "marketValueCr": 24.9,
       "shares": 974625
     },
     {
-      "name": "Whirlpool of India Ltd.",
-      "isin": "INE716A01013",
-      "sector": "Consumer Durables",
-      "pctAum": 0.26,
-      "shares": 320508
+      "name": "8.40% Muthoot Finance Ltd. (27/07/2028) **",
+      "isin": "INE414G07IH7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.25,
+      "marketValueCr": 25.04,
+      "shares": null
+    },
+    {
+      "name": "7.48% National Bank for Agriculture and Rural Development (15/09/2028)",
+      "isin": "INE261F08EO7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.25,
+      "marketValueCr": 24.93,
+      "shares": null
+    },
+    {
+      "name": "8.75% Cholamandalam Investment & Finance Co. Ltd. (09/04/2032) **",
+      "isin": "INE121A08PU7",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.25,
+      "marketValueCr": 24.86,
+      "shares": null
+    },
+    {
+      "name": "Radhakrishna Securitisation Trust (28/09/2028) **",
+      "isin": "INE2I7H15018",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA(SO)",
+      "pctAum": 0.24,
+      "marketValueCr": 24.26,
+      "shares": null
     },
     {
       "name": "Paradeep Phosphates Ltd.",
       "isin": "INE088F01024",
+      "assetClass": "Equity",
       "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 0.22,
-      "shares": 1475473
+      "rating": null,
+      "pctAum": 0.23,
+      "marketValueCr": 23.67,
+      "shares": 1478993
+    },
+    {
+      "name": "Trent Ltd.",
+      "isin": "INE849A01020",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.23,
+      "marketValueCr": 22.83,
+      "shares": 79282
     },
     {
       "name": "Astral Ltd.",
       "isin": "INE006I01046",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
-      "pctAum": 0.22,
+      "rating": null,
+      "pctAum": 0.23,
+      "marketValueCr": 22.83,
       "shares": 149948
     },
     {
       "name": "Physicswallah Ltd.",
       "isin": "INE0LP301011",
+      "assetClass": "Equity",
       "sector": "Other Consumer Services",
-      "pctAum": 0.22,
+      "rating": null,
+      "pctAum": 0.2,
+      "marketValueCr": 19.77,
       "shares": 1699800
     },
     {
-      "name": "L&T Finance Ltd.",
-      "isin": "INE498L01015",
-      "sector": "Finance",
-      "pctAum": 0.21,
-      "shares": 647965
+      "name": "7.45% Bharti Telecom Ltd. (15/12/2028) **",
+      "isin": "INE403D08280",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.19,
+      "marketValueCr": 19.67,
+      "shares": null
     },
     {
       "name": "Sun Pharmaceutical Industries Ltd.",
       "isin": "INE044A01036",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.19,
+      "rating": null,
+      "pctAum": 0.18,
+      "marketValueCr": 18.72,
       "shares": 94298
     },
     {
       "name": "IRB Invit Fund",
       "isin": "INE183W23014",
+      "assetClass": "Equity",
       "sector": "Transport Infrastructure",
+      "rating": null,
       "pctAum": 0.17,
+      "marketValueCr": 17.51,
       "shares": 2700000
+    },
+    {
+      "name": "8.52% Muthoot Finance Ltd. (07/04/2028) **",
+      "isin": "INE414G07JN3",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "ICRA AA+",
+      "pctAum": 0.15,
+      "marketValueCr": 14.96,
+      "shares": null
     },
     {
       "name": "NTPC Ltd.",
       "isin": "INE733E01010",
+      "assetClass": "Equity",
       "sector": "Power",
-      "pctAum": 0.16,
+      "rating": null,
+      "pctAum": 0.14,
+      "marketValueCr": 14.54,
       "shares": 444000
     },
     {
       "name": "Raajmarg Infra Investment Trust",
       "isin": "INE2PB023011",
+      "assetClass": "Equity",
       "sector": "Transport Infrastructure",
-      "pctAum": 0.13,
+      "rating": null,
+      "pctAum": 0.14,
+      "marketValueCr": 13.72,
       "shares": 1129388
     },
     {
       "name": "Biocon Ltd.",
       "isin": "INE376G01013",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.11,
+      "rating": null,
+      "pctAum": 0.1,
+      "marketValueCr": 9.98,
       "shares": 242353
+    },
+    {
+      "name": "9.10% Piramal Finance Ltd. (16/04/2027) **",
+      "isin": "INE202B07JS2",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CARE AA+",
+      "pctAum": 0.1,
+      "marketValueCr": 10.04,
+      "shares": null
+    },
+    {
+      "name": "Government of India (11/05/2036)",
+      "isin": null,
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "Sovereign",
+      "pctAum": 0.1,
+      "marketValueCr": 9.99,
+      "shares": null
     },
     {
       "name": "Indian Oil Corporation Ltd.",
       "isin": "INE242A01010",
+      "assetClass": "Equity",
       "sector": "Petroleum Products",
+      "rating": null,
       "pctAum": 0.08,
+      "marketValueCr": 8.07,
       "shares": 580125
-    },
-    {
-      "name": "Tata Motors Passenger Vehicles Ltd.",
-      "isin": "INE155A01022",
-      "sector": "Automobiles",
-      "pctAum": 0.07,
-      "shares": 208000
     },
     {
       "name": "Hindustan Aeronautics Ltd.",
       "isin": "INE066F01020",
+      "assetClass": "Equity",
       "sector": "Aerospace & Defense",
+      "rating": null,
       "pctAum": 0.07,
+      "marketValueCr": 6.63,
       "shares": 13800
     },
     {
-      "name": "Varun Beverages Ltd.",
-      "isin": "INE200M01039",
-      "sector": "Beverages",
-      "pctAum": 0.03,
-      "shares": 67575
+      "name": "Tata Motors Passenger Vehicles Ltd.",
+      "isin": "INE155A01022",
+      "assetClass": "Equity",
+      "sector": "Automobiles",
+      "rating": null,
+      "pctAum": 0.06,
+      "marketValueCr": 6.42,
+      "shares": 208000
+    },
+    {
+      "name": "7.86% HDFC Bank Ltd. (02/12/2032) **",
+      "isin": "INE040A08427",
+      "assetClass": "Debt",
+      "sector": null,
+      "rating": "CRISIL AAA",
+      "pctAum": 0.05,
+      "marketValueCr": 4.98,
+      "shares": null
     },
     {
       "name": "Nestle India Ltd.",
       "isin": "INE239A01024",
+      "assetClass": "Equity",
       "sector": "Food Products",
+      "rating": null,
       "pctAum": 0.03,
+      "marketValueCr": 2.92,
       "shares": 19500
     },
     {
-      "name": "GE Vernova T&D India Ltd.",
-      "isin": "INE200A01026",
-      "sector": "Electrical Equipment",
+      "name": "Varun Beverages Ltd.",
+      "isin": "INE200M01039",
+      "assetClass": "Equity",
+      "sector": "Beverages",
+      "rating": null,
       "pctAum": 0.03,
-      "shares": 6375
-    },
-    {
-      "name": "Supreme Industries Ltd.",
-      "isin": "INE195A01028",
-      "sector": "Industrial Products",
-      "pctAum": 0.02,
-      "shares": 6125
+      "marketValueCr": 2.71,
+      "shares": 67575
     },
     {
       "name": "One 97 Communications Ltd.",
       "isin": "INE982J01020",
+      "assetClass": "Equity",
       "sector": "Financial Technology (Fintech)",
+      "rating": null,
       "pctAum": 0.02,
+      "marketValueCr": 2.37,
       "shares": 13775
+    },
+    {
+      "name": "Supreme Industries Ltd.",
+      "isin": "INE195A01028",
+      "assetClass": "Equity",
+      "sector": "Industrial Products",
+      "rating": null,
+      "pctAum": 0.02,
+      "marketValueCr": 2.18,
+      "shares": 6125
     },
     {
       "name": "JSW Energy Ltd.",
       "isin": "INE121E01018",
+      "assetClass": "Equity",
       "sector": "Power",
-      "pctAum": 0.02,
+      "rating": null,
+      "pctAum": 0.01,
+      "marketValueCr": 1.4,
       "shares": 26875
     },
     {
       "name": "Coal India Ltd.",
       "isin": "INE522F01014",
+      "assetClass": "Equity",
       "sector": "Consumable Fuels",
+      "rating": null,
       "pctAum": 0.01,
+      "marketValueCr": 1.3,
       "shares": 32400
-    },
-    {
-      "name": "INDO-MIM Ltd.",
-      "isin": "INE084101034",
-      "sector": "Industrial Manufacturing",
-      "pctAum": 0.01,
-      "shares": 14683
-    },
-    {
-      "name": "Grasim Industries Ltd.",
-      "isin": "INE047A01021",
-      "sector": "Cement & Cement Products",
-      "pctAum": 0.01,
-      "shares": 3500
-    },
-    {
-      "name": "Inox Wind Ltd.",
-      "isin": "INE066P01011",
-      "sector": "Electrical Equipment",
-      "pctAum": 0.01,
-      "shares": 134400
     },
     {
       "name": "Vedanta Ltd.",
       "isin": "INE205A01025",
+      "assetClass": "Equity",
       "sector": "Diversified Metals",
+      "rating": null,
       "pctAum": 0.01,
+      "marketValueCr": 1.09,
       "shares": 39100
     },
     {
-      "name": "Bharat Petroleum Corporation Ltd.",
-      "isin": "INE029A01011",
-      "sector": "Petroleum Products",
+      "name": "Inox Wind Ltd.",
+      "isin": "INE066P01011",
+      "assetClass": "Equity",
+      "sector": "Electrical Equipment",
+      "rating": null,
       "pctAum": 0.01,
-      "shares": 25675
+      "marketValueCr": 0.95,
+      "shares": 134400
     },
     {
       "name": "Interglobe Aviation Ltd.",
       "isin": "INE646L01027",
+      "assetClass": "Equity",
       "sector": "Transport Services",
+      "rating": null,
       "pctAum": 0,
+      "marketValueCr": 0.16,
       "shares": 300
     },
     {
       "name": "CG Power and Industrial Solutions Ltd.",
       "isin": "INE067A01029",
+      "assetClass": "Equity",
       "sector": "Electrical Equipment",
+      "rating": null,
       "pctAum": 0,
+      "marketValueCr": 0.05,
       "shares": 500
-    },
-    {
-      "name": "Bank of Baroda",
-      "isin": "INE028A01039",
-      "sector": "Banks",
-      "pctAum": 0,
-      "shares": 1574
     },
     {
       "name": "IndusInd Bank Ltd.",
       "isin": "INE095A01012",
+      "assetClass": "Equity",
       "sector": "Banks",
+      "rating": null,
       "pctAum": 0,
+      "marketValueCr": 0.04,
       "shares": 372
     },
     {
-      "name": "Trent Ltd.",
-      "isin": "INE849A01020",
-      "sector": "Retailing",
-      "pctAum": 0,
-      "shares": 75
-    },
-    {
-      "name": "Bajaj Finance Limited",
-      "isin": "INE296A01032",
-      "sector": "Finance",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "HDFC Asset Management Company Limited",
-      "isin": "INE127D01025",
-      "sector": "Capital Markets",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Yes Bank Limited",
-      "isin": "INE528G01035",
+      "name": "Bank of Baroda",
+      "isin": "INE028A01039",
+      "assetClass": "Equity",
       "sector": "Banks",
+      "rating": null,
       "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Mankind Pharma Ltd",
-      "isin": "INE634S01028",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Cipla Limited",
-      "isin": "INE059A01026",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Oil & Natural Gas Corporation Limited",
-      "isin": "INE213A01029",
-      "sector": "Oil",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Dixon Technologies (India) Limited",
-      "isin": "INE935N01020",
-      "sector": "Consumer Durables",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Glenmark Pharmaceuticals Limited",
-      "isin": "INE935A01035",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Torrent Pharmaceuticals Limited",
-      "isin": "INE685A01028",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Britannia Industries Limited",
-      "isin": "INE216A01030",
-      "sector": "Food Products",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Page Industries Limited",
-      "isin": "INE761H01022",
-      "sector": "Textiles & Apparels",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Lodha Developers Limited",
-      "isin": "INE670K01029",
-      "sector": "Realty",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Power Grid Corporation of India Limited",
-      "isin": "INE752E01010",
-      "sector": "Power",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Solar Industries India Limited",
-      "isin": "INE343H01029",
-      "sector": "Chemicals & Petrochemicals",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Hindustan Zinc Limited",
-      "isin": "INE267A01025",
-      "sector": "Non - Ferrous Metals",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Oil India Limited",
-      "isin": "INE274J01014",
-      "sector": "Oil",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Cholamandalam Investment and Finance Company Limited",
-      "isin": "INE121A01024",
-      "sector": "Finance",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Hindustan Petroleum Corporation Limited",
-      "isin": "INE094A01015",
-      "sector": "Petroleum Products",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Alkem Laboratories Limited",
-      "isin": "INE540L01014",
-      "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "TVS Motor Company Limited",
-      "isin": "INE494B01023",
-      "sector": "Automobiles",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "ANGEL ONE LIMITED",
-      "isin": "INE732I01021",
-      "sector": "Capital Markets",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "ZF Commercial Vehicle Control Systems India Limited",
-      "isin": "INE342J01019",
-      "sector": "Auto Components",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "DLF Limited",
-      "isin": "INE271C01023",
-      "sector": "Realty",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Tata Consultancy Services Limited",
-      "isin": "INE467B01029",
-      "sector": "IT - Software",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Tata Chemicals Limited",
-      "isin": "INE092A01019",
-      "sector": "Chemicals & Petrochemicals",
-      "pctAum": 0,
-      "shares": 0
-    },
-    {
-      "name": "Billionbrains Garage Ventures Ltd",
-      "isin": "INE0HOQ01053",
-      "sector": "Capital Markets",
-      "pctAum": 0,
-      "shares": 0
+      "marketValueCr": 0.04,
+      "shares": 1574
     }
   ],
   "counts": {
-    "equity": 143
+    "holdings": 141,
+    "byClass": {
+      "Equity": 113,
+      "Debt": 28
+    }
   }
 }

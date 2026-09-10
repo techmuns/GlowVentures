@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet,
+  costCoversSet, currentHoldings,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -163,7 +163,12 @@ export function MorningCIO() {
     // figure covering ₹461 Cr of which 62% is private by asset class. A caption
     // that narrows a figure it does not narrow is the same failure as one that
     // widens it: the reader believes a scope nothing measured.
-    const p = consolidated;
+    // AND CURRENT HOLDINGS ONLY, so this page and the `/holdings` table each of
+    // its tiles opens count the same set. A closed position is a measured ₹0
+    // with no reported cost, so not one figure here moves — what moves is the
+    // Positions count, which is the figure that was wrong: it counted what the
+    // family had already been paid out of. See `currentHoldings`.
+    const p = currentHoldings(consolidated);
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the

@@ -31,6 +31,18 @@
  *     about the instrument rather than a gap in the store, so it is worded as
  *     one — see `skipReason` in `lookthrough.ts`.
  *
+ * AND A ROW IS AN ISSUER, NOT AN INSTRUMENT — which is what the family asked
+ * for: *"there is a LIC housing NCD in the market. Now there's some negative
+ * news on LIC housing. I want to see how much LIC housing I hold through my
+ * mutual fund exposure and through which mutual fund."* Negative news is about
+ * the COMPANY, so the question is answered per company and the answer must
+ * carry every instrument of it the fund filed. HDFC Balanced Advantage files
+ * TWELVE separate LIC Housing NCDs at their own coupons; one line per fund is
+ * the honest unit for "how much", and the instruments open underneath because
+ * a reader deciding what to do about the news needs to know whether they hold
+ * the equity, the paper, or both. This card no longer says EQUITY ONLY: the
+ * store reads the AMC's whole monthly filing, every asset class it carries.
+ *
  * AND WHILE IT IS LOADING IT RENDERS NOTHING AT ALL, at the family's request —
  * *"remove the highlighted texts from the dashboard UI completely."* That is a
  * removal of a SENTENCE and not of the state: the load-bearing half was never
@@ -43,7 +55,9 @@
  * unreachable from `loading` — a version that fell through to it would satisfy
  * the first and be exactly the defect.
  */
+import { Fragment, useState } from "react";
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import type { StockExposureState } from "@/lib/lookthrough";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtPct } from "@/lib/format";
@@ -55,6 +69,7 @@ export function FundExposure({ exposure, securityKey, money }: {
   securityKey: string;
   money: (n: number) => string;
 }) {
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   // NOTHING, NEVER THE NONE-BRANCH. See the note above: the words went at the
   // family's request; falling through to the card below would print a claim
   // about the holding before a single disclosure had been read.
@@ -75,6 +90,15 @@ export function FundExposure({ exposure, securityKey, money }: {
   const aif = skipped.filter((s) => /^an AIF files/.test(s.reason));
   const other = skipped.filter((s) => !/^an AIF files/.test(s.reason));
   const aifValue = aif.reduce((a, s) => a + s.marketValue, 0);
+  /**
+   * WHAT IT IS HELD AS, FROM THE FILINGS AND NOT FROM AN ASSUMPTION. A company
+   * reached through its bonds must not read as an equity exposure: the negative
+   * news the family described moves a share price and a credit spread by
+   * different amounts, and a reader who cannot see which they hold cannot act.
+   * Absent where no filing declared a class, never defaulted to "Equity".
+   */
+  const classes = hit?.classes ?? [];
+  const instruments = rows.reduce((a, r) => a + r.instruments.length, 0);
 
   return (
     <div className="mt-2.5 rounded-lg border border-dashed border-ink-600/70 px-3 py-2" data-fund-exposure={rows.length ? "ok" : "none"}>
@@ -82,8 +106,13 @@ export function FundExposure({ exposure, securityKey, money }: {
         <span className="font-medium text-slate-300">Held inside your funds</span>
         {rows.length > 0
           ? <> — <span className="font-medium text-slate-200" data-fund-exposure-total>{money(total)}</span> of this
-              name sits inside {rows.length} of the {covered} fund{covered === 1 ? "" : "s"} this store can read.</>
-          : <> — none of the {covered} fund{covered === 1 ? "" : "s"} this store can read discloses this name.</>}
+              issuer sits inside {rows.length} of the {covered} fund{covered === 1 ? "" : "s"} this store can read,
+              across <span data-fund-exposure-instruments>{instruments}</span> disclosed
+              instrument{instruments === 1 ? "" : "s"}
+              {classes.length > 0
+                ? <> — held as <span className="font-medium text-slate-300" data-fund-exposure-classes>{classes.join(" and ")}</span></>
+                : <>, whose asset class no filing here declared</>}.</>
+          : <> — none of the {covered} fund{covered === 1 ? "" : "s"} this store can read discloses this issuer.</>}
         {" "}
         <span className="text-slate-500">
           DERIVED, not a position: the AMC disclosed what the FUND holds and this is your units&rsquo; share of it.
@@ -97,6 +126,7 @@ export function FundExposure({ exposure, securityKey, money }: {
             <thead>
               <tr className="border-b border-ink-700/70">
                 <th className="label-xs px-3 py-1.5 text-left font-medium">Through this fund</th>
+                <th className="label-xs px-3 py-1.5 text-right font-medium">Instruments</th>
                 <th className="label-xs px-3 py-1.5 text-right font-medium">You hold of the fund</th>
                 <th className="label-xs px-3 py-1.5 text-right font-medium">Fund&rsquo;s weight in it</th>
                 <th className="label-xs px-3 py-1.5 text-right font-medium">Your derived share</th>
@@ -104,13 +134,37 @@ export function FundExposure({ exposure, securityKey, money }: {
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/50">
-              {rows.map((r) => (
-                <tr key={r.fundKey} data-fund-exposure-row={r.via}>
+              {rows.map((r) => {
+                // A CHEVRON THAT OPENS NOTHING IS WORSE THAN NONE: a fund
+                // holding this issuer through one instrument has nothing to
+                // break out, and the row already names it in full.
+                const many = r.instruments.length > 1;
+                const isOpen = open.has(r.fundKey);
+                return (
+                <Fragment key={r.fundKey}>
+                <tr data-fund-exposure-row={r.via} data-fund-instruments={r.instruments.length}>
                   <td className="px-3 py-1.5 text-slate-200">
                     <Link to={stockHref(r.fundKey)}
                       className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
                       {r.fundName}
                     </Link>
+                  </td>
+                  <td className="px-3 py-1.5 text-right whitespace-nowrap">
+                    {many ? (
+                      <button type="button" data-fund-instruments-toggle={r.fundKey}
+                        onClick={() => setOpen((prev) => {
+                          const next = new Set(prev);
+                          if (!next.delete(r.fundKey)) next.add(r.fundKey);
+                          return next;
+                        })}
+                        aria-expanded={isOpen}
+                        className="inline-flex items-center gap-1 mono text-slate-300 transition-colors hover:text-champagne-400">
+                        {r.instruments.length}
+                        <ChevronRight className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                      </button>
+                    ) : (
+                      <span className="mono text-slate-500">{r.instruments.length}</span>
+                    )}
                   </td>
                   <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">{money(r.holdingValue)}</td>
                   <td className="px-3 py-1.5 text-right mono text-slate-400">{fmtPct(r.pctAum)}</td>
@@ -121,15 +175,39 @@ export function FundExposure({ exposure, securityKey, money }: {
                     {r.via === "name" ? " · matched on name" : ""}
                   </td>
                 </tr>
-              ))}
+                {many && isOpen && r.instruments.map((i) => (
+                  /* ONE LINE PER INSTRUMENT AS THE AMC FILED IT — its own name,
+                     its own weight, its own share. The fund row above is their
+                     sum, so this table ties to it by construction. */
+                  <tr key={`${r.fundKey}|${i.isin ?? i.name}`} data-fund-instrument={r.fundKey}
+                    className="bg-ink-900/40 text-[11px]">
+                    <td className="py-1 pl-7 pr-3 text-slate-400">{i.name}</td>
+                    <td className="px-3 py-1 text-right text-slate-500 whitespace-nowrap">
+                      {/* A SECTOR ON A SHARE AND A CREDIT RATING ON A BOND — the
+                          AMC files both in one column and they are not the same
+                          fact, so neither is printed under the other's heading. */}
+                      {i.assetClass ?? <AbsentCell reason="this filing declared no asset class for the line" />}
+                      {i.rating ? <span className="text-slate-600"> · {i.rating}</span> : null}
+                    </td>
+                    <td className="px-3 py-1 text-right text-slate-600 mono">
+                      {i.isin ?? <AbsentCell reason="this filing carried no ISIN for the line" />}
+                    </td>
+                    <td className="px-3 py-1 text-right mono text-slate-500">{fmtPct(i.pctAum)}</td>
+                    <td className="px-3 py-1 text-right mono text-slate-300 whitespace-nowrap">{money(i.value)}</td>
+                    <td className="px-3 py-1" />
+                  </tr>
+                ))}
+                </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
       {/* WHAT THIS FIGURE CANNOT SEE, counted rather than claimed. */}
       <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-        Read across {covered} of your {considered} fund holdings, EQUITY ONLY — a scheme&rsquo;s debt and cash sleeves
-        are outside this store.
+        Read across {covered} of your {considered} fund holdings, on each AMC&rsquo;s whole monthly filing &mdash;
+        shares, bonds, NCDs, commercial paper and every other line it carries, not the equity section alone.
         {other.length > 0 && <> {other.length} could not be read: {other.map((s) => s.fundName).join(", ")}.</>}
         {aif.length > 0 && <> Your {aif.length} AIF folio{aif.length === 1 ? "" : "s"} ({money(aifValue)}) file no
           portfolio disclosure this book can join, so nothing held inside them is visible here at all.</>}
