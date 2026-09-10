@@ -192,7 +192,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   ISIN, and screener.in joined on the NSE symbol (`src/data/screenerSectors.json`,
   `npm run build-sectors`). A lower tier only ever FILLS AN EMPTY sector and can
   never overrule a statement — measured, 80 of the 84 companies where both have
-  an answer agree, and the statement wins on all four that differ. See Stage 10as.
+  an answer agree, and the statement wins on all four that differ. See Stage 10at.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
@@ -4812,9 +4812,11 @@ beside a measured one is exactly where this book has been bitten:
   twice. `check:pages` asserts the row still prints the BOOK's figure, verified by
   reintroducing the double count;
 - it says **DERIVED, not a position**, in words rather than in a tooltip;
-- it is **equity-only and partial**, and says so with counts: N of M fund
-  holdings read, the schemes it could not read named, and **the AIF folios named
-  as publishing nothing this book can join at all**;
+- it is **partial**, and says so with counts: N of M fund holdings read, the
+  schemes it could not read named, and **the AIF folios named as publishing
+  nothing this book can join at all**. *(It read the EQUITY SECTION alone until
+  Stage 10aq; it now reads each AMC's whole monthly filing — shares, bonds, NCDs
+  and commercial paper — and a row is one ISSUER across every instrument of it.)*;
 - the disclosure's **own as-of date** rides on every row, because a monthly
   filing and a statement mark are dated differently.
 
@@ -5238,7 +5240,7 @@ techmuns/amfibeas (read-only)            npm run build-lookthrough
    |  book ISIN -> mf-latest-nav.json (3,439 schemes, ISIN on every one)
    v
 public/lookthrough/index.json            securityKey -> scheme, plan, as-of
-public/lookthrough/<schemecode>.json     NAV + day change, returns, equity rows
+public/lookthrough/<schemecode>.json     NAV + day change, returns, EVERY disclosed row
 docs/FUND-LOOKTHROUGH.md                 what resolved, what did not, and why
 ```
 
@@ -5290,15 +5292,16 @@ aggregator, with neither. So the filing wins, the aggregator is the fallback, an
 document the fund published, the other is somebody's reading of it. Measured: 14
 schemes from the AMC, 3 from the aggregator.
 
-**AND BOTH ARE EQUITY-ONLY, WHICH IS A REAL LIMIT AND A REGRESSION ON ONE POINT.**
-`meta.section` is "Equity Holdings" on every file, so a liquid, debt or commodity
-scheme resolves to ZERO rows — correctly, it holds no equity — and **its debt
-book is not in this store**. Five of this book's schemes are in that position,
-and the aggregator's live endpoint did carry their debt sleeves (224 rows for one
-liquid fund). That is a step back for those five, taken deliberately: the repo is
-the source the family named, its provenance is better everywhere else, and the
-card states the limit in words rather than drawing an empty table. Wiring the
-debt sleeve back would need a second source beside this one.
+**BOTH WERE EQUITY-ONLY, AND THAT LIMIT IS CLOSED — see Stage 10aq.** This
+paragraph read *"a step back for those five, taken deliberately… wiring the debt
+sleeve back would need a second source beside this one"*, which was TRUE of
+`holdings-direct/` and false of the repo: **`public/amc-portfolio/` is the SAME
+FILING read whole** — identical `sourceUrl`, every asset class, an ISIN on every
+one of 157,125 rows. No second source, and no scheme resolves to zero rows any
+more: the three liquid funds carry 214 / 161 / 151 debt lines each. It is kept
+here in the order it was learnt, because *"we need a source we do not have"* is
+exactly the shape of absence this file has now recorded against an unchecked
+premise seven times — and the answer was in the directory next door.
 
 **NONE OF IT ENTERS A BOOK TOTAL.** These are the only figures on the site that
 are not the family's own — the fund's value already stands for everything the
@@ -8464,7 +8467,265 @@ byte-identically, so every difference belongs to this change; `BOOK_SUMMARY` doe
 not move by a rupee, because a decomposition of a window is not a re-measurement
 of the book.
 
-### Stage 10as — THE SECTORS ARE LOOKED UP, AND THE DONUT STOPS RUNNING OVER ITS OWN RING
+### Stage 10as — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
+
+Four asks, and the last two turned out to be one defect seen from both ends.
+
+*(Numbered `10as` rather than `10aq`: main took THAT letter and then `10ar` too,
+while this branch was open — the same parallel-branch collision Stage 10al
+already records, twice over. Four PRs landed on main during this branch's life,
+which is why the letter moved twice and why every count below was re-measured on
+the merged tree rather than carried across. And
+the first of the four asks below OVERLAPS main's own — both rounds pointed at the
+grey paragraph under this table — so what shipped for it is MAIN'S answer, the
+collapsed fold in Stage 10aq, and the subsection here records only what this
+branch put beside it and what the merge had to correct.)*
+
+*"remove the highlighted text from the dashboard."* · *"we only need to show the
+current holdings in these allocation drill down pages, if anything has been
+redeemed or sold completely then remove it from these pages since they are
+supposed to be the current holdings allocation only."* · *"we also need to
+account for the stock positions held through mutual funds and PMS as well… in
+the security filter page in holdings toggle page."* · *"the Look-through must
+cover bonds, NCDs and every instrument, not just stocks. Any stock or bond. It
+could be a bond. It could be an NCD. **If I type it, it has to first pick up.**
+And then it has to show me how much — not just stocks. For example — there is a
+LIC housing NCD in the market. Now there's some negative news on LIC housing. I
+want to see how much LIC housing I hold through my mutual fund exposure and
+through which mutual fund."*
+
+#### The look-through read one section of a document it already had
+
+`build-lookthrough` read `holdings-direct/` — the AMC's monthly filing, EQUITY
+SECTION ONLY, `meta.section` reading "Equity Holdings" on all 17 schemes. The
+same repo carries **`public/amc-portfolio/`, which is the SAME FILING read
+whole**: identical `sourceUrl`, every asset class, and **an ISIN on every one of
+157,125 rows**. Verified before switching, not assumed. So the equity-only limit
+this book had recorded as a real one was an absence against a document already in
+hand — the **seventh** of those, after FRED, the RBI, the release calendar, the
+ISIN tier, the NAV series and 3P's own page 2.
+
+| | was | now |
+| --- | ---: | ---: |
+| disclosed rows in the store | 1,394 | **2,362** — Equity 1,394 · Debt 964 · Other 4 |
+| schemes resolving to ZERO rows | 3 liquid funds | **0** — 214 / 161 / 151 debt lines each |
+| derived exposure | ₹77.6 Cr | **₹90.56 Cr** |
+| the part of a disclosed fund no line accounts for | ₹45.7 Cr | **₹32.73 Cr** |
+
+**NOTHING ABOUT THE JOIN LOOSENED.** ISIN first, then this book's own
+`securityKeyOf`, and **still no fuzzy tier** — the refusal `shared/nameMatch.mjs`
+already records, where a token-overlap rule matched `KIRANAKART TECHNOLOGIES` to
+`TATA TECHNOLOGIES`.
+
+**AND `techmuns/amfibeas` IS READ-ONLY, as it has been since Stage 10s.** Nothing
+here clones, updates or writes to it; the checkout is an INPUT (`AMFIBEAS_DIR`).
+
+#### An Indian ISIN carries its issuer in characters 1–7, and that is the whole fix
+
+```
+INE115A01026   LIC Housing Finance   —  the equity share
+INE115A07QY1   …the same company     —  an NCD
+INE115A14FW4   …the same company     —  commercial paper, matures in three weeks
+```
+
+Keyed on the FULL ISIN, one company got as many rows as it has instruments. And
+the rule beside it made that worse rather than visible: `takenHere` kept **ONE
+DISCLOSED LINE PER FUND PER COMPANY** and dropped the rest, which was right while
+the store carried the equity section alone — there the only repeat was a second
+share class. On the whole filing it is the difference between an answer and a
+wrong answer: **HDFC Balanced Advantage files TWELVE separate LIC Housing NCDs,
+and keeping the first reports 0.6% of that fund against a true 1.74%.**
+
+A row is one **ISSUER** now and its `instruments` are what it is made of, opened
+underneath — because a reader acting on news about a company needs to know
+whether they hold the equity, the paper, or both. `seenHere` still drops an exact
+repeat: the same ISIN filed twice in one scheme is one holding printed twice.
+
+**THE ISSUER TIER WAS MEASURED BEFORE IT WAS RELIED ON.** 1,052 ISINs collapse to
+557 issuer prefixes; **34 carry more than one spelling and every one of those 34
+is one company written two ways** — NABARD / National Bank for Agriculture and
+Rural Development, REC / Rural Electrification Corporation, Tata Power / The Tata
+Power Company. **None merges two different companies.** And it is load-bearing
+rather than decorative: **100 of 557 issuers have names that normalise to more
+than one key** (HDFC Bank alone to twelve, because each commercial paper carries
+its own maturity in the name).
+
+**AND THE ISSUER'S ISIN IS THE ONE THAT NAMES THE ISSUER.** A row now spans a
+share, an NCD and a CP maturing in three weeks — all real identifiers, and only
+the first still identifies the company after that paper matures. `rankIsin` takes
+the BOOK's own where the book carries one, then the `01` equity series, then
+anything else. It never invents one; every candidate was filed.
+
+**`industry` IS TWO FACTS IN ONE COLUMN**, verified empirically: a SECTOR on an
+equity row (`Finance`, `Banks`) and a CREDIT RATING on a debt one (`CRISIL -
+AAA`, `ICRA A1+`). They are emitted as separate fields and neither is ever
+printed under the other's heading — `upstreamStatus.ts`'s rule arriving through a
+spreadsheet column.
+
+#### …and the row had nothing to open, in three separate ways
+
+*"If I type it, it has to first pick up."* Measured on this book, **553 of the
+615 issuers a fund discloses are ones the book holds no position in** — including
+LIC Housing itself. Every one of the three refusals was invisible on its own:
+
+- **`securityNames` was keyed on `p.security` over the POSITIONS**, so a company
+  only a fund holds was in no option. It unions the look-through's own names on
+  the security axis now.
+- **`derivedShown` was gated on `selected.size === 0`**, so picking a name
+  suppressed the very rows the pick was for. The gate is per-row now.
+- **The row carried no `venues`, so it drew no chevron** — and the expansion was
+  gated on `assetClass === "Equity"`, which refused an issuer reached through its
+  NCDs. It is `canLookThrough` now: an issuer, whatever paper of theirs a fund
+  holds, excluding only a FUND row (a scheme holding itself is not a look-through)
+  and CASH. A derived-only row gets its own expansion branch rather than an empty
+  version of the venue one, because a route-split sentence over zero routes and a
+  table with no rows are both statements about a measurement that does not exist.
+
+**AND THE ROW'S CLASS IS WHAT THE FILINGS SAID.** `assetClass: "Equity"` was
+hardcoded on a derived row; an issuer the family reach only through its bonds is
+not an equity holding, and filing it as one is the fabricated-classification
+failure. It is `e.classes` joined now — `Debt`, `Equity`, or both.
+
+Measured end to end, the family's own example: **LIC Housing Finance across SEVEN
+funds, held as Debt AND Equity**, twelve NCDs inside HDFC Balanced Advantage, CPs
+in two liquid funds, equity in Bandhan, Kotak and ICICI.
+
+#### A closed position is not a holding, on any allocation surface
+
+`currentHoldings` in `analytics.ts`, **one definition read by every surface that
+draws an allocation**. The monitor had dropped closed positions a stage ago;
+`/holdings` and Private Market had not — Private Market drew 3P's three unit
+classes at ₹0 apiece, three of its fourteen fund rows.
+
+**AND `/holdings` FILTERS INSIDE `resolveDrilldown`, NOT AT THE PAGE BOUNDARY,
+WHICH IS THE HALF THE MERGE CORRECTED.** This branch narrowed the set as it
+entered the page; main filters where the SET is defined and carries
+`closedExcluded` out with it, so the table's own subtitle names the rows it
+dropped — *"N closed positions are not listed: the fund still publishes a NAV,
+the family no longer holds them"*. A boundary filter leaves that count at zero
+and the page falls silent about them. **Main's is what stands.**
+
+**AND MORNING CIO *IS* NARROWED, WHICH THE MERGE GOT WRONG ONCE BEFORE FIXING.**
+The reasoning above looks as though it should extend to the tile — narrow the
+tile too and nothing anywhere accounts for the five — and it does not, because
+`/holdings` builds its own set from the portfolio context rather than from
+Morning CIO's locals. `closedExcluded` is 5 either way and the subtitle prints
+either way, so BOTH can be true at once: the tile counts 364 and the drill-down
+still names what it left out. The family settled it in the same words —
+*"exclude closed rows from morning cio positions too."* A tile that disagrees
+with the page it opens is the one failure `drilldown.ts` exists to prevent, so
+Positions reads 364, Distinct names 208, and the cost coverage 55 of 364. The
+count reconciliations are plain equality again rather than carrying a gap term.
+
+**AND IT GOES THROUGH `currentHoldings`, NOT AN INLINE PREDICATE.** Five surfaces
+now ask what the family currently holds — this page, the Portfolio Monitor,
+Private Market, the fund look-through and `resolveDrilldown` — and a fifth copy
+of the test is a fifth chance for one screen to disagree with the others about
+which rows are still held.
+
+**IT MOVES NO MONEY, WHICH IS WHY THE COUNT IS THE ONLY THING WORTH ANCHORING.**
+A closed position is a measured ₹0 with no reported cost: NAV, Capital invested,
+every allocation row, every weight and every return are identical either way. So
+`check:pages` holds the rows against `glowData.ts`'s own closed KEYS rather than
+against the tile — comparing the tile with the page it opens passes when BOTH
+revert together, and that is exactly how the regression would arrive — and holds
+the subtitle's count against `closedCount` from the same source.
+
+**`unvaluedAccounts` DELIBERATELY KEEPS THE WHOLE SET.** It asks a different
+question — does this account report any holding at all — and narrowing it would
+fold 3P's account into the list of funds that publish no NAV, which is the
+opposite of true: it publishes one and redeemed against it. A confidently wrong
+reason sends the next reader to ask a fund manager for a NAV no fund owes.
+
+**AND THE `redeemed` PILL WENT WITH THE ROWS IT EXPLAINED.** It was the right
+answer while `/holdings` was the one page that still listed them; a branch that
+can never fire, wearing a confident explanation, is the dead-code-that-looks-alive
+failure. `check:pages` INVERTS rather than being deleted with it — and it is
+struck on `data-hb-key` rather than on the security NAME appearing in the page
+text, because a name is clipped, wrapped and re-cased by the table it sits in
+while the key is what the row IS.
+
+#### The paragraph audit, and how it was reconciled with main's
+
+Both branches audited the same grey paragraph claim by claim — the Stage 10aa /
+10ai pattern — and reached DIFFERENT answers, which is exactly the case where a
+merge must pick one rather than ship both readings of one screen:
+
+- **main moved the load-bearing half into a collapsed `<details>`** and the
+  derived fence up onto the two column headers. **That is what stands**, and it
+  is the better answer: a fold is one click and is visible to a reader who never
+  hovers, and its SUMMARY carries the loading and unreachable states, which a
+  reader must not have to open anything to learn.
+- **this branch moved the same facts into the footer cells' own hovers.** The
+  partition hover on the `Total exposure` cell and the weight basis on the
+  `Weight` footer both survive the merge, because main ships them too — a claim
+  about a column belongs on the column, and the fold is where the five buckets
+  are set out at length.
+
+Two things this branch contributed to that audit stand on their own:
+
+**AND THAT WEIGHT HOVER WAS WRONG.** On this axis every Weight cell divides TOTAL
+EXPOSURE by the book, and the hover explained the printed percentage using the
+MEASURED half alone — a figure a reader could not reproduce from the two numbers
+they were given. It is the cell's own numerator now.
+
+**`nonEquityValue` BECAME `unaccountedValue`, BECAUSE THE NAME STOPPED BEING
+TRUE.** The debt sleeve is INSIDE the derived total now, so the remainder is what
+no line in the filing accounted for — a scheme's cash, a metal ETF's metal, the
+disclosure's own rounding. **A FIELD that misdescribes its own figure is the
+caption failure one layer down, where every caller inherits it.** The fold and
+the hover both say so, and the derived figure the partition is struck against
+moved ₹77.6 Cr → **₹90.56 Cr** with the remainder falling ₹45.7 Cr → ₹32.73 Cr.
+
+#### Sixteen bugs reintroduced, and FOUR of them were defects in the checks
+
+- **The first attempt at the issuer bug changed nothing**, because the keying
+  pass writes `issuerSeen`'s answer into `isinSeen` and the accumulation loop
+  reads that first. The mutation had to move to the keying pass to isolate it —
+  which is the whole point of doing this rather than reasoning about it.
+- **Three checks ABSTAINED where the fact had been DELETED.** Restoring the
+  `assetClass === "Equity"` gate removes the look-through card, and all three of
+  its invariants reported NOT CHECKED over a **clean sweep**; deleting the
+  partition from the footer hover did the same to three more. A missing panel and
+  an absent hover are the defect, not a reason to abstain — `golden.mjs`'s rule,
+  arriving twice in one pass.
+- **Private Market had no invariant on WHICH funds it draws**, so the redeemed
+  fund's ₹0 rows came back to a clean sweep. Every cell of such a row is correct
+  and it adds nothing to any total, so no value check on that page can see it;
+  the rows carry `data-pm-fund` now.
+- **And one check had silently stopped biting.** `stock-mf-lookthrough`'s
+  reconciliation matched a row shape of `name → one column → weight`, and the
+  table gained a `Class` column when the store stopped being equity-only. It
+  abstained on a page rendering perfectly. Anchored on the two adjacent cells it
+  is actually about now.
+
+The twelve that fired first time: the one-line-per-fund rule, the issuer tier,
+the equity-only gate, the derived row's missing expansion, the pick-list dropping
+fund-only names, closed positions back on `/holdings` and on Morning CIO, the
+paragraph restored, the partition deleted, the weight hover's numerator, the
+EQUITY ONLY sentence, a truncated breakdown, a debt line filed as equity, the
+derived half summed into the measured column, and the look-through column on a
+different basis.
+
+**THE WALKED NAME IS DERIVED, NEVER TYPED.** `FUND_INSTRUMENTS` picks the issuer
+ONE fund holds through the most separate instruments — the worst case by
+construction, since a build that kept the old rule reports a twelfth of it — and
+the next drop picks its own. The pick-list grew `data-multiselect` /
+`data-option` and `/holdings` grew `data-hb-key`, because a claim about which
+holdings a page draws must not be struck on prose a redesign is free to reword.
+
+`build` · `tsc` · `test:ingest` 140 + 35 · `test:family` (10 new, anchored on the
+committed store rather than on a fixture) · `check:family` 57/0 · `check:pages`
+**148 combinations clean**, with the same two pre-existing abstentions —
+MEASURED ON THE MERGED TREE, which is the only base any of these counts is a
+fact about. Stages 10aq and 10ar each state 146 and this branch's own pre-merge
+run stated 146 too; all three were struck against different bases and cannot be
+reconciled by arithmetic, which is the point of re-running the sweep rather than
+adding to a number. `npm run build-book` and `npm run build-lookthrough` are both
+no-ops against the committed tree, which is what says the files on disk are what
+the builders would write.
+
+### Stage 10at — THE SECTORS ARE LOOKED UP, AND THE DONUT STOPS RUNNING OVER ITS OWN RING
 
 Three asks on Sector Composition, sent with two screenshots of the page — the
 Consolidated and Direct Equity views, with the grey explainer blocks highlighted:
@@ -8658,23 +8919,34 @@ Each is applied one substitution per invocation now, and the bug harness restore
 the bugged build, and the next sweep reads it and reports the previous bug's
 failures under the next one's name. Measured once in this session.
 
-#### The merge with 10ar, and why a union was the only safe resolution
+#### Merged with main THREE TIMES, and the union was the only safe resolution each time
 
-Both branches were open at once and **both wrote a Stage 10ar**, which is the
-10aj/10al collision this file already records, arriving a second time. Main's is
-the merged one so it keeps the letter; this is 10as, and the one cross-reference
-that pointed here moved with it.
+This branch was open while **three** PRs landed on main, and two of them wrote a
+stage section of their own — the 10aj/10al letter collision this file already
+records, arriving twice more in one branch. Main's merged section keeps the
+letter each time: 10ar went to the NAV attribution work, 10as to the
+look-through pass, and this is **10at**, with the one cross-reference that points
+here moved along with it.
 
-**THE DANGEROUS CONFLICT WAS ONE LINE, AND IT WAS NOT IN THE PROSE.** Both
-branches added keys to the ctx literal `check-pages.mjs` hands its invariants —
-mine `donut` and `sectorSource`, main's `attrib` — and git presented them as one
-conflicting line. **Taking either side whole is a clean-looking sweep that has
-stopped checking.** Measured by reintroducing exactly that: dropping `attrib`
-turns **9 of main's attribution invariants into NOT CHECKED**, and the run still
-reports every combination clean, because an abstention is counted apart from a
-failure. That is this repo's own most-repeated defect — a field carrying the
-right answer into no caller — arriving through a merge resolution rather than
-through code.
+**THE DANGEROUS CONFLICT WAS ONE LINE, IT WAS NOT IN THE PROSE, AND IT CAME BACK
+EVERY TIME.** `check-pages.mjs` hands its invariants ONE ctx literal, so every
+branch that adds a probe adds a key to that line — mine `donut` and
+`sectorSource`, 10ar's `attrib`, 10as's `pmFunds` — and git presents them as a
+single conflicting line on every merge. **Taking either side whole is a
+clean-looking sweep that has stopped checking**, and both directions were
+measured by reintroducing exactly that:
+
+- dropping **`attrib`** turns 9 of that stage's invariants into **NOT CHECKED**,
+  and the run still reports every combination CLEAN, because an abstention is
+  counted apart from a failure;
+- dropping **`pmFunds`** FAILS, by name, on `private-market`.
+
+**Only one of those two would ever have been caught**, which is the whole reason
+the resolution is a mechanical union rather than a judgement about which side
+looks more important. It is this repo's own most-repeated defect — a field
+carrying the right answer into no caller — arriving through a merge resolution
+rather than through code, and the ctx line should be expected to conflict on
+every future parallel branch.
 
 **AND THE GENERATED FILES WERE NOT TRUSTED TO A TEXT MERGE.** `glowData.ts` and
 `docs/BOOK-REPORT.md` auto-merged without conflicting, which is precisely when a
@@ -8692,17 +8964,19 @@ INEQUALITY: the tier must place company shares no statement placed (84 of 84 tha
 resolve a symbol), or a store wired to a book it no longer matches would satisfy
 every structural check while placing nothing.
 
-`build` · `tsc` · `test:ingest` 140 + 35 · `test:family` (BOTH new suites, this
-one's and 10ar's, side by side) · `check:family` **57/0** · `check:pages`
-**146 combinations clean**, with the same two pre-existing abstentions.
-`build-book` regenerates byte-identically.
+`build` · `tsc` · `test:ingest` 140 + 35 · `test:family` (this stage's suite
+beside 10ar's and 10as's) · `check:family` **57/0** · `check:pages`
+**148 combinations clean**, with the same two pre-existing abstentions.
+`build-book` is a no-op against the committed tree, which is what says the book
+on disk is what the builder would write.
 
-**EVERY ONE OF THOSE WAS RE-RUN ON THE MERGED TREE**, not carried across from
-this branch's own base — the discipline Stage 10aq's closing paragraph records
-after three PRs landed in parallel each carrying a count struck against a
-different base. This branch adds ONE route (`sectors-direct`) and 10ar adds none,
-its attribution invariants hanging off `cio` and `cio-live`, so both branches
-measuring 146 is arithmetic rather than one number copied from the other.
+**EVERY ONE OF THOSE WAS RE-RUN ON THE FINAL MERGED TREE**, not carried across
+from this branch's own base — the discipline Stage 10aq's closing paragraph
+records. This branch's own pre-merge runs stated 146 twice and the answer is
+**148** here; 10aq, 10ar and 10as each state their own figure. All of them were
+struck against different bases and none can be reconciled with another by
+arithmetic, which is exactly why the sweep is re-run rather than the number
+adjusted.
 
 
 ### Stage 10k — News & Announcements: REMOVED
@@ -9644,7 +9918,9 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   A company with no NSE symbol is NAMED in the report and never name-matched.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
   `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
-  disclosed equity holdings — from a READ-ONLY checkout of `techmuns/amfibeas`
+  **every disclosed holding, not the equity section alone**: shares, bonds, NCDs,
+  commercial paper and each line's own class and rating (see Stage 10aq) — from a
+  READ-ONLY checkout of `techmuns/amfibeas`
   (`AMFIBEAS_DIR`, `DRY=1` to resolve and report without writing). Idempotent.
   Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
   the card prints both as-of dates so staleness is visible rather than silent.

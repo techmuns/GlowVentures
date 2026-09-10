@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BOOK_POLYCAB } from "@/data/glowData";
-import { isCompanyShare, isFundVehicle } from "@/lib/analytics";
+import { currentHoldings, isCompanyShare, isFundVehicle } from "@/lib/analytics";
 import { loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
 
@@ -34,9 +34,17 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
   // DERIVED exposure and a fund counted twice would double the share derived
   // from it. Clubbed on `securityKey`, so one scheme held by three members is
   // one vehicle with one disclosure.
+  //
+  // AND CURRENT HOLDINGS ONLY. A scheme redeemed to nil is not a fund this
+  // family holds, so it must not be counted in "N of your M fund holdings
+  // disclose". It contributes no exposure either way — `loadStockExposure` drops
+  // a ₹0 fund's lines, because your share of a fund you hold none of is none of
+  // everything in it — so this moves the DENOMINATOR and nothing else, which is
+  // exactly the figure that was wrong. Here rather than in each caller, for the
+  // reason this whole hook exists.
   const heldVehicles = useMemo<HeldFund[]>(() => {
     const m = new Map<string, HeldFund>();
-    for (const p of consolidated) {
+    for (const p of currentHoldings(consolidated)) {
       if (!isFundVehicle(p)) continue;
       const e = m.get(p.securityKey)
         ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };

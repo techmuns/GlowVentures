@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet, isRedeemedToNil,
+  costCoversSet, currentHoldings,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -180,10 +180,13 @@ export function MorningCIO() {
      * names, and the cost-coverage count on the Capital invested tile, which
      * used to read "60 of 369" against a drill-down facet showing 55.
      *
-     * Same test the Portfolio Monitor and `resolveDrilldown` use, so all three
-     * screens agree about what "current" means.
+     * Through `currentHoldings` rather than an inline `isRedeemedToNil`: the
+     * Portfolio Monitor, Private Market, the fund look-through and
+     * `resolveDrilldown` all read that one helper, and a fifth copy of what
+     * "current" means is a fifth chance for one screen to disagree with the
+     * others about which rows the family still holds.
      */
-    const p = consolidated.filter((x) => !isRedeemedToNil(x));
+    const p = currentHoldings(consolidated);
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the

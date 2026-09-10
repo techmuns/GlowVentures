@@ -48,12 +48,31 @@ export type LookthroughHolding = {
   name: string;
   /** Percent of the FUND's AUM, as the AMC disclosed it. */
   pctAum: number;
-  /** Shares the FUND holds — not the family's. */
+  /** Shares the FUND holds — not the family's. Absent on a debt line. */
   shares: number | null;
-  /** The underlying's own ISIN, where the AMC's filing gives one. */
+  /** The underlying's own ISIN. Present on every row the AMC filed. */
   isin: string | null;
-  /** The AMC's own sector label — not this book's GICS taxonomy. */
+  /**
+   * WHAT THE INSTRUMENT IS, as the AMC filed it — `Equity`, `Debt`, `Other`,
+   * `Gold`, `Silver`, `Cash & equiv`. The store used to carry the equity
+   * section alone, so this had no reason to exist and a liquid fund had no rows
+   * at all; it is what lets an NCD, a commercial paper and a share of one issuer
+   * be told apart on the row that sums them.
+   */
+  assetClass: string | null;
+  /** The AMC's own sector label — not this book's GICS taxonomy. Equity only. */
   sector: string | null;
+  /**
+   * THE CREDIT RATING ON A DEBT LINE, and never in the sector column.
+   *
+   * The AMC files both under one `industry` heading — `Finance` on a share,
+   * `CRISIL - AAA` on a bond — so publishing them under one name would print a
+   * rating where a reader reads a sector. Split on the row's own class at
+   * ingest; each renders under its own heading.
+   */
+  rating: string | null;
+  /** The FUND's own market value in this line, in ₹ crore, where it filed one. */
+  marketValueCr: number | null;
 };
 
 /** The scheme's NAV and the move since the previous published one. */
@@ -108,14 +127,24 @@ export type FundPortfolio = {
    */
   holdingsSource: { kind: "amc" | "aggregator"; url: string | null } | null;
   /**
-   * The section the source file covers. It is "Equity Holdings" on every one,
-   * which is why a debt or liquid scheme has no rows: it holds no equity, and
-   * its debt book is not in this store. The card says that rather than drawing
-   * an empty table.
+   * WHAT THE PUBLISHED ROWS COVER — `Whole portfolio` where the AMC filed every
+   * asset class, `Equity Holdings` where only the equity read of that filing
+   * exists. Two of this book's schemes are the second, and the card says which
+   * rather than letting a reader take an equity list for the whole fund.
    */
   section: string | null;
-  equity: LookthroughHolding[];
-  counts: { equity: number };
+  /**
+   * THE AMC'S OWN FIGURE FOR HOW MUCH OF THE SCHEME THE ROWS ACCOUNT FOR.
+   *
+   * Never 100, and not meant to be: a filing rounds and holds cash it does not
+   * itemise. 89% to 99% across this book. Printed rather than implied, because
+   * rows that add to 94% of a fund under no caption read as the whole of it.
+   */
+  coveragePct: number | null;
+  /** The filing's own class split, as it stated it. */
+  allocation: { class: string; pct: number }[] | null;
+  holdings: LookthroughHolding[];
+  counts: { holdings: number; byClass: Record<string, number> };
 };
 
 export type SchemeMatch = {
@@ -204,15 +233,43 @@ export const familyValue = (holdingValue: number, pctAum: number): number =>
   (holdingValue * pctAum) / 100;
 
 /**
- * Sum of the disclosed EQUITY weights.
+ * Sum of the disclosed weights, over every instrument the filing carries.
  *
- * It does not reach 100% and is not meant to: the store carries the equity
- * section alone, so a fund's cash and debt sleeves are outside it, as is its own
- * rounding. The card prints this total and names what the remainder is, rather
- * than implying the rows account for the whole scheme.
+ * It does not reach 100% and is not meant to — see `coveragePct`, which is the
+ * AMC's own statement of the same gap. The card prints both rather than
+ * implying the rows account for the whole scheme.
  */
 export const disclosedWeight = (pf: FundPortfolio): number =>
-  pf.equity.reduce((a, h) => a + (h.pctAum ?? 0), 0);
+  (pf.holdings ?? []).reduce((a, h) => a + (h.pctAum ?? 0), 0);
+
+/**
+ * ── ONE ISSUER, HOWEVER MANY INSTRUMENTS IT FILED ──────────────────────────
+ *
+ * *"It could be a bond. It could be an NCD. If I type it, it has to first pick
+ * up… I want to see how much LIC housing I hold through my mutual fund exposure
+ * and through which mutual fund."*
+ *
+ * LIC Housing Finance is inside six of this family's funds under FOURTEEN
+ * different ISINs — a share, twelve NCDs at different coupons and maturities,
+ * and commercial paper. Keyed on the ISIN each line is its own company and the
+ * answer to that question is 0.6%; keyed on the NAME the debt lines do not even
+ * agree with each other, because an AMC files `7.95% LIC Housing Finance
+ * Limited (29/01/2028) **` beside `LIC Housing Finance Ltd.^`.
+ *
+ * AN INDIAN ISIN CARRIES ITS ISSUER IN CHARACTERS 1-7. `INE115A` is LIC Housing
+ * Finance whether the next two say `01` (equity), `07` (a debenture) or `14`
+ * (commercial paper). That is a STRUCTURAL identifier, not a resemblance — the
+ * same standing the ISIN tier already has over the name tiers here — and it
+ * bridges spellings no name rule may: `NABARD` to `National Bank for
+ * Agriculture and Rural Development`, `REC Limited.` to `Rural Electrification
+ * Corporation`, on the identifier both filings print.
+ *
+ * MEASURED BEFORE IT WAS RELIED ON, because the failure it could cause is
+ * merging two companies: across the store's 1,052 distinct ISINs it forms 557
+ * issuer groups, 34 of which carry more than one spelling — and every one of
+ * those 34 is one company written two ways. Not one merges two companies.
+ */
+export const issuerOf = (isin: string): string => isin.slice(0, 7).toUpperCase();
 
 /** Whether a holding could ever have a look-through — mirrors the ingest. */
 export const canHaveLookthrough = (p: Position): boolean =>
@@ -263,6 +320,13 @@ export type FundExposureRow = {
   /** DERIVED: holdingValue x pctAum. Never a reported figure. */
   value: number;
   /**
+   * EVERY INSTRUMENT OF THIS ISSUER THIS FUND FILED, largest first — one share
+   * line, or twelve NCDs at their own coupons and maturities. The row's `value`
+   * is their sum, and a reader who acts on "how much LIC Housing do I hold
+   * through this fund" is entitled to see what it is made of.
+   */
+  instruments: { name: string; isin: string | null; assetClass: string | null; rating: string | null; pctAum: number; value: number }[];
+  /**
    * How the disclosed row was KEYED — never a guess.
    *
    * `isin` means the row carried one and was joined on it, which is the only
@@ -304,6 +368,12 @@ export type StockExposure = {
   /** Σ rows.value. Derived, and never added to a book total by this module. */
   total: number;
   /**
+   * WHAT THE ISSUER WAS HELD AS, across every fund — `Equity`, `Debt` or both.
+   * A company reached only through its bonds must not be filed as equity, and
+   * the row that sums a share and an NCD has to say it did.
+   */
+  classes: string[];
+  /**
    * THE COMPANY'S GICS SECTOR, resolved from what the AMCs filed — or null.
    *
    * A disclosure prints the AMFI/SEBI INDUSTRY label ("Pharmaceuticals &
@@ -343,13 +413,21 @@ export type StockExposureState =
       /** Value of the funds it could not — the AIF block, and any unresolved scheme. */
       skippedValue: number;
       /**
-       * `disclosedValue - total`: the part of a disclosed fund that is NOT
-       * disclosed equity — its cash and debt sleeves, a gold or silver ETF's
-       * metal, and the disclosure's own rounding. Named rather than dropped,
-       * because a reader who sees only the equity half reads the remainder as
-       * missing rather than as something else.
+       * `disclosedValue - total`: the part of a disclosed fund that NO LINE in
+       * the filing accounted for — its cash sleeve, a gold or silver ETF's
+       * metal, a line carrying neither an ISIN nor a usable name, and the
+       * disclosure's own rounding.
+       *
+       * IT WAS `nonEquityValue` AND THE NAME STOPPED BEING TRUE. While the store
+       * carried the equity section alone this really was the debt and cash
+       * remainder — ₹45.7 Cr of it. The store now reads each AMC's whole monthly
+       * filing, so the debt sleeve is INSIDE `total`, the remainder is ₹32.7 Cr,
+       * and a field called "non-equity" would be describing something it is not.
+       * A caption that misdescribes its own figure is the failure this book keeps
+       * paying for; a FIELD that does is the same thing one layer down, where
+       * every caller inherits it.
        */
-      nonEquityValue: number;
+      unaccountedValue: number;
     };
 
 /**
@@ -531,7 +609,7 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  *     the same money twice — the rule this whole store is fenced by. A caller
  *     that shows it beside the book's own figure must say which is which.
  *   • IT IS EQUITY-ONLY AND PARTIAL. `skipped`, `skippedValue` and
- *     `nonEquityValue` are returned so a caller can state exactly what it does
+ *     `unaccountedValue` are returned so a caller can state exactly what it does
  *     not cover, rather than implying completeness.
  *   • IT IS DATED DIFFERENTLY FROM THE BOOK. A disclosure is monthly; a holding
  *     is valued on its own statement's date. Both ride on every row.
@@ -549,6 +627,14 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  * either tier, so its fund exposure would stand as a SEPARATE row rather than
  * joining it. The caller counts those and says so.
  */
+/**
+ * How well an ISIN identifies its ISSUER rather than one of its instruments.
+ * Lower is better: one the book itself carries, then the equity series, then
+ * anything else. It never invents an identifier — every candidate was filed.
+ */
+const rankIsin = (isin: string, book: ReadonlyMap<string, string>): number =>
+  book.has(isin) ? 0 : /^IN[EF][A-Z0-9]{5}01/.test(isin) ? 1 : 2;
+
 export async function loadStockExposure(
   funds: HeldFund[],
   isinToBookKey: ReadonlyMap<string, string>,
@@ -617,16 +703,38 @@ export async function loadStockExposure(
    * alone, exactly as before.
    */
   const nameToKey = new Map<string, string>();
+  /**
+   * ONE KEY PER ISSUER, decided once over every filing before any row is placed.
+   *
+   * `isinSeen` keys on the full ISIN and so gave one issuer's fourteen
+   * instruments fourteen answers. `issuerSeen` keys on the issuer (see
+   * `issuerOf`) and takes the BOOK's own key wherever any one of that issuer's
+   * ISINs is in the book — so LIC Housing's NCDs land on the same row as its
+   * share if the family also hold the share, and on one row of their own if
+   * they do not.
+   *
+   * THE NAME ON THE ROW IS THE SHORTEST THE FILINGS GIVE. An issuer's debt
+   * lines print the coupon and the maturity (`7.95% LIC Housing Finance Limited
+   * (29/01/2028) **`) and its equity line prints the company; a row headed by
+   * the first would name one bond over a figure covering fourteen instruments.
+   */
+  const issuerSeen = new Map<string, string>();
+  const issuerName = new Map<string, string>();
   for (const { pf } of loaded) {
     if (!pf) continue;
-    for (const h of pf.equity ?? []) {
+    for (const h of pf.holdings ?? []) {
       const isin = (h.isin ?? "").trim().toUpperCase();
       if (!isin || !(h.pctAum > 0)) continue;
       const nameKey = securityKeyOf(h.name);
       if (!nameKey || ringFenced.isins.has(isin) || ringFenced.keys.has(nameKey)) continue;
-      const key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
-      if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
-      if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, key);
+      const iss = issuerOf(isin);
+      const bookKey = isinToBookKey.get(isin);
+      if (bookKey) issuerSeen.set(iss, bookKey);
+      else if (!issuerSeen.has(iss)) issuerSeen.set(iss, nameKey);
+      const prev = issuerName.get(iss);
+      if (!prev || h.name.length < prev.length) issuerName.set(iss, h.name);
+      if (!isinToBookKey.has(isin)) isinSeen.set(isin, issuerSeen.get(iss)!);
+      if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, issuerSeen.get(iss)!);
     }
   }
   let covered = 0;
@@ -642,23 +750,36 @@ export async function loadStockExposure(
     }
     covered += 1;
     disclosedValue += f.marketValue;
-    // ONE DISCLOSED LINE PER FUND PER COMPANY. A scheme listing two share
-    // classes of one company would otherwise contribute twice to that name.
-    const takenHere = new Set<string>();
-    for (const h of pf.equity ?? []) {
+    /**
+     * EVERY INSTRUMENT OF AN ISSUER ADDS; THE SAME ISIN TWICE DOES NOT.
+     *
+     * This used to keep ONE disclosed line per fund per company and drop the
+     * rest, which was right while the store carried the equity section alone —
+     * there the only repeat was a second share class. On the whole filing it is
+     * the difference between an answer and a wrong answer: HDFC Balanced
+     * Advantage files TWELVE separate LIC Housing NCDs, and keeping the first
+     * reports 0.6% of that fund against a true 1.74%. A row is now one issuer
+     * and its `instruments` are what it is made of.
+     *
+     * `seenHere` still drops an exact repeat — the same ISIN filed twice in one
+     * scheme is one holding printed twice, not two.
+     */
+    const seenHere = new Set<string>();
+    for (const h of pf.holdings ?? []) {
       if (!(h.pctAum > 0)) continue;
       const isin = (h.isin ?? "").trim().toUpperCase() || null;
       const nameKey = securityKeyOf(h.name);
-      if (!nameKey) continue;
-      if ((isin && ringFenced.isins.has(isin)) || ringFenced.keys.has(nameKey)) continue;
+      if (!nameKey && !isin) continue;
+      if ((isin && ringFenced.isins.has(isin)) || (nameKey && ringFenced.keys.has(nameKey))) continue;
       let key: string;
       if (isin) {
-        key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+        key = isinToBookKey.get(isin) ?? issuerSeen.get(issuerOf(isin)) ?? isinSeen.get(isin) ?? nameKey;
         if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
       } else {
         key = nameToKey.get(nameKey) ?? nameKey;
       }
-      if (takenHere.has(key)) continue;
+      const dedupeOn = isin ?? `name:${nameKey}`;
+      if (seenHere.has(dedupeOn)) continue;
 
       const value = familyValue(f.marketValue, h.pctAum);
       // A FUND THE FAMILY HOLDS AT ₹0 GIVES ₹0 OF EVERYTHING INSIDE IT. Five
@@ -668,28 +789,57 @@ export async function loadStockExposure(
       // company when what it holds is none of it. The line is dropped; a company
       // any funded scheme also discloses keeps that scheme's share.
       if (!(value > 0)) continue;
-      takenHere.add(key);
+      seenHere.add(dedupeOn);
       total += value;
-      const e = byKey.get(key) ?? { key, name: h.name, isin, rows: [], total: 0, sector: null };
-      e.rows.push({
-        fundKey: f.securityKey,
-        fundName: f.name,
-        holdingValue: f.marketValue,
-        pctAum: h.pctAum,
-        value,
-        via: isin ? "isin" : "name",
-        sector: h.sector ?? null,
-        holdingsAsOf: pf.holdingsAsOf ?? null,
-        sourceKind: pf.holdingsSource?.kind ?? null,
-      });
+      const e = byKey.get(key) ?? { key, name: (isin ? issuerName.get(issuerOf(isin)) : null) ?? h.name, isin, rows: [], total: 0, classes: [], sector: null };
+      // ONE ROW PER FUND PER ISSUER, gaining an instrument rather than a row.
+      let row = e.rows.find((r) => r.fundKey === f.securityKey);
+      if (!row) {
+        row = {
+          fundKey: f.securityKey,
+          fundName: f.name,
+          holdingValue: f.marketValue,
+          pctAum: 0,
+          value: 0,
+          instruments: [],
+          via: isin ? "isin" : "name",
+          // THE ROW'S SECTOR IS THE FIRST EQUITY LINE'S OWN LABEL. A debt line
+          // files a credit RATING in that column, so taking whichever line came
+          // first would put `CRISIL - AAA` where a sector belongs — the two facts
+          // this reader splits at the source, arriving one level up.
+          sector: null,
+          holdingsAsOf: pf.holdingsAsOf ?? null,
+          sourceKind: pf.holdingsSource?.kind ?? null,
+        };
+        e.rows.push(row);
+      }
+      row.pctAum += h.pctAum;
+      row.value += value;
+      if (!row.sector && h.sector) row.sector = h.sector;
+      row.instruments.push({ name: h.name, isin, assetClass: h.assetClass ?? null, rating: h.rating ?? null, pctAum: h.pctAum, value });
       e.total += value;
-      if (!e.isin && isin) e.isin = isin;
+      if (h.assetClass && !e.classes.includes(h.assetClass)) e.classes.push(h.assetClass);
+      /**
+       * THE ISSUER'S ISIN IS THE ONE THAT NAMES THE ISSUER, not whichever line
+       * was read first. A row now spans every instrument this family reaches an
+       * issuer through, and LIC Housing's arrive as a share (INE115A01026), an
+       * NCD (INE115A07QY1) and a commercial paper maturing in three weeks
+       * (INE115A14FW4) — all real identifiers, and only the first still
+       * identifies the company after that paper matures. So the BOOK's own is
+       * taken where the book carries one, then the `01` equity series, and a
+       * debt identifier only where the issuer is reached through nothing else.
+       * The issuer is the same in every case; this decides which of its names
+       * a reader can search on.
+       */
+      if (isin && (!e.isin || rankIsin(isin, isinToBookKey) < rankIsin(e.isin, isinToBookKey))) e.isin = isin;
       byKey.set(key, e);
     }
   }
 
   for (const e of byKey.values()) {
     e.rows.sort((a, b) => b.value - a.value);
+    for (const r of e.rows) r.instruments.sort((a, b) => b.value - a.value);
+    e.classes.sort();
     // Every GICS sector the filings for this company agree on. One means an
     // answer; none or several means there is not one, and null says so.
     const agreed = new Set<string>();
@@ -708,6 +858,6 @@ export async function loadStockExposure(
     skipped,
     disclosedValue,
     skippedValue,
-    nonEquityValue: disclosedValue - total,
+    unaccountedValue: disclosedValue - total,
   };
 }

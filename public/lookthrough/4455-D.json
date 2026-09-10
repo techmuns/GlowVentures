@@ -8,669 +8,941 @@
   "classification": "Equity : Small Cap",
   "isin": "INF179KA1RW5",
   "nav": {
-    "value": 160.972,
-    "date": "2026-09-01",
-    "prev": 160.949,
-    "prevDate": "2026-08-31",
-    "changePct": 0.014290241008018772
+    "value": 159.88,
+    "date": "2026-09-09",
+    "prev": 160.587,
+    "prevDate": "2026-09-08",
+    "changePct": -0.44025979687022837
   },
   "returns": {
     "1M": {
-      "value": 1.5206,
+      "value": -2.3335,
       "kind": "simple",
-      "startDate": "2026-06-19",
-      "endDate": "2026-09-01",
-      "startNav": 158.561,
-      "endNav": 160.972
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-09",
+      "startNav": 163.7,
+      "endNav": 159.88
     },
     "3M": {
-      "value": 6.5123,
+      "value": 4.6315,
       "kind": "simple",
-      "startDate": "2026-06-01",
-      "endDate": "2026-09-01",
-      "startNav": 151.13,
-      "endNav": 160.972
+      "startDate": "2026-06-09",
+      "endDate": "2026-09-09",
+      "startNav": 152.803,
+      "endNav": 159.88
     },
     "6M": {
-      "value": 5.2098,
+      "value": 11.3053,
       "kind": "simple",
-      "startDate": "2026-02-27",
-      "endDate": "2026-09-01",
-      "startNav": 153.001,
-      "endNav": 160.972
+      "startDate": "2026-03-09",
+      "endDate": "2026-09-09",
+      "startNav": 143.641,
+      "endNav": 159.88
     },
     "1Y": {
-      "value": 0.2522,
+      "value": -1.1133,
       "kind": "simple",
-      "startDate": "2025-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 160.567,
-      "endNav": 160.972
+      "startDate": "2025-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 161.68,
+      "endNav": 159.88
     },
     "3Y": {
-      "value": 11.3332,
+      "value": 10.4431,
       "kind": "cagr",
-      "startDate": "2023-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 116.639,
-      "endNav": 160.972
+      "startDate": "2023-09-08",
+      "endDate": "2026-09-09",
+      "startNav": 118.64,
+      "endNav": 159.88
     },
     "5Y": {
-      "value": 16.1366,
+      "value": 15.3794,
       "kind": "cagr",
-      "startDate": "2021-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 76.199,
-      "endNav": 160.972
+      "startDate": "2021-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 78.198,
+      "endNav": 159.88
     },
     "10Y": {
-      "value": 17.7075,
+      "value": 17.4476,
       "kind": "cagr",
-      "startDate": "2016-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 31.536,
-      "endNav": 160.972
+      "startDate": "2016-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 32.022,
+      "endNav": 159.88
     }
   },
-  "returnsAsOf": "2026-09-01",
-  "fundAumCr": 37526.1,
-  "holdingsAsOf": "2026-07-31",
+  "returnsAsOf": "2026-09-09",
+  "fundAumCr": 37577.21,
+  "holdingsAsOf": "2026-08-31",
   "holdingsSource": {
     "kind": "amc",
     "url": "https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio"
   },
-  "section": "Equity Holdings",
-  "equity": [
+  "section": "Whole portfolio",
+  "coveragePct": 89.64,
+  "allocation": [
+    {
+      "class": "Equity",
+      "pct": 89.64
+    }
+  ],
+  "holdings": [
     {
       "name": "Firstsource Solutions Ltd.",
       "isin": "INE684F01012",
+      "assetClass": "Equity",
       "sector": "Commercial Services & Supplies",
-      "pctAum": 4.24,
-      "shares": 58522189
+      "rating": null,
+      "pctAum": 3.71,
+      "marketValueCr": 1554.96,
+      "shares": 58722189
     },
     {
       "name": "Aster DM Quality Care Limited",
       "isin": "INE914M01019",
+      "assetClass": "Equity",
       "sector": "Healthcare Services",
-      "pctAum": 3.89,
+      "rating": null,
+      "pctAum": 3.56,
+      "marketValueCr": 1492.35,
       "shares": 19740031
     },
     {
       "name": "Gabriel India Ltd.",
       "isin": "INE524A01029",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 3.34,
-      "shares": 9655309
+      "rating": null,
+      "pctAum": 3.25,
+      "marketValueCr": 1363.29,
+      "shares": 9481123
     },
     {
       "name": "eClerx Services Limited",
       "isin": "INE738I01010",
+      "assetClass": "Equity",
       "sector": "Commercial Services & Supplies",
-      "pctAum": 2.85,
-      "shares": 6447656
+      "rating": null,
+      "pctAum": 3.09,
+      "marketValueCr": 1294.41,
+      "shares": 6547683
     },
     {
       "name": "Bank of Baroda",
       "isin": "INE028A01039",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 2.73,
+      "rating": null,
+      "pctAum": 2.67,
+      "marketValueCr": 1117.34,
       "shares": 46828792
+    },
+    {
+      "name": "Indian Bank",
+      "isin": "INE562A01011",
+      "assetClass": "Equity",
+      "sector": "Banks",
+      "rating": null,
+      "pctAum": 2.08,
+      "marketValueCr": 870.72,
+      "shares": 9688128
     },
     {
       "name": "Krishna Institute Of Medical Sciences Limited",
       "isin": "INE967H01025",
+      "assetClass": "Equity",
       "sector": "Healthcare Services",
-      "pctAum": 2.15,
+      "rating": null,
+      "pctAum": 2.01,
+      "marketValueCr": 841.14,
       "shares": 11133566
     },
     {
       "name": "Eris Lifesciences Ltd",
       "isin": "INE406M01024",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 2.1,
+      "rating": null,
+      "pctAum": 2,
+      "marketValueCr": 838.59,
       "shares": 6464629
-    },
-    {
-      "name": "Fortis Healthcare Limited",
-      "isin": "INE061F01013",
-      "sector": "Healthcare Services",
-      "pctAum": 1.99,
-      "shares": 8770176
-    },
-    {
-      "name": "Indian Bank",
-      "isin": "INE562A01011",
-      "sector": "Banks",
-      "pctAum": 1.94,
-      "shares": 9688128
-    },
-    {
-      "name": "The Federal Bank Ltd.",
-      "isin": "INE171A01029",
-      "sector": "Banks",
-      "pctAum": 1.79,
-      "shares": 20759451
-    },
-    {
-      "name": "Home First Finance Company India Ltd",
-      "isin": "INE481N01025",
-      "sector": "Finance",
-      "pctAum": 1.73,
-      "shares": 6070351
     },
     {
       "name": "Apar Industries Limited",
       "isin": "INE372A01015",
+      "assetClass": "Equity",
       "sector": "Electrical Equipment",
-      "pctAum": 1.62,
-      "shares": 470044
-    },
-    {
-      "name": "PVR LIMITED",
-      "isin": "INE191H01014",
-      "sector": "Entertainment",
-      "pctAum": 1.57,
-      "shares": 5770361
-    },
-    {
-      "name": "Sonata Software Ltd.",
-      "isin": "INE269A01021",
-      "sector": "IT - Software",
-      "pctAum": 1.55,
-      "shares": 20084594
-    },
-    {
-      "name": "Great Eastern Shipping Company Ltd.",
-      "isin": "INE017A01032",
-      "sector": "Transport Services",
-      "pctAum": 1.47,
-      "shares": 4534582
-    },
-    {
-      "name": "Chalet Hotels Ltd.",
-      "isin": "INE427F01016",
-      "sector": "Leisure Services",
-      "pctAum": 1.46,
-      "shares": 7524166
-    },
-    {
-      "name": "Vijaya Diagnostic Centre Limited",
-      "isin": "INE043W01024",
-      "sector": "Healthcare Services",
-      "pctAum": 1.46,
-      "shares": 4516178
-    },
-    {
-      "name": "Kalpataru Projects International Ltd",
-      "isin": "INE220B01022",
-      "sector": "Construction",
-      "pctAum": 1.43,
-      "shares": 4636042
-    },
-    {
-      "name": "Suprajit Engineering Ltd.",
-      "isin": "INE399C01030",
-      "sector": "Auto Components",
-      "pctAum": 1.43,
-      "shares": 11844506
+      "rating": null,
+      "pctAum": 1.9,
+      "marketValueCr": 796.67,
+      "shares": 450044
     },
     {
       "name": "PEARL GLOBAL INDUSTRIES LIMITED",
       "isin": "INE940H01022",
+      "assetClass": "Equity",
       "sector": "Textiles & Apparels",
-      "pctAum": 1.42,
-      "shares": 2870856
+      "rating": null,
+      "pctAum": 1.77,
+      "marketValueCr": 741.2,
+      "shares": 3008356
+    },
+    {
+      "name": "The Federal Bank Ltd.",
+      "isin": "INE171A01029",
+      "assetClass": "Equity",
+      "sector": "Banks",
+      "rating": null,
+      "pctAum": 1.77,
+      "marketValueCr": 740.49,
+      "shares": 20759451
     },
     {
       "name": "Sudarshan Chemical Industries Limited",
       "isin": "INE659A01023",
+      "assetClass": "Equity",
       "sector": "Chemicals & Petrochemicals",
-      "pctAum": 1.41,
+      "rating": null,
+      "pctAum": 1.75,
+      "marketValueCr": 733.46,
       "shares": 5789852
     },
     {
-      "name": "Godrej Consumer Products Ltd.",
-      "isin": "INE102D01028",
-      "sector": "Personal Products",
-      "pctAum": 1.4,
-      "shares": 5448413
+      "name": "Home First Finance Company India Ltd",
+      "isin": "INE481N01025",
+      "assetClass": "Equity",
+      "sector": "Finance",
+      "rating": null,
+      "pctAum": 1.69,
+      "marketValueCr": 707.01,
+      "shares": 6070351
     },
     {
-      "name": "Aditya Vision Limited",
-      "isin": "INE679V01027",
-      "sector": "Retailing",
-      "pctAum": 1.35,
-      "shares": 8812189
+      "name": "Vijaya Diagnostic Centre Limited",
+      "isin": "INE043W01024",
+      "assetClass": "Equity",
+      "sector": "Healthcare Services",
+      "rating": null,
+      "pctAum": 1.67,
+      "marketValueCr": 700.92,
+      "shares": 4616178
     },
     {
-      "name": "Power Mech Projects Ltd.",
-      "isin": "INE211R01019",
+      "name": "PVR LIMITED",
+      "isin": "INE191H01014",
+      "assetClass": "Equity",
+      "sector": "Entertainment",
+      "rating": null,
+      "pctAum": 1.66,
+      "marketValueCr": 696.89,
+      "shares": 5770361
+    },
+    {
+      "name": "Chalet Hotels Ltd.",
+      "isin": "INE427F01016",
+      "assetClass": "Equity",
+      "sector": "Leisure Services",
+      "rating": null,
+      "pctAum": 1.63,
+      "marketValueCr": 680.98,
+      "shares": 7533380
+    },
+    {
+      "name": "Kalpataru Projects International Ltd",
+      "isin": "INE220B01022",
+      "assetClass": "Equity",
       "sector": "Construction",
-      "pctAum": 1.35,
-      "shares": 2200000
+      "rating": null,
+      "pctAum": 1.55,
+      "marketValueCr": 649.46,
+      "shares": 4636042
     },
     {
       "name": "City Union Bank Ltd.",
       "isin": "INE491A01021",
+      "assetClass": "Equity",
       "sector": "Banks",
-      "pctAum": 1.32,
+      "rating": null,
+      "pctAum": 1.46,
+      "marketValueCr": 611.35,
       "shares": 26674184
     },
     {
-      "name": "Timken India Ltd.",
-      "isin": "INE325A01013",
-      "sector": "Industrial Products",
-      "pctAum": 1.32,
-      "shares": 1742665
-    },
-    {
-      "name": "Vardhman Textiles Ltd.",
-      "isin": "INE825A01020",
-      "sector": "Textiles & Apparels",
-      "pctAum": 1.31,
-      "shares": 9342211
-    },
-    {
-      "name": "Blue Dart Express Ltd.",
-      "isin": "INE233B01017",
-      "sector": "Transport Services",
-      "pctAum": 1.25,
-      "shares": 1012064
-    },
-    {
-      "name": "Dodla Dairy Limited",
-      "isin": "INE021O01019",
-      "sector": "Food Products",
-      "pctAum": 1.24,
-      "shares": 4950138
-    },
-    {
-      "name": "Equitas Small Finance Bank Ltd",
-      "isin": "INE063P01018",
-      "sector": "Banks",
-      "pctAum": 1.23,
-      "shares": 68216454
-    },
-    {
-      "name": "FIEM INDUSTRIES LIMITED",
-      "isin": "INE737H01014",
+      "name": "Suprajit Engineering Ltd.",
+      "isin": "INE399C01030",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 1.23,
-      "shares": 2200177
+      "rating": null,
+      "pctAum": 1.42,
+      "marketValueCr": 596.91,
+      "shares": 11855219
+    },
+    {
+      "name": "Great Eastern Shipping Company Ltd.",
+      "isin": "INE017A01032",
+      "assetClass": "Equity",
+      "sector": "Transport Services",
+      "rating": null,
+      "pctAum": 1.41,
+      "marketValueCr": 590.31,
+      "shares": 4534582
+    },
+    {
+      "name": "Sonata Software Ltd.",
+      "isin": "INE269A01021",
+      "assetClass": "Equity",
+      "sector": "IT - Software",
+      "rating": null,
+      "pctAum": 1.4,
+      "marketValueCr": 586.57,
+      "shares": 20084594
     },
     {
       "name": "JSW Dulux Limited",
       "isin": "INE133A01011",
+      "assetClass": "Equity",
       "sector": "Consumer Durables",
-      "pctAum": 1.22,
-      "shares": 1734903
+      "rating": null,
+      "pctAum": 1.32,
+      "marketValueCr": 552.03,
+      "shares": 1744448
     },
     {
-      "name": "JK Tyre & Industries Limited",
-      "isin": "INE573A01042",
-      "sector": "Auto Components",
-      "pctAum": 1.09,
-      "shares": 11376327
+      "name": "Power Mech Projects Ltd.",
+      "isin": "INE211R01019",
+      "assetClass": "Equity",
+      "sector": "Construction",
+      "rating": null,
+      "pctAum": 1.32,
+      "marketValueCr": 554.66,
+      "shares": 2200000
     },
     {
-      "name": "Sharda Cropchem Ltd.",
-      "isin": "INE221J01015",
-      "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 1.07,
-      "shares": 5448901
+      "name": "Timken India Ltd.",
+      "isin": "INE325A01013",
+      "assetClass": "Equity",
+      "sector": "Industrial Products",
+      "rating": null,
+      "pctAum": 1.31,
+      "marketValueCr": 548.87,
+      "shares": 1742665
     },
     {
-      "name": "CIE Automotive India Ltd",
-      "isin": "INE536H01010",
-      "sector": "Auto Components",
-      "pctAum": 1.06,
-      "shares": 10847384
+      "name": "Dodla Dairy Limited",
+      "isin": "INE021O01019",
+      "assetClass": "Equity",
+      "sector": "Food Products",
+      "rating": null,
+      "pctAum": 1.28,
+      "marketValueCr": 535.86,
+      "shares": 4958868
     },
     {
-      "name": "LG Balakrishnan & Bros Ltd.",
-      "isin": "INE337A01034",
-      "sector": "Auto Components",
-      "pctAum": 1.06,
-      "shares": 2774820
+      "name": "Vardhman Textiles Ltd.",
+      "isin": "INE825A01020",
+      "assetClass": "Equity",
+      "sector": "Textiles & Apparels",
+      "rating": null,
+      "pctAum": 1.28,
+      "marketValueCr": 534.42,
+      "shares": 9342211
     },
     {
-      "name": "Transport Corporation of India Ltd.",
-      "isin": "INE688A01022",
+      "name": "Godrej Consumer Products Ltd.",
+      "isin": "INE102D01028",
+      "assetClass": "Equity",
+      "sector": "Personal Products",
+      "rating": null,
+      "pctAum": 1.27,
+      "marketValueCr": 533.61,
+      "shares": 5920495
+    },
+    {
+      "name": "Aditya Vision Limited",
+      "isin": "INE679V01027",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 1.26,
+      "marketValueCr": 529.17,
+      "shares": 8812189
+    },
+    {
+      "name": "Blue Dart Express Ltd.",
+      "isin": "INE233B01017",
+      "assetClass": "Equity",
       "sector": "Transport Services",
-      "pctAum": 1.06,
-      "shares": 4769702
+      "rating": null,
+      "pctAum": 1.22,
+      "marketValueCr": 510.65,
+      "shares": 1037064
+    },
+    {
+      "name": "Equitas Small Finance Bank Ltd",
+      "isin": "INE063P01018",
+      "assetClass": "Equity",
+      "sector": "Banks",
+      "rating": null,
+      "pctAum": 1.2,
+      "marketValueCr": 504.6,
+      "shares": 68216454
     },
     {
       "name": "Redington Ltd.",
       "isin": "INE891D01026",
+      "assetClass": "Equity",
       "sector": "Commercial Services & Supplies",
-      "pctAum": 1.05,
+      "rating": null,
+      "pctAum": 1.16,
+      "marketValueCr": 485.34,
       "shares": 13566331
+    },
+    {
+      "name": "LG Balakrishnan & Bros Ltd.",
+      "isin": "INE337A01034",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 1.12,
+      "marketValueCr": 469.61,
+      "shares": 2774820
+    },
+    {
+      "name": "FIEM INDUSTRIES LIMITED",
+      "isin": "INE737H01014",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 1.1,
+      "marketValueCr": 460.3,
+      "shares": 2260561
+    },
+    {
+      "name": "JK Tyre & Industries Limited",
+      "isin": "INE573A01042",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 1.09,
+      "marketValueCr": 457.51,
+      "shares": 12076327
+    },
+    {
+      "name": "Fortis Healthcare Limited",
+      "isin": "INE061F01013",
+      "assetClass": "Equity",
+      "sector": "Healthcare Services",
+      "rating": null,
+      "pctAum": 1.08,
+      "marketValueCr": 453.47,
+      "shares": 5000176
     },
     {
       "name": "Vishal Mega Mart Limited",
       "isin": "INE01EA01019",
+      "assetClass": "Equity",
       "sector": "Retailing",
-      "pctAum": 1.05,
+      "rating": null,
+      "pctAum": 1.08,
+      "marketValueCr": 453.87,
       "shares": 41022660
-    },
-    {
-      "name": "Zensar Technologies Ltd.",
-      "isin": "INE520A01027",
-      "sector": "IT - Software",
-      "pctAum": 1.02,
-      "shares": 8393515
     },
     {
       "name": "Voltamp Transformers Ltd.",
       "isin": "INE540H01012",
+      "assetClass": "Equity",
       "sector": "Electrical Equipment",
-      "pctAum": 0.96,
+      "rating": null,
+      "pctAum": 1.05,
+      "marketValueCr": 438.25,
       "shares": 401754
-    },
-    {
-      "name": "Shoppers Stop Ltd.",
-      "isin": "INE498B01024",
-      "sector": "Retailing",
-      "pctAum": 0.94,
-      "shares": 10042780
     },
     {
       "name": "VRL Logistics Ltd.",
       "isin": "INE366I01010",
+      "assetClass": "Equity",
       "sector": "Transport Services",
-      "pctAum": 0.92,
+      "rating": null,
+      "pctAum": 1.04,
+      "marketValueCr": 437.06,
       "shares": 14417372
-    },
-    {
-      "name": "Chambal Fertilizers & Chemicals Ltd.",
-      "isin": "INE085A01013",
-      "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 0.9,
-      "shares": 8577755
-    },
-    {
-      "name": "Kirloskar Ferrous Industries Ltd.",
-      "isin": "INE884B01025",
-      "sector": "Ferrous Metals",
-      "pctAum": 0.9,
-      "shares": 7899475
-    },
-    {
-      "name": "NRB Bearing Ltd.",
-      "isin": "INE349A01021",
-      "sector": "Auto Components",
-      "pctAum": 0.86,
-      "shares": 8748982
-    },
-    {
-      "name": "UTI Asset Management Company Ltd",
-      "isin": "INE094J01016",
-      "sector": "Capital Markets",
-      "pctAum": 0.86,
-      "shares": 3983858
     },
     {
       "name": "Indigo Paints Limited",
       "isin": "INE09VQ01012",
+      "assetClass": "Equity",
       "sector": "Consumer Durables",
-      "pctAum": 0.83,
-      "shares": 3120036
+      "rating": null,
+      "pctAum": 1.03,
+      "marketValueCr": 432.55,
+      "shares": 3751818
     },
     {
-      "name": "TEGA INDUSTRIES LIMITED",
-      "isin": "INE011K01018",
-      "sector": "Industrial Manufacturing",
-      "pctAum": 0.83,
-      "shares": 2327843
+      "name": "CIE Automotive India Ltd",
+      "isin": "INE536H01010",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 1.01,
+      "marketValueCr": 424.19,
+      "shares": 10847384
+    },
+    {
+      "name": "Sharda Cropchem Ltd.",
+      "isin": "INE221J01015",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 1,
+      "marketValueCr": 417.88,
+      "shares": 5448901
+    },
+    {
+      "name": "Transport Corporation of India Ltd.",
+      "isin": "INE688A01022",
+      "assetClass": "Equity",
+      "sector": "Transport Services",
+      "rating": null,
+      "pctAum": 0.99,
+      "marketValueCr": 414.01,
+      "shares": 4769702
+    },
+    {
+      "name": "NRB Bearing Ltd.",
+      "isin": "INE349A01021",
+      "assetClass": "Equity",
+      "sector": "Auto Components",
+      "rating": null,
+      "pctAum": 0.97,
+      "marketValueCr": 406.57,
+      "shares": 8580129
+    },
+    {
+      "name": "Zensar Technologies Ltd.",
+      "isin": "INE520A01027",
+      "assetClass": "Equity",
+      "sector": "IT - Software",
+      "rating": null,
+      "pctAum": 0.93,
+      "marketValueCr": 391,
+      "shares": 8493515
+    },
+    {
+      "name": "Shoppers Stop Ltd.",
+      "isin": "INE498B01024",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.92,
+      "marketValueCr": 385.84,
+      "shares": 10051914
     },
     {
       "name": "Lumax Industries Ltd",
       "isin": "INE162B01018",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 0.77,
-      "shares": 603649
+      "rating": null,
+      "pctAum": 0.9,
+      "marketValueCr": 378.08,
+      "shares": 606530
     },
     {
-      "name": "PNC Infratech Ltd.",
-      "isin": "INE195J01029",
-      "sector": "Construction",
-      "pctAum": 0.77,
-      "shares": 13086529
-    },
-    {
-      "name": "The Anup Engineering Limited",
-      "isin": "INE294Z01018",
+      "name": "TEGA INDUSTRIES LIMITED",
+      "isin": "INE011K01018",
+      "assetClass": "Equity",
       "sector": "Industrial Manufacturing",
-      "pctAum": 0.77,
-      "shares": 1479480
+      "rating": null,
+      "pctAum": 0.88,
+      "marketValueCr": 369.27,
+      "shares": 2327843
+    },
+    {
+      "name": "UTI Asset Management Company Ltd",
+      "isin": "INE094J01016",
+      "assetClass": "Equity",
+      "sector": "Capital Markets",
+      "rating": null,
+      "pctAum": 0.87,
+      "marketValueCr": 362.65,
+      "shares": 4165766
+    },
+    {
+      "name": "Kirloskar Ferrous Industries Ltd.",
+      "isin": "INE884B01025",
+      "assetClass": "Equity",
+      "sector": "Ferrous Metals",
+      "rating": null,
+      "pctAum": 0.85,
+      "marketValueCr": 357.64,
+      "shares": 7908852
+    },
+    {
+      "name": "Chambal Fertilizers & Chemicals Ltd.",
+      "isin": "INE085A01013",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 0.84,
+      "marketValueCr": 351.3,
+      "shares": 8577755
     },
     {
       "name": "SKF India (Industrial) Limited",
       "isin": "INE2J8701016",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
-      "pctAum": 0.73,
+      "rating": null,
+      "pctAum": 0.79,
+      "marketValueCr": 330.69,
       "shares": 1108471
+    },
+    {
+      "name": "Tata Steel Ltd.",
+      "isin": "INE081A01020",
+      "assetClass": "Equity",
+      "sector": "Ferrous Metals",
+      "rating": null,
+      "pctAum": 0.68,
+      "marketValueCr": 284.7,
+      "shares": 15443425
     },
     {
       "name": "Mastek Ltd.",
       "isin": "INE759A01021",
+      "assetClass": "Equity",
       "sector": "IT - Software",
-      "pctAum": 0.71,
+      "rating": null,
+      "pctAum": 0.66,
+      "marketValueCr": 276.23,
       "shares": 1579876
     },
     {
       "name": "Redtape Limited",
       "isin": "INE0LXT01019",
+      "assetClass": "Equity",
       "sector": "Consumer Durables",
-      "pctAum": 0.71,
+      "rating": null,
+      "pctAum": 0.66,
+      "marketValueCr": 278.05,
       "shares": 22396179
-    },
-    {
-      "name": "Tata Steel Ltd.",
-      "isin": "INE081A01020",
-      "sector": "Ferrous Metals",
-      "pctAum": 0.7,
-      "shares": 15443425
-    },
-    {
-      "name": "Aadhar Housing Finance Limited",
-      "isin": "INE883F01010",
-      "sector": "Finance",
-      "pctAum": 0.67,
-      "shares": 5644620
-    },
-    {
-      "name": "Bajaj Consumer Care Ltd.",
-      "isin": "INE933K01021",
-      "sector": "Personal Products",
-      "pctAum": 0.67,
-      "shares": 5300000
     },
     {
       "name": "Unichem Laboratories Ltd.",
       "isin": "INE351A01035",
+      "assetClass": "Equity",
       "sector": "Pharmaceuticals & Biotechnology",
-      "pctAum": 0.61,
+      "rating": null,
+      "pctAum": 0.66,
+      "marketValueCr": 275.97,
       "shares": 4958645
     },
     {
-      "name": "KEC International Ltd.",
-      "isin": "INE389H01022",
+      "name": "Aadhar Housing Finance Limited",
+      "isin": "INE883F01010",
+      "assetClass": "Equity",
+      "sector": "Finance",
+      "rating": null,
+      "pctAum": 0.63,
+      "marketValueCr": 264.22,
+      "shares": 5644620
+    },
+    {
+      "name": "The Anup Engineering Limited",
+      "isin": "INE294Z01018",
+      "assetClass": "Equity",
+      "sector": "Industrial Manufacturing",
+      "rating": null,
+      "pctAum": 0.63,
+      "marketValueCr": 265.34,
+      "shares": 1479480
+    },
+    {
+      "name": "Bajaj Consumer Care Ltd.",
+      "isin": "INE933K01021",
+      "assetClass": "Equity",
+      "sector": "Personal Products",
+      "rating": null,
+      "pctAum": 0.59,
+      "marketValueCr": 245.72,
+      "shares": 5183379
+    },
+    {
+      "name": "PNC Infratech Ltd.",
+      "isin": "INE195J01029",
+      "assetClass": "Equity",
       "sector": "Construction",
-      "pctAum": 0.56,
-      "shares": 4959256
-    },
-    {
-      "name": "Bajaj Electricals Ltd.",
-      "isin": "INE193E01025",
-      "sector": "Consumer Durables",
-      "pctAum": 0.5,
-      "shares": 6256654
-    },
-    {
-      "name": "ION EXCHANGE (INDIA) LIMITED",
-      "isin": "INE570A01022",
-      "sector": "Other Utilities",
-      "pctAum": 0.49,
-      "shares": 4806257
-    },
-    {
-      "name": "Gateway Distriparks Limited",
-      "isin": "INE079J01017",
-      "sector": "Transport Services",
-      "pctAum": 0.47,
-      "shares": 33756481
+      "rating": null,
+      "pctAum": 0.59,
+      "marketValueCr": 246.22,
+      "shares": 13086529
     },
     {
       "name": "Wakefit Innovations Limited",
       "isin": "INE0E7301029",
+      "assetClass": "Equity",
       "sector": "Consumer Durables",
-      "pctAum": 0.46,
-      "shares": 15336460
-    },
-    {
-      "name": "AWFIS SPACE SOLUTIONS LIMITED",
-      "isin": "INE108V01019",
-      "sector": "Commercial Services & Supplies",
-      "pctAum": 0.45,
-      "shares": 6682359
+      "rating": null,
+      "pctAum": 0.56,
+      "marketValueCr": 235.9,
+      "shares": 16071502
     },
     {
       "name": "GMM Pfaudler Limited",
       "isin": "INE541A01023",
+      "assetClass": "Equity",
       "sector": "Industrial Manufacturing",
-      "pctAum": 0.44,
+      "rating": null,
+      "pctAum": 0.53,
+      "marketValueCr": 221.45,
       "shares": 2124361
+    },
+    {
+      "name": "Bajaj Electricals Ltd.",
+      "isin": "INE193E01025",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 0.49,
+      "marketValueCr": 203.22,
+      "shares": 6256654
+    },
+    {
+      "name": "KEC International Ltd.",
+      "isin": "INE389H01022",
+      "assetClass": "Equity",
+      "sector": "Construction",
+      "rating": null,
+      "pctAum": 0.49,
+      "marketValueCr": 206.55,
+      "shares": 4959256
+    },
+    {
+      "name": "Gateway Distriparks Limited",
+      "isin": "INE079J01017",
+      "assetClass": "Equity",
+      "sector": "Transport Services",
+      "rating": null,
+      "pctAum": 0.43,
+      "marketValueCr": 181.58,
+      "shares": 33756481
     },
     {
       "name": "GNA Axles Ltd.",
       "isin": "INE934S01014",
+      "assetClass": "Equity",
       "sector": "Auto Components",
+      "rating": null,
       "pctAum": 0.42,
+      "marketValueCr": 176.91,
       "shares": 3277102
+    },
+    {
+      "name": "ION EXCHANGE (INDIA) LIMITED",
+      "isin": "INE570A01022",
+      "assetClass": "Equity",
+      "sector": "Other Utilities",
+      "rating": null,
+      "pctAum": 0.42,
+      "marketValueCr": 174.88,
+      "shares": 4806257
+    },
+    {
+      "name": "AWFIS SPACE SOLUTIONS LIMITED",
+      "isin": "INE108V01019",
+      "assetClass": "Equity",
+      "sector": "Commercial Services & Supplies",
+      "rating": null,
+      "pctAum": 0.41,
+      "marketValueCr": 173.01,
+      "shares": 6682359
     },
     {
       "name": "KEI Industries Ltd.",
       "isin": "INE878B01027",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
-      "pctAum": 0.42,
-      "shares": 350000
-    },
-    {
-      "name": "La Opala RG Limited",
-      "isin": "INE059D01020",
-      "sector": "Consumer Durables",
-      "pctAum": 0.42,
-      "shares": 9444822
-    },
-    {
-      "name": "Vesuvius India Ltd.",
-      "isin": "INE386A01023",
-      "sector": "Industrial Products",
-      "pctAum": 0.42,
-      "shares": 3935770
-    },
-    {
-      "name": "Insecticides (India) Ltd.",
-      "isin": "INE070I01018",
-      "sector": "Fertilizers & Agrochemicals",
-      "pctAum": 0.4,
-      "shares": 2598408
+      "rating": null,
+      "pctAum": 0.41,
+      "marketValueCr": 172.21,
+      "shares": 300000
     },
     {
       "name": "SKF India Ltd.",
       "isin": "INE640A01023",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 0.39,
+      "rating": null,
+      "pctAum": 0.41,
+      "marketValueCr": 172.25,
       "shares": 1108471
     },
     {
-      "name": "Ifgl Refractories Limited (Erst Ifgl Exports Limited)",
-      "isin": "INE133Y01011",
+      "name": "Insecticides (India) Ltd.",
+      "isin": "INE070I01018",
+      "assetClass": "Equity",
+      "sector": "Fertilizers & Agrochemicals",
+      "rating": null,
+      "pctAum": 0.38,
+      "marketValueCr": 158.72,
+      "shares": 2598408
+    },
+    {
+      "name": "La Opala RG Limited",
+      "isin": "INE059D01020",
+      "assetClass": "Equity",
+      "sector": "Consumer Durables",
+      "rating": null,
+      "pctAum": 0.38,
+      "marketValueCr": 160.22,
+      "shares": 9228822
+    },
+    {
+      "name": "Vesuvius India Ltd.",
+      "isin": "INE386A01023",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
-      "pctAum": 0.33,
-      "shares": 6537435
+      "rating": null,
+      "pctAum": 0.38,
+      "marketValueCr": 160.48,
+      "shares": 3935770
     },
     {
-      "name": "Emami Ltd.",
-      "isin": "INE548C01032",
-      "sector": "Personal Products",
-      "pctAum": 0.32,
-      "shares": 3365892
-    },
-    {
-      "name": "G R Infraprojects Limited",
-      "isin": "INE201P01022",
-      "sector": "Construction",
-      "pctAum": 0.32,
-      "shares": 1497051
+      "name": "Vedant Fashions Ltd",
+      "isin": "INE825V01034",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.37,
+      "marketValueCr": 154.59,
+      "shares": 2835224
     },
     {
       "name": "Gujarat Pipavav Port Ltd.",
       "isin": "INE517F01014",
+      "assetClass": "Equity",
       "sector": "Transport Infrastructure",
-      "pctAum": 0.32,
+      "rating": null,
+      "pctAum": 0.35,
+      "marketValueCr": 147.45,
       "shares": 8800000
     },
     {
-      "name": "Brainbees Solutions Limited (FirstCry)",
-      "isin": "INE02RE01045",
-      "sector": "Retailing",
-      "pctAum": 0.25,
-      "shares": 4918751
+      "name": "Ifgl Refractories Limited (Erst Ifgl Exports Limited)",
+      "isin": "INE133Y01011",
+      "assetClass": "Equity",
+      "sector": "Industrial Products",
+      "rating": null,
+      "pctAum": 0.33,
+      "marketValueCr": 137.53,
+      "shares": 6537435
+    },
+    {
+      "name": "G R Infraprojects Limited",
+      "isin": "INE201P01022",
+      "assetClass": "Equity",
+      "sector": "Construction",
+      "rating": null,
+      "pctAum": 0.31,
+      "marketValueCr": 131.17,
+      "shares": 1497051
+    },
+    {
+      "name": "Jupiter Life Line Hospitals Limited",
+      "isin": "INE682M01020",
+      "assetClass": "Equity",
+      "sector": "Healthcare Services",
+      "rating": null,
+      "pctAum": 0.3,
+      "marketValueCr": 125.57,
+      "shares": 4247850
+    },
+    {
+      "name": "Emami Ltd.",
+      "isin": "INE548C01032",
+      "assetClass": "Equity",
+      "sector": "Personal Products",
+      "rating": null,
+      "pctAum": 0.29,
+      "marketValueCr": 122.52,
+      "shares": 3365892
+    },
+    {
+      "name": "D B Corp Limited",
+      "isin": "INE950I01011",
+      "assetClass": "Equity",
+      "sector": "Media",
+      "rating": null,
+      "pctAum": 0.22,
+      "marketValueCr": 94.18,
+      "shares": 4727772
     },
     {
       "name": "Goodyear India Ltd.",
       "isin": "INE533A01012",
+      "assetClass": "Equity",
       "sector": "Auto Components",
-      "pctAum": 0.25,
+      "rating": null,
+      "pctAum": 0.22,
+      "marketValueCr": 93.39,
       "shares": 1256330
     },
     {
       "name": "SULA VINEYARDS LIMITED",
       "isin": "INE142Q01026",
+      "assetClass": "Equity",
       "sector": "Beverages",
-      "pctAum": 0.25,
+      "rating": null,
+      "pctAum": 0.21,
+      "marketValueCr": 88.4,
       "shares": 6005600
     },
     {
-      "name": "D B Corp Limited",
-      "isin": "INE950I01011",
-      "sector": "Media",
-      "pctAum": 0.24,
-      "shares": 4727772
+      "name": "Brainbees Solutions Limited (FirstCry)",
+      "isin": "INE02RE01045",
+      "assetClass": "Equity",
+      "sector": "Retailing",
+      "rating": null,
+      "pctAum": 0.2,
+      "marketValueCr": 85.39,
+      "shares": 4681185
     },
     {
       "name": "BEML Limited",
       "isin": "INE258A01024",
+      "assetClass": "Equity",
       "sector": "Agricultural, Commercial & Construction Vehicles",
-      "pctAum": 0.17,
+      "rating": null,
+      "pctAum": 0.19,
+      "marketValueCr": 78.7,
       "shares": 406478
     },
     {
       "name": "Carborundum Universal Ltd.",
       "isin": "INE120A01034",
+      "assetClass": "Equity",
       "sector": "Industrial Products",
+      "rating": null,
       "pctAum": 0.17,
+      "marketValueCr": 72.21,
       "shares": 652537
-    },
-    {
-      "name": "Jupiter Life Line Hospitals Limited",
-      "isin": "INE682M01020",
-      "sector": "Healthcare Services",
-      "pctAum": 0.14,
-      "shares": 1708413
     },
     {
       "name": "TCI Express Ltd.",
       "isin": "INE586V01016",
+      "assetClass": "Equity",
       "sector": "Transport Services",
+      "rating": null,
       "pctAum": 0.06,
-      "shares": 496165
+      "marketValueCr": 26.31,
+      "shares": 480481
     }
   ],
   "counts": {
-    "equity": 84
+    "holdings": 85,
+    "byClass": {
+      "Equity": 85
+    }
   }
 }
