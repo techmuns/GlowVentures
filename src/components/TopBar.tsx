@@ -122,7 +122,7 @@ export function TopBar() {
         <CurrencySwitch />
         {portfolio && (
           <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-1.5 text-xs text-slate-200"
-            title="Consolidated NAV">
+            title="Current Value of Holdings">
             <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}
           </span>
         )}

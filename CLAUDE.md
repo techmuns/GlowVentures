@@ -181,6 +181,13 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's My investments rollup and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag.
+- `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
+  `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
+  halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
+  Composition's Consolidated view. `src/lib/useStockExposure.ts` assembles its
+  three inputs once. See Stage 10aq.
+- `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
+  `build-book` and the app resolve a sector through ONE committed table.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
@@ -2327,6 +2334,15 @@ The one bridge is a PREFIX match, because these fact sheets clip the sector
 column to its width and the same sector arrives as `Heavy Electrical Equip`,
 `Heavy Electrical Equipmen` and in full. A prefix must be ≥8 characters and match
 exactly one entry; an ambiguous prefix stays unclassified.
+
+**IT ALSO CARRIES THE AMFI *INDUSTRY* LEVEL NOW, and `src/lib/sectors.ts` is the
+browser's door to the same table.** The block seeded from the PMS fact sheets is
+that taxonomy's MACRO level; a fund's own SEBI monthly disclosure prints the
+INDUSTRY level, and 57 of the 65 labels `public/lookthrough/` carries resolved to
+nothing until they were listed. That is what lets Sector Composition place a
+company by the industry a filing printed against its ISIN — see Stage 10aq, which
+also records that the FIRST measurement of the gap was wrong because it compared
+`resolveSector`'s object against a string.
 
 ### NSE symbols — `npm run build-symbols`
 
@@ -7982,9 +7998,241 @@ failing.
 `/compare` route walked), with the same two pre-existing abstentions.
 `glowData.ts` is untouched — nothing here reads the ingest.
 
-### Stage 10aq — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
+### Stage 10aq — SECTORS FOR TWO SETS, AND THE MAP THAT MADE THEM POSSIBLE
+
+Four asks, and the one that took the work is the one that looked smallest.
+
+#### 1. *"remove the highlighted text from the dashboard ui"* — the Portfolio Monitor's two grey paragraphs
+
+Audited line by line before anything went, the Stage 10aa / 10ai / 10al pattern,
+because most of it carried a FIGURE:
+
+| The claim | Kept? |
+| --- | --- |
+| "One row per company, ranked by total exposure" | chrome — the table is one row per company and sorts on that column |
+| "A FUND IS NOT A STOCK and is no longer a row" | chrome — no fund is in the table to contradict it |
+| **the DERIVED fence** | **moved UP, onto the two columns it is about** |
+| the coverage, the five buckets, the AIF block, the clubbed count | inside a one-line fold |
+| the loading / unreachable states | in the SUMMARY, unfolded |
+| "Weight is a share of the book, not of the holdings you picked" | already on the column — `weightPlain` is the `plain` line of every Weight cell's own popover and the footer's title carries it |
+
+**A COLLAPSED ONE-LINER IS NOT A WALL OF PROSE**, and it is the form this book
+already uses for "the rest are NAMED" (the excluded accounts on the NAV card).
+What the family objected to was seven lines of grey under their table; what they
+must not lose is a table that quietly reads as the whole of their money, so the
+summary still states the one thing they act on — `covers ₹299.6 Cr of the
+₹710.4 Cr book`.
+
+**THE FENCE DOES NOT GO IN THE FOLD, AND NOT IN A HOVER EITHER.** *"It says
+DERIVED, not a position, in words rather than in a tooltip"* is a rule of this
+book. `Th` grew a `note`, so `Via funds` carries **derived** and `Total exposure`
+**incl. derived** under their labels — visible whatever the fold is set to, on
+the column each is about, which is strictly better than the paragraph was.
+`check:pages` reads them structurally through `data-col-note`.
+
+**AND THE PROBE HAD TO LEARN TO OPEN THE FOLD.** Three invariants read that
+text; a collapsed `<details>` is not in `innerText`, so unopened they would have
+reported it unparseable — an ABSTENTION, not a failure, retiring all three in
+silence. The same fix the excluded-accounts block already needed.
+
+#### 2. Sector Composition gets the family's own two sets
+
+*"add a toggle switch for direct equity and consolidated. in direct equity we
+will show only the sector composition of direct equity holdings, and in
+consolidated sector composition we will show sector composition based on the
+aggregate securities weightage as per the data from the security filter in the
+holdings in portfolio monitor."*
+
+**NEITHER IS THE SET THIS PAGE USED TO SHOW.** It was company shares —
+mandate-chosen and self-bought — and the two asked for sit either side of it.
+**Consolidated is the default**, a decision rather than an ordering: it is the
+widest, and opening on Direct Equity would take ₹127 Cr of mandate-held shares
+off the first paint, which this page's own header note has always warned against.
+
+**ONE DEFINITION, AND THE TWO PAGES ARE HELD TO IT.** `companyExposure` in
+`lookthrough.ts` is what the Monitor's stock axis and this view are both built
+on, and `useStockExposure` assembles the three inputs `loadStockExposure` needs
+(which vehicles the family holds and at what value, the ISIN bridge, the
+ring-fence) once instead of per page — two of those fail silently when got
+wrong. Measured, the two pages agree exactly:
+
+| | Monitor · Security axis | Sector Composition · Consolidated |
+| --- | ---: | ---: |
+| Direct + PMS | ₹222 Cr | ₹222 Cr |
+| Via funds | ₹77.6 Cr | ₹77.6 Cr |
+| Total exposure | **₹299.6 Cr** | **₹299.6 Cr** |
+| companies | 565 | 565 |
+
+and the page's three tiles rebuild the book: ₹222 + ₹77.6 + ₹410.8 = ₹710.4 Cr.
+`check:pages` holds both to ONE derivation off `glowData.ts` — if they ever
+diverge, one of them is wrong.
+
+**A RETURN IS REFUSED THROUGHOUT THE CONSOLIDATED VIEW, with its reason.** Its
+value column is part measured and part derived and no statement reports a cost
+for the second, so a percentage would divide a part-measured gain by a cost
+covering a fraction of its own numerator — "a total must tie to its own columns",
+one column wider. `AbsentCell` with that cause, never a bare dash.
+
+#### …and Direct Equity was one grey wedge, which is a finding
+
+**NOT ONE of the 37 company shares the family bought in its own demat or broking
+account carries a sector.** A depository statement prints an ISIN, a quantity and
+a rate and no industry at all, so read off the book alone this view is 100%
+Unclassified — true, and it answers nothing.
+
+What places them is an identifier. Fourteen of those ISINs are named in a monthly
+portfolio disclosure filed by a fund **this same family holds**, and that filing
+prints the company's industry. Joined on the ISIN — exactly, never on a name —
+and resolved through the one committed map: **14 of 37 placed, ₹44.0 Cr of
+₹94.9 Cr, and ZERO where two filings disagree.** The view draws 6 sectors instead
+of 1.
+
+**IT ONLY EVER FILLS AN EMPTY SECTOR** and can never contradict the book: a
+position whose own statement printed one keeps it. So this page places names the
+rest of the app leaves unplaced rather than placing them differently, and it says
+so with the count — 84 from the family's own statements, 364 from a filing. The
+durable fix is a backfill pass in the ingest; it is named here rather than done,
+because `build-lookthrough` reads the book that would consume it.
+
+#### The map is why any of that works, and my first measurement of it was wrong
+
+`shared/sectors.mjs` carried the AMFI taxonomy's MACRO level ("Financial
+Services", "Capital Goods"), which arrived with the PMS fact sheets. A fund's own
+SEBI disclosure prints the INDUSTRY level, and none of it was there: **57 of 65
+distinct labels resolved to nothing, 1,009 of 1,318 disclosed lines Unclassified**
+— a sector table where a fifth of the book says "we could not place this" for want
+of a map entry rather than for want of a source.
+
+**THE FIRST MEASUREMENT SAID THE OPPOSITE, AND IT WAS MINE.** `resolveSector`
+returns `{ sector, matchedBy }`, and a test comparing it against the STRING
+`"Unclassified"` passes on every label — so the first pass reported "all 65 map,
+zero unmapped" and would have shipped a Consolidated view mostly grey. Caught by
+the per-company follow-up printing `[object Object]`. It is the
+plausible-wrong-answer this repo exists to catch, arriving in the measurement
+rather than in the page.
+
+Fifty-seven entries added, one GICS sector each, listed as the disclosures print
+them. Two are deliberately NOT listed: `UNRATED` joins `PROVIDER_UNCLASSIFIED`
+(the filer declined to classify), and `Units of Infrastructure Investment Trusts`
+has no GICS home — GICS names equity REITs and does not name InvITs, so placing
+one in a company sector would assert a classification GICS does not make.
+
+**AND IT MOVED THE BOOK BY EXACTLY ONE POSITION**, which is the check that says
+this was a map extension rather than a re-measurement: Chemfab's `CHEMICALS`
+prefix-matches the new `Chemicals & Petrochemicals` entry and leaves Unclassified
+for **Materials**, ₹3,74,700. That is the map's own documented prefix rule doing
+what it is for. `glowData.ts` is regenerated and idempotent.
+
+#### 3. *"what is uncalled capital? … what is distributions?"*
+
+The client, on two Private Market tiles. Both halves of each are answered **on the
+tile** — `StatTile`'s `hint` renders on screen — because a definition a reader has
+to point at is a definition they will not find. WHAT it is first, because the
+figure means nothing without it; HOW it is arrived at second, including the two
+folios the uncalled figure cannot cover. The second tile is renamed
+**Distributions (cash returned)**: its sub-line had always said "distribution
+figure", so a reader asking what a distribution is was reading a word the tile
+used and never defined.
+
+#### 4. *"rename consolidated NAV as Current Value of Holdings … wherever it is written"*
+
+Every rendered label — the Morning CIO tile, the top bar, NAV & Performance, Data
+Refresh, the drill-down's title and `backs` — **and the prose**, which is where
+the instruction's "wherever" bit: the phrase was in sentences on Compare
+Companies, the stock page, Register, the NAV card, the chat panel and a
+drill-down note. Code comments keep it; nothing there renders.
+
+**TWO OF THOSE SURFACES HAVE SINCE BEEN REMOVED**, by Stage 10ao and 10ap on the
+way in: `Drilldown.backs` went with the header pill row, and Compare Companies
+went entirely. The rename is recorded against them anyway rather than tidied out
+of this list, because the surfaces it had to reach is what the instruction's
+"wherever" measured, and a later removal does not unmake the audit. What DID
+have to change is the check that guards it: `DRILLDOWN_CHROME_GONE` asserts the
+retired pill never comes back, and it named only the OLD label — so it could not
+have fired for the pill returning under the label the app now draws. It matches
+both.
+
+**AND THE RENAME BROKE FOUR CHECKS, WHICH IS THE POINT.** The sweep reads this
+tile's figure OFF ITS LABEL to feed other invariants, and three more find the
+tile by matching `/consolidated nav/i`. A rename the probe did not follow would
+have made those report NOT CHECKED — an abstention, not a failure, and how a
+check retires itself in silence. The new both-directions assertion is what
+surfaced it, and it is also what found the prose: it failed while the tile was
+already correct, because `NavVsIndex` renders the phrase inside a fold the sweep
+opens.
+
+#### 5. …AND THIS PAGE'S OWN FOOTERS WENT WITH THE REST, ON THE WAY IN
+
+Stage 10ap removed Sector Composition's footer paragraph at the family's request
+— *"Remove all the highlighted text and the sections from the dashboard UI"* —
+while this branch was open, and this branch had written a NEW footer for each of
+its two views. Merging the two by keeping both would have re-landed on the page
+the exact block they had just asked to be rid of, one per view, which is the
+letter of the merge and the opposite of the instruction.
+
+**SO BOTH FOOTERS GO, AND EVERY CLAIM WAS AUDITED FIRST**, the same way Stage
+10ap audited the one it replaced. Most of what they carried was already on the
+page in the partition cards this branch built; three things were not, and each
+moved onto the figure it describes rather than into a fold:
+
+- **the row COUNT and that the set is deduped** → the donut hole, under the
+  total, with the view's own noun (Consolidated rolls up COMPANIES, Direct
+  Equity rolls up HOLDINGS — a count under the wrong noun is the caption
+  failure this page has already paid for);
+- **the two-tier sector provenance** — how many companies a family statement
+  placed and how many a fund's own filing did — → the donut hole, as two
+  counted figures. This is the one a reader cannot infer: it is the whole reason
+  the page can place a depository holding at all;
+- **why Unclassified is unclassified** → the hover on that row and its legend
+  entry, which is where an absence's reason belongs.
+
+**AND THAT REASON IS WORDED PER VIEW, which the merged-in version could not be.**
+Stage 10ap's constant reads *"these are company shares, so the sector exists; the
+document simply does not report it"* — true of Direct Equity, which has ONE place
+to have looked, and silent about Consolidated, which has a second: the industry
+an AMC filed against the same ISIN. A reason that names the wrong cause sends the
+next reader to the wrong source, so `unclassifiedWhy` takes the view.
+
+**THREE HELPERS LOST THEIR LAST CALLER AND WERE DELETED, NOT LEFT.**
+`privateMV`, the standalone `unclassified` binding and `shareOfTable`. The last
+is worth naming because Stage 10ap had just ADDED its callers: it printed a
+subset's share of this table, which fitted cards that split the ONE set the page
+drew. The cards here describe the active view and what sits OUTSIDE it, so the
+only percentages it could produce were 100% and a share of a denominator the
+reader cannot see. A helper with no caller is the failure this file keeps
+naming, so it went with them rather than being kept for a future one.
+
+**Seven bugs reintroduced, each firing its own check**: the Consolidated view
+showing only the measured half (fires the two-page identity), the default view
+moved (5), the disclosed-sector fallback dropped so Direct Equity is one wedge
+again, the derived markers taken off the columns (2), the grey paragraph put
+back, the uncalled-capital tile stripped of its definition, and the tile rename
+reverted (4).
+
+`build` · `test:ingest` 140 + 35 · `test:family` · `check:family` **57/0** ·
+`check:pages` **146 combinations clean**, with the same two pre-existing
+abstentions. `build-book` regenerates the book BYTE-IDENTICALLY, which is the
+gate that says a sector-map extension moved one position's classification and
+nothing else.
+
+**THAT COUNT IS MEASURED ON THE MERGED TREE AND DOES NOT FOLLOW FROM THE ONE
+ABOVE IT.** Stage 10ap states 136, which was true of the branch that wrote it
+and is not a fact about main: three PRs landed in parallel and the last to merge
+carried a count struck against its own base. This branch adds one route
+(`sectors-direct`) and removes none, so the two figures cannot be reconciled by
+arithmetic — which is the point of re-running the sweep rather than adding to a
+number, and the same reason `docs/BOOK-REPORT.md` counts rather than asserts.
+
+### Stage 10ar — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
 
 Four asks, and the last two turned out to be one defect seen from both ends.
+
+*(Numbered `10ar` rather than `10aq`: main took that letter while this branch was
+open, which is the same parallel-branch collision Stage 10al already records. And
+the first of the four asks below OVERLAPS main's own — both rounds pointed at the
+grey paragraph under this table — so what shipped for it is MAIN'S answer, the
+collapsed fold in Stage 10aq, and the subsection here records only what this
+branch put beside it and what the merge had to correct.)*
 
 *"remove the highlighted text from the dashboard."* · *"we only need to show the
 current holdings in these allocation drill down pages, if anything has been
@@ -8097,19 +8345,30 @@ in two liquid funds, equity in Bandhan, Kotak and ICICI.
 
 #### A closed position is not a holding, on any allocation surface
 
-`currentHoldings` in `analytics.ts`, **one definition read by four surfaces**.
-The monitor had dropped closed positions a stage ago; Morning CIO and the
-`/holdings` table each of its tiles opens had not — so **the Positions tile
-counted 371 while the page it opened listed two schemes the family had already
-been paid out of**. Private Market drew 3P's three unit classes at ₹0 apiece,
-three of its fourteen fund rows.
+`currentHoldings` in `analytics.ts`, **one definition read by every surface that
+draws an allocation**. The monitor had dropped closed positions a stage ago;
+`/holdings` and Private Market had not — Private Market drew 3P's three unit
+classes at ₹0 apiece, three of its fourteen fund rows.
+
+**AND `/holdings` FILTERS INSIDE `resolveDrilldown`, NOT AT THE PAGE BOUNDARY,
+WHICH IS THE HALF THE MERGE CORRECTED.** This branch narrowed the set as it
+entered the page and narrowed Morning CIO's Positions tile to match, so the tile
+and the table agreed at 364 and neither said anything had been left out. Main
+filters where the SET is defined and carries `closedExcluded` out with it, so the
+table's own subtitle names the rows it dropped — *"N closed positions are not
+listed: the fund still publishes a NAV, the family no longer holds them"*. A
+boundary filter leaves that count at zero, so the page falls silent about a
+reader arriving from a tile that counts every position in the book. **Main's is
+what stands**, and the Positions tile is therefore NOT narrowed: it counts the
+book, and the page it opens accounts for the difference in words.
 
 **IT MOVES NO MONEY, WHICH IS WHY THE COUNT IS THE ONLY THING WORTH ANCHORING.**
 A closed position is a measured ₹0 with no reported cost: NAV, Capital invested,
-every allocation row, every weight and every return are identical either way.
-**369 → 364**, and `check:pages` holds that count against `glowData.ts` rather
-than against the drill-down — comparing the tile with the page it opens passes
-when BOTH revert together, and that is exactly how the regression would arrive.
+every allocation row, every weight and every return are identical either way. So
+`check:pages` holds the rows against `glowData.ts`'s own closed KEYS rather than
+against the tile — comparing the tile with the page it opens passes when BOTH
+revert together, and that is exactly how the regression would arrive — and holds
+the subtitle's count against `closedCount` from the same source.
 
 **`unvaluedAccounts` DELIBERATELY KEEPS THE WHOLE SET.** It asks a different
 question — does this account report any holding at all — and narrowing it would
@@ -8120,29 +8379,29 @@ reason sends the next reader to ask a fund manager for a NAV no fund owes.
 **AND THE `redeemed` PILL WENT WITH THE ROWS IT EXPLAINED.** It was the right
 answer while `/holdings` was the one page that still listed them; a branch that
 can never fire, wearing a confident explanation, is the dead-code-that-looks-alive
-failure. `check:pages` INVERTS rather than being deleted with it.
+failure. `check:pages` INVERTS rather than being deleted with it — and it is
+struck on `data-hb-key` rather than on the security NAME appearing in the page
+text, because a name is clipped, wrapped and re-cased by the table it sits in
+while the key is what the row IS.
 
-#### The three paragraphs, checked claim by claim before they went
+#### The paragraph audit, and how it was reconciled with main's
 
-The Stage 10aa / 10ai pattern, and it mattered here: **one claim in three was
-stated nowhere else.**
+Both branches audited the same grey paragraph claim by claim — the Stage 10aa /
+10ai pattern — and reached DIFFERENT answers, which is exactly the case where a
+merge must pick one rather than ship both readings of one screen:
 
-| The claim | Elsewhere? | Where it is now |
-| --- | --- | --- |
-| one row per company · ranked by exposure · a fund is not a stock | yes — the table shows all three | — |
-| the clubbing, `N of M rows held through more than one account` | yes — the row's own entities pill and the venue panel | — |
-| the look-through still loading / the store not answering | yes — the `Via funds` footer's own `AbsentCell` reasons | also in the new hover |
-| Via funds and Total exposure are DERIVED and no part of NAV | no | the `Via funds` column header |
-| **the five-bucket partition — what this table covers and where the rest of the book is** | **NO** | **the Total exposure footer cell** |
-| the split-name warning (silent on this book) | `docs/BOOK-REPORT.md` | the same hover |
-| the closed-position note | — | Transactions → My investments, where a redemption belongs |
-| Weight is a share of the book, not of the rows picked | partly — the Weight footer's hover | that hover, corrected |
+- **main moved the load-bearing half into a collapsed `<details>`** and the
+  derived fence up onto the two column headers. **That is what stands**, and it
+  is the better answer: a fold is one click and is visible to a reader who never
+  hovers, and its SUMMARY carries the loading and unreachable states, which a
+  reader must not have to open anything to learn.
+- **this branch moved the same facts into the footer cells' own hovers.** The
+  partition hover on the `Total exposure` cell and the weight basis on the
+  `Weight` footer both survive the merge, because main ships them too — a claim
+  about a column belongs on the column, and the fold is where the five buckets
+  are set out at length.
 
-**THE PARTITION IS THE ONE A READER ACTS ON.** This table covers **₹312.6 Cr of
-₹710.4 Cr** — under half — and without a statement of that it reads as the whole
-portfolio, which is the caption-that-widens failure in its purest form. It rides
-on the cell that PRINTS the figure it is about, and the SHARE stays on the face
-of the table in the Weight footer, which reads 42.2%.
+Two things this branch contributed to that audit stand on their own:
 
 **AND THAT WEIGHT HOVER WAS WRONG.** On this axis every Weight cell divides TOTAL
 EXPOSURE by the book, and the hover explained the printed percentage using the
@@ -8153,7 +8412,9 @@ they were given. It is the cell's own numerator now.
 TRUE.** The debt sleeve is INSIDE the derived total now, so the remainder is what
 no line in the filing accounted for — a scheme's cash, a metal ETF's metal, the
 disclosure's own rounding. **A FIELD that misdescribes its own figure is the
-caption failure one layer down, where every caller inherits it.**
+caption failure one layer down, where every caller inherits it.** The fold and
+the hover both say so, and the derived figure the partition is struck against
+moved ₹77.6 Cr → **₹90.56 Cr** with the remainder falling ₹45.7 Cr → ₹32.73 Cr.
 
 #### Sixteen bugs reintroduced, and FOUR of them were defects in the checks
 
@@ -8194,11 +8455,14 @@ holdings a page draws must not be struck on prose a redesign is free to reword.
 
 `build` · `tsc` · `test:ingest` 140 + 35 · `test:family` (10 new, anchored on the
 committed store rather than on a fixture) · `check:family` 57/0 · `check:pages`
-**146 combinations clean** — 144 plus `monitor-lookthrough-instruments` across
-both themes — with the same two pre-existing abstentions. `npm run
-build-lookthrough` is a no-op against the committed store, which is what says the
-files on disk are what the builder would write. `glowData.ts` is untouched —
-nothing here reads the ingest.
+**148 combinations clean**, with the same two pre-existing abstentions —
+MEASURED ON THE MERGED TREE, which is the only base any of these counts is a
+fact about. Stage 10aq states 146 and this branch's own pre-merge run stated
+146; the two were struck against different bases and cannot be reconciled by
+arithmetic, which is the point of re-running the sweep rather than adding to a
+number. `npm run build-book` and `npm run build-lookthrough` are both no-ops
+against the committed tree, which is what says the files on disk are what the
+builders would write.
 
 ### Stage 10k — News & Announcements: REMOVED
 

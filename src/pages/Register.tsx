@@ -87,7 +87,7 @@ export function Register() {
           <p>
             <span className="font-semibold text-slate-100">Every figure on this page is money the family PAID</span>{" "}
             — a cash outflow on a date, taken from their own workbook. It is not a statement, no
-            institution struck it, and it is deliberately no part of the book: consolidated NAV,
+            institution struck it, and it is deliberately no part of the book: the current value of holdings,
             allocations, sectors and returns are all computed without it and none of them moves by a
             rupee because of anything here.
           </p>
@@ -315,7 +315,7 @@ export function Register() {
       {/* ── what is already counted, shown so it is never counted again ── */}
       <Card
         title={`Already in the book — ${inAccount.length + inPosition.length} of ${inBookNames} names`}
-        subtitle="Listed so the overlap is visible rather than implied. Every one of these is already inside consolidated NAV at a statement mark; the paid figure beside it is history, not an addition."
+        subtitle="Listed so the overlap is visible rather than implied. Every one of these is already inside the current value of holdings at a statement mark; the paid figure beside it is history, not an addition."
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-table="register-in-book">

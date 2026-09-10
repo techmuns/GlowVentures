@@ -8,7 +8,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { FundExposure } from "@/components/FundExposure";
-import { loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
@@ -24,7 +24,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { trancheTable, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
-import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
@@ -326,6 +326,12 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
 
 /**
+ * THE ONE SENTENCE THE DERIVED COLUMNS CARRY, written once so the two headers
+ * cannot come to say different things about the same fence.
+ */
+const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
+
+/**
  * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — held in the URL (`?ret=`) like
  * every other view on this page, so "send me the CAGR view" is a link.
  *
@@ -524,75 +530,19 @@ export function PortfolioMonitor() {
    */
   const COL_COUNT = groupAxis === SECURITY_AXIS ? 15 : 13;
   /**
-   * ── THE FUND LOOK-THROUGH, LOADED ONCE FOR THE WHOLE PAGE ──────────────────
+   * THE FUND LOOK-THROUGH — assembled by `useStockExposure`, which both this
+   * page and Sector Composition's Consolidated view call.
    *
-   * The stock axis needs the SAME answer in two places: the `Via funds` cell on
-   * a row, and the itemised card inside that row's expansion. Loading it twice
-   * would be two chances for a cell and the card beneath it to state different
-   * numbers about one company — the failure `drilldown.ts` exists to stop for
-   * the book's own figures, arriving through a derived one. So the index is
-   * built once here and both read it.
+   * The three inputs it needs (which vehicles the family holds and at what
+   * value, the ISIN→key bridge, the ring-fence) used to be built here. They are
+   * decisions rather than lookups and two of them fail silently when got wrong,
+   * so they live in one hook now rather than being re-derived per page. See the
+   * note there.
    *
    * ONLY ON THIS AXIS. The other three group the book's own positions and never
    * ask what a fund holds, so they must not pay for 21 fetches.
    */
-  const heldVehicles = useMemo<HeldFund[]>(() => {
-    // Struck over `consolidated` — each dedupeGroup once — because this feeds a
-    // DERIVED exposure and a fund counted twice would double the share derived
-    // from it. Clubbed by `securityKey`, so one scheme held by three members is
-    // one fund with one disclosure at the value the book carries for all three.
-    // AND CURRENT HOLDINGS ONLY: a scheme redeemed to nil is not a fund this
-    // family holds, so it must not be counted in "N of your M fund holdings
-    // disclose". It contributes no exposure either way — `loadStockExposure`
-    // drops a ₹0 fund's lines, because your share of a fund you hold none of is
-    // none of everything in it — so this moves the DENOMINATOR and nothing else,
-    // which is exactly the figure that was wrong.
-    const m = new Map<string, HeldFund>();
-    for (const p of currentHoldings(consolidated)) {
-      if (!isFundVehicle(p)) continue;
-      const e = m.get(p.securityKey)
-        ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
-      e.marketValue += p.marketValue;
-      m.set(p.securityKey, e);
-    }
-    return [...m.values()];
-  }, [consolidated]);
-  /**
-   * ISIN → THE BOOK'S OWN KEY, which is the only tier that can join a
-   * depository's `SBI - EQ` to an AMC's `State Bank of India`. Without it those
-   * two stand as separate rows and the family's own question — how much of this
-   * company do I hold altogether — gets two answers.
-   */
-  const isinToBookKey = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const p of consolidated) {
-      if (!isCompanyShare(p) || !p.isin) continue;
-      const k = p.isin.trim().toUpperCase();
-      if (k && !m.has(k)) m.set(k, p.securityKey);
-    }
-    return m;
-  }, [consolidated]);
-  /**
-   * THE RING-FENCE, CARRIED ONTO THE DERIVED SIDE.
-   *
-   * `Polycab.tsx` is `BOOK_POLYCAB`'s only reader FOR DISPLAY and stays so: this
-   * reads it to take a name OUT, never to put a figure in, and no value from it
-   * reaches any cell. Without it the look-through would draw a Polycab row from
-   * a scheme's disclosure — the fence is a decision about a SECURITY, and it has
-   * to hold wherever that security is reported, including in somebody else's
-   * portfolio. `check:pages` asserts the page never names it.
-   */
-  const ringFenced = useMemo(() => ({
-    keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
-    isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
-  }), []);
-  const [exposure, setExposure] = useState<StockExposureState>({ status: "loading" });
-  useEffect(() => {
-    if (!bySecurity) return;
-    let live = true;
-    loadStockExposure(heldVehicles, isinToBookKey, ringFenced).then((s) => { if (live) setExposure(s); });
-    return () => { live = false; };
-  }, [bySecurity, heldVehicles, isinToBookKey, ringFenced]);
+  const exposure = useStockExposure(consolidated, bySecurity);
   /**
    * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — the picker that replaced the
    * Absolute/CAGR toggle. Default is `auto`, the methodology (equity under a year
@@ -1452,7 +1402,11 @@ export function PortfolioMonitor() {
       aifCount: aif.length,
       aifValue: sum(aif.map((sk) => sk.marketValue)),
       covered: ex?.covered ?? 0,
-      considered: ex?.considered ?? heldVehicles.length,
+      // Both are 0 until the look-through answers, and both are rendered ONLY
+      // inside the `status === "ok"` branch — a page that has not been told how
+      // many funds were considered says it is still loading rather than printing
+      // "0 of 0", which is a measurement nobody made.
+      considered: ex?.considered ?? 0,
       /**
        * ONE COMPANY THE BOOK ITSELF CARRIES UNDER TWO KEYS — named, never merged.
        *
@@ -1492,7 +1446,7 @@ export function PortfolioMonitor() {
         };
       })(),
     };
-  }, [consolidated, exposure, heldVehicles]);
+  }, [consolidated, exposure]);
   /**
    * WHAT THE WEIGHT COLUMN DIVIDES BY, IN WORDS — and by how much that
    * denominator exceeds the rows on screen.
@@ -1772,10 +1726,17 @@ export function PortfolioMonitor() {
                     reason: on this axis "Market value" would be the measured
                     half under a name that reads like the whole.
                   */}
-                  {bySecurity && <Th right onClick={sortBtn("viaFunds")}
-                    title="DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class it filed — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV, because the fund's own value already stands for it there and counting both would count the same money twice.">Via funds</Th>}
-                  {bySecurity && <Th right onClick={sortBtn("totalExposure")}
-                    title="What the family holds of this issuer altogether: the measured Direct + PMS figure plus the derived Via funds one. It is what this table ranks on, and it is not a book total — see the footer for what it covers and where the rest of the book is.">Total exposure</Th>}
+                  {/* THE DERIVED FENCE IS ON THE COLUMNS, VISIBLE, AND NOT IN A
+                      HOVER. It used to live in the paragraph under the table,
+                      which the family asked to have removed; a derived figure
+                      standing beside a measured one is exactly where this book
+                      has been bitten, so it moved onto the two headers it is
+                      about rather than into the fold with the rest. `Via funds`
+                      is wholly derived; `Total exposure` is the measured half
+                      plus it, so it is marked as INCLUDING derived rather than
+                      as being it. */}
+                  {bySecurity && <Th right onClick={sortBtn("viaFunds")} note="derived" noteTitle={DERIVED_NOTE}>Via funds</Th>}
+                  {bySecurity && <Th right onClick={sortBtn("totalExposure")} note="incl. derived" noteTitle={DERIVED_NOTE}>Total exposure</Th>}
                   <Th right onClick={sortBtn("weight")}>Weight</Th>
                   <Th right onClick={sortBtn("unrealizedPnL")}>Unreal. P&L</Th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Realised P&L</th>
@@ -3044,12 +3005,113 @@ export function PortfolioMonitor() {
             `check:pages` asserts the removals AND that each moved fact is still
             reachable, because neither implies the other.
           */}
+          {bySecurity && (
+            <details data-stock-coverage className="mt-2 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2">
+              {/*
+                *"remove the highlighted text from the dashboard ui"* — the grey
+                paragraph that stood here. Audited line by line before anything
+                went, because most of it carried a FIGURE:
+
+                  · "One row per company, ranked by total exposure" — chrome. The
+                    table is one row per company and sorts on that column.
+                  · "A FUND IS NOT A STOCK and is no longer a row" — chrome. No
+                    fund is in the table to contradict it.
+                  · the DERIVED fence — load-bearing, and it must not hide behind
+                    a fold or a hover: it moved UP, onto the two column headers
+                    it is about, where it is on screen whatever this is set to.
+                  · the coverage, the five buckets, the AIF block and the clubbed
+                    count — load-bearing, each asserted by `check:pages` against
+                    a figure derived from `glowData.ts`, and the partition is the
+                    claim a reader acts on. They are inside the fold.
+                  · the loading / unreachable states — load-bearing, and they are
+                    in the SUMMARY: a reader must not have to open anything to
+                    learn that the figures beside them cover half the question.
+
+                A COLLAPSED ONE-LINER IS NOT A WALL OF PROSE, and it is the form
+                this book already uses for "the rest are NAMED" (see the excluded
+                accounts on the NAV card). What the family objected to was seven
+                lines of grey under their table; what they must not lose is a
+                table that quietly reads as the whole of their money.
+              */}
+              <summary className="cursor-pointer list-none text-[11px] leading-relaxed text-slate-500 marker:content-['']">
+                <span className="text-slate-400">{"\u25B8"} </span>
+                {exposure.status === "loading" ? (
+                  <span className="text-champagne-400/80">The fund look-through is still loading — the columns
+                    below cover the directly-reported half only.</span>
+                ) : exposure.status === "unreachable" ? (
+                  <span className="text-amber-400/80">The fund look-through store did not answer, so the columns
+                    below cover the directly-reported half only. That is a fact about the fetch, not about the
+                    book.</span>
+                ) : (
+                  <>This table covers <span className="font-medium text-slate-400">{money(stockCoverage.total)} of
+                    the {money(stockCoverage.nav)} book</span> — what the rest of it sits in</>
+                )}
+              </summary>
+              {exposure.status === "ok" && (
+                <p className="mt-2 border-t border-dashed border-ink-700 pt-2 text-[11px] leading-relaxed text-slate-500">
+                  That is {money(stockCoverage.measured)} the statements report directly,
+                  and {money(stockCoverage.derived)} DERIVED from what {stockCoverage.covered} of
+                  your {stockCoverage.considered} fund holdings disclose. A name is clubbed across every account
+                  that holds it — the family&rsquo;s own demat and a manager&rsquo;s mandate alike, because both
+                  report the share itself
+                  {clubbedCount > 0 && <>; {clubbedCount} of {rows.length} rows here are held through more than
+                    one account</>}. The rest of the book is not stocks this table can
+                  see: {money(stockCoverage.opaque)} sits inside vehicles that publish no holdings at all
+                  {stockCoverage.aifCount > 0 && <> ({stockCoverage.aifCount} AIF folio{stockCoverage.aifCount === 1 ? "" : "s"},
+                    {" "}{money(stockCoverage.aifValue)} — an AIF files no portfolio disclosure that joins to a folio
+                    this family holds, so no future statement fills it)</>}
+                  , {money(stockCoverage.unaccounted)} is the part of a disclosed fund that NO LINE in the filing
+                  accounted for — its cash sleeve, a gold or silver ETF&rsquo;s metal, and the disclosure&rsquo;s own
+                  rounding — and {money(stockCoverage.cash)} is the book&rsquo;s own cash. A scheme&rsquo;s DEBT is no
+                  longer in that remainder: the store reads each AMC&rsquo;s whole monthly filing, so its bonds, NCDs
+                  and commercial paper are inside the derived figure above. Every figure in the Via funds and Total
+                  exposure columns is derived and is no part of the book&rsquo;s NAV: the fund&rsquo;s own value
+                  already stands for it there.
+                  {stockCoverage.splitNames.count > 0 && (
+                    <> {" "}<span className="text-amber-400/80">{stockCoverage.splitNames.count === 1 ? "One company" : `${stockCoverage.splitNames.count} companies`} stands
+                      here as {stockCoverage.splitNames.count === 1 ? "two rows" : "more than one row"} ({money(stockCoverage.splitNames.value)}): one issuer CLIPS
+                      its name where another spells it out, and the book keys a holding on the name its own statement
+                      printed. Their ISINs say they are one security — which is the evidence, and it is also the only
+                      thing that could supply the name neither statement prints in full. Joining them on screen would
+                      hide that from the reconciler, so it is said here instead — the fix belongs in the extractor.</span></>
+                  )}
+                </p>
+              )}
+            </details>
+          )}
           {/* The tranche-coverage note ("N of M rows open their Invested figure…")
               was removed from the holdings table at the family's request, a
               declutter. The chevrons it summarised still render — an Invested cell
               with a dated history still opens its contribution breakdown — so
               nothing measurable was lost. `check:pages` asserts the note stays
               gone rather than deleting the check with the prose. */}
+          {/*
+            THE CLOSED-POSITION NOTE IS GONE TOO, at the family's request —
+            it was one of the three grey paragraphs they pointed at.
+
+            It was the right answer while this was the only page that dropped
+            them: a reader who knew the family held 3P and could not find it
+            would learn the dashboard lost it. The family have since asked for a
+            redeemed holding to leave every allocation page AND for this note to
+            go with it, so the fact now lives where a redemption belongs — on
+            Transactions → My investments as a dated movement under Taken out,
+            which `monitor-txn-out` asserts. A note here would be an allocation
+            page explaining a transaction. `check:pages` INVERTS rather than
+            being deleted with it.
+          */}
+          {/* THE WEIGHT PARAGRAPH IS GONE, and its fact did not go with it.
+              *"remove the highlighted text from the dashboard ui"*.
+
+              It explained why the column stops adding to 100 — and that
+              explanation was ALREADY on the column it is about, in two places
+              that both survive: `weightPlain` is the `plain` line inside every
+              Weight cell's own formula popover, and the footer's Weight cell
+              carries the same sentence with both figures in its `title`. A
+              claim about a column belongs on the column; a paragraph under the
+              table was the third copy, and the one a reader had to scroll to.
+
+              `weightGap` therefore keeps its caller (the footer title above) and
+              is not left computed into nothing. */}
           {/*
             ONE CAPTION PER DELIBERATELY-PICKED MEASURE, so the reader is told
             WHICH return each note is about and how much of the table it can answer
@@ -3226,12 +3288,31 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
   return built;
 }
 
-function Th({ children, right, onClick, title }: { children: React.ReactNode; right?: boolean; onClick?: () => void; title?: string }) {
+function Th({ children, right, onClick, title, note, noteTitle }: {
+  children: React.ReactNode; right?: boolean; onClick?: () => void;
+  /** A plain hover on the header cell, for a column whose note is a sentence. */
+  title?: string;
+  /**
+   * A word about WHAT THE COLUMN IS, rendered under its label and never in a
+   * hover. Used for the derived fence on the stock axis: "it says DERIVED, not
+   * a position, in words rather than in a tooltip" is a rule of this book, and
+   * the sentence a reader may want beyond the word rides in `noteTitle`.
+   *
+   * Lower-case on purpose — `label-xs` uppercases the label, and a second
+   * SHOUTED line would read as a second column rather than as a note on this one.
+   */
+  note?: string; noteTitle?: string;
+}) {
   return (
     <th className={`label-xs px-2 py-1.5 font-medium ${right ? "text-right" : "text-left"}`} title={title}>
       <button onClick={onClick} className={`inline-flex items-center gap-1 hover:text-champagne-400 ${right ? "flex-row-reverse" : ""}`}>
         {children}<ArrowUpDown className="h-3 w-3 opacity-50" />
       </button>
+      {note && (
+        <div data-col-note className="mt-0.5 text-[9px] font-normal normal-case tracking-normal text-champagne-400/70" title={noteTitle}>
+          {note}
+        </div>
+      )}
     </th>
   );
 }

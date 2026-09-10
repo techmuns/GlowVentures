@@ -6,7 +6,7 @@ import { Kpi } from "@/components/Kpi";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, currentHoldings, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
@@ -166,29 +166,15 @@ export function HoldingsBehind() {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
-  /**
-   * ── CURRENT HOLDINGS, AT THE BOUNDARY ─────────────────────────────────────
-   *
-   * *"we only need to show the current holdings in these allocation drill down
-   *  pages, if anything has been redeemed or sold completely then remove it."*
-   *
-   * Applied to BOTH sets `resolveDrilldown` reads, and applied HERE rather than
-   * inside each of its thirteen branches: the per-account scopes read
-   * `portfolio.positions` and the consolidated ones read `consolidated`, so
-   * narrowing one and not the other would leave a closed row reachable through
-   * exactly the facet nobody thought to check. One filter at the base makes
-   * every set, every facet and every count consistent by construction — the
-   * same place, and the same reasoning, as the monitor's own row build and the
-   * ring-fence one layer above it.
-   */
-  const held = useMemo(() => currentHoldings(consolidated), [consolidated]);
-  const heldBook = useMemo(
-    () => (portfolio ? { ...portfolio, positions: currentHoldings(portfolio.positions) } : null),
-    [portfolio],
-  );
+  /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
+     note there. It was written at THIS boundary first, which narrows the same
+     two sets and is one edit rather than nine; the reason it moved is that a
+     filter here leaves `closedExcluded` at zero, so the table's subtitle would
+     say nothing had been left out while five rows were missing. A page that
+     drops rows silently is the defect the count exists to close. */
   const resolved = useMemo<Drilldown | null>(
-    () => (heldBook && scope ? resolveDrilldown(scope, { portfolio: heldBook, consolidated: held }) : null),
-    [heldBook, held, scope],
+    () => (portfolio && scope ? resolveDrilldown(scope, { portfolio, consolidated }) : null),
+    [portfolio, consolidated, scope],
   );
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -268,6 +254,18 @@ export function HoldingsBehind() {
   const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
+  /**
+   * THE ACCOUNTS THE RATE IS ACTUALLY STRUCK ON, for the derivation card below.
+   *
+   * Read off the COVERED facet rather than the active one: the derivation
+   * describes how the rate is computed, and that is the same arithmetic over the
+   * same accounts whichever half of the toggle the reader is looking at. Taken
+   * from `rows` it would read "the 29 accounts" on the Not-covered facet, about a
+   * rate none of them is in. Derived, never typed.
+   */
+  const coveredAccounts = new Set(
+    (d.facets.find((f) => f.key === "covered")?.rows ?? rows).map((r) => r.accountId),
+  ).size;
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
   // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
   // On a bucket drill-down every row would carry the same chip — a repetition of
@@ -469,18 +467,79 @@ export function HoldingsBehind() {
               Everything else the card said is on this page's own four tiles:
               the total, the counts, the cost coverage, and the reason a refused
               return is refused. */}
-          {d.excludedAccounts.length > 0 && (
-            <Card className="mt-5" title={`${d.excludedAccounts.length} accounts outside this figure`}
-              subtitle="Named rather than dropped. A figure that exists for some accounts is shown for those and the rest are said out loud — a reader who cannot see which accounts are missing reads the figure as covering the book.">
-              <p className="text-[12.5px] leading-relaxed text-slate-400">
-                {d.excludedAccounts.join(", ")}
-              </p>
+          {/* ── NO "N ACCOUNTS OUTSIDE THIS FIGURE" CARD ──────────────────────
+              A block listing forty-four raw account numbers, at the family's
+              request. What it existed to prevent — a reader taking a partial
+              figure for a whole-book one — is still prevented, and better: the
+              facet toggle at the top of this page carries "Not covered" with its
+              own row count, so the holdings outside the rate are one click away
+              as HOLDINGS rather than as a wall of digits. The coverage is also
+              on the tile that opens this page and on `/performance`, which names
+              each account with the document it is missing. */}
+
+          {/* ── HOW THIS FIGURE IS WORKED OUT ────────────────────────────────
+              *"in money weighted return drill down page add a small
+              derivation/formula section that tells how it is being calculated.
+              It should be explain in short and direct language and clear legible
+              font size."*
+
+              SCOPED TO THIS ONE FIGURE. Every other set on this page is a sum
+              over the rows below it and needs no derivation; a money-weighted
+              rate is the one figure here a reader cannot get to by adding a
+              column up. Set at `text-sm` rather than the 11–12px this page uses
+              for captions, because legibility was half the request.
+
+              EVERY CLAIM IS THE ARITHMETIC `pooledXirr` ACTUALLY RUNS — the
+              per-account terminal date, the sub-year refusal (Stage 10g(ii)'s
+              guard, which this figure once broke by reading +99.0%), and trades
+              not being flows. The account count is DERIVED from the rows, never
+              typed. */}
+          {d.id === "measured" && (
+            <Card className="mt-5" title="How this is worked out">
+              <div className="space-y-3 text-sm leading-relaxed text-slate-300">
+                <p>
+                  Every dated capital movement in or out of the{" "}
+                  <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
+                  account{coveredAccounts === 1 ? "" : "s"} whose statements publish an opening
+                  portfolio value, with that opening value as the first flow and each
+                  account&rsquo;s own closing market value as the last. The rate is the one that
+                  makes them balance.
+                </p>
+                <p className="mono rounded-md border border-ink-700 px-3 py-2 text-[13px] text-slate-200">
+                  find r where &nbsp;Σ&nbsp; flow ÷ (1 + r)<sup>days ÷ 365</sup> &nbsp;=&nbsp; 0
+                </p>
+                <ul className="space-y-1.5 pl-4">
+                  <li className="list-disc">
+                    Each account closes on <span className="text-slate-100">its own report date</span>,
+                    not one shared date — closing them all on the newest would credit the
+                    earlier ones with standing still.
+                  </li>
+                  <li className="list-disc">
+                    Over a window shorter than a year this is the return{" "}
+                    <span className="text-slate-100">earned over that window</span>, never
+                    compounded up to a yearly rate.
+                  </li>
+                  <li className="list-disc">
+                    A buy or a sell is <span className="text-slate-100">not a flow</span>: it moves
+                    cash inside the account, and its proceeds are already in the closing value.
+                    Only money the family put in or took out counts.
+                  </li>
+                </ul>
+              </div>
             </Card>
           )}
 
           <Card className="mt-5" pad={false}
             title="The holdings behind it"
-            subtitle={`Weight is within this set, not within the book — ${money(mv)} is the denominator. Every figure is as the statements report it, ${d.deduped ? "with each holding two members both carry counted once" : "each statement's row as printed"}.`}
+            subtitle={`Weight is within this set, not within the book — ${money(mv)} is the denominator. Every figure is as the statements report it, ${d.deduped ? "with each holding two members both carry counted once" : "each statement's row as printed"}.${
+              // CURRENT HOLDINGS ONLY, AND THE COUNT SAYS SO. A reader who
+              // arrives from a tile counting every position would otherwise find
+              // fewer rows here with nothing to explain the gap. No figure moves
+              // — these carry ₹0 and report no cost — so only the count is named.
+              d.closedExcluded > 0
+                ? ` ${fmtNum(d.closedExcluded)} closed position${d.closedExcluded === 1 ? " is" : "s are"} not listed: the fund still publishes a NAV, the family no longer holds ${d.closedExcluded === 1 ? "it" : "them"}, and ${d.closedExcluded === 1 ? "it carries" : "they carry"} no value and no cost here.`
+                : ""
+            }`}
             right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
             {shown.length === 0 ? (
@@ -548,21 +607,25 @@ export function HoldingsBehind() {
                                   <span className="text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(g.rows[0], engagementOf(accIdx, g.rows[0])))}</span>
                                 )}
                                 {/*
-                                  THE `redeemed` PILL IS GONE, AND ITS ROW WITH IT.
+                                  NO `redeemed` PILL HERE ANY MORE.
 
-                                  It was the right answer while this page listed
-                                  closed positions and the monitor did not: a ₹0
-                                  row needs to say the zero was MEASURED. The
-                                  family have since asked that a redeemed holding
-                                  leave the allocation pages altogether, so the
-                                  rows are filtered at the ctx boundary above and
-                                  the pill can no longer fire — a branch that can
-                                  never be reached, wearing a confident
+                                  It existed because this page listed the set
+                                  BEHIND a figure and Positions counted the closed
+                                  rows, so a ₹0 row had to say its zero was a
+                                  MEASUREMENT rather than a feed nobody wired. The
+                                  family have since asked for these pages to list
+                                  current holdings only, so `resolveDrilldown`
+                                  filters `isRedeemedToNil` out at the source and
+                                  this branch could never fire again — a condition
+                                  that is always false, wearing a confident
                                   explanation, is the dead-code-that-looks-alive
-                                  failure this book keeps naming. `check:pages`
-                                  INVERTS rather than being deleted with it: no
-                                  closed key may be a row here, and the handle
-                                  must be gone.
+                                  failure this repo keeps naming.
+
+                                  The fact it carried is not lost: the table's own
+                                  subtitle counts what was left out, and the
+                                  Portfolio Monitor still lists the closed rows in
+                                  full with the money that came back on
+                                  Transactions → My investments.
                                 */}
                               </div>
                             </td>

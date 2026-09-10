@@ -172,7 +172,7 @@ export function DataRefresh() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Consolidated NAV" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.totalValue, { compact: true })}
+        <StatTile label="Current Value of Holdings" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.totalValue, { compact: true })}
           sub={bookIsEmpty ? "no statements ingested"
             : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${privateMV === null ? DASH : fmtFromBase(privateMV, { compact: true })}`}
           icon={<Database className="h-4 w-4" />} />

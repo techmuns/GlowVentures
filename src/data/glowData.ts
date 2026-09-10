@@ -5257,7 +5257,7 @@ export const BOOK_POSITIONS: Position[] = [
     "symbol": "CHEMFAB",
     "accountId": "molecule-ventures-llp-7810404",
     "memberId": null,
-    "sector": "Unclassified",
+    "sector": "Materials",
     "providerSector": "CHEMICALS",
     "assetClass": "Equity",
     "quantity": 1000,

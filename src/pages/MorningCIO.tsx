@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet, currentHoldings,
+  costCoversSet,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -163,12 +163,22 @@ export function MorningCIO() {
     // figure covering ₹461 Cr of which 62% is private by asset class. A caption
     // that narrows a figure it does not narrow is the same failure as one that
     // widens it: the reader believes a scope nothing measured.
-    // AND CURRENT HOLDINGS ONLY, so this page and the `/holdings` table each of
-    // its tiles opens count the same set. A closed position is a measured ₹0
-    // with no reported cost, so not one figure here moves — what moves is the
-    // Positions count, which is the figure that was wrong: it counted what the
-    // family had already been paid out of. See `currentHoldings`.
-    const p = currentHoldings(consolidated);
+    // AND THIS PAGE IS DELIBERATELY *NOT* NARROWED TO CURRENT HOLDINGS.
+    //
+    // The family asked for redeemed positions off the ALLOCATION DRILL-DOWNS,
+    // and `resolveDrilldown` drops them there — carrying `closedExcluded` out
+    // with them so `/holdings` names in words what it left out. Narrowing this
+    // page too would make the tile and the table agree at 364 and leave nothing
+    // anywhere to account for the five: `closedExcluded` would be zero and the
+    // subtitle would fall silent. A reader arriving from a tile that counts the
+    // book must find the difference explained on the page it opens, which is
+    // where a redemption is a fact worth stating.
+    //
+    // It costs no figure either way. A closed position is a measured ₹0 with no
+    // reported cost, so `bookMV` is identical and `sumOrNull` already skips it
+    // out of `bookCost`; only the COUNT differs, and the count is the one thing
+    // the drill-down reconciles in words.
+    const p = consolidated;
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the
@@ -895,7 +905,7 @@ export function MorningCIO() {
           make. See the `cio` invariant "each KPI tile offers exactly one
           destination". */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
-        <Kpi label="Consolidated NAV"
+        <Kpi label="Current Value of Holdings"
           href={drilldownHref("book")}
           hrefTitle={`Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page.${
             m.accrued == null || !m.accruedCount ? "" :
@@ -1409,7 +1419,7 @@ export function MorningCIO() {
           half. Every one of those figures is still on this page and still
           derived — invested and current value per bucket in the allocation
           table, the money-weighted return in its own KPI tile with its own
-          coverage line, and the listed/private split in the Consolidated NAV
+          coverage line, and the listed/private split in the Current Value of Holdings
           tile and on Concentration & risk, which links each half to the
           holdings behind it. So this is a LAYOUT removal and not a measurement
           one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
