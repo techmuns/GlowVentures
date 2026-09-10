@@ -43,6 +43,8 @@ const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowDat
 const REPORT = path.join(ROOT, "docs", "BOOK-REPORT.md");
 
 const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 100);
+/** Four places, for a PERCENTAGE — two would round a 0.4 bp contribution to zero. */
+const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) / 10000);
 /**
  * Asset classes with no exchange behind them. What splits `listedValue` from
  * `privateValue` — a property of the HOLDING, never of the mandate it sits in.
@@ -369,7 +371,12 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
         // counted again under the other at the same date.
         rows: valued.map((h) => ({
           securityKey: h.securityKey,
+          security: h.security ?? h.securityKey,
           quantity: isNum(h.quantity) ? h.quantity : null,
+          // The PRICE is what makes an attribution possible: market value is
+          // quantity x price on every priced row in this archive (measured:
+          // 765 of 765 to the paisa), so the split below has no residual.
+          marketPrice: isNum(h.marketPrice) ? h.marketPrice : null,
           marketValue: h.marketValue,
           dedupeGroup: h.dedupeGroup ?? dedupeByAcctSec.get(`${key}|${h.securityKey}`)?.dedupeGroup ?? null,
         })),
@@ -397,16 +404,32 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
         covered: [],
         single: single.map((x) => ({ ...x, bookValue: r2(bookValueOf.get(x.accountId) ?? 0) })),
         unvalued: unvalued.map((u) => ({ ...u, bookValue: r2(bookValueOf.get(u.accountId) ?? 0) })),
-        from: null, to: null,
+        from: null, to: null, panelCompleteFrom: null,
       },
+      snapshotsByAccount,
     };
   }
 
-  // Rule 1 — the series starts where the composition is COMPLETE.
+  /**
+   * RULE 1, RESTATED — THE LINK HOLDS THE PANEL CONSTANT, NOT THE SERIES.
+   *
+   * This used to read `const start = covered.map(firstOf).sort().at(-1)` — the
+   * series began where every covered account had published at least once, so
+   * that no arrival could look like performance. The rule was right about the
+   * LEVEL and it cost 40 of the archive's 74 measured days, which is exactly
+   * what the family reported about this card.
+   *
+   * A chain-linked index needs a constant panel across each LINK, not across
+   * the whole series. So the series now starts at the EARLIEST covered date and
+   * every link is struck over the accounts valued at both of its ends; an
+   * account joining on a date is in neither end of the link ending there and
+   * contributes 0.00% rather than a step. `panelCompleteFrom` is the old start
+   * and still governs the RAW NAV line, which genuinely cannot be rebased
+   * across a changing panel.
+   */
   const firstOf = (id) => snapshotsByAccount.get(id).snaps[0].date;
-  const start = covered.map(firstOf).sort().at(-1);
-  const dates = [...new Set(covered.flatMap((id) => snapshotsByAccount.get(id).snaps.map((s) => s.date)))]
-    .filter((d) => d >= start).sort();
+  const panelCompleteFrom = covered.map(firstOf).sort().at(-1);
+  const dates = [...new Set(covered.flatMap((id) => snapshotsByAccount.get(id).snaps.map((s) => s.date)))].sort();
 
   /** The account's latest snapshot at or before `d`. */
   const at = (id, d) => {
@@ -414,6 +437,36 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     let hit = null;
     for (const s of snaps) if (s.date <= d) hit = s; else break;
     return hit;
+  };
+
+  /**
+   * RULE 3 IN ONE PLACE — the deduped consolidated value of a SET of accounts
+   * at a date. The whole-panel NAV and each link's two ends all go through it,
+   * so a link cannot count a `dedupeGroup` on a basis the level does not.
+   *
+   * The tie-break is NOT alphabetical: 360 ONE Special Opportunities is
+   * reported under CRN37702 and CRN60117 and both are covered, so taking
+   * whichever accountId sorted first would hold the group at 60117's 30 June
+   * mark on every date after 37702 restated — counted once (right) at a stale
+   * figure (wrong). The group is held at its LATEST-DATED row; the accountId
+   * breaks a genuine tie so the emitted file stays byte-identical.
+   */
+  const navAt = (ids, d) => {
+    let total = 0;
+    const best = new Map();
+    for (const id of ids) {
+      const snap = at(id, d);
+      if (!snap) continue;
+      for (const row of snap.rows) {
+        if (!row.dedupeGroup) { total += row.marketValue; continue; }
+        const cur = best.get(row.dedupeGroup);
+        if (!cur || snap.date > cur.date || (snap.date === cur.date && id < cur.id)) {
+          best.set(row.dedupeGroup, { date: snap.date, id, marketValue: row.marketValue });
+        }
+      }
+    }
+    for (const g of best.values()) total += g.marketValue;
+    return total;
   };
 
   // Rule 4 — the flow basis per account, measured rather than assumed.
@@ -436,73 +489,75 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
   }
 
   const navHistory = [];
-  let prevPoint = null;
+  let prevDate = null;
   for (const d of dates) {
-    let nav = 0;
-    let onDate = 0;
-    /** Net external capital IN, attributed on each account's own clock (rule 4). */
+    /** The whole marked panel — climbs while accounts are still arriving. */
+    const nav = navAt(covered, d);
+    const present = covered.filter((id) => at(id, d));
+    const onDate = present.filter((id) => at(id, d).date === d).length;
+
+    /**
+     * THE LINK — struck over the accounts valued at BOTH ends of this interval.
+     *
+     * Before the panel is complete this is a strict subset of `present`, and
+     * that subsetting is the whole of why the series can now start 40 days
+     * earlier: an account that first publishes on `d` is not in `common`, so
+     * its arrival moves `linkClose` and `linkOpen` by nothing at all. From
+     * `panelCompleteFrom` onwards `common` IS the whole panel and `linkClose`
+     * equals `nav` to the rupee — asserted in `navSeries.test.ts`, because two
+     * constructions of one figure that are meant to coincide are exactly where
+     * a silent divergence lives.
+     */
+    const common = prevDate ? present.filter((id) => at(id, prevDate)) : [];
+    const linkOpen = prevDate ? navAt(common, prevDate) : null;
+    const linkClose = prevDate ? navAt(common, d) : null;
+
+    /** Rule 4 — net external capital IN, attributed on each account's own clock. */
     let flowIn = 0;
     let flowUnknownValue = 0;
-    /**
-     * RULE 3, AND THE TIE-BREAK IS NOT ALPHABETICAL.
-     *
-     * 360 ONE Special Opportunities is reported under CRN37702 and CRN60117, and
-     * both CRNs are in the covered set. Counting whichever account sorted first
-     * would have taken 60117's 30 June mark on every date after 31 July, when
-     * 37702 has restated — the group would be counted once (right) at a stale
-     * figure (wrong). The group is held at its LATEST-DATED row, which is the
-     * same "a snapshot supersedes" rule `newestPerReportType` applies one layer
-     * up; the accountId breaks a genuine tie so the file stays byte-identical.
-     */
-    const best = new Map();
-    for (const id of covered) {
+    for (const id of common) {
       const snap = at(id, d);
-      if (!snap) continue;                       // cannot happen after `start`, by construction
-      if (snap.date === d) onDate++;
-      for (const row of snap.rows) {
-        if (!row.dedupeGroup) { nav += row.marketValue; continue; }
-        const cur = best.get(row.dedupeGroup);
-        if (!cur || snap.date > cur.date || (snap.date === cur.date && id < cur.id)) {
-          best.set(row.dedupeGroup, { date: snap.date, id, marketValue: row.marketValue });
-        }
-      }
-      if (prevPoint) {
-        const was = at(id, prevPoint.date);
-        // This account's mark MOVED in this interval — so its own flows since
-        // that earlier snapshot are what this interval's change contains.
-        if (was && was.date !== snap.date) {
-          const flows = (accountCashFlows[id] ?? []).filter((f) =>
-            !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date);
-          // `CashFlow.amount` is NEGATIVE for capital in (see types.ts), so
-          // capital in is the negated sum.
-          flowIn += -sum(flows.map((f) => f.amount));
-          if (flowBasis[id].basis === "unreported") flowUnknownValue += snap.marketValue;
-        }
-      }
+      const was = at(id, prevDate);
+      // This account's mark MOVED in this interval — so its own flows since
+      // that earlier snapshot are what this interval's change contains.
+      if (was.date === snap.date) continue;
+      const flows = (accountCashFlows[id] ?? []).filter((f) =>
+        !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date);
+      // `CashFlow.amount` is NEGATIVE for capital in (see types.ts), so capital
+      // in is the negated sum.
+      flowIn += -sum(flows.map((f) => f.amount));
+      if (flowBasis[id].basis === "unreported") flowUnknownValue += snap.marketValue;
     }
-    for (const g of best.values()) nav += g.marketValue;
+
     const point = {
       period: d,
       date: d,
       nav: r2(nav),
       accountsOnDate: onDate,
-      accountsCarried: covered.length - onDate,
+      accountsCarried: present.length - onDate,
       /** Net external capital in since the previous point, on each account's own clock. */
-      flowIn: prevPoint ? r2(flowIn) : 0,
+      flowIn: prevDate ? r2(flowIn) : 0,
       /** Value restated in this interval by an account with no capital record. */
-      unreportedFlowValue: prevPoint ? r2(flowUnknownValue) : 0,
+      unreportedFlowValue: prevDate ? r2(flowUnknownValue) : 0,
+      linkOpen: linkOpen === null ? null : r2(linkOpen),
+      linkClose: linkClose === null ? null : r2(linkClose),
+      linkAccounts: common.length,
+      panelComplete: d >= panelCompleteFrom,
     };
     navHistory.push(point);
-    prevPoint = { date: d };
+    prevDate = d;
   }
 
-  notes.push(`navHistory: ${navHistory.length} dated point(s) from ${dates[0]} to ${dates.at(-1)}, `
+  const spanDays = Math.round((Date.parse(dates.at(-1)) - Date.parse(dates[0])) / 86400000);
+  notes.push(`navHistory: ${navHistory.length} dated point(s) from ${dates[0]} to ${dates.at(-1)} (${spanDays} days), `
     + `over the ${covered.length} account(s) that publish MORE THAN ONE dated valuation `
     + `(₹${(navHistory.at(-1).nav / 1e7).toFixed(2)} Cr at the last point, each dedupeGroup counted once). `
     + `${single.length} account(s) publish exactly one dated valuation and ${unvalued.length} publish none — `
     + "both are named in the coverage block rather than carried into the series as a flat line, "
     + "which would drag its return towards a figure nothing measured. "
-    + "The series starts where the composition is complete: an earlier start would climb because accounts ARRIVED.");
+    + `The panel is complete from ${panelCompleteFrom}; before that each link is struck over the accounts valued at `
+    + "BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book "
+    + "NAV from the date the panel completes, and is flagged per point.");
   const unreported = covered.filter((id) => flowBasis[id].basis === "unreported");
   if (unreported.length) {
     notes.push(`navHistory: ${unreported.length} covered account(s) publish no dated capital record and hold more than `
@@ -527,8 +582,272 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
       unvalued: unvalued.map((u) => ({ ...u, bookValue: r2(bookValueOf.get(u.accountId) ?? 0) })),
       from: dates[0],
       to: dates.at(-1),
+      panelCompleteFrom,
     },
+    // Handed on so `attributionFrom` reads the SAME authoritative document per
+    // account per date that the series does. Two selections of "which statement
+    // is the mark at this date" would be two chances for the bridge to
+    // reconcile to a NAV point the chart never drew.
+    snapshotsByAccount,
   };
+}
+
+
+/**
+ * ── RETURN ATTRIBUTION OVER A DATED WINDOW ──────────────────────────────────
+ *
+ * *"What was the attribution to those returns? So what did the benchmark do?
+ * What did I do? … which were the biggest detractors of returns?"*
+ *
+ * The archive has carried the answer for five deliveries and nothing read it.
+ * SIXTEEN accounts publish a VALUED holdings statement at two or more dates, and
+ * those statements are PER HOLDING — Goldstandard prints 32 rows at 10 July and
+ * 32 again at 11 August, SVAN 46 rows at three month-ends, Green Lantern 34 at
+ * two. Measured: 273 holdings are priced at BOTH ends of a window, over
+ * ₹128.05 Cr → ₹141.96 Cr. That is the seventh absence in this book recorded
+ * against a premise nobody rechecked, after FRED, the RBI, the release calendar,
+ * the ISIN tier, the NAV series itself and 3P's redemption on page 2.
+ *
+ * ── THE SPLIT IS EXACT, AND THAT IS THE WHOLE LICENCE FOR PUBLISHING IT ─────
+ *
+ * A statement's market value is quantity × price wherever it prints a price —
+ * rule 3, and MEASURED here rather than assumed: of 794 valued rows across the
+ * archive's holdings documents, 765 carry both and every one satisfies the
+ * identity to the paisa, 0 do not, and the other 29 carry no price at all. So
+ * for a holding priced at both ends
+ *
+ *   v₁ − v₀  =  q₀·(p₁ − p₀)  +  (q₁ − q₀)·p₁
+ *               └─ PRICE ──┘      └── TRADING ──┘
+ *
+ * with NO RESIDUAL. Nothing is apportioned, smoothed or fitted; both terms are
+ * arithmetic on four printed primitives. `priceEffect` is what the units held at
+ * the start earned, which is the only term that is performance — and it is the
+ * term the detractor ranking is struck on.
+ *
+ * ── FOUR TERMS, BECAUSE TWO WOULD HIDE THE LARGEST MOVEMENT IN THIS BOOK ────
+ *
+ * A holding that ENTERED the window contributes its whole closing value and one
+ * that EXITED its whole opening value. Folding either into `tradeEffect` would
+ * be defensible arithmetic and a bad answer: V.E.C 128005 runs ₹9.24 Cr →
+ * ₹20.29 Cr over its window, +119%, and essentially all of it is the ₹11.24 Cr
+ * of Fund Deposits `accountXirr.test.ts` already gates that account for. Split
+ * out, the bridge SHOWS that as capital rather than letting it sit inside a
+ * performance term. Same failure the flow adjustment already avoids one card up,
+ * arriving through a decomposition instead of an index.
+ *
+ * ── AND A ROW WITHOUT A PRICE IS ITS OWN TERM, NEVER ZERO ───────────────────
+ *
+ * Cash sleeves and AIF units marked at a total value carry no per-unit price, so
+ * no price/trading split exists for them. Their change lands in
+ * `undecomposedValue` and is NAMED. Assigning it to `priceEffect` would put
+ * money nobody measured into the one figure a reader acts on.
+ *
+ * ── WHAT IT COVERS, AND WHY EACH ACCOUNT KEEPS ITS OWN WINDOW ───────────────
+ *
+ * The statements do not share report dates — Green Lantern's pair is 25 June to
+ * 27 July, Carnelian's 10 July to 10 August, SVAN's 31 May to 31 July. Forcing
+ * one window would either discard accounts or credit an account with weeks of
+ * standing still, which is `pooledXirr`'s own finding (5.44 pp on a quarter).
+ * So each account is decomposed over ITS OWN first and last valued statement,
+ * the span of all of them is reported, and every per-holding row carries the two
+ * dates it was struck between.
+ *
+ * RULE 3 APPLIES HERE TOO. 360 ONE Special Opportunities is reported under both
+ * CRNs and both are covered, so one `dedupeGroup` is counted once — at its
+ * LATEST-DATED row, the same tie-break `navAt` uses. Counting both would put
+ * ₹1.46 Cr of one holding into the bridge twice and would rank a phantom
+ * contributor.
+ */
+function attributionFrom(snapshotsByAccount, positions, notes) {
+  /**
+   * THE COVERAGE FRACTION IS ON THE BOOK'S OWN BASIS, WHICH IS DEDUPED.
+   *
+   * A raw sum over `positions` reads ₹713.56 Cr against the ₹710.39 Cr the
+   * reader sees at the top of the page, because the 360 ONE holding is reported
+   * under two CRNs. Both are covered here, so the same ₹1.46 Cr would inflate
+   * the numerator AND the denominator of "how much of the book does this
+   * window cover" — a figure whose only job is to be checked against the
+   * headline. First member wins, exactly as `dedupedPositions` does in the app
+   * and `totalValue` does 1,400 lines below.
+   */
+  const seen = new Set();
+  let bookValue = 0;
+  const bookValueByAccount = new Map();
+  for (const p of positions) {
+    if (!isNum(p.marketValue)) continue;
+    if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+    bookValue += p.marketValue;
+    bookValueByAccount.set(p.accountId, (bookValueByAccount.get(p.accountId) ?? 0) + p.marketValue);
+  }
+  const accounts = [];
+  const rows = [];
+  /** Rule 3 — a dedupeGroup contributes to the bridge once, at its later row. */
+  const groupOwner = new Map();
+  for (const [accountId, { snaps }] of [...snapshotsByAccount.entries()].sort()) {
+    const last = snaps.at(-1);
+    for (const row of last.rows) {
+      if (!row.dedupeGroup) continue;
+      const cur = groupOwner.get(row.dedupeGroup);
+      if (!cur || last.date > cur.date || (last.date === cur.date && accountId < cur.accountId)) {
+        groupOwner.set(row.dedupeGroup, { date: last.date, accountId });
+      }
+    }
+  }
+  const counts = (accountId, row) =>
+    !row.dedupeGroup || groupOwner.get(row.dedupeGroup)?.accountId === accountId;
+
+  for (const [accountId, { snaps }] of [...snapshotsByAccount.entries()].sort()) {
+    if (snaps.length < 2) continue;
+    const a = snaps[0];
+    const b = snaps.at(-1);
+    const A = new Map(a.rows.filter((r) => counts(accountId, r)).map((r) => [r.securityKey, r]));
+    const B = new Map(b.rows.filter((r) => counts(accountId, r)).map((r) => [r.securityKey, r]));
+
+    let priceEffect = 0, tradeEffect = 0, enteredValue = 0, exitedValue = 0, undecomposedValue = 0;
+    let rowsHeld = 0, rowsEntered = 0, rowsExited = 0, rowsUnpriced = 0;
+
+    for (const [key, r1] of B) {
+      const r0 = A.get(key);
+      const base = {
+        securityKey: key,
+        security: r1.security,
+        accountId,
+        from: a.date,
+        to: b.date,
+        openValue: r0 ? r2(r0.marketValue) : null,
+        closeValue: r2(r1.marketValue),
+        openPrice: r0 && r0.marketPrice !== null ? r0.marketPrice : null,
+        closePrice: r1.marketPrice,
+        openQty: r0 && r0.quantity !== null ? r0.quantity : null,
+        closeQty: r1.quantity,
+      };
+      if (!r0) {
+        enteredValue += r1.marketValue;
+        rowsEntered++;
+        rows.push({ ...base, kind: "entered", priceEffect: null, tradeEffect: null, returnPct: null });
+        continue;
+      }
+      const priced = r0.marketPrice !== null && r1.marketPrice !== null
+        && r0.quantity !== null && r1.quantity !== null;
+      if (!priced) {
+        undecomposedValue += r1.marketValue - r0.marketValue;
+        rowsUnpriced++;
+        rows.push({ ...base, kind: "unpriced", priceEffect: null, tradeEffect: null, returnPct: null });
+        continue;
+      }
+      const pe = r0.quantity * (r1.marketPrice - r0.marketPrice);
+      const te = (r1.quantity - r0.quantity) * r1.marketPrice;
+      priceEffect += pe;
+      tradeEffect += te;
+      rowsHeld++;
+      rows.push({
+        ...base,
+        kind: "held",
+        priceEffect: r2(pe),
+        tradeEffect: r2(te),
+        returnPct: r0.marketValue > 0 ? r4((pe / r0.marketValue) * 100) : null,
+      });
+    }
+    for (const [key, r0] of A) {
+      if (B.has(key)) continue;
+      exitedValue += r0.marketValue;
+      rowsExited++;
+      rows.push({
+        securityKey: key,
+        security: r0.security,
+        accountId,
+        from: a.date,
+        to: b.date,
+        openValue: r2(r0.marketValue),
+        closeValue: null,
+        openPrice: r0.marketPrice,
+        closePrice: null,
+        openQty: r0.quantity,
+        closeQty: null,
+        kind: "exited",
+        priceEffect: null,
+        tradeEffect: null,
+        returnPct: null,
+      });
+    }
+
+    const openValue = sum([...A.values()].map((r) => r.marketValue));
+    const closeValue = sum([...B.values()].map((r) => r.marketValue));
+    /**
+     * THE BRIDGE MUST TIE, AND IT IS CHECKED HERE RATHER THAN HOPED FOR.
+     *
+     * open + price + trading + entered − exited + undecomposed = close, exactly,
+     * because every term is arithmetic on the same printed primitives. A gap
+     * above a rupee means a row was classified into two terms or none, so the
+     * ACCOUNT is dropped and NAMED rather than published with a bridge that
+     * does not add up — `hdfcNsdl.mjs`'s licence, applied to a decomposition.
+     */
+    const bridged = openValue + priceEffect + tradeEffect + enteredValue - exitedValue + undecomposedValue;
+    if (Math.abs(bridged - closeValue) > 1) {
+      notes.push(`attribution: ${accountId} is NOT published — its bridge misses by `
+        + `${(bridged - closeValue).toFixed(2)} over ${a.date} → ${b.date}, so a row landed in two terms or in `
+        + "none. Every term is arithmetic on printed primitives, so a gap is a defect and not a rounding.");
+      for (let i = rows.length - 1; i >= 0; i--) if (rows[i].accountId === accountId) rows.splice(i, 1);
+      continue;
+    }
+    accounts.push({
+      accountId,
+      from: a.date,
+      to: b.date,
+      days: Math.round((Date.parse(b.date) - Date.parse(a.date)) / 86400000),
+      openValue: r2(openValue),
+      closeValue: r2(closeValue),
+      priceEffect: r2(priceEffect),
+      tradeEffect: r2(tradeEffect),
+      enteredValue: r2(enteredValue),
+      exitedValue: r2(exitedValue),
+      undecomposedValue: r2(undecomposedValue),
+      rowsHeld, rowsEntered, rowsExited, rowsUnpriced,
+    });
+  }
+
+  if (!accounts.length) {
+    notes.push("attribution is EMPTY: no account in this archive publishes a valued holdings statement at two "
+      + "dates, so no holding is priced at both ends of a window and no contribution is measurable.");
+    return {
+      from: null, to: null, openValue: 0, closeValue: 0, priceEffect: 0, tradeEffect: 0,
+      enteredValue: 0, exitedValue: 0, undecomposedValue: 0,
+      bookValue: r2(bookValue), coveredBookValue: 0, accounts: [], rows: [],
+    };
+  }
+
+  const t = (f) => r2(sum(accounts.map((x) => x[f])));
+  const out = {
+    from: accounts.map((x) => x.from).sort()[0],
+    to: accounts.map((x) => x.to).sort().at(-1),
+    openValue: t("openValue"),
+    closeValue: t("closeValue"),
+    priceEffect: t("priceEffect"),
+    tradeEffect: t("tradeEffect"),
+    enteredValue: t("enteredValue"),
+    exitedValue: t("exitedValue"),
+    undecomposedValue: t("undecomposedValue"),
+    bookValue: r2(bookValue),
+    coveredBookValue: r2(sum(accounts.map((x) => bookValueByAccount.get(x.accountId) ?? 0))),
+    accounts,
+    // Sorted by the term the ranking is struck on, so the emitted file is stable
+    // and a page can take the head and the tail without re-sorting the book.
+    rows: rows.sort((x, y) =>
+      (y.priceEffect ?? -Infinity) - (x.priceEffect ?? -Infinity)
+      || x.accountId.localeCompare(y.accountId)
+      || x.securityKey.localeCompare(y.securityKey)),
+  };
+  const worst = out.rows.filter((r) => r.kind === "held").at(-1);
+  notes.push(`attribution: ${accounts.length} account(s) publish a valued holdings statement at two or more dates, `
+    + `so ${out.rows.filter((r) => r.kind === "held").length} holding(s) are priced at both ends of a window. `
+    + `Over ${out.from} → ${out.to} the covered set runs ₹${(out.openValue / 1e7).toFixed(2)} Cr → `
+    + `₹${(out.closeValue / 1e7).toFixed(2)} Cr, of which price ₹${(out.priceEffect / 1e7).toFixed(2)} Cr, `
+    + `trading ₹${(out.tradeEffect / 1e7).toFixed(2)} Cr, bought in ₹${(out.enteredValue / 1e7).toFixed(2)} Cr, `
+    + `sold out ₹${(out.exitedValue / 1e7).toFixed(2)} Cr. `
+    + (worst ? `Largest detractor ${worst.security} ₹${(worst.priceEffect / 1e5).toFixed(2)} L. ` : "")
+    + `It covers ₹${(out.coveredBookValue / 1e7).toFixed(2)} Cr of the book's ₹${(out.bookValue / 1e7).toFixed(2)} Cr; `
+    + "every other account publishes one statement, and one statement is a level rather than a change.");
+  return out;
 }
 
 // ── The family's own dated investments ───────────────────────────────────────
@@ -1805,9 +2124,14 @@ function build(docs) {
    * `navHistoryFrom` for what the archive actually carries and for the four
    * rules that keep the series from asserting a path nothing measured.
    */
-  const { navHistory, accountNavHistory, coverage: navCoverage } = navHistoryFrom(
+  const { navHistory, accountNavHistory, coverage: navCoverage, snapshotsByAccount } = navHistoryFrom(
     byAccount, new Set(accounts.map((a) => a.accountId)), dedupeByAcctSec, accountCashFlows, positions, notes,
   );
+  // Struck on the SAME snapshots the series is, so the bridge's opening and
+  // closing values are the same figures the chart plots. Deriving them again
+  // from the archive would be a second selection of "which statement is the
+  // mark at this date", which is the failure this repo names most often.
+  const attribution = attributionFrom(snapshotsByAccount, positions, notes);
   // The short/long split is produced wherever a lot register exists and left
   // NULL everywhere else — counted rather than asserted, so this note cannot go
   // stale the way its predecessor did (it claimed the split was impossible on
@@ -1842,7 +2166,7 @@ function build(docs) {
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     capitalMoves, positionTranches,
-    navHistory, accountNavHistory, navCoverage,
+    navHistory, accountNavHistory, navCoverage, attribution,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
@@ -1909,7 +2233,7 @@ function emit(book) {
   L.push("// list and what document would supply each.");
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
-  L.push("  CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
+  L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  RealisedByClass, StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
@@ -1974,6 +2298,18 @@ function emit(book) {
   L.push(" * `unreported` (neither — a capital movement there would read as performance).");
   L.push(" */");
   L.push(`export const BOOK_NAV_COVERAGE: NavCoverage = ${j(book.navCoverage)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * RETURN ATTRIBUTION over each covered account's own dated window — the exact");
+  L.push(" * four-term bridge from the opening value to the closing one, plus every");
+  L.push(" * holding priced at BOTH ends with its own price and trading effect.");
+  L.push(" *");
+  L.push(" * `open + price + trading + entered - exited + undecomposed = close`, to the");
+  L.push(" * rupee, because market value is quantity x price on every priced row in this");
+  L.push(" * archive. An account whose bridge does not tie is NOT PUBLISHED and is named");
+  L.push(" * in the run's notes. See `attributionFrom` in build-book.mjs.");
+  L.push(" */");
+  L.push(`export const BOOK_ATTRIBUTION: Attribution = ${j(book.attribution)};`);
   L.push("");
   L.push("/**");
   L.push(" * Realised short/long-term gains as the MANAGER split them, per account.");

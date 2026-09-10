@@ -1529,6 +1529,109 @@ const crU = (n, unit) => cr(n) * (unit === "Cr" ? 1 : unit === "L" ? 0.01 : unit
 const notChecked = (why) => ({ notChecked: why });
 
 /**
+ * ── THE ATTRIBUTION, DERIVED FROM THE GENERATED BOOK ────────────────────────
+ *
+ * Every expectation the attribution invariants use comes from `glowData.ts` on
+ * each run: how many accounts carry a window, how many holdings are priced at
+ * both ends, the largest contributor and the largest detractor by name, and the
+ * covered fraction. A literal here would be a second source for a figure
+ * `build-book` generates, and it would go stale on the next drop.
+ *
+ * The ranking is RE-DERIVED rather than imported from `src/lib/attribution.ts`:
+ * a check that imports the helper it is checking agrees with it by
+ * construction, which is the rule `FUND_CLASS_BOOK` and `PRIVATE_QUOTABLE`
+ * already follow one card over.
+ */
+const ATTRIB_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const grab = (name, open) => {
+      const i = src.indexOf(`export const ${name}`);
+      if (i < 0) return null;
+      const eq = src.indexOf("=", i);
+      const start = src.indexOf(open, eq);
+      const close = open === "[" ? "\n];" : "\n};";
+      const end = src.indexOf(close, start);
+      if (start < 0 || end < 0) return null;
+      return JSON.parse(src.slice(start, end + 2));
+    };
+    const a = grab("BOOK_ATTRIBUTION", "{");
+    const summary = grab("BOOK_SUMMARY", "{");
+    const nav = grab("BOOK_NAV_HISTORY", "[");
+    const cov = grab("BOOK_NAV_COVERAGE", "{");
+    const accounts = grab("BOOK_ACCOUNTS", "[");
+    if (!a || !summary || !nav || !cov || !accounts) return null;
+    const held = a.rows.filter((r) => r.kind === "held");
+    const by = new Map();
+    for (const r of held) {
+      const cur = by.get(r.securityKey) ?? { key: r.securityKey, name: r.security, pe: 0, open: 0, n: 0 };
+      cur.pe += r.priceEffect; cur.open += r.openValue; cur.n++;
+      by.set(r.securityKey, cur);
+    }
+    const ranked = [...by.values()].sort((x, y) => y.pe - x.pe || x.name.localeCompare(y.name));
+    return {
+      accounts: a.accounts.length,
+      accountsTotal: accounts.length,
+      held: held.length,
+      names: ranked.length,
+      gainers: ranked.filter((r) => r.pe > 0).length,
+      losers: ranked.filter((r) => r.pe < 0).length,
+      best: ranked[0] ?? null,
+      worst: ranked[ranked.length - 1] ?? null,
+      multi: ranked.filter((r) => r.n > 1).length,
+      openValue: a.openValue,
+      closeValue: a.closeValue,
+      priceEffect: a.priceEffect,
+      bookValue: a.bookValue,
+      coveredBookValue: a.coveredBookValue,
+      from: a.from,
+      to: a.to,
+      // The accounts whose every row is unpriced — their price and trading
+      // cells must be ABSENT rather than a fabricated zero.
+      unpricedAccounts: a.accounts.filter((x) => x.rowsHeld === 0).map((x) => x.accountId),
+      /**
+       * THE BOOK'S RETURN, CHAINED TWO WAYS — the right one and the wrong one.
+       *
+       * Reproduced here from the emitted points, on a path the page does not
+       * take, so the pill can be checked against the book rather than against
+       * another rendering of itself. `byLink` divides each interval's closing
+       * end by its OPENING END OVER THE SAME ACCOUNTS; `byLevel` divides the
+       * whole marked panel by the previous one and therefore counts every
+       * account that ARRIVED. On this book they are +5.09% and +398.76%, and
+       * the second is what the card printed for one build of this change with
+       * the whole sweep reporting clean — which is why this exists.
+       */
+      chainByLink: (() => {
+        let x = 100;
+        for (let i = 1; i < nav.length; i++) {
+          const p = nav[i];
+          const open = p.linkOpen ?? nav[i - 1].nav;
+          if (open > 0) x *= ((p.linkClose ?? p.nav) - (p.flowIn ?? 0)) / open;
+        }
+        return x - 100;
+      })(),
+      chainByLevel: (() => {
+        let x = 100;
+        for (let i = 1; i < nav.length; i++) {
+          if (nav[i - 1].nav > 0) x *= (nav[i].nav - (nav[i].flowIn ?? 0)) / nav[i - 1].nav;
+        }
+        return x - 100;
+      })(),
+      // The series' own extension, which is the other half of this change.
+      seriesPoints: nav.length,
+      seriesFrom: nav[0]?.date ?? null,
+      seriesTo: nav[nav.length - 1]?.date ?? null,
+      panelCompleteFrom: cov.panelCompleteFrom ?? null,
+      completePanelPoints: nav.filter((p) => p.panelComplete !== false).length,
+      panelFirst: (nav[0]?.accountsOnDate ?? 0) + (nav[0]?.accountsCarried ?? 0),
+      panelLast: (nav[nav.length - 1]?.accountsOnDate ?? 0) + (nav[nav.length - 1]?.accountsCarried ?? 0),
+      totalValue: summary.totalValue,
+    };
+  } catch { return null; }
+})();
+
+
+/**
  * ── THE HOLDINGS TABLE IS SECTIONED BY BUCKET, AND THE SECTIONS ARE READ HERE ──
  *
  * The family asked three times for one thing and the first two rounds answered
@@ -4217,6 +4320,302 @@ const INVARIANTS = {
       /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
 
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+
+    /**
+     * ── RETURN ATTRIBUTION ────────────────────────────────────────────────
+     *
+     * *"Build return attribution over a period, against the benchmark … which
+     * were the biggest detractors of returns?"*
+     *
+     * On `cio` rather than `cio-live` because every figure here comes from
+     * `BOOK_ATTRIBUTION`, which is baked into the bundle: the card renders whole
+     * with no feed at all, and only the Nifty 500 pill beside it needs one. Each
+     * was verified by reintroducing its bug.
+     *
+     * A MISSING CARD IS A FAILURE, NOT AN ABSTENTION — the book carries a
+     * window, so a page that stopped drawing it must go red rather than
+     * reporting NOT CHECKED on eight lines. `ATTRIB_BOOK` decides that, off
+     * `glowData.ts`, so a drop that genuinely leaves no account with two dated
+     * statements abstains honestly instead.
+     */
+    ["the return attribution card renders", (t, ctx) => {
+      if (!ATTRIB_BOOK) return notChecked("the generated book could not be read on this run");
+      if (ATTRIB_BOOK.accounts < 2) return notChecked("this book carries fewer than two account windows");
+      return !!ctx?.attrib && ctx.attrib.steps.length >= 5;
+    }],
+
+    /**
+     * THE BRIDGE ADDS TO ITS OWN CLOSING VALUE, ON THE RENDERED CELLS.
+     *
+     * The one claim that makes publishing a decomposition defensible, struck on
+     * what the reader can actually add up rather than on the generated object —
+     * a card that dropped a step would still reconcile against `glowData.ts`
+     * and would not reconcile against itself. The bound is the page's own
+     * printing precision reproduced: every cell is one decimal in Cr, so six
+     * cells carry at most seven half-digits of rounding. A dropped step moves
+     * it by crores.
+     */
+    ["the bridge's steps add to its own printed closing value", (t, ctx) => {
+      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
+      const val = (key) => {
+        const row = ctx.attrib.steps.find((r) => r.key === key);
+        if (!row) return null;
+        const m = /([+−-]?)₹([\d.,]+)\s*(Cr|L|K)?/.exec(row.cells[1] ?? "");
+        if (!m) return null;
+        return (m[1] === "−" || m[1] === "-" ? -1 : 1) * crU(m[2], m[3]);
+      };
+      const open = val("open"), close = val("close");
+      if (open == null || close == null) return false;
+      const steps = ctx.attrib.steps
+        .filter((r) => r.key !== "open" && r.key !== "close")
+        .map((r) => val(r.key));
+      if (steps.some((x) => x == null) || steps.length < 4) return false;
+      return Math.abs(open + steps.reduce((a, b) => a + b, 0) - close) <= 0.35;
+    }],
+
+    /**
+     * EXACTLY ONE STEP IS LABELLED PERFORMANCE, AND IT IS THE PRICE STEP.
+     *
+     * The distinction is the whole reason for decomposing: V.E.C 128005 runs
+     * +119% over its window and nearly all of it is a ₹11.24 Cr deposit. A card
+     * that labelled Trading or Bought in as performance would read as a mandate
+     * that earned the money it was handed.
+     */
+    ["exactly one bridge step is labelled performance, and it is Price", (t, ctx) => {
+      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
+      // NO `\b` — the badge is an inline span, so the cell reads
+      // "PricePERFORMANCE" with no separator and a word boundary between "e"
+      // and "P" does not exist. Matching on the boundary reported zero
+      // performance steps on a card that draws exactly one.
+      const perf = ctx.attrib.steps.filter((r) => /performance/i.test(r.cells[0] ?? ""));
+      return perf.length === 1 && /^Price/.test(perf[0].cells[0] ?? "");
+    }],
+
+    /**
+     * THE RANKING NAMES THE BOOK'S OWN BEST AND WORST — derived on each run, so
+     * this cannot go stale when the next drop moves the book, and a card ranking
+     * on the wrong term (raw change in value rather than the price effect) puts
+     * a different name at the head of each list.
+     */
+    ["the contributor and detractor lists lead with the book's own extremes", (t, ctx) => {
+      if (!ctx?.attrib || !ATTRIB_BOOK?.best || !ATTRIB_BOOK?.worst) {
+        return notChecked("the attribution card or the generated ranking was unavailable");
+      }
+      const g = ctx.attrib.gainers[0], l = ctx.attrib.losers[0];
+      return !!g && !!l && g.key === ATTRIB_BOOK.best.key && l.key === ATTRIB_BOOK.worst.key;
+    }],
+
+    /**
+     * A NAME HELD IN SEVERAL ACCOUNTS IS ONE ROW, AND SAYS SO.
+     *
+     * Today's movers' own rule arriving through a window. Ranked per statement
+     * row instead, Ather Energy takes two of the top five slots and understates
+     * its own impact in both. Gated on the BOOK carrying such a name, so a drop
+     * where none does abstains rather than passing on an untested aggregation.
+     */
+    ["a name held in more than one account is one ranked row, and names the count", (t, ctx) => {
+      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
+      if (!ATTRIB_BOOK.multi) return notChecked("no name in this book is priced at both ends in two accounts");
+      const rows = [...ctx.attrib.gainers, ...ctx.attrib.losers];
+      const keys = rows.map((r) => r.key);
+      if (new Set(keys).size !== keys.length) return false;
+      return rows.some((r) => /\d+ accounts, added/.test(r.cells[0] ?? ""));
+    }],
+
+    /**
+     * AN ACCOUNT WITH NO PRICED ROW SHOWS AN ABSENCE, NEVER A ZERO.
+     *
+     * 360 ONE holds one AIF unit line marked at a total value with no per-unit
+     * price, and its value still moved ₹1.44 Cr → ₹1.47 Cr. Printed `+₹0` that
+     * reads "this mandate went nowhere", which is a measurement nothing made —
+     * §2, arriving inside a decomposition.
+     */
+    ["an account with no priced holding renders an absence with its reason", (t, ctx) => {
+      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
+      if (!ATTRIB_BOOK.unpricedAccounts.length) {
+        return notChecked("every covered account in this book carries at least one priced holding");
+      }
+      const rows = ATTRIB_BOOK.unpricedAccounts
+        .map((id) => ctx.attrib.accounts.find((r) => r.key === id))
+        .filter(Boolean);
+      if (rows.length !== ATTRIB_BOOK.unpricedAccounts.length) return false;
+      // MATCHED ON THE PHRASE THE CELL ACTUALLY CARRIES. The first draft looked
+      // for "no per-unit price"; the reason reads "No holding in this account
+      // carries a per-unit price on both statements", so the check failed a card
+      // rendering exactly what it asks for — a check struck on a paraphrase of
+      // the sentence rather than on the sentence.
+      return rows.every((r) => /—/.test(r.cells[3] ?? "") && !/₹0/.test(r.cells[3] ?? "")
+        && r.titles.some((x) => /per-unit price on both statements/i.test(x)));
+    }],
+
+    /**
+     * AND EVERY PER-ACCOUNT ROW TIES ACROSS ITS OWN COLUMNS.
+     *
+     * This is why the "Not split" column exists: without it 360 ONE reads open
+     * ₹1.44 Cr, price ₹0, trading ₹0, in/out —, close ₹1.47 Cr, and a reader who
+     * adds the printed cells and gets a third answer has found a contradiction
+     * no popover rescues. The check was written by finding exactly that on the
+     * first sweep of this card.
+     */
+    ["every per-account row adds across its own columns", (t, ctx) => {
+      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
+      const num = (cell) => {
+        const txt = String(cell ?? "");
+        if (/^\s*—\s*$/.test(txt)) return 0;
+        let total = 0;
+        const re = /([+−-]?)₹([\d.,]+)\s*(Cr|L|K)?/g;
+        let m, seen = 0;
+        while ((m = re.exec(txt))) {
+          total += (m[1] === "−" || m[1] === "-" ? -1 : 1) * crU(m[2], m[3]);
+          seen++;
+        }
+        return seen ? total : null;
+      };
+      if (!ctx.attrib.accounts.length) return false;
+      return ctx.attrib.accounts.every((r) => {
+        const [, , open, price, trade, inout, unsplit, close] = r.cells;
+        const vals = [open, price, trade, inout, unsplit, close].map(num);
+        if (vals.some((v) => v === null)) return false;
+        const [o, p, tr, io, us, c] = vals;
+        // The bound is the page's own precision: six cells at one decimal in Cr.
+        return Math.abs(o + p + tr + io + us - c) <= 0.35;
+      });
+    }],
+
+    /**
+     * THE ONE-YEAR ROWS PAIR ON ONE DOCUMENT, AND NO BOOK-WIDE ONE IS STRUCK.
+     *
+     * Both halves, and the second cannot be seen by any value check: a card that
+     * averaged these into a single figure would render a perfectly plausible
+     * percentage. The refusal is the deliverable, so it is asserted in words —
+     * and the coverage count beside it is derived, so a card that quietly
+     * dropped a mandate fails.
+     */
+    ["the one-year table names each mandate's own benchmark and strikes no book-wide figure", (t, ctx) => {
+      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
+      const rows = ctx.attrib.years;
+      if (rows.length < 3) return false;
+      // Every row names a benchmark and an active figure derived from it.
+      const paired = rows.every((r) => /[A-Za-z]/.test(r.cells[2] ?? "") && /%/.test(r.cells[2] ?? "")
+        && /%/.test(r.cells[3] ?? ""));
+      const distinct = new Set(rows.map((r) => (r.cells[2] ?? "").split(" ")[0])).size > 1;
+      const refuses = /no book-wide one-year return here and there cannot be one/i.test(ctx.attrib.yearMissing);
+      return paired && distinct && refuses;
+    }],
+
+    /**
+     * AND THE ABSENCE IS STATED WITH THE DOCUMENT THAT WOULD FILL IT.
+     *
+     * *"What was my portfolio value in end of August 2025?"* — the archive's
+     * earliest dated valuation of any kind is 2026-03-31, so the answer is a
+     * refusal, and a refusal that does not name its remedy sends a reader to
+     * look for a dashboard bug. Struck on the card's own block, and it must
+     * NAME the series' own start rather than a typed date.
+     */
+    ["the card states what it cannot reach, and what would fill it", (t, ctx) => {
+      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
+      const c = ctx.attrib.cannot;
+      return c.includes(ATTRIB_BOOK.seriesFrom)
+        && /holdings statement per account dated on or before/i.test(c)
+        && /2026-03-31/.test(c)
+        && /a level is not a change/i.test(c);
+    }],
+
+    /**
+     * ── THE SERIES ITSELF REACHES BACK PAST THE COMPLETE PANEL ──────────────
+     *
+     * *"fix this portfolio NAV, we are only able to see portfolio NAV for a very
+     * short period of time."* The window went 34 days to 74 because each link is
+     * struck over the accounts valued at both its ends. Asserted on the card's
+     * own subtitle against the book, so a build that reverted to the old start
+     * fails by name rather than merely drawing a shorter line nobody measures.
+     */
+    ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (!ATTRIB_BOOK.panelCompleteFrom || ATTRIB_BOOK.panelCompleteFrom === ATTRIB_BOOK.seriesFrom) {
+        return notChecked("this book's panel is complete at the series' first point");
+      }
+      return head.includes(ATTRIB_BOOK.seriesFrom)
+        && new RegExp(`${ATTRIB_BOOK.seriesPoints} dated points`).test(head);
+    }],
+
+    /**
+     * AND IT SAYS HOW MUCH OF THE BOOK EACH STRETCH OF THE LINE MEASURES.
+     *
+     * The cost of reaching back is that the early links cover four accounts
+     * where the late ones cover thirteen. A reader comparing this line to an
+     * index needs that, and it is the one thing no figure on the card discloses
+     * on its own.
+     */
+    /**
+     * ── THE BOOK PILL IS THE LINK-CHAINED RETURN, AND NOT THE LEVEL-CHAINED
+     *    ONE ────────────────────────────────────────────────────────────────
+     *
+     * THIS CHECK EXISTS BECAUSE THE SWEEP MISSED THE BUG IT IS FOR. Reverting
+     * `navIndexSeries` to divide each point's whole-panel NAV by the previous
+     * one — which is what it did before the series reached back past the
+     * complete panel — makes the Book pill read +398.76% instead of +5.09%,
+     * because every account that ARRIVED lands in the return. Every existing
+     * invariant on this card stayed green: they check the header's shape, the
+     * chart's geometry and the panel sentence, and not one of them looks at the
+     * MAGNITUDE of the figure. `test:family` catches it; the screen is where a
+     * reader would have believed it.
+     *
+     * Struck against the book, on a path the page does not take, and against
+     * the WRONG chaining too — a pill that matched neither would satisfy an
+     * equality check written only one way round.
+     */
+    ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      const m = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      if (!m) return false;
+      const shown = Number(m[1]);
+      // The pill prints one decimal, so the bound is that precision reproduced.
+      if (Math.abs(shown - ATTRIB_BOOK.chainByLink) > 0.05) return false;
+      // …and the two chainings must actually differ on this book, or the check
+      // asserts nothing and must be re-read rather than passing.
+      return Math.abs(ATTRIB_BOOK.chainByLevel - ATTRIB_BOOK.chainByLink) > 1;
+    }],
+
+    /**
+     * ── THE RAW NAV LINE STOPS WHERE THE PANEL DOES ────────────────────────
+     *
+     * ALSO WRITTEN BECAUSE THE SWEEP MISSED THE BUG. Rebasing the dashed line at
+     * the series' FIRST point instead of at the complete panel draws it climbing
+     * ~440% in six weeks, every rupee of it an account arriving — and it blows
+     * the y-axis domain out so far that both real lines flatten to a straight
+     * edge. Every existing check stayed green: the hover's pair is computed
+     * separately and stays right, and nothing looked at how far the curve
+     * extends.
+     *
+     * A chart claim is checked on the chart. The dashed curve must carry exactly
+     * the complete-panel points and the book's curve the whole series, both
+     * counted off the emitted book — so a build that drew either over the wrong
+     * span fails, in whichever direction.
+     */
+    ["the raw NAV curve covers only the complete panel, and the book's covers the whole series", (t, ctx) => {
+      const counts = ctx?.navChart?.vertexCounts;
+      if (!counts || !ATTRIB_BOOK) return notChecked("the NAV chart was not found on this pass");
+      if (ATTRIB_BOOK.completePanelPoints >= ATTRIB_BOOK.seriesPoints) {
+        return notChecked("this book's panel is complete at the series' first point");
+      }
+      // recharts emits one command per plotted vertex on a monotone curve.
+      return counts.includes(ATTRIB_BOOK.completePanelPoints)
+        && counts.includes(ATTRIB_BOOK.seriesPoints);
+    }],
+
+    ["the NAV card names the panel it grows through", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (ATTRIB_BOOK.panelFirst >= ATTRIB_BOOK.panelLast) {
+        return notChecked("this book's panel does not grow inside the series");
+      }
+      return new RegExp(`${ATTRIB_BOOK.panelFirst} to ${ATTRIB_BOOK.panelLast} accounts`).test(head)
+        && head.includes(ATTRIB_BOOK.panelCompleteFrom);
+    }],
+
   /**
    * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
    *
@@ -4258,15 +4657,30 @@ const INVARIANTS = {
       const head = navHead(ctx);
       if (head == null) return notChecked("the NAV card's header was not on screen on this run");
       const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      /**
+       * THE HOVER CARRIES BOTH ENDS AND NAMES ITS OWN WINDOW.
+       *
+       * This used to require the header's Book pill to EQUAL the hover's
+       * adjusted figure, which held while both covered the same 34 days. They no
+       * longer do: the adjusted line is chain-linked back to 74 days and the raw
+       * one is undefined before the panel completes, so the hover's pair is
+       * struck over the segment the raw line has and the pill over the series.
+       * Requiring them to match would fail a card that is right, and — worse —
+       * would have been satisfied by "fixing" the card to compare 74 days with
+       * 34 and call the extra weeks a deposit.
+       *
+       * So the claim is that both figures survived, that they differ (or the
+       * adjustment is doing nothing and this asserts nothing), and that the
+       * hover SAYS which window its pair is over — because two returns a reader
+       * cannot date are two returns a reader will pair with the pill.
+       */
       const raw = (ctx?.titles ?? [])
-        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*against the book's\s*([+-]\d+\.\d+)%/.exec(x))
+        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
         .find(Boolean);
       if (!book || !raw) return false;
-      // The pill and the hover must agree about the adjusted figure…
-      if (Number(book[1]) !== Number(raw[2])) return false;
-      // …and the two measurements must DIFFER, or the adjustment is doing
-      // nothing and this check is asserting nothing.
-      return Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
+      const named = (ctx?.titles ?? []).some((x) =>
+        /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
+      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
     }],
   /**
    * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
@@ -6629,12 +7043,30 @@ const INVARIANTS = {
         const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
         const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
         if (!book || !idx) return false;
-        // The raw NAV moved onto the toggle's hover with the paragraph that
-        // carried it; the claim is unchanged.
-        const raw = (ctx?.titles ?? [])
-          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*against the book/.exec(x))
+        /**
+         * THE RAW NAV IS ON THE TOGGLE'S HOVER, AND IT NAMES BOTH ENDS.
+         *
+         * This used to close with `Number(book[1]) < Number(idx[1])` — on the
+         * fixture the index rises ~1.26% and the adjusted book +0.54%, so the
+         * book had to read BELOW it. That calibration was struck on the 34-day
+         * complete-panel window and stopped holding the day the series was
+         * chain-linked back to 74 days: the book reads +5.09% over the longer
+         * window and the comparison inverts on a card that is correct. It was
+         * the FIXTURE's outcome standing in for the claim.
+         *
+         * The claim is structural and is asserted as such: the headline must
+         * carry the ADJUSTED figure rather than the raw one, and the hover's own
+         * pair must show the raw above the adjusted — which is what says capital
+         * entered this window and the adjustment is doing work. A card that put
+         * the raw curve in the headline fails the first; a book with no flows in
+         * it fails the second and must be re-read rather than passing.
+         */
+        const pair = (ctx?.titles ?? [])
+          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
           .find(Boolean);
-        return !!raw && Number(book[1]) !== Number(raw[1]) && Number(book[1]) < Number(idx[1]);
+        if (!pair) return false;
+        const rawPct = Number(pair[1]), adjPct = Number(pair[2]);
+        return Number(book[1]) !== rawPct && rawPct - adjPct > 1 && Number(idx[1]) !== rawPct;
       }],
   ],
 
@@ -8672,6 +9104,33 @@ const INVARIANTS = {
    * the arrival of its data is the same defect as the absence itself, and it is
    * caught by nothing unless it is asserted.
    */
+  /**
+   * ── /performance's NAV TRAJECTORY: THE ABSENCE IS GONE AND THE SERIES IS
+   *    THERE ─────────────────────────────────────────────────────────────────
+   *
+   * That card rendered "No valuation series in this book · each account's
+   * statements carry exactly two dated portfolio values" for five deliveries
+   * after it stopped being true — the SIXTH absence in this book recorded
+   * against a premise nobody rechecked. It now draws the same `<NavVsIndex />`
+   * Morning CIO does.
+   *
+   * BOTH HALVES, AND NEITHER IMPLIES THE OTHER: a build that deleted the card
+   * outright satisfies the absence check and draws nothing, and one that kept
+   * the old wording above a working chart satisfies the second. A removal is
+   * verified by asserting it happened.
+   */
+  performance: [
+    ["the stale 'no valuation series' absence is gone", (t) =>
+      !/No valuation series in this book/i.test(t)
+      && !/two points are not a trajectory/i.test(t)],
+    ["and the dated series is drawn here, over the whole measured span", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      return head.includes(ATTRIB_BOOK.seriesFrom) && head.includes(ATTRIB_BOOK.seriesTo)
+        && new RegExp(`${ATTRIB_BOOK.seriesPoints} dated points`).test(head);
+    }],
+  ],
+
   history: [
     /**
      * EVERY ONE OF THESE IS CASE-INSENSITIVE AND THE COLUMN ONES ARE STRUCK ON
@@ -9572,6 +10031,11 @@ for (const theme of THEMES) {
           // counter that reads 1 for every curve cannot tell a sampled line from
           // a daily one, which is the only thing it exists to do.
           vertices: Math.max(0, ...paths.map((e) => ((e.getAttribute("d") ?? "").match(/[MLC]/g) ?? []).length)),
+          // PER CURVE, not the maximum — the dashed raw-NAV line is only defined
+          // where the panel is complete, and the only way to see that it has
+          // stopped being is to count ITS vertices rather than the longest
+          // curve's. See the invariant that reads it.
+          vertexCounts: paths.map((e) => ((e.getAttribute("d") ?? "").match(/[MLC]/g) ?? []).length),
           xTicks: [...el.querySelectorAll(".recharts-xAxis .recharts-cartesian-axis-tick-value")]
             .map((e) => (e.textContent ?? "").trim()),
           yTicks: el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick").length,
@@ -9586,6 +10050,50 @@ for (const theme of THEMES) {
           // as an element because every text boundary tried here turned out to
           // be something the page is free to print; see `navHead`.
           head: (card?.firstElementChild?.innerText ?? "").trim(),
+        };
+      });
+      /**
+       * THE RETURN ATTRIBUTION CARD, READ STRUCTURALLY.
+       *
+       * Every claim about this card is arithmetic — the bridge adds to the
+       * closing value, the ranking sums to the price step, a per-account row
+       * ties across its own columns — and none of it can be struck on prose
+       * that a redesign is free to reword. `data-bridge-step`,
+       * `data-attrib-row` and `data-account-window` carry it, the same contract
+       * `data-section` and `data-mandate` already keep.
+       */
+      const attrib = FAST ? null : await page.evaluate(() => {
+        const bridge = document.querySelector('[data-testid="attrib-bridge"]');
+        if (!bridge) return null;
+        const card = bridge.closest(".card");
+        /**
+         * `textContent`, NOT `innerText` — the per-account table lives inside a
+         * collapsed `<details>`, and `innerText` returns "" for everything
+         * inside one. Read that way, eight cells of figures came back empty and
+         * the row-ties-across-its-columns check failed a page that was correct.
+         * The same trap `ctx.titles` was added for, one element deeper.
+         */
+        const cells = (tr) => [...tr.cells].map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim());
+        const rowsOf = (sel) => [...(card?.querySelectorAll(sel) ?? [])].map((tr) => ({
+          key: tr.getAttribute("data-attrib-row") ?? tr.getAttribute("data-account-window")
+            ?? tr.getAttribute("data-year-row") ?? tr.getAttribute("data-bridge-step"),
+          priceEffect: tr.getAttribute("data-price-effect"),
+          cells: cells(tr),
+          titles: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? ""),
+          links: [...tr.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
+        }));
+        return {
+          steps: rowsOf("[data-bridge-step]"),
+          gainers: rowsOf('[data-testid="attrib-gainers"] tbody tr[data-attrib-row]'),
+          losers: rowsOf('[data-testid="attrib-losers"] tbody tr[data-attrib-row]'),
+          years: rowsOf("tr[data-year-row]"),
+          accounts: rowsOf("tr[data-account-window]"),
+          accountHead: [...(card?.querySelectorAll('[data-testid="attrib-accounts"] thead th') ?? [])]
+            .map((th) => (th.innerText ?? "").trim()),
+          subtitle: (card?.firstElementChild?.innerText ?? "").trim(),
+          cannot: (card?.querySelector('[data-testid="attrib-cannot"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
+          yearCoverage: (card?.querySelector('[data-testid="attrib-year-coverage"]')?.innerText ?? "").trim(),
+          yearMissing: (card?.querySelector('[data-testid="attrib-year-missing"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
         };
       });
       /**
@@ -10289,7 +10797,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

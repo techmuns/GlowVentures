@@ -33,6 +33,7 @@ import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
+import { ReturnAttribution } from "@/components/ReturnAttribution";
 import { TodaysMovers } from "@/components/TodaysMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
 
@@ -1424,6 +1425,22 @@ export function MorningCIO() {
             cannot supply one are NAMED — which is the rest of the same request.
             See `navHistoryFrom` in build-book.mjs and `NavVsIndex`. */}
         <NavVsIndex />
+      </div>
+
+      {/* ── RETURN ATTRIBUTION ───────────────────────────────────────────────
+          *"Build return attribution over a period, against the benchmark …
+          which were the biggest detractors of returns? All of these questions
+          in my mind, these should be visible in this section."*
+
+          It sits directly under the NAV chart because it decomposes THAT LINE:
+          the covered set, the window and the closing value are the same figures
+          the chart plots, struck in `attributionFrom` off the same snapshots
+          `navHistoryFrom` draws from. Two selections of "which statement is the
+          mark at this date" would let the bridge reconcile to a point the chart
+          never drew — the failure this repo names most often, and the reason
+          both go through one function. */}
+      <div className="mt-6">
+        <ReturnAttribution />
       </div>
 
       {/* ── THE ROADMAP PLACEHOLDER IS GONE ─────────────────────────────────
