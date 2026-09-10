@@ -226,6 +226,45 @@ export const SECTOR_MAP = {
   "IT - Services": "Information Technology",
   // Communications EQUIPMENT is IT under GICS, where the carriers above are not.
   "Telecom - Equipment & Accessories": "Information Technology",
+
+  // ── screener.in's SECTOR level ─────────────────────────────────────────────
+  //
+  // The third tier (`npm run build-sectors`) reads the classification
+  // screener.in publishes against an NSE symbol, and resolves it HERE rather
+  // than through a private table of its own — a vendor taxonomy mapped by a
+  // second map would be a second definition of what a GICS sector is.
+  //
+  // Measured over the 163 company shares in this book that carry a symbol,
+  // screener produces 19 distinct sector labels and the block above already
+  // answered 15 of them. These are the four it did not, listed as screener
+  // prints them and nothing inferred:
+  "Metals & Mining": "Materials",
+  "Oil, Gas & Consumable Fuels": "Energy",
+  // GICS files exhibition, broadcasting and publishing under Communication
+  // Services, which is where its own "Movies & Entertainment" industry sits —
+  // NOT under Consumer Discretionary, where several Indian providers put them.
+  // This book's rule is that the family's OWN statement wins wherever it has
+  // one, so a provider that disagrees keeps its answer and this fills a gap.
+  "Media, Entertainment & Publication": "Communication Services",
+
+  // ── The GICS names themselves, which are their own answer ──────────────────
+  //
+  // NOT AN INFERENCE — the identity function on the target vocabulary. A source
+  // that prints "Information Technology" has named a GICS sector, and the map
+  // carried no key for it, so ten of this book's holdings resolved to nothing
+  // against a label that IS the answer. Every one of the eleven is listed, so
+  // the next vendor to print a bare GICS name is not a fresh gap.
+  "Communication Services": "Communication Services",
+  "Consumer Discretionary": "Consumer Discretionary",
+  "Consumer Staples": "Consumer Staples",
+  "Energy": "Energy",
+  "Financials": "Financials",
+  "Health Care": "Health Care",
+  "Industrials": "Industrials",
+  "Information Technology": "Information Technology",
+  "Materials": "Materials",
+  "Real Estate": "Real Estate",
+  "Utilities": "Utilities",
 };
 
 /**
