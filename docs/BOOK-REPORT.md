@@ -136,14 +136,14 @@ A per-contribution breakdown is published for **7** position(s), of which **2** 
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 6,09,70,30,101.55 | 85.83% |
+| Unclassified | 6,09,66,55,401.55 | 85.82% |
 | Financials | 25,85,86,623.95 | 3.64% |
 | Health Care | 19,08,15,090.8 | 2.69% |
 | Consumer Discretionary | 18,37,36,315.22 | 2.59% |
 | Industrials | 14,49,38,189.09 | 2.04% |
 | Cash | 11,57,87,076.72 | 1.63% |
 | Information Technology | 7,15,96,197.78 | 1.01% |
-| Materials | 2,35,59,866.25 | 0.33% |
+| Materials | 2,39,34,566.25 | 0.34% |
 | Consumer Staples | 2,28,13,806.84 | 0.32% |
 | Communication Services | 1,10,42,228.2 | 0.16% |
 | Utilities | 99,62,509.52 | 0.14% |
@@ -160,7 +160,6 @@ never guessed into the nearest plausible bucket.
 - **Shipping** — 2 position(s)
 - **Oil Equipment & Services** — 2 position(s)
 - **OTHERS** — 2 position(s)
-- **CHEMICALS** — 1 position(s)
 - **BASIC MATERIALS** — 4 position(s)
 - **INFORMATION TECHNOLOGY** — 1 position(s)
 

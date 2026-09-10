@@ -138,14 +138,103 @@ export const SECTOR_MAP = {
   "Construction Materials": "Materials",
   "Telecommunication": "Communication Services",
   "Power": "Utilities",
+
+  // ── AMFI / SEBI INDUSTRY LABELS ────────────────────────────────────────────
+  //
+  // The block above is that taxonomy's MACRO level ("Financial Services",
+  // "Capital Goods", "Fast Moving Consumer Goods"), which arrived with the PMS
+  // fact sheets. A fund's own SEBI monthly portfolio disclosure prints the
+  // INDUSTRY level instead, and none of it was here: measured over
+  // `public/lookthrough/`, 57 of 65 distinct labels resolved to nothing and
+  // 1,009 of 1,318 disclosed lines were Unclassified — a sector table where a
+  // fifth of the book says "we could not place this" for want of a map entry
+  // rather than for want of a source, which is the exact failure Sector
+  // Composition's own header comment records about funds.
+  //
+  // Same discipline as everything above it: each string is LISTED as the
+  // disclosure prints it and resolves to exactly one GICS sector. Nothing is
+  // inferred, and a label absent here still reports through `unmappedSectors()`.
+  // `normalize` folds "&" to "and" and strips case and punctuation, so the
+  // spelling pairs these filings carry — "Chemicals & Petrochemicals" against
+  // "Chemicals and Petrochemicals", "Diversified FMCG" against "Diversified
+  // Fmcg" — are one entry each rather than two.
+  "Finance": "Financials",
+  "Capital Markets": "Financials",
+  "Insurance": "Financials",
+  "Financial Technology (Fintech)": "Financials",
+
+  "Pharmaceuticals & Biotechnology": "Health Care",
+  "Healthcare Services": "Health Care",
+
+  "Retailing": "Consumer Discretionary",
+  "Automobiles": "Consumer Discretionary",
+  "Leisure Services": "Consumer Discretionary",
+  "Textiles & Apparels": "Consumer Discretionary",
+  "Other Consumer Services": "Consumer Discretionary",
+
+  "Personal Products": "Consumer Staples",
+  "Food Products": "Consumer Staples",
+  "Beverages": "Consumer Staples",
+  "Diversified FMCG": "Consumer Staples",
+  "Agricultural Food & Other Products": "Consumer Staples",
+  "Household Products": "Consumer Staples",
+
+  "Electrical Equipment": "Industrials",
+  "Industrial Products": "Industrials",
+  "Industrial Manufacturing": "Industrials",
+  "Construction": "Industrials",
+  "Transport Services": "Industrials",
+  "Transport Infrastructure": "Industrials",
+  "Aerospace & Defense": "Industrials",
+  "Commercial Services & Supplies": "Industrials",
+  "Printing & Publication": "Industrials",
+  // Trucks, tractors and construction equipment — GICS Machinery, not the
+  // passenger-vehicle makers under "Automobiles" above. The clipped
+  // "Agricultural, Commercial and Constr" some filings print resolves to this
+  // one through the prefix rule, which is what that rule is for.
+  "Agricultural, Commercial & Construction Vehicles": "Industrials",
+
+  "Chemicals & Petrochemicals": "Materials",
+  "Ferrous Metals": "Materials",
+  "Non - Ferrous Metals": "Materials",
+  "Cement & Cement Products": "Materials",
+  "Fertilizers & Agrochemicals": "Materials",
+  "Paper, Forest & Jute Products": "Materials",
+  "Minerals & Mining": "Materials",
+  "Metals & Minerals Trading": "Materials",
+
+  "Petroleum Products": "Energy",
+  "Oil": "Energy",
+  "Consumable Fuels": "Energy",
+
+  // City-gas distribution, which GICS puts with the utilities rather than with
+  // the explorers and refiners above.
+  "Gas": "Utilities",
+  "Other Utilities": "Utilities",
+
+  "Realty": "Real Estate",
+  // GICS names equity REITs explicitly and gives them a Real Estate home.
+  // Infrastructure Investment Trusts have no such home and are deliberately NOT
+  // listed: an InvIT unit is a pooled vehicle rather than a company, so placing
+  // it in a company sector would assert a classification GICS does not make.
+  "Units of Real Estate Investment Trust (REITs)": "Real Estate",
+
+  "Telecom - Services": "Communication Services",
+  "Entertainment": "Communication Services",
+  "Media": "Communication Services",
+
+  "IT - Services": "Information Technology",
+  // Communications EQUIPMENT is IT under GICS, where the carriers above are not.
+  "Telecom - Equipment & Accessories": "Information Technology",
 };
 
 /**
- * `Miscellaneous` is what Green Lantern prints when IT cannot place a holding.
- * Carrying it through as Unclassified is honest — mapping it to a sector would
- * be inventing a classification the provider itself declined to make.
+ * `Miscellaneous` is what Green Lantern prints when IT cannot place a holding,
+ * and `UNRATED` is what a fund's own disclosure prints for the same reason.
+ * Carrying either through as Unclassified is honest — mapping it to a sector
+ * would be inventing a classification the provider itself declined to make.
  */
-export const PROVIDER_UNCLASSIFIED = new Set(["Miscellaneous"]);
+export const PROVIDER_UNCLASSIFIED = new Set(["Miscellaneous", "UNRATED"]);
 
 const MIN_PREFIX = 8;
 

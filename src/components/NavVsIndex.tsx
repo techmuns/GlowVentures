@@ -552,7 +552,7 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
       <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500">
         The three lists account for every account in the book. Their values sum to{" "}
         {fmt(sum(cov.covered.map((c) => c.bookValue)) + sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })},
-        which is ABOVE the consolidated NAV by the value two members both report — a per-account sum does not dedupe and a
+        which is ABOVE the current value of holdings by the value two members both report — a per-account sum does not dedupe and a
         consolidated one does.
       </p>
     </details>

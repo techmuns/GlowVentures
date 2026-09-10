@@ -228,7 +228,7 @@ export function MunsChat() {
               {msgs.length === 0 && (
                 <div className="space-y-3">
                   <p className="text-[12.5px] leading-relaxed text-slate-400">
-                    The assistant is given a snapshot of this dashboard — the consolidated NAV and its listed/private
+                    The assistant is given a snapshot of this dashboard — the current value of holdings and its listed/private
                     split, the allocation by mandate and asset class, every account with its owner and report date, the
                     largest holdings, the undrawn commitments — <span className="text-slate-300">and the list of
                     things this book does not carry</span>, so it can say what is missing instead of estimating it.

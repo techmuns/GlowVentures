@@ -216,12 +216,12 @@ export function Performance() {
       <PageHeader eyebrow="Analytics" title="NAV &amp; Performance"
         subtitle="Time-weighted returns as each manager publishes them, the value bridge from opening to closing, and a money-weighted return over the real dated flows."
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Consolidated NAV and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
+          <BasisPill liveText="Live prices" hint="Current value of holdings and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
           <Pill tone="info">{accounts.length} accounts</Pill>
         </div>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Consolidated NAV"
+        <StatTile label="Current Value of Holdings"
           value={money(listedMV)}
           sub={p.length === consolidated.length
             ? `${p.length} positions across ${accounts.length} accounts`
@@ -249,7 +249,7 @@ export function Performance() {
 
         <StatTile label="Top-10 concentration"
           value={<Auditable formula={{ title: "Top-10 concentration", excel: "= Top 10 holdings' value ÷ Total market value × 100", plain: "How much of the consolidated book sits in just its ten biggest holdings.", worked: `= ${money(top10Val)} ÷ ${money(listedMV)} × 100 = ${top10.toFixed(0)}%`,  }}>{`${top10.toFixed(0)}%`}</Auditable>}
-          sub="of consolidated NAV in the 10 biggest holdings" icon={<Crosshair className="h-4 w-4" />} />
+          sub="of the current value of holdings in the 10 biggest holdings" icon={<Crosshair className="h-4 w-4" />} />
       </div>
 
       {/* ── NAV trajectory: absent, and why ── */}

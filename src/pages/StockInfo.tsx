@@ -569,7 +569,7 @@ export function StockInfo() {
               <p className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
                 The rows above add to {money(sum(rows.map((r) => r.marketValue)))}: this is ONE holding, reported on
                 each of the {held} statements listed. Both are shown as printed, and the Total counts it once —
-                {money(mv)}, the same basis as the consolidated NAV. Which statement owns it is a question about the
+                {money(mv)}, the same basis as the current value of holdings. Which statement owns it is a question about the
                 family's affairs, not a parsing rule, so neither row is suppressed.
               </p>
             )}
@@ -601,7 +601,7 @@ export function StockInfo() {
                 so an AIF folio's page read "Weight in listed book 38.0%" about a
                 holding that is not listed and against a total that is not the
                 listed one. Wrong on both halves of a three-word label. */}
-            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in book</span><span className="mono text-slate-100" title="Share of consolidated NAV — every asset class, each dually-reported holding counted once.">{weight.toFixed(1)}%</span></div>
+            <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in book</span><span className="mono text-slate-100" title="Share of the current value of holdings — every asset class, each dually-reported holding counted once.">{weight.toFixed(1)}%</span></div>
           </Card>
         </div>
       )}

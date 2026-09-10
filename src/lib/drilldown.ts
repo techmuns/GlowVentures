@@ -51,7 +51,7 @@ export const TOP_NAMES = 10;
  * return a class this drop does not carry). Every other id names a fixed set.
  */
 export type DrilldownId =
-  | "book"        // every holding — Consolidated NAV, Positions, Distinct names
+  | "book"        // every holding — Current Value of Holdings, Positions, Distinct names
   | "bucket"      // one allocation row, on the CATEGORY axis
   /**
    * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
@@ -359,7 +359,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         },
         ...(outside.length ? [{
           key: "not-covered", label: "Not covered",
-          note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the consolidated NAV — they are outside this rate, not outside the book.",
+          note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the current value of holdings — they are outside this rate, not outside the book.",
           rows: outside,
         }] : []),
       ]);

@@ -9,7 +9,10 @@ export declare function normalizeSecurityName(name: string): string;
 export declare function securityKeyOf(name: string): string;
 
 /** A security name with trailing depository series/face-value furniture removed.
- *  DISPLAY ONLY — `securityKeyOf` is derived from the raw name, never from this. */
+ *  `securityKeyOf` IS routed through this — the furniture is the depository's own
+ *  bookkeeping about a line in ITS books and is not what the security is, which
+ *  is what merged `ICICI Bank Ltd.` and `ICICI BANK-EQ` into one key. Also used
+ *  on its own for display. See Stage 10ak. */
 export declare function stripDepositoryTail(name: string): string;
 
 /** A fund's base name and the unit class split off the end of it, or `null`

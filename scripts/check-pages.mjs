@@ -413,6 +413,71 @@ const SECURITY_AXIS_BOOK = (() => {
 })();
 
 /**
+ * ── SECTOR COMPOSITION'S TWO VIEWS, off the book ───────────────────────────
+ *
+ *   "add a toggle switch for direct equity and consolidated. in direct equity we
+ *    will show only the sector composition of direct equity holdings, and in
+ *    consolidated sector composition we will show sector composition based on
+ *    the aggregate securities weightage as per the data from the security filter
+ *    in the holdings in portfolio monitor."
+ *
+ * The Consolidated view's expectations are `SECURITY_AXIS_BOOK`'s own, and that
+ * is the point rather than a shortcut: the client asked for this page to show
+ * what the Monitor's Security axis shows, so holding both to ONE derivation is
+ * the claim itself. If they ever diverge, one of the two is wrong.
+ *
+ * Direct Equity is derived here, from the engagement on each holding's own
+ * ACCOUNT — how a holding is run is a fact about the account that holds it, and
+ * `holdingRoute` is the app's own rule (`Direct`/`Execution` = the family chose
+ * it). Re-derived rather than imported, so this cannot agree with the page by
+ * construction.
+ */
+const SECTOR_VIEW_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const eng = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const seen = new Set();
+    const ded = [];
+    for (const p of positions) {
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      ded.push(p);
+    }
+    const own = ded.filter((p) => p.assetClass === "Equity"
+      && ["Direct", "Execution"].includes(eng.get(p.accountId)));
+    const mandate = ded.filter((p) => p.assetClass === "Equity" && eng.get(p.accountId) === "PMS");
+    const sum = (a) => a.reduce((x, p) => x + p.marketValue, 0);
+    return {
+      directCr: sum(own) / 1e7,
+      directRows: own.length,
+      directNames: new Set(own.map((p) => p.securityKey)).size,
+      mandateCr: sum(mandate) / 1e7,
+      mandateRows: mandate.length,
+      // NOT ONE own-account company share carries a sector: a depository
+      // statement prints an ISIN, a quantity and a rate, and no industry. That
+      // is what the page's ISIN join to the funds' own filings exists for, and
+      // it is why "some sector other than Unclassified is drawn" is a real
+      // assertion on this view rather than a truism.
+      directWithBookSector: own.filter((p) => p.sector && p.sector !== "Unclassified").length,
+      /*
+       * HOW MANY COMPANIES THE BOOK ITSELF PLACES — distinct `securityKey`
+       * among deduped company shares carrying a real sector. `companyExposure`
+       * builds one entry per company and takes the BOOK's sector wherever there
+       * is one, so this is exactly what the page's "N placed by statement"
+       * must come to. Derived here from `glowData.ts` by a different path from
+       * the page's, which is what makes the assertion able to fail: the page
+       * counts by classifying its own entries, this counts the positions.
+       */
+      companySharesWithBookSector: new Set(
+        ded.filter((p) => p.assetClass === "Equity" && p.sector && p.sector !== "Unclassified")
+          .map((p) => p.securityKey)).size,
+    };
+  } catch { return null; }
+})();
+
+/**
  * ── WHAT A NON-SECURITY AXIS MUST OFFER, off the book ──────────────────────
  *
  * Every axis but `security` lifts the PMS mandates out into one row each and
@@ -921,13 +986,17 @@ const CIO_BUCKET_HREFS = [];
  * none of them is a phrase the surviving surfaces print: the table's subtitle
  * says "each statement's row as printed" where the pill said "as printed · per
  * account", and the crumb says "What is behind the figure" where the pill said
- * "behind Consolidated NAV". The arithmetic card is struck STRUCTURALLY on its
+ * "behind <the figure>". BOTH LABELS FOR THE NAV FIGURE ARE MATCHED — it renders
+ * as "Current Value of Holdings" now and as "Consolidated NAV" before this
+ * branch renamed it, and a check naming only the retired one could not fire for
+ * the pill coming back under the label the app actually draws.
+ * The arithmetic card is struck STRUCTURALLY on its
  * own probe instead, because its absence is what the family asked for and a
  * text match could not tell an empty card from no card.
  */
 const DRILLDOWN_CHROME_GONE = [
   ["the header pill row stays removed", (t) =>
-    !/behind (Consolidated NAV|Capital invested|Top-\d+|Cross-held|Winners|the coverage)/i.test(t)
+    !/behind (Current Value of Holdings|Consolidated NAV|Capital invested|Top-\d+|Cross-held|Winners|the coverage)/i.test(t)
     && !/consolidated\s*·\s*each holding once/i.test(t)
     && !/as printed\s*·\s*per account/i.test(t)],
   ["...including its basis pill and staleness pill", (t) =>
@@ -1322,6 +1391,10 @@ const ROUTES = [
   // the scope now lives in the URL so this route can exist at all.
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
+  // The family's own toggle. Both are walked, because the two are DIFFERENT SETS
+  // and neither is the set this page used to show — a check on one says nothing
+  // about the other.
+  ["sectors-direct", "/sectors?view=direct"],
   // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
   // family's request, so they are no longer walked — there is no page at any of
   // those three addresses to hold to the light-mode, overflow and stray-zero
@@ -4128,6 +4201,21 @@ const INVARIANTS = {
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
   cio: [
+    /**
+     * ── THE TILE IS "CURRENT VALUE OF HOLDINGS" ───────────────────────────────
+     *
+     *   "rename consolidated NAV as Current Value of holdings … wherever it is
+     *    written consolidated NAV replace it with Current value of Holdings"
+     *
+     * Both directions, and the second is the one that would fail quietly: the
+     * sweep READS this tile's figure off its label to feed four other
+     * invariants, so a rename the probe did not follow would not fail anything —
+     * it would make those four report NOT CHECKED, which is an abstention rather
+     * than a failure and is how a check retires itself in silence.
+     */
+    ["the NAV tile is renamed, and the old label is gone", (t) =>
+      /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
+
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
   /**
    * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
@@ -4479,7 +4567,7 @@ const INVARIANTS = {
   ["...and the listed/private split it carried is one click from the NAV tile", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
-    const nav = ctx.kpiTiles.find((x) => /consolidated nav/i.test(x.label));
+    const nav = ctx.kpiTiles.find((x) => /current value of holdings/i.test(x.label));
     return !!nav && /of=book\b/.test(nav.links[0] ?? "");
   }],
   ["...and the money-weighted return it carried still has its own tile",
@@ -4549,7 +4637,7 @@ const INVARIANTS = {
   ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
-    return /of=book\b/.test(at(/consolidated nav/i))
+    return /of=book\b/.test(at(/current value of holdings/i))
       && /of=invested\b/.test(at(/capital invested/i))
       && /of=measured\b/.test(at(/money-weighted|xirr/i));
   }],
@@ -4876,7 +4964,7 @@ const INVARIANTS = {
       // this asserts that the figure a reader clicks opens the set that figure
       // is summed over. Each entry is [what the reader clicks, where it goes].
       const tiles = [
-        [/^consolidated nav$/i, "/holdings?of=book"],
+        [/^current value of holdings$/i, "/holdings?of=book"],
         [/^capital invested$/i, "/holdings?of=invested"],
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
         [/^consolidated return$/i, "/holdings?of=invested"],
@@ -5224,7 +5312,7 @@ const INVARIANTS = {
        own absence is asserted once, in `DRILLDOWN_CHROME_GONE`, which every
        holdings route spreads in; a second copy here fired twice for one defect
        and said nothing the first did not. */
-    ["its market value reproduces the Consolidated NAV", (t) => {
+    ["its market value reproduces the Current Value of Holdings tile", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
       return Number.isFinite(here) && Math.abs(here - nav) <= 0.15;
@@ -5722,6 +5810,40 @@ const INVARIANTS = {
    */
   "private-market": [
     /**
+     * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN ─────────────────────────
+     *
+     *   "what is uncalled capital? how do we arrive at this uncalled capital
+     *    number that the dashboard is showing? what is distributions?"
+     *
+     * Both halves of each are asserted, and BOTH ON THE TILE rather than in a
+     * hover: a definition a reader has to point at is a definition they will not
+     * find. WHAT it is, because the figure means nothing without it, and HOW it
+     * is arrived at, because the whole claim of this book is that a figure
+     * traces to a document — including, here, the two folios it cannot cover.
+     */
+    ["the uncalled-capital tile says what it is and how it is arrived at", (t) => {
+      const tile = sliceBetween(t, "STILL TO CALL", "COMMITTED") || sliceBetween(t, "Still to call", "Committed");
+      if (!tile) return { notChecked: "the uncalled-capital tile was not on screen on this run" };
+      return /What it is:/i.test(tile)
+        && /promised/i.test(tile) && /not yet asked for|not yet called/i.test(tile)
+        && /How this number is arrived at:/i.test(tile)
+        && /never (worked out|derived) as committed/i.test(tile);
+    }],
+    ["the distributions tile says what it is and how it is arrived at", (t) => {
+      const tile = sliceBetween(t, "DISTRIBUTIONS", "Realised gain") || sliceBetween(t, "Distributions", "Realised gain");
+      if (!tile) return { notChecked: "the distributions tile was not on screen on this run" };
+      return /What it is:/i.test(tile)
+        && /paid back/i.test(tile)
+        && /How this number is arrived at:/i.test(tile)
+        // The two things a reader would otherwise get wrong about a distribution,
+        // and neither is guessable from the number: it is not inside the value
+        // above, and it does not reduce what the fund can still call.
+        && /NOT part of the value above|not part of the value above/i.test(tile)
+        && /still be called again|does not reduce the commitment/i.test(tile);
+    }],
+    ["the tile carries the client's own word for it", (t) => /Distributions \(cash returned\)/i.test(t)],
+
+    /**
      * ── THE HEADER PROSE AND BOTH PILLS ARE GONE ────────────────────────────
      *
      * At the family's request, and this INVERTS the check added one release ago
@@ -5880,10 +6002,168 @@ const INVARIANTS = {
         && rows.some((r) => r[1] === "—");     // and the book really does carry one
     }],
   ],
+  /**
+   * ── THE CONSOLIDATED VIEW ─────────────────────────────────────────────────
+   *
+   * It is the page's DEFAULT, which is a decision rather than an ordering: it is
+   * the widest of the sets and the one that answers "what is this family exposed
+   * to". Opening on Direct Equity would drop ₹127 Cr of mandate-held shares off
+   * the first paint, which this page's own header note has always warned against.
+   */
   sectors: [
-    ["sector view is company shares only, the excluded classes named", (t) => /company shares only/i.test(t) && /excluded rather than folded in/i.test(t)],
-    // The failure this replaced: a fund standing at the head of a sector table.
-    // No wrapper may appear as a holding here at all.
+    ["both views are offered and the page opens on Consolidated", (t) =>
+      // Both segments render, and the donut's own hole says which set is drawn.
+      // The default is asserted rather than assumed: two views beside an old one
+      // is exactly the change that silently moves a default, and the page would
+      // render perfectly while showing the family the narrower set.
+      /\bConsolidated\b/.test(t) && /\bDirect Equity\b/.test(t)
+      && /TOTAL EXPOSURE\s*\n\s*₹/i.test(t) && !/DIRECT EQUITY\s*\n\s*₹/i.test(t)],
+    /**
+     * THE CLIENT'S ACTUAL REQUIREMENT, STRUCK ACROSS TWO PAGES. "based on the
+     * aggregate securities weightage as per the data from the security filter in
+     * the holdings in portfolio monitor" — so this view's total, its measured
+     * half, its derived half and its company count must all be the Monitor's
+     * own. Both are held to ONE derivation off `glowData.ts` and the committed
+     * store; two implementations of "what does this family hold of a company"
+     * would be two chances to disagree, and this is the check that says they do
+     * not.
+     */
+    ["its total, both halves and its company count are the Monitor's security axis", (t) => {
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
+      const grab = (re) => { const m = re.exec(t); return m ? crU(m[1], m[2]) : NaN; };
+      const total = grab(/TOTAL EXPOSURE\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const measured = grab(/Reported by their statements\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const derived = grab(/Derived from what their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      // THE COUNT IS ON THE DONUT HOLE NOW, not in a footer sentence — the
+      // paragraph that carried it went with the rest of this page's prose.
+      const rows = Number(/TOTAL EXPOSURE\s*\n\s*₹[^\n]+\n\s*(\d+) companies · each counted once/i.exec(t)?.[1]);
+      if (![total, measured, derived].every(Number.isFinite) || !Number.isFinite(rows)) return false;
+      return Math.abs(total - SECURITY_AXIS_BOOK.totalCr) <= 0.15
+        && Math.abs(measured - SECURITY_AXIS_BOOK.measuredCr) <= 0.15
+        && Math.abs(derived - SECURITY_AXIS_BOOK.derivedCr) <= 0.15
+        && rows === SECURITY_AXIS_BOOK.rows;
+    }],
+    /**
+     * AND THE THREE TILES ACCOUNT FOR EVERY RUPEE. A table's total reads as the
+     * whole of a reader's money unless the page says what the rest is, and no
+     * one of the three figures can make that claim alone.
+     */
+    ["reported + derived + not-on-this-page rebuilds the book", (t) => {
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
+      const grab = (re) => { const m = re.exec(t); return m ? crU(m[1], m[2]) : NaN; };
+      const measured = grab(/Reported by their statements\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const derived = grab(/Derived from what their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const rest = grab(/Not on this page\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      if (![measured, derived, rest].every(Number.isFinite)) return false;
+      return Math.abs(measured + derived + rest - SECURITY_AXIS_BOOK.navCr) <= 0.5;
+    }],
+    /**
+     * A RETURN IS REFUSED THROUGHOUT, WITH ITS REASON. This view's value column
+     * is part measured and part derived, and no document reports a cost for the
+     * derived half — so a percentage anywhere in the sector table would divide a
+     * part-measured gain by a cost covering part of its own numerator. Struck on
+     * the REASON as well as on the absence, because a bare dash teaches nothing.
+     */
+    ["no sector return is struck, and the refusal names its cause", (t, ctx) => {
+      // Struck on the sector-breakdown card ALONE. A page-wide test would be
+      // satisfied by nothing and broken by anything: the legend prints a weight
+      // on every row and the closing note prints more, so a signed percentage
+      // elsewhere says nothing about the Return column.
+      const table = sliceBetween(t, "Sector breakdown", "This is ");
+      if (!table) return { notChecked: "the sector-breakdown card was not on screen on this run" };
+      const why = (ctx?.titles ?? []).some((x) => /divide a part-measured gain by a cost covering part/i.test(x));
+      return !/[+\-\u2212]\d+\.\d+%/.test(table) && why;
+    }],
+    ["the derived half says it is no part of the book's NAV, in words", (t) =>
+      /DERIVED, not a position/i.test(t) && /no part of the book[\u2019']?s NAV/i.test(t)],
+    // The failure this page was rebuilt for: a fund standing at the head of a
+    // sector table. No wrapper may be a slice or a row in EITHER view.
+    ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
+    /**
+     * ── THE FOOTER PARAGRAPH IS GONE FROM BOTH VIEWS, AND ITS THREE
+     * load-bearing facts are not. Stage 10ap removed this page's footer while
+     * this branch was open; this branch had written a NEW one per view, so both
+     * went and every claim was audited first. Asserted as a PAIR, because a page
+     * that lost the paragraph and the relocations together passes an absence
+     * check on its own.
+     */
+    ["this view's footer paragraph stays removed", (t) =>
+      !/This is\s+total exposure per company/i.test(t)
+      && !/ranked and weighted exactly as the/i.test(t)
+      && !/Switch to\s+Direct Equity\s+for the shares/i.test(t)],
+    ["...and the count and basis it carried are on the figure itself", (t) => {
+      const m = /TOTAL EXPOSURE\s*\n\s*₹[^\n]+\n\s*(\d+) companies · each counted once/i.exec(t);
+      return !!m && Number(m[1]) > 0;
+    }],
+    /*
+     * THE TWO-TIER PROVENANCE IS THE ONE A READER CANNOT INFER, and it is the
+     * whole reason this page can place a depository holding at all. Struck
+     * against the BOOK's own count rather than against the page's other copy of
+     * it — a check that compares a figure with its own copy cannot fail.
+     */
+    ["...and so is where each sector came from, book against fund filing", (t) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      const m = /(\d+) placed by statement(?: · (\d+) by a fund[\u2019\']s filing)?/i.exec(t);
+      if (!m) return false;
+      const book = Number(m[1]), disc = Number(m[2] ?? 0);
+      // The book half is EXACT against the book's own count; the disclosure
+      // half only has to be doing work, since it depends on a store this
+      // harness reads at runtime rather than on `glowData.ts`.
+      return book === SECTOR_VIEW_BOOK.companySharesWithBookSector && disc > 0;
+    }],
+    /*
+     * AND THE UNCLASSIFIED REASON IS ON THE ROW, worded for THIS view. Direct
+     * Equity has one place to have looked and Consolidated has two, so a reason
+     * naming only the statement would be silent about the disclosure tier and
+     * send the next reader to the wrong source.
+     */
+    ["the Unclassified row names its cause, for this view's own sources", (t, ctx) =>
+      (ctx?.titles ?? []).some((x) => /neither the family[\u2019\']s own statement nor any fund disclosure/i.test(x))],
+  ],
+  /**
+   * ── THE DIRECT EQUITY VIEW ────────────────────────────────────────────────
+   *
+   * A narrowing, and the danger of a narrowing is that the reader is not told:
+   * a page headed with a family's own money reads as all of it. So the set must
+   * tie to the book's own Direct Equity bucket AND the page must name what it
+   * left out, at its value.
+   */
+  "sectors-direct": [
+    ["it is the book's own Direct Equity bucket, to the rupee", (t) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      const m = /DIRECT EQUITY\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
+      if (!m) return false;
+      return Math.abs(crU(m[1], m[2]) - SECTOR_VIEW_BOOK.directCr) <= 0.15;
+    }],
+    ["it names the mandate-held shares it left out, at their value", (t) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      if (!SECTOR_VIEW_BOOK.mandateRows) return { notChecked: "this book holds no mandate-chosen company share" };
+      const m = /Left out by this view\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
+      if (!m) return false;
+      return Math.abs(crU(m[1], m[2]) - SECTOR_VIEW_BOOK.mandateCr) <= 0.15
+        && /in the\s+Consolidated\s+view/i.test(t.replace(/\s+/g, " "));
+    }],
+    /**
+     * AND IT DRAWS REAL SECTORS, which on this book is a claim only an
+     * identifier can make good. NOT ONE of these holdings carries a sector of
+     * its own — a depository prints none — so read off the book alone this view
+     * is a single grey wedge. The page places them by joining each ISIN to the
+     * industry a fund's own filing printed against it. Gated on that measured
+     * fact, so the check cannot pass by asserting nothing: if a future drop
+     * brings sectored demat statements the gate flips and the claim still holds.
+     */
+    ["it draws sectors rather than one Unclassified wedge", (t) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      const n = Number(/(\d+)\s+sectors?/i.exec(t)?.[1]);
+      if (!Number.isFinite(n)) return false;
+      if (SECTOR_VIEW_BOOK.directWithBookSector > 0) return n >= 2;
+      // No holding here carries a sector of its own, so every sector drawn came
+      // from the ISIN join — and the page must say so rather than leave a reader
+      // to think their custodian supplied it.
+      // The sentence that said so lived in the footer paragraph, which is
+      // gone; the fact is on the donut hole now, as a counted figure.
+      return n >= 2 && /\d+ by a fund[\u2019']?s filing/i.test(t);
+    }],
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
 
     /**
@@ -5895,10 +6175,13 @@ const INVARIANTS = {
      * moved onto the figures they describe. Asserted separately from the
      * absence, because a page that lost the lot passes an absence check.
      */
-    ["the footer paragraph stays removed", (t) =>
+    ["the footer paragraph stays removed — the one this page had, and the one this branch wrote", (t) =>
       !/That is\s+not\s+the same set as/i.test(t)
       && !/a look-through into a mandate is a gain/i.test(t)
-      && !/Within company shares, ₹/i.test(t)],
+      && !/Within company shares, ₹/i.test(t)
+      // ...and this branch's own per-view footer, which went the same way.
+      && !/every one a share in a company bought in the family/i.test(t)
+      && !/It deliberately leaves out ₹/i.test(t)],
 
     /**
      * THE COVERAGE OF THIS TABLE, ON THE FIGURE ITSELF. A sector page over
@@ -5910,7 +6193,10 @@ const INVARIANTS = {
      * filter that widens one and not the other is caught here.
      */
     ["the donut names how many holdings it spans, and that each is counted once", (t) => {
-      const m = /Company shares\s*\n\s*₹[^\n]+\n\s*(\d+) holdings · each counted once/i.exec(t);
+      // THE HOLE READS THE ACTIVE VIEW, not "Company shares": this page has
+      // two views and neither is that set. A check on the retired label could
+      // not have passed a correct page.
+      const m = /DIRECT EQUITY\s*\n\s*₹[^\n]+\n\s*(\d+) holdings · each counted once/i.exec(t);
       if (!m) return false;
       const stated = Number(m[1]);
       /*
@@ -5948,12 +6234,25 @@ const INVARIANTS = {
        * top bar's own figure is the first ₹…Cr on it.
        */
       const nav = cr(new RegExp(CR).exec(t)?.[1]);
-      const covered = cr(new RegExp(String.raw`Company shares\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      // Labelled by the active VIEW since this page grew a toggle; on the
+      // Direct Equity walk the donut hole reads that.
+      const covered = cr(new RegExp(String.raw`DIRECT EQUITY\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      /*
+       * THE PARTITION IS THREE-TERMED ON THIS VIEW, and that is a real change
+       * rather than a looser check. When this page drew ONE set — every company
+       * share — the mandate-held half was inside `covered`, so covered plus the
+       * non-share classes came to the book. Direct Equity is the SELF-BOUGHT
+       * half, so the manager-chosen shares are neither covered nor "not a
+       * company share": they are a set of their own, on their own card. Left at
+       * two terms this fails a correct page by exactly the mandate's value —
+       * which is what it did on the first sweep after the merge.
+       */
+      const leftOut = cr(new RegExp(String.raw`Left out by this view\s*\n\s*` + CR, "i").exec(t)?.[1]);
       const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
       if (!card) return false;
       const parts = [...card[1].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
-      if (![nav, covered].every(Number.isFinite) || parts.length < 2) return false;
-      return Math.abs(covered + parts.reduce((a, b) => a + b, 0) - nav) <= 0.1 * (parts.length + 1);
+      if (![nav, covered, leftOut].every(Number.isFinite) || parts.length < 2) return false;
+      return Math.abs(covered + leftOut + parts.reduce((a, b) => a + b, 0) - nav) <= 0.1 * (parts.length + 2);
     }],
 
     /**
@@ -6001,7 +6300,11 @@ const INVARIANTS = {
       // abstention trap this file names: a gate that cannot see its own subject
       // reports "not applicable" rather than failing.
       if (!/\nUnclassified\n\t₹/i.test(t)) return notChecked("no company share in this book is unsectored");
-      return (ctx?.titles ?? []).some((x) => /statement printed no sector/i.test(x) && /rather than assigned/i.test(x));
+      // WORDED PER VIEW on this branch: Direct Equity has ONE source to have
+      // looked in and Consolidated has two, so the reason names the sources
+      // the ACTIVE view actually has. Matched on this view's own wording.
+      return (ctx?.titles ?? []).some((x) => /the statement simply does not report it/i.test(x)
+        && /rather than assigned/i.test(x));
     }],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
@@ -6987,6 +7290,51 @@ const INVARIANTS = {
    * generated figure and would go stale on the next drop.
    */
   "monitor-security": [
+    /**
+     * ── THE TWO GREY PARAGRAPHS ARE GONE, AND EVERY FIGURE IN THEM IS NOT ─────
+     *
+     *   "remove the highlighted text from the dashboard ui"
+     *
+     * A removal is verified by asserting it happened. Both halves, and neither
+     * implies the other: the prose must be off the screen, AND the two claims
+     * that carried a figure must still be reachable — the coverage partition
+     * behind a one-line fold (the three invariants above it read that text, and
+     * the probe opens it), and the derived fence ON the columns, where it is
+     * visible whatever the fold is set to and can never be mistaken for a hover.
+     */
+    ["the weight paragraph is gone and its fact is on the column it describes", (t, ctx) => {
+      const gone = !/Weight is a share of the book, not of the holdings you picked/i.test(t);
+      // `weightPlain` is the `plain` line of every Weight cell's own formula
+      // popover, and the footer's Weight cell carries the same sentence in its
+      // title. A claim about a column belongs on the column.
+      const kept = (ctx?.titles ?? []).some((x) => /no longer adds to 100%|adds to 100%/i.test(x));
+      return gone && kept;
+    }],
+    ["the coverage paragraph is a one-line fold, not seven lines of prose", (t, ctx) => {
+      const cov = ctx?.stockCoverage;
+      if (!cov) return { notChecked: "the coverage block was not captured on this run" };
+      // The chrome that carried no figure is gone …
+      return !/One row per company, ranked by total exposure/i.test(cov)
+        && !/A FUND IS NOT A STOCK/i.test(cov)
+        // … and the summary a reader sees without opening anything still states
+        // the one thing they act on: this table is not all of their money.
+        && /covers ₹[\d,.]+\s*(Cr|L|K)? of the ₹[\d,.]+/i.test(cov);
+    }],
+    /**
+     * THE DERIVED FENCE IS ON THE COLUMNS, VISIBLE, AND NOT IN A HOVER.
+     * "It says DERIVED, not a position, in words rather than in a tooltip" is a
+     * rule of this book, and moving it into the fold with the rest of the
+     * paragraph would have broken it while every value check stayed green.
+     */
+    ["both derived columns carry a visible marker, and the sentence behind it", (t, ctx) => {
+      const notes = ctx?.colNotes;
+      if (!notes) return { notChecked: "the column notes were not captured on this run" };
+      const hasDerived = notes.filter((n) => /derived/i.test(n.text)).length;
+      const says = notes.some((n) => /DERIVED, not a position/i.test(n.title ?? "")
+        && /no part of the book's NAV/i.test(n.title ?? ""));
+      return hasDerived === 2 && says;
+    }],
+
     ["the axis is offered as a fourth segment and is the one selected", (t, ctx) => {
       const axes = ctx?.axisButtons;
       if (!axes?.length) return { notChecked: "the axis segments were not captured on this run" };
@@ -7263,10 +7611,24 @@ const INVARIANTS = {
       if (!selects) return { notChecked: "the filter row was not captured on this run" };
       return (secs?.length ?? 0) === 0 && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
     }],
-    ["the caption states the axis and that a fund is not a stock",
-      (t) => /one row per company, ranked by total exposure/i.test(t)
-        && /a fund is not a stock and is no longer a row/i.test(t)
-        && /is no part of the book.s NAV/i.test(t)],
+    /**
+     * THE CAPTION IS GONE AND ITS ONE LOAD-BEARING CLAIM IS NOT.
+     *
+     * This used to require three sentences of the grey paragraph under the
+     * table: "one row per company, ranked by total exposure", "a fund is not a
+     * stock and is no longer a row", and the derived fence. The family asked
+     * that paragraph off the screen. The first two carried no figure and no
+     * reader acts on them — the table is one row per company and no fund is in
+     * it to contradict them — so they went. The THIRD is the fence, and it did
+     * not: it is on the two columns it is about now, asserted structurally by
+     * "both derived columns carry a visible marker" above, where it is on
+     * screen whatever the fold is set to.
+     *
+     * Retired here rather than deleted with the feature: what replaced it is
+     * the pair of removal checks at the top of this block.
+     */
+    ["the derived fence survived the caption's removal", (t, ctx) =>
+      (ctx?.colNotes ?? []).some((n) => /no part of the book's NAV/i.test(n.title ?? ""))],
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -9583,9 +9945,28 @@ for (const theme of THEMES) {
       // prints a strategy — so the entity-count check below reads `<tr>`s.
       const accountRows = FAST ? null : await page.evaluate(() =>
         document.querySelectorAll("tr[data-account-row]").length);
+      // A COLLAPSED `<details>` IS NOT IN `innerText`, and the coverage block is
+      // one now: the family asked the paragraph off the screen, so the five
+      // buckets sit behind a one-line summary. Three invariants read this text,
+      // and a probe that read the summary alone would have reported them
+      // unparseable — which is an abstention, not a failure, and would have
+      // retired all three silently. Opened before reading, exactly as the
+      // excluded-accounts block on the NAV card already is.
+      // A COLUMN'S OWN NOTE — the word under a header and the sentence behind it.
+      // The derived fence lives here now rather than in a paragraph under the
+      // table, and `innerText` alone cannot tell a note apart from a second
+      // header, so it is read structurally.
+      const colNotes = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main th [data-col-note]")].map((el) => ({
+          text: (el.textContent ?? "").trim(),
+          title: el.getAttribute("title"),
+          column: (el.closest("th")?.innerText ?? "").replace(/\s+/g, " ").trim(),
+        })));
       const stockCoverage = FAST ? null : await page.evaluate(() => {
         const p = document.querySelector("[data-stock-coverage]");
-        return p ? (p.innerText ?? "").replace(/\s+/g, " ").trim() : null;
+        if (!p) return null;
+        if (p.tagName === "DETAILS") p.open = true;
+        return (p.innerText ?? "").replace(/\s+/g, " ").trim();
       });
       const selectLabels = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
@@ -9698,7 +10079,7 @@ for (const theme of THEMES) {
       if (name === "cio" && !FAST) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
         const grab = (label, re) => { const v = money2cr(re.exec(text)?.[1]); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
-        grab("nav", new RegExp(String.raw`CONSOLIDATED NAV\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        grab("nav", new RegExp(String.raw`CURRENT VALUE OF HOLDINGS\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
         grab("invested", new RegExp(String.raw`CAPITAL INVESTED\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
         grab("no-cost", new RegExp(String.raw`positions? worth (₹[\d,.]+\s*(?:Cr|L|K)?) carry no cost`, "i"));
         grab("measured", new RegExp(String.raw`\d+ of \d+ accounts\s*·\s*(₹[\d,.]+\s*(?:Cr|L|K)?) of `, "i"));
@@ -9908,7 +10289,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

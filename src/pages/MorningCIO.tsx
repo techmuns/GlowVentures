@@ -890,7 +890,7 @@ export function MorningCIO() {
           make. See the `cio` invariant "each KPI tile offers exactly one
           destination". */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
-        <Kpi label="Consolidated NAV"
+        <Kpi label="Current Value of Holdings"
           href={drilldownHref("book")}
           hrefTitle={`Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page.${
             m.accrued == null || !m.accruedCount ? "" :
@@ -1404,7 +1404,7 @@ export function MorningCIO() {
           half. Every one of those figures is still on this page and still
           derived — invested and current value per bucket in the allocation
           table, the money-weighted return in its own KPI tile with its own
-          coverage line, and the listed/private split in the Consolidated NAV
+          coverage line, and the listed/private split in the Current Value of Holdings
           tile and on Concentration & risk, which links each half to the
           holdings behind it. So this is a LAYOUT removal and not a measurement
           one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
