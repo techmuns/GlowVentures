@@ -26,7 +26,7 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { isPrivateClass } from "./analytics";
+import { isPrivateClass, isRedeemedToNil } from "./analytics";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -193,8 +193,22 @@ export type Drilldown = {
   facets: Facet[];
   /** Which facet `rows` currently holds. Empty where the scope has none. */
   activeFacet: string;
-  /** Accounts outside the set, by number — the money-weighted figure names them. */
-  excludedAccounts: string[];
+  /**
+   * HOW MANY CLOSED POSITIONS THIS PAGE LEFT OUT.
+   *
+   * *"we only need to show current holdings in the consolidated drill down
+   * pages, anything that has been sold or redeemed shouldn't be shown here."*
+   * So every set below is drawn from holdings the family still owns, and this
+   * counts what that filter removed.
+   *
+   * IT MOVES NO FIGURE, WHICH IS WHY THE FILTER IS SAFE HERE. Measured over this
+   * book, all five redeemed rows carry `marketValue: 0` and `costBasis: null` —
+   * the fund still prices what the family no longer holds — so they add nothing
+   * to the value total and are already skipped by `sumOrNull` in the cost total.
+   * Only the COUNTS move, and the page says so rather than letting a reader who
+   * arrived from a tile reading 369 wonder where five rows went.
+   */
+  closedExcluded: number;
   /**
    * Set only where the scope is legitimately EMPTY, with what would fill it. An
    * empty table renders through `AbsentSection`, never as a frame around nothing.
@@ -218,13 +232,28 @@ type Ctx = {
  * agree on the RENDERED figures rather than on the source.
  */
 export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: string }, ctx: Ctx): Drilldown {
-  const { portfolio, consolidated } = ctx;
+  const { portfolio } = ctx;
   const accIdx = accountIndex(portfolio.accounts);
+  /**
+   * CURRENT HOLDINGS ONLY, AND IT IS FILTERED IN ONE PLACE.
+   *
+   * A position a fund still prices but the family no longer holds is CLOSED, and
+   * every set on this page is drawn from what is held now. Done here rather than
+   * per branch because there are nine branches and each would be a chance for one
+   * page to list a redeemed row the others drop — the same reason `holdingBucket`
+   * and `costCoversSet` are single functions.
+   *
+   * `isRedeemedToNil` is the test the Portfolio Monitor already uses to separate
+   * its closed rows, so the two screens agree about what "current" means.
+   */
+  const live = (p: Position) => !isRedeemedToNil(p);
+  const consolidated = ctx.consolidated.filter(live);
+  const livePositions = portfolio.positions.filter(live);
   const base: Omit<Drilldown, "id" | "key" | "title" | "backs" | "lead" | "rows"> = {
     deduped: true,
     facets: [],
     activeFacet: "",
-    excludedAccounts: [],
+    closedExcluded: ctx.consolidated.length - consolidated.length,
     absent: null,
   };
 
@@ -329,11 +358,8 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         .filter((a) => accountHasOpeningValue(portfolio, a.accountId))
         .map((a) => a.accountId);
       const keep = new Set(ids);
-      const rows = portfolio.positions.filter((p) => keep.has(p.accountId));
-      const excluded = portfolio.accounts
-        .filter((a) => !keep.has(a.accountId))
-        .map((a) => a.accountNo);
-      const outside = portfolio.positions.filter((p) => !keep.has(p.accountId));
+      const rows = livePositions.filter((p) => keep.has(p.accountId));
+      const outside = livePositions.filter((p) => !keep.has(p.accountId));
       /* NO WINDOW IS DERIVED HERE ANY MORE. `Drilldown.windowDays` fed the
          arithmetic card's "N-day window · not annualised" line and nothing
          else, and the card is gone. The window itself is NOT lost — it is
@@ -345,8 +371,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
+        // This scope reads the PER-ACCOUNT set, so its closed count is that
+        // set's — not the deduped one `base` carries.
+        closedExcluded: portfolio.positions.length - livePositions.length,
         title: "Money-weighted return",
-        excludedAccounts: excluded,
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
           needs: "A money-weighted return needs the window's opening valuation as its first flow. No statement in the drop publishes one, so the rate is absent rather than struck on a stake nobody stated.",

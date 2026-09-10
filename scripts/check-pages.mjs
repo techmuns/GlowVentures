@@ -2755,6 +2755,12 @@ const FUND_CLASS_BOOK = (() => {
       // stands as a row of its own beside the fund that now clubs it.
       clubbedKeys: new Set(all.filter((f) => f.classes.length > 1).flatMap((f) => f.keys)),
       closedKeys: new Set(closedRows.map((p) => p.securityKey)),
+      // The closed securities BY NAME, for the drill-down pages, which now list
+      // current holdings only. A name is what those pages render, and it is
+      // exact where `closedFunds` is not: a fund with one class closed and
+      // another still held contributes its FUND name to that list, so a check
+      // struck on it would fail a page correctly drawing the live class.
+      closedSecurities: [...new Set(closedRows.map((p) => p.security))],
       closedCount: closedRows.length,
       closedAccounts: new Set(closedRows.map((p) => p.accountId)).size,
       closedFunds,
@@ -5203,27 +5209,41 @@ const INVARIANTS = {
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
-     * ── A CLOSED POSITION IS STILL BEHIND THE FIGURE, AND SAYS SO ───────────
+     * ── A CLOSED POSITION IS NOT LISTED BEHIND THE FIGURE ANY MORE ──────────
      *
-     * The Portfolio Monitor lists CURRENT holdings and leaves a closed position
-     * out. This page lists the set BEHIND a Morning CIO figure, and Positions
-     * counts every one of the book's rows — so the closed ones still render
-     * here, still at ₹0, and still need to say the zero is a MEASUREMENT rather
-     * than a feed nobody wired. That is where the monitor's own pill went when
-     * its row stopped existing, and asserting it here is what stops the two
-     * removals cancelling into a ₹0 nobody explains anywhere.
+     * *"we only need to show current holdings in the consolidated drill down
+     * pages, anything that has been sold or redeemed shouldn't be shown here."*
      *
-     * Both directions: every closed key must be drawn AND marked, and no other
-     * row may claim it.
+     * This page used to do the OPPOSITE, deliberately: it listed the set behind
+     * a Morning CIO figure, so the ₹0 rows rendered with a `redeemed` pill
+     * saying the zero was a MEASUREMENT rather than a feed nobody wired. The
+     * family have decided the other way, so the rows go and the pill goes with
+     * them — and THE CHECK INVERTS rather than being deleted with the feature.
+     *
+     * IT COSTS NO FIGURE, which is what makes the removal safe rather than a
+     * quiet loss. Measured on this book, every closed row carries `marketValue:
+     * 0` and `costBasis: null`, so the value total is identical and the capital
+     * total already skipped them through `sumOrNull`. Only the COUNTS move.
+     *
+     * BOTH HALVES, BECAUSE NEITHER IMPLIES THE OTHER: no closed security is
+     * drawn, AND the marker that used to explain one is gone. A build that kept
+     * the pill with no row to put it on is the dead-code-that-looks-alive
+     * failure, and a build that kept the rows while dropping the pill would show
+     * unexplained ₹0s — the first half catches that one.
      */
-    ["a closed position still renders here and is marked as measured", (t, ctx) => {
-      if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+    ["no closed position is listed behind the figure", (t, ctx) => {
+      if (!FUND_CLASS_BOOK?.closedSecurities.length) return { notChecked: "no holding in this book is redeemed to nil" };
       if (ctx.hbRedeemed === null) return { notChecked: "markers not captured on this run" };
-      // The page groups by SECURITY, so a group's key is its securityKey — the
-      // same key the book's closed set is built on.
-      const marked = new Set(ctx.hbRedeemed);
-      const want = [...FUND_CLASS_BOOK.closedKeys];
-      return want.length > 0 && want.every((k) => marked.has(k)) && marked.size === want.length;
+      return FUND_CLASS_BOOK.closedSecurities.every((n) => !t.includes(n))
+        && ctx.hbRedeemed.length === 0;
+    }],
+    // ...AND WHAT IT LEFT OUT IS COUNTED. A reader arriving from a tile that
+    // counts every position in the book would otherwise find fewer rows here
+    // with nothing on the page to account for the gap.
+    ["...and the closed positions it leaves out are counted", (t) => {
+      if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
+      const said = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? NaN);
+      return said === FUND_CLASS_BOOK.closedCount;
     }],
     /**
      * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────
@@ -5317,11 +5337,28 @@ const INVARIANTS = {
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
       return Number.isFinite(here) && Math.abs(here - nav) <= 0.15;
     }],
+    /**
+     * ── ITS COUNTS REPRODUCE THE TILE'S, ONCE THE CLOSED ROWS ARE PUT BACK ───
+     *
+     * This page lists CURRENT holdings; Morning CIO's Positions counts every row
+     * in the book, closed ones included. So the two are deliberately apart, by
+     * exactly the number this page prints as left out — and the check reconciles
+     * all three rather than relaxing to an inequality.
+     *
+     * THAT GAP IS READ OFF THE PAGE, not recomputed here: the page's claim about
+     * what it dropped is the thing under test, so a page that filtered ten rows
+     * and said five fails. Names use the BOOK's own count of keys every row of
+     * which is closed, because a name is only gone from this page when no live
+     * row still carries it.
+     */
     ["its two counts reproduce Positions and Distinct names", (t) => {
       const c = drilldownCounts(t);
       const pos = CIO_FIGURES.get("positions"), names = CIO_FIGURES.get("names");
       if (!Number.isFinite(pos) || !Number.isFinite(names)) return notChecked("Morning CIO's concentration counts did not parse on this run");
-      return c != null && c.holdings === pos && c.names === names;
+      if (c == null) return false;
+      const dropped = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? 0);
+      const droppedNames = FUND_CLASS_BOOK?.redeemedKeys.size ?? 0;
+      return c.holdings + dropped === pos && c.names + droppedNames === names;
     }],
     // THE WHOLE-BOOK RETURN STAYS REFUSED. 60 positions are in Value and in no
     // Invested, so a percentage across the two columns would divide one set of
@@ -5625,11 +5662,47 @@ const INVARIANTS = {
        beneath it actually belong to. */
     ["it states that it is per-account and not consolidated", (t) =>
       /each statement's row as printed/i.test(t)],
-    // AND IT NAMES WHAT IT LEAVES OUT. A figure that exists for some accounts is
-    // shown for those and the rest are named — the coverage line on the tile is
-    // only half of that rule if the drill-down then hides them.
-    ["the accounts outside the figure are named, not dropped", (t) =>
-      /\d+ accounts outside this figure/i.test(t) && /\d{4,}/.test(t)],
+    /**
+     * ── THE ACCOUNT-NUMBER BLOCK IS GONE, AND THE DERIVATION STANDS INSTEAD ──
+     *
+     * The card listed forty-four raw account numbers under a paragraph about
+     * naming rather than dropping; the family asked for it to go. Asserted as a
+     * REMOVAL, because nothing else on this page would notice it coming back.
+     *
+     * WHAT IT EXISTED TO PREVENT IS STILL PREVENTED, and by a better surface:
+     * the facet toggle at the top of the page carries "Not covered" with its own
+     * row count, so the holdings outside the rate are one click away AS HOLDINGS
+     * rather than as a wall of digits — and `/performance` still names each
+     * account with the document it is missing.
+     */
+    ["the accounts-outside block stays removed", (t) =>
+      !/accounts outside this figure/i.test(t)],
+    /**
+     * ── ...AND THE DERIVATION IS ON THE PAGE ─────────────────────────────────
+     *
+     * *"add a small derivation/formula section that tells how it is being
+     * calculated."* Struck on the RULES it states rather than on its heading:
+     * each of the three is the arithmetic `pooledXirr` actually runs, and each
+     * is a claim a reader acts on. A card that kept the title and lost the
+     * per-account terminal date would pass a title check and mislead.
+     */
+    ["the money-weighted derivation says how the rate is struck", (t) =>
+      /find r where/i.test(t) && /\(1 \+ r\)/.test(t)
+      && /its own report date/i.test(t)
+      && /compounded up to a yearly rate/i.test(t)
+      && /not a flow/i.test(t)],
+    /**
+     * ...OVER THE ACCOUNT COUNT THE PAGE'S OWN TILE REPORTS. The card states how
+     * many accounts the rate is struck on, and a number typed into prose is the
+     * one thing on it a reader could not check. Compared against the tile above
+     * it, so the two are two renderings of one derived figure rather than a
+     * sentence and a literal.
+     */
+    ["...on the same account count its own tile reports", (t) => {
+      const card = Number(/in or out of the\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      const tile = Number(/·\s*([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      return Number.isFinite(card) && Number.isFinite(tile) && card > 0 && card === tile;
+    }],
   ],
   /**
    * ── THE CAPITAL INVESTED PAGE, WHICH WAS NEVER WALKED ────────────────────
@@ -5678,19 +5751,25 @@ const INVARIANTS = {
       return /facet=no-cost/.test(none.href) && Number.isFinite(none.rows) && none.rows > 0;
     }],
     /**
-     * ...AND THE TWO SIDES PARTITION THE BOOK. `sumOrNull` skips a missing cost
-     * rather than entering it as zero, so costed + cost-less is every holding —
-     * and the toggle's own printed counts are where a reader sees it. Held
-     * against Morning CIO's Positions count so the two pages cannot drift into
-     * agreeing with each other about a set neither has right.
+     * ...AND THE TWO SIDES PARTITION THE CURRENT BOOK. `sumOrNull` skips a
+     * missing cost rather than entering it as zero, so costed + cost-less is
+     * every holding — and the toggle's own printed counts are where a reader
+     * sees it. Held against Morning CIO's Positions count so the two pages
+     * cannot drift into agreeing with each other about a set neither has right.
+     *
+     * THE CLOSED ROWS ARE PUT BACK BEFORE THE COMPARISON. This page lists
+     * current holdings; Positions counts every row the book carries. The gap is
+     * exactly what the page prints as left out, so the partition is asserted
+     * over three rendered figures rather than loosened to an inequality.
      */
     ["the two sides of the toggle account for every position", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
       const pos = CIO_FIGURES.get("positions");
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      const dropped = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? 0);
       return ctx.facets.every((f) => Number.isFinite(f.rows))
-        && ctx.facets.reduce((a, f) => a + f.rows, 0) === pos;
+        && ctx.facets.reduce((a, f) => a + f.rows, 0) + dropped === pos;
     }],
   ],
   /**
