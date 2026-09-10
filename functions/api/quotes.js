@@ -48,6 +48,29 @@ const BODY_PREVIEW = 300;
 // and then stay complete, with every request short.
 const MAX_FETCH_PER_REQUEST = 64;
 
+// ── WHAT `pending` IS, AND WHY `missing` COULD NOT ANSWER IT ────────────────
+//
+// A symbol this round DEFERRED because of the cap and a symbol the upstream
+// CANNOT PRICE both used to arrive as `missing`, and they are opposite facts: the
+// first will be answered in a few seconds, the second never will. A caller that
+// cannot tell them apart cannot know when a set is complete — which is exactly
+// what Today's movers needs, because a ranked list of the day's biggest movers
+// struck over part of a scope can promote a name that is not the top and omit the
+// one that is. That is a wrong figure presented as a measurement, not merely a
+// slow screen.
+//
+// So `missing` now means ATTEMPTED AND UNSERVABLE, `pending` means NOT YET
+// ATTEMPTED, and the two partition everything this request could not price. The
+// client polls fast while anything is pending and holds a ranking until nothing
+// in its own scope is.
+//
+// `priority` is the other half: the caller names the symbols the first screen
+// needs, and they are fetched first. Measured on this book — 161 symbols, 64 per
+// request — the movers card's 33 direct-equity names sat at positions 20 to 108
+// in book order, 30 of them beyond the first request, so the card did not
+// complete until the THIRD round. Named first they land in the first.
+
+
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -199,9 +222,14 @@ export async function onRequest(context) {
   // layer is what breaks the request, not the upstream.
   const probe = !!payload.probe;
 
-  const symbols = [...new Set((Array.isArray(payload.symbols) ? payload.symbols : [])
+  const clean = (list) => [...new Set((Array.isArray(list) ? list : [])
     .filter((s) => typeof s === "string" && /^[A-Za-z0-9&.\-]{1,20}$/.test(s))
-    .map((s) => s.toUpperCase()))].slice(0, probe ? 3 : MAX_SYMBOLS);
+    .map((s) => s.toUpperCase()))];
+  const symbols = clean(payload.symbols).slice(0, probe ? 3 : MAX_SYMBOLS);
+  // The caller's own ordering hint. It never widens what is fetched — a symbol
+  // not in `symbols` is ignored here — it only decides what goes first.
+  const priority = new Set(clean(payload.priority).filter((s) => symbols.includes(s)));
+  const first = (a, b) => (priority.has(b) ? 1 : 0) - (priority.has(a) ? 1 : 0);
 
   const cache = bundleCache("quotes", { ttlS: STALE_S, request });
   const cacheTally = cache.stats;
@@ -209,7 +237,7 @@ export async function onRequest(context) {
   if (!symbols.length) {
     return json({
       ok: false, failureCode: "NO_SYMBOLS", upstreamStatus: null,
-      quotes: {}, fresh: 0, stale: 0, missing: [], errors: [],
+      quotes: {}, fresh: 0, stale: 0, missing: [], pending: [], errors: [],
       symbolsReceived: Array.isArray(payload.symbols) ? payload.symbols.length : 0,
       chunksAttempted: 0, chunksSucceeded: 0, chunksFailed: 0,
       totalDurationMs: Date.now() - startedAt, cache: cacheTally, ...meta,
@@ -223,8 +251,11 @@ export async function onRequest(context) {
   //    timestamp, so per-symbol freshness still works.
   const bundle = probe ? {} : await cache.read();
   let needed = [];
+  let pending = [];
   if (probe || refresh) {
-    needed = symbols.slice(0, probe ? symbols.length : MAX_FETCH_PER_REQUEST);
+    const ordered = probe ? symbols : [...symbols].sort(first);
+    needed = ordered.slice(0, probe ? ordered.length : MAX_FETCH_PER_REQUEST);
+    pending = ordered.slice(needed.length);
   } else {
     const candidates = [];
     for (const sym of symbols) {
@@ -232,11 +263,14 @@ export async function onRequest(context) {
       if (age < FRESH_S) quotes[sym] = { ...bundle[sym].v, ageS: Math.round(age) };
       else candidates.push({ sym, age });
     }
-    // Never-seen symbols first, then the most stale — so the book fills in
-    // quickly and then refreshes in rotation.
-    candidates.sort((a, b) => b.age - a.age);
+    // THE CALLER'S PRIORITY FIRST, then never-seen, then the most stale — so the
+    // screen the reader is looking at completes in one round and the rest of the
+    // book fills in behind it and then refreshes in rotation.
+    candidates.sort((a, b) => first(a.sym, b.sym) || b.age - a.age);
     needed = candidates.slice(0, MAX_FETCH_PER_REQUEST).map((c) => c.sym);
+    pending = candidates.slice(MAX_FETCH_PER_REQUEST).map((c) => c.sym);
   }
+  const pendingSet = new Set(pending);
 
   // 2. Fetch the rest.
   const chunkDiags = [];
@@ -275,10 +309,19 @@ export async function onRequest(context) {
     if (quotes[sym]) continue;
     const age = ageS(bundle, sym, now);
     if (age < STALE_S) { quotes[sym] = { ...bundle[sym].v, ageS: Math.round(age) }; stale++; }
-    else missing.push(sym);
+    // DEFERRED IS NOT UNSERVABLE. A symbol this round never asked about belongs
+    // in `pending`, where the caller reads it as "an answer is coming"; only a
+    // symbol that was attempted and still has no price is `missing`.
+    else if (!pendingSet.has(sym)) missing.push(sym);
   }
+  // A pending symbol that turned out to be servable from the bundle after all is
+  // answered, so it is no longer pending — the two sets must never overlap.
+  pending = pending.filter((sym) => !quotes[sym]);
 
-  const fresh = symbols.length - stale - missing.length;
+  // A pending symbol has no price and is not a shortfall either, so it must come
+  // out of `fresh` — counted in, a first round would report the whole book fresh
+  // while holding 97 prices it had not asked for yet.
+  const fresh = symbols.length - stale - missing.length - pending.length;
   const chunksFailed = chunkDiags.filter((d) => !d.fetchCompleted || d.status !== 200).length;
   const chunksSucceeded = chunkDiags.length - chunksFailed;
   const errors = chunkDiags
@@ -305,7 +348,7 @@ export async function onRequest(context) {
     ...(failureCode ? { failureCode } : {}),
     upstreamStatus,
     asOf: new Date().toISOString(),
-    quotes, fresh, stale, missing,
+    quotes, fresh, stale, missing, pending,
     errors,
     symbolsReceived: Array.isArray(payload.symbols) ? payload.symbols.length : 0,
     symbolsAccepted: symbols.length,

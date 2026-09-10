@@ -2690,7 +2690,7 @@ feature that is broken instead of one that was never possible.
 | Spec item | Where | Backed by |
 | --- | --- | --- |
 | Returns table — daily / weekly / monthly / QTD / FYTD / 1Y / 3Y / 5Y / 10Y / max CAGR | company page | `market_data`, one dated close per horizon |
-| Compare up to four companies | **REMOVED at the family's request — see Stage 10ao.** `/compare` redirects to Portfolio Monitor, whose security axis is one row per company; each opens `/stock/:securityKey`, where every figure the comparison drew still renders per company | the book, the quote feed, `ratio_source` |
+| Compare up to four companies | **REMOVED at the family's request — see Stage 10ap.** `/compare` redirects to Portfolio Monitor, whose security axis is one row per company; each opens `/stock/:securityKey`, where every figure the comparison drew still renders per company | the book, the quote feed, `ratio_source` |
 | Document repository — annual reports, concalls, earnings, announcements | company page | `combined_filings_announcements`, `filings_domestic` |
 | Financial tables, ratios, shareholding | company page | `financial_tables_markdown` (screener.in) |
 | **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
@@ -2805,9 +2805,9 @@ violate any of them.**
 6. **STATEMENT vs LIVE basis.** Live prices may move market value, day change,
    unrealised P&L and return on cost — and nothing else. Never quantity, cost
    basis, realised gains, dividends, fees or a dated cash flow. Every
-   consolidated figure carried a `<BasisPill>` until Stage 10an, when the family
+   consolidated figure carried a `<BasisPill>` until Stage 10ao, when the family
    asked for it off Morning CIO and off the `/holdings` drill-down, and Stage
-   10ao, when they asked for it off Private Market too.
+   10ap, when they asked for it off Private Market too.
 
    **THE HALF THAT IS A CORRECTNESS GUARANTEE IS UNCHANGED AND IS NOT
    NEGOTIABLE, and it is the SOURCE rather than the label** — Capital Gains,
@@ -2930,8 +2930,8 @@ violate any of them.**
 - Pages that must RECONCILE to a source document read `statementPortfolio`, and
   the three that a reader checks against a PDF carrying quotable rows also SAY so
   with a `<BasisPill statement>` — Capital Gains, Data Audit, Ledger Insights.
-  Morning CIO and `/holdings` lost theirs at Stage 10an and Private Market at
-  Stage 10ao, all at the family's request; those are the places this file's own
+  Morning CIO and `/holdings` lost theirs at Stage 10ao and Private Market at
+  Stage 10ap, all at the family's request; those are the places this file's own
   §6 has been narrowed rather than upheld, and what each costs is recorded there
   rather than softened here. **The source never moved on any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
@@ -5533,7 +5533,7 @@ watched name's target and its upside; leaving it pointed somewhere with none of
 those figures while `/compare` sat one link away is the stale routing decision
 Stage 9d removed the day the calendar was wired.
 
-**COMPARE COMPANIES HAS SINCE BEEN REMOVED TOO (Stage 10ao), so `/watchlist` is
+**COMPARE COMPANIES HAS SINCE BEEN REMOVED TOO (Stage 10ap), so `/watchlist` is
 REPOINTED at `/monitor` rather than chained through a dead address** — two hops
 settle at the same pathname as one, which is precisely the routing this suite
 cannot catch and which therefore has to be fixed in the route table. The reason
@@ -5544,7 +5544,7 @@ BREAKS SILENTLY.** Every target price, fair value, entry and exit level, price
 alert, valuation method, FV reference year, target weight and "why we own it"
 note the family typed is still stored and still read and written by
 `InvestmentTools` on a name's own company page — and `CompareCompanies` read the
-target and the upside beside each price until it too was removed (Stage 10ao).
+target and the upside beside each price until it too was removed (Stage 10ap).
 Nothing anyone entered was deleted. With its most VISIBLE reader gone the store
 looks dead, which is how a future session deletes
 it and takes the family's own judgements with it: the same trap
@@ -5569,7 +5569,7 @@ Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
 `upsidePct`, `parseWeightPct` and `VALUATION_METHODS` all have their caller in
 `InvestmentTools`, and `readWatchlist` kept its one in `CompareCompanies` — so
 nothing was left exported and dead, which is the failure this file keeps naming.
-**That last caller has since gone with the page (Stage 10ao).** `readWatchlist`
+**That last caller has since gone with the page (Stage 10ap).** `readWatchlist`
 is still called by `readEntry` and `writeEntry` beside it, so it is not an
 orphan — but it now LOOKS like one from outside the file, which is exactly how a
 store the family typed into gets deleted a release later, so it says so at its
@@ -5775,7 +5775,7 @@ went because it is the removed page's own feed client.
 **ALL THREE FORWARD TO THE DASHBOARD HOME, WHICH IS A DECISION RATHER THAN A
 DEFAULT.** Every other removal in this file sends its address to the surviving
 surface nearest its purpose — `/private` to the private book, `/watchlist` to
-Compare Companies (since removed itself — Stage 10ao — so both now go to the
+Compare Companies (since removed itself — Stage 10ap — so both now go to the
 Portfolio Monitor), `/household` to Family & Entities. Nothing that survives
 holds the family's own notes, and nothing that survives renders a commodity,
 index, currency or macro series. Pointing these at a page that merely LOOKS
@@ -5789,7 +5789,7 @@ the two pages that have just gone, so they now LOOK dead. They are not:
 `HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and `rebase`, off
 `/api/prices`; `NavVsIndex` fetches through the same client and
 `navSeries.test.ts` reads the same shapes. (`CompareCompanies` was a third
-reader and has since been removed — Stage 10ao.)
+reader and has since been removed — Stage 10ap.)
 The `stock` invariant that asserts the price card renders is what holds them up
 at runtime, and it says so in as many words; `SeriesChart` itself is held by the
 BUILD, because the harness serves no price feed and the chart never mounts, so
@@ -7544,7 +7544,174 @@ whose failures match the previous run's exactly is the tell.
 `check:pages` **142 combinations clean**, with the two pre-existing abstentions.
 `glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is untouched.
 
-### Stage 10an — THE BASIS PILL GOES, AND THE DRILL-DOWN LOSES ITS PROSE
+### Stage 10an — THE MOVERS CARD LANDS COMPLETE, AND TWO CAPTIONS GO
+
+*"this daily movers section take a lot of time to show data and sometimes first
+shows incomplete data and then starts showing all the portfolio movers... make it
+quick and it should show all the data together rather than in bits and pieces, so
+it does not confuses anyone using the dashboard."* And: *"remove the highlighted
+texts from the dashboard UI completely."*
+
+**THE FIRST IS A CORRECTNESS COMPLAINT WEARING A SPEED COMPLAINT'S CLOTHES**, and
+reading it as the second would have produced a faster card that was still wrong.
+`/api/quotes` prices a BOUNDED SLICE per request — the upstream returns only part
+of a large ask inside its own budget — so the card redrew on every round, and
+**every figure on it is struck over whichever names had arrived**: the day's move
+divided a partial rupee change by a partial previous close, the gainer and loser
+lists ranked a subset, and the comparison against the Nifty 500 set that against
+a real index. All of it real arithmetic over the wrong set, all of it changing
+under the reader.
+
+Measured before anything was written: **161 distinct book symbols, 64 per
+request, so three rounds** — and the card's own 33 direct-equity names sat at
+distinct-symbol positions **20 to 108** in book order, **30 of them beyond the
+first request**. The card could not be complete until the third round. Worse,
+`quotesStatus` flips to `live` after round one, so the "Fetching prices" note
+disappeared while the lists were still a ranking over three names.
+
+#### `pending` is not `missing`, and conflating them is why nothing could wait
+
+A symbol this round **DEFERRED by the cap** and a symbol the upstream **CANNOT
+PRICE** both arrived as `missing`, and they are opposite facts: the first is
+answered in seconds, the second never is. A caller that cannot tell them apart
+cannot know when a set is COMPLETE — which is the only thing a RANKING can
+honestly wait on.
+
+- **`missing` now means ATTEMPTED AND UNSERVABLE, `pending` NOT YET ATTEMPTED**,
+  and the two partition everything a request could not price. The response
+  carries both.
+- **`fresh` excludes pending.** Counted in, a first round reported the whole book
+  fresh while holding 136 prices it had not asked for — a coverage figure over a
+  set nobody measured.
+- **THE FILL POLL RUNS ON `pending`, NEVER ON `missing`.** This book has symbols
+  the upstream cannot price, so the old condition held the tab at a four-second
+  cadence for its whole life while nothing could change. A pre-existing defect
+  the split fixes rather than one this change introduced.
+- **`priority` is the other half.** The caller names the symbols the first screen
+  needs and they are fetched first. It never WIDENS the ask — a priority symbol
+  not in `symbols` is ignored, or a browser could reach past its own request —
+  it only decides the order. The card's 33 names now land in ONE round.
+
+`PRIORITY_SYMBOLS` in `PortfolioContext` is **derived through the same
+`holdingBucket` the card groups on**, so a drop that moves a holding between
+buckets moves it too. A typed list would go stale silently and the card would be
+back to three rounds with nothing to say so.
+
+#### The card holds on ITS OWN scope, never on the book's
+
+`pendingFor(model.scopeSymbols)` — 33 symbols, not 161. Holding until the whole
+book lands would make a 33-name card wait on 128 names it does not show, which is
+this fix running the other way. **A FAILED FEED IS NOT A SLOW ONE**: when the
+feed is unavailable no answer is coming, so the card stops waiting and renders
+the absent state that names the feed. And the loading state **counts its own
+progress** against its own scope size, because a spinner with no number is
+indistinguishable from a hung one.
+
+The "Fetching prices — figures are the last snapshot" caption now renders only
+when the scope is COMPLETE and a refresh round is in flight, and says so:
+figures that are complete and dated, with a newer round coming. It used to sit
+above a partial ranking, describing it as a snapshot rather than as a subset.
+
+#### The two captions, checked against the rest of the screen before they went
+
+**`PortfolioMonitor`'s venue-table line** — *"The row above clubs them into one
+holding; each line here is one statement as printed."* Both claims survive it:
+the lead sentence above already names the row's own value and splits it by route,
+and the per-statement basis only has a CONSEQUENCE where the two differ — on
+exactly those rows the lead sentence names the overlap in rupees and the amber
+line under the table reconciles it. On every other row the sentence described a
+difference that row does not have.
+
+**`FundExposure`'s loading line** — *"Checking which of your funds disclose this
+name…"* — is a removal of a SENTENCE and not of the STATE. The load-bearing half
+was never the words: a card still fetching must not print "none of the N funds
+discloses this name", which is a claim about the holding made before a
+disclosure has been read. It renders `null` now, which asserts nothing. **And
+the fall-through is a TYPE ERROR rather than a check**: `StockExposureState` is a
+discriminated union whose loading variant carries none of `covered`,
+`considered`, `skipped` or `byKey`, so deleting the branch instead of its markup
+does not compile. That is the stronger guard, and the invariant below is the
+runtime backstop for a state the type cannot see.
+
+#### `npm run test:family` gained the suite the server change needed
+
+`quotesFunction.test.ts` — **nine checks against a stubbed upstream**, because
+`MUNS_TOKEN` lives in the Cloudflare environment and the partition is a property
+of THIS function rather than of the upstream. The partition itself, deferred vs
+unservable in both directions, priority ordering, priority never widening the
+ask, `fresh` excluding pending, an ask inside the cap deferring nothing, and the
+last-good fallback moving a symbol OUT of pending once the bundle can serve it.
+
+**THE PARTITION IS RE-STRUCK ON THE BUNDLED CALL, and that is the one that can
+fail.** Everywhere else a pending symbol has no price, so "exactly one place" is
+true by construction and the check cannot see the overlap it is written for.
+Reintroducing the overlap proved it: the general partition check stayed green and
+only the bundled one fired. Six server bugs were put back one at a time and each
+fired exactly its own checks.
+
+**AND THE STUBBED SHAPES ARE THE FUNCTION'S OWN, taken rather than guessed.** The
+first draft answered under `data[]` keyed on `ticker_symbol`; the upstream answers
+under `data.items` keyed on `ticker` with the rest inside a `rawQuote` blob, and
+the whole suite reported nothing priced — every case failing for one reason that
+had nothing to do with what any of them assert.
+
+#### `cio-filling` and `monitor-security-loading` — two states no walk could reach
+
+Both removals and the hold needed routes that HOLD A FETCH OPEN, because every
+existing mock answers in one round and the settled walk waits for a settled box.
+
+- **`installFillingQuotes`** prices a third of the ask and defers the rest for
+  ever, and deliberately does NOT honour `priority` — it is the pessimistic case,
+  so the card must hold on its own scope rather than on the server having ordered
+  the ask conveniently. The invariants are struck on STRUCTURE: a card that drew
+  six of its 33 names renders a perfectly well-formed list, and only a count of
+  `[data-mover-row]` can see it.
+- **`monitor-security-loading`** stalls `**/lookthrough/**` for the length of the
+  walk. Without it *"the removed loading line is gone"* was struck on text that is
+  never on screen at read time and could not have failed either way.
+
+**AND IT IMMEDIATELY FOUND A LIGHT-MODE GAP NOTHING COULD HAVE REPORTED.**
+`text-champagne-400/80` had no `html:not(.dark)` remap — Tailwind emits each
+opacity variant as its own class, which this file already says in as many words —
+and it came back at `#ecdcae` on white. It renders ONLY while the fund
+look-through is loading, so the class had been on screen for nobody. Same shape
+as the `hover:` variant Stage 10ag found the day a route first clicked something.
+
+#### The bug-reintroduction pass found that FIVE OF THE NEW CHECKS COULD NOT FAIL
+
+Every one of them returned a DESCRIPTIVE STRING on failure, and the harness reads
+any truthy return as a pass (`if (!r) invariants.push(desc)`). So the first sweep
+came back clean over a card rendering a partial ranking. Rewritten to return
+booleans and `{ notChecked }`, with each claim split so a failure names its own
+part. **This is the "a check that cannot fail is itself a defect" rule arriving
+through a return type**, and it is why the pass is run at all: the sweep was
+green, twice, over exactly the defect it was written for.
+
+**AND A SIXTH ABSTAINED WHERE IT SHOULD HAVE FAILED.** The `priority` claim reads
+the request rather than the page, and an absent field was recorded as `null` —
+which the check read as "no request was captured" and abstained on. Dropping
+`priority` entirely, the exact regression it exists for, produced a clean run
+with one NOT CHECKED line. A request that named NONE now records `[]`, which is
+a finding; `null` means only that no request was seen. `golden.mjs`'s rule and
+this file's own *"a missing toggle must be a finding"*, arriving through a
+captured request.
+
+**Nine bugs reintroduced in the browser and six in the suite, each firing its
+own check**: the card ranking a partial scope (the original defect), the ask
+naming no priority, priority widened to the whole book, the card waiting on the
+whole book, the card holding for ever, the loading state naming no progress, each
+caption restored, and — in the suite — pending folded back into missing, priority
+ignored, priority widening the ask, the two sets overlapping, `fresh` counting
+pending, and an off-by-one on the cap. **The fall-through in `FundExposure` is
+the one that could not be reintroduced at all**, and that is the finding: it does
+not typecheck.
+
+`build` · `test:ingest` 140 + 35 · `test:family` (9 new) · `check:family` **53/0** ·
+`check:pages` **146 combinations clean** — 142 plus the two new routes across both
+themes — with the same two pre-existing abstentions. `glowData.ts` is untouched:
+nothing here reads the ingest.
+
+### Stage 10ao — THE BASIS PILL GOES, AND THE DRILL-DOWN LOSES ITS PROSE
 
 *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part from
 the UI."* And: *"Remove all the highlighted text and the sections from the
@@ -7644,7 +7811,7 @@ through a template literal instead of a CSS transform.
 `check:pages` **138 combinations clean**, with the same two pre-existing
 abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
 
-### Stage 10ao — FOUR MORE REMOVALS, AND COMPARE COMPANIES GOES ENTIRELY
+### Stage 10ap — FOUR MORE REMOVALS, AND COMPARE COMPANIES GOES ENTIRELY
 
 *"remove highlighted texts and sections from the dashboard UI"* — pointed at
 three paragraphs on three pages — and *"remove the compare companies page from
@@ -7678,7 +7845,7 @@ derivation — a build that lost the lot passes an absence check on its own.
 #### 2. Private Market — the lead, and both header pills
 
 **THIS IS THE SECOND TIME §6 HAS BEEN NARROWED, AND IT IS RECORDED RATHER THAN
-GLOSSED.** Stage 10an took the `<BasisPill>` off Morning CIO and `/holdings` and
+GLOSSED.** Stage 10ao took the `<BasisPill>` off Morning CIO and `/holdings` and
 kept it here as the correctness half; the family have now pointed at it on this
 page too. `statementPortfolio` IS STILL THE SOURCE — that is where the guarantee
 actually lives, and it has not moved. What went is the reader being TOLD.
@@ -7914,7 +8081,7 @@ reintroducing its bug and watching it fail:
 - no class the caption names as excluded may stand as a row in the table above it;
 - every wrapper class Return & Drawdown names in its caption must have its own
   attribution row, and no fund NAME may be a row label;
-- ~~`/compare` offers no fund and says what it left out~~ — the page was REMOVED at Stage 10ao. `isCompanyShare` is still the filter behind Sector Composition and Exposure & IPS, and both still assert that no fund wrapper appears as a company row;
+- ~~`/compare` offers no fund and says what it left out~~ — the page was REMOVED at Stage 10ap. `isCompanyShare` is still the filter behind Sector Composition and Exposure & IPS, and both still assert that no fund wrapper appears as a company row;
 - a new `stock-fund` route asserts the fund page states the research does not
   apply and renders none of the five panels — while the existing `stock` route
   asserts a COMPANY still carries all of them.

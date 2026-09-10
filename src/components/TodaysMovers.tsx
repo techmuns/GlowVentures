@@ -9,7 +9,7 @@ import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
-import { symbolCoverage } from "@/lib/quotes";
+import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 
 // ── TODAY'S MOVERS, OVER DIRECT EQUITY ───────────────────────────────────────
 //
@@ -117,7 +117,7 @@ const SCOPE = {
 } as const;
 
 export function TodaysMovers() {
-  const { portfolio, consolidated, quotesStatus, quotesAsOf, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, quotesStatus, quotesAsOf, pendingFor, fmtFromBase } = usePortfolio();
   const [rank, setRank] = useState<"impact" | "pct">("impact");
   const [indices, setIndices] = useState<IndexFeed | null>(null);
   /**
@@ -227,6 +227,10 @@ export function TodaysMovers() {
     const cov = symbolCoverage(scope);
     const distinct = new Set(scope.map((p) => p.securityKey)).size;
     const scopeValue = scope.reduce((a, p) => a + p.marketValue, 0);
+    // The symbols THIS CARD needs, so it can tell its own scope being complete
+    // from the book being complete. The book is 161 symbols and fills over three
+    // rounds; this scope is 33 and, named as `priority`, lands in one.
+    const scopeSymbols = symbolsFor(scope);
 
     const gainers = rows.filter((r) => r.dayChange > 0);
     const losers = rows.filter((r) => r.dayChange < 0);
@@ -235,7 +239,7 @@ export function TodaysMovers() {
       ? (a: Row, b: Row) => Math.abs(b.dayChange) - Math.abs(a.dayChange)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows,
+      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
@@ -246,6 +250,42 @@ export function TodaysMovers() {
   }, [portfolio, consolidated, rank]);
 
   if (!portfolio || !model) return null;
+
+  /**
+   * ── THE CARD LANDS COMPLETE, OR IT SAYS IT IS STILL LANDING ────────────────
+   *
+   * *"this daily movers section take a lot of time to show data and sometimes
+   * first shows incomplete data and then starts showing all the portfolio
+   * movers… it should show all the data together rather than in bits and
+   * pieces, so it does not confuses anyone using the dashboard."*
+   *
+   * That is a correctness complaint wearing a speed complaint's clothes. The
+   * endpoint prices a bounded slice per request, so this card used to redraw on
+   * every round — and EVERY FIGURE ON IT IS STRUCK OVER WHICHEVER NAMES HAD
+   * ARRIVED. A top-gainers list over 3 of 33 names promotes a name that is not
+   * the top and omits the one that is; the tile's own percentage divides a
+   * partial rupee move by a partial previous close. Both are real arithmetic
+   * over the wrong set — a wrong figure rather than a slow screen — and both
+   * changed under the reader as the rounds landed.
+   *
+   * So the card holds until NOTHING IN ITS OWN SCOPE is pending, then renders
+   * once. `pendingFor` is what makes that answerable: a symbol the feed
+   * DEFERRED is answered in seconds, one it CANNOT PRICE never is, and the two
+   * used to arrive as one list. Waiting on the second would hold this card for
+   * the life of the tab.
+   *
+   * IT IS THE SCOPE'S OWN SYMBOLS, NEVER THE BOOK'S. Holding until all 161 land
+   * would make a 33-name card wait on 128 names it does not show — the same fix
+   * running the other way. Paired with `priority` in `PortfolioContext`, which
+   * puts exactly these symbols in the first request, the wait is one round.
+   *
+   * AND A FAILED FEED IS NOT A SLOW ONE. When the feed is unavailable no answer
+   * is coming, so the card stops waiting and renders what it has — which is the
+   * absent state naming the feed, two branches below.
+   */
+  const scopePending = quotesStatus === "unavailable" ? [] : pendingFor(model.scopeSymbols);
+  const settling = scopePending.length > 0;
+  const landed = model.scopeSymbols.length - scopePending.length;
 
   const clock = quotesAsOf ? new Date(quotesAsOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
 
@@ -273,8 +313,12 @@ export function TodaysMovers() {
         </div>
       }>
 
-      {quotesStatus === "loading" && model.rows.length > 0 && (
-        <p className="mb-4 text-[11.5px] text-slate-500">Fetching prices — figures are the last snapshot until they settle.</p>
+      {/* Every name in scope carries a price and the feed is refreshing them.
+          The figures below are complete and dated; this says only that a newer
+          round is in flight. When the SCOPE ITSELF is incomplete the card draws
+          no figures at all — see `settling` above. */}
+      {quotesStatus === "loading" && !settling && model.rows.length > 0 && (
+        <p className="mb-4 text-[11.5px] text-slate-500">Refreshing prices — figures are the last complete round until they settle.</p>
       )}
 
       {/*
@@ -296,14 +340,16 @@ export function TodaysMovers() {
         reached only on a genuinely cold open: a reload inside the session
         renders the previous figures immediately and never passes through here.
       */}
-      {model.rows.length === 0 && quotesStatus === "loading" ? (
+      {settling || (model.rows.length === 0 && quotesStatus === "loading") ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center"
-             data-testid="movers-loading">
+             data-testid="movers-loading" data-movers-landed={landed} data-movers-needed={model.scopeSymbols.length}>
           <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
           <div className="text-sm font-medium text-slate-300">Fetching prices…</div>
           <p className="max-w-xl text-xs leading-relaxed text-slate-500">
-            The day&rsquo;s move needs a live price and the previous close behind it. Nothing is shown until they land —
-            no figure here has been estimated or carried over from another day.
+            The day&rsquo;s move needs a live price and the previous close behind it. Every figure on this card — the
+            move, the ranking, the comparison against the index — is struck over the whole scope, so it is shown once
+            the scope has landed in full rather than redrawn as each name arrives.
+            {model.scopeSymbols.length > 0 && ` ${landed} of ${model.scopeSymbols.length} names have landed so far.`}
           </p>
         </div>
       ) : model.rows.length === 0 ? (
@@ -463,7 +509,10 @@ function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
         <table className="mt-3 w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (
-              <tr key={r.securityKey}>
+              /* `data-mover-row` is the handle the sweep counts a RANKING by. A
+                 partial list is well-formed prose, so "the card is not ranking
+                 yet" can only be struck on structure. */
+              <tr key={r.securityKey} data-mover-row={r.securityKey}>
                 <td className="py-1.5 pr-2">
                   <Link to={`/stock/${encodeURIComponent(r.securityKey)}`}
                     className="text-slate-300 transition-colors hover:text-champagne-400"

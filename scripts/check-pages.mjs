@@ -1058,6 +1058,17 @@ const ROUTES = [
    */
   ["cio-live", "/cio"],
   /**
+   * ...AND THE SAME PAGE WITH THE FEED STILL FILLING.
+   *
+   * The one state in which Today's movers could draw a ranking over PART of its
+   * own scope, and no walk could reach it: every other mock answers the whole
+   * ask in one round. `installFillingQuotes` prices a third and defers the rest
+   * for ever, so the card must hold — and the invariants are struck on the
+   * ABSENCE of a ranking plus the presence of a progress count, because a card
+   * that drew six of its 33 names would render a perfectly well-formed list.
+   */
+  ["cio-filling", "/cio"],
+  /**
    * ...AND THE MOVERS CARD'S OTHER TABS, ON THE SAME FULFILLED FEED.
    *
    * `cio-movers-etf` and `cio-movers-mf` WERE HERE and went with the tabs the
@@ -1176,6 +1187,19 @@ const ROUTES = [
    * which the derived figure can be reproduced and the fence around it tested.
    */
   ["monitor-security-drill", "/monitor?group=security"],
+  /**
+   * ...AND THE SAME DRILL-DOWN WITH THE LOOK-THROUGH STORE HELD OPEN.
+   *
+   * The loading state is TRANSIENT — `monitor-security-drill` waits for a
+   * settled box before it reads the page — so "the removed loading line is
+   * gone" was struck on text that is never on screen at read time, and could
+   * not have failed whether the line was there or not. Held open, it is on
+   * screen for the length of the walk and the check bites in both directions:
+   * the sentence must be absent AND no box may be drawn, because a version that
+   * deleted the loading BRANCH rather than its markup falls through to "none of
+   * the N funds discloses this name" with nothing read behind it.
+   */
+  ["monitor-security-loading", "/monitor?group=security"],
   ["monitor-sector", FILTER_SECTOR ? `/monitor?group=security&sector=${encodeURIComponent(FILTER_SECTOR)}` : "/monitor?group=security"],
   /**
    * ...AND THE SAME HOLDINGS SLICED THE FAMILY'S OTHER TWO WAYS.
@@ -1835,6 +1859,40 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
   } catch { return null; }
 })();
 
+/**
+ * EVERY NSE SYMBOL THE MOVERS CARD'S SCOPE RESOLVES — the exact size of the
+ * `priority` list the page must send, and of the set it must wait on.
+ *
+ * Distinct from `PRICED_DIRECT_EQUITY_NAMES` above, which counts the names the
+ * FIXTURE can price (25 here against 33 symbols): a direct-equity holding whose
+ * statement carries no mark still resolves a symbol, is still asked for, and is
+ * still one of the names the card is waiting on. Two different questions, so
+ * two derivations — using the priced count for both would have made the
+ * priority bound pass by a margin of zero and the scope bound pass by luck.
+ *
+ * Re-derived from the book here rather than imported, like everything else in
+ * this file: a check that imports the helper it is checking agrees with it by
+ * construction.
+ */
+const DIRECT_EQUITY_SYMBOLS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const out = new Set();
+    for (const p of positions) {
+      const e = engagement.get(p.accountId);
+      if (e === "PMS" || p.assetClass !== "Equity") continue;
+      if (e !== "Direct" && e !== "Execution") continue;
+      const sym = p.symbol || symbols[p.securityKey];
+      if (sym) out.add(sym);
+    }
+    return out.size || null;
+  } catch { return null; }
+})();
+
 const MOCK_INDICES = [
   ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
   ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
@@ -1920,10 +1978,77 @@ async function installStalledIndices(page) {
   await page.route("**/api/indices*", (route) => new Promise(() => { void route; }));
 }
 
-async function installLiveMocks(page) {
+/**
+ * ── A FEED MID-FILL, WHICH IS THE STATE THE FAMILY REPORTED ─────────────────
+ *
+ * *"sometimes first shows incomplete data and then starts showing all the
+ * portfolio movers."*
+ *
+ * The real endpoint prices a bounded slice per request and names the rest
+ * `pending`; every other mock here answers in one round, so the partial state —
+ * the only one in which the card could ever draw a ranking over part of its own
+ * scope — was reachable by no walk at all. This one holds it open: the FIRST
+ * THIRD of the ask is priced and everything else comes back as `pending`, and it
+ * NEVER ADVANCES, so the card either holds or it is caught drawing a partial
+ * ranking.
+ *
+ * The slice is taken in the order the page ASKED, so `priority` decides which
+ * names land — which is the point. A card whose scope is prioritised sees its
+ * own names in that first third; one that is not sees whatever book order gave
+ * it, and this route's own invariants are struck on the SCOPE's completeness
+ * rather than on a count of anything, so both cases are distinguishable.
+ */
+async function installFillingQuotes(page) {
+  await installLiveMocks(page);
+  await page.unroute("**/api/quotes");
   await page.route("**/api/quotes", async (route) => {
     let want = [];
     try { want = JSON.parse(route.request().postData() ?? "{}").symbols ?? []; } catch { /* empty body */ }
+    // Deliberately NOT honouring `priority`: this fixture is the pessimistic
+    // case — a round that answers for a third of the ask and defers the rest —
+    // so the card must hold on its own scope rather than on the server having
+    // ordered the ask conveniently.
+    const cut = Math.max(1, Math.floor(want.length / 3));
+    const quotes = {}, missing = [], pending = want.slice(cut);
+    for (const sym of want.slice(0, cut)) {
+      const mark = MARK_BY_SYMBOL.get(sym);
+      if (!mark) { missing.push(sym); continue; }
+      quotes[sym] = {
+        price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
+        open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+      };
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending, fresh: Object.keys(quotes).length, stale: 0 }),
+    });
+  });
+}
+
+/**
+ * THE PRIORITY LIST THE PAGE ACTUALLY SENT, on whichever walk installed the
+ * mocks. It is a claim about the REQUEST, so it cannot be read off the rendered
+ * page at all — and it is the half of the movers fix that makes the card land in
+ * ONE round rather than three. Reset per page so a walk reads its own.
+ */
+let QUOTE_PRIORITY = null;
+
+async function installLiveMocks(page) {
+  QUOTE_PRIORITY = null;
+  await page.route("**/api/quotes", async (route) => {
+    let want = [], sentPriority = null;
+    try {
+      const body = JSON.parse(route.request().postData() ?? "{}");
+      want = body.symbols ?? [];
+      sentPriority = Array.isArray(body.priority) ? body.priority : null;
+    } catch { /* empty body */ }
+    // AN ASK THAT NAMED NOTHING IS A FINDING, NOT AN ABSTENTION. Recording the
+    // absent field as `null` made "the page sent no priority at all" — the exact
+    // regression this check exists for — read as "no request was captured", so
+    // the check abstained and the sweep came back clean. `null` now means only
+    // that no request was seen; a request that named none records `[]`.
+    if (QUOTE_PRIORITY == null) QUOTE_PRIORITY = sentPriority ?? [];
     const quotes = {}, missing = [];
     for (const s of want) {
       const mark = MARK_BY_SYMBOL.get(s);
@@ -1936,7 +2061,11 @@ async function installLiveMocks(page) {
     }
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, fresh: Object.keys(quotes).length, stale: 0 }),
+      // `pending` is part of the endpoint's contract — DEFERRED, as against
+      // `missing`, which is attempted and unservable. This fixture answers
+      // everything in one round, so it is empty; `installFillingQuotes` is the
+      // one that exercises the other state.
+      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending: [], fresh: Object.keys(quotes).length, stale: 0 }),
     });
   });
   await page.route("**/api/indices*", async (route) => {
@@ -2351,8 +2480,11 @@ const ALLOC_AXIS = [
     const a = ctx?.allocTable;
     if (!a) return { notChecked: "the allocation table was not on screen on this run" };
     const want = { category: "bucket", basket: "basket", assetClass: "family-class" }[a.axis];
-    const rows = (ctx?.hrefs ?? []).filter((h) => new RegExp(`^/holdings\\?of=${want}&key=.`).test(h));
-    return rows.length === a.rows.length && new Set(rows).size === rows.length;
+    // Read the destinations off the ROWS, not page-wide `hrefs`: the bar chart
+    // above the table now draws a second link to each of these, so a raw count
+    // over the page would see every destination twice.
+    const dests = a.rows.map((k) => a.rowHrefs[k]).filter((h) => h && new RegExp(`^/holdings\\?of=${want}&key=.`).test(h));
+    return dests.length === a.rows.length && new Set(dests).size === dests.length;
   }],
   /** ...AND THE TABLE STILL UNDERLINES NOTHING AND HIDES NO ARITHMETIC. */
   ["the allocation table underlines nothing and hides no arithmetic, on every axis", (t, ctx) => {
@@ -4487,6 +4619,30 @@ const INVARIANTS = {
     return ctx.allocTable.links >= 2;
   }],
   /**
+   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
+   *
+   * *"the bar graphs should also be clickable just like the rows in the table
+   * and should show the same drill down pages as the table ones do."* So the
+   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
+   * its row's href — both null where the row is a non-clickable fund-of-funds
+   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
+   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
+   * a page that still renders every figure correctly. Verified by reintroducing
+   * both bugs — a bar with a wrong href, and a bar that is not a link.
+   */
+  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    if (!a.bars || !a.bars.length) return false;   // the chart must be there
+    const rowKeys = Object.keys(a.rowHrefs);
+    // one bar per row (keys are unique per section, so equal counts plus every
+    // bar key being a row key means the two sets coincide), and each bar's
+    // destination is its row's — null against null for a non-clickable line.
+    if (a.bars.length !== rowKeys.length) return false;
+    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
+      && b.href === a.rowHrefs[b.key]);
+  }],
+  /**
    * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
    *
    * *"remove the placeholder for not live data from the dashboard ui."* A
@@ -4668,9 +4824,11 @@ const INVARIANTS = {
      */
     ["every allocation row links to its own holdings", (t, ctx) => {
       const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(held)) return false;
-      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
-      return rows.length === held;
+      if (!Number.isFinite(held) || !ctx?.allocTable) return false;
+      // Off the rows, not page-wide `hrefs`: the bar chart draws a parallel link
+      // per destination (asserted to match it, below), which doubles a raw count.
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length === held;
     }],
     // ...AND THE SWEEP HAS AN ADDRESS FOR EVERY ONE OF THEM. `holdings-row-N`
     // walks the Nth allocation row; a book with more buckets than slots would
@@ -4684,8 +4842,9 @@ const INVARIANTS = {
     // ...AND EACH ONE NAMES A DIFFERENT SET. Six links to one address would
     // satisfy the count above while opening the same holdings six times.
     ["each allocation row opens a different set", (t, ctx) => {
-      const rows = (ctx?.hrefs ?? []).filter((h) => /^\/holdings\?of=bucket&key=./.test(h));
-      return rows.length > 0 && new Set(rows).size === rows.length;
+      if (!ctx?.allocTable) return false;
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length > 0 && new Set(dests).size === dests.length;
     }],
     /**
      * THE KPI TILES AND THE CONCENTRATION FIGURES ARE THE SAME FIX, so they are
@@ -5861,7 +6020,107 @@ const INVARIANTS = {
    * is a literal typed to match what the page happens to print — each is the
    * arithmetic the fixture makes true, which is what lets them FAIL.
    */
+  /**
+   * ── THE MOVERS CARD MID-FILL: IT HOLDS, IT DOES NOT RANK PART OF ITSELF ────
+   *
+   * *"sometimes first shows incomplete data and then starts showing all the
+   * portfolio movers... it should show all the data together rather than in
+   * bits and pieces."*
+   *
+   * `installFillingQuotes` prices a third of the ask and defers the rest for
+   * ever. Every figure on this card is struck over its whole scope — the day's
+   * move, the ranking, the comparison against the index — so a card that drew
+   * anything here would be drawing real arithmetic over the wrong set. The
+   * checks are on STRUCTURE because a partial ranking is well-formed prose: six
+   * rows, a total, a percentage, and nothing on screen to say the other 27 names
+   * have not arrived.
+   */
+  "cio-filling": [
+    /**
+     * IT HOLDS, and holding is a fact about the DOM rather than about the prose:
+     * all three of this card's states render sentences, and two of them say a
+     * day change is not available.
+     */
+    ["the movers card holds while its own scope is still filling", (t, ctx) => {
+      void t;
+      const m = ctx?.movers;
+      if (!m) return { notChecked: "the movers probe did not run" };
+      return m.holding === true;
+    }],
+    /**
+     * AND IT RANKS NOTHING. The load-bearing half: a card that drew six of its
+     * 33 names renders a perfectly well-formed list — a total, a percentage,
+     * six rows — with nothing on screen to say the other 27 have not arrived.
+     * Only a count of the ranked rows can see it.
+     */
+    ["...and ranks none of its scope while part of it is deferred", (t, ctx) => {
+      void t;
+      const m = ctx?.movers;
+      if (!m) return { notChecked: "the movers probe did not run" };
+      return m.ranked === 0 && m.figures === false;
+    }],
+    /**
+     * AND IT SAYS HOW FAR ALONG IT IS, against ITS OWN scope size.
+     *
+     * A spinner with no number is indistinguishable from a hung one, and the
+     * family's complaint was about waiting. The DENOMINATOR is the load-bearing
+     * half twice over: a card that quietly narrowed its scope to whatever had
+     * landed would print "11 of 11" and satisfy every check above, and one that
+     * waited on the whole 161-symbol book instead of its own 33 is this fix
+     * running the other way and would satisfy them too.
+     */
+    ["the loading state names how many of the scope's own names have landed", (t, ctx) => {
+      void t;
+      const m = ctx?.movers;
+      if (!m) return { notChecked: "the movers probe did not run" };
+      if (!m.holding) return { notChecked: "the card is not in its loading state on this run" };
+      return Number.isFinite(m.needed) && m.needed > 0
+        && Number.isFinite(m.landed) && m.landed >= 0 && m.landed < m.needed;
+    }],
+    ["...and the scope it waits on is its own set, neither the whole book nor part of itself", (t, ctx) => {
+      void t;
+      const m = ctx?.movers;
+      if (!m) return { notChecked: "the movers probe did not run" };
+      if (!m.holding) return { notChecked: "the card is not in its loading state on this run" };
+      if (DIRECT_EQUITY_SYMBOLS == null) return { notChecked: "the book's own direct-equity symbol count could not be derived" };
+      return m.needed === DIRECT_EQUITY_SYMBOLS;
+    }],
+  ],
   "cio-live": [
+    /**
+     * THE SCOPE IS NAMED AS `priority`, WHICH IS A CLAIM ABOUT THE REQUEST.
+     *
+     * It cannot be read off the rendered page at all, and it is what turns three
+     * rounds into one: the endpoint prices a bounded slice per request and this
+     * book has 161 symbols, so in book order the card's own names sat at
+     * distinct-symbol positions 20 to 108 — 30 of the 33 beyond the first
+     * request — and the card could not be complete until the third round.
+     *
+     * Held to the BOOK's own count of direct-equity symbols, EXACTLY: a priority
+     * list that quietly became "the first few" leaves part of the scope
+     * deferred, and one that became the whole book prioritises nothing.
+     */
+    ["the quote request names the card's own scope as priority, so it lands in one round",
+      (t, ctx) => {
+        void t;
+        const p = ctx?.quotePriority;
+        if (p == null) return { notChecked: "no quote request was captured on this run" };
+        if (DIRECT_EQUITY_SYMBOLS == null) return { notChecked: "the book's own direct-equity symbol count could not be derived" };
+        return Array.isArray(p) && p.length === DIRECT_EQUITY_SYMBOLS;
+      }],
+    /**
+     * AND WITH THE WHOLE ASK ANSWERED IT RENDERS, RATHER THAN HOLDING.
+     *
+     * The other half of the hold, and neither implies the other: a card wired to
+     * hold for ever passes every check on `cio-filling` and fails this one.
+     */
+    ["with the feed complete the card renders its figures rather than holding",
+      (t, ctx) => {
+        void t;
+        const m = ctx?.movers;
+        if (!m) return { notChecked: "the movers probe did not run" };
+        return m.holding === false && m.figures === true && m.ranked > 0;
+      }],
     /**
      * THE DAY'S MOVE IS STRUCK ON THE PRICED SUBSET, NOT ON THE WHOLE BOOK.
      *
@@ -6637,6 +6896,47 @@ const INVARIANTS = {
       if (!fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
       return fe.via.length > 0 && fe.via.every((v) => v === "isin" || v === "name");
     }],
+    /**
+     * ── THE TWO CAPTIONS THE FAMILY ASKED TO BE RID OF, ASSERTED GONE ─────────
+     *
+     * *"remove the highlighted texts from the dashboard UI completely."*
+     *
+     * A removal is verified by asserting it happened, never by deleting a check
+     * alongside the feature. Both are struck on this one route because it is the
+     * route that opens the venue table AND the look-through card.
+     *
+     * THE LOAD-BEARING HALF OF THE SECOND IS NOT THE WORDS. A look-through still
+     * fetching must not print "none of the N funds discloses this name" — that is
+     * a claim about the holding made before a disclosure has been read, and a
+     * version that deleted the loading BRANCH rather than its markup would fall
+     * straight through to it, satisfy "the sentence is gone", and be exactly the
+     * defect. So the second half asserts the card that IS on screen came from a
+     * settled store, never from the loading one.
+     */
+    ["the venue table's caption is gone",
+      (t) => !/clubs them into one holding/i.test(t) && !/one statement as printed/i.test(t)],
+  ],
+  /**
+   * ── THE LOOK-THROUGH, MID-FETCH: NO SENTENCE, AND NO CLAIM EITHER ─────────
+   *
+   * *"remove the highlighted texts from the dashboard UI completely."*
+   *
+   * The words are the ask; the guard behind them is the thing that must survive
+   * it. A look-through still fetching must never print "none of the N funds
+   * discloses this name", which is a claim about the holding made before a
+   * disclosure has been read — so removing the loading BRANCH rather than its
+   * markup would satisfy the first check here and be exactly the defect the
+   * second catches.
+   */
+  "monitor-security-loading": [
+    ["the look-through's loading line is gone",
+      (t) => !/Checking which of your funds disclose this name/i.test(t)],
+    ["...and a store that has not answered draws no box at all, never the none-branch",
+      (t, ctx) => {
+        const fe = ctx?.fundExposure;
+        if (fe) return false;                      // any box here came from an unanswered store
+        return !/discloses this name/i.test(t) && !/Held inside your funds/i.test(t);
+      }],
   ],
   /**
    * ── THE SECTOR FILTER SURVIVES ITS DROPDOWN ────────────────────────────────
@@ -8208,6 +8508,7 @@ for (const theme of THEMES) {
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
       if (name === "cio-live") await installLiveMocks(page);
+      if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
       // The first load answers, so the snapshot is written; the reload below
@@ -8228,7 +8529,7 @@ for (const theme of THEMES) {
        * intended. It waits for `load` instead, which is the state its
        * invariants are about: the page painted, the feeds still in flight.
        */
-      const settle = (name === "cio-loading" || name === "cio-index-loading")
+      const settle = (name === "cio-loading" || name === "cio-index-loading" || name === "monitor-security-loading")
         ? "load" : (FAST ? "load" : "networkidle");
       await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
       if (name === "cio-cached") {
@@ -8316,12 +8617,22 @@ for (const theme of THEMES) {
        * FETCHES — up to 21 scheme files — and asserting on a panel that is still
        * loading would report an absence that is really a race.
        */
-      if (name === "monitor-security-drill" && FUND_EXPOSURE) {
+      // THE LOOK-THROUGH STORE, HELD OPEN. `public/lookthrough/` is served as
+      // static JSON by `vite preview`, so the only way to see the loading state
+      // is to stall the request for the length of the walk.
+      if (name === "monitor-security-loading") {
+        await page.route("**/lookthrough/**", (r) => new Promise(() => { void r; }));
+      }
+      if ((name === "monitor-security-drill" || name === "monitor-security-loading") && FUND_EXPOSURE) {
         const row = page.locator(`tr[data-security-key="${FUND_EXPOSURE.key}"] button`).first();
         if (await row.count()) {
           await row.click();
-          await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
-          await page.waitForTimeout(500);
+          // The stalled walk must NOT wait for a settled box — that is the state
+          // it exists to never reach.
+          if (name === "monitor-security-drill") {
+            await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
+          }
+          await page.waitForTimeout(name === "monitor-security-loading" ? 1200 : 500);
         }
       }
       if (name === "monitor-txns" || name === "monitor-txn-manager"
@@ -8785,6 +9096,20 @@ for (const theme of THEMES) {
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
           buttons: t.querySelectorAll("button").length,
           links: t.querySelectorAll("a[href]").length,
+          // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
+          // bar carries `data-alloc-bar` (its section key) and IS the same
+          // `<Link>` its row is, so a bar and its row must open the same
+          // drill-down — and a fund-of-funds row that is not a link has a bar
+          // that is not one either. `rowHrefs` is the row's own destination per
+          // key; the invariant holds `bars` to it.
+          bars: [...document.querySelectorAll("main [data-alloc-bars] [data-alloc-bar]")].map((el) => ({
+            key: el.getAttribute("data-alloc-bar"),
+            href: el.matches("a[href]") ? el.getAttribute("href") : null,
+          })),
+          rowHrefs: Object.fromEntries([...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => {
+            const a = r.querySelector("a[href]");
+            return [r.getAttribute("data-alloc-row"), a ? a.getAttribute("href") : null];
+          })),
           // The axis segments, so "the selector exists and offers all three" is
           // a claim about controls rather than about words on the page.
           axes: [...document.querySelectorAll("main [data-alloc-axis][role='tab']")].map((b) => ({
@@ -8814,6 +9139,27 @@ for (const theme of THEMES) {
           label: (b.textContent ?? "").trim(),
           active: b.getAttribute("aria-selected") === "true",
         })));
+      /**
+       * ── WHAT THE MOVERS CARD IS ACTUALLY DOING, STRUCK ON STRUCTURE ────────
+       *
+       * `holding` / `figures` / `absent` are the card's three states, and only
+       * the DOM tells them apart: all three render prose, and the loading one
+       * and the absent one both say a day change is not available. `landed` and
+       * `needed` are the progress the loading state prints; `ranked` is how many
+       * mover rows are drawn, which is the number that must be ZERO while the
+       * scope is incomplete — a card that ranked six of 33 names would print a
+       * perfectly well-formed list and no text check could see it.
+       */
+      const movers = FAST ? null : await page.evaluate(() => {
+        const load = document.querySelector('[data-testid="movers-loading"]');
+        return {
+          holding: !!load,
+          landed: load ? Number(load.getAttribute("data-movers-landed")) : null,
+          needed: load ? Number(load.getAttribute("data-movers-needed")) : null,
+          figures: !!document.querySelector('[data-testid="movers-coverage"]'),
+          ranked: document.querySelectorAll('[data-mover-row]').length,
+        };
+      });
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
@@ -9562,7 +9908,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

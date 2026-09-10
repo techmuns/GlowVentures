@@ -63,11 +63,28 @@ export type Quote = {
 export type QuoteFeed = {
   quotes: Record<string, Quote>;
   asOf: string;
-  /** Symbols the upstream could not price at all — these stay on workbook marks. */
+  /** Symbols the upstream ATTEMPTED and could not price — these stay on workbook marks. */
   missing: string[];
+  /**
+   * Symbols this round DEFERRED because of the per-request cap. An answer is
+   * coming; `missing` says one never will. A caller that cannot tell the two
+   * apart cannot know when a set is complete, and a ranked list struck over a
+   * partial set is a wrong figure rather than a slow one.
+   */
+  pending: string[];
   fresh: number;
   stale: number;
 };
+
+/** Which of `symbols` this feed has not answered for yet. */
+export function pendingAmong(feed: QuoteFeed | null, symbols: readonly string[]): string[] {
+  if (!feed) return [...symbols];
+  const p = new Set(feed.pending);
+  // A symbol with no quote and no verdict is one this feed never mentioned —
+  // treat it as pending, because the alternative is calling a set complete on a
+  // response that said nothing about it.
+  return symbols.filter((s) => !feed.quotes[s] && (p.has(s) || !feed.missing.includes(s)));
+}
 
 /** Why a fetch produced no prices, for the UI and for the console. */
 export type QuoteFailure = {
@@ -94,13 +111,24 @@ export function symbolsFor(positions: Position[]): string[] {
  * marks, so a feed outage degrades to "as of the last upload" rather than a
  * broken page.
  */
-export async function fetchQuotes(symbols: string[], opts?: { refresh?: boolean; probe?: boolean }): Promise<QuoteFeed | null> {
+export async function fetchQuotes(
+  symbols: string[],
+  opts?: { refresh?: boolean; probe?: boolean; priority?: readonly string[] },
+): Promise<QuoteFeed | null> {
   if (!symbols.length) return null;
   try {
     const r = await fetch("/api/quotes", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ symbols, refresh: !!opts?.refresh, probe: !!opts?.probe }),
+      body: JSON.stringify({
+        symbols,
+        // Which symbols the first screen needs. It never widens the ask — the
+        // server ignores anything not in `symbols` — it only decides the order,
+        // so one visible card completes in a round instead of a book's worth.
+        priority: opts?.priority ? [...opts.priority] : undefined,
+        refresh: !!opts?.refresh,
+        probe: !!opts?.probe,
+      }),
       cache: "no-store",
     });
     const d = await r.json().catch(() => null);
@@ -122,6 +150,7 @@ export async function fetchQuotes(symbols: string[], opts?: { refresh?: boolean;
       quotes: (d.quotes ?? {}) as Record<string, Quote>,
       asOf: typeof d.asOf === "string" ? d.asOf : new Date().toISOString(),
       missing: Array.isArray(d.missing) ? d.missing : [],
+      pending: Array.isArray(d.pending) ? d.pending : [],
       fresh: Number(d.fresh) || 0,
       stale: Number(d.stale) || 0,
     };

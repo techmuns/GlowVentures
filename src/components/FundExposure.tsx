@@ -23,14 +23,25 @@
  * `drilldown.ts` exists to stop for the book's own figures, arriving through a
  * derived one. `loadStockExposure` is the single join and both read its result.
  *
- * FOUR ABSENCES ARE NAMED RATHER THAN LEFT TO BE INFERRED, because on this card
+ * THREE ABSENCES ARE NAMED RATHER THAN LEFT TO BE INFERRED, because on this card
  * a silent zero would read as "you hold none of it through funds":
- *   • still loading is said, never rendered as none;
  *   • a store that did not answer is a fact about the FETCH and is worded as one;
  *   • the vehicles this store cannot speak for are counted, listed and valued;
  *   • an AIF publishes nothing this book can join AT ALL, and that is a fact
  *     about the instrument rather than a gap in the store, so it is worded as
  *     one — see `skipReason` in `lookthrough.ts`.
+ *
+ * AND WHILE IT IS LOADING IT RENDERS NOTHING AT ALL, at the family's request —
+ * *"remove the highlighted texts from the dashboard UI completely."* That is a
+ * removal of a SENTENCE and not of the state: the load-bearing half was never
+ * the words, it was that a card still fetching must NOT print "none of the N
+ * funds discloses this name", which is a claim about the holding made before
+ * anything has been read. Rendering nothing asserts nothing, so the guard is
+ * intact and the reader sees the card appear rather than a line telling them to
+ * wait for it. The lists are memoised, so the gap is one fetch on first use.
+ * `check:pages` asserts the words are gone AND that the none-branch is still
+ * unreachable from `loading` — a version that fell through to it would satisfy
+ * the first and be exactly the defect.
  */
 import { Link } from "react-router-dom";
 import type { StockExposureState } from "@/lib/lookthrough";
@@ -44,11 +55,10 @@ export function FundExposure({ exposure, securityKey, money }: {
   securityKey: string;
   money: (n: number) => string;
 }) {
-  if (exposure.status === "loading") {
-    return <p className="mt-2 text-[11px] text-slate-500" data-fund-exposure="loading">
-      Checking which of your funds disclose this name…
-    </p>;
-  }
+  // NOTHING, NEVER THE NONE-BRANCH. See the note above: the words went at the
+  // family's request; falling through to the card below would print a claim
+  // about the holding before a single disclosure had been read.
+  if (exposure.status === "loading") return null;
   if (exposure.status === "unreachable") {
     return <p className="mt-2 text-[11px] text-amber-400/80" data-fund-exposure="unreachable">
       The fund look-through store did not answer, so it is not known whether your funds hold this name.

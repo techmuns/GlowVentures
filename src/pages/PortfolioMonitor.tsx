@@ -2482,9 +2482,19 @@ export function PortfolioMonitor() {
                                   reported twice</>
                               )}.
                             </p>
-                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                              The row above clubs them into one holding; each line here is one statement as printed.
-                            </p>
+                            {/* THE CAPTION THAT SAT HERE IS GONE at the family's
+                                request, and its two claims were checked against
+                                the rest of the panel before it went. That the row
+                                clubs these lines is the lead sentence above, which
+                                names the row's own value and then splits it by
+                                route; that each line is one STATEMENT rather than
+                                a deduped view only has a consequence where the two
+                                differ, and on exactly those rows the lead sentence
+                                names the overlap in rupees and the amber line under
+                                the table reconciles it in figures. On every other
+                                row the distinction changes no number, so the
+                                sentence was telling a reader about a difference
+                                their own row does not have. */}
                             <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                               <table className="min-w-full text-[12px]">
                                 <thead>
