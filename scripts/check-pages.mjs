@@ -4325,33 +4325,27 @@ const INVARIANTS = {
 
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
     /**
-     * ── POSITIONS COUNTS THE BOOK, AND THE PAGE IT OPENS ACCOUNTS FOR THE REST ─
+     * ── POSITIONS COUNTS WHAT THE FAMILY STILL HOLDS ────────────────────────
      *
-     *   "we only need to show the current holdings in these allocation drill
-     *    down pages, if anything has been redeemed or sold completely then
-     *    remove it."
+     *   "exclude closed rows from morning cio positions too."
      *
-     * That is a request about the DRILL-DOWNS, and `resolveDrilldown` is where
-     * it is answered — the closed rows are dropped there and `closedExcluded`
-     * travels with them, so `/holdings` names in words how many it left out.
+     * THE COUNT IS THE ONLY FIGURE THAT MOVES, which is what makes it the only
+     * one worth anchoring. A closed position is a measured ₹0 with no reported
+     * cost, so NAV, Capital invested, every allocation row and every return are
+     * identical whether or not it is in the set — and the count is not: it read
+     * 369 while the page it opens listed 364, a tile disagreeing with the page
+     * it opens, which is the one failure `drilldown.ts` exists to prevent.
      *
-     * NARROWING THIS TILE TOO WOULD SILENCE THAT SENTENCE, which is why the
-     * check is inverted rather than deleted: with the tile at 364 the drill-down
-     * has nothing to reconcile, `closedExcluded` is zero and the page falls
-     * silent about the five. Both halves are asserted here and neither implies
-     * the other — the tile counts every position the book carries, AND the count
-     * differs from what the drill-down draws by exactly the closed rows, which
-     * is the gap the subtitle exists to explain. Struck against `glowData.ts`
-     * rather than against that page, because comparing the tile with the page it
-     * opens passes when BOTH revert together.
+     * Struck against `glowData.ts` rather than against the drill-down, because
+     * comparing the tile with the page it opens passes when BOTH revert
+     * together, and that is exactly how this regression would arrive.
      */
-    ["Positions counts the book, and the closed rows are the gap the drill-down explains", (t) => {
+    ["Positions counts current holdings, not what the family was paid out of", (t) => {
       if (!SECURITY_AXIS_BOOK?.heldPositions) return notChecked("the book could not be read on this run");
-      const closed = FUND_CLASS_BOOK?.closedCount;
-      if (!closed) return notChecked("no holding in this book is redeemed to nil");
+      if (!FUND_CLASS_BOOK?.closedCount) return notChecked("no holding in this book is redeemed to nil");
       const pos = CIO_FIGURES.get("positions");
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
-      return pos === SECURITY_AXIS_BOOK.heldPositions + closed;
+      return pos === SECURITY_AXIS_BOOK.heldPositions;
     }],
   /**
    * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
@@ -5481,27 +5475,20 @@ const INVARIANTS = {
       return Number.isFinite(here) && Math.abs(here - nav) <= 0.15;
     }],
     /**
-     * ── ITS COUNTS REPRODUCE THE TILE'S, ONCE THE CLOSED ROWS ARE PUT BACK ───
+     * ── ITS COUNTS REPRODUCE THE TILE'S, EXACTLY ─────────────────────────────
      *
-     * This page lists CURRENT holdings; Morning CIO's Positions counts every row
-     * in the book, closed ones included. So the two are deliberately apart, by
-     * exactly the number this page prints as left out — and the check reconciles
-     * all three rather than relaxing to an inequality.
-     *
-     * THAT GAP IS READ OFF THE PAGE, not recomputed here: the page's claim about
-     * what it dropped is the thing under test, so a page that filtered ten rows
-     * and said five fails. Names use the BOOK's own count of keys every row of
-     * which is closed, because a name is only gone from this page when no live
-     * row still carries it.
+     * Both sides list CURRENT holdings now: this page filters the closed rows
+     * and so does Morning CIO, at the family's request, so Positions counts what
+     * this page lists rather than running five ahead of it. Plain equality is
+     * the whole claim, and it is the strongest form of it — the version that
+     * added the gap back was correct while the two screens disagreed and would
+     * now hide a page that dropped rows the tile still counted.
      */
     ["its two counts reproduce Positions and Distinct names", (t) => {
       const c = drilldownCounts(t);
       const pos = CIO_FIGURES.get("positions"), names = CIO_FIGURES.get("names");
       if (!Number.isFinite(pos) || !Number.isFinite(names)) return notChecked("Morning CIO's concentration counts did not parse on this run");
-      if (c == null) return false;
-      const dropped = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? 0);
-      const droppedNames = FUND_CLASS_BOOK?.redeemedKeys.size ?? 0;
-      return c.holdings + dropped === pos && c.names + droppedNames === names;
+      return c != null && c.holdings === pos && c.names === names;
     }],
     // THE WHOLE-BOOK RETURN STAYS REFUSED. 60 positions are in Value and in no
     // Invested, so a percentage across the two columns would divide one set of
@@ -5659,19 +5646,15 @@ const INVARIANTS = {
      * narrowed one drops rows from both. Neither page can make this claim
      * alone, which is why the listed half's own figures are carried here.
      *
-     * THE CLOSED ROWS ARE PUT BACK BEFORE THE COMPARISON, as on the other two
-     * count reconciliations. Both halves list current holdings and Positions
-     * counts every row the book carries, so the partition is over the book's own
-     * closed count — which is the right number here even though the closed rows
-     * split ACROSS the two halves (3P is AIF, the HDFC schemes are Mutual Fund):
-     * what each half drops is its own share, and the two shares are all of them.
+     * BOTH HALVES AND THE TILE ARE ON CURRENT HOLDINGS, so the partition is
+     * exact with no gap term — Morning CIO stopped counting the closed rows at
+     * the same time these pages stopped listing them.
      */
     ["the two halves hold every position between them, and none twice", (t) => {
       const here = drilldownCounts(t), listed = DRILLDOWN_COUNTS.get("holdings-listed");
       const pos = CIO_FIGURES.get("positions");
       if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
-      const closed = FUND_CLASS_BOOK?.closedCount ?? 0;
-      return here != null && here.holdings + listed.holdings + closed === pos;
+      return here != null && here.holdings + listed.holdings === pos;
     }],
     /**
      * THE NARROWED PAGE SHOWS THE HALF'S OWN FIGURE, NOT THE BOOK'S.
@@ -5908,19 +5891,17 @@ const INVARIANTS = {
      * sees it. Held against Morning CIO's Positions count so the two pages
      * cannot drift into agreeing with each other about a set neither has right.
      *
-     * THE CLOSED ROWS ARE PUT BACK BEFORE THE COMPARISON. This page lists
-     * current holdings; Positions counts every row the book carries. The gap is
-     * exactly what the page prints as left out, so the partition is asserted
-     * over three rendered figures rather than loosened to an inequality.
+     * BOTH SIDES ARE ON CURRENT HOLDINGS. This page filters the closed rows and
+     * so does Morning CIO, so the two facets partition exactly what Positions
+     * counts — no gap term, which is the stronger claim.
      */
     ["the two sides of the toggle account for every position", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
       const pos = CIO_FIGURES.get("positions");
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
-      const dropped = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? 0);
       return ctx.facets.every((f) => Number.isFinite(f.rows))
-        && ctx.facets.reduce((a, f) => a + f.rows, 0) + dropped === pos;
+        && ctx.facets.reduce((a, f) => a + f.rows, 0) === pos;
     }],
   ],
   /**

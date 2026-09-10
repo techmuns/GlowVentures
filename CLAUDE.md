@@ -8352,15 +8352,29 @@ classes at ₹0 apiece, three of its fourteen fund rows.
 
 **AND `/holdings` FILTERS INSIDE `resolveDrilldown`, NOT AT THE PAGE BOUNDARY,
 WHICH IS THE HALF THE MERGE CORRECTED.** This branch narrowed the set as it
-entered the page and narrowed Morning CIO's Positions tile to match, so the tile
-and the table agreed at 364 and neither said anything had been left out. Main
-filters where the SET is defined and carries `closedExcluded` out with it, so the
-table's own subtitle names the rows it dropped — *"N closed positions are not
-listed: the fund still publishes a NAV, the family no longer holds them"*. A
-boundary filter leaves that count at zero, so the page falls silent about a
-reader arriving from a tile that counts every position in the book. **Main's is
-what stands**, and the Positions tile is therefore NOT narrowed: it counts the
-book, and the page it opens accounts for the difference in words.
+entered the page; main filters where the SET is defined and carries
+`closedExcluded` out with it, so the table's own subtitle names the rows it
+dropped — *"N closed positions are not listed: the fund still publishes a NAV,
+the family no longer holds them"*. A boundary filter leaves that count at zero
+and the page falls silent about them. **Main's is what stands.**
+
+**AND MORNING CIO *IS* NARROWED, WHICH THE MERGE GOT WRONG ONCE BEFORE FIXING.**
+The reasoning above looks as though it should extend to the tile — narrow the
+tile too and nothing anywhere accounts for the five — and it does not, because
+`/holdings` builds its own set from the portfolio context rather than from
+Morning CIO's locals. `closedExcluded` is 5 either way and the subtitle prints
+either way, so BOTH can be true at once: the tile counts 364 and the drill-down
+still names what it left out. The family settled it in the same words —
+*"exclude closed rows from morning cio positions too."* A tile that disagrees
+with the page it opens is the one failure `drilldown.ts` exists to prevent, so
+Positions reads 364, Distinct names 208, and the cost coverage 55 of 364. The
+count reconciliations are plain equality again rather than carrying a gap term.
+
+**AND IT GOES THROUGH `currentHoldings`, NOT AN INLINE PREDICATE.** Five surfaces
+now ask what the family currently holds — this page, the Portfolio Monitor,
+Private Market, the fund look-through and `resolveDrilldown` — and a fifth copy
+of the test is a fifth chance for one screen to disagree with the others about
+which rows are still held.
 
 **IT MOVES NO MONEY, WHICH IS WHY THE COUNT IS THE ONLY THING WORTH ANCHORING.**
 A closed position is a measured ₹0 with no reported cost: NAV, Capital invested,

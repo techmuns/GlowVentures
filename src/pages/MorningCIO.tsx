@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet,
+  costCoversSet, currentHoldings,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -163,22 +163,29 @@ export function MorningCIO() {
     // figure covering ₹461 Cr of which 62% is private by asset class. A caption
     // that narrows a figure it does not narrow is the same failure as one that
     // widens it: the reader believes a scope nothing measured.
-    // AND THIS PAGE IS DELIBERATELY *NOT* NARROWED TO CURRENT HOLDINGS.
-    //
-    // The family asked for redeemed positions off the ALLOCATION DRILL-DOWNS,
-    // and `resolveDrilldown` drops them there — carrying `closedExcluded` out
-    // with them so `/holdings` names in words what it left out. Narrowing this
-    // page too would make the tile and the table agree at 364 and leave nothing
-    // anywhere to account for the five: `closedExcluded` would be zero and the
-    // subtitle would fall silent. A reader arriving from a tile that counts the
-    // book must find the difference explained on the page it opens, which is
-    // where a redemption is a fact worth stating.
-    //
-    // It costs no figure either way. A closed position is a measured ₹0 with no
-    // reported cost, so `bookMV` is identical and `sumOrNull` already skips it
-    // out of `bookCost`; only the COUNT differs, and the count is the one thing
-    // the drill-down reconciles in words.
-    const p = consolidated;
+    /**
+     * CURRENT HOLDINGS, SO THIS PAGE COUNTS WHAT ITS DRILL-DOWNS LIST.
+     *
+     * *"exclude closed rows from morning cio positions too."* The drill-downs
+     * already list current holdings only; this tile counted every row the book
+     * carries, so Positions read 369 over a page listing 364 — a figure
+     * disagreeing with the page it opens, which is the one failure
+     * `drilldown.ts` exists to prevent.
+     *
+     * IT MOVES NO MONEY, which is why the filter belongs at `p` rather than on
+     * the two counts alone: every closed row carries `marketValue: 0` and
+     * `costBasis: null`, so every sum below is identical and `sumOrNull` was
+     * already skipping them. What changes is the COUNTS — Positions, Distinct
+     * names, and the cost-coverage count on the Capital invested tile, which
+     * used to read "60 of 369" against a drill-down facet showing 55.
+     *
+     * Through `currentHoldings` rather than an inline `isRedeemedToNil`: the
+     * Portfolio Monitor, Private Market, the fund look-through and
+     * `resolveDrilldown` all read that one helper, and a fifth copy of what
+     * "current" means is a fifth chance for one screen to disagree with the
+     * others about which rows the family still holds.
+     */
+    const p = currentHoldings(consolidated);
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the
