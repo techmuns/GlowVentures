@@ -118,7 +118,17 @@ const SCOPE = {
 
 export function TodaysMovers() {
   const { portfolio, consolidated, quotesStatus, quotesAsOf, pendingFor, fmtFromBase } = usePortfolio();
-  const [rank, setRank] = useState<"impact" | "pct">("impact");
+  /**
+   * THE DEFAULT IS THE PERCENTAGE MOVE, at the family's request — *"keep % wise
+   * as the default view and ₹ wise absolute as the second toggle option."*
+   *
+   * The two answer different questions and neither subsumes the other, which is
+   * why both are offered: a 9% move on a ₹40 L holding is the larger mover by
+   * one measure and the smaller by the other. The order of the union type and
+   * of the buttons below is the order they are OFFERED in, so both follow the
+   * default rather than being set independently of it.
+   */
+  const [rank, setRank] = useState<"pct" | "impact">("pct");
   const [indices, setIndices] = useState<IndexFeed | null>(null);
   /**
    * THREE STATES, NOT TWO — the same rule `IndexStrip` already follows.
@@ -303,8 +313,13 @@ export function TodaysMovers() {
            RANKING, which reorders one list rather than changing which holdings
            are in it — the set itself is named in the heading above. */
         <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
-          {(["impact", "pct"] as const).map((k) => (
-            <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k}
+          {/* `data-mover-rank` is the handle the sweep reads the OFFER and the
+              ACTIVE choice off. Struck on the attribute rather than on the
+              button labels, because "By % move" and "By ₹ impact" are exactly
+              the prose a redesign is free to reword — the same contract
+              `data-movers-scope` and `data-section` already carry. */}
+          {(["pct", "impact"] as const).map((k) => (
+            <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k} data-mover-rank={k}
               className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
                 rank === k ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
               {k === "impact" ? "By ₹ impact" : "By % move"}

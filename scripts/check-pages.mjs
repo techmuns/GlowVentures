@@ -5124,6 +5124,35 @@ const INVARIANTS = {
     return tabs.length === 0;
   }],
   /**
+   * ── THE MOVERS RANKING OPENS ON THE PERCENTAGE MOVE ───────────────────────
+   *
+   * *"keep % wise as the default view and \u20b9 wise absolute as the second
+   * toggle option."* A default is exactly what moves silently — the page renders
+   * perfectly either way, every count, total and caption on the card is
+   * identical, and only the ORDER of two lists differs. No value check on this
+   * card can see it, which is why it is struck on the control.
+   *
+   * THREE CLAIMS, AND THE SECOND IS THE ONE THE FAMILY ASKED FOR: both measures
+   * are still offered (a "default" that is the only option is not a default),
+   * the live one is the percentage, and the percentage is offered FIRST. Read
+   * off `data-mover-rank`, never the labels.
+   *
+   * A MISSING CONTROL IS A FINDING, NOT AN ABSTENTION. This card's header
+   * renders whether or not a quote has landed, so an empty offer means the
+   * control is gone — and a sweep that abstained there would report CLEAN over
+   * a card with no toggle at all, which is `golden.mjs`'s rule arriving through
+   * a ranking. Only the probe failing to run abstains.
+   */
+  ["Today\u2019s movers offers both rankings and opens on the % move", (t, ctx) => {
+    void t;
+    const m = ctx?.movers;
+    if (!m || m.ranks == null) return { notChecked: "the movers probe did not run on this pass" };
+    const keys = m.ranks.map((r) => r.key);
+    return keys.length === 2
+      && keys[0] === "pct" && keys[1] === "impact"
+      && m.ranks.find((r) => r.active)?.key === "pct";
+  }],
+  /**
    * ...AND THE ALLOCATION CARD STILL OPENS ON CATEGORY. *"Default view will
    * remain the current one, category wise."* Two new axes beside an old one is
    * the change that silently moves a default, and the page would render
@@ -10604,6 +10633,16 @@ for (const theme of THEMES) {
           needed: load ? Number(load.getAttribute("data-movers-needed")) : null,
           figures: !!document.querySelector('[data-testid="movers-coverage"]'),
           ranked: document.querySelectorAll('[data-mover-row]').length,
+          /**
+           * The RANKING control: which measures the card offers, in the order it
+           * offers them, and which one is live. Read off `data-mover-rank`
+           * rather than the button labels — a claim about a DEFAULT must not be
+           * struck on prose a redesign is free to reword.
+           */
+          ranks: [...document.querySelectorAll('[data-mover-rank]')].map((b) => ({
+            key: b.getAttribute("data-mover-rank"),
+            active: b.getAttribute("aria-pressed") === "true",
+          })),
         };
       });
       const navListRows = FAST ? null : await page.evaluate(() => ({
