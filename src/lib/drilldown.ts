@@ -25,7 +25,6 @@
 // be a second source for a decision made elsewhere, which is the same failure
 // one level down.
 import type { Portfolio, Position } from "./types";
-import type { FormulaDef } from "./auditFormulas";
 import { accountIndex } from "./accounts";
 import { isPrivateClass } from "./analytics";
 /**
@@ -169,10 +168,6 @@ export type Drilldown = {
   key: string;
   /** The page's heading. */
   title: string;
-  /** Which Morning CIO figures this exact set stands behind, named on the page. */
-  backs: string[];
-  /** One paragraph: what the set IS, in the terms the figure was struck in. */
-  lead: string;
   /** The rows, on the same basis the figure was struck on. */
   rows: Position[];
   /**
@@ -200,12 +195,6 @@ export type Drilldown = {
   activeFacet: string;
   /** Accounts outside the set, by number — the money-weighted figure names them. */
   excludedAccounts: string[];
-  /**
-   * The dated window a rate is struck over, in days, where the scope has one.
-   * NULL everywhere else — and null on `measured` too if no account publishes a
-   * dated flow, because a window nobody can date is not a zero-day window.
-   */
-  windowDays?: number | null;
   /**
    * Set only where the scope is legitimately EMPTY, with what would fill it. An
    * empty table renders through `AbsentSection`, never as a frame around nothing.
@@ -286,8 +275,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: scope.key,
         title: label,
-        backs: [`the ${label} row of Morning CIO's allocation table${axis === "category" ? "" : `, grouped by ${noun}`}`],
-        lead: `Every holding Morning CIO files under ${label}. ${decidedBy}`,
         rows,
         absent: rows.length ? null : {
           what: `Nothing is filed under ${label}`,
@@ -307,8 +294,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: scope.id, key: "",
         title: "Capital invested",
-        backs: ["Capital invested", "Consolidated return"],
-        lead: "Both figures on Morning CIO that divide by capital — Capital invested and the Consolidated return struck on it — are summed over the holdings whose statement prints what they cost. `sumOrNull` skips a missing cost rather than entering it as zero, which would understate the basis and overstate the return on everything else, so the tile's own caption names the remainder. Both sets are here.",
         absent: costed.length ? null : {
           what: "No holding in this book reports a cost",
           needs: "Every statement in the drop prints a holding without a basis. Capital invested and the Consolidated return are absent rather than zero until one carries a cost column.",
@@ -349,35 +334,18 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         .filter((a) => !keep.has(a.accountId))
         .map((a) => a.accountNo);
       const outside = portfolio.positions.filter((p) => !keep.has(p.accountId));
-      /**
-       * THE WINDOW THE RATE IS STRUCK OVER, and it is load-bearing rather than
-       * decorative. Morning CIO's tile used to print "134-day window · not
-       * annualised" beside the figure, and that caption is the whole of Stage
-       * 10g(ii): the same tile once read +99.0% because a four-month return was
-       * compounded onto a year, and nothing was miscalculated — an annualised
-       * figure is a claim about a YEAR and this book has four months of flows.
-       * The family asked for the tile's captions to go, so the window comes
-       * here, to the page that lists the very accounts it is measured across.
-       *
-       * DERIVED FROM THE SAME INPUTS AS THE RATE, not paraphrased: the earliest
-       * dated flow among the accounts that qualify, against the book's own
-       * report date — the accounts being exactly the set this scope has just
-       * resolved, so the two cannot describe different windows.
-       */
-      const flowDates = ids
-        .flatMap((id) => (portfolio.accountCashFlows?.[id] ?? []).map((f) => f.date))
-        .filter(Boolean)
-        .sort();
-      const windowDays = flowDates.length && portfolio.asOf
-        ? Math.round((new Date(portfolio.asOf).getTime() - new Date(flowDates[0]).getTime()) / 864e5)
-        : null;
+      /* NO WINDOW IS DERIVED HERE ANY MORE. `Drilldown.windowDays` fed the
+         arithmetic card's "N-day window · not annualised" line and nothing
+         else, and the card is gone. The window itself is NOT lost — it is
+         `m.bookMW.windowDays` on Morning CIO, derived by `moneyWeightedReturn`
+         from the same flows, and it is stated in the hover of the tile that
+         prints the rate. That is Stage 10g(ii)'s guard and it must keep a home:
+         this figure once read +99.0% because a 132-day return was compounded
+         onto a year. */
       return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
         title: "Money-weighted return",
-        windowDays,
-        backs: ["the coverage the Money-weighted return states"],
-        lead: `An XIRR needs a stake to measure against, so it can only be struck on an account whose statements carry an opening portfolio value. ${ids.length} account${ids.length === 1 ? " does" : "s do"}, and their market value is the coverage figure the tile prints beside the rate. The rest sit outside it on BOTH sides — closing a market value against a stake nobody stated would overstate the return rather than approximate it — and are the second set here rather than a number the tile mentions and hides.`,
         excludedAccounts: excluded,
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
@@ -408,8 +376,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: "",
         title: `The ${top.size} largest names`,
-        backs: ["Top-10 concentration"],
-        lead: `Ranked by consolidated market value across every account, so a name two members both hold is one entry at its combined size rather than two smaller ones. The percentage on Morning CIO is these names' value over the whole book.`,
         rows,
         absent: rows.length ? null : {
           what: "No holding to rank",
@@ -430,8 +396,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: "",
         title: `Names held by two or more entities`,
-        backs: ["Cross-held"],
-        lead: "A security that appears on more than one family member's statements. This is not the duplicate policy — a cross-held name is two members each genuinely owning some of it, counted once per member; a DUPLICATE is one holding two statements both report, and the consolidated set above has already collapsed those.",
         rows,
         absent: rows.length ? null : {
           what: "No name is held by more than one entity",
@@ -457,8 +421,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: scope.id, key: "",
         title: wantWin ? "Holdings showing a gain" : "Holdings showing a loss",
-        backs: ["Winners / losers"],
-        lead: `Every holding whose return against its own cost is ${wantWin ? "above" : "below"} zero on the basis the page is showing — live where a quote resolved, the statement mark where it did not. The two counts do not add to the book: a holding exactly at cost is in neither, and one whose cost the statements do not report has no return to sort on at all.`,
         absent: rows.length ? null : {
           what: wantWin ? "No holding is showing a gain" : "No holding is showing a loss",
           needs: "This is a measured zero rather than a missing figure: every priced holding in the book falls on the other side or exactly at cost.",
@@ -497,8 +459,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
-        backs: ["Consolidated NAV", "Positions", "Distinct names"],
-        lead: `The whole book across ${portfolio.accounts.length} accounts, consolidated — each holding two statements both report counted once. Both concentration counts are read off this one set: the row count is Positions, the name count is Distinct names.`,
         absent: consolidated.length ? null : {
           what: "The book carries no holding",
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",
@@ -588,190 +548,23 @@ export function coveredReturn(mv: number, cost: number | null, pnl: number | nul
   };
 }
 
-export function drilldownFormula(d: Drilldown, money: (n: number) => string): FormulaDef | null {
-  const rows = d.rows;
-  if (!rows.length) return null;
-
-  const mv = rows.reduce((a, p) => a + p.marketValue, 0);
-  const costed = rows.filter((p) => p.costBasis != null);
-  // `sumOrNull`'s rule, inline: null when NOTHING reports a cost, and the sum
-  // over those that do otherwise. A zero here would report the whole market
-  // value as profit at an infinite return.
-  const cost = costed.length ? costed.reduce((a, p) => a + (p.costBasis ?? 0), 0) : null;
-  const accounts = new Set(rows.map((p) => p.accountId)).size;
-  const names = new Set(rows.map((p) => p.securityKey)).size;
-  const n = (k: number, one: string, many = one + "s") => `${k} ${k === 1 ? one : many}`;
-
-  /** The active facet's own label, so a narrowed page never reads as the whole. */
-  const facet = d.facets.length > 1
-    ? d.facets.find((f) => f.key === d.activeFacet)?.label ?? ""
-    : "";
-  const of = facet ? ` · ${facet}` : "";
-
-  const spread = `across ${n(rows.length, "position")} in ${n(accounts, "account")}`;
-  const basis = d.deduped
-    ? "Each holding that two members' statements both report is counted once."
-    : "Every statement's row stands as printed — this is a per-account figure and is not deduped.";
-
-  switch (d.id) {
-    case "book": {
-      /**
-       * WHAT THIS FIGURE LEAVES OUT, stated where the figure is. The managers'
-       * printed totals fold accrued income into market value on some rows and
-       * not others, so the book carries it as its own field and the NAV excludes
-       * it throughout — which makes our total differ from a statement's by
-       * exactly this, and a reader reconciling the two needs to be told.
-       *
-       * Morning CIO's tile used to say so, and the family asked for the tile's
-       * captions to go. It is the ONE line among them that no other surface
-       * carried, so it moved here rather than went.
-       */
-      const accrued = rows.reduce((a, p) => a + (typeof p.accruedIncome === "number" ? p.accruedIncome : 0), 0);
-      const accruedRows = rows.filter((p) => typeof p.accruedIncome === "number" && p.accruedIncome !== 0).length;
-      return {
-        title: `Consolidated NAV${of}`,
-        excel: "= Σ market value of every holding",
-        plain: `The market value of every holding in this set, at each account's latest mark. ${basis} The two counts beside it are read off the same set: ${n(rows.length, "position")} is what Morning CIO calls Positions, and ${n(names, "distinct name")} is Distinct names — a name two members both hold is one name and two positions.${
-          accruedRows
-            ? `\n\nNOT IN THIS FIGURE: ${money(accrued)} of accrued income — dividends and interest declared on ${n(accruedRows, "holding")} here and not yet received. The managers' printed totals include it on some rows and not others, so the book carries it as its own field and every market value on this site excludes it. A statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
-            : ""
-        }`,
-        worked: `= ${money(mv)} ${spread} · ${n(names, "name")}`,
-      };
-    }
-
-    case "invested": {
-      // BOTH FIGURES THAT DIVIDE BY CAPITAL OPEN THIS PAGE, so the worked
-      // example carries both: printing only the sum would leave the reader who
-      // clicked Consolidated return with the denominator and no division.
-      const gain = cost == null ? null : mv - cost;
-      const pct = cost != null && cost > 0 && gain != null ? (gain / cost) * 100 : null;
-      return {
-        title: `Capital invested${of}`,
-        excel: "= Σ cost basis of every holding    ·    Return = (Value − Invested) ÷ Invested",
-        plain: `What the statements say these holdings cost. \`sumOrNull\` SKIPS a holding whose statement prints no cost rather than entering it as zero — a zero would drag the basis down and report that holding's whole market value as profit — so the figure covers ${n(costed.length, "holding")} of ${rows.length} here. The Consolidated return is struck over exactly the same set, which is why both tiles open this one page.`,
-        worked: cost == null
-          ? `= — · no statement in this set reports a cost, so there is nothing to sum`
-          : `= ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length}${
-              pct == null ? "" : ` · return = (${money(mv)} − ${money(cost)}) ÷ ${money(cost)} = ${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(1)}%`
-            }`,
-      };
-    }
-
-    case "measured":
-      // THE RATE ITSELF IS NOT RESTATED HERE, DELIBERATELY. It is a pooled XIRR
-      // over every account's dated flows, each closing on its own report date,
-      // and re-deriving it on this page would be a SECOND source for one figure
-      // — the exact failure this whole file exists to prevent. What this page
-      // owns is the SET the rate is struck over, so that is what it works out.
-      return {
-        title: `What the money-weighted return covers${of}`,
-        excel: "= XIRR(each account's dated flows + its own market value on its own report date)",
-        plain: `Excel's XIRR() over every dated capital movement the statements carry — the window's opening portfolio value first, then each contribution, withdrawal and TDS transfer on the day it happened. Trades are not flows: a sale moves cash inside an account rather than out of it, and its proceeds are already inside the closing value. ${basis} The rate needs an opening stake to measure against, so it can only be struck where a statement publishes one; this page is the set that qualifies, and the rate itself stays on the tile it was clicked from.${
-          d.windowDays == null
-            ? ""
-            : d.windowDays >= 365
-              ? `\n\nTHE WINDOW IS ${d.windowDays} DAYS, so the rate is a genuine annual one.`
-              : `\n\nTHE WINDOW IS ${d.windowDays} DAYS, AND THE RATE IS NOT ANNUALISED. It is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection of ${d.windowDays} days rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, and it contradicted the managers' own annualised since-inception figures for these very accounts, which run from about 7% to 31%. When the flows eventually span a year the same calculation starts returning an annual rate and says so.`
-        }${
-          /**
-           * ── THE TWO BASES, ON ONE SET ────────────────────────────────────
-           *
-           * Morning CIO's allocation footer used to carry this comparison in a
-           * popover, because the money-weighted rate and the footer's own
-           * return-on-cost are two different measurements and a reader seeing
-           * both needs them told apart. That popover is gone with the table's
-           * underlines, and this is a SHARPER place for it: the footer set a
-           * whole-book figure against a seven-account one, where here both
-           * bases describe the SAME accounts — the Return on cost tile above is
-           * the cost basis, and the rate on the tile you clicked is the dated
-           * one. The difference between them is WHEN the money arrived, which
-           * is the whole reason the second measurement exists.
-           */
-          cost == null || cost <= 0
-            ? ""
-            : `\n\nTWO MEASUREMENTS OF THIS SAME SET. Return on cost above divides ${money(mv)} by the ${money(cost)} these holdings cost and asks what the capital has produced; the money-weighted rate asks what it produced GIVEN WHEN IT ARRIVED, so a rupee that landed a month before the close is credited with a month rather than the whole window. They answer different questions and neither is a correction of the other — the gap between them is the timing of the flows.`
-        }`,
-        worked: `= ${money(mv)} ${spread}${d.excludedAccounts.length ? ` · ${n(d.excludedAccounts.length, "account")} outside it` : ""}${
-          d.windowDays == null ? "" : ` · ${d.windowDays}-day window${d.windowDays >= 365 ? "" : " · not annualised"}`
-        }`,
-      };
-
-    case "bucket":
-    case "basket":
-    case "family-class": {
-      /**
-       * THE RETURN THE ALLOCATION ROW'S CHIP USED TO EXPLAIN. That chip carried
-       * a popover, and the dashed underline that opened it was the last
-       * underline in the table — *"remove the underlines from the allocation
-       * table too."* So the arithmetic lands here, on the page the row already
-       * opens, beside the very holdings it is struck over.
-       *
-       * AND IT REFUSES ITSELF ON EXACTLY THE ROWS THE CHIP DOES. A section whose
-       * Invested column covers a minority of its holdings has no return that
-       * divides one column by the other — the two would span different sets —
-       * so the em dash is the answer here too, with the count that causes it.
-       *
-       * ALL THREE AXES SHARE IT, and that is the point rather than a saving:
-       * the basket rows refuse a return on exactly the coverage test the
-       * category rows refuse one on, so a reader who switches the table's axis
-       * cannot get a percentage for a set the other axis withholds one for.
-       */
-      const axis = SCOPE_AXIS[d.id] as GroupAxis;
-      const noun = GROUP_NOUN[axis].one;
-      const costedMV = costed.reduce((a, p) => a + p.marketValue, 0);
-      // THE SAME TEST THE ROW AND THE TILE RUN, not a re-derivation of it.
-      const { pct } = coveredReturn(mv, cost, cost == null ? null : costedMV - cost, mv - costedMV);
-      const full = costed.length === rows.length;
-      return {
-        title: `${d.title}${of}`,
-        excel: `= Σ market value of the holdings in this ${noun}    ·    Return = (Value of the costed holdings − Invested) ÷ Invested`,
-        plain: `${
-          axis === "category"
-            ? "The bucket is decided by `holdingBucket`, the one function every holdings table on this site groups by — so this is the allocation row's own arithmetic rather than a second reading of it."
-            : `The ${noun} is the family's own, read off their consolidated review product by product — nothing here is inferred from what the instrument is, and a holding their review does not name carries no ${noun} rather than a guessed one.`
-        } ${basis}${
-          pct == null
-            ? cost == null
-              ? "\n\nNo holding here reports a cost, so there is nothing to strike a return against — the market value stands on its own."
-              : `\n\nNO RETURN IS STRUCK HERE, and the allocation row this page opens from prints an em dash for the same reason: Invested covers ${n(costed.length, "holding")} of ${rows.length} and Value covers all of them, so the ${money(mv - costedMV)} that reports no cost stands in one column and not the other. A percentage across the two would divide one set of holdings by another.`
-            : full
-              ? "\n\nThe return is CUMULATIVE, not annualised: it is the gain this bucket has produced to date on the capital in it, not a yearly pace."
-              : `\n\nThe return is CUMULATIVE, not annualised, and it covers ${n(costed.length, "holding")} of ${rows.length}: the other ${rows.length - costed.length} report no cost, and their ${money(mv - costedMV)} stands in the value column and on neither side of the ratio.`
-        }`,
-        worked: `= ${money(mv)} ${spread}${
-          pct == null
-            ? cost == null
-              ? " · no cost reported, so no return"
-              : ` · cost ${money(cost)} over ${n(costed.length, "holding")} of ${rows.length} · return —`
-            : ` · ${money(cost ?? 0)} invested → ${money(costedMV)} today = ${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(1)}%`
-        }`,
-      };
-    }
-
-    case "top-names":
-      return {
-        title: `Top-${TOP_NAMES} concentration${of}`,
-        excel: `= Σ market value of the ${TOP_NAMES} largest names ÷ Consolidated NAV`,
-        plain: `Ranked on \`securityKey\` and on consolidated market value, so a name two members both hold is ONE entry at its combined size rather than two smaller ones. ${basis} The percentage on Morning CIO is this sum over the whole book, so it moves when a name grows and when the book around it does.`,
-        worked: `= ${money(mv)} across ${n(names, "name")} · ${n(rows.length, "position")} in ${n(accounts, "account")}`,
-      };
-
-    case "cross-held":
-      return {
-        title: `Cross-held names${of}`,
-        excel: "= count of securityKeys appearing under two or more owners",
-        plain: `Grouped by OWNER rather than by account: the question is how many names more than one family member holds, and keyed on the account it would instead count a name one member holds in two of their own mandates. ${basis} This is not the duplicate policy — a cross-held name is two members each genuinely owning some of it; a duplicate is ONE holding that two statements both report, and the set above has already collapsed those.`,
-        worked: `= ${n(names, "name")} · ${n(rows.length, "position")} across ${n(accounts, "account")} · ${money(mv)}`,
-      };
-
-    case "winners":
-    case "losers":
-      return {
-        title: `${d.title}${of}`,
-        excel: `= count of holdings whose (Value − Cost) ÷ Cost is ${d.id === "winners" ? "above" : "below"} zero`,
-        plain: `Struck on the basis the page is showing — live where a quote resolved, the statement mark where it did not. A holding whose cost the statements do not report has NO return to sort on and is in neither count; one sitting exactly at cost is a measured zero and is also in neither. Both are the second set on this page rather than a remainder a reader has to find by subtracting.`,
-        worked: `= ${n(rows.length, "holding")} · ${money(mv)}${cost == null ? "" : ` · cost ${money(cost)}`}`,
-      };
-  }
-}
+/**
+ * ── THERE IS NO `drilldownFormula` ANY MORE ─────────────────────────────────
+ *
+ * *"Remove all the highlighted text and the sections from the dashboard UI."*
+ * It built the "How this figure is worked out" card — an expression, a worked
+ * line and a paragraph, per scope — which Stage 10y moved off the KPI tiles and
+ * Stage 10ac off the allocation table. The family have now asked for the card,
+ * so the builder is DELETED rather than left exported with one dead caller,
+ * which is the shape `exportDeck.ts`, `entityParts` and `holdingHref` were each
+ * removed in.
+ *
+ * `Drilldown.lead`, `Drilldown.backs` and `Drilldown.windowDays` went with it
+ * and with the header prose that read them, for the same reason.
+ *
+ * TWO OF THE FACTS IT CARRIED HAD NO SECOND HOME and were moved BEFORE it went,
+ * both onto the hover of the Morning CIO tile that opens the page they were on:
+ * the accrued income the NAV excludes, and the XIRR's window with its refusal
+ * to annualise a sub-year one. `check:pages` asserts both at their new address
+ * and asserts this card is absent, so neither can be lost by a later edit.
+ */

@@ -2690,7 +2690,7 @@ feature that is broken instead of one that was never possible.
 | Spec item | Where | Backed by |
 | --- | --- | --- |
 | Returns table — daily / weekly / monthly / QTD / FYTD / 1Y / 3Y / 5Y / 10Y / max CAGR | company page | `market_data`, one dated close per horizon |
-| Compare up to four companies | `/compare` | the book, the quote feed, `ratio_source` |
+| Compare up to four companies | **REMOVED at the family's request — see Stage 10ap.** `/compare` redirects to Portfolio Monitor, whose security axis is one row per company; each opens `/stock/:securityKey`, where every figure the comparison drew still renders per company | the book, the quote feed, `ratio_source` |
 | Document repository — annual reports, concalls, earnings, announcements | company page | `combined_filings_announcements`, `filings_domestic` |
 | Financial tables, ratios, shareholding | company page | `financial_tables_markdown` (screener.in) |
 | **Cash flow statement + earnings calendar** | company page | `financials/<T>.NS` — see Stage 10e |
@@ -2805,8 +2805,25 @@ violate any of them.**
 6. **STATEMENT vs LIVE basis.** Live prices may move market value, day change,
    unrealised P&L and return on cost — and nothing else. Never quantity, cost
    basis, realised gains, dividends, fees or a dated cash flow. Every
-   consolidated figure carries a `<BasisPill>`; Capital Gains, Data Audit and
-   Ledger Insights read `statementPortfolio` and pass `statement`.
+   consolidated figure carried a `<BasisPill>` until Stage 10ao, when the family
+   asked for it off Morning CIO and off the `/holdings` drill-down, and Stage
+   10ap, when they asked for it off Private Market too.
+
+   **THE HALF THAT IS A CORRECTNESS GUARANTEE IS UNCHANGED AND IS NOT
+   NEGOTIABLE, and it is the SOURCE rather than the label** — Capital Gains,
+   Data Audit, Ledger Insights **and Private Market** all still read
+   `statementPortfolio`, because a reader checks those against the PDF and a
+   total that drifted with the market could not be checked at all. The first
+   three still SAY so; Private Market no longer does, which is weaker and is
+   recorded rather than glossed. What makes it cost almost nothing THERE is
+   measured, not assumed: no private holding resolves an NSE symbol, so no quote
+   could touch those rows even on the live portfolio — and `check:pages` checks
+   that premise every run, so a drop that brings a quotable private holding
+   fires by name instead of quietly making the reasoning false.
+
+   `check:pages` asserts the three removals AND that the remaining three keep
+   their pill, which are separate claims: a build that deleted the component
+   everywhere would satisfy every absence and take this with it.
 7. **`src/data/glowData.ts` is GENERATED. Never hand-edit it.** It regenerates
    byte-identically from `source/`; an edit is reverted by the next
    `build-book`, and until then the book no longer matches its own archive.
@@ -2910,8 +2927,13 @@ violate any of them.**
   serves is unchanged. A future session that wants a figure traceable again
   should read this paragraph first rather than reinventing `holdingHref`.
 - Large holdings lists get a `SearchInput` (filter by security name or ISIN).
-- Pages showing a consolidated total should carry a `<BasisPill>` so the reader
-  knows what the figure is actually based on.
+- Pages that must RECONCILE to a source document read `statementPortfolio`, and
+  the three that a reader checks against a PDF carrying quotable rows also SAY so
+  with a `<BasisPill statement>` — Capital Gains, Data Audit, Ledger Insights.
+  Morning CIO and `/holdings` lost theirs at Stage 10ao and Private Market at
+  Stage 10ap, all at the family's request; those are the places this file's own
+  §6 has been narrowed rather than upheld, and what each costs is recorded there
+  rather than softened here. **The source never moved on any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 
@@ -5504,21 +5526,28 @@ checks that had to be rewritten first, which is the whole reason for doing it.
 
 *"remove this tab"* — the sidebar entry, pointed at.
 
-`/watchlist` redirects to `/compare`, the nav entry is gone and
-`src/pages/Watchlist.tsx` is deleted. The redirect goes to Compare Companies
-rather than the monitor because that is the surviving surface in the SAME nav
-group that still renders a watched name's target and its upside; leaving it
-pointed somewhere with none of those figures while `/compare` sits one link away
-is the stale routing decision Stage 9d removed the day the calendar was wired.
+`/watchlist` redirects, the nav entry is gone and `src/pages/Watchlist.tsx` is
+deleted. The redirect went to Compare Companies rather than the monitor because
+that was the surviving surface in the SAME nav group that still rendered a
+watched name's target and its upside; leaving it pointed somewhere with none of
+those figures while `/compare` sat one link away is the stale routing decision
+Stage 9d removed the day the calendar was wired.
+
+**COMPARE COMPANIES HAS SINCE BEEN REMOVED TOO (Stage 10ap), so `/watchlist` is
+REPOINTED at `/monitor` rather than chained through a dead address** — two hops
+settle at the same pathname as one, which is precisely the routing this suite
+cannot catch and which therefore has to be fixed in the route table. The reason
+above expired; the rule it applied did not.
 
 **`src/lib/watchlist.ts` IS UNTOUCHED, AND THAT IS THE HALF A REMOVAL LIKE THIS
 BREAKS SILENTLY.** Every target price, fair value, entry and exit level, price
 alert, valuation method, FV reference year, target weight and "why we own it"
 note the family typed is still stored and still read and written by
-`InvestmentTools` on a name's own company page — and `CompareCompanies` still
-reads the target and the upside. Nothing anyone entered was deleted. With its
-most VISIBLE reader gone the store looks dead, which is how a future session
-deletes it and takes the family's own judgements with it: the same trap
+`InvestmentTools` on a name's own company page — and `CompareCompanies` read the
+target and the upside beside each price until it too was removed (Stage 10ap).
+Nothing anyone entered was deleted. With its most VISIBLE reader gone the store
+looks dead, which is how a future session deletes
+it and takes the family's own judgements with it: the same trap
 `announcements.ts` was in when `/news` went, and the same reason `deals.ts` and
 `household.ts` stayed in Stage 10f when their pages were removed.
 
@@ -5538,9 +5567,13 @@ it happened, never by deleting the test alongside the feature.**
 
 Nothing in the store became uncalled by this — `firedAlerts`, `ALERT_WORDING`,
 `upsidePct`, `parseWeightPct` and `VALUATION_METHODS` all have their caller in
-`InvestmentTools`, and `readWatchlist` keeps its one in `CompareCompanies` —
-so nothing was left exported and dead, which is the failure this file keeps
-naming.
+`InvestmentTools`, and `readWatchlist` kept its one in `CompareCompanies` — so
+nothing was left exported and dead, which is the failure this file keeps naming.
+**That last caller has since gone with the page (Stage 10ap).** `readWatchlist`
+is still called by `readEntry` and `writeEntry` beside it, so it is not an
+orphan — but it now LOOKS like one from outside the file, which is exactly how a
+store the family typed into gets deleted a release later, so it says so at its
+own definition.
 
 ### Stage 10y — Thesis & Triggers and Alerts: REMOVED, and the store is not
 
@@ -5742,7 +5775,8 @@ went because it is the removed page's own feed client.
 **ALL THREE FORWARD TO THE DASHBOARD HOME, WHICH IS A DECISION RATHER THAN A
 DEFAULT.** Every other removal in this file sends its address to the surviving
 surface nearest its purpose — `/private` to the private book, `/watchlist` to
-Compare Companies, `/household` to Family & Entities. Nothing that survives
+Compare Companies (since removed itself — Stage 10ap — so both now go to the
+Portfolio Monitor), `/household` to Family & Entities. Nothing that survives
 holds the family's own notes, and nothing that survives renders a commodity,
 index, currency or macro series. Pointing these at a page that merely LOOKS
 adjacent would assert a continuity that does not exist. `/industry`, removed at
@@ -5753,7 +5787,9 @@ silently.** `src/lib/series.ts` and `SeriesChart.tsx` were most visibly read by
 the two pages that have just gone, so they now LOOK dead. They are not:
 `ReturnsTable` draws a company's price history with `Point`, `SeriesMeta`,
 `HORIZON_COLS`, `RANGES`, `fmtLevel`, `fmtReturn` and `rebase`, off
-`/api/prices`; `CompareCompanies` and `navSeries.test.ts` read the same shapes.
+`/api/prices`; `NavVsIndex` fetches through the same client and
+`navSeries.test.ts` reads the same shapes. (`CompareCompanies` was a third
+reader and has since been removed — Stage 10ap.)
 The `stock` invariant that asserts the price card renders is what holds them up
 at runtime, and it says so in as many words; `SeriesChart` itself is held by the
 BUILD, because the harness serves no price feed and the chart never mounts, so
@@ -7675,6 +7711,274 @@ not typecheck.
 themes — with the same two pre-existing abstentions. `glowData.ts` is untouched:
 nothing here reads the ingest.
 
+### Stage 10ao — THE BASIS PILL GOES, AND THE DRILL-DOWN LOSES ITS PROSE
+
+*"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part from
+the UI."* And: *"Remove all the highlighted text and the sections from the
+dashboard UI"* — the `/holdings` lead paragraph, its facet note, its pill row
+and the whole "How this figure is worked out" card.
+
+**THIS IS THE FIRST REMOVAL IN THIS FILE THAT CROSSES ONE OF THE SEVEN RULES,
+AND IT IS RECORDED RATHER THAN GLOSSED.** §6 says every consolidated figure
+carries a `<BasisPill>`, because a reader who cannot tell a statement mark from
+a live one cannot check anything, and because a consolidated total here is a
+BLEND of report dates that `portfolio.asOf` states only the newest of. Morning
+CIO and the drill-down no longer print one. The family asked for it by name and
+that is their decision; what this section owes them is an accurate account of
+what it costs and of what was kept.
+
+**THE HALF OF §6 THAT IS A CORRECTNESS GUARANTEE IS UNTOUCHED.** Capital Gains,
+Data Audit, Ledger Insights and Private Market read `statementPortfolio` and
+pass `<BasisPill statement>` — a reader checks those against the PDF, and a
+total that drifted with the market could not be checked at all. That is asserted
+on `private-market` now, and it is a SEPARATE claim from the two absences:
+a build that deleted the component everywhere would satisfy both removals and
+silently take this with it. Verified by making `BasisPill` return null for
+`statement`, which fires exactly that check and nothing else.
+
+#### Every claim was checked before it was deleted, and three had no second home
+
+The same audit Stage 10aa and 10ai ran, on nine items this time:
+
+| Removed | Elsewhere? | Where it is now |
+| --- | --- | --- |
+| `LIVE · …` + `N accounts behind`, Morning CIO | **NO** | gone — see above |
+| the same pill on `/holdings` | **NO** | gone, same request |
+| the `lead` paragraph | the heading + the four tiles' own captions | deleted, and `Drilldown.lead` with it |
+| the active facet's NOTE paragraph | **the chip's own `title`** | the hover, which already had it |
+| `behind Consolidated NAV · …` | the crumb, and each tile's own hover | deleted, and `Drilldown.backs` with it |
+| `consolidated · each holding once` | **the holdings table's own subtitle** | already there, in the same two branches |
+| the accrued income the NAV excludes | **NO** | the NAV tile's hover |
+| the XIRR's window and its refusal to annualise | **NO** | the money-weighted tile's hover |
+| cross-held is not the duplicate policy | **NO** | the Cross-held link's hover |
+
+**THE THREE WITH NO SECOND HOME WENT INTO HOVERS, AND THAT IS WEAKER THAN A
+CAPTION.** Said plainly because it is true: a hover is not read by someone
+scanning. Each was kept anyway, because each is a figure a reader ACTS on —
+
+- **accrued income** is exactly the amount by which a manager's printed total
+  runs above ours. It has now been moved twice: it was this tile's caption,
+  Stage 10aa moved it to the arithmetic card as *"the ONE line among the six
+  that no other surface repeated"*, and the card has now gone too.
+- **the XIRR window** is Stage 10g(ii)'s guard. This tile once read **+99.0%**
+  with nothing miscalculated, against the managers' own 7–31% since-inception
+  figures for the same accounts. `moneyWeightedReturn` refuses to annualise a
+  sub-year window and **the caller must say so**; the hover is the caller now.
+- **cross-held is not the duplicate policy** — two members each genuinely owning
+  some of a name, counted once per member, against ONE holding two statements
+  both report (this book's ₹3.17 Cr), which the consolidated set has already
+  collapsed. A reader who conflates them misreads the concentration figure.
+
+**AND `drilldownFormula` IS DELETED, NOT ORPHANED** — 240 lines with one caller,
+plus `Drilldown.lead`, `Drilldown.backs`, `Drilldown.windowDays`, the window
+local that fed it and the `FormulaDef` import. The shape `exportDeck.ts`,
+`entityParts` and `holdingHref` were each removed in.
+
+#### The bug-reintroduction pass, and the four checks it corrected
+
+Eight bugs were put back one at a time. Five fired immediately; the other three
+were defects in the checks, and a fourth turned up in the full sweep:
+
+- **THE HARNESS ITSELF LOST A DAY'S WORK.** Two patches produced a JSX syntax
+  error, `set -e` skipped the restore, and the bugged file sat there while the
+  next sweep read a stale `dist` and reported CLEAN. The harness now restores on
+  a `trap … EXIT` and reports a failed build as a failed PATCH rather than as a
+  result. **A sweep that cannot build is not a sweep that passed.**
+- **`it opened the row Morning CIO linked, and says which figure it stands
+  behind`** read the `backs` pill on SEVEN routes, and `it opened a section
+  Morning CIO's axis actually drew…` on two more — all nine would have failed
+  the moment the pill went, and did. The half that still has an answer (the
+  address resolved to the section the reader clicked) is what is left; the other
+  half is the absence check.
+- **`the page separates cross-held from the duplicate policy`** read the lead
+  paragraph. That is the claim re-homed above — found by the sweep, not by
+  reading, which is why the full walk runs before the commit and not after.
+- **THE FACET-NOTE CHECK REQUIRED A NOTE ON EVERY CHIP, AND ONE HAS NONE.**
+  `holdings-winners`' "Showing a gain" facet carries `note: ""` in the book,
+  correctly — the label says the whole of it, and inventing a sentence to
+  satisfy a check is the wrong direction. It is `some` rather than `every`, and
+  it is spread ONLY into the eight scopes that draw a toggle: in the shared
+  block it abstained on ten routes that have no facets at all, and **ten
+  evidenced abstentions are how a real one gets missed.**
+
+One more was found by the sweep rather than by a reintroduced bug: the
+money-weighted hover's sub-year branch SHOUTS its sentence (`THE WINDOW IS 150
+DAYS AND THE RATE IS NOT ANNUALISED`) and the annualised branch does not, so a
+case-sensitive check failed a page that was right — `label-xs`'s trap arriving
+through a template literal instead of a CSS transform.
+
+`build` · `tsc` · `test:ingest` 140 · `test:family` · `check:family` 53/0 ·
+`check:pages` **138 combinations clean**, with the same two pre-existing
+abstentions. `glowData.ts` is untouched — nothing here reads the ingest.
+
+### Stage 10ap — FOUR MORE REMOVALS, AND COMPARE COMPANIES GOES ENTIRELY
+
+*"remove highlighted texts and sections from the dashboard UI"* — pointed at
+three paragraphs on three pages — and *"remove the compare companies page from
+the dashboard UI completely."*
+
+The fourth round of the same instruction, and the fourth time the text being
+removed turned out to be the LAST home of something. The method is the one
+Stages 10aa, 10ai and 10am established and is the whole of the work: audit every
+claim line by line against the rest of its own page, MOVE what has no second
+home onto the figure it describes, delete the rest, and assert both the removal
+and the new address. What is new here is the outcome of the audits — **two of
+the three paragraphs were entirely redundant, and the third had four claims
+already on its own page and four that were not.**
+
+#### 1. Polycab — two paragraphs, and every claim already stated above them
+
+The `Per demat account` card's subtitle and its footer. Audited before either
+was touched:
+
+| The claim | Where it already was |
+| --- | --- |
+| "one row per depository account" | the card's own TITLE, and its Depository account column |
+| "the per-share mark is value ÷ units", "an NSDL statement has no rate column" | the `STATEMENT · as of` pill's hover, **in those words** |
+| "a statement figure, not a live quote" | the same hover, and the pill itself |
+| "cost is absent because a depository holds the shares; it did not buy them" | the Cost basis tile's own `sub`, which is where the em dash is |
+
+Nothing moved, because nothing had to. Both halves are asserted and neither
+implies the other: the prose is GONE, **and** the hover still carries the
+derivation — a build that lost the lot passes an absence check on its own.
+
+#### 2. Private Market — the lead, and both header pills
+
+**THIS IS THE SECOND TIME §6 HAS BEEN NARROWED, AND IT IS RECORDED RATHER THAN
+GLOSSED.** Stage 10ao took the `<BasisPill>` off Morning CIO and `/holdings` and
+kept it here as the correctness half; the family have now pointed at it on this
+page too. `statementPortfolio` IS STILL THE SOURCE — that is where the guarantee
+actually lives, and it has not moved. What went is the reader being TOLD.
+
+What that costs was measured rather than asserted, and on this page it is the
+smallest it could be:
+
+- **the LABEL.** Not one private holding resolves an NSE symbol, and every live
+  endpoint is keyed on one — so no row here could drift even if the page read
+  the live portfolio. That is a PREMISE, so `check:pages` now checks it every
+  run (`PRIVATE_QUOTABLE`, derived from the book): a drop bringing a quotable
+  private holding fires by name and the decision gets made again, instead of
+  this paragraph silently becoming false. **This is the fifth absence in this
+  file that could have been recorded against an unchecked premise, and the first
+  one written down as a check on the day it was made.**
+- **the DATE.** `<BasisPill>` dates a consolidated figure `portfolio.asOf` — the
+  book's newest report date, two weeks ahead of every mark on this page. The
+  derived spread below it (*"Marks span … → …"*) was always the truer statement
+  and it stays, so losing the pill's date is a GAIN. That is the argument
+  `Polycab.tsx` already makes at length for never having used the component.
+- **`N accounts behind`** is about the BOOK's accounts, not this page's.
+
+**Capital Gains, Data Audit and Ledger Insights keep theirs**, and `check:pages`
+still asserts one of them, because a build that deleted the component everywhere
+would satisfy this removal and take the guarantee with it.
+
+The subtitle counted funds, accounts and owners. **Two of the three were already
+printed** — the fund table's footer reads `Total · N funds` and the By-owner
+rollup ENUMERATES the owners, which is stronger than counting them. The ACCOUNTS
+count was nowhere else, so it moved onto the Private market value tile.
+
+#### 3. Sector Composition — eight claims, four of them already on the page
+
+The long footer. Four claims survived where they were — the "company shares
+only" framing (the subtitle), the total (the donut hole), the mandate / own /
+route-unstated split with its counts, accounts and shares (**three cards that
+already render it, with more detail than the sentence had**), and "which of the
+two chose a name" (the Held via column). Four had no second home:
+
+- **the holdings count and "each counted once"** → the donut hole, under the
+  total they describe. Asserted against the sector table's own Positions column,
+  which is the same figure by a different path.
+- **the excluded classes, each with a value** → a third partition card, `Not a
+  company share ₹488.4 Cr`, beside the two that split the covered set. It is a
+  LABELLED FIGURE rather than a sentence, which is also what lets the check be
+  struck on arithmetic: company shares + the named classes must reconstruct the
+  consolidated NAV, and the card's own total must tie to the list beneath it.
+  **A sector page over ₹222 Cr of a ₹710 Cr book is an unexplained narrowing
+  without it.**
+- **why Unclassified is unclassified** → onto the Unclassified row and its
+  legend entry, as a hover, which is where an absence's reason belongs.
+
+`privateMV` and `unclassified` fed nothing but that paragraph and were DELETED
+with it rather than left computing the right number into no caller.
+
+**AND THE `title` WENT ON THE EXISTING SPAN, NEVER A NEW ONE.** That cell is a
+flex container, so an added child becomes a flex ITEM and `innerText` breaks the
+line at it — Stage 10ah's "N entities" trap, which would have silently reshaped
+every row-based check on the page.
+
+#### 4. Compare Companies — the page, the group, and one orphaned module
+
+`/compare` redirects, the nav entry is gone, `src/pages/CompareCompanies.tsx` is
+deleted, and with it the whole **RESEARCH** nav group, which held nothing else —
+the same thing that happened to MONITOR at Stage 10y and KNOWLEDGE at 10x. The
+headings are derived from the entries, so the group disappears on its own.
+
+**`src/lib/ratios.ts` WENT WITH IT.** `fetchRatios`, `isRatiosError` and
+`DEFAULT_METRICS` had no other caller, and a builder nothing calls is the
+dead-code-that-looks-alive failure this file keeps naming. `functions/api/ratios.js`
+STAYS — `RatioTable` on the company page still calls it.
+
+**IT FORWARDS TO PORTFOLIO MONITOR**, which is the surviving surface nearest its
+purpose rather than a neutral fallback: that page's SECURITY axis is one row per
+company across every vehicle the family holds it through, and each row opens
+`/stock/:securityKey`, where the price, the returns table, the ratios, the
+filings and the family's own target and upside all still render per company.
+Comparing four side by side is what is gone; reaching any one of them is not.
+
+**AND `/watchlist` IS REPOINTED RATHER THAN CHAINED.** Stage 10w sent it HERE,
+on the reasoning that Compare was the surviving surface in the same nav group
+that still rendered a target and its upside. That reason expired with Compare,
+so it goes straight to its own final destination — **two hops settle at the same
+pathname as one, which is exactly the stale routing `check-family-inputs.mjs`
+records it cannot catch.**
+
+**NOTHING THE FAMILY TYPED WAS DELETED.** `src/lib/watchlist.ts` is untouched
+and `InvestmentTools` still reads and writes every entry on a name's own company
+page. `readWatchlist`'s last caller OUTSIDE that file has gone, so it now LOOKS
+like an orphan while `readEntry` and `writeEntry` still call it — said at its
+own definition, because that is exactly how a store the family typed into gets
+deleted a release later.
+
+**AND ONE CHECK ASSERTED THE OPPOSITE AND WAS INVERTED, NOT DELETED.**
+`check-family-inputs.mjs` carried *"the Research group survives with Compare
+Companies in it"* — true until the one that survived was removed.
+
+#### Ten bugs reintroduced, and one weak check replaced before the pass
+
+Each was put back on its own, rebuilt and swept, and each fired exactly its own
+check: the Polycab subtitle restored; the pill hover stripped of the derivation;
+the Private Market pills back; the accounts count dropped from the tile; a
+private holding made quotable (which names the offenders in the failure line);
+the donut's count deleted; a class dropped from the excluded card (**two checks,
+from two directions**); the Unclassified hover removed; the Compare nav entry
+restored (**two — the entry and the group heading**); and the `/compare`
+redirect deleted.
+
+**AND ONE NEW CHECK COULD NOT HAVE FAILED, WHICH IS WHY THE PASS IS WORTH
+RUNNING BEFORE THE COMMIT AND NOT AFTER.** The first draft of the excluded
+card's guard asserted that *no class named as excluded appears as a sector row*
+— and the two name spaces never collide, because sectors are GICS and the
+classes are `AssetClass`. It was replaced by the card's total tying to its own
+list, which fires. What actually guards the original defect — a fund standing at
+the head of a sector table — is the fund-NAME check that has been there since
+Stage 10h.
+
+**TWO MORE OF THE NEW CHECKS FAILED A CORRECT PAGE AND WERE FIXED**, both for
+reasons this file has recorded before. `cr()` returns **NaN** for a missing
+match, so `cr(a) ?? cr(b)` never falls back — NaN is neither null nor undefined
+— and the reconstruction reported that it could not read figures the page was
+rendering. And a sector row's NAME is on its own line: the name cell is a flex
+container whose chevron and swatch are flex items, so `innerText` breaks before
+the figures. Matching `Unclassified\t` found nothing and **ABSTAINED** on a page
+whose largest sector is exactly that, which is the evidenced-abstention trap —
+a gate that cannot see its own subject reports "not applicable" rather than
+failing.
+
+`build` · `tsc` · `test:ingest` 140 · `test:family` · `check:family` 57/0 ·
+`check:pages` **136 combinations clean** (138 less the two the removed
+`/compare` route walked), with the same two pre-existing abstentions.
+`glowData.ts` is untouched — nothing here reads the ingest.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -7777,7 +8081,7 @@ reintroducing its bug and watching it fail:
 - no class the caption names as excluded may stand as a row in the table above it;
 - every wrapper class Return & Drawdown names in its caption must have its own
   attribution row, and no fund NAME may be a row label;
-- `/compare` offers no fund and says what it left out;
+- ~~`/compare` offers no fund and says what it left out~~ — the page was REMOVED at Stage 10ap. `isCompanyShare` is still the filter behind Sector Composition and Exposure & IPS, and both still assert that no fund wrapper appears as a company row;
 - a new `stock-fund` route asserts the fund page states the research does not
   apply and renders none of the five panels — while the existing `stock` route
   asserts a COMPANY still carries all of them.

@@ -18,8 +18,10 @@
 // imports this module for its TYPES and FORMATTERS: `ReturnsTable` draws a
 // company's price history with `Point`, `SeriesMeta`, `HORIZON_COLS`, `RANGES`,
 // `fmtLevel` and `fmtReturn`, `SeriesChart` uses `fmtLevel` and `rebase`, and
-// `CompareCompanies` and `navSeries.test.ts` read the same shapes. Those come
-// from `/api/prices`, not from the store.
+// `NavVsIndex` fetches through the same client and `navSeries.test.ts` reads the
+// same shapes. (`CompareCompanies` was a third reader and has been removed at
+// the family's request — see the `/compare` note in `App.tsx`.) Those come from
+// `/api/prices`, not from the store.
 //
 // So `fetchSeriesIndex` and `fetchSeriesPoints` — and the range and resampling
 // helpers around them — currently have NO CALLER. They stay, deliberately, and

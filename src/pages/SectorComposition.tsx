@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import {
-  bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, assetClassLabel,
+  bySector, sum, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
@@ -19,6 +19,21 @@ import { returnFormula, weightFormula } from "@/lib/auditFormulas";
 import { AbsentCell } from "@/components/Absent";
 
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
+
+/**
+ * WHY A COMPANY SHARE CAN HAVE NO SECTOR — the reason that used to live in the
+ * page's footer paragraph, now on the row it is about.
+ *
+ * It is a real absence rather than a bucket: `shared/sectors.mjs` maps each
+ * provider's own label to GICS and infers nothing, because the platforms
+ * disagree on nearly every name and a wrongly-sectored holding looks exactly
+ * like a correctly-sectored one on an allocation chart. So a statement that
+ * printed no sector leaves the holding here, named, instead of guessed into a
+ * slice.
+ */
+const UNCLASSIFIED_WHY =
+  "Its own statement printed no sector. Left unclassified rather than assigned one we would have to guess — "
+  + "these are company shares, so the sector exists; the document simply does not report it.";
 
 export function SectorComposition() {
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
@@ -124,14 +139,13 @@ export function SectorComposition() {
   const ownAccounts = new Set(ownRows.map((x) => x.accountId)).size;
   /** A share of this table's own total, omitted rather than shown as 0 when there is no total. */
   const shareOfTable = (v: number) => (totalMV > 0 ? <> · {((v / totalMV) * 100).toFixed(1)}% of this table</> : null);
-  const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
-  // Every class this page does NOT cover, largest first, so the note below can
-  // name them from the book rather than from a hardcoded list. `isPrivateClass`
-  // still drives the private-book sentence; this drives the rest.
+  // Every class this page does NOT cover, largest first, so the partition card
+  // above can name them FROM THE BOOK rather than from a hardcoded list — which
+  // is also what makes the reconstruction (covered + excluded = NAV) a real
+  // check rather than a comparison of a caption with itself.
   const excluded = excludedClasses(consolidated, isCompanyShare);
   const excludedMV = sum(excluded.map((c) => c.mv));
   const sectors = bySector(p);
-  const unclassified = sectors.find((s) => s.key === "Unclassified") ?? null;
   // Every figure on this page is rebuilt from position market values, so once the
   // quote feed is up they all track live prices — and none of them matches a cell
   // in the source extract any more. Live figures render plain; only a book still on its
@@ -193,6 +207,11 @@ export function SectorComposition() {
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <div className="label-xs">Company shares</div>
               <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(totalMV, { compact: true })}</div>
+              {/* THE COUNT AND THE BASIS, on the figure they describe. Both were
+                  in the removed footer and nowhere else: the split cards below
+                  count each ROUTE's holdings, which a reader would have to add
+                  up, and nothing at all said the set is deduped. */}
+              <div className="mt-0.5 text-[10.5px] text-slate-500">{p.length} holdings · each counted once</div>
             </div>
           </div>
           {/* Legend on the right — colour, sector, weight, value */}
@@ -201,7 +220,8 @@ export function SectorComposition() {
               <li key={s.key} onClick={() => toggle(s.key)}
                 className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 hover:bg-ink-700/40">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                <span className="flex-1 truncate text-[13px] text-slate-200" title={s.key}>{s.key}</span>
+                <span className="flex-1 truncate text-[13px] text-slate-200"
+                  title={s.key === "Unclassified" ? UNCLASSIFIED_WHY : s.key}>{s.key}</span>
                 <span className="mono text-[13px] font-semibold text-slate-100">{(s.weight * 100).toFixed(1)}%</span>
                 <span className="mono w-20 text-right text-[11px] text-slate-400">{fmtFromBase(s.mv, { compact: true })}</span>
               </li>
@@ -239,6 +259,33 @@ export function SectorComposition() {
                 : <>No own-account company share on this page.</>}
             </div>
           </div>
+          {/* ── WHAT IS NOT ON THIS PAGE AT ALL ────────────────────────────
+              The removed footer named every excluded class with its value, and
+              that is the figure a reader needs: this table covers a third of
+              the book and without it a sector page over ₹222 Cr of a ₹710 Cr
+              book is an unexplained narrowing. It sits with the other partition
+              cards because that is what it is — the same shares, split by who
+              chose them, plus the money that is not a share at all — and as a
+              LABELLED FIGURE rather than a sentence, which is also what lets
+              `check:pages` strike the reconstruction on it. */}
+          {excluded.length > 0 && (
+            <div>
+              <div className="label-xs">Not a company share</div>
+              <div className="mono text-sm font-semibold text-slate-100">{fmtFromBase(excludedMV, { compact: true })}</div>
+              <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                excluded rather than folded in —{" "}
+                {excluded.map((c, i) => (
+                  <Fragment key={c.key}>
+                    {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
+                    <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
+                  </Fragment>
+                ))}
+                . A GICS sector is a property of a COMPANY and a fund holds many, so every wrapper would land in one
+                false “Unclassified” slice and bury the sectors this view exists to show. A mandate’s cash sleeve is out
+                for the same reason.
+              </div>
+            </div>
+          )}
           {otherRows.length > 0 && (
             <div>
               <div className="label-xs">Route not stated</div>
@@ -386,7 +433,19 @@ export function SectorComposition() {
                     <Fragment key={s.key}>
                       <tr className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
                         <td className="px-4 py-2.5">
-                          <span className="flex items-center gap-2 font-medium text-slate-100">
+                          {/* An absence names its cause where the absence is —
+                              `Absent.tsx`'s rule, applied to a sector nobody
+                              reported rather than to a missing figure.
+
+                              THE `title` GOES ON THE EXISTING SPAN, never on a
+                              new one wrapping the name: this is a FLEX container,
+                              so an added child becomes a flex ITEM and
+                              `innerText` breaks the line at it — the trap Stage
+                              10ah records for the "N entities" pill, which would
+                              silently reshape every row-based check on this
+                              page. */}
+                          <span className="flex items-center gap-2 font-medium text-slate-100"
+                            title={s.key === "Unclassified" ? UNCLASSIFIED_WHY : undefined}>
                             <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
                             {s.key}
@@ -468,40 +527,37 @@ export function SectorComposition() {
             </table>
           </div>
         </Card>
-      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        This is <span className="font-medium text-slate-400">company shares only</span> — {money(totalMV)} across {p.length} holdings, every one of them
-        a share in a company the family owns, each counted once. That is <span className="font-medium text-slate-400">not</span> the same set as{" "}
-        <span className="font-medium text-slate-400">{DIRECT_EQUITY_BUCKET}</span> on the holdings tables, and the difference is deliberate:{" "}
-        {mandateRows.length > 0
-          ? <>{money(mandateMV)} of this table was chosen by a discretionary manager under a PMS mandate, across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}</>
-          : <>no account here states a discretionary mandate, so nothing in this table was chosen by a manager</>}
-        {ownRows.length > 0
-          ? <>, and {money(ownMV)} was bought in the family’s own demat or broking account</>
-          : <>, and no account here holds a share the family bought itself</>}
-        {otherRows.length > 0 ? <>, with {money(otherMV)} in accounts whose statements do not say how they are run</> : null}.
-        A GICS sector is a property of the COMPANY either way, and a mandate reports every share underneath it — so a
-        manager’s book can be read by sector, market cap and symbol exactly like a self-bought one. Narrowing this page to
-        the self-bought half would drop{mandateRows.length > 0 ? <> {money(mandateMV)} of</> : null} real sector exposure and
-        leave the table to depository rows that mostly print no sector at all; a look-through into a mandate is a gain
-        here, not something to undo. Which of the two chose a name is in the{" "}
-        <span className="font-medium text-slate-400">Held via</span> column above and on the name’s own page, and{" "}
-        <span className="font-medium text-slate-400">Portfolio Monitor</span> and <span className="font-medium text-slate-400">Morning CIO</span> group
-        them apart — under “{MANDATE_BUCKET}” and “{DIRECT_EQUITY_BUCKET}” — because a holdings table answers who decided,
-        and this one answers what the family is exposed to.
-        {excluded.length > 0 && <> {money(excludedMV)} of the book is not a share in a company at all and is excluded rather than folded in—{" "}
-          {excluded.map((c, i) => (
-            <Fragment key={c.key}>
-              {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
-              <span className="font-medium text-slate-400">{assetClassLabel(c.key)}</span> {money(c.mv)}
-            </Fragment>
-          ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,
-          so every wrapper would land in a single false “Unclassified” slice and bury the sectors this view exists to show.
-          A mandate’s cash sleeve is out for the same reason — cash has no sector — even though the holdings tables keep it
-          inside its mandate, where the manager’s own statement totals it.
-          {privateMV > 0 && <> They are broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span> and folio by folio in <span className="font-medium text-slate-400">Portfolio Monitor</span>.</>}
-        </>}
-        {unclassified && <> Within company shares, {money(unclassified.mv)} across {unclassified.count} holdings shows as <span className="font-medium text-slate-400">Unclassified</span> because its own statement printed no sector — it is left unclassified rather than assigned a sector we would have to guess.</>}
-      </p>
+      {/*
+        THE FOOTER PARAGRAPH IS REMOVED, at the family's request, and the audit
+        that preceded it is what made the removal safe rather than lossy. Every
+        claim it carried, and where each one is now:
+
+          · "company shares only"                the page subtitle, and the
+                                                 donut's own label
+          · the total                            the donut hole
+          · the holdings count, "each counted    MOVED — the donut hole, under
+            once"                                the total it describes
+          · the mandate / own / unstated split,  ALREADY on this page, in the
+            with counts, accounts and shares     three cards above, with more
+                                                 detail than the sentence had
+          · "a GICS sector belongs to the        the basis pill's hover, in
+            company, so a mandate's book reads   those words, and the manager
+            by sector like any other"            card's own note
+          · "which of the two chose a name is    the Held via column, and the
+            in Held via"                         two cards that name the buckets
+          · the excluded classes, each with a    MOVED — a third partition card
+            value, and why a wrapper has no      above, as a labelled figure
+            sector
+          · why Unclassified is unclassified     MOVED — onto the Unclassified
+                                                 row and legend entry, as a
+                                                 hover, which is where an
+                                                 absence's reason belongs
+
+        A hover is weaker than a caption and that is stated rather than glossed.
+        The two figures that a reader ACTS on — the coverage of this table and
+        what it leaves out — are rendered, not hidden: a hover carries only the
+        explanation behind them.
+      */}
     </div>
   );
 }

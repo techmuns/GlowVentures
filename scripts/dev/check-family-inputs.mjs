@@ -186,11 +186,20 @@ for (const [from, to] of [
   // WHOLE store. It is now the only way to reach a stored thesis or alert rule,
   // which is what makes it the honest destination rather than a near-enough one.
   ["/thesis", "/exposure"], ["/alerts", "/exposure"],
-  // WATCHLIST & TARGETS was removed at the family's request. It forwards to
-  // Compare Companies rather than the monitor because that is the surviving
-  // surface in the same nav group that still renders a watched name's target
-  // and its upside — the stale-routing rule Stage 9d applied to the calendar.
-  ["/watchlist", "/compare"],
+  // COMPARE COMPANIES was removed at the family's request, and with it the whole
+  // RESEARCH nav group. It forwards to Portfolio Monitor: that page's SECURITY
+  // axis is one row per company across every vehicle the family holds it
+  // through, and each row opens `/stock/:securityKey`, where the price, the
+  // returns table, the ratios, the filings and the family's own target and
+  // upside all still render per company. Comparing four side by side is what is
+  // gone; reaching any one of them is not.
+  //
+  // WATCHLIST & TARGETS was removed first (Stage 10w) and used to forward to
+  // Compare. That reason expired with Compare, so it is REPOINTED at its own
+  // final destination rather than chained through a dead address — the fix the
+  // `/industry` row above records this suite could not have caught, because two
+  // hops land on the same pathname as one.
+  ["/compare", "/monitor"], ["/watchlist", "/monitor"],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -206,8 +215,20 @@ for (const [from, to] of [
 await page.goto(`${BASE}/private-market`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 text = await page.locator("body").innerText();
-check("the Private Market page names the funds and accounts it covers",
-  /\d+ funds · \d+ accounts/.test(text), /\d+ funds · \d+ accounts/.exec(text)?.[0]);
+// THE HEADER PILL THIS USED TO READ IS GONE, at the family's request, along
+// with the page's lead paragraph. The claim survives on the figure it describes
+// — the fund table's footer counts the funds, and the accounts count moved onto
+// the Private market value tile — so it is struck THERE, and the pill's absence
+// is asserted beside it. Read off the removed pill this would have gone on
+// "passing" by being unable to match, which is the failure mode this suite has
+// already recorded once.
+check("the Private Market page still counts the funds and accounts it covers",
+  /Total · \d+ funds/i.test(text) && /across \d+ accounts · each holding counted once/i.test(text),
+  /across \d+ accounts/i.exec(text)?.[0]);
+check("...and its header pills and lead paragraph stay removed",
+  !/\d+ funds · \d+ accounts/.test(text)
+  && !/\bSTATEMENT\s*·\s*as of/i.test(text)
+  && !/Every private-market holding the statements in this drop report/i.test(text));
 check("its private market value is a real measured figure, not the removed page's ₹0",
   /PRIVATE MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
   && !/PRIVATE MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
@@ -244,6 +265,14 @@ for (const [from, label, pattern] of [
   // prints is not distinctive to the page that was removed, which is the trap the
   // comment above names and the first draft walked into anyway.
   ["/alerts", "Alerts", /no rules yet|need a source, not a threshold/i],
+  // COMPARE COMPANIES lands on Portfolio Monitor, so the text read here is that
+  // page's. Matched on the comparison screen's OWN furniture and deliberately
+  // NOT on "compare" or "of 4 selected": Sector Composition prints the second
+  // verbatim for its Compare-sectors chips, and the word itself is ordinary
+  // English on half the app. A phrase a surviving page prints is not distinctive
+  // to the page that was removed — the exact trap the `/alerts` row above walked
+  // into once already.
+  ["/compare", "Compare Companies", /names side by side|Pick companies|Pick up to four holdings above/i],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
@@ -287,11 +316,21 @@ check("the Watchlist & Targets nav entry is gone", !/Watchlist\s*&\s*Targets/i.t
 // section a reader will look for and never find.
 check("the Knowledge & Memory nav entry is gone", !/Knowledge\s*&\s*Memory/i.test(nav));
 check("...and the now-empty Knowledge group heading with it", !/(^|\n)\s*KNOWLEDGE\s*(\n|$)/.test(nav));
+// COMPARE COMPANIES went the same way, and it was the ONLY entry in the RESEARCH
+// group — so the heading must go with it, exactly as KNOWLEDGE and MONITOR did.
+// The two are separate claims: the group heading is derived from the entries, so
+// an entry removed from the array takes its heading automatically — but a future
+// session hardcoding a heading, or re-adding the entry, breaks one and not the
+// other.
+check("the Compare Companies nav entry is gone", !/Compare Companies/i.test(nav));
+check("...and the now-empty Research group heading with it", !/(^|\n)\s*RESEARCH\s*(\n|$)/.test(nav));
 check("the Macro Research nav entry is gone", !/Macro Research/i.test(nav));
 check("the Economy & Macro nav entry is gone", !/Economy\s*&\s*Macro/i.test(nav));
-// ...and RESEARCH, which lost two of its three, keeps the one that survived.
-check("the Research group survives with Compare Companies in it",
-  /Compare Companies/i.test(nav));
+// RESEARCH used to be asserted to SURVIVE here — "it lost two of its three and
+// keeps the one that survived". That was true until Compare Companies, the one
+// that survived, was removed at the family's request. The claim is inverted
+// above rather than deleted with the feature, which is the same treatment every
+// other removal in this file gets.
 // Thesis & Triggers and Alerts went the same way, and between them they were the
 // WHOLE of the MONITOR group — so its heading must go with both entries, exactly
 // as the KNOWLEDGE heading went with its one.

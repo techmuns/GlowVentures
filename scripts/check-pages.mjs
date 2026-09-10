@@ -902,6 +902,75 @@ const NO_COST_KEY = (() => {
 
 const CIO_BUCKET_HREFS = [];
 /** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
+/**
+ * ── THE DRILL-DOWN'S HEADER PROSE AND ITS ARITHMETIC CARD ARE GONE ──────────
+ *
+ * *"Remove all the highlighted text and the sections from the dashboard UI."*
+ * Five things went from every `/holdings` page at once, and this is spread into
+ * each route rather than written per route so a page cannot quietly keep one:
+ *
+ *   · the LEAD paragraph (`Drilldown.lead`, deleted with it);
+ *   · the active facet's NOTE paragraph — still the `title` on the chip that
+ *     selects it, which is why `Facet.note` survives;
+ *   · the `behind <figure>` pill (`Drilldown.backs`, deleted with it);
+ *   · the dedupe-basis pill — the BASIS is not lost, it is the holdings table's
+ *     own subtitle, and `holdings-measured` asserts it there;
+ *   · the `<BasisPill>`, for the same reason it left Morning CIO's header.
+ *
+ * STRUCK ON THE PILLS' EXACT RENDERINGS, which are safe to match here because
+ * none of them is a phrase the surviving surfaces print: the table's subtitle
+ * says "each statement's row as printed" where the pill said "as printed · per
+ * account", and the crumb says "What is behind the figure" where the pill said
+ * "behind Consolidated NAV". The arithmetic card is struck STRUCTURALLY on its
+ * own probe instead, because its absence is what the family asked for and a
+ * text match could not tell an empty card from no card.
+ */
+const DRILLDOWN_CHROME_GONE = [
+  ["the header pill row stays removed", (t) =>
+    !/behind (Consolidated NAV|Capital invested|Top-\d+|Cross-held|Winners|the coverage)/i.test(t)
+    && !/consolidated\s*·\s*each holding once/i.test(t)
+    && !/as printed\s*·\s*per account/i.test(t)],
+  ["...including its basis pill and staleness pill", (t) =>
+    !/\bLIVE\s*·/.test(t) && !/\bSTATEMENT\s*·\s*as of/i.test(t)
+    && !/\d+\s+accounts? behind/i.test(t)],
+  ["the arithmetic card stays removed", (t, ctx) => ctx?.formula == null],
+];
+
+/**
+ * ── THE FACET NOTE IS A HOVER, NOT A PARAGRAPH ──────────────────────────────
+ *
+ * Spread ONLY into the scopes that draw a toggle, deliberately. In the shared
+ * block above it abstained on ten routes that have no facets at all — an
+ * evidenced abstention, and ten lines of it, which is exactly the noise that
+ * makes a real one easy to miss. Every scope listed below has more than one
+ * facet in this book, so a `notChecked` here is a finding about the page rather
+ * than a fact about the scope.
+ *
+ * ASSERTED IN BOTH DIRECTIONS by its siblings: the paragraph must be gone (the
+ * shared block) AND the chip must still carry the note (here), or the reason a
+ * half exists would have been deleted rather than moved.
+ */
+const DRILLDOWN_FACET_NOTE = [
+  /**
+   * SOME, NOT EVERY, BECAUSE A FACET MAY LEGITIMATELY CARRY NO NOTE.
+   *
+   * The first draft required a title on every chip and failed `holdings-winners`
+   * — whose "Showing a gain" facet has `note: ""` in the book, correctly: the
+   * label says the whole of it, and inventing a sentence to satisfy a check is
+   * the wrong direction entirely. Its "In neither count" sibling DOES carry one,
+   * which is the note that had to survive.
+   *
+   * `some` still catches what this exists for: dropping `title={f.note}` empties
+   * every chip at once, so a build that moved the note back into a paragraph —
+   * or lost it — fails here. Verified by reintroducing exactly that.
+   */
+  ["the facet notes are on the chips rather than under them", (t, ctx) => {
+    const fs = ctx?.facets ?? [];
+    if (fs.length < 2) return notChecked("this scope draws no facet toggle");
+    return fs.some((f) => (f.title ?? "").trim().length > 0);
+  }],
+];
+
 const DRILLDOWN_COUNTS = new Map();
 const DRILLDOWN_TOTALS = new Map();
 // SIX, because the book has six buckets. Spare slots are not free: each one is
@@ -1253,7 +1322,6 @@ const ROUTES = [
   // the scope now lives in the URL so this route can exist at all.
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
-  ["compare", "/compare"],
   // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
   // family's request, so they are no longer walked — there is no page at any of
   // those three addresses to hold to the light-mode, overflow and stray-zero
@@ -1831,6 +1899,42 @@ const MOCK_INDICES = [
   ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
   ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
 ];
+
+/**
+ * HOW MANY PRIVATE HOLDINGS COULD BE PRICED BY THE QUOTE FEED — the premise
+ * that licenses Private Market losing its `<BasisPill statement>`.
+ *
+ * The family asked for the page's header pills to go. `statementPortfolio` is
+ * still the source and that is where §6's correctness guarantee actually lives,
+ * but the reader is no longer TOLD, and this is the measurement that says what
+ * that costs on THIS page rather than asserting it costs nothing:
+ *
+ *   an AIF folio, an unlisted share and a structured note resolve NO NSE
+ *   trading symbol, and every live endpoint is keyed on one. So not a single
+ *   row here could move with the feed even if the page read the live
+ *   portfolio — the label was describing a difference that does not arise.
+ *
+ * Measured on this book: 0. It is a PREMISE, not a decoration, so it is checked
+ * every run — a drop bringing a quotable private holding fires this and the next
+ * session has to decide again, instead of the page silently becoming a place
+ * where a live figure could appear unlabelled.
+ *
+ * `isPrivateClass` is re-derived here rather than imported, like every other
+ * expectation in this file: a check that imports the helper it is checking
+ * agrees with it by construction.
+ */
+const PRIVATE_QUOTABLE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const PRIVATE = new Set(["AIF", "Unlisted", "Structured Product"]);
+    return positions
+      .filter((p) => PRIVATE.has(p.assetClass))
+      .filter((p) => p.symbol || symbols[p.securityKey])
+      .map((p) => p.security);
+  } catch { return null; }   // an unreadable book fails the route's own checks, loudly
+})();
 
 /** A linear daily ramp, so the index's return between any two dates is exact. */
 const PRICE_SLOPE = 0.0004;
@@ -2902,6 +3006,31 @@ const INVARIANTS = {
      */
     ["the removed second-statement card stays removed, and no figure is claimed from the scan",
       (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
+
+    /**
+     * THE PER-DEMAT CARD'S SUBTITLE AND FOOTER ARE GONE, AND WHAT THEY SAID IS
+     * NOT — two claims, and the second is the one that could fail quietly.
+     *
+     * Removed at the family's request. Between them they carried the mark's
+     * DERIVATION (value ÷ units, because an NSDL statement prints no rate
+     * column), that it is therefore a statement figure rather than a live
+     * quote, and WHY cost is absent. All three are re-stated above — the first
+     * two on the `STATEMENT · as of` pill's hover, the third on the Cost basis
+     * tile's own sub, which is where the em dash is.
+     *
+     * Asserting only the absence would pass a page that had lost the lot, and
+     * asserting only the survivors would pass one that never removed anything.
+     * Both, and neither implies the other.
+     */
+    ["the per-demat prose stays removed",
+      (t) => !/One row per depository account/i.test(t)
+        && !/Cost is absent because a depository holds the shares/i.test(t)
+        && !/divided by the units it prints/i.test(t)],
+    ["…and the mark still says how it is derived, on the pill that dates it",
+      (_t, ctx) => (ctx?.titles ?? []).some((x) =>
+        /divided by the units it prints/i.test(x)
+        && /no rate column/i.test(x)
+        && /not a live price/i.test(x))],
 
     /**
      * ── THE FIVE THINGS THE FAMILY ASKED THIS PAGE FOR ──────────────────────
@@ -4533,6 +4662,63 @@ const INVARIANTS = {
    * panel with its ORIGINAL chip list would satisfy a check that only looked for
    * the heading.
    */
+  /**
+   * ── THE BASIS PILL IS GONE FROM THIS HEADER ────────────────────────────────
+   *
+   * *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part
+   * from the UI."*
+   *
+   * Struck on the page's own text, which is safe here in a way it usually is
+   * not: "LIVE ·" and "N accounts behind" are the pill's exact renderings and
+   * appear nowhere else on this route — the index strip prints "NSE · live"
+   * and the movers card prints its own coverage in different words. Both are
+   * required, because the staleness pill is a SEPARATE element that renders
+   * beside the basis one and a build could lose one and keep the other.
+   */
+  ["the basis pill and the staleness pill are gone from Morning CIO",
+    (t) => !/\bLIVE\s*·/.test(t) && !/\bSTATEMENT\s*·\s*as of/i.test(t)
+      && !/\d+\s+accounts? behind/i.test(t)],
+  /**
+   * ...AND THE TWO DISCLOSURES THAT HAD NO OTHER HOME ARE IN THE TILES' HOVERS.
+   *
+   * Both were on the arithmetic card of the page their tile opens, and both are
+   * the LAST statement of their fact anywhere:
+   *
+   *   · the accrued income the NAV excludes — our total differs from a
+   *     manager's printed one by exactly this, and a reader reconciling the
+   *     two would otherwise find the gap and no explanation;
+   *   · the XIRR's window and its refusal to annualise it — Stage 10g(ii)'s
+   *     guard, which exists because this tile once read +99.0%.
+   *
+   * Read off `ctx.titles`, the same probe the cost-less cells' reasons use. A
+   * hover is a weaker home than a caption and CLAUDE.md says so rather than
+   * pretending otherwise; what these assert is that neither was LOST.
+   */
+  ["the NAV tile's hover names the accrued income the figure excludes", (t, ctx) => {
+    if (!BOOK_HALVES) return notChecked("the book could not be read on this run");
+    if (!BOOK_HALVES.accrued) return notChecked("no holding in this book reports accrued income");
+    const titles = ctx?.titles ?? [];
+    return titles.some((x) => /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(x));
+  }],
+  ["the money-weighted tile's hover states its window, and refuses to annualise a short one", (t, ctx) => {
+    const titles = ctx?.titles ?? [];
+    // CASE-INSENSITIVE, because the sub-year branch SHOUTS its sentence — "THE
+    // WINDOW IS 150 DAYS AND THE RATE IS NOT ANNUALISED" — and the annualised
+    // branch does not. A check pinned to one casing fails a page that is right,
+    // which is the trap `label-xs` already sprang once on this sweep.
+    const m = titles.map((x) => /the window is (\d+) days/i.exec(x)).find(Boolean);
+    if (!m) return false;
+    const days = Number(m[1]);
+    const hover = titles.find((x) => /the window is \d+ days/i.test(x)) ?? "";
+    // A rate is only ever called annual beside a window of at least a year.
+    // Anything else is the extrapolation this guard exists to refuse.
+    return days >= 365 ? /genuine annual rate/i.test(hover) : /NOT ANNUALISED/.test(hover);
+  }],
+  /* AND THE CROSS-HELD FIGURE KEEPS THE DISTINCTION ITS DRILL-DOWN'S LEAD USED
+     TO CARRY. Two members each owning some of a name is not the ₹3.17 Cr
+     duplicate policy, and a reader who conflates them misreads this figure. */
+  ["the Cross-held figure separates itself from the duplicate policy", (t, ctx) =>
+    (ctx?.titles ?? []).some((x) => /counted once per member/i.test(x) && /already collapsed/i.test(x))],
   ["the roadmap placeholder for not-yet-live data is gone",
     (t) => !/Coming as live data lands/i.test(t)
       && !/These activate once the live market-data feed/i.test(t)
@@ -4768,10 +4954,15 @@ const INVARIANTS = {
    * holdings is invisible from either screen alone and obvious from both.
    */
   "holdings-row": [
-    ["it opened the row Morning CIO linked, and says which figure it stands behind", (t, ctx) => {
+    ...DRILLDOWN_CHROME_GONE,
+    /* THE "says which figure it stands behind" HALF WENT WITH THE PILL ROW,
+       and is asserted as an absence in `DRILLDOWN_CHROME_GONE`. What is left is
+       the half the page still answers: the address resolved, and the heading is
+       the bucket the reader clicked. */
+    ["it opened the row Morning CIO linked", (t, ctx) => {
       const key = bucketKeyOf(ctx);
       if (!key) return notChecked("Morning CIO drew no allocation link for this slot — the book has fewer buckets than the sweep has slots");
-      return new RegExp(`behind the ${esc(key)} row`, "i").test(t) && new RegExp(`^${esc(key)}$`, "m").test(t);
+      return new RegExp(`^${esc(key)}$`, "m").test(t);
     }],
     /**
      * ITS TOTAL IS THE CELL THE READER CLICKED. Bounded at the printing
@@ -4826,17 +5017,18 @@ const INVARIANTS = {
      * that showed one too. Two answers for one figure, one click apart, and the
      * check above could not see it because it only reads the tile.
      *
-     * Both surfaces call `coveredReturn` now. This asserts they agree.
+     * Both surfaces called `coveredReturn`, and this asserted they agreed.
+     *
+     * THE SECOND SURFACE IS GONE — the family asked for the arithmetic card, so
+     * the tile is the only place this page states a return and there is nothing
+     * left to disagree with it. What survives is the claim that matters, one
+     * line down: a refused return still names its cause. The card's ABSENCE is
+     * asserted below rather than this check being deleted quietly, so a future
+     * edit that brings the card back has to bring its agreement check with it.
      */
-    ["the worked example refuses the return wherever the tile does", (t, ctx) => {
-      if (!ctx?.formula?.worked) return notChecked("this page drew no formula card on this run");
-      const tile = tileValue(t, "RETURN ON COST");
-      // U+2212 MINUS SIGN, NOT AN ASCII HYPHEN. The worked line renders a real
-      // minus, so `[+-]` missed `= −0.0%` entirely — and the check then read a
-      // page printing a forbidden return as one printing none, and PASSED. Found
-      // by reintroducing the bug it exists for.
-      const inWorked = /=\s*[+\-\u2212]\d+\.\d%/.test(ctx.formula.worked);
-      return tile === "—" ? !inWorked : inWorked;
+    ["the arithmetic card stays removed", (t, ctx) => {
+      if (ctx?.formula == null) return true;
+      return false;
     }],
     // A REFUSED FIGURE STILL HAS TO SAY WHY. An em dash with no cause is the
     // "second dash" failure the stock page was fixed for.
@@ -4870,11 +5062,24 @@ const INVARIANTS = {
    * to prevent.
    */
   "holdings-alloc-row": [
-    ["it opened a section Morning CIO's axis actually drew, and says which figure it stands behind", (t, ctx) => {
+    ...DRILLDOWN_CHROME_GONE,
+    /**
+     * IT OPENED THE SECTION MORNING CIO'S AXIS ACTUALLY DREW.
+     *
+     * This had a second half — "and says which figure it stands behind" — read
+     * off the `behind the <key> row` PILL. The family asked for the pill row, so
+     * that half is asserted as an ABSENCE in `DRILLDOWN_CHROME_GONE` instead of
+     * being dropped, and what is left here is the half the page still answers:
+     * the address resolved, and the section it resolved to is the one the reader
+     * clicked. An unresolved address is a FINDING rather than an abstention —
+     * `/holdings` renders its own not-found page, which has no console error, no
+     * overflow and no stray zero, so every generic check would pass over it.
+     */
+    ["it opened the section Morning CIO's axis actually drew", (t, ctx) => {
       const q = new URLSearchParams(String(ctx?.path ?? "").split("?")[1] ?? "");
       const scope = q.get("of"), key = q.get("key");
-      if (!scope || !key) return false;   // the address never resolved — a finding, not an abstention
-      return new RegExp(`behind the ${esc(key)} row`, "i").test(t) && new RegExp(`^${esc(key)}$`, "m").test(t);
+      if (!scope || !key) return false;
+      return new RegExp(`^${esc(key)}$`, "m").test(t);
     }],
     /**
      * ITS TOTAL IS THE CELL THE READER CLICKED. Bounded at the printing
@@ -4894,14 +5099,21 @@ const INVARIANTS = {
      * own review, and a page that described one as the other would be asserting
      * a provenance the archive does not carry.
      */
-    ["it names the family's review as what decided this section",
-      // EITHER APOSTROPHE. This page's lead is a plain string in `drilldown.ts`
-      // and renders a straight quote; the pages around it use the typographic
-      // one. A check pinned to the wrong glyph fails a page that is right.
-      (t) => /the FAMILY['’]S OWN, taken from their consolidated review/i.test(t)],
+    /* THE PROVENANCE LINE WENT WITH THE LEAD PARAGRAPH, and it is not lost:
+       Morning CIO's allocation card — the surface this page is opened FROM —
+       states it on the family's two axes ("Grouped by the family's own basket,
+       as their consolidated review states it"), and that is asserted on the
+       `cio-alloc-basket` / `cio-alloc-class` routes. A reader reaches these
+       rows through that card, so the judgement is named before they arrive.
+       Asserted here as an ABSENCE so the removal is recorded rather than the
+       check quietly deleted with the sentence. */
+    ["the lead paragraph stays removed",
+      (t) => !/the FAMILY['’]S OWN, taken from their consolidated review/i.test(t)],
   ],
 
   "holdings-book": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     /**
      * ── A CLOSED POSITION IS STILL BEHIND THE FIGURE, AND SAYS SO ───────────
      *
@@ -5005,19 +5217,13 @@ const INVARIANTS = {
      * others, so our total differs from a statement's by exactly this and a
      * reader reconciling the two has to be told. It moved rather than went.
      */
-    ["what the NAV excludes is named, with its figure", (t) => {
-      if (!BOOK_HALVES) return notChecked("the book could not be read on this run");
-      if (!BOOK_HALVES.accrued) return notChecked("no holding in this book reports accrued income");
-      return /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(t);
-    }],
-    ["the arithmetic behind the figure is on this page, not behind a click", (t, ctx) =>
-      !!ctx?.formula && /Σ market value/.test(ctx.formula.text) && ctx.formula.worked.length > 0],
-    ["its worked example ties to the total this page prints", (t, ctx) => {
-      if (!ctx?.formula?.worked) return false;
-      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
-      if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
-      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15;
-    }],
+    /* MOVED TWICE NOW, AND ASSERTED AT ITS NEW ADDRESS. It was this tile's
+       caption; Stage 10aa put it on the arithmetic card here; the family have
+       asked for that card, so it is in the hover of the Morning CIO tile that
+       opens this page — checked on the `cio` route, not this one. The card's
+       own absence is asserted once, in `DRILLDOWN_CHROME_GONE`, which every
+       holdings route spreads in; a second copy here fired twice for one defect
+       and said nothing the first did not. */
     ["its market value reproduces the Consolidated NAV", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -5083,18 +5289,25 @@ const INVARIANTS = {
    * link to a page listing the wrong set passes the first and fails a reader.
    */
   "holdings-crossheld": [
+    ...DRILLDOWN_CHROME_GONE,
     ["its name count reproduces the Cross-held figure", (t) => {
       const there = CIO_FIGURES.get("crossHeld"), c = drilldownCounts(t);
       if (!Number.isFinite(there)) return notChecked("Morning CIO's Cross-held figure did not parse on this run");
       return c != null && c.names === there;
     }],
-    // ...and every name here really is held by two or more entities, which is
-    // what distinguishes a cross-held name from a DUPLICATE the consolidated set
-    // has already collapsed.
-    ["the page separates cross-held from the duplicate policy", (t) =>
-      /counted once per member/i.test(t) && /already collapsed/i.test(t)],
+    /* THE CROSS-HELD / DUPLICATE DISTINCTION MOVED TO THE FIGURE'S OWN LINK.
+       It was in this page's lead paragraph, which the family asked for, and it
+       is not a nicety: a cross-held name is two members each genuinely owning
+       some of it and counted once per member, while a DUPLICATE is ONE holding
+       that two statements both report — this book's ₹3.17 Cr — which the
+       consolidated set has already collapsed. A reader who conflates the two
+       misreads the concentration figure. It is on Morning CIO's Cross-held link
+       now, asserted there, where the figure it qualifies is printed. */
+    ["the lead paragraph stays removed", (t) =>
+      !/counted once per member/i.test(t)],
   ],
   "holdings-topnames": [
+    ...DRILLDOWN_CHROME_GONE,
     ["its value reproduces the Top-10 concentration share", (t) => {
       const pct = CIO_FIGURES.get("top10Pct"), nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (![pct, nav].every(Number.isFinite)) return notChecked("Morning CIO's Top-10 figure did not parse on this run");
@@ -5115,6 +5328,8 @@ const INVARIANTS = {
    * showing the wrong half passes a check that only looks at its own figure.
    */
   "holdings-listed": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     /**
      * THE HALF IS SMALLER THAN THE BOOK AND BIGGER THAN NOTHING, and the exact
      * reconstruction is struck on `holdings-private`, which is the only place
@@ -5160,6 +5375,8 @@ const INVARIANTS = {
     }],
   ],
   "holdings-private": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     ["its value is a real part of the book, not all of it and not none", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -5181,19 +5398,22 @@ const INVARIANTS = {
       return here != null && here.holdings + listed.holdings === pos;
     }],
     /**
-     * THE WORKED EXAMPLE IS THE HALF'S OWN, NOT THE BOOK'S. The single most
-     * likely regression in moving the arithmetic out of a popover: a formula
-     * summed over the SCOPE rather than the active facet reads correct on the
-     * undivided page and prints ₹710 Cr under a heading saying "Private".
-     * Struck against this page's own total, which is the private half's.
+     * THE NARROWED PAGE SHOWS THE HALF'S OWN FIGURE, NOT THE BOOK'S.
+     *
+     * This used to be struck on the arithmetic card's worked line — the single
+     * most likely regression in moving that arithmetic out of a popover was a
+     * formula summed over the SCOPE rather than the active facet, which reads
+     * correct on the undivided page and prints ₹710 Cr under a heading saying
+     * "Private". The card is gone at the family's request, so the claim moves
+     * onto the figure the page still prints: its own TOTAL must be the private
+     * half's and must NOT be the whole book's NAV. Weaker than having two
+     * derivations to compare, and the strongest thing left on the page.
      */
-    ["its worked example is the private half's, not the whole book's", (t, ctx) => {
-      if (!ctx?.formula?.worked) return false;
-      const here = drilldownTotal(t), worked = money2cr(/(₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(ctx.formula.worked)?.[1]);
-      const nav = CIO_FIGURES.get("nav");
+    ["the total on the private half is the half's, not the whole book's", (t) => {
+      const here = drilldownTotal(t), nav = CIO_FIGURES.get("nav");
       if (!Number.isFinite(here)) return notChecked("this page printed no total on this run");
-      return Number.isFinite(worked) && Math.abs(worked - here) <= 0.15
-        && (!Number.isFinite(nav) || Math.abs(worked - nav) > 0.15);
+      if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
+      return Math.abs(here - nav) > 0.15;
     }],
     /**
      * THE TWO HALVES RECONSTRUCT THE NAV — the check that used to live on
@@ -5217,6 +5437,8 @@ const INVARIANTS = {
    * left for a reader to discover by subtracting.
    */
   "holdings-winners": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     ["its count reproduces the Winners figure", (t) => {
       const there = CIO_FIGURES.get("winners"), c = drilldownCounts(t);
       if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
@@ -5256,6 +5478,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-losers": [
+    ...DRILLDOWN_FACET_NOTE,
     ["its count reproduces the losers figure", (t) => {
       const there = CIO_FIGURES.get("losers"), c = drilldownCounts(t);
       if (!Number.isFinite(there)) return notChecked("Morning CIO's winners/losers figure did not parse on this run");
@@ -5282,6 +5505,8 @@ const INVARIANTS = {
    * the mistake is invisible, and why the page says which basis it is on.
    */
   "holdings-measured": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     ["it covers part of the book and says so, rather than all of it", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -5302,14 +5527,16 @@ const INVARIANTS = {
      * A rate is only ever labelled annualised beside a window of at least a
      * year. Anything else is the extrapolation coming back.
      */
-    ["it states the window the rate is struck over", (t) =>
-      /\d+-day window/i.test(t)],
-    ["no sub-year window is presented as an annualised rate", (t) => {
-      const days = Number(/(\d+)-day window/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(days)) return false;
-      return days >= 365 ? /genuine annual/i.test(t) : /not annualised/i.test(t);
-    }],
-    ["it states that it is per-account and not consolidated", (t) => /as printed\s*·\s*per account/i.test(t)],
+    /* THE WINDOW AND THE REFUSAL MOVED TO THE TILE'S OWN HOVER when the family
+       asked for this page's arithmetic card. Stage 10g(ii)'s guard is asserted
+       on the `cio` route now, where the rate is printed. */
+    ["the arithmetic card stays removed", (t, ctx) => ctx?.formula == null],
+    /* AND THE BASIS IS READ OFF THE TABLE THAT IS ON THIS BASIS. It was a pill
+       in the header row the family removed; the holdings table's own subtitle
+       has always carried the same two branches, and it is the surface the rows
+       beneath it actually belong to. */
+    ["it states that it is per-account and not consolidated", (t) =>
+      /each statement's row as printed/i.test(t)],
     // AND IT NAMES WHAT IT LEAVES OUT. A figure that exists for some accounts is
     // shown for those and the rest are named — the coverage line on the tile is
     // only half of that rule if the drill-down then hides them.
@@ -5324,6 +5551,8 @@ const INVARIANTS = {
    * all, and the toggle that now reaches the other half is the only route to it.
    */
   "holdings-invested": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     ["its market value covers the holdings that report a cost", (t) => {
       const c = drilldownCounts(t);
       return c != null && c.holdings > 0;
@@ -5385,6 +5614,8 @@ const INVARIANTS = {
    * statement or accept a permanent absence.
    */
   "holdings-nocost": [
+    ...DRILLDOWN_CHROME_GONE,
+    ...DRILLDOWN_FACET_NOTE,
     /**
      * THE COSTED HALF AND THIS ONE ADD TO THE BOOK. `sumOrNull` skips a missing
      * cost rather than entering it as zero, so every holding is on exactly one
@@ -5477,7 +5708,70 @@ const INVARIANTS = {
    * carries a lot of true prose, and matching that is what made two earlier
    * drafts elsewhere in this file unable to fail.
    */
+  /**
+   * ── THE PAGES THAT MUST RECONCILE KEEP THEIR BASIS PILL ────────────────────
+   *
+   * The family asked for the pill off Morning CIO and off the drill-down, and
+   * both removals are asserted where they happened. This is the OTHER half, and
+   * neither implies it: §6's requirement that Capital Gains, Data Audit, Ledger
+   * Insights and this page read `statementPortfolio` and pass `<BasisPill
+   * statement>` is a CORRECTNESS guarantee rather than a label — a reader checks
+   * these against the PDF, and a total that drifted with the market could not be
+   * checked at all. A build that removed the component everywhere would satisfy
+   * both absence checks and silently take this with it.
+   */
   "private-market": [
+    /**
+     * ── THE HEADER PROSE AND BOTH PILLS ARE GONE ────────────────────────────
+     *
+     * At the family's request, and this INVERTS the check added one release ago
+     * rather than being deleted with the feature. Three claims, and the second
+     * and third are the ones that could go wrong quietly.
+     */
+    ["the lead paragraph and the header pills stay removed", (t) =>
+      !/Every private-market holding the statements in this drop report/i.test(t)
+      && !/\bSTATEMENT\s*·\s*as of/i.test(t)
+      && !/\d+\s+accounts? behind/i.test(t)
+      && !/\d+ funds\s*·\s*\d+ accounts/i.test(t)],
+
+    /**
+     * …AND THE ONE COUNT THAT HAD NO OTHER HOME MOVED RATHER THAN GOING.
+     *
+     * The subtitle counted funds, accounts and owners. The fund table's footer
+     * already prints `Total · N funds` and the By-owner rollup enumerates the
+     * owners; the ACCOUNTS count was nowhere else, so it is on the tile whose
+     * breadth it describes. Struck against the folio table's own row count so
+     * it cannot be satisfied by re-printing a number the page already had:
+     * every private row sits in an account, so accounts ≥ nothing useful — what
+     * matters is that a real figure is there and the tile still names its book.
+     */
+    ["the private value tile names how many accounts it spans", (t) => {
+      const m = /PRIVATE MARKET VALUE[\s\S]{0,240}?across (\d+) accounts · each holding counted once/i.exec(t);
+      return !!m && Number(m[1]) > 0;
+    }],
+
+    /**
+     * …AND THE PREMISE THAT MADE LOSING THE BASIS LABEL CHEAP IS CHECKED, NOT
+     * ASSUMED.
+     *
+     * `statementPortfolio` is still the source, so the guarantee holds; what
+     * went is the reader being told. That is only harmless because nothing here
+     * can be quoted — see `PRIVATE_QUOTABLE`. The day one can, this fires by
+     * name and the decision gets made again, which is the difference between a
+     * measured absence and one recorded against a premise nobody rechecked.
+     */
+    /*
+     * The offenders ride in the DESCRIPTION rather than the return value: a
+     * truthy object PASSES here (only `{notChecked}` is special), so a
+     * `{fail: …}` would report a green sweep over a red page. Built at module
+     * load, where `PRIVATE_QUOTABLE` already is.
+     */
+    [`no private holding could be priced by the feed, which is why the basis label costs nothing here${
+      PRIVATE_QUOTABLE?.length
+        ? ` — but ${PRIVATE_QUOTABLE.length} now resolve an NSE symbol: ${PRIVATE_QUOTABLE.slice(0, 3).join(", ")}`
+        : ""}`,
+      () => PRIVATE_QUOTABLE != null && PRIVATE_QUOTABLE.length === 0],
+
     // PM-1. The per-folio table shows every statement as printed; the fund table
     // counts each holding once. The difference is the double count, and the page
     // must NAME it rather than leave a reader to find it by adding.
@@ -5591,6 +5885,124 @@ const INVARIANTS = {
     // The failure this replaced: a fund standing at the head of a sector table.
     // No wrapper may appear as a holding here at all.
     ["no fund wrapper appears as a sector holding", (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Liquid ?Bees)/i.test(t)],
+
+    /**
+     * ── THE FOOTER PARAGRAPH IS GONE, AND ITS TWO LOAD-BEARING FIGURES ARE NOT
+     *
+     * Removed at the family's request. It carried eight claims; six were
+     * already elsewhere on the page (the subtitle, the donut, the three
+     * who-chose cards, the Held via column) and two were not, so those two
+     * moved onto the figures they describe. Asserted separately from the
+     * absence, because a page that lost the lot passes an absence check.
+     */
+    ["the footer paragraph stays removed", (t) =>
+      !/That is\s+not\s+the same set as/i.test(t)
+      && !/a look-through into a mandate is a gain/i.test(t)
+      && !/Within company shares, ₹/i.test(t)],
+
+    /**
+     * THE COVERAGE OF THIS TABLE, ON THE FIGURE ITSELF. A sector page over
+     * ₹221 Cr of a ₹710 Cr book is an unexplained narrowing unless it says how
+     * many holdings it spans and that the set is deduped — and neither was
+     * anywhere but that paragraph. Struck against the sector rows' OWN counts,
+     * which is what makes it able to fail: the donut's count and the table's
+     * positions column are computed from the same set by different paths, so a
+     * filter that widens one and not the other is caught here.
+     */
+    ["the donut names how many holdings it spans, and that each is counted once", (t) => {
+      const m = /Company shares\s*\n\s*₹[^\n]+\n\s*(\d+) holdings · each counted once/i.exec(t);
+      if (!m) return false;
+      const stated = Number(m[1]);
+      /*
+       * A ROW'S NAME IS ON ITS OWN LINE HERE. The name cell is a flex container
+       * and the chevron and colour swatch are flex ITEMS, so `innerText` breaks
+       * before the figures — the shape is `\nUnclassified\n\t₹129.7 Cr\t58.4%\t143\t…`.
+       * Matched from the leading TAB rather than from the name, so the check
+       * does not depend on a name it has no business knowing.
+       */
+      const rows = [...t.matchAll(/\n\t₹[^\t\n]+\t[\d.]+%\t(\d+)\t/g)].map((x) => Number(x[1]));
+      if (rows.length < 2) return false;
+      return stated > 0 && rows.reduce((a, b) => a + b, 0) === stated;
+    }],
+
+    /**
+     * …AND WHAT IT LEAVES OUT RECONSTRUCTS THE BOOK.
+     *
+     * The excluded classes moved from a sentence into a labelled partition
+     * card, which is also what lets this be struck on FIGURES rather than on
+     * prose — the failure `exposure`'s own first draft made, where matching the
+     * static caption passed while the filter had been reverted and ₹52.4 Cr of
+     * mutual funds were back in the sector table.
+     *
+     * The bound is the printing precision reproduced: every cell renders to one
+     * decimal in Cr, so the covered figure plus N named classes can round by at
+     * most (N+1) half-digits. A class dropped or double-counted moves it by
+     * whole crores.
+     */
+    ["company shares + the classes named as excluded reconstructs the consolidated NAV", (t) => {
+      /*
+       * `cr()` RETURNS NaN FOR A MISSING MATCH, so `a ?? b` never falls back —
+       * NaN is neither null nor undefined. The first draft of this line was
+       * written that way and reported "the figures could not be read" on a page
+       * rendering all of them. This page has no `Consolidated NAV` label; the
+       * top bar's own figure is the first ₹…Cr on it.
+       */
+      const nav = cr(new RegExp(CR).exec(t)?.[1]);
+      const covered = cr(new RegExp(String.raw`Company shares\s*\n\s*` + CR, "i").exec(t)?.[1]);
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const parts = [...card[1].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
+      if (![nav, covered].every(Number.isFinite) || parts.length < 2) return false;
+      return Math.abs(covered + parts.reduce((a, b) => a + b, 0) - nav) <= 0.1 * (parts.length + 1);
+    }],
+
+    /**
+     * …AND THAT CARD'S OWN TOTAL TIES TO THE CLASSES IT NAMES.
+     *
+     * The other end of the same claim, and the one that catches the failure the
+     * reconstruction above cannot: a total struck independently of the list
+     * beneath it. Drop a class from the list and the reconstruction fails
+     * because the page no longer accounts for the book — but a version that
+     * SUMMED the same shortened list into its headline would satisfy the
+     * reconstruction while printing a figure that ties to nothing. "A total must
+     * tie to its own columns", on a card of four.
+     *
+     * A FIRST DRAFT OF THIS SLOT COULD NOT FAIL and was replaced rather than
+     * kept: it asserted that no class named as excluded appears as a sector row,
+     * and the two name spaces never collide — sectors are GICS, classes are
+     * `AssetClass`. What actually guards that is the fund-name check above,
+     * which is struck on the wrappers' own names.
+     */
+    ["the excluded card's total ties to the classes it lists", (t) => {
+      const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const total = crU(card[1], card[2]);
+      const parts = [...card[3].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
+      if (!Number.isFinite(total) || parts.length < 2) return false;
+      // The page's own printing precision reproduced: every figure renders to
+      // three significant digits in Cr, so N parts plus the headline can round
+      // by at most (N+1) half-digits. A class dropped moves it by crores.
+      return Math.abs(parts.reduce((a, b) => a + b, 0) - total) <= 0.1 * (parts.length + 1);
+    }],
+
+    /**
+     * AND THE UNCLASSIFIED ROW STILL NAMES ITS CAUSE. It is an absence — a
+     * company share whose own statement printed no sector — and `Absent.tsx`'s
+     * rule is that a reason is a REQUIRED argument, because "no data" tells a
+     * reader nothing about whether to go and find something. It was in the
+     * removed paragraph; it is on the row now, so it is read off `ctx.titles`.
+     * Abstains only where the book HAS no unclassified share, which is a fact
+     * about the rows the page drew rather than about the check.
+     */
+    ["the Unclassified row names why it is unclassified", (t, ctx) => {
+      // The name is on its own line, the figures on the next — see the shape
+      // note above. Matching `Unclassified\t` found nothing and ABSTAINED on a
+      // page whose largest sector is exactly that, which is the evidenced-
+      // abstention trap this file names: a gate that cannot see its own subject
+      // reports "not applicable" rather than failing.
+      if (!/\nUnclassified\n\t₹/i.test(t)) return notChecked("no company share in this book is unsectored");
+      return (ctx?.titles ?? []).some((x) => /statement printed no sector/i.test(x) && /rather than assigned/i.test(x));
+    }],
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
   // holdings are sectioned by BUCKET (who chose the position), the sections must
@@ -7869,14 +8281,23 @@ const INVARIANTS = {
       return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum|Liquid ?Bees)/i.test(table);
     }],
   ],
-  // "Compare companies" compares COMPANIES. A fund unit has no PE, no filings and
-  // no peer set, and offering one in the picker put "Sanshi Fund-I (Open Ended
-  // AIF CAT-III) — Class E" and "Cash" side by side under that heading.
-  compare: [
-    ["the picker offers companies only, and names what it left out",
-      (t) => !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum)/i.test(t)
-        && /company shares only/i.test(t)],
-  ],
+  /*
+   * COMPARE COMPANIES IS REMOVED, at the family's request, and its block goes
+   * with the page it described — there is nothing at `/compare` any more to hold
+   * to the light-mode, overflow and stray-₹0 bar, so keeping a route here would
+   * only walk a redirect.
+   *
+   * The claim it made — that the picker offered COMPANIES and not fund units,
+   * after a draft had put "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E" and
+   * "Cash" side by side under that heading — is not lost: `isCompanyShare` is
+   * still the filter behind Sector Composition and Exposure & IPS, and the
+   * `sectors` and `exposure` blocks above both assert that no fund wrapper
+   * appears as a company row. THE REMOVAL ITSELF is asserted in
+   * `check-family-inputs.mjs`: the redirect lands, the nav entry is gone, the
+   * now-empty RESEARCH group heading with it, and the page renders none of its
+   * own content at its old address. A removal is verified by asserting it
+   * happened, never by deleting the test alongside the feature.
+   */
   /**
    * ── THE SNAPSHOT PAGE DESCRIBES THE SERIES THAT EXISTS ────────────────────
    *
@@ -8619,6 +9040,10 @@ for (const theme of THEMES) {
           rows: Number(((a.textContent ?? "").match(/([\d,]+)\s*$/)?.[1] ?? "").replace(/,/g, "")),
           href: a.getAttribute("href") ?? "",
           active: a.getAttribute("aria-current") === "true",
+          // THE FACET'S NOTE, which was a paragraph under the toggle until the
+          // family asked for it. It is the chip's `title` now, so the reason a
+          // half exists is still reachable — and only the CONTROL can say so.
+          title: a.getAttribute("title") ?? "",
         }));
       });
       /**

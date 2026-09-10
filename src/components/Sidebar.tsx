@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
   Activity, History, Lock, Table2, Calculator, Gauge,
-  GitCompare, Target, Cable,
+  Target, Cable,
   Handshake, NotebookPen,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -12,6 +12,13 @@ import { usePortfolio } from "@/context/PortfolioContext";
 // before statements are ingested. Knowledge & Memory, Macro Research and Economy
 // & Macro were the other three and have been removed at the family's request;
 // their addresses now redirect, so they need no entry here.
+//
+// COMPARE COMPANIES has gone the same way, and with it the RESEARCH group: the
+// headings below are derived from `group`, so a group whose last entry is
+// removed disappears on its own rather than leaving an empty label — the same
+// thing that happened to MONITOR at Stage 10y and KNOWLEDGE at Stage 10x. There
+// is nothing to delete here beyond the row itself, which is why this is written
+// down: a future session looking for the heading will not find one.
 const ALWAYS_ACCESSIBLE = new Set(["/upload", "/history", "/audit", "/ledger"]);
 
 // Drag-to-resize bounds for the left nav (px). Default 224 (14rem) keeps the
@@ -34,7 +41,6 @@ const NAV = [
   { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
   { to: "/exposure", label: "Exposure & IPS", icon: Target, group: "Allocation" },
   { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
-  { to: "/compare", label: "Compare Companies", icon: GitCompare, group: "Research" },
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: "Tax" },
   { to: "/performance", label: "NAV & Performance", icon: Activity, group: "Analytics" },
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: "Analytics" },
