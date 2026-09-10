@@ -367,6 +367,14 @@ html:not(.dark) .group:hover .group-hover\:text-champagne-400 { color: #5f4711; 
    over. This covers the Entities pill, the mandate links and the contribution
    chevron, all of which already carried the class. */
 html:not(.dark) .hover\:text-champagne-400:hover { color: #5f4711; }
+/* ...AND THE `/80` OPACITY VARIANT, which Tailwind emits as its own class and
+   which therefore needed its own remap — the rule this file already states in
+   as many words. It was invisible until a route held the fund look-through's
+   fetch open: that sentence renders only while the store is loading, and no walk
+   had ever seen that state, so the class was on screen for nobody and reported
+   by nothing. Same gold as `.text-champagne-400`, at the same 80% the utility
+   asks for. */
+html:not(.dark) .text-champagne-400\/80 { color: rgba(138, 106, 28, 0.8); }
 
 /* Gain / loss — darker in light mode for readable contrast (AA) on white rows
    and on the row-hover tint. Dark theme keeps the brighter #10b981 / #ef4444. */

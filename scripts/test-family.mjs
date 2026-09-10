@@ -30,6 +30,7 @@ const SUITES = [
   ["chat context", "src/lib/__tests__/chatContext.test.ts"],
   ["chat function", "src/lib/__tests__/chatFunction.test.ts"],
   ["indices function", "src/lib/__tests__/indicesFunction.test.ts"],
+  ["quotes function", "src/lib/__tests__/quotesFunction.test.ts"],
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
   ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
