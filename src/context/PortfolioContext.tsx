@@ -8,9 +8,10 @@
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Portfolio, Position } from "@/lib/types";
-import { dedupedPositions, publicPrivateSplit } from "@/lib/analytics";
+import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, type QuoteFeed } from "@/lib/quotes";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency, displaySecurity } from "@/lib/format";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
@@ -154,6 +155,19 @@ type Ctx = {
    * and folding them into `notLive` would read as a feed problem forever.
    */
   unpriceable: number;
+  /**
+   * Symbols the feed has DEFERRED and not yet answered for — an answer is
+   * coming. Distinct from a symbol the upstream cannot price, which never gets
+   * one and is counted in `notLive`.
+   *
+   * A card whose figures are a RANKING reads this for its own symbols and holds
+   * until none of them is in it: a top-gainers list struck over part of a scope
+   * can promote a name that is not the top and omit the one that is, which is a
+   * wrong figure rather than a slow screen.
+   */
+  quotesPending: ReadonlySet<string>;
+  /** Which of these symbols the feed has still to answer for. */
+  pendingFor: (symbols: readonly string[]) => string[];
   refreshQuotes: () => void;
 };
 
@@ -165,6 +179,34 @@ const QUOTE_POLL_MS = 60_000;
 // While symbols are still unpriced, poll harder — the upstream returns only part
 // of the book per call, so the first minute is a fill-in phase.
 const QUOTE_FILL_MS = 4_000;
+
+// ── WHICH SYMBOLS THE FIRST SCREEN NEEDS, DERIVED AND NEVER TYPED ────────────
+//
+// The endpoint prices a bounded slice per request (64 here) and this book has
+// 161 symbols, so a cold open fills over three rounds. In BOOK ORDER the 33
+// direct-equity names sat at positions 20 to 108, 30 of them beyond the first
+// request — so Today's movers, which covers exactly that set, could not be
+// complete until the third round. That is what "shows incomplete data and then
+// starts showing all the portfolio movers" is.
+//
+// Naming them as `priority` fetches them first, so the card's whole scope lands
+// in ONE round and the other 128 fill in behind it. It changes what is asked for
+// FIRST, never what is asked for: the server ignores a priority symbol that is
+// not in the ask, and every symbol is still fetched.
+//
+// Derived from the book through the same `holdingBucket` the card groups on, so
+// a drop that moves a holding between buckets moves this with it. A typed list
+// would go stale silently and the card would be back to three rounds.
+const PRIORITY_SYMBOLS = (() => {
+  const accIdx = accountIndex(BOOK_ACCOUNTS);
+  const out = new Set<string>();
+  for (const p of BOOK_POSITIONS) {
+    if (holdingBucket(p, engagementOf(accIdx, p)) !== DIRECT_EQUITY_BUCKET) continue;
+    const sym = symbolFor(p);
+    if (sym) out.add(sym);
+  }
+  return [...out];
+})();
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // The book as ingested. Live prices are layered on top in `portfolio` below,
@@ -235,8 +277,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }
     inFlight.current = true;
     try {
-      const feed = await fetchQuotes(symbols, { refresh });
-      if (feed) { mergeFeed(feed); setQuotesStatus("live"); return feed.missing.length; }
+      const feed = await fetchQuotes(symbols, { refresh, priority: PRIORITY_SYMBOLS });
+      // THE FILL POLL RUNS ON `pending`, NEVER ON `missing`. A deferred symbol
+      // is answered in seconds; one the upstream cannot price never is, so
+      // polling on it held this book at a four-second cadence for the life of
+      // the tab while nothing could change.
+      if (feed) { mergeFeed(feed); setQuotesStatus("live"); return feed.pending.length; }
       setQuotesStatus((s) => (s === "live" ? "live" : "unavailable"));
       return 0;
     } finally {
@@ -252,9 +298,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // alone full coverage would take minutes; this gets there in seconds and
     // each request is cheap (4 subrequests, mostly served from the edge cache).
     const tick = async (refresh = false) => {
-      const missing = await loadQuotes(refresh);
+      const pending = await loadQuotes(refresh);
       if (!alive) return;
-      timer = window.setTimeout(() => tick(), missing > 0 ? QUOTE_FILL_MS : QUOTE_POLL_MS);
+      timer = window.setTimeout(() => tick(), pending > 0 ? QUOTE_FILL_MS : QUOTE_POLL_MS);
     };
     tick();
     const onFocus = () => loadQuotes();
@@ -335,14 +381,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // Reset to the ingested book (upload override lands in a later prompt).
   const clearPortfolio = useCallback(() => setPortfolio(defaultPortfolio()), []);
   const refreshQuotes = useCallback(() => { loadQuotes(true); }, [loadQuotes]);
+  // What the feed has still to answer for. A symbol with no quote and no verdict
+  // counts as pending too — the alternative is calling a set complete on a
+  // response that never mentioned it.
+  const quotesPending = useMemo(() => new Set(quotes?.pending ?? []), [quotes]);
+  const pendingFor = useCallback((symbols: readonly string[]) => pendingAmong(quotes, symbols), [quotes]);
   const value = useMemo<Ctx>(
     () => ({
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, refreshQuotes,
+      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, quotesPending, pendingFor, refreshQuotes,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, unpriceable, refreshQuotes],
+     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, unpriceable, quotesPending, pendingFor, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 }

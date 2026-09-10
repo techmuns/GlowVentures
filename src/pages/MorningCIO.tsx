@@ -764,6 +764,11 @@ export function MorningCIO() {
    */
   const sections = m.bucketsByAxis[allocAxis] ?? m.buckets;
   const sectionLabel = (key: string) => (allocAxis === "category" ? bucketLabel(key) : key);
+  // The bar chart above the table scales each bar against the LARGEST bucket's
+  // current value, so the biggest fills the track and the rest read proportional
+  // to it. The actual figure and weight print beside every bar, so the bar is a
+  // visual encoding rather than one of the page's figures.
+  const maxCurrent = Math.max(0, ...sections.map((b) => b.current));
   /**
    * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
    * rows on screen rather than recomputed from the book — a caption struck on a
@@ -1064,13 +1069,52 @@ export function MorningCIO() {
               <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
             </div>
           }>
-          {/* THE PIE CHART IS GONE, at the family's request, and the table now
-              fills the card. The donut restated the Weight column as a wedge and
-              its centre restated the NAV tile above — no figure a reader could
-              not already read off the rows. Removing it left the card stretching
-              to the taller right column and a band of blank space below the
-              table; `self-start` on the Card sizes it to its own content, so the
-              table covers the section rather than floating in it. */}
+          {/* THE ALLOCATION BAR CHART, above the table. The donut this replaced
+              was removed for restating the Weight column as a wedge; a horizontal
+              bar chart is the same encoding without the wasted centre, and it
+              fills the space the donut's removal left below the table (the card
+              is `self-start`, so its height is its content).
+
+              EACH BAR IS THE SAME LINK ITS ROW IS. A `fromPositions` section is a
+              `<Link>` to `drilldownHref(AXIS_SCOPE[allocAxis], b.key)` — the exact
+              href the row builds — so a bar and its row open the same drill-down;
+              a fund-of-funds row carries no positions and its bar is a plain
+              `<div>`, exactly as the row is not a link. The bar WIDTH is relative
+              to the largest bucket; the value and weight print beside it, so the
+              bar encodes nothing the row does not also state as a figure. Keyed by
+              `data-alloc-bar` so `check:pages` can pair each bar with its row. */}
+          <div className="mb-5 flex flex-col gap-2" data-alloc-bars>
+            {sections.map((b) => {
+              const pct = m.totalValue > 0 ? (b.current / m.totalValue) * 100 : 0;
+              const barW = maxCurrent > 0 ? (b.current / maxCurrent) * 100 : 0;
+              const inner = (
+                <>
+                  <span className="flex min-w-[8.5rem] max-w-[8.5rem] items-center gap-2 text-sm font-medium text-slate-100">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                    <span className="truncate">{sectionLabel(b.key)}</span>
+                  </span>
+                  <span className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(148,163,184,0.16)" }}>
+                    <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: b.color }} />
+                  </span>
+                  <span className="mono w-24 shrink-0 text-right text-sm text-slate-200 whitespace-nowrap">{money(b.current)}</span>
+                  <span className="w-14 shrink-0 text-right text-xs text-slate-400">{m.totalValue > 0 ? `${pct.toFixed(1)}%` : DASH}</span>
+                </>
+              );
+              return b.fromPositions ? (
+                <Link key={b.key} data-alloc-bar={b.key} to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
+                  title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
+                  className="flex items-center gap-3 rounded px-1 py-1 transition-colors hover:bg-ink-700/40 hover:text-champagne-400">
+                  {inner}
+                </Link>
+              ) : (
+                <div key={b.key} data-alloc-bar={b.key} data-alloc-bar-static
+                  className="flex items-center gap-3 rounded px-1 py-1"
+                  title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
           <div className="overflow-x-auto">
               {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
                   this table is asserted through. `check:pages` used to find it

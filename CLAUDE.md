@@ -185,7 +185,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
   Composition's Consolidated view. `src/lib/useStockExposure.ts` assembles its
-  three inputs once. See Stage 10am.
+  three inputs once. See Stage 10ao.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
@@ -2340,7 +2340,7 @@ browser's door to the same table.** The block seeded from the PMS fact sheets is
 that taxonomy's MACRO level; a fund's own SEBI monthly disclosure prints the
 INDUSTRY level, and 57 of the 65 labels `public/lookthrough/` carries resolved to
 nothing until they were listed. That is what lets Sector Composition place a
-company by the industry a filing printed against its ISIN — see Stage 10am, which
+company by the industry a filing printed against its ISIN — see Stage 10ao, which
 also records that the FIRST measurement of the gap was wrong because it compared
 `resolveSector`'s object against a string.
 
@@ -7524,7 +7524,174 @@ whose failures match the previous run's exactly is the tell.
 `check:pages` **142 combinations clean**, with the two pre-existing abstentions.
 `glowData.ts` regenerates from the archive; `BOOK_SUMMARY` is untouched.
 
-### Stage 10am — SECTORS FOR TWO SETS, AND THE MAP THAT MADE THEM POSSIBLE
+### Stage 10an — THE MOVERS CARD LANDS COMPLETE, AND TWO CAPTIONS GO
+
+*"this daily movers section take a lot of time to show data and sometimes first
+shows incomplete data and then starts showing all the portfolio movers... make it
+quick and it should show all the data together rather than in bits and pieces, so
+it does not confuses anyone using the dashboard."* And: *"remove the highlighted
+texts from the dashboard UI completely."*
+
+**THE FIRST IS A CORRECTNESS COMPLAINT WEARING A SPEED COMPLAINT'S CLOTHES**, and
+reading it as the second would have produced a faster card that was still wrong.
+`/api/quotes` prices a BOUNDED SLICE per request — the upstream returns only part
+of a large ask inside its own budget — so the card redrew on every round, and
+**every figure on it is struck over whichever names had arrived**: the day's move
+divided a partial rupee change by a partial previous close, the gainer and loser
+lists ranked a subset, and the comparison against the Nifty 500 set that against
+a real index. All of it real arithmetic over the wrong set, all of it changing
+under the reader.
+
+Measured before anything was written: **161 distinct book symbols, 64 per
+request, so three rounds** — and the card's own 33 direct-equity names sat at
+distinct-symbol positions **20 to 108** in book order, **30 of them beyond the
+first request**. The card could not be complete until the third round. Worse,
+`quotesStatus` flips to `live` after round one, so the "Fetching prices" note
+disappeared while the lists were still a ranking over three names.
+
+#### `pending` is not `missing`, and conflating them is why nothing could wait
+
+A symbol this round **DEFERRED by the cap** and a symbol the upstream **CANNOT
+PRICE** both arrived as `missing`, and they are opposite facts: the first is
+answered in seconds, the second never is. A caller that cannot tell them apart
+cannot know when a set is COMPLETE — which is the only thing a RANKING can
+honestly wait on.
+
+- **`missing` now means ATTEMPTED AND UNSERVABLE, `pending` NOT YET ATTEMPTED**,
+  and the two partition everything a request could not price. The response
+  carries both.
+- **`fresh` excludes pending.** Counted in, a first round reported the whole book
+  fresh while holding 136 prices it had not asked for — a coverage figure over a
+  set nobody measured.
+- **THE FILL POLL RUNS ON `pending`, NEVER ON `missing`.** This book has symbols
+  the upstream cannot price, so the old condition held the tab at a four-second
+  cadence for its whole life while nothing could change. A pre-existing defect
+  the split fixes rather than one this change introduced.
+- **`priority` is the other half.** The caller names the symbols the first screen
+  needs and they are fetched first. It never WIDENS the ask — a priority symbol
+  not in `symbols` is ignored, or a browser could reach past its own request —
+  it only decides the order. The card's 33 names now land in ONE round.
+
+`PRIORITY_SYMBOLS` in `PortfolioContext` is **derived through the same
+`holdingBucket` the card groups on**, so a drop that moves a holding between
+buckets moves it too. A typed list would go stale silently and the card would be
+back to three rounds with nothing to say so.
+
+#### The card holds on ITS OWN scope, never on the book's
+
+`pendingFor(model.scopeSymbols)` — 33 symbols, not 161. Holding until the whole
+book lands would make a 33-name card wait on 128 names it does not show, which is
+this fix running the other way. **A FAILED FEED IS NOT A SLOW ONE**: when the
+feed is unavailable no answer is coming, so the card stops waiting and renders
+the absent state that names the feed. And the loading state **counts its own
+progress** against its own scope size, because a spinner with no number is
+indistinguishable from a hung one.
+
+The "Fetching prices — figures are the last snapshot" caption now renders only
+when the scope is COMPLETE and a refresh round is in flight, and says so:
+figures that are complete and dated, with a newer round coming. It used to sit
+above a partial ranking, describing it as a snapshot rather than as a subset.
+
+#### The two captions, checked against the rest of the screen before they went
+
+**`PortfolioMonitor`'s venue-table line** — *"The row above clubs them into one
+holding; each line here is one statement as printed."* Both claims survive it:
+the lead sentence above already names the row's own value and splits it by route,
+and the per-statement basis only has a CONSEQUENCE where the two differ — on
+exactly those rows the lead sentence names the overlap in rupees and the amber
+line under the table reconciles it. On every other row the sentence described a
+difference that row does not have.
+
+**`FundExposure`'s loading line** — *"Checking which of your funds disclose this
+name…"* — is a removal of a SENTENCE and not of the STATE. The load-bearing half
+was never the words: a card still fetching must not print "none of the N funds
+discloses this name", which is a claim about the holding made before a
+disclosure has been read. It renders `null` now, which asserts nothing. **And
+the fall-through is a TYPE ERROR rather than a check**: `StockExposureState` is a
+discriminated union whose loading variant carries none of `covered`,
+`considered`, `skipped` or `byKey`, so deleting the branch instead of its markup
+does not compile. That is the stronger guard, and the invariant below is the
+runtime backstop for a state the type cannot see.
+
+#### `npm run test:family` gained the suite the server change needed
+
+`quotesFunction.test.ts` — **nine checks against a stubbed upstream**, because
+`MUNS_TOKEN` lives in the Cloudflare environment and the partition is a property
+of THIS function rather than of the upstream. The partition itself, deferred vs
+unservable in both directions, priority ordering, priority never widening the
+ask, `fresh` excluding pending, an ask inside the cap deferring nothing, and the
+last-good fallback moving a symbol OUT of pending once the bundle can serve it.
+
+**THE PARTITION IS RE-STRUCK ON THE BUNDLED CALL, and that is the one that can
+fail.** Everywhere else a pending symbol has no price, so "exactly one place" is
+true by construction and the check cannot see the overlap it is written for.
+Reintroducing the overlap proved it: the general partition check stayed green and
+only the bundled one fired. Six server bugs were put back one at a time and each
+fired exactly its own checks.
+
+**AND THE STUBBED SHAPES ARE THE FUNCTION'S OWN, taken rather than guessed.** The
+first draft answered under `data[]` keyed on `ticker_symbol`; the upstream answers
+under `data.items` keyed on `ticker` with the rest inside a `rawQuote` blob, and
+the whole suite reported nothing priced — every case failing for one reason that
+had nothing to do with what any of them assert.
+
+#### `cio-filling` and `monitor-security-loading` — two states no walk could reach
+
+Both removals and the hold needed routes that HOLD A FETCH OPEN, because every
+existing mock answers in one round and the settled walk waits for a settled box.
+
+- **`installFillingQuotes`** prices a third of the ask and defers the rest for
+  ever, and deliberately does NOT honour `priority` — it is the pessimistic case,
+  so the card must hold on its own scope rather than on the server having ordered
+  the ask conveniently. The invariants are struck on STRUCTURE: a card that drew
+  six of its 33 names renders a perfectly well-formed list, and only a count of
+  `[data-mover-row]` can see it.
+- **`monitor-security-loading`** stalls `**/lookthrough/**` for the length of the
+  walk. Without it *"the removed loading line is gone"* was struck on text that is
+  never on screen at read time and could not have failed either way.
+
+**AND IT IMMEDIATELY FOUND A LIGHT-MODE GAP NOTHING COULD HAVE REPORTED.**
+`text-champagne-400/80` had no `html:not(.dark)` remap — Tailwind emits each
+opacity variant as its own class, which this file already says in as many words —
+and it came back at `#ecdcae` on white. It renders ONLY while the fund
+look-through is loading, so the class had been on screen for nobody. Same shape
+as the `hover:` variant Stage 10ag found the day a route first clicked something.
+
+#### The bug-reintroduction pass found that FIVE OF THE NEW CHECKS COULD NOT FAIL
+
+Every one of them returned a DESCRIPTIVE STRING on failure, and the harness reads
+any truthy return as a pass (`if (!r) invariants.push(desc)`). So the first sweep
+came back clean over a card rendering a partial ranking. Rewritten to return
+booleans and `{ notChecked }`, with each claim split so a failure names its own
+part. **This is the "a check that cannot fail is itself a defect" rule arriving
+through a return type**, and it is why the pass is run at all: the sweep was
+green, twice, over exactly the defect it was written for.
+
+**AND A SIXTH ABSTAINED WHERE IT SHOULD HAVE FAILED.** The `priority` claim reads
+the request rather than the page, and an absent field was recorded as `null` —
+which the check read as "no request was captured" and abstained on. Dropping
+`priority` entirely, the exact regression it exists for, produced a clean run
+with one NOT CHECKED line. A request that named NONE now records `[]`, which is
+a finding; `null` means only that no request was seen. `golden.mjs`'s rule and
+this file's own *"a missing toggle must be a finding"*, arriving through a
+captured request.
+
+**Nine bugs reintroduced in the browser and six in the suite, each firing its
+own check**: the card ranking a partial scope (the original defect), the ask
+naming no priority, priority widened to the whole book, the card waiting on the
+whole book, the card holding for ever, the loading state naming no progress, each
+caption restored, and — in the suite — pending folded back into missing, priority
+ignored, priority widening the ask, the two sets overlapping, `fresh` counting
+pending, and an off-by-one on the cap. **The fall-through in `FundExposure` is
+the one that could not be reintroduced at all**, and that is the finding: it does
+not typecheck.
+
+`build` · `test:ingest` 140 + 35 · `test:family` (9 new) · `check:family` **53/0** ·
+`check:pages` **146 combinations clean** — 142 plus the two new routes across both
+themes — with the same two pre-existing abstentions. `glowData.ts` is untouched:
+nothing here reads the ingest.
+
+### Stage 10ao — SECTORS FOR TWO SETS, AND THE MAP THAT MADE THEM POSSIBLE
 
 Four asks, and the one that took the work is the one that looked smallest.
 
@@ -7684,9 +7851,12 @@ again, the derived markers taken off the columns (2), the grey paragraph put
 back, the uncalled-capital tile stripped of its definition, and the tile rename
 reverted (4).
 
-`build` · `test:ingest` 290 · `test:family` · `check:family` 53/0 ·
-`check:pages` **144 combinations clean** (140 plus this page's two views), with
-the same two pre-existing abstentions. `build-book` regenerates idempotently.
+`build` · `test:ingest` 140 + 35 · `test:family` · `check:family` **53/0** ·
+`check:pages` **148 combinations clean** — re-run against the merged main, whose
+own two new routes account for the count moving — with the same two pre-existing
+abstentions. `build-book` regenerates the book BYTE-IDENTICALLY, which is the
+gate that says a sector-map extension moved one position's classification and
+nothing else.
 
 ### Stage 10k — News & Announcements: REMOVED
 

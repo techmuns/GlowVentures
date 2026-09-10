@@ -368,11 +368,17 @@ html:not(.dark) .group:hover .group-hover\:text-champagne-400 { color: #5f4711; 
    chevron, all of which already carried the class. */
 html:not(.dark) .hover\:text-champagne-400:hover { color: #5f4711; }
 /* AND THE OPACITY VARIANTS, which Tailwind emits as their own classes and which
-   therefore need their own remap — the derived-column marker on the Portfolio
-   Monitor's stock axis and Sector Composition's derived tile both carry one, and
-   both came back at rgba(236, 220, 174, 0.9) on white the first time they were
-   swept. The same gold, at the same alpha the dark theme uses, so the marker
-   still reads as a note rather than as a heading. */
+   therefore need their own remap. Three of them are on screen: the derived-column
+   marker on the Portfolio Monitor's stock axis and Sector Composition's derived
+   tile, and the fund look-through's loading sentence. That last one was invisible
+   until a route held the look-through's fetch open — it renders only while the
+   store is loading, so the class was on screen for nobody and reported by nothing.
+
+   THE ALPHA IS FLOORED AT 0.85, DELIBERATELY BELOW THE UTILITY'S OWN NUMBER. This
+   whole block already replaces the colour outright (champagne -> dark gold), so
+   faithfulness to the nominal alpha was never what it is for; legibility on white
+   is, and 0.7 of this gold is too pale to read. Flooring only ever DARKENS, so a
+   surface that passed the contrast check at the nominal alpha still passes. */
 html:not(.dark) .text-champagne-400\/90 { color: rgba(138, 106, 28, 0.9); }
 html:not(.dark) .text-champagne-400\/80 { color: rgba(138, 106, 28, 0.85); }
 html:not(.dark) .text-champagne-400\/70 { color: rgba(138, 106, 28, 0.85); }
