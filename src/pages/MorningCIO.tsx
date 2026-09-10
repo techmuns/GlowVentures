@@ -869,10 +869,18 @@ export function MorningCIO() {
           (Today's movers has three). The as-of and the staleness are on the
           holdings table's own basis note and in each KPI tile's hover. The
           pages that must RECONCILE to a document — Capital Gains, Data Audit,
-          Ledger Insights, Private Market — keep their `<BasisPill statement>`
-          untouched, which is the half of §6 that is a correctness guarantee
-          rather than a label. `check:pages` asserts both: gone here, kept
-          there. */}
+          Ledger Insights — keep their `<BasisPill statement>` untouched, which
+          is the half of §6 that is a correctness guarantee rather than a label.
+          `check:pages` asserts both: gone here, kept there.
+
+          PRIVATE MARKET WAS IN THAT LIST AND IS NOT ANY MORE — the family asked
+          for its header pills too, one round later, and this sentence is
+          corrected rather than left standing. It still reads
+          `statementPortfolio`, so the GUARANTEE is intact there; what went is
+          the label. What that costs is measured rather than assumed and is
+          checked every run (`PRIVATE_QUOTABLE`): no private holding resolves an
+          NSE symbol, so no row on that page could drift even on the live
+          portfolio. See CLAUDE.md §6 and Stage 10ap. */}
       <PageHeader eyebrow="Daily Briefing" title="Good morning — here's where the book stands" />
 
       {/* KPI strip */}
