@@ -214,6 +214,12 @@ const SECURITY_AXIS_BOOK = (() => {
     const seenAll = new Set();
     const ded = [];
     for (const p of positions) {
+      // CURRENT HOLDINGS, as every allocation surface now draws them: a fund
+      // vehicle at zero units still publishing a NAV has been redeemed, and a
+      // holdings table that lists one is listing what the family was paid out
+      // of. Re-derived here rather than imported from `analytics.ts`, like the
+      // rest of this block.
+      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
       if (p.dedupeGroup) { if (seenAll.has(p.dedupeGroup)) continue; seenAll.add(p.dedupeGroup); }
       ded.push(p);
     }
@@ -263,15 +269,25 @@ const SECURITY_AXIS_BOOK = (() => {
       if (!m) continue;
       try { portfolios.set(v.key, JSON.parse(readFileSync(new URL(`${m.schemecode}.json`, dir), "utf8"))); } catch { /* skipped below */ }
     }
+    // ONE KEY PER ISSUER, decided over every filing before a row is placed.
+    // An Indian ISIN carries its issuer in characters 1-7 whatever the next two
+    // say — `INE115A01026` is LIC Housing's share and `INE115A07QY1` one of its
+    // NCDs — so keying on the full ISIN gave one company as many rows as it has
+    // instruments. Written out again here rather than imported, on purpose.
+    const issuerOf = (i) => i.slice(0, 7).toUpperCase();
+    const issuerSeen = new Map();
     for (const pf of portfolios.values()) {
-      for (const h of pf.equity ?? []) {
+      for (const h of pf.holdings ?? []) {
         const isin = (h.isin ?? "").trim().toUpperCase();
         if (!isin || !(h.pctAum > 0)) continue;
         const nameKey = securityKeyOf(h.name);
         if (!nameKey || fencedIsins.has(isin) || fencedKeys.has(nameKey)) continue;
-        const key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
-        if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
-        if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, key);
+        const iss = issuerOf(isin);
+        const bookKey = isinToBookKey.get(isin);
+        if (bookKey) issuerSeen.set(iss, bookKey);
+        else if (!issuerSeen.has(iss)) issuerSeen.set(iss, nameKey);
+        if (!isinToBookKey.has(isin)) isinSeen.set(isin, issuerSeen.get(iss));
+        if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, issuerSeen.get(iss));
       }
     }
     let covered = 0, derived = 0, disclosedValue = 0, skippedValue = 0, aifCount = 0, aifValue = 0;
@@ -284,28 +300,50 @@ const SECURITY_AXIS_BOOK = (() => {
       }
       covered++;
       disclosedValue += v.mv;
-      const taken = new Set();
-      for (const h of pf.equity ?? []) {
+      // EVERY INSTRUMENT OF AN ISSUER ADDS; THE SAME ISIN TWICE DOES NOT. One
+      // line per fund per company was right while the store carried the equity
+      // section alone — there the only repeat was a second share class. On the
+      // whole filing it is the difference between an answer and a wrong one:
+      // HDFC Balanced Advantage files twelve separate LIC Housing NCDs.
+      const seenHere = new Set();
+      const fundsHere = new Set();
+      for (const h of pf.holdings ?? []) {
         if (!(h.pctAum > 0)) continue;
         const isin = (h.isin ?? "").trim().toUpperCase() || null;
         const nameKey = securityKeyOf(h.name);
-        if (!nameKey) continue;
-        if ((isin && fencedIsins.has(isin)) || fencedKeys.has(nameKey)) continue;
+        if (!nameKey && !isin) continue;
+        if ((isin && fencedIsins.has(isin)) || (nameKey && fencedKeys.has(nameKey))) continue;
         let key;
         if (isin) {
-          key = isinToBookKey.get(isin) ?? isinSeen.get(isin) ?? nameKey;
+          key = isinToBookKey.get(isin) ?? issuerSeen.get(issuerOf(isin)) ?? isinSeen.get(isin) ?? nameKey;
           if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
         } else key = nameToKey.get(nameKey) ?? nameKey;
-        if (taken.has(key)) continue;
+        const dedupeOn = isin ?? `name:${nameKey}`;
+        if (seenHere.has(dedupeOn)) continue;
         const value = (v.mv * h.pctAum) / 100;
         // A scheme the family holds at ₹0 gives ₹0 of everything in it — the
         // page drops those lines rather than drawing a company at no exposure.
         if (!(value > 0)) continue;
-        taken.add(key);
+        seenHere.add(dedupeOn);
         derived += value;
-        const e = derivedByKey.get(key) ?? { key, name: h.name, value: 0, funds: 0 };
+        const e = derivedByKey.get(key) ?? { key, name: h.name, value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map() };
+        // THE SHORTEST DISCLOSED NAME IS THE ISSUER'S. An AMC files the same
+        // company six ways once every instrument of it is read — `LIC Housing
+        // Finance Ltd. (09/09/2026) **` is one commercial paper's maturity and
+        // footnote markers, not a company. Re-derived here rather than taken
+        // from the page, and only so the walk can FIND the row; every figure
+        // asserted against it is still computed independently.
+        if (h.name.length < e.name.length) e.name = h.name;
         e.value += value;
-        e.funds += 1;
+        if (!fundsHere.has(key)) { e.funds += 1; fundsHere.add(key); }
+        e.instruments += 1;
+        // The most instruments of this issuer any ONE fund files — the figure
+        // the breakdown must expand to, and the case a one-line-per-fund rule
+        // gets most wrong.
+        const n = (e.hereN.get(v.key) ?? 0) + 1;
+        e.hereN.set(v.key, n);
+        if (n > e.maxInFund) e.maxInFund = n;
+        if (h.assetClass) e.classes.add(h.assetClass);
         derivedByKey.set(key, e);
       }
     }
@@ -381,11 +419,23 @@ const SECURITY_AXIS_BOOK = (() => {
 
     return {
       nav, navCr: nav / 1e7,
+      /**
+       * THE POSITIONS COUNT MORNING CIO MUST PRINT — the deduped set with the
+       * closed positions out of it, which is what every allocation surface now
+       * draws. It is the one figure the drop-closed change MOVES (371 → 364),
+       * so it is the one an anchor can catch: every rupee figure is identical
+       * either way, because a closed position is a measured ₹0.
+       */
+      heldPositions: ded.length,
       measured, measuredCr: measured / 1e7,
       derived, derivedCr: derived / 1e7,
       totalCr: (measured + derived) / 1e7,
       opaqueCr: skippedValue / 1e7,
-      nonEquityCr: (disclosedValue - derived) / 1e7,
+      // WAS `nonEquityCr` AND STOPPED BEING TRUE. The store reads each AMC's
+      // whole monthly filing now, so a scheme's debt sleeve is INSIDE `derived`
+      // and this remainder is what NO LINE in the filing accounted for — its
+      // cash, a metal ETF's metal, and the disclosure's own rounding.
+      unaccountedCr: (disclosedValue - derived) / 1e7,
       cashCr: cash / 1e7,
       // The five buckets are a PARTITION: they must reconstruct NAV exactly.
       residualCr: (nav - (measured + derived + skippedValue + (disclosedValue - derived) + cash)) / 1e7,
@@ -561,7 +611,40 @@ const FUND_EXPOSURE = (() => {
   for (const [key, e] of b.derivedByKey) {
     const m = b.measuredByKey.get(key);
     if (!m) continue;
-    if (!best || e.value > best.value) best = { key, name: e.name, value: e.value, funds: e.funds, bookValue: m.mv };
+    if (!best || e.value > best.value) best = { key, name: e.name, value: e.value, funds: e.funds, bookValue: m.mv,
+      instruments: e.instruments, classes: [...e.classes].sort() };
+  }
+  return best;
+})();
+
+/**
+ * ── THE FAMILY'S OWN EXAMPLE, DERIVED RATHER THAN TYPED ──────────────────────
+ *
+ *   "there is a LIC housing NCD in the market. Now there's some negative news on
+ *    LIC housing. I want to see how much LIC housing I hold through my mutual
+ *    fund exposure and through which mutual fund."
+ *
+ * The issuer ONE fund holds through the most separate instruments — on this book
+ * that is LIC Housing Finance, twelve NCDs inside HDFC Balanced Advantage. It is
+ * chosen that way rather than by name so the next drop picks its own, and it is
+ * the worst case by construction: a build that kept the old one-line-per-fund
+ * rule reports one twelfth of the exposure here, and a build that drew the row
+ * without its breakdown has nothing to expand.
+ *
+ * IT IS TYPICALLY A NAME THE BOOK DOES NOT HOLD, which is the other half of the
+ * family's ask — *"If I type it, it has to first pick up"* — so the row it walks
+ * is a DERIVED-ONLY one and its existence is itself the assertion.
+ */
+const FUND_INSTRUMENTS = (() => {
+  const b = SECURITY_AXIS_BOOK;
+  if (!b?.derivedByKey) return null;
+  let best = null;
+  for (const [key, e] of b.derivedByKey) {
+    if (!(e.maxInFund > 1)) continue;
+    if (!best || e.maxInFund > best.maxInFund || (e.maxInFund === best.maxInFund && e.value > best.value)) {
+      best = { key, name: e.name, value: e.value, funds: e.funds, instruments: e.instruments,
+        maxInFund: e.maxInFund, classes: [...e.classes].sort(), inBook: b.measuredByKey.has(key) };
+    }
   }
   return best;
 })();
@@ -1256,6 +1339,20 @@ const ROUTES = [
    * which the derived figure can be reproduced and the fence around it tested.
    */
   ["monitor-security-drill", "/monitor?group=security"],
+  /**
+   * ...AND THE FAMILY'S OWN EXAMPLE, WHICH IS A NAME THIS BOOK DOES NOT HOLD.
+   *
+   *   "there is a LIC housing NCD in the market … I want to see how much LIC
+   *    housing I hold through my mutual fund exposure and through which mutual
+   *    fund."
+   *
+   * Two things at once, and neither is reachable on the route above: that TYPING
+   * a name only a fund holds finds it at all, and that the fund row it opens
+   * breaks out every instrument the AMC filed for that issuer. The name is
+   * derived (`FUND_INSTRUMENTS` — the issuer one fund holds through the most
+   * separate instruments), so the next drop picks its own worst case.
+   */
+  ["monitor-lookthrough-instruments", "/monitor?group=security"],
   /**
    * ...AND THE SAME DRILL-DOWN WITH THE LOOK-THROUGH STORE HELD OPEN.
    *
@@ -3023,27 +3120,24 @@ const FUND_CLASSES = [
       && rows.every((r) => !/\bredeemed\b/i.test(r.cells?.[COL.name] ?? ""));
   }],
   /**
-   * 6. ...AND WHAT LEFT IS NAMED, WITH WHERE THE MONEY WENT.
+   * 6. ...AND THE NOTE THAT NAMED THEM IS GONE TOO, AT THE FAMILY'S REQUEST.
    *
-   * Dropping a row and saying nothing is the same defect as showing a ₹0 one: a
-   * reader who knew the family held 3P and cannot find it learns the dashboard
-   * lost it. Neither half implies the other — a page that dropped the rows and
-   * the note passes 5 and fails this; one that kept both fails 5 and passes
-   * this. Every expectation comes from the book.
+   * It was the right answer while this was the only page that dropped them: a
+   * reader who knew the family held 3P and could not find it would learn the
+   * dashboard lost it. The family have since asked for a redeemed holding to
+   * leave EVERY allocation page and for this note to go with it — so the fact
+   * now lives where a redemption belongs, on Transactions → My investments as a
+   * dated movement under Taken out, which the `monitor-txn-out` route asserts.
+   * A note here would be an allocation page explaining a transaction.
+   *
+   * Struck on the HANDLE rather than on prose: the words it used ("closed",
+   * "redeemed", "My investments") are ones this page prints legitimately
+   * elsewhere, so a text match would fail a correct page.
    */
-  ["...and the closed positions are named under the table, with where the money went", (t, ctx) => {
+  ["...and the note that named them is gone with them", (t, ctx) => {
     if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
-    const note = ctx?.closedNote;
-    if (!note) return false;
-    const n = FUND_CLASS_BOOK.closedCount;
-    return note.includes(String(n))
-      // The FUNDS by name, so a reader can tell which of their holdings closed.
-      && FUND_CLASS_BOOK.closedFunds.every((f) => note.includes(f))
-      && note.includes(FUND_CLASS_BOOK.closedAccounts === 1 ? "one account" : `${FUND_CLASS_BOOK.closedAccounts} accounts`)
-      // The zero is MEASURED — the claim the deleted pill carried.
-      && /measured zero/i.test(note)
-      // And where the redemption is, which is the whole of the family's ask.
-      && /My investments/i.test(note) && /Taken out/i.test(note);
+    return ctx?.closedNote == null
+      && !/closed\s+and not listed above/i.test(t);
   }],
 ];
 
@@ -4273,9 +4367,16 @@ const INVARIANTS = {
      */
     ["the look-through column is the holding's value times the disclosed weight", (t) => {
       const hv = cr(new RegExp(String.raw`HOLDING VALUE\s*\n\s*` + CR, "i").exec(t)?.[1]);
-      const row = /\n[^\n\t]+\t[^\t\n]*\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
+      // THE TABLE GAINED A `Class` COLUMN when the store stopped being
+      // equity-only, so the old shape — name, one column, weight — matched
+      // nothing and this check ABSTAINED on a page rendering perfectly. It is
+      // anchored on the two cells it is about (the weight and the derived value,
+      // adjacent) rather than on how many descriptor columns precede them.
+      const row = /\t(\d+\.\d\d)%\t(₹[\d,.]+\s*(?:Cr|L|K)?)\t/.exec(t);
       if (!Number.isFinite(hv)) return notChecked("the holding value did not parse on this run");
-      if (!row) return notChecked("this scheme discloses no equity holdings, so there is no look-through row to reconcile");
+      // A SCHEME THAT DISCLOSES NOTHING IS A FINDING HERE, not an abstention:
+      // this route is walked on a scheme the store was measured to carry.
+      if (!row) return false;
       const pct = Number(row[1]);
       const shown = crU(/₹([\d,.]+)/.exec(row[2])?.[1], /(Cr|L|K)/.exec(row[2])?.[1]);
       const expect = (hv * pct) / 100;
@@ -4326,6 +4427,29 @@ const INVARIANTS = {
       /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
 
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+    /**
+     * ── POSITIONS COUNTS WHAT THE FAMILY STILL HOLDS ────────────────────────
+     *
+     *   "exclude closed rows from morning cio positions too."
+     *
+     * THE COUNT IS THE ONLY FIGURE THAT MOVES, which is what makes it the only
+     * one worth anchoring. A closed position is a measured ₹0 with no reported
+     * cost, so NAV, Capital invested, every allocation row and every return are
+     * identical whether or not it is in the set — and the count is not: it read
+     * 369 while the page it opens listed 364, a tile disagreeing with the page
+     * it opens, which is the one failure `drilldown.ts` exists to prevent.
+     *
+     * Struck against `glowData.ts` rather than against the drill-down, because
+     * comparing the tile with the page it opens passes when BOTH revert
+     * together, and that is exactly how this regression would arrive.
+     */
+    ["Positions counts current holdings, not what the family was paid out of", (t) => {
+      if (!SECURITY_AXIS_BOOK?.heldPositions) return notChecked("the book could not be read on this run");
+      if (!FUND_CLASS_BOOK?.closedCount) return notChecked("no holding in this book is redeemed to nil");
+      const pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return pos === SECURITY_AXIS_BOOK.heldPositions;
+    }],
 
     /**
      * ── RETURN ATTRIBUTION ────────────────────────────────────────────────
@@ -5625,8 +5749,10 @@ const INVARIANTS = {
     /**
      * ── A CLOSED POSITION IS NOT LISTED BEHIND THE FIGURE ANY MORE ──────────
      *
-     * *"we only need to show current holdings in the consolidated drill down
-     * pages, anything that has been sold or redeemed shouldn't be shown here."*
+     *   "we only need to show the current holdings in these allocation drill
+     *    down pages, if anything has been redeemed or sold completely then
+     *    remove it from these pages since they are supposed to be the current
+     *    holdings allocation only."
      *
      * This page used to do the OPPOSITE, deliberately: it listed the set behind
      * a Morning CIO figure, so the ₹0 rows rendered with a `redeemed` pill
@@ -5644,12 +5770,23 @@ const INVARIANTS = {
      * the pill with no row to put it on is the dead-code-that-looks-alive
      * failure, and a build that kept the rows while dropping the pill would show
      * unexplained ₹0s — the first half catches that one.
+     *
+     * AND IT IS STRUCK ON THE KEY, not on the security NAME appearing in the
+     * page text. A name is clipped, wrapped and re-cased by the table it sits
+     * in, so a text match can report a row absent while it is on screen; the
+     * key is what the row IS. `data-hb-key` is the handle, the same contract
+     * `data-section` and `data-mandate` already carry.
      */
     ["no closed position is listed behind the figure", (t, ctx) => {
-      if (!FUND_CLASS_BOOK?.closedSecurities.length) return { notChecked: "no holding in this book is redeemed to nil" };
-      if (ctx.hbRedeemed === null) return { notChecked: "markers not captured on this run" };
-      return FUND_CLASS_BOOK.closedSecurities.every((n) => !t.includes(n))
-        && ctx.hbRedeemed.length === 0;
+      if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+      const hb = ctx?.hbRedeemed;
+      // A PAGE THAT DREW NO ROWS IS A FINDING, NOT AN ABSTENTION — this scope is
+      // the whole book, so an empty table is a broken page and a check that
+      // shrugged at it could not fail in the one direction that matters.
+      if (!hb || !hb.keys.length) return false;
+      return hb.marked.length === 0
+        && hb.keys.every((k) => !FUND_CLASS_BOOK.closedKeys.has(k))
+        && !/\bredeemed\b/i.test(t);
     }],
     // ...AND WHAT IT LEFT OUT IS COUNTED. A reader arriving from a tile that
     // counts every position in the book would otherwise find fewer rows here
@@ -6358,6 +6495,29 @@ const INVARIANTS = {
     ["the private value tile names how many accounts it spans", (t) => {
       const m = /PRIVATE MARKET VALUE[\s\S]{0,240}?across (\d+) accounts · each holding counted once/i.exec(t);
       return !!m && Number(m[1]) > 0;
+    }],
+
+    /**
+     * ── A REDEEMED FUND IS NOT A PRIVATE HOLDING EITHER ─────────────────────
+     *
+     *   "if anything has been redeemed or sold completely then remove it from
+     *    these pages since they are supposed to be the current holdings
+     *    allocation only."
+     *
+     * Card A is one row per fund, and 3P's three unit classes stood in it at ₹0
+     * apiece — three of its fourteen rows, for a fund that has already paid the
+     * family out. Struck on each row's own key against the book's closed set,
+     * because every one of those rows renders correctly and adds nothing: no
+     * value check on this page can see them.
+     *
+     * A PAGE THAT DREW NO ROWS IS A FINDING, not an abstention — this book has
+     * private holdings and an empty card is a broken page.
+     */
+    ["no redeemed fund stands as a row in the private book", (t, ctx) => {
+      if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
+      const keys = ctx?.pmFunds;
+      if (!keys?.length) return false;
+      return keys.every((k) => !FUND_CLASS_BOOK.closedKeys.has(k));
     }],
 
     /**
@@ -7693,11 +7853,28 @@ const INVARIANTS = {
         return /DERIVED, not a position/i.test(fe.text)
           && /no part of the book.s own NAV/i.test(fe.text);
       }],
-    /** ...and names what it cannot see: the equity-only limit and the AIF block. */
-    ["...and names the vehicles it cannot look through", (t, ctx) => {
+    /**
+     * ...AND NAMES WHAT IT CANNOT SEE — WHICH NO LONGER INCLUDES A SCHEME'S BONDS.
+     *
+     *   "the Look-through must cover bonds, NCDs and every instrument, not just
+     *    stocks."
+     *
+     * The store used to read each AMC's EQUITY SECTION and the card said so in
+     * as many words. It reads the whole monthly filing now, so the EQUITY ONLY
+     * sentence had to go — and a removal is verified by asserting it happened,
+     * because the card would look identical on a book whose funds happen to hold
+     * only shares. The AIF block is the absence that REMAINS, and it is about
+     * the instrument rather than the store: no drop of the current statements
+     * can ever fill it.
+     */
+    ["...and names the vehicles it cannot look through, without claiming to be equity-only", (t, ctx) => {
       const fe = ctx?.fundExposure;
       if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
-      return /EQUITY ONLY/i.test(fe.text) && /AIF folio/i.test(fe.text);
+      return /AIF folio/i.test(fe.text)
+        && !/EQUITY ONLY/i.test(fe.text)
+        && !/debt and cash sleeves\s+are outside this store/i.test(fe.text)
+        && /whole monthly filing/i.test(fe.text)
+        && /NCDs/i.test(fe.text);
     }],
     /** Every match is EXACT — ISIN, or this book's own key. Never a fuzzy tier. */
     ["every disclosed line was matched exactly, never by resemblance", (t, ctx) => {
@@ -7737,6 +7914,115 @@ const INVARIANTS = {
    * markup would satisfy the first check here and be exactly the defect the
    * second catches.
    */
+  /**
+   * ── "IF I TYPE IT, IT HAS TO FIRST PICK UP" ────────────────────────────────
+   *
+   *   "the Look-through must cover bonds, NCDs and every instrument, not just
+   *    stocks. Any stock or bond. It could be a bond. It could be an NCD. If I
+   *    type it, it has to first pick up. And then it has to show me how much —
+   *    not just stocks. For example - there is a LIC housing NCD in the market.
+   *    Now there's some negative news on LIC housing. I want to see how much LIC
+   *    housing I hold through my mutual fund exposure and through which mutual
+   *    fund."
+   *
+   * Four claims, and NOT ONE of them is visible on the route above, because the
+   * name in question is one this book holds no position in and one fund holds
+   * through twelve separate NCDs. Every expectation comes from `glowData.ts` and
+   * the committed store through `FUND_INSTRUMENTS`, so the next drop picks its
+   * own worst case rather than inheriting this one.
+   */
+  "monitor-lookthrough-instruments": [
+    /**
+     * 1. THE PICK-LIST OFFERS IT AT ALL. This is what the family reported: a
+     * company only a fund holds has no position, so it was in no row and in no
+     * option, and typing it found nothing. Struck on the OPTION's own handle —
+     * the row below could exist while the control that reaches it does not.
+     */
+    ["the pick-list offers a company only a fund holds, and picking it narrows the table", (t, ctx) => {
+      if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
+      // BOTH HALVES, because the row is on the UNFILTERED table too and asserting
+      // its presence alone would pass on a pick-list that offers nothing. The
+      // narrowing is the proof the option existed and was tickable.
+      return rows.some((r) => r.securityKey === FUND_INSTRUMENTS.key)
+        && rows.length <= 2;
+    }],
+    /**
+     * 2. AND IT SAYS HOW MUCH — the derived total, reproduced from the book's
+     * own fund values times the store's own disclosed weights. A build that kept
+     * ONE disclosed line per fund reports a twelfth of this on the walked name,
+     * which is why the pick is the most-instruments case rather than the largest.
+     */
+    ["...and says how much of it is held through the funds", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
+      // A MISSING PANEL IS THE DEFECT, NOT A REASON TO ABSTAIN. Reintroducing
+      // the old `assetClass === "Equity"` gate — which is precisely what refused
+      // the family's own example — removes the card entirely, and all three of
+      // these checks reported NOT CHECKED over a clean sweep. `golden.mjs`'s
+      // rule: a suite that passes over no input claims confidence nobody earned.
+      if (!fe) return false;
+      if (fe.state === "loading") return { notChecked: "the store had not answered when the page was read" };
+      if (fe.state === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
+      const printed = moneyCell(fe.total);
+      if (!Number.isFinite(printed)) return false;
+      // The page prints to a fixed precision, so the bound is that rounding
+      // reproduced — never a tolerance fitted until the figure passes. This name
+      // is small, so the printed unit is lakhs and the bound scales with it.
+      const want = FUND_INSTRUMENTS.value / 1e7;
+      return Math.abs(printed - want) <= Math.max(0.005, want * 0.02)
+        && fe.rows === FUND_INSTRUMENTS.funds;
+    }],
+    /**
+     * 3. ...AND THROUGH WHICH FUND, WITH EVERY INSTRUMENT IT FILED.
+     *
+     * The half a one-line-per-fund rule cannot express: HDFC Balanced Advantage
+     * files twelve separate LIC Housing NCDs at their own coupons, and a reader
+     * deciding what to do about news on the issuer needs to see whether they
+     * hold the equity, the paper, or both. Both the COUNT on the collapsed row
+     * and the LINES the expansion draws, because neither implies the other — a
+     * row can claim twelve and open onto one.
+     */
+    ["...and breaks that fund down into every instrument the AMC filed", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
+      // A MISSING PANEL IS A FAILURE — see the sibling above.
+      if (!fe) return false;
+      if (fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      const most = Math.max(0, ...fe.instruments);
+      if (most !== FUND_INSTRUMENTS.maxInFund) return false;
+      // ...and the expansion drew that many lines, for exactly one fund.
+      const byFund = new Map();
+      for (const l of fe.lines) byFund.set(l.fund, (byFund.get(l.fund) ?? 0) + 1);
+      const drawn = Math.max(0, ...byFund.values());
+      return byFund.size === 1 && drawn === FUND_INSTRUMENTS.maxInFund;
+    }],
+    /**
+     * 4. AND THE INSTRUMENTS ARE NOT ALL SHARES, which is the whole of "not just
+     * stocks". A line's class and its rating are two DIFFERENT facts the AMC
+     * files in one column — a sector on a share, a credit rating on a bond — so
+     * neither may be printed under the other's heading, and a debt line must
+     * carry a class that says so.
+     */
+    ["...and the breakdown carries a non-equity instrument, named as one", (t, ctx) => {
+      const fe = ctx?.fundExposure;
+      if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
+      // A MISSING PANEL IS A FAILURE — see the sibling above.
+      if (!fe) return false;
+      if (fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      if (!FUND_INSTRUMENTS.classes.some((c) => c !== "Equity")) {
+        return { notChecked: "every filing of the walked issuer is equity on this store" };
+      }
+      if (!fe.lines.length) return false;
+      // The class cell is the second column of an instrument line.
+      const classes = fe.lines.map((l) => (l.cells?.[1] ?? ""));
+      return classes.some((c) => /debt/i.test(c))
+        // ...and the lead sentence says what the ISSUER is held as, so a reader
+        // who never opens the breakdown still knows it is not an equity holding.
+        && FUND_INSTRUMENTS.classes.every((c) => new RegExp(`\\b${c}\\b`, "i").test(fe.text));
+    }],
+  ],
   "monitor-security-loading": [
     ["the look-through's loading line is gone",
       (t) => !/Checking which of your funds disclose this name/i.test(t)],
@@ -7813,12 +8099,23 @@ const INVARIANTS = {
       // `weightPlain` is the `plain` line of every Weight cell's own formula
       // popover, and the footer's Weight cell carries the same sentence in its
       // title. A claim about a column belongs on the column.
-      const kept = (ctx?.titles ?? []).some((x) => /no longer adds to 100%|adds to 100%/i.test(x));
+      //
+      // BOTH ENDINGS, because the sentence has two of them and only one is on
+      // screen at a time: unfiltered the column adds to the share this table
+      // covers, so it says so and names 100% as what it is NOT; on an axis whose
+      // rows ARE the whole book it adds to 100 outright. A regex that matched
+      // only the second reported the fact absent on the very axis this check is
+      // scoped to.
+      const kept = (ctx?.titles ?? []).some((x) => /adds to (?:[\d.]+% and not to )?100%/i.test(x));
       return gone && kept;
     }],
     ["the coverage paragraph is a one-line fold, not seven lines of prose", (t, ctx) => {
-      const cov = ctx?.stockCoverage;
-      if (!cov) return { notChecked: "the coverage block was not captured on this run" };
+      const cov = ctx?.stockCoverage?.fold;
+      // AN ABSENT FOLD IS THE DEFECT, NOT A REASON TO ABSTAIN. It renders
+      // unconditionally on this axis, so nothing but its deletion produces
+      // this state — and its deletion is exactly the regression to catch.
+      if (!ctx?.stockCoverage) return { notChecked: "the coverage block was not captured on this run" };
+      if (!cov) return false;
       // The chrome that carried no figure is gone …
       return !/One row per company, ranked by total exposure/i.test(cov)
         && !/A FUND IS NOT A STOCK/i.test(cov)
@@ -7950,6 +8247,80 @@ const INVARIANTS = {
       });
     }],
     /**
+     * ── THE THREE PARAGRAPHS ARE GONE, AND EACH FACT IS STILL REACHABLE ──────
+     *
+     * *"remove the highlighted text from the dashboard."* Both halves, and
+     * NEITHER IMPLIES THE OTHER — a build that deleted the paragraph and its
+     * facts passes this and fails the partition check below; one that kept the
+     * paragraph fails this and passes that. A removal is verified by asserting
+     * it happened.
+     *
+     * STRUCK ON THE HANDLE AND THE HOVERS, never on prose. The removed
+     * sentences use words this page still legitimately prints — "Weight",
+     * "clubbed", "fund" — so a text match would report them absent while they
+     * were on screen, or fail a correct page.
+     */
+    ["the three paragraphs under the table stay removed", (t, ctx) => {
+      // WHAT SURVIVES OF THIS CLAIM, and what supersedes the rest. The coverage
+      // paragraph did not go: it became the collapsed fold, asserted one check
+      // up, and the clubbing sentence went inside it — so requiring either to be
+      // absent from the page would fail a correct build. What must still be gone
+      // is the prose that carried no figure and the two captions whose facts
+      // moved onto the columns they describe.
+      return ctx?.closedNote == null
+        && !/Weight is a share of the book, not of the holdings you picked/i.test(t)
+        && !/One row per company, ranked by total exposure/i.test(t)
+        && !/A FUND IS NOT A STOCK/i.test(t);
+    }],
+    /**
+     * ...AND THE TWO DERIVED COLUMNS STILL SAY WHAT THEY ARE, on themselves.
+     *
+     * This is the claim a reader most needs and would least suspect: `Via
+     * funds` and `Total exposure` are DERIVED and are no part of NAV, because
+     * the fund's own value already stands for them there. Losing it with the
+     * paragraph would leave two money columns a reader adds to their book.
+     */
+    ["...and the sentence behind that marker says the look-through is not equity-only", (t, ctx) => {
+      const notes = ctx?.colNotes;
+      if (!notes) return { notChecked: "the column notes were not captured on this run" };
+      const via = notes.find((n) => /via funds/i.test(n.column ?? ""))?.title ?? null;
+      const exp = notes.find((n) => /total exposure/i.test(n.column ?? ""))?.title ?? null;
+      if (!via || !exp) return false;
+      // THE WHOLE OF THE FAMILY'S FOURTH ASK: "the Look-through must cover
+      // bonds, NCDs and every instrument, not just stocks." The store reads each
+      // AMC's whole monthly filing now, and the column that carries the figure
+      // has to say so — a reader who believes it is equity-only reads a debt
+      // exposure as nothing.
+      return /every asset class the filing carries/i.test(via)
+        && /bonds/i.test(via) && /NCDs/i.test(via)
+        && /count(?:ed|s)? the same money twice|never summed into a book total/i.test(via)
+        && via === exp;
+    }],
+    /**
+     * ...AND THE WEIGHT BASIS IS ON THE WEIGHT COLUMN.
+     *
+     * The removed caption's whole claim, on the column it describes — and with
+     * the numerator the cell actually PRINTS. On this axis every Weight cell
+     * divides TOTAL EXPOSURE by the book, and the old hover explained the
+     * figure with the measured half alone: a percentage a reader could not
+     * reproduce from the two numbers they were given.
+     */
+    ["the weight basis is on the weight column, with the numerator the cell prints", (t, ctx) => {
+      const cov = ctx?.stockCoverage;
+      if (!cov) return { notChecked: "the table chrome was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const w = cov.weight;
+      if (!w) return false;
+      if (!/Weight is a share of the book/i.test(w)) return false;
+      const shown = crU(...(/rows on screen are ₹([\d,.]+)\s*(Cr|L|K)?/i.exec(w) ?? []).slice(1));
+      const base  = crU(...(/divides by ₹([\d,.]+)\s*(Cr|L|K)?/i.exec(w) ?? []).slice(1));
+      if (!Number.isFinite(shown) || !Number.isFinite(base)) return false;
+      // THE NUMERATOR IS THE TABLE'S OWN COVERAGE, NOT THE MEASURED HALF — the
+      // defect this rewrite fixed. Off by the derived ₹90 Cr if it regresses.
+      return Math.abs(shown - SECURITY_AXIS_BOOK.totalCr) <= 0.15
+        && Math.abs(base - SECURITY_AXIS_BOOK.navCr) <= 0.15;
+    }],
+    /**
      * ── THE PARTITION, WHICH IS THE HONESTY OF THE WHOLE AXIS ────────────────
      *
      * The rows are companies, so the footer no longer describes the book: this
@@ -7960,15 +8331,21 @@ const INVARIANTS = {
      */
     ["the page states what it covers and what it cannot, and the five buckets rebuild NAV", (t, ctx) => {
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
-      const cov = ctx?.stockCoverage;
-      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      const cov = ctx?.stockCoverage?.exposure;
+      // AN ABSENT HOVER IS THE DEFECT, NOT A REASON TO ABSTAIN. The partition
+      // moved onto this cell when the paragraph carrying it was removed; a build
+      // that deleted the facts along with the paragraph leaves no hover at all,
+      // and all three of these reported NOT CHECKED over a clean sweep. The
+      // cell itself renders unconditionally on this axis, so nothing else can
+      // produce this state.
+      if (!cov) return false;
       if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
       const cr = (re) => { const m = re.exec(cov); return m ? crU(m[1], m[2]) : NaN; };
       const covers   = cr(/covers ₹([\d,.]+)\s*(Cr|L|K)? of the/i);
       const directly = cr(/₹([\d,.]+)\s*(Cr|L|K)? the statements report\s*directly/i);
       const derived  = cr(/and ₹([\d,.]+)\s*(Cr|L|K)? DERIVED/i);
       const opaque   = cr(/₹([\d,.]+)\s*(Cr|L|K)? sits inside vehicles that publish no holdings/i);
-      const nonEq    = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the part of a disclosed fund that is not equity/i);
+      const nonEq    = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the part of a disclosed fund no line in the filing accounted for/i);
       const cash     = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the book/i);
       const all = [covers, directly, derived, opaque, nonEq, cash];
       if (all.some((v) => !Number.isFinite(v))) return false;
@@ -7977,7 +8354,7 @@ const INVARIANTS = {
       if (Math.abs(directly - SECURITY_AXIS_BOOK.measuredCr) > 0.15) return false;
       if (Math.abs(derived - SECURITY_AXIS_BOOK.derivedCr) > 0.15) return false;
       if (Math.abs(opaque - SECURITY_AXIS_BOOK.opaqueCr) > 0.15) return false;
-      if (Math.abs(nonEq - SECURITY_AXIS_BOOK.nonEquityCr) > 0.15) return false;
+      if (Math.abs(nonEq - SECURITY_AXIS_BOOK.unaccountedCr) > 0.15) return false;
       if (Math.abs(cash - SECURITY_AXIS_BOOK.cashCr) > 0.15) return false;
       // ...and the five together must rebuild the book, which is the claim a
       // reader acts on and which no single figure can make on its own.
@@ -7992,8 +8369,14 @@ const INVARIANTS = {
      * for a store fix that cannot exist.
      */
     ["the AIF block is named, valued, and its absence attributed to the instrument", (t, ctx) => {
-      const cov = ctx?.stockCoverage;
-      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      const cov = ctx?.stockCoverage?.exposure;
+      // AN ABSENT HOVER IS THE DEFECT, NOT A REASON TO ABSTAIN. The partition
+      // moved onto this cell when the paragraph carrying it was removed; a build
+      // that deleted the facts along with the paragraph leaves no hover at all,
+      // and all three of these reported NOT CHECKED over a clean sweep. The
+      // cell itself renders unconditionally on this axis, so nothing else can
+      // produce this state.
+      if (!cov) return false;
       if (!SECURITY_AXIS_BOOK?.aifCount) return { notChecked: "this book holds no AIF folio" };
       if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
       const m = /(\d+) AIF folios?, ₹([\d,.]+)\s*(Cr|L|K)?/i.exec(cov);
@@ -8016,8 +8399,14 @@ const INVARIANTS = {
      * the name test became the key compared with its own definition.
      */
     ["a company the book keys twice is named, and none is keyed twice here", (t, ctx) => {
-      const cov = ctx?.stockCoverage;
-      if (!cov) return { notChecked: "the coverage caption was not captured on this run" };
+      const cov = ctx?.stockCoverage?.exposure;
+      // AN ABSENT HOVER IS THE DEFECT, NOT A REASON TO ABSTAIN. The partition
+      // moved onto this cell when the paragraph carrying it was removed; a build
+      // that deleted the facts along with the paragraph leaves no hover at all,
+      // and all three of these reported NOT CHECKED over a clean sweep. The
+      // cell itself renders unconditionally on this axis, so nothing else can
+      // produce this state.
+      if (!cov) return false;
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
       const said = /stands\s+here as (two rows|more than one row)/i.test(cov)
         && /the fix belongs in the extractor/i.test(cov);
@@ -9530,6 +9919,47 @@ for (const theme of THEMES) {
           await page.waitForTimeout(name === "monitor-security-loading" ? 1200 : 500);
         }
       }
+      /**
+       * THE FAMILY'S OWN EXAMPLE: TYPE THE NAME, OPEN THE ROW, EXPAND THE FUND.
+       *
+       * The pick-list is the first assertion — a company only a fund holds has
+       * no position and so no row to find unless `securityNames` offers it, and
+       * that is precisely what the family reported as broken. Then the row's
+       * expansion, then the fund line with the most instruments inside the
+       * look-through card.
+       */
+      if (name === "monitor-lookthrough-instruments" && FUND_INSTRUMENTS) {
+        // The pick-list, driven exactly as a reader drives it: open, search, tick.
+        // Every locator is a data handle rather than prose — the labels here
+        // change with the caller's own vocabulary by design.
+        const opener = page.locator("[data-multiselect-toggle='All holdings']").first();
+        if (await opener.count()) { await opener.click(); await page.waitForTimeout(300); }
+        const box = page.locator("[data-multiselect='All holdings'] input").first();
+        if (await box.count()) { await box.fill(FUND_INSTRUMENTS.name); await page.waitForTimeout(400); }
+        const opt = page.locator(`[data-option="${FUND_INSTRUMENTS.name.replace(/"/g, '\\"')}"]`).first();
+        if (await opt.count()) { await opt.click(); await page.waitForTimeout(700); }
+        await opener.click().catch(() => {});
+        await page.waitForTimeout(400);
+        const row = page.locator(`tr[data-security-key="${FUND_INSTRUMENTS.key}"] button`).first();
+        if (await row.count()) {
+          await row.click();
+          await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+        // AND THE FUND ROW WITH THE MOST INSTRUMENTS, chosen from the DOM rather
+        // than by name: a walk that expanded the first fund line would be
+        // satisfied by a one-instrument row that has nothing to break out — the
+        // same blindness `data-days` already exists for on the transactions
+        // rollup, and the reason that trap is worth repeating here.
+        const toggles = page.locator("[data-fund-instruments-toggle]");
+        const n = await toggles.count();
+        let best = -1, bestN = -1;
+        for (let i = 0; i < n; i++) {
+          const c = Number(await toggles.nth(i).innerText().then((x) => x.trim().split(/\s/)[0])) || 0;
+          if (c > bestN) { bestN = c; best = i; }
+        }
+        if (best >= 0) { await toggles.nth(best).click(); await page.waitForTimeout(500); }
+      }
       if (name === "monitor-txns" || name === "monitor-txn-manager"
         || name === "monitor-txn-drill" || name === "monitor-txn-direct"
         || name === "monitor-txn-in" || name === "monitor-txn-out") {
@@ -10230,8 +10660,14 @@ for (const theme of THEMES) {
        */
       const closedNote = FAST ? null : await page.evaluate(() =>
         (document.querySelector("[data-closed-note]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null);
-      const hbRedeemed = FAST ? null : await page.evaluate(() =>
-        [...document.querySelectorAll("[data-hb-redeemed]")].map((e) => e.getAttribute("data-hb-redeemed")));
+      const hbRedeemed = FAST ? null : await page.evaluate(() => ({
+        // The marker the closed rows used to carry; it must now never appear.
+        marked: [...document.querySelectorAll("[data-hb-redeemed]")].map((e) => e.getAttribute("data-hb-redeemed")),
+        // AND WHICH SECURITIES THE PAGE ACTUALLY DREW, which is the half that
+        // can fail. A build that put the closed rows back with the pill deleted
+        // would satisfy a marker count of zero and be exactly the defect.
+        keys: [...document.querySelectorAll("[data-hb-key]")].map((e) => e.getAttribute("data-hb-key")),
+      }));
       /**
        * ── MY INVESTMENTS, AND THE MANAGER ROLLUP, READ AS STRUCTURE ───────────
        *
@@ -10515,6 +10951,16 @@ for (const theme of THEMES) {
           total: (document.querySelector("[data-fund-exposure-total]")?.textContent ?? "").trim(),
           rows: [...document.querySelectorAll("[data-fund-exposure-row]")].length,
           via: [...document.querySelectorAll("[data-fund-exposure-row]")].map((t) => t.getAttribute("data-fund-exposure-row")),
+          // ONE ROW PER FUND PER ISSUER, and how many instruments each stands
+          // for. A build that kept the old one-line-per-fund rule reports 1 on
+          // every row while every figure beside it is a twelfth of the truth.
+          instruments: [...document.querySelectorAll("[data-fund-exposure-row]")]
+            .map((t) => Number(t.getAttribute("data-fund-instruments")) || 0),
+          // The lines an expanded fund row broke out, keyed on that fund.
+          lines: [...document.querySelectorAll("[data-fund-instrument]")].map((tr) => ({
+            fund: tr.getAttribute("data-fund-instrument"),
+            cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
+          })),
           text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
         };
       });
@@ -10527,13 +10973,11 @@ for (const theme of THEMES) {
       // prints a strategy — so the entity-count check below reads `<tr>`s.
       const accountRows = FAST ? null : await page.evaluate(() =>
         document.querySelectorAll("tr[data-account-row]").length);
-      // A COLLAPSED `<details>` IS NOT IN `innerText`, and the coverage block is
-      // one now: the family asked the paragraph off the screen, so the five
-      // buckets sit behind a one-line summary. Three invariants read this text,
-      // and a probe that read the summary alone would have reported them
-      // unparseable — which is an abstention, not a failure, and would have
-      // retired all three silently. Opened before reading, exactly as the
-      // excluded-accounts block on the NAV card already is.
+      // WHICH FUNDS THE PRIVATE BOOK DRAWS, by key. A redeemed fund's row is
+      // correct in every cell and adds nothing to any total, so no value check
+      // on that page can see it.
+      const pmFunds = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
       // A COLUMN'S OWN NOTE — the word under a header and the sentence behind it.
       // The derived fence lives here now rather than in a paragraph under the
       // table, and `innerText` alone cannot tell a note apart from a second
@@ -10544,11 +10988,38 @@ for (const theme of THEMES) {
           title: el.getAttribute("title"),
           column: (el.closest("th")?.innerText ?? "").replace(/\s+/g, " ").trim(),
         })));
+      /**
+       * THE COVERAGE BLOCK, ON BOTH THE SURFACES THAT CARRY IT.
+       *
+       * The grey paragraph the family asked off the screen became TWO things,
+       * and each is asserted where it lives rather than one standing in for the
+       * other:
+       *
+       *   • `fold` — the collapsed `<details>`. A COLLAPSED `<details>` IS NOT
+       *     IN `innerText`, so a probe reading the summary alone would report
+       *     three invariants unparseable — an abstention, not a failure, which
+       *     would have retired all three silently. Opened before reading,
+       *     exactly as the excluded-accounts block on the NAV card already is.
+       *     It is opened AFTER `text` was captured, so nothing here leaks into
+       *     a page-wide match.
+       *   • `exposure` / `weight` — the footer cells' own hovers, which carry
+       *     the partition and the weight basis on the columns they are about.
+       *
+       * Read as a structure rather than as one blob, because each claim is now
+       * about a different surface and a page-wide match cannot tell them apart.
+       */
       const stockCoverage = FAST ? null : await page.evaluate(() => {
         const p = document.querySelector("[data-stock-coverage]");
-        if (!p) return null;
-        if (p.tagName === "DETAILS") p.open = true;
-        return (p.innerText ?? "").replace(/\s+/g, " ").trim();
+        if (p && p.tagName === "DETAILS") p.open = true;
+        const foot = document.querySelector("[data-footer-total]");
+        const cells = foot ? [...foot.querySelectorAll("td")] : [];
+        return {
+          fold: p ? (p.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          exposure: document.querySelector("[data-footer-exposure]")?.getAttribute("title") ?? null,
+          // The Weight footer is the LAST cell carrying a percent; found by its
+          // own position in the row rather than by matching prose.
+          weight: cells.map((c) => c.getAttribute("title")).filter((x) => x && /Weight is a share|adds to 100/.test(x))[0] ?? null,
+        };
       });
       const selectLabels = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
@@ -10871,7 +11342,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, accountRows, pmFunds, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

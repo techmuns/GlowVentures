@@ -8,63 +8,63 @@
   "classification": "Equity : Thematic",
   "isin": "INF109KC1RH9",
   "nav": {
-    "value": 40.06,
-    "date": "2026-09-01",
-    "prev": 40.15,
-    "prevDate": "2026-08-31",
-    "changePct": -0.22415940224158482
+    "value": 39.03,
+    "date": "2026-09-09",
+    "prev": 39.41,
+    "prevDate": "2026-09-08",
+    "changePct": -0.9642222786094785
   },
   "returns": {
     "1M": {
-      "value": 0.9322,
+      "value": -4.7352,
       "kind": "simple",
-      "startDate": "2026-06-19",
-      "endDate": "2026-09-01",
-      "startNav": 39.69,
-      "endNav": 40.06
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-09",
+      "startNav": 40.97,
+      "endNav": 39.03
     },
     "3M": {
-      "value": 3.1942,
+      "value": 1.3503,
       "kind": "simple",
-      "startDate": "2026-06-01",
-      "endDate": "2026-09-01",
-      "startNav": 38.82,
-      "endNav": 40.06
+      "startDate": "2026-06-09",
+      "endDate": "2026-09-09",
+      "startNav": 38.51,
+      "endNav": 39.03
     },
     "6M": {
-      "value": -1.5725,
+      "value": 0.36,
       "kind": "simple",
-      "startDate": "2026-02-27",
-      "endDate": "2026-09-01",
-      "startNav": 40.7,
-      "endNav": 40.06
+      "startDate": "2026-03-09",
+      "endDate": "2026-09-09",
+      "startNav": 38.89,
+      "endNav": 39.03
     },
     "1Y": {
-      "value": 4.3501,
+      "value": 1.0616,
       "kind": "simple",
-      "startDate": "2025-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 38.39,
-      "endNav": 40.06
+      "startDate": "2025-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 38.62,
+      "endNav": 39.03
     },
     "3Y": {
-      "value": 15.7333,
+      "value": 13.7736,
       "kind": "cagr",
-      "startDate": "2023-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 25.84,
-      "endNav": 40.06
+      "startDate": "2023-09-08",
+      "endDate": "2026-09-09",
+      "startNav": 26.49,
+      "endNav": 39.03
     },
     "5Y": {
-      "value": 19.1268,
+      "value": 18.1839,
       "kind": "cagr",
-      "startDate": "2021-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 16.7,
-      "endNav": 40.06
+      "startDate": "2021-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 16.93,
+      "endNav": 39.03
     }
   },
-  "returnsAsOf": "2026-09-01",
+  "returnsAsOf": "2026-09-09",
   "fundAumCr": 38298.96,
   "holdingsAsOf": "2026-07-31",
   "holdingsSource": {
@@ -72,702 +72,1004 @@
     "url": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker"
   },
   "section": "Equity Holdings",
-  "equity": [
+  "coveragePct": null,
+  "allocation": null,
+  "holdings": [
     {
       "name": "HDFC Bank Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 8.28,
-      "shares": 42391545
+      "shares": 42391545,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "ICICI Bank Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 5.8,
-      "shares": 15482919
+      "shares": 15482919,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Infosys Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 4.88,
-      "shares": 16543015
+      "shares": 16543015,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Axis Bank Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 4.77,
-      "shares": 14852843
+      "shares": 14852843,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Reliance Industries Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 3.62,
-      "shares": 10610410
+      "shares": 10610410,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Bharti Airtel Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 3.24,
-      "shares": 6294011
+      "shares": 6294011,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "SBI Life Insurance Company Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 3.01,
-      "shares": 6135102
+      "shares": 6135102,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Larsen & Toubro Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.98,
-      "shares": 2896538
+      "shares": 2896538,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Mahindra & Mahindra Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.58,
-      "shares": 2905062
+      "shares": 2905062,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "HDFC Life Insurance Company Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.48,
-      "shares": 17284230
+      "shares": 17284230,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Tata Motors Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.4,
-      "shares": 21068251
+      "shares": 21068251,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Info Edge (India) Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.32,
-      "shares": 7232712
+      "shares": 7232712,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "ICICI Lombard General Insurance Company Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.28,
-      "shares": 5385704
+      "shares": 5385704,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Kotak Mahindra Bank Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 2.23,
-      "shares": 21870221
+      "shares": 21870221,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Sun Pharmaceutical Industries Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.89,
-      "shares": 3628307
+      "shares": 3628307,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Hindustan Unilever Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.87,
-      "shares": 3411654
+      "shares": 3411654,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Britannia Industries Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.79,
-      "shares": 1267186
+      "shares": 1267186,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "NTPC Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.78,
-      "shares": 19633128
+      "shares": 19633128,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "State Bank Of India",
       "isin": null,
       "sector": null,
       "pctAum": 1.66,
-      "shares": 6173812
+      "shares": 6173812,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Gland Pharma Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.57,
-      "shares": 2403430
+      "shares": 2403430,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Interglobe Aviation Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.54,
-      "shares": 1143058
+      "shares": 1143058,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "PI Industries Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.45,
-      "shares": 2021972
+      "shares": 2021972,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Tata Motors Passenger Vehicles Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.31,
-      "shares": 14759437
+      "shares": 14759437,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "SBI Cards & Payment Services Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.31,
-      "shares": 7622846
+      "shares": 7622846,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Bajaj Finserv Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.23,
-      "shares": 2314253
+      "shares": 2314253,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "UPL Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.23,
-      "shares": 7820377
+      "shares": 7820377,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "KPIT Technologies Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 1.13,
-      "shares": 7244591
+      "shares": 7244591,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Vedanta Aluminium Metal Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 1.03,
-      "shares": 8650859
+      "shares": 8650859,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Tata Consultancy Services Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.99,
-      "shares": 1595110
+      "shares": 1595110,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Tata Communications Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.92,
-      "shares": 2006009
+      "shares": 2006009,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Trent Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.89,
-      "shares": 1135402
+      "shares": 1135402,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Affle India Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.88,
-      "shares": 2124200
+      "shares": 2124200,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "TBO Tek Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.85,
-      "shares": 2115136
+      "shares": 2115136,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Hindustan Aeronautics Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.82,
-      "shares": 674156
+      "shares": 674156,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Oil & Natural Gas Corporation Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.81,
-      "shares": 12759933
+      "shares": 12759933,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "ICICI Prudential Life Insurance Company Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.81,
-      "shares": 6007032
+      "shares": 6007032,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Swiggy Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.8,
-      "shares": 10760919
+      "shares": 10760919,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Ultratech Cement Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.78,
-      "shares": 250636
+      "shares": 250636,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Kalpataru Projects International Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.7,
-      "shares": 2071713
+      "shares": 2071713,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Sona Blw Precision Forgings Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.7,
-      "shares": 3472823
+      "shares": 3472823,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Cipla Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.65,
-      "shares": 1698881
+      "shares": 1698881,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Indian Energy Exchange Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.63,
-      "shares": 18298644
+      "shares": 18298644,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Dr. Reddy's Laboratories Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.62,
-      "shares": 2055738
+      "shares": 2055738,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Shree Cements Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.6,
-      "shares": 87553
+      "shares": 87553,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Avenue Supermarts Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.53,
-      "shares": 519354
+      "shares": 519354,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Aditya Birla Lifestyle Brands Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.53,
-      "shares": 21427927
+      "shares": 21427927,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Aarti Industries Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.52,
-      "shares": 4051639
+      "shares": 4051639,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Life Insurance Corporation of India",
       "isin": null,
       "sector": null,
       "pctAum": 0.51,
-      "shares": 4568828
+      "shares": 4568828,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "IndusInd Bank Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.51,
-      "shares": 1934348
+      "shares": 1934348,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Oil India Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.49,
-      "shares": 4109792
+      "shares": 4109792,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Apollo Tyres Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.48,
-      "shares": 4295061
+      "shares": 4295061,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Titan Company Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.42,
-      "shares": 333845
+      "shares": 333845,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Brainbees Solutions Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.41,
-      "shares": 7368156
+      "shares": 7368156,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Tata Chemicals Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.39,
-      "shares": 2220263
+      "shares": 2220263,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Gujarat Gas Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.37,
-      "shares": 5135100
+      "shares": 5135100,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "LIC Housing Finance Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.34,
-      "shares": 2503030
+      "shares": 2503030,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Mphasis Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.34,
-      "shares": 554303
+      "shares": 554303,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Maruti Suzuki India Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.33,
-      "shares": 89782
+      "shares": 89782,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Eternal Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.31,
-      "shares": 3909104
+      "shares": 3909104,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "KEC International Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.28,
-      "shares": 2302232
+      "shares": 2302232,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Chambal Fertilisers & Chemicals Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.27,
-      "shares": 2324874
+      "shares": 2324874,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Cohance Lifesciences Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.26,
-      "shares": 2377398
+      "shares": 2377398,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "CIE Automotive India Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.24,
-      "shares": 2265432
+      "shares": 2265432,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Vedanta Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.19,
-      "shares": 2748883
+      "shares": 2748883,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Aurobindo Pharma Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.18,
-      "shares": 445885
+      "shares": 445885,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "AIA Engineering Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.14,
-      "shares": 114922
+      "shares": 114922,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "PVR INOX Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.14,
-      "shares": 462302
+      "shares": 462302,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Chemplast Sanmar Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.13,
-      "shares": 2654638
+      "shares": 2654638,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Cyient Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.09,
-      "shares": 411246
+      "shares": 411246,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Red Tape Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.07,
-      "shares": 1899137
+      "shares": 1899137,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "GSPL India Transco Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0.07,
-      "shares": 1744132
+      "shares": 1744132,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Talwandi Sabo Power Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.05,
-      "shares": 5748883
+      "shares": 5748883,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Bajaj Electricals Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0.01,
-      "shares": 98858
+      "shares": 98858,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Medplus Health Services Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 19892
+      "shares": 19892,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "COFORGE Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Alkem Laboratories Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Samvardhana Motherson International Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Vedanta Iron And Steel Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "PNB Housing Finance Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Hero Motocorp Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Star Health & Allied Insurance",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Malco Energy Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "PNC Infratech Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Inox Wind Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "IRB Infrastructure Developers Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Gujarat State Petronet Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Zydus Lifesciences Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Hyundai Motor India Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Bharat Heavy Electricals Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Syngene International Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "DLF Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Rural Electrification Corporation Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "ITC Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Triveni Turbine Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Indian Oil Corporation Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Petronet LNG Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Bharat Forge Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "JSW Energy Ltd",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     },
     {
       "name": "Kwality Walls India Ltd.",
       "isin": null,
       "sector": null,
       "pctAum": 0,
-      "shares": 0
+      "shares": 0,
+      "assetClass": "Equity",
+      "rating": null,
+      "marketValueCr": null
     }
   ],
   "counts": {
-    "equity": 99
+    "holdings": 99,
+    "byClass": {
+      "Equity": 99
+    }
   }
 }

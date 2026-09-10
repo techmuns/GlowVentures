@@ -10,33 +10,34 @@ monthly disclosure. It is kept out of every book total for that reason.
 - schemes the book holds: **22**
 - resolved: **21** (₹123.28 Cr of ₹124.46 Cr) — 20 on ISIN, 1 on name
 - unresolved: **1**
-- resolved but disclosing no EQUITY holdings: **5** (debt and liquid schemes — see the limit below)
+- covering the AMC's WHOLE portfolio (every asset class): **15** — the rest carry the equity read of the same filing
+- resolved but disclosing nothing at all: **2**
 
 ## Resolved
 
-| Holding | ISIN | Scheme | Plan | NAV | Day | Equity rows | Holdings from |
-| --- | --- | --- | --- | ---: | ---: | ---: | --- |
-| Helios Flexi Cap Fund - Direct Growth | INF0R8701046 | Helios Flexi Cap Fund-Reg(G) | direct | 16.21 | -0.80% | 85 | amc |
-| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | — | Motilal Oswal Active Momentum Fund | direct | 14.2249 | -1.35% | 66 | amc |
-| DSP GOLD ETF | INF740KA1SW3 | DSP Gold ETF | regular | 14.7678 | -1.47% | 0 | — |
-| ABSL LIQF D-GROWTH | INF209K01VA3 | Aditya Birla SL Liquid Fund(G) | direct | 458.2557 | 0.03% | 0 | amc |
-| HELIOS FCF D-GROW | INF0R8701046 | Helios Flexi Cap Fund-Reg(G) | direct | 16.21 | -0.80% | 85 | amc |
-| WOC MAAF D-GROW | INF03VN01761 | WOC Multi Asset Allocation Fund-Reg(G) | direct | 16.852 | -0.22% | 148 | aggregator |
-| ICICI IOPPF D-GRW | INF109KC1RH9 | ICICI Pru India Opp Fund(G) | direct | 40.06 | -0.22% | 99 | aggregator |
-| DSP SILVER ETF | INF740KA1RE3 | DSP Silver ETF | regular | 22.0833 | -2.42% | 0 | — |
-| BNDH L&MCF DP GR | INF194K01V89 | Bandhan Large & Mid Cap Fund-Reg(G) | direct | 167.421 | -0.66% | 192 | amc |
-| ABSL BAL ADV-GROWTH | INF084M01AB8 | Aditya Birla SL Balanced Advantage Fund(G) | regular | 114.33 | -0.08% | 143 | amc |
-| HDFC BAF R-GROW | INF179K01830 | HDFC Balanced Advantage Fund(G) | regular | 524.183 | -0.32% | 165 | amc |
-| KOTAK MTCF D-GROW | INF174KA1HV3 | Kotak Multicap Fund-Reg(G) | direct | 21.52 | -0.69% | 83 | amc |
-| ICICI PRU BAF DP GRW | INF109K012B0 | ICICI Pru Balanced Advantage Fund(G) | direct | 89.13 | -0.67% | 132 | amc |
-| ICICI LIQF D-GROWTH | INF109K01Q49 | ICICI Pru Liquid Fund(G) | direct | 419.6119 | 0.02% | 0 | amc |
-| HDFC BAF D-GROW | INF179K01WA6 | HDFC Balanced Advantage Fund(G) | direct | 570.199 | -0.31% | 165 | amc |
-| ICICI NIFT50IND DP G | INF109K012M7 | ICICI Pru Nifty 50 Index Fund-Reg(G) | direct | 254.6 | -0.10% | 51 | aggregator |
-| INVES CON R GROWTH | INF205K01189 | Invesco India Contra Fund-Reg(G) | regular | 136.84 | -1.11% | 82 | amc |
-| ICICI NFT NX 50 R GR | INF109K01IF1 | ICICI Pru Nifty Next 50 Index Fund(G) | regular | 64.1001 | -1.20% | 61 | amc |
-| ICICI NFT NT 50 DP G | INF109K01Y80 | ICICI Pru Nifty Next 50 Index Fund(G) | direct | 67.8384 | -1.20% | 61 | amc |
-| HDFC Liquid Fund-Direct Plan-Growth Option | INF179KB1HP9 | HDFC Liquid Fund(G) | direct | 5567.8537 | 0.03% | 0 | amc |
-| HDFC Small Cap Fund - Direct Growth Plan | INF179KA1RW5 | HDFC Small Cap Fund-Reg(G) | direct | 160.972 | 0.01% | 84 | amc |
+| Holding | ISIN | Scheme | Plan | NAV | Day | Rows | By class | Covers | Holdings from |
+| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| Helios Flexi Cap Fund - Direct Growth | INF0R8701046 | Helios Flexi Cap Fund-Reg(G) | direct | 16.22 | -0.12% | 68 | Equity 68 | Whole portfolio | amc |
+| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | — | Motilal Oswal Active Momentum Fund | direct | 14.6359 | -0.24% | 25 | Equity 25 | Whole portfolio | amc |
+| DSP GOLD ETF | INF740KA1SW3 | DSP Gold ETF | regular | 14.7633 | 0.18% | 0 | — | — | — |
+| ABSL LIQF D-GROWTH | INF209K01VA3 | Aditya Birla SL Liquid Fund(G) | direct | 459.0137 | 0.04% | 214 | Debt 213 · Other 1 | Whole portfolio | amc |
+| HELIOS FCF D-GROW | INF0R8701046 | Helios Flexi Cap Fund-Reg(G) | direct | 16.22 | -0.12% | 68 | Equity 68 | Whole portfolio | amc |
+| WOC MAAF D-GROW | INF03VN01761 | WOC Multi Asset Allocation Fund-Reg(G) | direct | 16.802 | -0.04% | 148 | Equity 148 | Equity Holdings | aggregator |
+| ICICI IOPPF D-GRW | INF109KC1RH9 | ICICI Pru India Opp Fund(G) | direct | 39.03 | -0.96% | 99 | Equity 99 | Equity Holdings | aggregator |
+| DSP SILVER ETF | INF740KA1RE3 | DSP Silver ETF | regular | 22.4561 | 0.57% | 0 | — | — | — |
+| BNDH L&MCF DP GR | INF194K01V89 | Bandhan Large & Mid Cap Fund-Reg(G) | direct | 165.767 | -0.23% | 122 | Equity 121 · Debt 1 | Whole portfolio | amc |
+| ABSL BAL ADV-GROWTH | INF084M01AB8 | Aditya Birla SL Balanced Advantage Fund(G) | regular | 113.02 | -0.50% | 141 | Equity 113 · Debt 28 | Whole portfolio | amc |
+| HDFC BAF R-GROW | INF179K01830 | HDFC Balanced Advantage Fund(G) | regular | 517.318 | -0.54% | 324 | Equity 169 · Debt 155 | Whole portfolio | amc |
+| KOTAK MTCF D-GROW | INF174KA1HV3 | Kotak Multicap Fund-Reg(G) | direct | 21.386 | -0.48% | 69 | Equity 68 · Other 1 | Whole portfolio | amc |
+| ICICI PRU BAF DP GRW | INF109K012B0 | ICICI Pru Balanced Advantage Fund(G) | direct | 87.8 | -0.42% | 211 | Equity 109 · Debt 102 | Whole portfolio | amc |
+| ICICI LIQF D-GROWTH | INF109K01Q49 | ICICI Pru Liquid Fund(G) | direct | 420.2936 | 0.02% | 161 | Debt 160 · Other 1 | Whole portfolio | amc |
+| HDFC BAF D-GROW | INF179K01WA6 | HDFC Balanced Advantage Fund(G) | direct | 562.797 | -0.54% | 324 | Equity 169 · Debt 155 | Whole portfolio | amc |
+| ICICI NIFT50IND DP G | INF109K012M7 | ICICI Pru Nifty 50 Index Fund-Reg(G) | direct | 248.061 | -0.86% | 51 | Equity 51 | Equity Holdings | aggregator |
+| INVES CON R GROWTH | INF205K01189 | Invesco India Contra Fund-Reg(G) | regular | 134.81 | -0.58% | 69 | Equity 69 | Whole portfolio | amc |
+| ICICI NFT NX 50 R GR | INF109K01IF1 | ICICI Pru Nifty Next 50 Index Fund(G) | regular | 64.0758 | -0.13% | 50 | Equity 50 | Whole portfolio | amc |
+| ICICI NFT NT 50 DP G | INF109K01Y80 | ICICI Pru Nifty Next 50 Index Fund(G) | direct | 67.8184 | -0.13% | 50 | Equity 50 | Whole portfolio | amc |
+| HDFC Liquid Fund-Direct Plan-Growth Option | INF179KB1HP9 | HDFC Liquid Fund(G) | direct | 5577.0646 | 0.02% | 151 | Debt 150 · Other 1 | Whole portfolio | amc |
+| HDFC Small Cap Fund - Direct Growth Plan | INF179KA1RW5 | HDFC Small Cap Fund-Reg(G) | direct | 159.88 | -0.44% | 85 | Equity 85 | Whole portfolio | amc |
 
 ## Unresolved — named, never guessed
 
@@ -46,11 +47,21 @@ monthly disclosure. It is kept out of every book total for that reason.
 
 ## The limits, stated
 
-**Holdings are EQUITY ONLY.** Every AmfiBeas holdings file is
-`section: "Equity Holdings"`, so a debt or liquid scheme resolves to zero
-rows — correctly, it holds no equity — and its debt book is not in this
-store. The fund page renders that as an absence with the reason rather than
-an empty table.
+**Holdings cover EVERY INSTRUMENT the AMC filed** — equity, debt, NCDs and
+commercial paper, gold, silver and cash — taken from `amc-portfolio/`, which
+is the same monthly disclosure `holdings-direct/` reads for its equity
+section alone (identical `sourceUrl` on every scheme checked). A scheme the
+AMC filed no whole portfolio for keeps the equity read and its `Covers`
+column says `Equity Holdings` rather than `Whole portfolio`.
+
+**`industry` is a SECTOR on an equity row and a CREDIT RATING on a debt one**
+(`Finance` against `CRISIL - AAA`), so the two are published as separate
+fields and neither renders under the other's heading.
+
+**A disclosure does not account for the whole scheme, and says how much it
+does.** `coveragePct` is the AMC's own figure — 89% to 99% here — because a
+filing rounds and holds cash it does not itemise. The card prints it rather
+than letting the rows read as the entire fund.
 
 **AIF folios are not attempted at all.** SEBI requires a monthly portfolio
 from a mutual fund and not from a Category II or III alternative fund, so no

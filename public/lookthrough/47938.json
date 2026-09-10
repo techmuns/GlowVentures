@@ -8,61 +8,64 @@
   "classification": "Metal : ETFs",
   "isin": "INF740KA1SW3",
   "nav": {
-    "value": 14.7678,
-    "date": "2026-09-01",
-    "prev": 14.9875,
-    "prevDate": "2026-08-31",
-    "changePct": -1.4658882402001756
+    "value": 14.7633,
+    "date": "2026-09-09",
+    "prev": 14.7373,
+    "prevDate": "2026-09-08",
+    "changePct": 0.1764230897111398
   },
   "returns": {
     "1M": {
-      "value": -89.4539,
+      "value": -89.2807,
       "kind": "simple",
-      "startDate": "2026-06-19",
-      "endDate": "2026-09-01",
-      "startNav": 140.0309,
-      "endNav": 14.7678
+      "startDate": "2026-08-03",
+      "endDate": "2026-09-09",
+      "startNav": 137.7268,
+      "endNav": 14.7633
     },
     "3M": {
-      "value": -90.1448,
+      "value": -89.9454,
       "kind": "simple",
-      "startDate": "2026-06-01",
-      "endDate": "2026-09-01",
-      "startNav": 149.8473,
-      "endNav": 14.7678
+      "startDate": "2026-06-09",
+      "endDate": "2026-09-09",
+      "startNav": 146.8314,
+      "endNav": 14.7633
     },
     "6M": {
-      "value": -90.3817,
+      "value": -90.4104,
       "kind": "simple",
-      "startDate": "2026-02-27",
-      "endDate": "2026-09-01",
-      "startNav": 153.5391,
-      "endNav": 14.7678
+      "startDate": "2026-03-09",
+      "endDate": "2026-09-09",
+      "startNav": 153.9508,
+      "endNav": 14.7633
     },
     "1Y": {
-      "value": -85.4649,
+      "value": -86.1279,
       "kind": "simple",
-      "startDate": "2025-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 101.6008,
-      "endNav": 14.7678
+      "startDate": "2025-09-09",
+      "endDate": "2026-09-09",
+      "startNav": 106.4245,
+      "endNav": 14.7633
     },
     "3Y": {
-      "value": -37.0263,
+      "value": -36.9054,
       "kind": "cagr",
-      "startDate": "2023-09-01",
-      "endDate": "2026-09-01",
-      "startNav": 59.1529,
-      "endNav": 14.7678
+      "startDate": "2023-09-08",
+      "endDate": "2026-09-09",
+      "startNav": 58.8695,
+      "endNav": 14.7633
     }
   },
-  "returnsAsOf": "2026-09-01",
+  "returnsAsOf": "2026-09-09",
   "fundAumCr": null,
   "holdingsAsOf": null,
   "holdingsSource": null,
   "section": null,
-  "equity": [],
+  "coveragePct": null,
+  "allocation": null,
+  "holdings": [],
   "counts": {
-    "equity": 0
+    "holdings": 0,
+    "byClass": {}
   }
 }

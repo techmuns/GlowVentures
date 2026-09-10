@@ -166,6 +166,12 @@ export function HoldingsBehind() {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
+  /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
+     note there. It was written at THIS boundary first, which narrows the same
+     two sets and is one edit rather than nine; the reason it moved is that a
+     filter here leaves `closedExcluded` at zero, so the table's subtitle would
+     say nothing had been left out while five rows were missing. A page that
+     drops rows silently is the defect the count exists to close. */
   const resolved = useMemo<Drilldown | null>(
     () => (portfolio && scope ? resolveDrilldown(scope, { portfolio, consolidated }) : null),
     [portfolio, consolidated, scope],
@@ -565,7 +571,12 @@ export function HoldingsBehind() {
                       const isOpen = open.has(g.key);
                       return (
                         <Fragment key={g.key}>
-                          <tr className="hover:bg-ink-700/40">
+                          {/* THE ROW'S OWN SECURITY KEY, so a claim about WHICH
+                              holdings this page draws is struck on structure and
+                              not on a rendered name. `g.key` carries an `S:`/`M:`
+                              prefix saying how the row was grouped rather than
+                              what it is, which is why this is the security's. */}
+                          <tr className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-1.5">
                                 {/* THE ROW OPENS THE THING IT NAMES. A mandate

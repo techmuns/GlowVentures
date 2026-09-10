@@ -107,7 +107,7 @@ const ex = state;
 console.log("\n── the partition: every rupee of the book in exactly one bucket ──");
 const measured = sum(stocks.map((p) => p.marketValue));
 const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.nonEquityValue + cash;
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -118,12 +118,12 @@ const buckets = measured + ex.total + ex.skippedValue + ex.nonEquityValue + cash
  */
 near("the five buckets rebuild the book's own NAV, to the rupee", buckets, BOOK_SUMMARY.totalValue, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + non-equity ${CR(ex.nonEquityValue)} + cash ${CR(cash)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} = ${CR(buckets)}`);
 ok("...and the table covers less than the book, which is why the statement is owed",
   measured + ex.total < BOOK_SUMMARY.totalValue * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_SUMMARY.totalValue)}`);
 ok("every bucket is non-negative — a partition, not a subtraction that overshot",
-  [measured, ex.total, ex.skippedValue, ex.nonEquityValue, cash].every((v) => v >= 0));
+  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, cash].every((v) => v >= 0));
 eq("the vehicles split into covered and skipped with none lost",
   ex.covered + ex.skipped.length, vehicles.length);
 near("...and their values do too", ex.disclosedValue + ex.skippedValue,
@@ -144,10 +144,82 @@ ok("no derived value is non-finite — a `?? 0` here is the absent-vs-zero rule 
   [...ex.byKey.values()].every((e) => Number.isFinite(e.total) && e.rows.every((r) => Number.isFinite(r.value))));
 ok("no company is carried at an exposure of nothing", [...ex.byKey.values()].every((e) => e.total > 0),
   "a scheme the family holds at ₹0 gives ₹0 of everything in it, and that is not a holding");
-ok("a fund contributes at most one line per company",
+ok("a fund contributes at most one ROW per issuer",
   [...ex.byKey.values()].every((e) => new Set(e.rows.map((r) => r.fundKey)).size === e.rows.length));
 ok("every join is exact — ISIN or this book's own key, never a resemblance",
   [...ex.byKey.values()].every((e) => e.rows.every((r) => r.via === "isin" || r.via === "name")));
+
+/**
+ * ── EVERY INSTRUMENT OF AN ISSUER ADDS, AND THE ROW IS THEIR SUM ────────────
+ *
+ *   "the Look-through must cover bonds, NCDs and every instrument, not just
+ *    stocks… there is a LIC housing NCD in the market."
+ *
+ * The store used to carry each AMC's equity section alone, where ONE line per
+ * fund per company was right: the only repeat was a second share class. On the
+ * whole filing it is the difference between an answer and a wrong one — HDFC
+ * Balanced Advantage files TWELVE separate LIC Housing NCDs, and keeping the
+ * first reports a twelfth of the exposure. Every assertion here is a RELATION
+ * so none goes stale when either generated artefact moves.
+ */
+console.log("\n── every instrument, not just stocks ──");
+const rowsAll = [...ex.byKey.values()].flatMap((e) => e.rows);
+ok("a row's value is the sum of its own instruments",
+  rowsAll.every((r) => Math.abs(r.value - r.instruments.reduce((a, i) => a + i.value, 0)) <= 0.01));
+ok("...and its weight is the sum of their weights",
+  rowsAll.every((r) => Math.abs(r.pctAum - r.instruments.reduce((a, i) => a + i.pctAum, 0)) <= 1e-6));
+ok("no instrument is counted twice inside one fund row — the same ISIN filed twice is one holding",
+  rowsAll.every((r) => {
+    const seen = r.instruments.map((i) => i.isin).filter(Boolean);
+    return new Set(seen).size === seen.length;
+  }));
+const multi = rowsAll.filter((r) => r.instruments.length > 1);
+ok("the store really carries an issuer a fund holds through several instruments", multi.length > 0,
+  `${multi.length} fund rows, the largest ${Math.max(...multi.map((r) => r.instruments.length))} instruments`);
+/**
+ * AND THE OLD RULE IS SHOWN TO HAVE BEEN WRONG, not merely replaced. Keeping one
+ * line per fund would report the largest such row at a fraction of its value —
+ * asserted as an inequality so it cannot pass on a drop where they happen to be
+ * close, which is `accountXirr.test.ts`'s own load-bearing gate one page over.
+ */
+const worst = multi.sort((a, b) => b.instruments.length - a.instruments.length)[0];
+ok("...and keeping only its first line would materially understate it",
+  !!worst && worst.instruments[0].value < worst.value * 0.5,
+  worst ? `${CR(worst.instruments[0].value)} of ${CR(worst.value)} across ${worst.instruments.length} instruments` : "");
+/**
+ * AN ISSUER IS ONE ROW HOWEVER MANY WAYS ITS PAPER IS NAMED. An Indian ISIN
+ * carries its issuer in characters 1-7 whatever the next two say, so this is
+ * the property the issuer tier exists to give: no two keys in the index may
+ * share an issuer prefix. Measured on this store the NAME tier reaches the same
+ * answer for most of them — which is exactly why the guard has to be asserted
+ * rather than assumed, since a clean run and a deleted guard look identical.
+ */
+const issuers = new Map<string, Set<string>>();
+for (const e of ex.byKey.values()) {
+  for (const r of e.rows) {
+    for (const i of r.instruments) {
+      if (!i.isin) continue;
+      const pre = i.isin.slice(0, 7).toUpperCase();
+      (issuers.get(pre) ?? issuers.set(pre, new Set()).get(pre)!).add(e.key);
+    }
+  }
+}
+const splitIssuers = [...issuers.entries()].filter(([, v]) => v.size > 1);
+ok("no issuer stands in the index under two keys", splitIssuers.length === 0,
+  splitIssuers.length ? splitIssuers.slice(0, 3).map(([p, v]) => `${p}: ${[...v].join(" | ")}`).join("; ")
+    : `${issuers.size} issuer prefixes, each one row`);
+/**
+ * AND THE CLASS TRAVELS WITH THE ROW. A company reached only through its bonds
+ * must not be filed as equity: the news the family described moves a share price
+ * and a credit spread by different amounts, and a reader who cannot see which
+ * they hold cannot act. Absent where no filing declared one, never defaulted.
+ */
+const debtOnly = [...ex.byKey.values()].filter((e) => e.classes.length > 0 && !e.classes.includes("Equity"));
+ok("this store reaches issuers through debt alone, and they say so", debtOnly.length > 0,
+  `${debtOnly.length} issuers, e.g. ${debtOnly.slice(0, 3).map((e) => e.name).join(", ")}`);
+ok("...and every class on a company came off a filing, never a default",
+  [...ex.byKey.values()].every((e) => e.classes.every((c) =>
+    e.rows.some((r) => r.instruments.some((i) => i.assetClass === c)))));
 
 console.log("\n── the ring-fence reaches the derived side ──");
 ok("this book has a ring-fenced holding to test against", BOOK_POLYCAB.length > 0);
@@ -210,7 +282,12 @@ ok("...and that reason says no future statement fills it",
   aif.every((s) => /joins to a folio this family holds/.test(s.reason)));
 ok("every skipped vehicle carries its own value, so a caller can state the size",
   ex.skipped.every((s) => Number.isFinite(s.marketValue)));
-near("non-equity is exactly the disclosed value the equity rows do not account for",
-  ex.nonEquityValue, ex.disclosedValue - ex.total, 0.01);
+// WAS "non-equity", AND THE STORE OUTGREW THE NAME. It reads each AMC's whole
+// monthly filing now — shares, bonds, NCDs and commercial paper — so a scheme's
+// debt sleeve is INSIDE the derived total and this remainder is what no line in
+// the filing accounted for: its cash, a metal ETF's metal, a line carrying
+// neither an ISIN nor a usable name, and the disclosure's own rounding.
+near("what no disclosed line accounted for is exactly the disclosed value the rows do not reach",
+  ex.unaccountedValue, ex.disclosedValue - ex.total, 0.01);
 
 process.exit(fails ? 1 : 0);

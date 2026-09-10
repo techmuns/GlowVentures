@@ -129,11 +129,103 @@ const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
  * labels, so the month is read from the metadata rather than by picking a fixed
  * key — a hardcoded `jul_26` silently freezes the store the month after.
  */
+/**
+ * `Jul-26` → `2026-07-31`. The whole-portfolio file dates its months by LABEL
+ * where the equity read prints an `aumAsOf` date, and a store that carried one
+ * of each would have two spellings of the disclosure date on one card.
+ */
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function monthEndOf(label) {
+  const m = /^([a-z]{3})-(\d{2})$/i.exec(String(label ?? "").trim());
+  if (!m) return null;
+  const mi = MONTHS.indexOf(m[1].toLowerCase());
+  if (mi < 0) return null;
+  const y = 2000 + Number(m[2]);
+  return `${y}-${String(mi + 1).padStart(2, "0")}-${String(new Date(Date.UTC(y, mi + 1, 0)).getUTCDate()).padStart(2, "0")}`;
+}
+
 function newestHoldingsMonth(doc) {
   const labels = (doc?.meta?.months ?? []).map((m) => m?.label).filter(Boolean);
   if (!labels.length) return null;
   const key = String(labels[0]).toLowerCase().replace("-", "_");
   return { key, label: labels[0], aumCr: num(doc.meta.months[0]?.aumCr) };
+}
+
+/**
+ * ── EVERY INSTRUMENT, NOT ONLY THE EQUITY SLEEVE ────────────────────────────
+ *
+ * *"The look-through must cover bonds, NCDs and every instrument, not just
+ * stocks. Any stock or bond. It could be a bond. It could be an NCD… there is a
+ * LIC Housing NCD in the market. Now there's some negative news on LIC housing.
+ * I want to see how much LIC housing I hold through my mutual fund exposure and
+ * through which mutual fund."*
+ *
+ * `holdings-direct/` is the AMC's own disclosure read for ITS EQUITY SECTION —
+ * `meta.section` is "Equity Holdings" on all 2,088 files — so a liquid or debt
+ * scheme resolved to ZERO rows and a hybrid's debt sleeve was simply absent.
+ * That is not a fund holding nothing; it is this store not carrying what it
+ * holds, and on the family's own example it is the whole answer: measured,
+ * **LIC Housing Finance is inside SIX of this family's funds** and only two of
+ * those lines are equity. The other four are NCDs and commercial paper, which
+ * nothing here could see.
+ *
+ * `amc-portfolio/` IS THE SAME DOCUMENT READ WHOLE. Its `sourceUrl` is
+ * byte-identical to `holdings-direct`'s `meta.source` on every scheme checked,
+ * so this is not a second source to weigh against the first — it is the filing
+ * with its debt, gold, silver and cash rows kept instead of dropped. Measured
+ * across the store: 157,125 rows, **an ISIN on every one**, in Equity 109,807 ·
+ * Debt 45,854 · Other 1,196 · Gold 193 · Silver 69 · Cash 6. On this book's own
+ * 13 resolvable schemes it takes the store from 1,702 equity rows to 3,495 rows
+ * of every class — and the three liquid funds that resolved to nothing now
+ * carry 688, 534 and 314 debt lines.
+ *
+ * ── `industry` IS A SECTOR ON AN EQUITY ROW AND A CREDIT RATING ON A DEBT ONE ─
+ *
+ * One field, two different facts: `Finance`, `Banks`, `IT - Software` against
+ * `CRISIL - AAA`, `ICRA A1+`, `Sovereign`. Emitted under one name it would put a
+ * rating in a column headed Sector — the fabricated-classification failure this
+ * book already records for an index-cycled valuation method. They are separate
+ * fields, split on the row's own `assetClass`, and each renders under its own
+ * heading.
+ *
+ * ── AND ONLY THE MONTH THE FILE ITSELF REPORTS LAST ─────────────────────────
+ *
+ * Every row carries up to seven months and a row's own latest month may be an
+ * OLD one — ICICI Prudential Liquid's `INE115A07QB9` last appears in 2026-01,
+ * because the fund no longer holds it. Taking each row's own latest would report
+ * instruments the fund has sold. The month comes from the FILE's `months[0]`, and
+ * a row absent from it is not a current holding.
+ */
+function wholePortfolioRows(doc, enrichByIsin) {
+  const months = doc?.months ?? [];
+  const key = months[0]?.key;
+  if (!key) return { rows: [], month: null };
+  const rows = (doc.rows ?? [])
+    .map((r) => {
+      const m = r.months?.[key];
+      const cls = r.assetClass ?? null;
+      const isin = /^IN[EF][A-Z0-9]{9}$/i.test(String(r.isin ?? "")) ? String(r.isin).toUpperCase() : null;
+      const extra = isin ? enrichByIsin.get(isin) : null;
+      return {
+        name: r.name ?? null,
+        isin,
+        assetClass: cls,
+        // See above: the same source field is a sector on one class and a rating
+        // on the other, so neither is published under the other's name.
+        sector: cls === "Equity" ? (extra?.sector ?? r.industry ?? null) : null,
+        rating: cls === "Equity" ? null : (r.industry ?? null),
+        pctAum: num(m?.pctToNav),
+        marketValueCr: num(m?.marketValueCr),
+        // The whole-portfolio filing states a weight and a market value and no
+        // unit count; the equity read of the SAME document states the shares.
+        // Joined on the ISIN both sides print, so this is one document's own two
+        // columns rather than a second source.
+        shares: extra?.shares ?? null,
+      };
+    })
+    .filter((r) => r.name && r.pctAum != null)
+    .sort((a, b) => b.pctAum - a.pctAum);
+  return { rows, month: { key, label: months[0]?.label ?? null, aumCr: num(months[0]?.aumCr), coveragePct: num(months[0]?.coveragePct), allocation: months[0]?.allocation ?? null } };
 }
 
 /** One scheme's equity rows for that month, largest weight first. */
@@ -281,6 +373,32 @@ function main() {
     const month = hold ? newestHoldingsMonth(hold) : null;
     const equity = hold && month ? holdingsRows(hold, month.key) : [];
 
+    /**
+     * THE WHOLE PORTFOLIO WHERE THE AMC FILED ONE, THE EQUITY READ OTHERWISE.
+     *
+     * `amc-portfolio` carries every asset class of the SAME document (see
+     * `wholePortfolioRows`), so where it exists it is what this store publishes
+     * and the equity-only read is folded into it for the `shares` and `sector`
+     * columns the whole-portfolio read does not print. Where the AMC filed no
+     * whole portfolio — five of this book's schemes, both DSP metal ETFs among
+     * them — the equity rows stand exactly as before and `coverage` says so.
+     */
+    const wholePath = join(AMFI, "public/amc-portfolio", `${base}.json`);
+    const whole = has(wholePath) ? readJson(wholePath) : null;
+    const enrich = new Map();
+    for (const e of equity) if (e.isin) enrich.set(e.isin, { shares: e.shares, sector: e.sector });
+    const w = whole ? wholePortfolioRows(whole, enrich) : { rows: [], month: null };
+    const useWhole = w.rows.length > 0;
+    // THE SOURCE NAMED IS THE FILE THE ROWS CAME FROM. Where the whole portfolio
+    // is what is published, the URL is its own — identical to the equity read's
+    // on every scheme checked, and this way it stays right if one ever moves.
+    if (useWhole) holdSource = { kind: "amc", url: whole?.sourceUrl ?? holdSource?.url ?? null };
+    const holdings = useWhole
+      ? w.rows
+      : equity.map((e) => ({ ...e, assetClass: "Equity", rating: null, marketValueCr: null }));
+    const byClass = {};
+    for (const h of holdings) byClass[h.assetClass ?? "Unclassified"] = (byClass[h.assetClass ?? "Unclassified"] ?? 0) + 1;
+
     out.set(code, {
       schemecode: code,
       scheme: r.fund.fundName ?? null,
@@ -293,26 +411,30 @@ function main() {
       nav,
       returns,
       returnsAsOf: rec?.asOfNavDate ?? null,
-      fundAumCr: num(hold?.meta?.aumTotalCr) ?? month?.aumCr ?? null,
-      holdingsAsOf: String(hold?.meta?.aumAsOf ?? "").slice(0, 10) || null,
+      fundAumCr: num(whole?.months?.[0]?.aumCr) ?? num(hold?.meta?.aumTotalCr) ?? month?.aumCr ?? null,
+      holdingsAsOf: monthEndOf(w.month?.label) ?? (String(hold?.meta?.aumAsOf ?? "").slice(0, 10) || null),
       holdingsSource: holdSource,
       /**
-       * EQUITY ONLY, AND THE FIELD SAYS SO. Every AmfiBeas holdings file is
-       * `section: "Equity Holdings"`, so a debt or liquid scheme resolves to
-       * zero rows — correctly, it holds no equity — and its debt book is simply
-       * not in this store. The card renders that as an absence with the reason
-       * rather than an empty table, which is the whole difference between "this
-       * fund holds nothing" and "we do not carry what it holds".
+       * WHAT THE PUBLISHED ROWS COVER, STATED RATHER THAN IMPLIED.
+       *
+       * `whole` is every asset class the AMC filed; `equity` is the equity-only
+       * read this store used to publish alone. `coveragePct` is the AMC's OWN
+       * figure for how much of the scheme the disclosure accounts for — it is
+       * never 100, because a filing rounds and holds cash it does not itemise —
+       * so the card can say what the rows leave out instead of letting a reader
+       * take them for the whole fund.
        */
-      section: hold?.meta?.section ?? null,
-      equity,
-      counts: { equity: equity.length },
+      section: useWhole ? "Whole portfolio" : (hold?.meta?.section ?? null),
+      coveragePct: useWhole ? w.month?.coveragePct ?? null : null,
+      allocation: useWhole ? w.month?.allocation ?? null : null,
+      holdings,
+      counts: { holdings: holdings.length, byClass },
     });
   }
 
   if (DRY) {
     for (const [code, v] of out)
-      console.log(`  #${code.padEnd(8)} ${String(v.scheme).slice(0, 40).padEnd(40)} nav=${v.nav.value} ${v.nav.date} chg=${v.nav.changePct?.toFixed(2) ?? "—"}% eq=${v.counts.equity} ret=${Object.keys(v.returns).length} src=${v.holdingsSource?.kind ?? "—"}`);
+      console.log(`  #${code.padEnd(8)} ${String(v.scheme).slice(0, 40).padEnd(40)} nav=${v.nav.value} ${v.nav.date} chg=${v.nav.changePct?.toFixed(2) ?? "—"}% rows=${v.counts.holdings} ${JSON.stringify(v.counts.byClass)} ret=${Object.keys(v.returns).length} src=${v.holdingsSource?.kind ?? "—"}`);
     console.log("\nDRY=1 — nothing written");
     return;
   }
@@ -337,7 +459,7 @@ function main() {
       nav: "public/nav-data/mf-latest-nav.json — AMFI NAVAll daily over the mf-data base",
       returns: "public/nav-data/mf-returns.json — each period states its own basis and window",
       holdings: "public/holdings-direct (the AMC's own monthly disclosure) with public/holdings as fallback",
-      limit: "Holdings are EQUITY ONLY; a debt or liquid scheme resolves to zero rows and its debt book is not carried.",
+      limit: "Holdings are the AMC's WHOLE monthly portfolio where it filed one — equity, debt, NCDs, gold, silver and cash alike. Where only the equity read of that filing exists the scheme carries its equity rows and says so.",
       note: "A scheme's plans differ in expense ratio, and therefore NAV, not in what the fund owns. The ISIN resolves the plan, so NAV and returns are the family's own plan.",
     },
     schemes: Object.fromEntries(resolved
@@ -360,7 +482,8 @@ function main() {
   const cr = (n) => `₹${(n / 1e7).toFixed(2)} Cr`;
   const coveredMv = resolved.reduce((a, b) => a + b.mv, 0);
   const totalMv = [...wanted.values()].reduce((a, b) => a + b.mv, 0);
-  const noEquity = [...out.values()].filter((v) => v.counts.equity === 0);
+  const noHoldings = [...out.values()].filter((v) => v.counts.holdings === 0);
+  const wholeCount = [...out.values()].filter((v) => v.section === "Whole portfolio").length;
   const lines = [
     "# Fund look-through — NAV, returns and what each scheme holds",
     "",
@@ -374,15 +497,16 @@ function main() {
     `- schemes the book holds: **${wanted.size}**`,
     `- resolved: **${resolved.length}** (${cr(coveredMv)} of ${cr(totalMv)}) — ${resolved.filter((r) => r.matchedVia === "isin").length} on ISIN, ${resolved.filter((r) => r.matchedVia !== "isin").length} on name`,
     `- unresolved: **${unresolved.length}**`,
-    `- resolved but disclosing no EQUITY holdings: **${noEquity.length}** (debt and liquid schemes — see the limit below)`,
+    `- covering the AMC's WHOLE portfolio (every asset class): **${wholeCount}** — the rest carry the equity read of the same filing`,
+    `- resolved but disclosing nothing at all: **${noHoldings.length}**`,
     "",
     "## Resolved",
     "",
-    "| Holding | ISIN | Scheme | Plan | NAV | Day | Equity rows | Holdings from |",
-    "| --- | --- | --- | --- | ---: | ---: | ---: | --- |",
+    "| Holding | ISIN | Scheme | Plan | NAV | Day | Rows | By class | Covers | Holdings from |",
+    "| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |",
     ...resolved.filter((r) => out.has(String(r.fund.schemecode))).map((r) => {
       const v = out.get(String(r.fund.schemecode));
-      return `| ${r.name} | ${r.isin ?? "—"} | ${v.scheme} | ${v.plan ?? "—"} | ${v.nav.value ?? "—"} | ${v.nav.changePct == null ? "—" : v.nav.changePct.toFixed(2) + "%"} | ${v.counts.equity} | ${v.holdingsSource?.kind ?? "—"} |`;
+      return `| ${r.name} | ${r.isin ?? "—"} | ${v.scheme} | ${v.plan ?? "—"} | ${v.nav.value ?? "—"} | ${v.nav.changePct == null ? "—" : v.nav.changePct.toFixed(2) + "%"} | ${v.counts.holdings} | ${Object.entries(v.counts.byClass).map(([k, n]) => `${k} ${n}`).join(" · ") || "—"} | ${v.section ?? "—"} | ${v.holdingsSource?.kind ?? "—"} |`;
     }),
     "",
   ];
@@ -394,11 +518,21 @@ function main() {
   lines.push(
     "## The limits, stated",
     "",
-    "**Holdings are EQUITY ONLY.** Every AmfiBeas holdings file is",
-    "`section: \"Equity Holdings\"`, so a debt or liquid scheme resolves to zero",
-    "rows — correctly, it holds no equity — and its debt book is not in this",
-    "store. The fund page renders that as an absence with the reason rather than",
-    "an empty table.",
+    "**Holdings cover EVERY INSTRUMENT the AMC filed** — equity, debt, NCDs and",
+    "commercial paper, gold, silver and cash — taken from `amc-portfolio/`, which",
+    "is the same monthly disclosure `holdings-direct/` reads for its equity",
+    "section alone (identical `sourceUrl` on every scheme checked). A scheme the",
+    "AMC filed no whole portfolio for keeps the equity read and its `Covers`",
+    "column says `Equity Holdings` rather than `Whole portfolio`.",
+    "",
+    "**`industry` is a SECTOR on an equity row and a CREDIT RATING on a debt one**",
+    "(`Finance` against `CRISIL - AAA`), so the two are published as separate",
+    "fields and neither renders under the other's heading.",
+    "",
+    "**A disclosure does not account for the whole scheme, and says how much it",
+    "does.** `coveragePct` is the AMC's own figure — 89% to 99% here — because a",
+    "filing rounds and holds cash it does not itemise. The card prints it rather",
+    "than letting the rows read as the entire fund.",
     "",
     "**AIF folios are not attempted at all.** SEBI requires a monthly portfolio",
     "from a mutual fund and not from a Category II or III alternative fund, so no",
@@ -414,7 +548,8 @@ function main() {
 
   console.log(`\n${changed ? `${changed} file(s) written` : "no change — the store is already current"}`);
   console.log(`covers ${resolved.length} of ${wanted.size} names · ${cr(coveredMv)} of ${cr(totalMv)}`);
-  if (noEquity.length) console.log(`${noEquity.length} scheme(s) disclose no equity holdings (debt/liquid): ${noEquity.map((v) => v.scheme).join(", ")}`);
+  console.log(`${wholeCount} scheme(s) carry the AMC's WHOLE portfolio — every asset class; the rest carry the equity read of the same filing`);
+  if (noHoldings.length) console.log(`${noHoldings.length} scheme(s) disclose nothing at all: ${noHoldings.map((v) => v.scheme).join(", ")}`);
 }
 
 main();

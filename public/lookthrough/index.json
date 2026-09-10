@@ -4,7 +4,7 @@
     "nav": "public/nav-data/mf-latest-nav.json — AMFI NAVAll daily over the mf-data base",
     "returns": "public/nav-data/mf-returns.json — each period states its own basis and window",
     "holdings": "public/holdings-direct (the AMC's own monthly disclosure) with public/holdings as fallback",
-    "limit": "Holdings are EQUITY ONLY; a debt or liquid scheme resolves to zero rows and its debt book is not carried.",
+    "limit": "Holdings are the AMC's WHOLE monthly portfolio where it filed one — equity, debt, NCDs, gold, silver and cash alike. Where only the equity read of that filing exists the scheme carries its equity rows and says so.",
     "note": "A scheme's plans differ in expense ratio, and therefore NAV, not in what the fund owns. The ISIN resolves the plan, so NAV and returns are the family's own plan."
   },
   "schemes": {
@@ -14,8 +14,8 @@
       "plan": "direct",
       "isin": "INF0R8701046",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
@@ -24,7 +24,7 @@
       "plan": "direct",
       "isin": "INF247L01EP5",
       "matchedVia": "name+plan",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -34,7 +34,7 @@
       "plan": "regular",
       "isin": "INF740KA1SW3",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": null,
       "holdingsSource": null
     },
@@ -44,8 +44,8 @@
       "plan": "direct",
       "isin": "INF209K01VA3",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "helios-fcf-d-grow": {
@@ -54,8 +54,8 @@
       "plan": "direct",
       "isin": "INF0R8701046",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "woc-maaf-d-grow": {
@@ -64,7 +64,7 @@
       "plan": "direct",
       "isin": "INF03VN01761",
       "matchedVia": "isin",
-      "navDate": "2026-08-31",
+      "navDate": "2026-09-08",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -74,7 +74,7 @@
       "plan": "direct",
       "isin": "INF109KC1RH9",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -84,7 +84,7 @@
       "plan": "regular",
       "isin": "INF740KA1RE3",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": null,
       "holdingsSource": null
     },
@@ -94,7 +94,7 @@
       "plan": "direct",
       "isin": "INF194K01V89",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -104,8 +104,8 @@
       "plan": "regular",
       "isin": "INF084M01AB8",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "hdfc-baf-r-grow": {
@@ -114,8 +114,8 @@
       "plan": "regular",
       "isin": "INF179K01830",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "kotak-mtcf-d-grow": {
@@ -124,8 +124,8 @@
       "plan": "direct",
       "isin": "INF174KA1HV3",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "icici-pru-baf-dp-grw": {
@@ -134,8 +134,8 @@
       "plan": "direct",
       "isin": "INF109K012B0",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "icici-liqf-d-growth": {
@@ -144,8 +144,8 @@
       "plan": "direct",
       "isin": "INF109K01Q49",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "hdfc-baf-d-grow": {
@@ -154,8 +154,8 @@
       "plan": "direct",
       "isin": "INF179K01WA6",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "icici-nift50ind-dp-g": {
@@ -164,7 +164,7 @@
       "plan": "direct",
       "isin": "INF109K012M7",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -174,7 +174,7 @@
       "plan": "regular",
       "isin": "INF205K01189",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
+      "navDate": "2026-09-09",
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -184,8 +184,8 @@
       "plan": "regular",
       "isin": "INF109K01IF1",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "icici-nft-nt-50-dp-g": {
@@ -194,8 +194,8 @@
       "plan": "direct",
       "isin": "INF109K01Y80",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "hdfc-liquid-fund-direct-plan-growth-option": {
@@ -204,8 +204,8 @@
       "plan": "direct",
       "isin": "INF179KB1HP9",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
     "hdfc-small-cap-fund-direct-growth-plan": {
@@ -214,8 +214,8 @@
       "plan": "direct",
       "isin": "INF179KA1RW5",
       "matchedVia": "isin",
-      "navDate": "2026-09-01",
-      "holdingsAsOf": "2026-07-31",
+      "navDate": "2026-09-09",
+      "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     }
   },
