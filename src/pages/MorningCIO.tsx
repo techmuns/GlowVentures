@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet,
+  costCoversSet, isRedeemedToNil,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -163,7 +163,26 @@ export function MorningCIO() {
     // figure covering ₹461 Cr of which 62% is private by asset class. A caption
     // that narrows a figure it does not narrow is the same failure as one that
     // widens it: the reader believes a scope nothing measured.
-    const p = consolidated;
+    /**
+     * CURRENT HOLDINGS, SO THIS PAGE COUNTS WHAT ITS DRILL-DOWNS LIST.
+     *
+     * *"exclude closed rows from morning cio positions too."* The drill-downs
+     * already list current holdings only; this tile counted every row the book
+     * carries, so Positions read 369 over a page listing 364 — a figure
+     * disagreeing with the page it opens, which is the one failure
+     * `drilldown.ts` exists to prevent.
+     *
+     * IT MOVES NO MONEY, which is why the filter belongs at `p` rather than on
+     * the two counts alone: every closed row carries `marketValue: 0` and
+     * `costBasis: null`, so every sum below is identical and `sumOrNull` was
+     * already skipping them. What changes is the COUNTS — Positions, Distinct
+     * names, and the cost-coverage count on the Capital invested tile, which
+     * used to read "60 of 369" against a drill-down facet showing 55.
+     *
+     * Same test the Portfolio Monitor and `resolveDrilldown` use, so all three
+     * screens agree about what "current" means.
+     */
+    const p = consolidated.filter((x) => !isRedeemedToNil(x));
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the
