@@ -5515,12 +5515,20 @@ const INVARIANTS = {
      * moves the counts and can leave the values looking plausible, and a
      * narrowed one drops rows from both. Neither page can make this claim
      * alone, which is why the listed half's own figures are carried here.
+     *
+     * THE CLOSED ROWS ARE PUT BACK BEFORE THE COMPARISON, as on the other two
+     * count reconciliations. Both halves list current holdings and Positions
+     * counts every row the book carries, so the partition is over the book's own
+     * closed count — which is the right number here even though the closed rows
+     * split ACROSS the two halves (3P is AIF, the HDFC schemes are Mutual Fund):
+     * what each half drops is its own share, and the two shares are all of them.
      */
     ["the two halves hold every position between them, and none twice", (t) => {
       const here = drilldownCounts(t), listed = DRILLDOWN_COUNTS.get("holdings-listed");
       const pos = CIO_FIGURES.get("positions");
       if (!listed || !Number.isFinite(pos)) return notChecked("the listed half's counts were not captured on this run");
-      return here != null && here.holdings + listed.holdings === pos;
+      const closed = FUND_CLASS_BOOK?.closedCount ?? 0;
+      return here != null && here.holdings + listed.holdings + closed === pos;
     }],
     /**
      * THE NARROWED PAGE SHOWS THE HALF'S OWN FIGURE, NOT THE BOOK'S.
