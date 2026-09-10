@@ -4,13 +4,12 @@ import { ChevronLeft, ChevronDown, ChevronRight, Layers, Wallet, Coins, Trending
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
-import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, isRedeemedToNil, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
-import { parseDrilldown, resolveDrilldown, drilldownHref, drilldownFormula, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -239,8 +238,6 @@ export function HoldingsBehind() {
   const activeFacet = d.facets[activeIdx] ?? null;
   const narrowed = d.facets.length > 1 && activeIdx > 0 && !!activeFacet;
   const heading = narrowed ? `${d.title} · ${activeFacet!.label}` : d.title;
-  const lead = narrowed && activeFacet!.note ? activeFacet!.note : d.lead;
-  const activeNote = narrowed ? "" : (activeFacet?.note ?? "");
 
   // ── The figures this page has to reconstruct ───────────────────────────────
   const mv = sum(rows.map((r) => r.marketValue));
@@ -250,13 +247,6 @@ export function HoldingsBehind() {
   const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
   const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
-  // THE WORKED EXAMPLE, IN THE READER'S OWN DISPLAY CURRENCY. `drilldownFormula`
-  // owns the arithmetic — it sits beside the set definition, so the explanation
-  // and the set cannot drift apart — and takes the formatter rather than
-  // importing one, because every figure in this app renders through the
-  // context's `fmtFromBase` and a formatter fixed in a lib would print rupees on
-  // a page showing dollars.
-  const formula = drilldownFormula(d, (n: number) => money(n) ?? "—");
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
@@ -308,7 +298,13 @@ export function HoldingsBehind() {
             <ChevronLeft className="h-3.5 w-3.5" /> Back to Morning CIO
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
-          <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-slate-400">{lead}</p>
+          {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
+              sections from the dashboard UI."* What it said — which set this is
+              and on what basis — is the HEADING plus the four tiles below, whose
+              own captions carry the counts (`369 holdings · 213 names · 34
+              accounts`), the coverage (`60 of 369 report none`) and the reason a
+              refused figure is refused. `Drilldown.lead` went with it rather
+              than being left as a field nothing renders. */}
           {/* ── THE SETS THIS FIGURE IS MADE OF ─────────────────────────────
               *"just give the toggle option inside the Consolidated NAV link
               page"* — and the same for every other tile. Each of these was its
@@ -340,32 +336,28 @@ export function HoldingsBehind() {
               })}
             </div>
           )}
-          {/* WHAT THE ACTIVE SET IS, where the reader is looking at it. The
-              toggle's own label is two words; the reason a set exists at all —
-              why a depository reports no cost, why an account cannot carry a
-              rate — is the part that decides what a reader does next. */}
-          {d.facets.length > 1 && activeNote && (
-            <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-slate-500" data-testid="drilldown-facet-note">{activeNote}</p>
-          )}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {/* WHAT THIS SET STANDS BEHIND, on the page rather than left to be
-                inferred from the heading. A reader arrives here from one figure
-                and needs to know the page is that figure's own arithmetic. */}
-            <Pill tone="core">
-              <span title="This page lists exactly the holdings that figure is summed over — the same set, resolved by the same function that built the link.">
-                behind {d.backs.join(" · ")}
-              </span>
-            </Pill>
-            <Pill>
-              <span title={d.deduped
-                ? "Each holding that two family members' statements both report is counted ONCE, which is the basis every consolidated figure on Morning CIO uses."
-                : "Every statement's row stands as printed. This is a PER-ACCOUNT figure, and collapsing a holding two accounts both report would take it off whichever account lost the collapse and put this total below the coverage the tile states."}>
-                {d.deduped ? "consolidated · each holding once" : "as printed · per account"}
-              </span>
-            </Pill>
-            <BasisPill liveText={`marked now · statements to ${fmtDate(portfolio.asOf)}`} />
-          </div>
+          {/* THE ACTIVE SET'S NOTE IS NOW ONLY ON THE CHIP THAT SELECTS IT.
+              It was a paragraph under the toggle and the family asked for it to
+              go; the reason a set exists — why a depository reports no cost, why
+              an account cannot carry a rate — is still the `title` on each chip
+              above, which is where a reader hovering that half looks for it.
+              `Facet.note` therefore stays a field with a live caller. */}
+          {/* ── NO PILL ROW ──────────────────────────────────────────────
+              It carried three things and the family asked for all of them:
+
+              · `behind <figure>` — which Morning CIO tiles this set stands
+                behind. The crumb still reads "Morning CIO › What is behind the
+                figure", every tile's own hover says what it opens, and the
+                heading names the set. `Drilldown.backs` went with the pill.
+              · `consolidated · each holding once` / `as printed · per account`
+                — the DEDUPE BASIS, which is load-bearing and is NOT dropped:
+                the holdings table's own subtitle below states it in the same
+                two branches, and `check:pages` reads it there now.
+              · the `<BasisPill>` — removed here for the same reason it was
+                removed from Morning CIO's header, in the same request. See the
+                note on that header for what §6 says and what it costs. */}
         </div>
+
         <div className="text-right">
           <div className="mono text-2xl font-semibold text-slate-100">{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
@@ -437,24 +429,27 @@ export function HoldingsBehind() {
               "Private". That is also why it sits here — the figures it explains
               are directly above it and the rows it is summed over directly
               below, which a floating popover could never be. */}
-          {formula && (
-            <div data-testid="drilldown-formula">
-              <Card className="mt-5" title="How this figure is worked out"
-                subtitle="Summed over exactly the rows in the table below — the same set, resolved by the same function that built the link you followed.">
-                <div className="mono rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-300">
-                  {formula.excel}
-                </div>
-                {formula.worked && (
-                  <div data-testid="drilldown-formula-worked"
-                    className="mono mt-2 rounded-md border border-champagne-500/25 bg-ink-900/50 px-3 py-2 text-[12px] leading-relaxed text-slate-200">
-                    {formula.worked}
-                  </div>
-                )}
-                <p className="mt-3 max-w-3xl whitespace-pre-line text-[12.5px] leading-relaxed text-slate-400">{formula.plain}</p>
-              </Card>
-            </div>
-          )}
+          {/* ── NO "HOW THIS FIGURE IS WORKED OUT" CARD ──────────────────
+              Stage 10y moved the KPI tiles' formula popovers here, and Stage
+              10ac moved the allocation table's; the family have now asked for
+              the card itself. `drilldownFormula` had exactly one caller and is
+              DELETED rather than left exported — a builder nothing calls is the
+              failure this repo keeps naming.
 
+              TWO OF ITS LINES WERE THE LAST STATEMENT OF A FACT ANYWHERE, and
+              both were re-homed before the card went, to the hover of the very
+              tile that opens this page:
+
+              · the accrued income the NAV excludes (₹47.1 L over 125 holdings),
+                which is exactly the amount by which a manager's printed total
+                runs above ours;
+              · the XIRR's window and its refusal to annualise it, which is
+                Stage 10g(ii)'s guard — this figure once read +99.0% with
+                nothing miscalculated.
+
+              Everything else the card said is on this page's own four tiles:
+              the total, the counts, the cost coverage, and the reason a refused
+              return is refused. */}
           {d.excludedAccounts.length > 0 && (
             <Card className="mt-5" title={`${d.excludedAccounts.length} accounts outside this figure`}
               subtitle="Named rather than dropped. A figure that exists for some accounts is shown for those and the rest are said out loud — a reader who cannot see which accounts are missing reads the figure as covering the book.">

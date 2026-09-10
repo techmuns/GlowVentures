@@ -3,7 +3,6 @@ import { Briefcase, Wallet, TrendingUp, Percent, Fuel, Coins } from "lucide-reac
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { BasisPill } from "@/components/BasisPill";
 import { Kpi } from "@/components/Kpi";
 import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
@@ -852,8 +851,37 @@ export function MorningCIO() {
 
   return (
     <div>
-      <PageHeader eyebrow="Daily Briefing" title="Good morning — here's where the book stands"
-        right={<BasisPill liveText="Consolidated · listed live" hint="Listed holdings are priced live where a quote exists; anything the quote feed could not supply keeps its statement mark and is flagged as not-live." />} />
+      {/* ── NO BASIS PILL ───────────────────────────────────────────────────
+          *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind'
+          part from the UI."*
+
+          IT IS THE ONE REMOVAL IN THIS ROUND THAT TOUCHES A STANDING RULE, and
+          that is recorded rather than glossed: §6 of the conventions says every
+          consolidated figure carries a `<BasisPill>`, because a reader who
+          cannot tell a statement mark from a live one cannot check anything,
+          and because a consolidated total here is a BLEND of report dates that
+          `portfolio.asOf` states only the newest of.
+
+          What survives, and where: the LIVE half is visible on every route
+          anyway — `IndexStrip` sits above this page carrying four NSE levels
+          and the top bar carries the quote clock — and the quote feed's own
+          failure states still name themselves on the cards that use them
+          (Today's movers has three). The as-of and the staleness are on the
+          holdings table's own basis note and in each KPI tile's hover. The
+          pages that must RECONCILE to a document — Capital Gains, Data Audit,
+          Ledger Insights — keep their `<BasisPill statement>` untouched, which
+          is the half of §6 that is a correctness guarantee rather than a label.
+          `check:pages` asserts both: gone here, kept there.
+
+          PRIVATE MARKET WAS IN THAT LIST AND IS NOT ANY MORE — the family asked
+          for its header pills too, one round later, and this sentence is
+          corrected rather than left standing. It still reads
+          `statementPortfolio`, so the GUARANTEE is intact there; what went is
+          the label. What that costs is measured rather than assumed and is
+          checked every run (`PRIVATE_QUOTABLE`): no private holding resolves an
+          NSE symbol, so no row on that page could drift even on the live
+          portfolio. See CLAUDE.md §6 and Stage 10ap. */}
+      <PageHeader eyebrow="Daily Briefing" title="Good morning — here's where the book stands" />
 
       {/* KPI strip */}
       {/* ONE LINK PER TILE, ASSERTED ON THE DOM. `check:pages` counts the
@@ -864,15 +892,23 @@ export function MorningCIO() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
         <Kpi label="Current Value of Holdings"
           href={drilldownHref("book")}
-          hrefTitle="Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page, and so is the arithmetic behind this number."
+          hrefTitle={`Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page.${
+            m.accrued == null || !m.accruedCount ? "" :
+            ` NOT IN THIS FIGURE: ${fmtFromBase(m.accrued, { compact: true })} of accrued income — dividends and interest declared on ${m.accruedCount} holding${m.accruedCount === 1 ? "" : "s"} here and not yet received. The managers' printed totals fold it into market value on some rows and not others, so the book carries it as its own field and every market value on this site excludes it; a statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
+          }`}
           value={fmtFromBase(m.totalValue, { compact: true })}
-          /* NO SUB-LINE. *"remove these small subtext from the clickable KPI
-             buttons since these are also already written inside each KPI
-             pages."* Measured before removing, line by line: the listed and
-             private halves are the facet toggle on `?of=book`, which prints
-             each half's count and opens it. THE ACCRUED-INCOME DISCLOSURE WAS
-             NOT THERE and is now — a fact this tile was the only place to
-             state, so it moved rather than went (see `drilldownFormula`). */
+          /* NO SUB-LINE, AND THE ACCRUED-INCOME DISCLOSURE IS IN THE HOVER.
+             It has now been moved twice. It was this tile's caption; Stage 10aa
+             took the captions off and it went to the arithmetic card on the page
+             the tile opens, because it was the ONE line among the six that no
+             other surface repeated. The family have now asked for that card to
+             go as well, so the hover is what is left — the same treatment the
+             NAV chart's raw-return figures and its unproven accounts already
+             get. It is a weaker home than a caption and that is stated in
+             CLAUDE.md rather than pretended away; what it must not do is vanish,
+             because our NAV differs from a manager's printed total by exactly
+             this and a reader reconciling the two would find the gap and no
+             explanation for it. */
           icon={<Briefcase className="h-4 w-4" />} />
 
         {/* CAPITAL INVESTED — the whole book, and its caption says which
@@ -923,7 +959,12 @@ export function MorningCIO() {
             the terminal value fails rather than drifts. */}
         <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
           href={drilldownHref("measured")}
-          hrefTitle="Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page."
+          hrefTitle={`Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page.${
+            m.bookMW.windowDays == null ? "" :
+            m.bookMW.annualised
+              ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
+              : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
+          }`}
           value={m.bookMW.pct == null
             ? <AbsentValue />
             : <span className={changeColor(m.bookMW.pct)}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</span>}
@@ -1009,14 +1050,18 @@ export function MorningCIO() {
 
             Two of the things it said are facts a reader ACTS on rather than
             chrome: that every return here is CUMULATIVE rather than annualised,
-            and the DATE each figure closes at. Neither is dropped, because both
-            are ALREADY ON THIS PAGE outside this card — the Consolidated
-            return tile states "cumulative, not annualised" on its face, and the
-            header's `<BasisPill>` states the as-of and how many accounts are
-            behind it. Each figure's own popover still carries the coverage and
-            the excluded accounts in full. So nothing here is reachable only by
-            hover, and what has gone is the description of how the buckets
-            GROUP — which the rows themselves show.
+            and the DATE each figure closes at. The first is still on this page
+            outside this card — the Consolidated return tile states "cumulative,
+            not annualised" on its face.
+
+            THE SECOND HAS SINCE LOST ITS OTHER HOME, and this comment is
+            corrected rather than left standing: it read "the header's
+            `<BasisPill>` states the as-of and how many accounts are behind it",
+            and the family have now asked for that pill. The as-of and the
+            staleness are on the holdings table's own basis note and in the KPI
+            tiles' hovers; this page no longer prints a report date on its face.
+            That is the family's decision, recorded in CLAUDE.md with what it
+            costs, and it is why the sentence above no longer claims otherwise.
 
             AND THE PILL KEEPS THE WORD "HELD". Two other invariants read the
             bucket count out of `N buckets held`; rewording it to `N buckets ·
@@ -1311,7 +1356,7 @@ export function MorningCIO() {
             <div className="grid grid-cols-2 gap-x-6 text-sm">
               <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, one row per statement line — the unit this count counts">Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
               <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, grouped one row per name and per mandate — the unit this count counts">Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
-              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
+              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
               <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
               <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
                 {/* TWO SETS, TWO LINKS. The split is on ASSET CLASS — what a

@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import {
-  bySector, sum, consolidatedMarketValue, isPrivateClass, isCompanyShare, excludedClasses, assetClassLabel,
+  bySector, sum, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
@@ -23,6 +23,31 @@ import { returnFormula, weightFormula } from "@/lib/auditFormulas";
 import { AbsentCell } from "@/components/Absent";
 
 const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
+
+/**
+ * WHY A COMPANY SHARE CAN HAVE NO SECTOR — the reason that used to live in this
+ * page's footer paragraph, now on the row it is about.
+ *
+ * It is a real absence rather than a bucket: `shared/sectors.mjs` maps each
+ * provider's own label to GICS and infers nothing, because the platforms
+ * disagree on nearly every name and a wrongly-sectored holding looks exactly
+ * like a correctly-sectored one on an allocation chart. So a statement that
+ * printed no sector leaves the holding here, named, instead of guessed into a
+ * slice.
+ *
+ * IT TAKES THE VIEW, because the two have different numbers of places to look.
+ * Direct Equity has ONE source — the family's own statement. Consolidated has a
+ * second, the industry an AMC filed against the same ISIN, so "the document
+ * does not report it" would be true of one document and silent about the other.
+ * A reason that names the wrong cause sends the next reader to the wrong
+ * source, which is this book's rule for a failure message arriving at an
+ * absence.
+ */
+const unclassifiedWhy = (consolidatedView: boolean) =>
+  "Left unclassified rather than assigned a sector we would have to guess. These are shares in companies, so the sector "
+  + (consolidatedView
+    ? "exists — neither the family's own statement nor any fund disclosure that names this company printed one."
+    : "exists; the statement simply does not report it. A depository prints an ISIN, a quantity and a rate and no industry at all.");
 
 /**
  * ── TWO SETS, AND THE READER PICKS ─────────────────────────────────────────
@@ -155,12 +180,21 @@ export function SectorComposition() {
   const otherMV = sum(otherRows.map((x) => x.marketValue));
   const mandateAccounts = new Set(mandateRows.map((x) => x.accountId)).size;
   const ownAccounts = new Set(ownRows.map((x) => x.accountId)).size;
-  /** A share of this table's own total, omitted rather than shown as 0 when there is no total. */
-  const shareOfTable = (v: number) => (measuredMV > 0 ? <> · {((v / measuredMV) * 100).toFixed(1)}% of this table</> : null);
-  const privateMV = consolidatedMarketValue(consolidated.filter(isPrivateClass));
-  // Every class this page does NOT cover, largest first, so the note below can
-  // name them from the book rather than from a hardcoded list. `isPrivateClass`
-  // still drives the private-book sentence; this drives the rest.
+  /* `shareOfTable` IS GONE, and it is not an oversight. It printed a subset's
+     share of this table, which fitted the cards it was written for: they split
+     the ONE set the page drew. The cards here describe the active view and what
+     sits OUTSIDE it — "Left out by this view" is not in the table at all, and
+     "Bought by the family" is the whole of it on Direct Equity — so the only
+     honest percentages it could produce were 100% and a share of a denominator
+     the reader cannot see. A helper with no caller is the failure this file
+     keeps naming, so it went with them rather than being kept for a future one.
+
+     `privateMV` and the standalone `unclassified` binding went the same way:
+     their only readers were the footer paragraphs below. */
+  // Every class this page does NOT cover, largest first, so the fund card can
+  // name them FROM THE BOOK rather than from a hardcoded list — which is also
+  // what makes the reconstruction (covered + excluded = NAV) a real check
+  // rather than a comparison of a caption with itself.
   const excluded = excludedClasses(consolidated, isCompanyShare);
   const excludedMV = sum(excluded.map((c) => c.mv));
   /**
@@ -244,7 +278,6 @@ export function SectorComposition() {
       }))
       .sort((a, b) => b.mv - a.mv);
   }, [consolidatedView, entries]);
-  const unclassified = sectors.find((s) => s.key === UNCLASSIFIED) ?? null;
   /**
    * THE ACTIVE VIEW'S OWN TOTAL, SUMMED FROM THE VERY SLICES ON SCREEN — never
    * computed on a second path. A donut whose hole prints a figure its own wedges
@@ -388,6 +421,22 @@ export function SectorComposition() {
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <div className="label-xs">{consolidatedView ? "Total exposure" : "Direct Equity"}</div>
               <div className="mono text-base font-semibold text-slate-100">{fmtFromBase(totalMV, { compact: true })}</div>
+              {/* THE COUNT, THE BASIS AND WHERE THE SECTORS CAME FROM, on the
+                  figure they describe. All three were in the removed footer and
+                  nowhere else: the split cards below count each ROUTE, which a
+                  reader would have to add up; nothing at all said the set is
+                  deduped; and the two-tier provenance is the whole reason this
+                  page can place a depository holding, which carries no industry
+                  on any statement. The noun follows the view — Consolidated
+                  rolls up COMPANIES and Direct Equity rolls up HOLDINGS, and a
+                  count under the wrong noun is the caption failure this page
+                  has already paid for. */}
+              <div className="mt-0.5 text-[10.5px] text-slate-500">
+                {consolidatedView ? `${entries.length} companies` : `${ownRows.length} holdings`} · each counted once
+              </div>
+              <div className="mt-0.5 text-[10.5px] text-slate-500">
+                {sectorFrom.book} placed by statement{sectorFrom.disc > 0 && <> · {sectorFrom.disc} by a fund&rsquo;s filing</>}
+              </div>
             </div>
           </div>
           {/* Legend on the right — colour, sector, weight, value */}
@@ -396,7 +445,8 @@ export function SectorComposition() {
               <li key={s.key} onClick={() => toggle(s.key)}
                 className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 hover:bg-ink-700/40">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                <span className="flex-1 truncate text-[13px] text-slate-200" title={s.key}>{s.key}</span>
+                <span className="flex-1 truncate text-[13px] text-slate-200"
+                  title={s.key === UNCLASSIFIED ? unclassifiedWhy(consolidatedView) : s.key}>{s.key}</span>
                 <span className="mono text-[13px] font-semibold text-slate-100">{(s.weight * 100).toFixed(1)}%</span>
                 <span className="mono w-20 text-right text-[11px] text-slate-400">{fmtFromBase(s.mv, { compact: true })}</span>
               </li>
@@ -491,12 +541,27 @@ export function SectorComposition() {
                 </div>
               </div>
               <div>
-                <div className="label-xs">And every fund</div>
+                <div className="label-xs">Not a company share</div>
                 <div className="mono text-sm font-semibold text-slate-100">{fmtFromBase(excludedMV, { compact: true })}</div>
+                {/* EACH CLASS WITH ITS OWN VALUE, not just the names. The
+                    removed footer carried the per-class figures and this card
+                    had only the list — and the total alone cannot tell a reader
+                    whether the excluded money is one big wrapper or a dozen
+                    small ones, which is the thing they would act on. It is also
+                    what lets `check:pages` strike the reconstruction on a
+                    labelled figure rather than on a sentence. */}
                 <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  {excluded.map((c) => assetClassLabel(c.key as never)).join(", ") || "none"} — a fund is a wrapper
-                  holding many companies and has no sector of its own, so no view of this page ever draws one as a
-                  slice. What the funds hold underneath is the Consolidated view.
+                  excluded rather than folded in —{" "}
+                  {excluded.length === 0 ? "none" : excluded.map((c, i) => (
+                    <Fragment key={c.key}>
+                      {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
+                      <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
+                    </Fragment>
+                  ))}
+                  . A GICS sector is a property of a COMPANY and a fund holds many, so every wrapper would land in
+                  one false &ldquo;Unclassified&rdquo; slice and bury the sectors this view exists to show. A
+                  mandate&rsquo;s cash sleeve is out for the same reason. What the funds hold underneath is the
+                  Consolidated view.
                 </div>
               </div>
             </>
@@ -652,7 +717,19 @@ export function SectorComposition() {
                     <Fragment key={s.key}>
                       <tr className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
                         <td className="px-4 py-2.5">
-                          <span className="flex items-center gap-2 font-medium text-slate-100">
+                          {/* An absence names its cause where the absence is —
+                              `Absent.tsx`'s rule, applied to a sector nobody
+                              reported rather than to a missing figure.
+
+                              THE `title` GOES ON THE EXISTING SPAN, never on a
+                              new one wrapping the name: this is a FLEX container,
+                              so an added child becomes a flex ITEM and
+                              `innerText` breaks the line at it — the trap Stage
+                              10ah records for the "N entities" pill, which would
+                              silently reshape every row-based check on this
+                              page. */}
+                          <span className="flex items-center gap-2 font-medium text-slate-100"
+                            title={s.key === UNCLASSIFIED ? unclassifiedWhy(consolidatedView) : undefined}>
                             <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
                             {s.key}
@@ -792,63 +869,40 @@ export function SectorComposition() {
             </table>
           </div>
         </Card>
-      {/* ── WHAT THE ACTIVE VIEW IS, AND WHAT IT LEAVES OUT ────────────────
-          One note per view, because the two are different sets and a single
-          paragraph that tried to describe both would be true of neither. Every
-          figure in each is derived; the counts move with the next drop. */}
-      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        {consolidatedView ? (
-          <>
-            This is <span className="font-medium text-slate-400">total exposure per company</span> — {money(totalMV)} across{" "}
-            {entries.length} companies, ranked and weighted exactly as the{" "}
-            <span className="font-medium text-slate-400">Security</span> view of Portfolio Monitor ranks them, because both
-            are built on one definition of what this family holds of a company.
-            {" "}{money(measuredMV)} of it is what their statements report — every company share, whichever of them chose it —
-            and {exposure.status === "ok" ? money(derivedMV) : "the rest"} is DERIVED from what their funds disclosed holding.
-            {" "}<span className="font-medium text-slate-400">The derived half is no part of the book&rsquo;s NAV</span>: the
-            fund&rsquo;s own value already stands for it there, so nothing on this page may be added to a book total.
-            A sector here comes from one committed map — the book&rsquo;s own where a statement printed one, and the industry
-            label the AMC filed otherwise, resolved through the same table `build-book` resolves the book&rsquo;s own
-            positions through. Neither side is guessed: a label the map does not carry stays Unclassified.
-            {" "}Switch to <span className="font-medium text-slate-400">Direct Equity</span> for the shares the family bought
-            itself, measured end to end.
-          </>
-        ) : (
-          <>
-            This is <span className="font-medium text-slate-400">{DIRECT_EQUITY_BUCKET}</span> — {money(totalMV)} across{" "}
-            {ownRows.length} holdings, every one a share in a company bought in the family&rsquo;s own demat or broking
-            account, each counted once. It is the same set the holdings tables call by that name.
-            {mandateRows.length > 0 && <> It deliberately leaves out {money(mandateMV)} of company shares a discretionary
-              manager chose across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"} — real sector exposure,
-              and a mandate reports every share underneath it, so a manager&rsquo;s book reads by sector exactly like a
-              self-bought one. Those are in the <span className="font-medium text-slate-400">Consolidated</span> view, along
-              with what the family&rsquo;s funds hold underneath.</>}
-            {otherRows.length > 0 && <> {money(otherMV)} sits in accounts whose statements do not say how they are run, so
-              this book cannot claim either that a manager chose them or that the family did; they are in Consolidated too.</>}
-          </>
-        )}
-        {excluded.length > 0 && <> {money(excludedMV)} of the book is not a share in a company at all and is excluded rather than folded in—{" "}
-          {excluded.map((c, i) => (
-            <Fragment key={c.key}>
-              {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
-              <span className="font-medium text-slate-400">{assetClassLabel(c.key)}</span> {money(c.mv)}
-            </Fragment>
-          ))}. A GICS sector is a property of a COMPANY; a fund holds many, and no statement in this book prints a sector for one,
-          so every wrapper would land in a single false “Unclassified” slice and bury the sectors this view exists to show.
-          A mandate’s cash sleeve is out for the same reason — cash has no sector — even though the holdings tables keep it
-          inside its mandate, where the manager’s own statement totals it.
-          {privateMV > 0 && <> They are broken out by asset class on <span className="font-medium text-slate-400">Morning CIO</span> and folio by folio in <span className="font-medium text-slate-400">Portfolio Monitor</span>.</>}
-        </>}
-        {" "}Of the {entries.length} companies on this view, <span className="font-medium text-slate-400">{sectorFrom.book}</span> are
-        placed by a sector the family&rsquo;s own statement printed and <span className="font-medium text-slate-400">{sectorFrom.disc}</span> by
-        the industry a fund&rsquo;s own filing printed against the same ISIN — an exact identifier match through the one committed
-        map, never a name. That second tier is what places a depository holding at all: a demat statement prints an ISIN, a
-        quantity and a rate, and no industry anywhere. It only ever fills a sector the book left empty, so this page places
-        names the rest of the app leaves unplaced rather than placing them differently.
-        {unclassified && <> The remaining {money(unclassified.mv)} across {unclassified.count} {consolidatedView ? "companies" : "holdings"} shows as{" "}
-          <span className="font-medium text-slate-400">Unclassified</span> because neither source printed one — left unclassified
-          rather than assigned a sector we would have to guess.</>}
-      </p>
+      {/*
+        THE FOOTER PARAGRAPH IS REMOVED — one per view — at the family's
+        request, and the audit that preceded it is what makes the removal a
+        relocation rather than a loss. Every claim it carried, and where it is
+        now:
+
+          · "company shares only" / "total       the view toggle, the donut's
+            exposure per company"                own label and the subtitle
+          · the total                            the donut hole
+          · the count, "each counted once"       MOVED — the donut hole, under
+                                                 the total it describes, with
+                                                 the view's own noun
+          · measured vs DERIVED, and that the    ALREADY on this page, as the
+            derived half is no part of NAV       two partition cards above, in
+                                                 those words
+          · what the narrowing leaves out,       ALREADY the third card, with
+            with its value and its counts        more detail than the sentence
+          · the excluded classes and why a       ALREADY the fund card, which
+            wrapper has no sector                names each class
+          · the two-tier sector provenance,      MOVED — the donut hole, as two
+            book vs a fund's own filing          counted figures
+          · why Unclassified is unclassified     MOVED — onto the Unclassified
+                                                 row and legend entry, as a
+                                                 hover, which is where an
+                                                 absence's reason belongs, and
+                                                 worded per view because the
+                                                 two have different numbers of
+                                                 sources to have looked in
+
+        A hover is weaker than a caption, and that is stated rather than
+        glossed. The figures a reader ACTS on — what this view covers, what it
+        leaves out, and how much of it is derived rather than reported — are all
+        RENDERED; a hover carries only the explanation behind them.
+      */}
     </div>
   );
 }

@@ -152,6 +152,17 @@ export const VALUATION_METHODS = [
   "Dividend discount", "Transaction comparable", "Manager mark",
 ];
 
+/**
+ * Exported, and its LAST CALLER OUTSIDE THIS FILE has gone.
+ *
+ * `CompareCompanies` read it to put a target and an upside beside each price,
+ * and that page was removed at the family's request. `readEntry` and
+ * `writeEntry` below still call it, so it is not an orphan — but it now looks
+ * like one from the outside, which is exactly how a store the family typed into
+ * gets deleted a release later. Said here rather than left silent, and the
+ * export stays: `InvestmentTools` on a company page reads and writes every
+ * entry through the two functions beneath this, so the whole store is live.
+ */
 export function readWatchlist(): Watchlist {
   try {
     const raw = localStorage.getItem(KEY);
