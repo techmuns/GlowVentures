@@ -8978,6 +8978,52 @@ struck against different bases and none can be reconciled with another by
 arithmetic, which is exactly why the sweep is re-run rather than the number
 adjusted.
 
+### Stage 10au — THE MOVERS OPEN ON THE PERCENTAGE, AND A DEFAULT IS ASSERTED OR IT MOVES
+
+*"keep % wise as the default view and ₹ wise absolute as the second toggle
+option."*
+
+Today's movers has ranked by rupee impact since Stage 10p built it, and the
+family have now settled it the other way. `TodaysMovers`'s `rank` state opens on
+`pct` and the two buttons are offered in that order.
+
+**BOTH MEASURES STAY, BECAUSE NEITHER SUBSUMES THE OTHER.** That was the reason
+the toggle existed at all and it is unchanged: *a 9% move on a ₹40 L holding is
+the larger mover by one measure and the smaller by the other.* What moved is
+which question the card answers before anyone touches it.
+
+**AND NOT ONE FIGURE ON THE CARD CHANGES.** The day's move, its denominator, the
+coverage line, the gainer and loser counts, the index comparison and the excluded
+footer are all struck over the same set on either ranking — the sort reorders one
+list of five and reorders nothing else. The two ranked columns already keyed
+their emphasis off `rank`, so the bold column followed the default with no edit.
+
+**WHICH IS EXACTLY WHY IT NEEDED A CHECK, AND HAD NONE.** A default is the change
+that moves silently: the page renders perfectly either way, every value check on
+this card passes either way, and the only difference is the ORDER of two
+five-row lists. `check:pages` asserts the allocation card's default axis for that
+reason (Stage 10z, Stage 10ad) and had no equivalent here — so the ranking could
+have been flipped back by an unrelated edit and the sweep would have reported
+clean.
+
+**STRUCK ON `data-mover-rank`, NEVER ON THE LABELS.** "By % move" and "By ₹
+impact" are precisely the prose a redesign is free to reword, and this file has
+recorded a check retiring itself in silence that way more than once. The probe
+reads which measures the control OFFERS, in order, and which is live; the
+invariant makes three claims, and the middle one is the family's ask: both are
+still offered, the live one is the percentage, and the percentage is offered
+first.
+
+**A MISSING CONTROL IS A FINDING, NOT AN ABSTENTION.** This card's header renders
+whether or not a quote has landed, so an empty offer means the control is gone —
+and a sweep that abstained there would report CLEAN over a card with no toggle at
+all. Only the probe failing to run abstains. Verified rather than assumed:
+deleting the handle FAILS the invariant by name rather than adding a NOT CHECKED
+line.
+
+Three bugs reintroduced, each firing it: the default back to `impact`, the button
+order back to impact-first *with the default left correct* (which a check on the
+active button alone would have passed), and the control removed outright.
 
 ### Stage 10k — News & Announcements: REMOVED
 
