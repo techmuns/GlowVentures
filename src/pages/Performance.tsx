@@ -11,22 +11,29 @@ import { xirrWithTerminal, pooledXirr, totalReturnFromXirr } from "@/lib/bucketX
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
+import { NavVsIndex } from "@/components/NavVsIndex";
 import { embeddedReturnFormula } from "@/lib/auditFormulas";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 
 // NAV & Performance — built from what these statements actually carry.
 //
-// WHAT THIS PAGE USED TO DO, AND WHY IT DOESN'T. It led with a NAV trajectory
-// chart plus growth and CAGR read off `navHistory`. This book's corpus carries
-// exactly TWO dated portfolio values per account — the opening figure on the
-// performance summary and the closing one — and two points are not a curve. A
-// line between them would assert a path through the period that nothing
-// measured, and the CAGR off it would be a real-looking number with no
-// measurement behind it. So the chart is gone, and what replaced it is the three
-// things the statements DO support: each manager's own time-weighted returns,
-// the value bridge from opening to closing, and a money-weighted return over the
-// real dated flows.
+// THE NAV TRAJECTORY IS BACK, AND THE PARAGRAPH THAT SAID IT COULD NOT BE HAD
+// OUTLIVED ITS OWN PREMISE. It read: "this book's corpus carries exactly TWO
+// dated portfolio values per account and two points are not a curve." True of
+// the nine-account corpus it was written against; false from the first drop that
+// REISSUED a statement. Thirteen accounts publish two or more dated valuations
+// and the series spans 2026-05-31 → 2026-08-13. The chart here is the same
+// `<NavVsIndex />` Morning CIO draws off the same generated series, so the two
+// cannot state different things about what the book measured.
+//
+// What that paragraph was right about survives inside the chart rather than
+// instead of it: a line drawn through a growing panel of accounts asserts a path
+// nothing measured, which is why each of its links is struck over the accounts
+// valued at both ends and why the raw NAV level only starts where the panel is
+// complete. The three things this page already carried — each manager's own
+// time-weighted returns, the value bridge, and a money-weighted return over the
+// real dated flows — are unchanged.
 //
 // THREE PERIOD VOCABULARIES, KEPT APART. Goldstandard publishes MTD / QTD / YTD
 // against N50TRI; Green Lantern and Carnelian publish trailing 1m / 3m / 1y
@@ -252,16 +259,21 @@ export function Performance() {
           sub="of the current value of holdings in the 10 biggest holdings" icon={<Crosshair className="h-4 w-4" />} />
       </div>
 
-      {/* ── NAV trajectory: absent, and why ── */}
-      <Card className="mt-5" title="NAV trajectory" subtitle="A dated series of portfolio values">
-        <AbsentSection
-          what="No valuation series in this book"
-          needs={`Each account's statements carry exactly two dated portfolio values — the opening figure on the
-            performance summary and the closing one. Two points are not a trajectory: a line between them would
-            assert a path through the period that nothing measured, and any growth or CAGR read off it would be a
-            real-looking number with nothing behind it. A periodic — monthly or quarterly — valuation statement
-            per account is what this needs.`} />
-      </Card>
+      {/* ── NAV TRAJECTORY — AND THE ABSENCE THAT OUTLIVED ITS PREMISE ─────
+          This card rendered an `AbsentSection` reading "No valuation series in
+          this book · each account's statements carry exactly two dated portfolio
+          values" for five deliveries after that stopped being true. Thirteen
+          accounts publish two or more, and the series spans 74 days.
+
+          It was the SIXTH absence in this book recorded against a premise nobody
+          rechecked — after FRED, the RBI, the release calendar, the ISIN tier and
+          3P's redemption on page 2 — and this file's own header still carried the
+          same claim in prose. It is the same chart Morning CIO draws, from the
+          same generated series, so the two cannot disagree about what the book
+          measured. */}
+      <div className="mt-5">
+        <NavVsIndex />
+      </div>
 
       {/* ── TWRR grid ── */}
       <Card className="mt-5" title="Time-weighted return"

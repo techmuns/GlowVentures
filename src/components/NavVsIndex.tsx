@@ -149,12 +149,57 @@ export function NavVsIndex() {
         t: ts(d),
         date: d,
         book: p ? Number(p.index.toFixed(3)) : null,
-        nav: p ? Number(p.navIndex.toFixed(3)) : null,
+        // NULL, NEVER NaN — the raw line is undefined before the panel is
+        // complete (`navIndexSeries`), and recharts draws a gap for null while
+        // NaN reaches the axis domain and drags it.
+        nav: p && Number.isFinite(p.navIndex) ? Number(p.navIndex.toFixed(3)) : null,
         flowIn: p?.flowIn ?? 0,
         unreportedFlowValue: p?.unreportedFlowValue ?? 0,
         index: level === undefined ? null : Number(level.toFixed(3)),
       };
     });
+
+    /**
+     * THE PANEL, MEASURED OFF THE POINTS THE CHART DRAWS.
+     *
+     * The series now begins before every covered account has published, because
+     * each link is struck over the accounts valued at BOTH its ends (see
+     * `navHistoryFrom`). That is what took the window from 34 days to 74 — and
+     * it means the early links cover fewer accounts than the late ones, which
+     * is a fact about the measurement and therefore belongs on the card rather
+     * than in this comment. Counted from the emitted points, never typed.
+     */
+    const panelAt = (p: (typeof book)[number]) => p.accountsOnDate + p.accountsCarried;
+    const panelFirst = book.length ? panelAt(book[0]) : 0;
+    const panelLast = book.length ? panelAt(book[book.length - 1]) : 0;
+    const completeFrom = book.find((p) => p.panelComplete)?.date ?? null;
+
+    /**
+     * THE RAW-vs-ADJUSTED PAIR, STRUCK OVER ONE WINDOW.
+     *
+     * The raw NAV line is only defined where the panel is complete, and the
+     * adjusted line now runs 40 days further back — so setting the whole
+     * series' adjusted return against the raw line's last value would compare
+     * 74 days with 34 and call the difference "the deposit". Both would be
+     * right on their own terms, which is exactly the shape of contradiction
+     * this card's own footer rule exists to stop. Both are taken over the
+     * COMPLETE-PANEL segment, which is the only window the raw line has.
+     */
+    const segFrom = book.findIndex((p) => p.panelComplete);
+    const segRaw = segFrom >= 0 && book.length - segFrom >= 2
+      ? (book[book.length - 1].nav / book[segFrom].nav - 1) * 100 : null;
+    let segAdj: number | null = null;
+    if (segFrom >= 0 && book.length - segFrom >= 2) {
+      let idxSeg = 100;
+      for (let i = segFrom + 1; i < book.length; i++) {
+        const p = portfolio.navHistory[i];
+        const open = p.linkOpen ?? portfolio.navHistory[i - 1].nav;
+        const close = p.linkClose ?? p.nav;
+        if (open > 0) idxSeg *= (close - (p.flowIn ?? 0)) / open;
+      }
+      segAdj = idxSeg - 100;
+    }
+    const segFromDate = segFrom >= 0 ? book[segFrom].date : null;
 
     const bookRet = windowReturnPct(book);
     /**
@@ -181,6 +226,7 @@ export function NavVsIndex() {
     return {
       book, rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven, dates,
       bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays,
+      panelFirst, panelLast, completeFrom, segRaw, segAdj, segFromDate,
       // COUNTED OFF THE ROWS THAT ARE DRAWN, not off the curve before it is
       // clipped — the book range caps at the last statement date, and a count
       // taken upstream of that would report closes the chart does not contain.
@@ -192,6 +238,7 @@ export function NavVsIndex() {
   const {
     rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven,
     bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays, indexRuns,
+    panelFirst, panelLast, completeFrom, segRaw, segAdj, segFromDate,
   } = model;
   const cov = BOOK_NAV_COVERAGE;
   // NAMED FROM THE REGISTRY, NOT FROM THE ID. `accountId` is a slug and reads
@@ -243,6 +290,22 @@ export function NavVsIndex() {
             mistake the allocation footer already cost this book once. */}
         {" "}Each point holds every account at its most recent mark on that date and counts each duplicated holding once,
         and both lines are rebased to 100 at {cov.from}.
+        {panelLast > panelFirst && completeFrom && (
+          <>
+            {" "}The panel grows from <strong className="text-slate-300">{panelFirst} to {panelLast} accounts</strong>{" "}
+            over the window and is complete from {completeFrom}; each step is measured over the accounts valued at both
+            of its ends, so an account arriving contributes nothing, and the dashed NAV line starts where the panel does.
+          </>
+        )}
+        {/* ── THE PANEL IS PART OF THE MEASUREMENT, SO IT IS ON THE CARD ─────
+            The series used to start where every covered account had published,
+            which threw away 40 of the archive's 74 measured days — the family
+            reported exactly that ("we are only able to see portfolio NAV for a
+            very short period of time"). Chain-linking each step over the
+            accounts common to its two ends recovers them, and the cost is that
+            the early steps cover 4 accounts where the late ones cover 13. That
+            is not a caveat to bury: a reader comparing this line to an index
+            needs to know how much of the book each stretch of it measures. */}
         {/* THE REBASE IS A BASIS, AND A BASIS BELONGS ON THE CARD'S BASIS LINE.
             It used to open the paragraph block under the chart, which is gone;
             the y-axis reads 84 / 91 / 98 and is a ratio rather than an amount,
@@ -291,8 +354,13 @@ export function NavVsIndex() {
       }>
 
       {/* ── HOW FAR BACK TO LOOK ────────────────────────────────────────────
-          The book's own dated series is five weeks and cannot be longer — the
-          whole archive is four and a half months. What CAN be lengthened is the
+          The book's own dated series is ELEVEN WEEKS and cannot be longer — the
+          archive's earliest dated valuation of any kind is 2026-03-31, and the
+          earliest belonging to an account that publishes twice is 2026-05-31.
+          (It was five weeks until the chain-link above; the sentence that said
+          so outlived the constraint, which is the failure this book records
+          against six other premises nobody rechecked.) What CAN still be
+          lengthened is the
           index's context around it, and the shaded band below keeps the measured
           stretch identifiable at every range, so a five-year view reads as
           market history with a measured window in it rather than as a comparison
@@ -322,8 +390,9 @@ export function NavVsIndex() {
             the family asked for the paragraphs to go — so it moves to the row
             that already holds this chart's controls, and it carries the one
             fact the paragraph had that nothing else does: HOW MUCH capital the
-            book line nets out. That figure is load-bearing. Over this window
-            the covered set's raw NAV runs +9.29% against the book's +0.54%,
+            book line nets out. That figure is load-bearing. Over the segment the
+            raw line covers, the covered set's raw NAV runs +9.29% against
+            +0.54% net of flows,
             and the whole of the difference is a deposit into V.E.C 128005 —
             money added is not money earned, and a chart of the raw NAV would
             show eight points of outperformance, none of it earned. The two
@@ -332,7 +401,9 @@ export function NavVsIndex() {
         {flowMarks.length > 0 && (
           <button type="button" data-testid="nav-raw-toggle" aria-pressed={showRaw}
             onClick={() => setShowRaw((v) => !v)}
-            title={`With the capital left in, the covered set reads ${fmtPct(model.book[model.book.length - 1].navIndex - 100, { sign: true })} against the book's ${bookRet == null ? "—" : fmtPct(bookRet, { sign: true })}. The difference is the deposit rather than performance. The intervals that took it are circled on the chart.`}
+            title={segRaw == null || segAdj == null
+              ? "The raw NAV line needs a complete panel — before it, the level is a growing set of accounts rather than a book."
+              : `Over ${segFromDate} → ${bookTo}, the window the raw line covers, the covered set reads ${fmtPct(segRaw, { sign: true })} with the capital left in against ${fmtPct(segAdj, { sign: true })} net of it. The difference is the deposit rather than performance. BOTH FIGURES ARE OVER THAT SEGMENT and not over the whole series, which starts ${cov.from} — the raw level is undefined before the panel completes, and comparing a 74-day return with a 34-day one would call the extra weeks a deposit. The intervals that took capital are circled on the chart.`}
             className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
               showRaw
                 ? "border-ink-600 bg-champagne-500 text-ink-950"

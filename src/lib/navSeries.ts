@@ -42,6 +42,10 @@ export type NavIndexPoint = {
   accountsOnDate: number;
   accountsCarried: number;
   unreportedFlowValue: number;
+  /** How many accounts the link ending at this point was struck over. */
+  linkAccounts: number;
+  /** True once every covered account has published — see `NavPoint`. */
+  panelComplete: boolean;
 };
 
 /**
@@ -63,23 +67,48 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
   if (history.length < 2) return [];
   const out: NavIndexPoint[] = [];
   let idx = 100;
-  const base = history[0].nav;
+  /**
+   * THE RAW NAV LINE IS REBASED AT THE COMPLETE PANEL, NOT AT THE FIRST POINT.
+   *
+   * `nav` is the whole marked panel, and the panel GROWS: ₹25.85 Cr over four
+   * accounts on 31 May against ₹128.25 Cr over thirteen on 10 July. Rebasing
+   * that to the first point draws a line up 396% in six weeks, every rupee of
+   * it an arrival. So the raw line starts where the panel is complete and is
+   * undefined before it — the one thing a chain-link cannot rescue, because it
+   * is a LEVEL rather than a return.
+   */
+  const firstComplete = history.find((p) => p.panelComplete !== false);
+  const base = firstComplete ? firstComplete.nav : history[0].nav;
   for (let i = 0; i < history.length; i++) {
     const p = history[i];
     if (i > 0) {
-      const prev = history[i - 1].nav;
+      /**
+       * CHAINED ON THE LINK, NOT ON THE LEVEL.
+       *
+       * `linkOpen` and `linkClose` are struck over the accounts valued at BOTH
+       * ends of this interval, so an account arriving here is in neither and
+       * contributes nothing. Dividing `nav` by the previous `nav` instead would
+       * put every arrival into the return, which is why the generator used to
+       * refuse to emit these points at all. Where the generator emits no link —
+       * an older book, or a first point — the level is the fallback and is
+       * identical once the panel is complete.
+       */
+      const open = p.linkOpen ?? history[i - 1].nav;
+      const close = p.linkClose ?? p.nav;
       const flow = p.flowIn ?? 0;
-      if (prev > 0) idx *= (p.nav - flow) / prev;
+      if (open > 0) idx *= (close - flow) / open;
     }
     out.push({
       date: p.date,
       nav: p.nav,
       flowIn: p.flowIn ?? 0,
       index: idx,
-      navIndex: base > 0 ? (p.nav / base) * 100 : 100,
+      navIndex: p.panelComplete === false || base <= 0 ? NaN : (p.nav / base) * 100,
       accountsOnDate: p.accountsOnDate ?? 0,
       accountsCarried: p.accountsCarried ?? 0,
       unreportedFlowValue: p.unreportedFlowValue ?? 0,
+      linkAccounts: p.linkAccounts ?? (p.accountsOnDate ?? 0) + (p.accountsCarried ?? 0),
+      panelComplete: p.panelComplete !== false,
     });
   }
   return out;

@@ -195,7 +195,16 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/navSeries.ts` — the DATED NAV series' presentation half: the chained
   flow-adjusted index, the nearest-EARLIER alignment against an index series, and
   the coverage stats. The series itself is generated (`BOOK_NAV_HISTORY`); this
-  is what turns levels into a return the book actually earned. See Stage 10p.
+  is what turns levels into a return the book actually earned. Each link is
+  chained over the accounts valued at BOTH its ends, which is what lets the
+  series start before the panel is complete. See Stage 10p and Stage 10ar.
+- `src/lib/attribution.ts` — WHAT MOVED, AND WHAT THE MARKET DID. The bridge is
+  generated (`BOOK_ATTRIBUTION`, struck in `attributionFrom` off the same
+  snapshots the series is drawn from, so the two cannot describe different
+  windows); this turns it into rows — the four labelled steps, the ranked
+  contributors and detractors with a name held in several accounts counted once,
+  and the managers' own one-year returns paired with their own benchmark ON ONE
+  DOCUMENT. See Stage 10ar.
 - `src/lib/indices.ts` — the four live NSE index levels (`/api/indices`), and the
   one place `NIFTY_500_SYMBOL` is named so the strip and the NAV chart cannot
   disagree about which index "Nifty 500" means.
@@ -2274,7 +2283,7 @@ written to `docs/BOOK-REPORT.md`, and the UI renders `—`. In this drop that is
 
 | Not populated | Why | What would fix it |
 | --- | --- | --- |
-| ~~`navHistory`~~ | **NOW POPULATED — see Stage 10p.** This row read "two dated portfolio values per account is not a series" for four deliveries after the archive started carrying three month-ends for some accounts. 13 of 49 accounts publish two or more dated valuations; 23 publish one and 13 publish none, and all of them are NAMED in `BOOK_NAV_COVERAGE` | a monthly valuation statement from any of the other 36 |
+| ~~`navHistory`~~ | **NOW POPULATED — see Stage 10p, and Stage 10ar for the window.** This row read "two dated portfolio values per account is not a series" for four deliveries after the archive started carrying three month-ends for some accounts. 13 of 51 accounts publish two or more dated valuations; 23 publish one and 15 publish none, and all of them are NAMED in `BOOK_NAV_COVERAGE`. The series is **12 points over 2026-05-31 → 2026-08-13** since each link was struck over the accounts valued at both its ends — it was 7 over 34 days while it began where the panel completes | a monthly valuation statement from any of the other 38 |
 | `stCostBasis` / `ltCostBasis` / `daysToLT` on 296 of 301 positions | needs per-lot purchase dates. The CAPITAL REGISTER the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS), not a lot register | a holding statement with lot-level acquisition dates, which ONE broker in this drop publishes — see below |
 | `privateMarkets.peFunds` etc. | no statement here reports a fund-of-funds structure with its own TVPI and DPI. The AIF HOLDINGS are ordinary positions with `assetClass: "AIF"`, and the undrawn COMMITMENTS are `BOOK_COMMITMENTS` | a fund-of-funds statement |
 
@@ -5770,13 +5779,16 @@ statement date, so they can never be averaged into a book return. `/performance`
 already renders them per account and this card deliberately does not duplicate
 them.
 
-**AND `/performance` STILL CARRIES THE ABSENCE THIS CARD EXISTS TO CORRECT.** Its
-"NAV trajectory" card renders an `AbsentSection` reading *"No valuation series in
-this book · each account's statements carry exactly two dated portfolio values"*
-— the same premise Stage 10p measured and found false, still standing one route
-over from a chart built on the data it says does not exist. Named here rather
-than fixed, because the family pointed at Morning CIO; it is the sixth absence
-against an unchecked premise and it is one `<NavVsIndex />` away.
+**AND `/performance` STILL CARRIED THE ABSENCE THIS CARD EXISTS TO CORRECT —
+FIXED AT STAGE 10ar.** Its "NAV trajectory" card rendered an `AbsentSection`
+reading *"No valuation series in this book · each account's statements carry
+exactly two dated portfolio values"* — the same premise Stage 10p measured and
+found false, standing one route over from a chart built on the data it says does
+not exist. It was named here rather than fixed because the family had pointed at
+Morning CIO, as the sixth absence against an unchecked premise and *"one
+`<NavVsIndex />` away"*. It draws that chart now, off the same generated series,
+and `check:pages` asserts BOTH that the old wording is gone and that the series
+is there — a build that deleted the card satisfies the first and draws nothing.
 
 ### Stage 10x — Knowledge & Memory, Macro Research and Economy & Macro: REMOVED
 
@@ -8223,12 +8235,242 @@ carried a count struck against its own base. This branch adds one route
 arithmetic — which is the point of re-running the sweep rather than adding to a
 number, and the same reason `docs/BOOK-REPORT.md` counts rather than asserts.
 
-### Stage 10ar — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
+### Stage 10ar — THE NAV SERIES REACHES BACK, AND THE RETURNS ARE ATTRIBUTED
+
+*"fix this portfolio NAV, we are only able to see portfolio NAV for a very short
+period of time. Build return attribution over a period, against the benchmark —
+'what was my portfolio value in end of August 2025? What's my portfolio value end
+of August 2026? What was the attribution to those returns in 2026? So what did
+the benchmark do? What did I do? What did my portfolio do? In this last year,
+return attribution… which were the biggest detractors of returns?' All of these
+questions in my mind, these should be visible in this section."*
+
+**FOUR QUESTIONS. THE ARCHIVE ANSWERS THREE, AND THE FOURTH IS A REFUSAL WITH AN
+ASK.** Measured before anything was built, which is the whole of why the split
+is stated rather than glossed:
+
+| The question | Answered from |
+| --- | --- |
+| what moved, and which names | **NEW** — the four-term bridge over 268 holdings priced at both ends of a window |
+| what did the market do | the Nifty 500 over the same span, already fetched |
+| what happened over the last year | **NEW** — the managers' own published one-year returns, each beside the benchmark THAT MANAGER publishes, on the same document |
+| what was it worth in August 2025 | **ABSENT.** The archive's earliest dated valuation of any kind is 2026-03-31 |
+
+#### 1. The series was 34 days because of a rule, not because of the archive
+
+`navHistoryFrom` began the series where EVERY covered account had published —
+2026-07-10 — because a NAV LEVEL that climbs ₹27 Cr → ₹142 Cr as accounts ARRIVE
+reads as performance. That rule was right about the level and it threw away 40 of
+the archive's 74 measured days, which is exactly what the family reported.
+
+**A CHAIN-LINKED INDEX NEEDS A CONSTANT PANEL ACROSS EACH LINK, NOT ACROSS THE
+WHOLE SERIES.** Each point now carries the interval ending at it, struck over the
+accounts valued at BOTH its ends:
+
+```
+r = (linkClose − flowIn) / linkOpen − 1
+```
+
+An account first publishing on a date is in neither end of the link ending there,
+so its arrival contributes **0.00%** instead of a step. Measured, the panel grows
+4 → 13 and the series runs **7 points over 34 days → 12 points over 74**, from
+2026-05-31. `navSeries.ts` chains on the link; `windowReturnPct` reads +5.09%
+where dividing the LEVELS reads **+398.76%**, and the suite asserts that gap
+rather than only the right answer.
+
+**THE RAW NAV LINE IS THE ONE THING A CHAIN-LINK CANNOT RESCUE**, because it is a
+LEVEL. It is rebased where the panel completes and is `null` before it — not NaN,
+which reaches the axis domain and drags it. `panelComplete` rides on every point
+and `panelCompleteFrom` in the coverage block, so the old rule survives exactly
+where it is load-bearing.
+
+**AND THE RAW-vs-ADJUSTED PAIR IS NOW STRUCK OVER ONE WINDOW.** The toggle's
+hover set the whole series' adjusted return against the raw line's last value —
+74 days against 34, calling the extra weeks a deposit. Both figures were right on
+their own terms, which is this card's own footer rule failing inside a tooltip.
+Both are over the complete-panel segment now (+9.29% against +0.54%, the original
+pair), and the hover SAYS so.
+
+#### 2. Return attribution — 268 holdings priced at both ends, and nothing read them
+
+**SIXTEEN ACCOUNTS PUBLISH A VALUED HOLDINGS STATEMENT AT TWO OR MORE DATES, AND
+THOSE STATEMENTS ARE PER HOLDING.** Goldstandard prints 32 rows at 10 July and 32
+again at 11 August, SVAN 46 rows at three month-ends, Green Lantern 34 at two.
+That is the **seventh** absence in this book recorded against a premise nobody
+rechecked — after FRED, the RBI, the release calendar, the ISIN tier, the NAV
+series itself and 3P's redemption on page 2.
+
+**THE SPLIT IS EXACT, AND THAT IS THE WHOLE LICENCE FOR PUBLISHING IT.** Market
+value is quantity × the statement's own mark wherever a price is printed — rule
+3, and MEASURED rather than assumed: of 794 valued rows across the archive's
+holdings documents, 765 carry both and **every one satisfies the identity to the
+paisa, zero do not**, and the other 29 carry no price at all. So
+
+```
+v₁ − v₀  =  q₀·(p₁ − p₀)  +  (q₁ − q₀)·p₁
+            └─ PRICE ──┘      └── TRADING ──┘
+```
+
+with **no residual**. Nothing is apportioned, smoothed or fitted.
+
+**FOUR TERMS, BECAUSE TWO WOULD HIDE THE LARGEST MOVEMENT IN THIS BOOK.** A
+holding that ENTERED contributes its whole closing value and one that EXITED its
+whole opening value. Folding either into `tradeEffect` is defensible arithmetic
+and a bad answer: V.E.C 128005 runs ₹9.24 Cr → ₹20.29 Cr, +119%, and essentially
+all of it is the ₹11.24 Cr of Fund Deposits `accountXirr.test.ts` already gates
+that account for. Split out, the bridge SHOWS it as capital. On this book:
+
+| | |
+| --- | ---: |
+| Opening value, 13 accounts, 2026-05-31 → 2026-08-13 | ₹126.28 Cr |
+| **Price** — the only term that is performance | **+₹2.54 Cr** |
+| Trading | +₹8.37 Cr |
+| Bought in | +₹10.72 Cr |
+| Sold out | −₹8.23 Cr |
+| Not split — no per-unit price at one end | +₹0.49 Cr |
+| Closing value | **₹140.17 Cr** |
+
+and it covers ₹140.17 Cr of the book's ₹710.39 Cr, because every other account
+publishes one statement and **a level is not a change**.
+
+**A ROW WITHOUT A PRICE IS ITS OWN TERM, NEVER ZERO.** Cash sleeves and AIF units
+marked at a total value have no split. 360 ONE holds one such line and its value
+still moved ₹1.44 Cr → ₹1.47 Cr; printed `+₹0` that reads *this mandate went
+nowhere*, which is a measurement nothing made. Those cells render `AbsentCell`
+with the reason — and the **Not split** column exists so the row still ADDS
+ACROSS. Without it the row read open ₹1.44 Cr, price ₹0, trading ₹0, in/out —,
+close ₹1.47 Cr, which is "a total must tie to its own columns" one table over.
+**It was found by reading the rendered page, not by reasoning.**
+
+**A NAME HELD IN SEVERAL ACCOUNTS IS ONE CONTRIBUTOR** — the rupee impact adds
+and the percentage is re-derived from the combined opening value, never averaged
+across positions of different sizes. Today's movers' own rule arriving through a
+window: Ather Energy sits in both V.E.C folios at ₹33.69 L and ₹24.07 L and would
+otherwise take two of the top five slots while understating itself in both. The
+book's largest detractor is **Jammu Kashmir Bank −₹106.04 L, −19.47%**.
+
+**EACH ACCOUNT KEEPS ITS OWN WINDOW.** Green Lantern's pair is 25 June → 27 July,
+Carnelian's 10 July → 10 August, SVAN's 31 May → 31 July. One imposed window
+would discard accounts or credit one with weeks of standing still, which is
+`pooledXirr`'s own finding (5.44 pp on a quarter). Rule 3 applies too: one
+`dedupeGroup` counts once, at its later row.
+
+**AND AN ACCOUNT WHOSE BRIDGE DOES NOT TIE IS NOT PUBLISHED.** Every term is
+arithmetic on printed primitives, so a gap above a rupee means a row landed in
+two terms or in none — the account is dropped and NAMED in the run's notes.
+`hdfcNsdl.mjs`'s licence, applied to a decomposition.
+
+#### 3. The last year, from the managers' own reports — and no book-wide figure
+
+**SEVEN ACCOUNTS PUBLISH A ONE-YEAR RETURN AND THEIR BENCHMARK'S ONE-YEAR RETURN
+ON THE SAME DOCUMENT**, struck by the manager who runs the mandate. That is a
+primary-source answer to *"what did the benchmark do? what did I do?"* over
+exactly the period asked about — V.E.C 128004 **+30.46% against BSE 500 TRI
++4.93%**, Carnelian +15.84% against S&P BSE 500 +5.89%, SVAN 8710067 +7.27%
+against +2.98%.
+
+**BOTH FIGURES MUST COME FROM ONE BLOCK, and that is not a nicety.** Green
+Lantern's fact sheet closes 27 July and its performance history 10 August, and
+the S&P BSE 500's one-year reads **1.22% on the first and 5.89% on the second**.
+Pairing across documents prints a 14.93 pp active return where the document says
+10.30 — two windows in one row, and `attribution.test.ts` asserts the pairing per
+account by `source`.
+
+**AND THEY ARE NEVER AVERAGED INTO A BOOK FIGURE.** Different fee bases
+(Goldstandard after fees, Carnelian before), different benchmarks (N50TRI, S&P
+BSE 500 TRI, NSmCap250TRI) and different end dates. A weighted mean of those is a
+number no document supports, so the card REFUSES it in words and names the five
+accounts whose report carries no such pair. The refusal is the deliverable, which
+is why it is asserted as text: a card that averaged them would render a perfectly
+plausible percentage that no value check could see.
+
+#### 4. August 2025 is a refusal, and two substitutes were available
+
+Measured, not assumed: the archive's earliest dated valuation of ANY kind is
+**2026-03-31**, and the earliest belonging to an account that publishes twice is
+2026-05-31. So the opening side of that comparison does not exist, and neither
+does any calendar year's.
+
+**TWO PLAUSIBLE SUBSTITUTES WERE AVAILABLE AND BOTH ARE REFUSED.** Cost basis is
+dated on **3 of 371** positions, so "what it was worth a year ago" cannot be
+backed out of cost; and `BOOK_CAPITAL_MOVES` runs to 2023-05-04, so an opening
+value could have been *inferred* from capital in less capital out. **Neither is a
+valuation.** The ask is one document — a holdings statement per account dated on
+or before the date in question — and the card says so with the figures behind it.
+
+#### 5. `/performance`'s stale absence, which this change made a contradiction
+
+That page rendered *"No valuation series in this book · each account's statements
+carry exactly two dated portfolio values"* for five deliveries after it stopped
+being true, and this file already named it as the SIXTH unchecked-premise absence
+and *"one `<NavVsIndex />` away"*. It draws that chart now, off the same
+generated series, so the two pages cannot disagree about what the book measured.
+Both halves are asserted, and neither implies the other: a build that deleted the
+card satisfies the absence check and draws nothing.
+
+#### Fifteen bugs reintroduced, and the harness itself was the first defect
+
+**THE RESTORE SILENTLY DID NOTHING.** Two of the files this pass patches are NEW
+and therefore UNTRACKED, and `git checkout -- <untracked>` is a no-op — so the
+first run left every bug in place and reported the accumulated failures under
+each later bug's name. Caught by running a NO-PATCH CONTROL, which came back
+with four failures on an unchanged tree. The harness snapshots to a temp dir and
+restores by copy now. **A restore that cannot restore looks exactly like one that
+did**, which is this file's own `set -e`/`trap` lesson in a new shape.
+
+Thirteen of the fifteen then fired their own check on the first attempt. **The
+two that did not are the point of doing it**, and both were gaps in the sweep
+rather than in the pages:
+
+- **Chaining on the LEVEL again makes the Book pill read +398.76% instead of
+  +5.09%, and the whole sweep stayed CLEAN.** Every existing invariant on that
+  card checks the header's shape, the chart's geometry and the panel sentence,
+  and **not one looked at the MAGNITUDE of the figure**. `test:family` caught it;
+  the screen is where a reader would have believed it. The pill is now reconciled
+  against the book's own links, computed in `check-pages.mjs` on a path the page
+  does not take — and against the WRONG chaining too, so an equality written only
+  one way round cannot pass.
+- **Rebasing the raw NAV line at the series' first point draws it climbing ~440%
+  over a growing panel** and blows the y-axis domain out so far that both real
+  lines flatten. Also clean, because the hover's pair is computed separately and
+  stays right. The dashed curve's own vertex count is now checked against the
+  book's complete-panel point count.
+
+Three more defects were found this way in the checks themselves: `innerText`
+returns `""` for everything inside a collapsed `<details>` (the per-account table
+came back as eight empty cells and failed a correct page); `\b` does not exist
+between two word characters, so `/\bperformance\b/` matched nothing in the
+inline-badge cell `"PricePERFORMANCE"`; and a reason regex was struck on a
+PARAPHRASE (`no per-unit price`) of a sentence that reads *"carries a per-unit
+price on both statements"*.
+
+**AND THREE `navSeries.test.ts` CHECKS ENCODED THE RULE THIS CHANGE REPLACED.**
+One asserted no covered account's first valuation is later than the series'
+start; it moved down a level, to `panelCompleteFrom` and the per-point flag. One
+compared the whole series' adjusted return against the raw line's last value —
+which silently became 74 days against 34 — and is struck over the complete-panel
+segment now. One reproduced the chain by dividing levels, which is the bug. The
+same fixture-shaped calibration was in `check:pages`: *"the book must read BELOW
+the index"* was the fixture's outcome standing in for the claim, and inverts on a
+card that is correct.
+
+`build` · `tsc` · `test:ingest` 140 + 84 + 35 · `test:family` (a new
+`attribution.test.ts`, anchored on the generated book) · `check:family` 57/0 ·
+`check:pages` **146 combinations clean**, with the same two pre-existing
+abstentions. `npm run build-book` was run as a CONTROL first and regenerated
+byte-identically, so every difference belongs to this change; `BOOK_SUMMARY` does
+not move by a rupee, because a decomposition of a window is not a re-measurement
+of the book.
+
+### Stage 10as — EVERY INSTRUMENT, NOT JUST STOCKS; AND A CLOSED POSITION IS NOT AN ALLOCATION
 
 Four asks, and the last two turned out to be one defect seen from both ends.
 
-*(Numbered `10ar` rather than `10aq`: main took that letter while this branch was
-open, which is the same parallel-branch collision Stage 10al already records. And
+*(Numbered `10as` rather than `10aq`: main took THAT letter and then `10ar` too,
+while this branch was open — the same parallel-branch collision Stage 10al
+already records, twice over. Four PRs landed on main during this branch's life,
+which is why the letter moved twice and why every count below was re-measured on
+the merged tree rather than carried across. And
 the first of the four asks below OVERLAPS main's own — both rounds pointed at the
 grey paragraph under this table — so what shipped for it is MAIN'S answer, the
 collapsed fold in Stage 10aq, and the subsection here records only what this
@@ -8471,12 +8713,12 @@ holdings a page draws must not be struck on prose a redesign is free to reword.
 committed store rather than on a fixture) · `check:family` 57/0 · `check:pages`
 **148 combinations clean**, with the same two pre-existing abstentions —
 MEASURED ON THE MERGED TREE, which is the only base any of these counts is a
-fact about. Stage 10aq states 146 and this branch's own pre-merge run stated
-146; the two were struck against different bases and cannot be reconciled by
-arithmetic, which is the point of re-running the sweep rather than adding to a
-number. `npm run build-book` and `npm run build-lookthrough` are both no-ops
-against the committed tree, which is what says the files on disk are what the
-builders would write.
+fact about. Stages 10aq and 10ar each state 146 and this branch's own pre-merge
+run stated 146 too; all three were struck against different bases and cannot be
+reconciled by arithmetic, which is the point of re-running the sweep rather than
+adding to a number. `npm run build-book` and `npm run build-lookthrough` are both
+no-ops against the committed tree, which is what says the files on disk are what
+the builders would write.
 
 ### Stage 10k — News & Announcements: REMOVED
 
