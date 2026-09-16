@@ -314,6 +314,126 @@ export const MANDATE_BUCKET = "PMS mandates";
 export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
 
 /**
+ * ── CASH IS CASH, WHATEVER WRAPPER IT ARRIVED IN ────────────────────────────
+ *
+ *   "why should an ETF show here? Like, a liquid ETF should actually show in
+ *    cash. It should not come here… Cash is liquid, arbitrage. All of it is
+ *    cash. Then all of that has to go in cash."  … "please look at the mapping
+ *    because as of now, it looks all over the place to me."
+ *
+ * IT WAS ALL OVER THE PLACE, AND THAT IS MEASURABLE RATHER THAN A MATTER OF
+ * TASTE. One security — Nippon India ETF Nifty 1D Rate LIQUID BeES, the
+ * family's own example — reached this book under TWO different asset classes:
+ *
+ *   ETF          in three Motilal demat accounts   ₹1.1764 Cr
+ *   Mutual Fund  in the LKP broking account        ₹0.0017 Cr
+ *
+ * and the liquid FUNDS split two ways for the same reason: Axis Liquid arrives
+ * inside a PMS statement, whose own section heading types it `Cash`, while
+ * ABSL, ICICI and HDFC Liquid arrive on a depository statement that types every
+ * scheme `Mutual Fund`. Nothing is misread. `assetClass` is what the ISSUING
+ * DOCUMENT called it (§5), and four documents called one kind of instrument
+ * three different things.
+ *
+ * SO THE FIX IS ON THE BUCKET, NOT ON `assetClass`. The archive must go on
+ * describing the statements — `assertNormalized` still rejects a document that
+ * says otherwise, and `glowData.ts` still regenerates byte-identically — while
+ * the CATEGORY AXIS answers the question a reader actually asks of it: how much
+ * of this book is cash? This is the same seam `MANDATE_BUCKET` already uses,
+ * where an account's engagement overrides the class of every row in it.
+ *
+ * WHAT IT WAS COSTING, AND IT IS NOT A LABEL. On the deduped current-holdings
+ * set the Cash row read **₹0.0000 Cr** — every real rupee of cash was either
+ * inside a mandate (correctly, see below) or filed under Mutual Fund and ETF.
+ * The family were being shown a book with no cash in it while holding
+ * ₹14.07 Cr of liquid funds and liquid ETFs. After this: Mutual Fund
+ * ₹99.90 → ₹87.01 Cr, ETF ₹24.56 → ₹23.38 Cr, Cash ₹0 → ₹14.07 Cr, and the
+ * footer does not move by a rupee — which is the check that says this is a
+ * regrouping and not a re-measurement.
+ *
+ * ── A COMMITTED LIST, CITED PER ENTRY, AND DELIBERATELY NOT A NAME MATCHER ──
+ *
+ * Every entry names the row in the family's own consolidated review (30 June
+ * 2026) that files it under Cash — the same standing `familyTaxonomy.ts` gives
+ * its `reviewProduct`, and the same three-witness workbook. A pattern over
+ * names is what this book refuses everywhere else and for a measured reason:
+ * "Motilal Oswal Active Momentum Fund" matched "Motilal Oswal Founders Fund II"
+ * on a shared HOUSE, and a section heading looks equally authoritative whichever
+ * rows sit under it.
+ *
+ * ── ARBITRAGE IS IN THE RULE AND NOT YET IN THE BOOK, WHICH IS TWO FACTS ────
+ *
+ * The family named arbitrage in the same breath as liquid, and their review
+ * carries ₹41.08 Cr of it — four funds, the largest ₹30.99 Cr. Two things about
+ * that are worth stating rather than glossing:
+ *
+ *   • It is the ONE place this departs from their workbook. That workbook lists
+ *     all four on its DEBT sheet — which is why `familyTaxonomy.ts` files them
+ *     as Debt on the family's own asset-class axis, and that stays. It also
+ *     codes every one of them basket `Liquid`, so the workbook was already half
+ *     of this way. The instruction above is the family overruling their own
+ *     sheet placement for the category axis, which is theirs to do.
+ *   • NOT ONE OF THEM IS IN THIS BOOK. Searched over every position: no holding
+ *     carries an arbitrage name, so this map has no arbitrage entry today and
+ *     the screen shows none. Saying "arbitrage now shows in cash" would be a
+ *     claim about a row that does not exist.
+ *
+ * That second point is exactly how a typed list goes stale in silence, so it is
+ * not left to a future reader to notice: `cashEquivalentCandidates` below finds
+ * what this map does not name, and `familyTaxonomy.test.ts` FAILS on the first
+ * drop that brings one. The detector REPORTS and never DECIDES — check (c)'s
+ * "flagged, never deduped", one axis over — because a rule that moved money on
+ * the strength of a name is the failure the paragraph above refuses.
+ */
+export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
+  "absl-liqf-d-growth": "Aditya Birla SL Liquid Fund-Direct (G) — Cash sheet",
+  "icici-liqf-d-growth": "ICICI Pru Liquid Fund-Direct(G) — Cash sheet",
+  "hdfc-liquid-fund-direct-plan-growth-option": "HDFC Liquid Fund -Direct(G) — Cash sheet",
+  "nip-etnf1d-rtliqbees": "Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW — Cash sheet",
+  /**
+   * Already `Cash` by its own PMS statement's section heading, and listed
+   * anyway. It reaches this map only inside a mandate, where the mandate wins
+   * (below) and this entry never fires — but a set called "the cash
+   * equivalents in this book" that omitted a liquid fund BECAUSE one document
+   * happened to type it correctly is a set that cannot be checked against the
+   * review, and the first drop reporting it from a depository instead would
+   * find it missing.
+   */
+  "axis-liquid-fund-direct-plan-growth-option": "Axis Liquid Fund - Direct Plan - Growth Option — Cash sheet",
+};
+
+/**
+ * Is this holding one of the family's cash equivalents?
+ *
+ * Keyed on `securityKey` — this book's identity for a security (§1) — so it
+ * holds wherever the holding is reported rather than only where it is reported
+ * today, which is the same reason `RINGFENCED_SECURITY_KEYS` is keyed that way.
+ */
+export const isCashEquivalent = (p: { securityKey?: string }) =>
+  p.securityKey != null && Object.prototype.hasOwnProperty.call(CASH_EQUIVALENT_KEYS, p.securityKey);
+
+/**
+ * WHAT THE MAP DOES NOT NAME, SO THE NEXT DROP CANNOT LAND SILENTLY.
+ *
+ * Returns the holdings whose printed name reads as a cash equivalent and which
+ * `CASH_EQUIVALENT_KEYS` does not carry. It is a LEAD, never a verdict, and
+ * nothing on screen and no total reads it: its one caller is the suite, which
+ * fails and names the offenders so a human commits them with a citation.
+ *
+ * The pattern is anchored on whole words on purpose. `liquid` unanchored also
+ * matches nothing dangerous here, but `arb` would match "Arbor", and this book
+ * has already measured what a loose name rule does to it.
+ */
+const CASH_EQUIVALENT_HINT = /\b(liquid|liqf|liqbees|arbitrage|overnight|money\s*market)\b/i;
+
+export function cashEquivalentCandidates<T extends { securityKey: string; security: string }>(
+  positions: readonly T[],
+): T[] {
+  return positions.filter((p) => !isCashEquivalent(p)
+    && (CASH_EQUIVALENT_HINT.test(p.security) || CASH_EQUIVALENT_HINT.test(p.securityKey)));
+}
+
+/**
  * Which bucket a holding belongs to on a HOLDINGS TABLE.
  *
  * Keys are strings, and every class that is not touched passes through as its
@@ -325,11 +445,21 @@ export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
  * off the position is what would let two rows of one mandate land in two
  * buckets.
  */
-export function holdingBucket(p: { assetClass: string }, engagement: string | null | undefined): string {
+export function holdingBucket(p: { assetClass: string; securityKey?: string }, engagement: string | null | undefined): string {
   const route = holdingRoute(engagement);
   // A mandate takes its whole account — the shares AND the cash sleeve beside
   // them — because that is what the manager runs and what the statement totals.
   if (route === "mandate") return MANDATE_BUCKET;
+  /**
+   * CASH AFTER THE MANDATE, AND THE ORDER IS THE WHOLE OF IT.
+   *
+   * Both of this book's Axis Liquid rows sit INSIDE a Green Lantern mandate,
+   * and a mandate is worth what its own statement says it is worth. Lifting its
+   * liquid sleeve into Cash would leave that row unable to tie to the document
+   * it came from — which is the check that keeps the mandate bucket honest, and
+   * the identical reason the ordinary cash sleeve is not lifted either.
+   */
+  if (isCashEquivalent(p)) return "Cash";
   /**
    * AN UNREADABLE ENGAGEMENT DOES NOT BECOME "DIRECT".
    *

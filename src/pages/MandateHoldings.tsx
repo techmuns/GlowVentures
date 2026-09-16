@@ -14,6 +14,8 @@ import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey } from "@/lib/txnRollup";
+import { capitalRollup } from "@/lib/tranches";
+import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 
@@ -408,7 +410,7 @@ export function MandateHoldings() {
 
           MEASURED BEFORE REMOVING IT: Buoyant is not a row on that card at all
           (it publishes no dated capital record), so this card was never the way
-          into its dealing; the By manager tab is, and it covers all ten accounts
+          into its dealing; the Manager trades tab is, and it covers all ten accounts
           whose statements the tape reads. The other six fund folios reaching
           this branch report no dealing whatsoever, so the card was an empty box
           for every one of them — which is what the family pointed at.
@@ -416,11 +418,66 @@ export function MandateHoldings() {
           The card stays on the MANDATE branch below, where it is reached from
           the holdings tables and where nine accounts actually fill it.
         */}
+
+        {/*
+          WHAT THE FAMILY PUT IN *IS* ON THIS BRANCH, AND THE DISTINCTION IS THE
+          POINT OF THE PARAGRAPH ABOVE.
+
+          *"Show contribution-wise transactions inside every PMS and AIF
+          mandate."* The dealing card came off this branch because a fund folio
+          reports no dealing — one purchase of a manager's portfolio is not a
+          trading record, and drawing an empty table for it is what the family
+          pointed at. The CONTRIBUTION record is the opposite case and is exactly
+          what a fund folio does report: measured, EIGHT of this book's eleven
+          dated capital records belong to accounts that reach this branch — the
+          five Sanshi folios, both Transition Venture trusts and 3P — against
+          three on the mandate branch. Leaving it off here would have answered
+          the smaller half of the ask.
+        */}
+        <CapitalIn account={account} />
       </div>
     );
   }
 
   // ── The mandate itself ─────────────────────────────────────────────────────
+  /**
+   * ── WHEN, BESIDE HOW MUCH ───────────────────────────────────────────────────
+   *
+   *   "here, you've given me the amount, but you've not given me the date. Date
+   *    is equally important… But invested when? When? Okay. Becomes very
+   *    important."
+   *
+   * TWO SOURCES, STRONGEST FIRST, AND NEITHER IS DERIVED FROM THE OTHER:
+   *
+   *   • the account's own DATED CONTRIBUTION RECORD — the first payment the
+   *     statements put a date against (11 of 51 accounts);
+   *   • failing that, the statement's own printed INCEPTION DATE (12 of 51).
+   *
+   * They are different facts and the label says which, because they can differ:
+   * an inception date is when the account opened, a first contribution is when
+   * money arrived in it. Printing either under a bare "since" would let a reader
+   * take one for the other.
+   *
+   * AND IT IS NOT THE DATE THE COST WAS INCURRED. The tile above it is the
+   * mandate's COST BASIS — what the manager paid for the shares it holds now —
+   * and the manager has been trading inside the account since. So the sub-line
+   * names what the date IS (funded from / opened) rather than attaching it to
+   * the cost figure as though the two were one measurement. The full record is
+   * the card below.
+   */
+  const firstContribution = BOOK_CAPITAL_MOVES
+    .filter((m) => m.accountId === account.accountId && m.direction === "in")
+    .map((m) => m.date).sort()[0] ?? null;
+  const fundedNote = firstContribution
+    ? `funded from ${fmtDate(firstContribution)}`
+    : account.inceptionDate ? `account opened ${fmtDate(account.inceptionDate)}`
+    : null;
+  const fundedWhy = firstContribution
+    ? `${account.provider} dates the first payment into this account to ${fmtDate(firstContribution)}. Every contribution it reports is listed in full below — this is the earliest of them, not the date the manager bought what it holds today.`
+    : account.inceptionDate
+      ? `${account.provider} prints ${fmtDate(account.inceptionDate)} as this account's inception. It does not date the individual payments into it, so this is when the account opened rather than when money arrived in it.`
+      : `No statement in this drop dates what was paid into this account, or when it opened.`;
+
   const shares = rows.filter((r) => r.assetClass === "Equity");
   const sleeve = rows.filter((r) => r.assetClass === "Cash");
   const other = rows.length - shares.length - sleeve.length;
@@ -528,11 +585,19 @@ export function MandateHoldings() {
           icon={<Wallet className="h-4 w-4" />} />
         <Kpi label="Invested"
           value={cost === null ? <AbsentValue /> : money(cost)}
-          sub={cost === null
-            ? <span className="text-slate-500">no row on this statement reports a cost</span>
-            : noCost
-              ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
-              : "cost in, whole mandate"}
+          sub={<span title={fundedWhy}>
+            {cost === null
+              ? <span className="text-slate-500">no row on this statement reports a cost</span>
+              : noCost
+                ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
+                : <span>cost in, whole mandate</span>}
+            {/* THE DATE, AND ITS ABSENCE IS NAMED RATHER THAN LEFT BLANK — a
+                tile that simply stops mentioning when tells a reader nothing
+                about whether to go and find the document. */}
+            <span className="text-slate-500">
+              {" · "}{fundedNote ?? "no statement dates what was paid in"}
+            </span>
+          </span>}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
@@ -716,8 +781,180 @@ export function MandateHoldings() {
         </div>
       </Card>
 
+      {/* THE TWO RECORDS, SIDE BY SIDE AND NEVER CONFLATED: what the family
+          paid in, then what the manager did with it. */}
+      <CapitalIn account={account} />
+
       <ManagerTrades account={account} />
     </div>
+  );
+}
+
+/**
+ * ── WHAT THE FAMILY PUT IN, CONTRIBUTION BY CONTRIBUTION ────────────────────
+ *
+ *   "Twice — I have the two tranches I've entered here. How do I see that? I
+ *    can't see that. Where will I get to see that there were two contributions?
+ *    … amount invested is fine. But if I further want to see — because XIRR will
+ *    change depending on the investment amount and the time, XIRR will change.
+ *    It is not showing that. So need to show transaction wise."
+ *
+ * THE RECORD EXISTED AND THIS PAGE DID NOT READ IT. `BOOK_CAPITAL_MOVES` carries
+ * every dated contribution and redemption the statements type as one, and the
+ * Transactions card has shown them per account since Stage 10ag — but a reader
+ * who opens a mandate from Holdings, from Family & Entities or from a company
+ * page never passes through that card. This page showed an Invested figure and
+ * nothing behind it, which is the half of the ask the family are pointing at.
+ *
+ * AND THE SECOND SENTENCE IS THE REASON IT IS A TABLE RATHER THAN A COUNT.
+ * ₹10 Cr in March and ₹10 Cr in October are the same ₹20 Cr invested and not the
+ * same return, because the March rupee has been at work seven months longer.
+ * That is exactly what a money-weighted return is FOR, and a reader cannot check
+ * one they cannot see the flows behind.
+ *
+ * ── IT REUSES `capitalRollup`, WHICH IS THE WHOLE POINT ─────────────────────
+ *
+ * The Transactions card's own table calls the same function with the same
+ * arguments, differing only in scope — every funded account there, this one
+ * here. A second implementation would be a second answer to "what did the family
+ * put into this mandate", and the tile above it and the tab one click away are
+ * precisely the pair where that disagreement is guaranteed to be visible. Same
+ * reason `holdingBucket`, `costCoversSet` and `companyExposure` are each one
+ * function rather than a per-page reflex.
+ *
+ * `side` is fixed at `"all"`: the Transactions card's side filter narrows what a
+ * reader asked to see, and there is no such control here — passing anything else
+ * would withhold half of a record this card exists to show in full.
+ *
+ * ── AN ACCOUNT WITH NO DATED RECORD SAYS SO, AND NAMES THE DOCUMENT ─────────
+ *
+ * ELEVEN of this book's 51 accounts publish one. The other 40 were funded too,
+ * and no statement in this drop says when: a managed mandate issues a
+ * capital-account ledger rather than dated allotments, and a depository records
+ * what is held and never what was paid for it. A card that rendered nothing
+ * there would read as a feed that failed, which is this book's founding rule —
+ * so it states which of the two it is and what would fill it.
+ */
+function CapitalIn({ account }: { account: Account }) {
+  const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
+  const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
+
+  const group = useMemo(() => {
+    const mine = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === account.accountId);
+    if (!mine.length) return null;
+    return capitalRollup(mine, [account], portfolio?.positions ?? [], BOOK_POSITION_TRANCHES, "all")[0] ?? null;
+  }, [account, portfolio?.positions]);
+
+  const title = "What the family put in";
+
+  if (!group) {
+    return (
+      <Card className="mt-5" title={title}>
+        <AbsentSection
+          what={`${account.provider} does not date what was paid into account ${account.accountNo}`}
+          needs={`The account was funded — it holds ${account.strategy ? "this mandate" : "a position"} — and no statement in this drop says on which dates or in how many payments. A managed mandate issues a capital-account ledger (contributions, withdrawals, TDS) rather than dated unit allotments, and a depository records what is held and never what was paid for it. What would fill this is a contribution or capital-account statement from ${account.provider} carrying a date against each payment. Eleven of this book's accounts publish one; this is not among them.`}
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-5" pad={false}
+      title={title}
+      subtitle={`Every dated movement ${account.provider} reports on account ${account.accountNo}, as its own statement types them. These are the FAMILY'S payments into the mandate — what the manager then bought with the money is a different record, above.`}
+      right={
+        <span className="pill" data-capital-how={group.staggered ? "staggered" : "lumpsum"}>
+          {group.staggered
+            ? `staggered · ${group.contributions} payments`
+            : group.contributions === 1 ? "one payment" : `${group.contributions} payments`}
+        </span>
+      }>
+      <div className="overflow-x-auto">
+        <table className="min-w-full whitespace-nowrap text-sm" data-capital-table={account.accountId}>
+          <thead className="border-b border-ink-700">
+            <tr>
+              <th className="label-xs px-4 py-2 text-left font-medium">Invested on</th>
+              <th className="label-xs px-4 py-2 text-left font-medium"
+                title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
+              <th className="label-xs px-4 py-2 text-right font-medium">Paid in</th>
+              <th className="label-xs px-4 py-2 text-right font-medium">Taken out</th>
+              <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
+              <th className="label-xs px-4 py-2 text-left font-medium">Security bought</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink-700/70">
+            {group.moves.map((m, i) => (
+              <tr key={`${m.date}-${i}`} data-capital-move={account.accountId} className="hover:bg-ink-700/40">
+                <td className="px-4 py-2 mono text-slate-200">{fmtDate(m.date)}</td>
+                <td className="px-4 py-2 text-slate-400">{m.label}</td>
+                <td className="px-4 py-2 text-right mono text-emerald-400/90">
+                  {m.direction === "in"
+                    ? (m.amount === null
+                      ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
+                      : money(m.invested ?? m.amount))
+                    : ""}
+                </td>
+                <td className="px-4 py-2 text-right mono text-rose-400/90">
+                  {m.direction === "out" ? money(m.amount ?? 0) : ""}
+                </td>
+                <td className="px-4 py-2 text-right mono text-slate-400">
+                  {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
+                </td>
+                <td className="px-4 py-2 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+          {/*
+            SUMMED FROM THE ROWS ABOVE, never computed beside them. A footer
+            struck independently of its own rows is the Private Market page's
+            PM-1: both figures correct on their own terms, and no check able to
+            see that one of the rows had been dropped.
+          */}
+          <tfoot className="border-t border-ink-700 bg-ink-800/60">
+            <tr data-capital-total={account.accountId}>
+              <td className="px-4 py-2 font-medium text-slate-200" colSpan={2}>
+                Total · {group.contributions} in{group.withdrawals ? ` · ${group.withdrawals} out` : ""}
+              </td>
+              <td className="px-4 py-2 text-right mono font-medium text-slate-100">{money(group.paidIn)}</td>
+              <td className="px-4 py-2 text-right mono font-medium text-slate-300">
+                {group.withdrawals === 0
+                  ? <AbsentCell reason="no statement for this account reports money coming back out" />
+                  : money(group.tookOut)}
+              </td>
+              <td className="px-4 py-2" colSpan={2} />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {/*
+        THE RETURN THE SECOND HALF OF THE ASK IS ABOUT, AND ITS GATE.
+
+        A return against a PARTIAL record of what was paid in overstates itself
+        by everything it missed, so `contributionsAreComplete` — inside
+        `capitalRollup` — publishes one only where the documents establish that
+        the list reaches inception. Where it cannot, the reason is printed here
+        rather than the figure being quietly withheld or, worse, struck anyway.
+      */}
+      <div className="border-t border-ink-700 px-4 py-2.5 text-[12px] leading-relaxed text-slate-400">
+        {group.returnPct === null || group.gain === null ? (
+          <>Net invested {money(group.net)} against {money(group.value)} today.{" "}
+            <span className="text-slate-500">
+              No return is struck on it: {group.incompleteReason ?? "this account's reported capital does not support one"}.
+            </span></>
+        ) : (
+          <>Net invested <span className="mono text-slate-200">{money(group.net)}</span> against{" "}
+            <span className="mono text-slate-200">{money(group.value)}</span> today —{" "}
+            <span className={`mono ${changeColor(group.gain)}`}>{money(group.gain)}</span>,{" "}
+            <span className={`mono ${changeColor(group.returnPct)}`}>{fmtPct(group.returnPct)}</span>{" "}
+            <span className="text-slate-500">
+              held over the whole record above. It is a holding-period return on what was paid in, NOT annualised
+              and NOT money-weighted: each payment above has been at work for a different length of time, and a rate
+              that weighted them by when they landed needs a valuation on each of those dates, which no statement
+              here carries.
+            </span></>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -728,7 +965,7 @@ export function MandateHoldings() {
  * and open the drill down page of one AIF/PMS then inside that we should see
  * what all transactions the portfolio manager of that fund has made."*
  *
- * The Transactions card now opens on the family's own capital (My investments);
+ * The Transactions card now opens on the family's own capital (What I invested);
  * this is where the manager's own dealing went. Grouped per SECURITY rather
  * than left as a tape, because that is the decision — Green Lantern bought The
  * Anup Engineering on fifty separate days, and fifty rows hide what one row
@@ -858,7 +1095,7 @@ function ManagerTrades({ account }: { account: Account }) {
             {instruments.length} {instruments.length === 1 ? "line" : "lines"} over the period this account&rsquo;s
             statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it. These are
             the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own capital into it
-            is on the Transactions card, under My investments.
+            is on the Transactions card, under What I invested.
           </p>
         </>
       )}

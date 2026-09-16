@@ -201,6 +201,14 @@ export function CapitalGains() {
       // A mandate takes its whole account — including the sleeve whose class no
       // statement carries. How an account is run is a fact about the ACCOUNT,
       // and it is knowable even where the security's class is not.
+      // NO `securityKey` HERE, AND IT IS NOT AN OVERSIGHT — `LedgerInsights`
+      // passes one from the same helper and this deliberately cannot. A
+      // `RealisedByClass` row is an AGGREGATE over several securities
+      // (`r.securities` is a list), so there is no single key to test for a
+      // cash equivalent and inventing one would file a whole row on one of its
+      // members. Measured, it costs nothing: seven of this book's eight rows
+      // are mandates and short-circuit above, and the eighth is LKP's Equity
+      // aggregate, which carries no cash equivalent to be misfiled.
       const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
         : r.assetClass ? holdingBucket({ assetClass: r.assetClass }, acc?.engagement)
         : null;
