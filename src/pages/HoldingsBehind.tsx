@@ -7,6 +7,10 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import {
+  aifSectionOf, aifCategoryOf, aifCategoryWhy, isAifHolding, aifSectionOrd,
+  unvaluedAifFolios, AIF_UNSTATED_SECTION, PRIVATE_EQUITY_SECTION,
+} from "@/lib/aifCategory";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { stockHref } from "@/lib/auditFormulas";
@@ -299,6 +303,77 @@ export function HoldingsBehind() {
    * `rows`; the filter narrows what is drawn, not what a row means.
    */
   const groups = groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions);
+  /**
+   * ── THE AIF DRILL-DOWN IS CLUBBED BY SEBI CATEGORY ─────────────────────────
+   *
+   * *"when you're drilling down in the AIF … make it cat one, cat two, cat
+   * three … club कर दो कि these are cat two AIFs, these are cat three AIFs,
+   * this is cat one AIF"* — and *"create another private equity fund line
+   * item"*.
+   *
+   * `aifCategory.ts` decides the section and carries the whole argument: it is
+   * READ from the two fields the statements print and never inferred, the two
+   * must agree where both speak, a phrase naming two categories resolves to
+   * neither, and Private Equity takes precedence over the category so the
+   * sections partition.
+   *
+   * IT APPLIES ONLY WHERE EVERY ROW IS AN AIF HOLDING. A drill-down that mixes
+   * an AIF with a mutual fund — the whole book, the winners, the costless
+   * positions — would draw a "Category not stated" heading over an ETF, which
+   * is a category claim about an instrument that has none. Gated on the SET
+   * rather than on the scope id, so it follows the rows rather than the address.
+   */
+  const aifSectioned = groups.length > 0 && groups.every((g) => g.rows.every((r) => isAifHolding(accIdx, r)));
+  const sections = useMemo(() => {
+    if (!aifSectioned) return null;
+    const by = new Map<string, Group[]>();
+    for (const g of groups) {
+      // A GROUP IS FILED BY ITS OWN ROWS, and a group whose rows disagree is
+      // not filed at all. Every group here is one fund across its folios, so
+      // they agree by construction on this book — but a fund reported under two
+      // categories by two custodians must not be silently filed under whichever
+      // sorted first, which is the same rule the category read itself follows.
+      const keys = [...new Set(g.rows.map((r) => aifSectionOf(accIdx, r)))];
+      const k = keys.length === 1 ? keys[0] : AIF_UNSTATED_SECTION;
+      const a = by.get(k) ?? []; a.push(g); by.set(k, a);
+    }
+    return [...by.entries()]
+      .map(([key, gs]) => ({ key, groups: gs, mv: sum(gs.map((g) => g.mv)), n: gs.length }))
+      .sort((a, b) => aifSectionOrd(a.key) - aifSectionOrd(b.key));
+  }, [aifSectioned, groups, accIdx]);
+
+  /**
+   * ONE ORDERED LIST, so the table body is a single `map` whether it is
+   * sectioned or not. Building it here rather than nesting two loops in the JSX
+   * keeps the group row identical in both cases — a second copy of it is a
+   * second chance for the sectioned table to render a cell the flat one does
+   * not, and this table has eight of them.
+   */
+  const items: ({ kind: "head"; key: string; mv: number; n: number } | { kind: "row"; group: Group })[] =
+    sections
+      ? sections.flatMap((sec) => [
+          { kind: "head" as const, key: sec.key, mv: sec.mv, n: sec.n },
+          ...sec.groups.map((g) => ({ kind: "row" as const, group: g })),
+        ])
+      : groups.map((g) => ({ kind: "row" as const, group: g }));
+
+  /**
+   * THE FOLIOS THAT PUBLISH NO NAV, NAMED RATHER THAN SILENTLY ABSENT.
+   *
+   * Every Category I AIF this family owns is an angel fund that values nothing,
+   * so a holdings table can never draw one — and a drill-down clubbed by
+   * category that simply has no Category I heading tells a reader they hold
+   * none. Measured here: four Sky Capital folios with ₹4.73 Cr drawn.
+   */
+  const unvalued = useMemo(() => {
+    if (!aifSectioned || !portfolio) return [];
+    const withPositions = new Set(portfolio.positions.map((p) => p.accountId));
+    const drawn = new Map<string, number | null>(
+      (portfolio.commitments ?? []).map((c) => [c.accountId, c.drawn]),
+    );
+    return unvaluedAifFolios(portfolio.accounts, withPositions, drawn);
+  }, [aifSectioned, portfolio]);
+
   /** What one row of this table IS, so the header and the footer can say it. */
   const anyMandate = groups.some((g) => g.kind === "mandate");
   const allMandate = groups.length > 0 && groups.every((g) => g.kind === "mandate");
@@ -562,7 +637,28 @@ export function HoldingsBehind() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
-                    {groups.map((g) => {
+                    {items.map((item) => {
+                      /* SECTION HEADINGS are rows of the SAME table rather than
+                         separate tables, so the columns stay aligned and the
+                         footer below still totals every row above it. */
+                      if (item.kind === "head") return (
+                        <tr key={`sec:${item.key}`} data-aif-section={item.key} data-aif-section-mv={item.mv}
+                            data-aif-section-funds={item.n} className="bg-ink-800/50">
+                          <td colSpan={3} className="px-4 py-1.5">
+                            <span className="label-xs text-slate-300">{item.key}</span>
+                            <span className="ml-2 text-[11px] normal-case text-slate-500">
+                              {item.n} {item.n === 1 ? "fund" : "funds"}
+                              {item.key === PRIVATE_EQUITY_SECTION && " \u00b7 the fund\u2019s own paperwork calls it private equity or venture capital"}
+                              {item.key === AIF_UNSTATED_SECTION && " \u00b7 no statement prints a SEBI category"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-1.5 text-right mono text-[12px] text-slate-300">{money(item.mv)}</td>
+                          <td className="px-4 py-1.5 text-right mono text-[12px] text-slate-400">{weight(item.mv) ?? DASH}</td>
+                          <td className="px-4 py-1.5" />
+                          <td className="px-4 py-1.5" />
+                        </tr>
+                      );
+                      const g = item.group;
                       const r = coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV);
                       const w = weight(g.mv);
                       const entities = [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))];
@@ -606,6 +702,23 @@ export function HoldingsBehind() {
                                 {showBucket && (
                                   <span className="text-[10.5px] text-slate-500"> · {bucketLabel(holdingBucket(g.rows[0], engagementOf(accIdx, g.rows[0])))}</span>
                                 )}
+                                {/* THE ROW STILL NAMES ITS SEBI CATEGORY even
+                                    when it sits under Private Equity, which is
+                                    the whole reason those two can be separate
+                                    sections without misleading anybody: a PE
+                                    fund IS a Category I or II AIF, and a reader
+                                    adding up the category sections has to be
+                                    able to see where it went. Where no category
+                                    is stated the chip says so and its hover
+                                    names the specific reason — a statement that
+                                    prints two categories and one that prints
+                                    none send a reader to different documents. */}
+                                {aifSectioned && (() => {
+                                  const read = aifCategoryOf(accIdx, g.rows[0]);
+                                  return read.category
+                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}> · {read.category}</span>
+                                    : <span className="text-[10.5px] text-slate-500" data-aif-row-cat="" title={aifCategoryWhy(read)}> · category not stated</span>;
+                                })()}
                                 {/*
                                   NO `redeemed` PILL HERE ANY MORE.
 
@@ -716,6 +829,40 @@ export function HoldingsBehind() {
                     pnl={sumOrNull(groups.map((g) => g.pnl))}
                     withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))} />
                 </table>
+              </div>
+            )}
+            {/* ── THE FOLIOS THAT VALUE NOTHING, NAMED UNDER THE TABLE ──────
+                Every Category I AIF this family owns is an angel fund that
+                publishes no NAV, so a holdings table can never draw one. A
+                drill-down clubbed by category that simply has no Category I
+                heading tells a reader they hold none, which is false — so the
+                folios are listed with the capital they have DRAWN, and the note
+                says plainly that drawn capital is what was paid rather than
+                what the stake is worth and is in no total on this page. */}
+            {unvalued.length > 0 && (
+              <div className="border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
+                <div className="label-xs text-slate-300">Held, and valued by no statement</div>
+                <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">
+                  {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} report units and the capital drawn
+                  against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is
+                  in none of its totals. Drawn capital is what was <em>paid</em>, never what the stake is worth.
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {unvalued.map((f) => (
+                    <li key={f.accountId} className="text-[11.5px] text-slate-400" data-aif-unvalued={f.section}
+                        /* THE FUND'S OWN REASON, which `build-book` wrote from the
+                           statement. It was on the record and rendered nowhere in
+                           the first draft — the field carrying the right answer
+                           into no caller, which is this repo's most-repeated
+                           defect and which this change committed three times. */
+                        title={f.reason ?? undefined}>
+                      <span className="text-slate-300">{f.section}</span> · {f.provider} {f.accountNo} · {f.owner} ·{" "}
+                      {f.drawn == null
+                        ? <span title="No statement for this folio prints the capital called to date.">drawn {DASH}</span>
+                        : <span className="mono">{money(f.drawn)} drawn</span>}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             <p className="px-5 pb-5 pt-3 text-[11.5px] leading-relaxed text-slate-500">

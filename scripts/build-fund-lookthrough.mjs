@@ -248,6 +248,92 @@ function holdingsRows(doc, monthKey) {
     .sort((a, b) => b.pctAum - a.pctAum);
 }
 
+/**
+ * ── ONE INDEX ENTRY, AND WHY THE WHOLE NAV BLOCK IS IN IT ───────────────────
+ *
+ * The index used to carry `navDate` alone and a caller wanting the NAV itself
+ * had to fetch the scheme's own file. That is right for a page showing ONE
+ * fund and wrong for a card showing every fund at once: Morning CIO's daily-NAV
+ * movers needs 20 numbers, and reading them out of the scheme files costs
+ * 632 KB on the landing page — which is the latency complaint that card already
+ * exists to answer, arriving through the store instead of the feed.
+ *
+ * `nav` is ~120 bytes per scheme and the index is 7 KB, so the whole card is one
+ * fetch. `navDate` STAYS beside it: it is what `SchemeMatch` has always
+ * published and what the fund card reads, and removing a field to avoid
+ * duplicating it inside this file would break a caller to save nothing.
+ */
+function indexEntry(rec, matchedVia) {
+  return {
+    schemecode: rec.schemecode, scheme: rec.scheme, plan: rec.plan,
+    isin: rec.isin, matchedVia,
+    navDate: rec.nav.date, nav: rec.nav,
+    holdingsAsOf: rec.holdingsAsOf,
+    holdingsSource: rec.holdingsSource?.kind ?? null,
+  };
+}
+
+/**
+ * ── `--reindex`: THE INDEX, REPLAYED OFF THE COMMITTED SCHEME FILES ─────────
+ *
+ * A full build needs the AmfiBeas checkout, which most machines do not have —
+ * so a change to `indexEntry` would otherwise be unlandable, exactly as a
+ * change to `securityKeyOf` was before `rekey:archive`. It does not have to be:
+ * every field `indexEntry` projects is READ VERBATIM off a record this store
+ * has already written to `<schemecode>.json`, so re-deriving the index from
+ * those files is a faithful partial replay of the build rather than a repair
+ * layer, and the next full run calls the same function on the same records and
+ * writes the same bytes.
+ *
+ * ITS GATE IS THE FIELD THE INDEX ALREADY CARRIED. `navDate` is in every
+ * existing entry and is `nav.date` by construction, so a replay that disagrees
+ * with it has joined an entry to the wrong scheme file — nothing is written and
+ * the run exits non-zero. `matchedVia` cannot be re-derived (it is a fact about
+ * the RESOLUTION, not about the record) and is carried across from the entry
+ * being replaced, which is why this can only ever UPDATE an index and never
+ * create one.
+ *
+ *   node scripts/build-fund-lookthrough.mjs --reindex
+ *   node scripts/build-fund-lookthrough.mjs --reindex --check   write nothing
+ */
+function reindex({ check }) {
+  const idxPath = join(OUT, "index.json");
+  if (!has(idxPath)) { console.error(`No index at ${idxPath} — --reindex updates an index, it cannot create one.`); process.exit(1); }
+  const index = readJson(idxPath);
+  const entries = Object.entries(index.schemes ?? {});
+  if (!entries.length) { console.error("The index carries no schemes."); process.exit(1); }
+
+  const replayed = {};
+  const bad = [];
+  for (const [securityKey, was] of entries) {
+    const f = join(OUT, `${was.schemecode}.json`);
+    if (!has(f)) { bad.push(`${securityKey}: no scheme file ${was.schemecode}.json`); continue; }
+    const rec = readJson(f);
+    const now = indexEntry(rec, was.matchedVia);
+    // THE CONTROL: the field the index already carried must come back
+    // unchanged, or this entry is joined to the wrong record.
+    if ((was.navDate ?? null) !== (now.navDate ?? null)) {
+      bad.push(`${securityKey}: navDate ${JSON.stringify(was.navDate)} in the index, ${JSON.stringify(now.navDate)} in ${was.schemecode}.json`);
+      continue;
+    }
+    replayed[securityKey] = now;
+  }
+  if (bad.length) {
+    console.error(`--reindex refuses: ${bad.length} entr${bad.length === 1 ? "y does" : "ies do"} not replay.`);
+    for (const b of bad) console.error(`  ${b}`);
+    process.exit(1);
+  }
+  const text = JSON.stringify({ ...index, schemes: replayed }, null, 2) + "\n";
+  const same = readFileSync(idxPath, "utf8") === text;
+  if (check) {
+    console.log(same ? `--reindex --check: no-op over ${entries.length} schemes.` : `--reindex --check: ${entries.length} schemes replay, and the index on disk DIFFERS.`);
+    return;
+  }
+  if (same) { console.log(`--reindex: no change (${entries.length} schemes).`); return; }
+  writeFileSync(idxPath, text);
+  console.log(`--reindex: rewrote index.json from ${entries.length} committed scheme files.`);
+}
+
 function main() {
   if (!has(AMFI)) {
     console.error(`AmfiBeas checkout not found at ${AMFI}. Set AMFIBEAS_DIR to a local read-only clone of techmuns/amfibeas.`);
@@ -464,15 +550,7 @@ function main() {
     },
     schemes: Object.fromEntries(resolved
       .filter((r) => out.has(String(r.fund.schemecode)))
-      .map((r) => {
-        const rec = out.get(String(r.fund.schemecode));
-        return [r.securityKey, {
-          schemecode: rec.schemecode, scheme: rec.scheme, plan: rec.plan,
-          isin: rec.isin, matchedVia: r.matchedVia,
-          navDate: rec.nav.date, holdingsAsOf: rec.holdingsAsOf,
-          holdingsSource: rec.holdingsSource?.kind ?? null,
-        }];
-      })),
+      .map((r) => [r.securityKey, indexEntry(out.get(String(r.fund.schemecode)), r.matchedVia)])),
     unresolved: unresolved.map((u) => ({ securityKey: u.securityKey, name: u.name, isin: u.isin, reason: u.reason })),
   };
   if (writeIfChanged(join(OUT, "index.json"), JSON.stringify(index, null, 2) + "\n")) changed++;
@@ -552,4 +630,7 @@ function main() {
   if (noHoldings.length) console.log(`${noHoldings.length} scheme(s) disclose nothing at all: ${noHoldings.map((v) => v.scheme).join(", ")}`);
 }
 
-main();
+// `--reindex` replays the index off the committed scheme files and needs no
+// AmfiBeas checkout; everything else is a full build. See `reindex` above.
+if (process.argv.includes("--reindex")) reindex({ check: process.argv.includes("--check") });
+else main();
