@@ -33,12 +33,38 @@
  "returns": [],
  "flows": null,
  "cashFlows": [],
- "transactions": [],
+ "transactions": [
+  {
+   "date": "2026-07-02",
+   "settlementDate": null,
+   "side": "receipt",
+   "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
+   "securityKey": "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
+   "isin": "INF174K01LC6",
+   "exchange": null,
+   "assetClass": null,
+   "description": "PAYOUT-CR CM M50175 TM/CP 10412 SETT — settlement, balance 613293.929",
+   "quantity": 613293.929,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  }
+ ],
  "capitalGains": [],
  "income": [],
  "expenses": [],
  "periodFrom": "2026-04-01",
- "periodTo": null,
+ "periodTo": "2026-07-31",
  "pan": null,
  "sourcePages": null,
  "accrual": null,
@@ -54,7 +80,17 @@
    "isin": "INF174K01LC6",
    "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
    "opening": 0,
-   "quantity": 613293.929
+   "quantity": 613293.929,
+   "movements": {
+    "unitsIn": 613293.929,
+    "unitsOut": 0,
+    "corporateActionIn": 0,
+    "corporateActionOut": 0,
+    "encumbrance": 0,
+    "rows": 1,
+    "unclassified": 0
+   },
+   "movementsReason": null
   }
  ],
  "dematBalances": [],

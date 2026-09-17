@@ -213,7 +213,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   windows); this turns it into rows — the four labelled steps, the ranked
   contributors and detractors with a name held in several accounts counted once,
   and the managers' own one-year returns paired with their own benchmark ON ONE
-  DOCUMENT. See Stage 10ar. **NO PAGE RENDERS IT since Stage 10ba**, when the
+  DOCUMENT. See Stage 10ar. **NO PAGE RENDERS IT since Stage 10bb**, when the
   family asked for the Return attribution section to go: the generator still
   emits the bridge on every `build-book`, and `attribution.test.ts` is the only
   thing that checks it ties — and it also carries the chain-linked NAV-series
@@ -228,6 +228,11 @@ cash holding's genuinely-zero return both match, and both are correct.
   `src/data/schemeNames.json` (`npm run build-scheme-names`), with the plan
   phrase cut to one word. Display only, on `stripDepositoryTail`'s terms:
   `securityKeyOf` is not routed through it. See Stage 10az.
+- `src/lib/shareMovements.ts` — OPENING, PLUS, MINUS, CLOSING: the one definition
+  of what the depository statements' quantity columns add to, read by the page
+  that PRINTS them and by the suite that CHECKS them. `movementNet` deliberately
+  excludes the encumbrance count — a pledge moves units between an account's free
+  and encumbered balances and nothing enters or leaves. See Stage 10ba.
 - `src/lib/txnSort.ts` — HOW THE TRANSACTION ROLLUPS ARE ORDERED, defined once
   and applied at all three levels: recent first by default, longest held, or
   largest. An absent amount sorts last rather than as zero. See Stage 10az.
@@ -1195,7 +1200,7 @@ NAV:
 
 ***THE PAGE HAS SINCE BEEN REMOVED at the family's request — `/register`
 redirects, and `src/data/registerData.ts` and `npm run build-register` went with
-it, because that module had exactly one reader. See Stage 10ba. What survives is
+it, because that module had exactly one reader. See Stage 10bb. What survives is
 everything below about the WORKBOOK: `scripts/lib/registerRead.mjs` is still its
 one reader, `npm run reconcile:register` still writes
 `docs/REGISTER-RECONCILIATION.md`, and the absence check below is stricter than
@@ -1238,7 +1243,7 @@ name does NOT appear — `REGISTER_SENTINEL`, derived from the data like
 onto Morning CIO fires the absence check; breaking the page's own wording fires the
 page check; the full sweep is 102 combinations clean.
 
-***ONLY THE SECOND STILL HAS A SUBJECT, AND IT IS STRICTER FOR IT (Stage 10ba).***
+***ONLY THE SECOND STILL HAS A SUBJECT, AND IT IS STRICTER FOR IT (Stage 10bb).***
 The page's five own invariants went with the page; the absence check now applies
 to EVERY route with no exception, and `cio` additionally asserts the sentinel
 DERIVED — because it used to be read out of `registerData.ts` inside a
@@ -7097,7 +7102,7 @@ for ever — the dead-code-that-looks-alive failure, wearing a query parameter. 
 `MOVER_SCOPES`, `CANNOT_BE_PRICED` and the param are deleted with the control.
 
 ***`?movers=` HAS SINCE COME BACK, AND IT IS NOT THIS REASONING REVERSED — see
-Stage 10ba.*** There it carries a TOGGLE BETWEEN TWO MEASUREMENTS (a live
+Stage 10bb.*** There it carries a TOGGLE BETWEEN TWO MEASUREMENTS (a live
 intraday price and a published NAV, never summed), not three unreachable scopes
 of one model. Both branches are whole cards, both are offered, both are walked.
 The distinction this paragraph draws is exactly what makes the two calls
@@ -9317,7 +9322,7 @@ Today's movers stays exactly as Stage 10t narrowed it and Stage 10al settled it
 beside it. Reading this as "widen that card" would have put back the selectors
 the family removed one round earlier.
 
-***THE TWO CARDS SIT BEHIND ONE TOGGLE SINCE Stage 10ba, and nothing below
+***THE TWO CARDS SIT BEHIND ONE TOGGLE SINCE Stage 10bb, and nothing below
 changed.*** The family asked for the second card to stop standing beside the
 first; it is the other branch of a control now. Every reason this section gives
 for keeping them APART — different prices, different days, never added — is why
@@ -10304,7 +10309,281 @@ regenerates the book BYTE-IDENTICALLY (md5 unchanged before and after) and
 `npm run build-scheme-names --check` is a no-op — nothing here touches the
 ingest, and a label change that moved a generated figure would not be one.
 
-### Stage 10ba — THREE REMOVALS, AND THE ONE THAT PUT TWO MEASUREMENTS BEHIND ONE CONTROL
+### Stage 10ba — 348 OF 362 MOVEMENT ROWS REACHED NOTHING, AND THE RETURN COLUMN WAS OFF-SCREEN
+
+Three asks, and the first turned out to be already shipped while the second
+needed a reader that had been silently reading 4% of what its own document
+printed.
+
+*"Where is it pending? … what is the timeline? When is the commitment expected?
+Or is there something which is due in the next one month, three months, six
+months?"* · *"if I'm holding a certain stock, then if I click on it, I should be
+able to see that beginning of the year, this was my quantity, sold so much in
+the year, this is the quantity remaining… more like an opening balance, plus
+minus, closing balance. In a simple table format."* · *"Where will I get to see
+holding period return? From the date of my purchase till today. Where is it —
+that's the most important return… Absolute return and XIRR, both. Less than one
+year equity has to be absolute. More than one year, then you should show me
+CAGR… ideally, I would not want to do one more scroll. One more click on the
+right side is not desirable. This 'held via' can actually hide… use that space
+for showing this column in entirety. And then tax maybe just make it a click."*
+
+#### 1. The capital-call timeline was already there, and it is verified rather than rebuilt
+
+Stage 10ay shipped it about an hour before the request arrived, and its code
+comments quote the same words. Verified on the current build rather than assumed:
+`/private-market` carries **Due now ₹0** (measured, on the 1 of 15 accounts whose
+statement prints the line), **Next 1 / 3 / 6 months** each `—` with the reason,
+and **Promised, no date ₹16 Cr**, with the scheme-by-scheme table underneath
+naming every fund's committed, called, invested, still-to-call, **its dated calls
+and their range**, its as-of and a tie check.
+
+**THE THREE WINDOWS ARE EMPTY BECAUSE NOTHING SCHEDULES THEM**, which is the
+answer rather than a gap: no document in this archive prints a commitment-period
+end date, a call notice dated ahead of its own statement, or an expected-drawdown
+table. Projecting the next call from the observed cadence is the one thing that
+must not happen — a forecast rendered beside fifteen measured figures reads as
+the sixteenth. Nothing here was changed; this entry exists so a future session
+does not rebuild it.
+
+#### 2. The demat statements print the whole quantity account, and the reader saw 14 rows of 362
+
+**`TXN_ROW` REQUIRED A LITERAL `CREDIT|DEBIT|CR PSB|DR PSB` TOKEN.** These
+statements print it on a wrapped continuation line, or not at all — so the
+pattern matched **14 of the 362 dated movement rows in the archive**, and nothing
+noticed, because a transaction statement with a few rows on it looks exactly like
+a quiet account. Every one of those 362 rows was in `pages.json` the whole time.
+That is the **ninth** absence in this book recorded against a premise nobody
+rechecked, and the second where the missing table was on a page already open.
+
+What the statement actually prints, per ISIN: an `Opening Balance`, a run of
+dated rows each carrying a **running balance**, and a `Closing Balance`. That is
+the family's table, printed by the custodian, four figures and all of them
+primitives.
+
+**THE DIRECTION COMES FROM THE BALANCE, NEVER FROM A TOKEN.** The row's own
+`Current Balance` less the previous one says whether units came in, went out, or
+did neither — and a token wrapped onto the next line says nothing at all.
+Measured across the corpus: **90 of 90 blocks walk from their printed opening to
+their printed closing with zero failures**, and every particular is consistently
+in, out or balance-neutral.
+
+**A BLOCK IS PUBLISHED ONLY IF ITS ROWS WALK ITS OWN PRINTED BALANCE.** That gate
+is the whole licence for showing the table — the same standing `hdfcNsdl.mjs`
+needs to publish a figure read off a rendered page, and `threePFlows`' five
+checks one document over. A block that does not walk has a row this reader
+misread or did not see, so it carries the two balances, `null` for every movement
+term and its own reason. Never a zero, which would read as a year in which
+nothing moved.
+
+| | |
+| --- | ---: |
+| Movement rows read | **14 → 362** |
+| Holding windows carrying an opening-to-closing split | **90** |
+| ...of which walk their own printed balances | **90** |
+| Rows matching no known particular | **0** |
+| Windows joining a position the book carries | 23 |
+| ...the rest are securities the account no longer holds | 66 |
+
+**AND THE EXCLUSION RESTS ON EVIDENCE, NOT ON THE WORD "NEUTRAL".** A pledge is
+balance-neutral by construction, and that is only safe while it stays true: one
+that DID move a balance would leave its units in no column, and the block would
+still walk if another row happened to compensate — wrong figures, nothing
+failing. The reader counts it, and prints the count **even when it is zero**,
+because a guard that only speaks when it fires is indistinguishable on a clean
+run from one that was deleted. Measured across all six statements: **0 of the 100
+pledge / lock-in rows changed a balance.** (That sentence rides in the reader's
+own warning, so it reaches `public/audit/` on the next full `npm run extract` —
+the replay writes only the four fields it names, which is its whole contract.)
+
+**FOUR TERMS, AND THE PLEDGE IS NOT ONE OF THEM.** `opening + units in − units
+out + corporate action = closing`. A pledge, an unpledge or an early pay-in
+earmark moves units between an account's free and encumbered balances and
+**nothing enters or leaves** — 100 of the 362 rows are those — so folding them in
+would report a holding at twice its size. They are COUNTED, in no column, and the
+suite asserts the exclusion is load-bearing rather than describing an empty set:
+**24 windows would stop reconciling if a pledge were counted.**
+
+A corporate action is its own term for the same reason in reverse: 99 rows are
+`CA-…` — a bonus, a rearrangement, a scheme redeeming its units — and folding
+those into units in would report the family as having bought units nobody
+ordered.
+
+#### `npm run replay:movements` — the fourth faithful partial replay
+
+`rekey:archive`, `build-lookthrough --reindex` and `replay:calls` are the
+precedents, and the same three rules govern this one: it only ever ADDS, its gate
+is struck on the ARCHIVE, and `--check` writes nothing and must be a no-op. The
+replayed block must reproduce the two balances already on disk holding for
+holding and in the same order, and **the tape may only GROW** — a replay that
+would lose a movement refuses, which is `guardAgainstShrinkingTheArchive`'s own
+rule at the document level.
+
+It exists because `npm run extract` needs `GLOW_PDF_PASSWORDS` for eight
+encrypted statements and `pdftoppm`/`tesseract` for two outlined-text ones, so a
+reader change would otherwise be unlandable on most machines.
+
+#### Three defects the arithmetic suite caught, and two were in the book layer
+
+`src/lib/__tests__/shareMovements.test.ts` is anchored on the generated book
+rather than on a fixture — a hand-written pair would prove only that two
+inventions agree — and it failed four ways on the first run:
+
+- **`r2` IS THE MONEY ROUNDER AND THESE ARE UNITS.** `shareMovementsFrom` rounded
+  each term to two decimals; the statements print units to **three**, and their
+  own arithmetic is exact at that precision. Bandhan Arbitrage read
+  `4,011,814.06 in less 640,238.36 out` against a printed closing of
+  `3,371,575.697` — **a table whose own columns do not reconcile**, by 0.003 of a
+  unit, which is nothing to a reader and is the whole of what the table claims.
+  `r3` now sits beside `r2` and says what it is for.
+- **AN ACCOUNT EXCLUDED BY DECISION WALKED BACK IN THROUGH A SIDE DOOR.** Demat
+  32387399 is the one whose three identifiers give three answers — masked PAN
+  against Aarti's, a file named for a family trust whose PANs it does not match —
+  so ₹8.23 Cr is excluded with the reason and is in no total. It issues a
+  transaction statement like every other demat, and its window was keyed on its
+  own accountId and emitted. `shareMovementsFrom` takes the REGISTRY now and
+  skips any account not in it, saying how many it skipped.
+- **AND FIVE FIELDS WERE CARRIED INTO NO CALLER.** This repo's most-repeated
+  defect, arriving in a component written the same hour as the comment warning
+  about it: the page rendered a GENERIC "no split is published" sentence where
+  `movementsReason` already named the balance the rows walked to and the closing
+  the statement printed, and `rows`, `unclassified`, `security` and `isin` were
+  emitted and read nowhere. The reason is the row's own now; the dated-row count
+  is in the footer; an unclassified row is NAMED as counted by its balance alone
+  rather than by a known event; and the statement's own spelling and ISIN ride on
+  the row, which is the evidence for the join and routinely a different name from
+  the page's own title.
+- **AND `makeTransaction` WAS SILENTLY DROPPING THE PARTICULARS.** The reader
+  built `CA-Redemption of AIF units — corporate-action, balance 0.000` for every
+  row and the normalized shape had no field to put it in, so the archive recorded
+  `side: "delivery"` and nothing about WHY units moved. On a trade report that is
+  right — a contract note's row is a buy or a sell and `side` says which — and on
+  a DEPOSITORY tape it is not: a debit is printed the same way whether a scheme
+  redeemed its units, a settlement obligation was met or a bonus was credited.
+  `description` is optional on `makeTransaction` now, which is the field
+  `makeCashFlow` has carried for the same reason since it was written.
+
+#### What the page shows, and the state where it shows nothing
+
+`src/components/QuantityMovement.tsx`, above the transaction tape, because the
+family asked for the quantity account first and the dated rows second.
+
+**ALL SIX COLUMNS RENDER ON EVERY NAME, INCLUDING WHERE THEY ARE ZERO.** Drawing
+the corporate-action column only where one fired would make the four printed
+figures stop adding across on the names that have one — and a zero in it is a
+measurement: no bonus, split, merger or scheme redemption touched this holding.
+The same for a pledge, which on a family book is the figure a reader acts on:
+these CDSL statements DO print the encumbrance rows, so a zero here is measured
+and not the absence of a column. (Contrast the NSDL statement on `/polycab`,
+which has no encumbrance column at all and correctly renders a dash.)
+
+**AND A HOLDING WITH NO BLOCK IS THE STATEMENT SAYING IT DID NOT MOVE.** 20
+positions sit in an account that issues a transaction statement and have no block
+on it — DSP Gold, DSP Silver, Zaggle, Bharat Parenteral among them. Measured
+rather than assumed: every one of the 89 blocks carries between 1 and 28 dated
+rows and **none carries zero**, and those securities appear **nowhere** in the
+document. So the page says so, names the accounts, and **invents no opening
+balance**: `opening = closing` is the tempting fill and it is a figure no
+statement printed, standing in a card whose every other figure was.
+
+**WHAT THIS IS NOT, in the footer: a trade history.** A demat credit or debit
+carries units and no price, no counterparty and no consideration
+(`precedence.mjs`), so nothing here is a buy or a sell and no amount is shown.
+
+#### 3. The Return column was 555 pixels off the right edge
+
+Measured at 1500×950 before anything was moved, because the complaint was
+geometric and no amount of matching text can see it: the stock page's `Position
+by account` table needed **1,508px inside a 953px card**, so Avg cost, Invested,
+Current, Unrealised P&L, **RETURN** and Basis were all off the right edge and a
+reader had to scroll the card sideways to reach the one figure they came for.
+
+Three moves, and the measurement afterwards is **overflow 0, no column cut**:
+
+- **`Held via` merged into `Managed by`**, which frees a whole column. The route
+  is not dropped with it — WHO CHOSE a position is the distinction Stage 10j and
+  10L exist for, and the mandate link is still the only door into a manager's own
+  book from this page — so both ride in that cell, and the strategy is no longer
+  printed twice (the mandate LINK is labelled with it).
+- **The tax card left the row and became a click.** Collapsing it in place would
+  not have helped: it would still have held a third of the width. Its figures are
+  untouched.
+- **The Return column names its measure and shows both.** `HPR` renders on every
+  costed row — the holding-period return, which the family called the most
+  important — and `CAGR` renders **beside it, never instead of it**, only where a
+  lot register reports the purchase date and the holding is at least a year old.
+  `measuredReturn` is the one place the methodology lives (Stage 10af), so the
+  guard that refuses to compound a sub-year window onto a year — the +99.0%
+  failure — is not re-implemented here.
+
+**XIRR IS DELIBERATELY NOT A THIRD LINE.** It is absent for every holding in this
+book for ONE reason — these statements cover the current period, so there is no
+per-holding cash-flow history to solve against, and `positionIrrPct` is the
+banned extrapolation that reaches +47,695% — and a dash on every row of every
+name would say that 371 times. The column header states it once, and names where
+the per-account XIRR lives.
+
+#### The verification, and the two checks that could not have failed
+
+Five routes, each walking a state the others cannot reach: `stock-qty` (the held
+name spanning the most demat accounts, chosen to exercise the corporate-action
+term), `stock-pledge` (a name whose window carries one), `stock-unmoved` (a name
+whose statement prints no block), `stock-cagr` (the one holding whose purchase
+date licenses an annual rate) and `stock` itself for the geometry. **Every
+expectation is derived from `glowData.ts` on the run** — `QTY_BOOK` and
+`CAGR_KEY` — and re-expressed there rather than imported from
+`src/lib/shareMovements.ts`, because a check that calls the helper it is checking
+agrees with it by construction.
+
+**A MISSING PROBE IS A FAILURE, NOT AN ABSTENTION.** A route that resolved
+nothing lands on a page with no table, which has no console error, no overflow
+and no stray zero — it would satisfy every generic check while asserting nothing.
+And the one evidenced abstention (`stock-qty`'s name carries no pledge) never
+stands alone: `stock-pledge` asserts the same claim as a hard failure.
+
+Two defects in the checks themselves, both found by reintroducing a bug:
+
+- **THE PROBE RETURNED `null` WHERE THERE WAS NO TABLE**, so every claim about
+  the no-block NOTE was unreadable and `stock-unmoved` failed a page that was
+  right — the "a check that cannot read the figure it asserts on" failure this
+  file already names. It reads the note independently of the table now.
+- **AND A WAITER THAT MATCHES ITSELF NEVER EXITS.** `until ! pgrep -f bug.sh` is
+  run from a shell whose own command line contains `bug.sh`, so it matched
+  itself and reported the batch as still running long after it had finished —
+  Stage 10aw's racing-waiter hazard in a new shape. The batch's own last line is
+  the signal; a predicate over process names is not.
+- **THE SIGN ON UNITS IN / UNITS OUT IS DECORATION AND THE ONE ON CORPORATE
+  ACTION IS DATA.** Both movement columns print a MAGNITUDE under a heading that
+  says the direction, so reading `−4,875.000` as part of the figure turns
+  `opening + in − out` into `opening + in + out` and the identity fails on a page
+  that is correct. The corporate-action column is the opposite: its sign IS the
+  measurement, because a bonus and a scheme redemption share one column.
+
+**THIRTEEN BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK**: the pledge counted as
+a movement, the total computed independently of its rows, the identity sentence
+deleted, the window pill removed, the no-block note deleted, an opening balance
+invented for a holding the statement printed none for, the `Held via` column
+restored (four routes), the tax card open on arrival (four routes), the return
+cell back to a bare percentage, a CAGR replacing the holding-period return, `r2`
+back on a unit count (three suite cases), the registry skip removed, and the old
+`TXN_ROW` restored — which refuses all six documents and exits non-zero, the
+shrink guard doing its job on the original defect.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` (a new `shareMovements.test.ts`, 18 checks anchored on
+the generated book) · `check:family` **57/0** · `check:pages` **160 combinations
+clean** — 152 plus this stage's four routes across both themes — with three
+EVIDENCED abstentions: the two pre-existing ones (this harness serves no
+`/api/quotes`, and every KPI tile on this book carries a figure) and the pledge
+claim on `stock-qty`, whose name carries none — which `stock-pledge` asserts as a
+hard failure, so it never stands alone. `npm run replay:movements -- --check` is
+a no-op and `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control before and after: **not
+one figure in the book moves**, which is what an additive change must look like.
+The ONLY generated files this touches are the six demat `document.json`s and the
+new `BOOK_SHARE_MOVEMENTS` block — `BOOK_SUMMARY` is unchanged to the rupee.
+
+### Stage 10bb — THREE REMOVALS, AND THE ONE THAT PUT TWO MEASUREMENTS BEHIND ONE CONTROL
 
 *"open pr and do not merge until i tell you to"* · *"remove the investment
 register page from the ui"* · *"give a toggle button in the direct equity daily
@@ -11415,6 +11694,16 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   are written back byte-identically and a run that would move one refuses — and
   `--check` writes nothing and is the control run, which must be a no-op.
   Follow it with `build-book`.
+- `npm run replay:movements` re-runs the DEMAT MOVEMENT reader over the committed
+  archive — the dated credits and debits, and each holding's opening-to-closing
+  split — from each document's own `pages.json`, through the same
+  `readTransactions` the extractor calls. The FOURTH faithful partial replay
+  after `rekey:archive`, `build-lookthrough --reindex` and `replay:calls`, on the
+  same three rules (see Stage 10ba). The two printed balances already on disk
+  must come back byte-identical, holding for holding and in the same order, and
+  the tape may only GROW — a replay that would lose a movement refuses. `--check`
+  writes nothing and is the control run, which must be a no-op. Follow it with
+  `build-book`.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a
@@ -11468,6 +11757,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   category read** (`aifCategory.test.ts`, Stage 10aw — `III` is never read as
   `I`, `Class A2` names nothing, `Category I/II` resolves to neither, and the
   sections partition the AIF row to the rupee),
+  the **share movements** (`shareMovements.test.ts`, Stage 10ba — the four
+  printed figures must add across on every window, and the exclusion of a pledge
+  is asserted as LOAD-BEARING: counting one must BREAK the identity that holds
+  without it),
   the **family's own dated investments** (`tranches.test.ts`, Stage 10ag: the
   tranches must tie to the position's own quantity, cost basis and market value
   on three separate paths; the derived entry NAV is checked against the one the
@@ -11517,7 +11810,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   outright if any entry's stored `navDate` disagrees with its scheme file, because
   then the entry is joined to the wrong record and the replay cannot reproduce it.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
-- ~~`npm run build-register`~~ — REMOVED at Stage 10ba with the `/register` page
+- ~~`npm run build-register`~~ — REMOVED at Stage 10bb with the `/register` page
   it was the only producer for. The workbook itself is untouched and
   `npm run reconcile:register` still reads it.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and

@@ -39,6 +39,7 @@
    "isin": "INF0R4I22041",
    "exchange": null,
    "assetClass": null,
+   "description": "CA-Rearrangement DEBIT — corporate-action, balance 0.000",
    "quantity": 965892.766,
    "unitPrice": null,
    "brokerageRate": null,
@@ -63,6 +64,7 @@
    "isin": "INF0R4I22058",
    "exchange": null,
    "assetClass": null,
+   "description": "CA-Rearrangement DEBIT — corporate-action, balance 0.000",
    "quantity": 282737.451,
    "unitPrice": null,
    "brokerageRate": null,
@@ -87,6 +89,7 @@
    "isin": "INF0R4I22066",
    "exchange": null,
    "assetClass": null,
+   "description": "CA-Rearrangement DATE-22042026 CREDIT — corporate-action, balance 1760865.154",
    "quantity": 993249.409,
    "unitPrice": null,
    "brokerageRate": null,
@@ -111,7 +114,33 @@
    "isin": "INF0R4I22066",
    "exchange": null,
    "assetClass": null,
+   "description": "CA-Rearrangement DATE-22042026 CREDIT — corporate-action, balance 2053614.026",
    "quantity": 292748.872,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-04-29",
+   "settlementDate": null,
+   "side": "receipt",
+   "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A1",
+   "securityKey": "buoyant-capital-aif-buoyant-opportunities-strategy-class-a1",
+   "isin": "INF0RRI22016",
+   "exchange": null,
+   "assetClass": null,
+   "description": "CA-Pvt. Placement_ AIF units DATE-29042026 — corporate-action, balance 1489474.102",
+   "quantity": 717459.678,
    "unitPrice": null,
    "brokerageRate": null,
    "stt": null,
@@ -135,7 +164,33 @@
    "isin": "INF0RRI22016",
    "exchange": null,
    "assetClass": null,
+   "description": "CA-Redemption of AIF units DEBIT — corporate-action, balance 0.000",
    "quantity": 1489474.102,
+   "unitPrice": null,
+   "brokerageRate": null,
+   "stt": null,
+   "otherCharges": null,
+   "ratePrecision": null,
+   "gross": null,
+   "brokerage": null,
+   "charges": null,
+   "net": null,
+   "printed": {
+    "settlementAmount": null
+   },
+   "source": null
+  },
+  {
+   "date": "2026-07-09",
+   "settlementDate": null,
+   "side": "receipt",
+   "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A4",
+   "securityKey": "buoyant-capital-aif-buoyant-opportunities-strategy-class-a4",
+   "isin": "INF0RRI22040",
+   "exchange": null,
+   "assetClass": null,
+   "description": "CA-Pvt. Placement_ AIF units DATE-09072026 — corporate-action, balance 3416657.416",
+   "quantity": 3416657.416,
    "unitPrice": null,
    "brokerageRate": null,
    "stt": null,
@@ -155,7 +210,7 @@
  "income": [],
  "expenses": [],
  "periodFrom": "2026-04-01",
- "periodTo": null,
+ "periodTo": "2026-07-31",
  "pan": null,
  "sourcePages": null,
  "accrual": null,
@@ -171,31 +226,81 @@
    "isin": "INF0R4I22041",
    "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B1",
    "opening": 965892.766,
-   "quantity": 0
+   "quantity": 0,
+   "movements": {
+    "unitsIn": 0,
+    "unitsOut": 0,
+    "corporateActionIn": 0,
+    "corporateActionOut": 965892.766,
+    "encumbrance": 0,
+    "rows": 1,
+    "unclassified": 0
+   },
+   "movementsReason": null
   },
   {
    "isin": "INF0R4I22058",
    "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B2",
    "opening": 282737.451,
-   "quantity": 0
+   "quantity": 0,
+   "movements": {
+    "unitsIn": 0,
+    "unitsOut": 0,
+    "corporateActionIn": 0,
+    "corporateActionOut": 282737.451,
+    "encumbrance": 0,
+    "rows": 1,
+    "unclassified": 0
+   },
+   "movementsReason": null
   },
   {
    "isin": "INF0R4I22066",
    "security": "3P INDIA EQUITY FUND#3P INDIA EQUITY FUND 1-CATEGORY III AIF-CLASS B3",
    "opening": 767615.745,
-   "quantity": 2053614.026
+   "quantity": 2053614.026,
+   "movements": {
+    "unitsIn": 0,
+    "unitsOut": 0,
+    "corporateActionIn": 1285998.281,
+    "corporateActionOut": 0,
+    "encumbrance": 0,
+    "rows": 2,
+    "unclassified": 0
+   },
+   "movementsReason": null
   },
   {
    "isin": "INF0RRI22016",
    "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A1",
    "opening": 772014.424,
-   "quantity": 0
+   "quantity": 0,
+   "movements": {
+    "unitsIn": 0,
+    "unitsOut": 0,
+    "corporateActionIn": 717459.678,
+    "corporateActionOut": 1489474.102,
+    "encumbrance": 0,
+    "rows": 2,
+    "unclassified": 0
+   },
+   "movementsReason": null
   },
   {
    "isin": "INF0RRI22040",
    "security": "BUOYANT CAPITAL AIF#BUOYANT OPPORTUNITIES STRATEGY-CLASS A4",
    "opening": 0,
-   "quantity": 3416657.416
+   "quantity": 3416657.416,
+   "movements": {
+    "unitsIn": 0,
+    "unitsOut": 0,
+    "corporateActionIn": 3416657.416,
+    "corporateActionOut": 0,
+    "encumbrance": 0,
+    "rows": 1,
+    "unclassified": 0
+   },
+   "movementsReason": null
   }
  ],
  "dematBalances": [],

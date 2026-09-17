@@ -548,6 +548,54 @@ export type CapitalMove = {
 };
 
 /**
+ * WHAT HAPPENED TO A QUANTITY OVER A STATEMENT'S OWN WINDOW.
+ *
+ * `opening + unitsIn - unitsOut + corporateAction = closing`, every term read
+ * off a demat statement's per-ISIN block — its printed opening balance, its
+ * dated movements and its printed closing balance. The identity holds on every
+ * entry that carries one, because the reader refuses a block whose rows do not
+ * walk between the two printed balances; where it refused, the movement terms
+ * are `null` and `reason` says why. Null is never zero here: a zero would read
+ * as a window in which nothing moved.
+ *
+ * NONE OF IT IS A TRADE. A depository movement has no price, no counterparty
+ * and no consideration, so these are UNITS IN and UNITS OUT rather than bought
+ * and sold, and no cost or realised gain is derived from any of them.
+ */
+export type ShareMovement = {
+  accountId: string;
+  securityKey: string;
+  security: string | null;
+  isin: string | null;
+  /** The window the two balances bound — the Indian FINANCIAL year on these. */
+  periodFrom: string | null;
+  periodTo: string | null;
+  opening: number | null;
+  closing: number | null;
+  unitsIn: number | null;
+  unitsOut: number | null;
+  /** Signed: the security itself changing, never a decision anybody made. */
+  corporateAction: number | null;
+  /**
+   * A COUNT, and in no total. A pledge moves units between free and pledged
+   * without changing the balance, so it is shown and never summed.
+   */
+  encumbranceMoves: number | null;
+  /** How many dated rows the statement prints between the two balances. */
+  rows: number | null;
+  /**
+   * Rows matching no particular this reader knows. They still count, by their
+   * own balance change — a weaker basis than a named event, so the page says so
+   * rather than presenting them as classified. Zero on this corpus.
+   */
+  unclassified: number | null;
+  /** The reader's own sentence where a block did not walk. Null when it did. */
+  reason: string | null;
+  /** The document this came from, for the archive. */
+  source: string | null;
+};
+
+/**
  * The dated investments behind ONE position, where they account for ALL of it.
  *
  * *"I invested additional 10 crores… previous amount… what was the return? Now
