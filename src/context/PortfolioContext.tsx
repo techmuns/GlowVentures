@@ -13,7 +13,8 @@ import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, type QuoteFeed } from "@/lib/quotes";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
-import { fmtCurrency, displaySecurity } from "@/lib/format";
+import { fmtCurrency } from "@/lib/format";
+import { holdingLabel } from "@/lib/schemeLabel";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
@@ -40,7 +41,14 @@ function defaultPortfolio(): Portfolio {
     // page (tables, dropdowns, the news/announcement holding tags) shows them the
     // same way. The securityKey is derived upstream from the raw name, so tidying
     // the display string here cannot move a position between groups.
-    positions: BOOK_POSITIONS.map((p) => ({ ...p, security: displaySecurity(p.security) })),
+    //
+    // `holdingLabel` is `displaySecurity` plus ONE more step, and only for a
+    // holding whose key resolved a mutual-fund scheme: the depository's clipped
+    // name becomes the AMC's published one and the plan phrase becomes a single
+    // word. It is reached from `src/data/schemeNames.json`, which was joined to
+    // this book BY ISIN — see `src/lib/schemeLabel.ts`. Nothing downstream may
+    // re-derive a key from this string, and nothing does.
+    positions: BOOK_POSITIONS.map((p) => ({ ...p, security: holdingLabel(p.securityKey, p.security) })),
     navHistory: BOOK_NAV_HISTORY,
     capitalGains: BOOK_CAPITAL_GAINS,
     // Dated external capital movements per account — the money-weighted-return

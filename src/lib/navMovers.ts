@@ -64,6 +64,7 @@ import type { Position } from "./types";
 import type { SchemeMatch } from "./lookthrough";
 import { holdingBucket } from "./analytics";
 import { engagementOf, type AccountIndex } from "./accounts";
+import { schemeNameFor, composeSchemeLabel } from "./schemeLabel";
 
 /**
  * THE BUCKETS A PUBLISHED DAILY NAV CAN REACH.
@@ -227,7 +228,13 @@ export function navMoverModel(
       }
     } else {
       byScheme.set(m.schemecode, {
-        schemecode: m.schemecode, scheme: m.scheme, plan: m.plan,
+        schemecode: m.schemecode, plan: m.plan,
+        // THE SAME NAME THIS BOOK SHOWS EVERYWHERE ELSE. The store's own
+        // `scheme` is AMFI's raw listing string (`…Fund-Reg(G)`), which is a
+        // THIRD spelling of a scheme the holdings tables and this card both
+        // name — so it is composed through `schemeLabel` and falls back to the
+        // raw string only where no scheme resolved, which on this card is never.
+        scheme: (() => { const sn = schemeNameFor(p.securityKey); return sn ? composeSchemeLabel(sn) : m.scheme; })(),
         security: p.security, securityKey: p.securityKey,
         keys: 0, positions: 1,
         nav: nav.value, navDate: nav.date, prevNav: nav.prev, prevNavDate: nav.prevDate,

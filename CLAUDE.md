@@ -218,6 +218,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   one place `NIFTY_500_SYMBOL` is named so the strip and the NAV chart cannot
   disagree about which index "Nifty 500" means.
 - `src/lib/ledger.ts` — the DATED record, read from `public/audit/` at runtime (see below).
+- `src/lib/schemeLabel.ts` — WHAT A MUTUAL-FUND SCHEME IS CALLED ON SCREEN. The
+  AMC's own published name, joined to this book BY ISIN through
+  `src/data/schemeNames.json` (`npm run build-scheme-names`), with the plan
+  phrase cut to one word. Display only, on `stripDepositoryTail`'s terms:
+  `securityKeyOf` is not routed through it. See Stage 10az.
+- `src/lib/txnSort.ts` — HOW THE TRANSACTION ROLLUPS ARE ORDERED, defined once
+  and applied at all three levels: recent first by default, longest held, or
+  largest. An absent amount sorts last rather than as zero. See Stage 10az.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -10086,6 +10094,176 @@ somewhere nobody looked.
 BYTE-IDENTICALLY — which is what says the archive on disk is what the extractor
 would write, and that a change carrying 52 new dated rows moved no figure.
 
+### Stage 10az — THE LABELS SAY WHAT THEY ARE, AND THE TAPE READS NEWEST FIRST
+
+Three asks, and the one that looked like a wording change turned out to have a
+committed, identifier-anchored source sitting in the repo already.
+
+#### 1. *"What is the capital deployed for private equity?… I told you — details, because it's not very clear."*
+
+and *"I'll make it clickable. And so you'll be redirected to the private page,
+and then we can show the details there."*
+
+Morning CIO's **Capital deployment** card carries four figures off the drawdown
+funds' capital accounts — committed, called, undrawn, distributed — and exactly
+ONE of them was a link: the words "Fund commitments". **The figure they were
+asking about, what has been CALLED, was not it.**
+
+**THE LIST IS THE ANCHOR NOW, AND THAT IS ONE LINK RATHER THAN FOUR.** The
+reasoning the card already carried stands and is why it is not four anchors —
+*"all four come off the same accounts, and four links to one destination reads
+as four different destinations"* — so the `<ul>` itself is the `<Link>`. Every
+figure on the card is a click target, there is still one destination, and the
+row now reads **Called / drawn — capital deployed** in the family's own words.
+
+`/private-market` is where the detail already is: committed, drawn, still to
+call and distributions, folio by folio, each tile naming the fraction of the
+capital accounts that publish it. Nothing had to be built there.
+
+**AND THE CHECK HAD TO BE REWRITTEN RATHER THAN DELETED.** It required a TEXT
+link reading exactly `Fund commitments` — struck on the one figure that was
+already a link and not on the one the family asked about. It is struck on
+`data-cio-deploy-link` now and additionally requires the anchor to COVER the
+called figure, so a card that kept the handle and lost the row fails. Verified
+by reintroducing the bug: removing the handle fires it by name.
+
+#### 2. *"Not recent transactions first. Do that."*
+
+*"how is it sorting? Is it, like, the recent transactions first? How is it
+sorted?… your transaction should always have your recent transactions first… It
+should be date wise, basically."* · *"See, something is October, something is
+December, something is 2023. It's all very chaotic."*
+
+**IT WAS CHAOTIC, AND FOR A REASON THAT LOOKED DEFENSIBLE WHEN IT WAS WRITTEN.**
+Every rollup on the Transactions card sorted BY SIZE — `capitalRollup` by
+`paidIn` descending, `rollup` by bought + sold — so the family's own capital read
+`3 Oct 2025`, `4 May 2023`, `16 Dec 2025` down the Period column. That ordering
+answers *what is the biggest*; a reader scanning dated movements is asking *what
+happened last*.
+
+**`src/lib/txnSort.ts` IS THE ONE DEFINITION, AND IT IS APPLIED AT ALL THREE
+LEVELS.** Groups, the instruments inside a group and the dated tranches inside
+those. A comparator written per level is how a card set to newest-first comes to
+contain rows that open on their oldest movement — which is the same complaint one
+level down. The full trade list follows it too, and is sorted BEFORE the cap is
+applied, so the cap takes the first rows of the order the reader asked for rather
+than of the feed's.
+
+**THREE MODES, AND DELIBERATELY NOT FOUR.** *"you can give me an option. I can
+sort recent transactions first, or I can sort as per, say, holding period."* A
+row's holding period runs from its first dated movement, so **"oldest first" and
+"longest held" are the same ordering on this data** — offering both would put two
+controls on screen that cannot be told apart by their results. The one ordering
+is named after what the family asked it for, and the size ordering it replaced
+keeps its place as the third: it was never wrong, only wrong to impose.
+
+**AN ABSENT AMOUNT SORTS LAST, NEVER AS ZERO.** `-Infinity`, not `?? 0`. A
+statement that reports no settled amount has not reported a small one, and a zero
+there files every unreported movement among the smallest — the absent-vs-zero
+rule arriving through a comparator, where no rendered figure would show it.
+
+**CHECKED ON ISO DATES, NOT ON THE PERIOD CELL.** The rows carry
+`data-mine-first` / `data-mine-last` and the control carries `data-txn-sort`,
+because a claim about WHICH ORDER a table is in must not be struck on `3 Oct
+2025` or on a button's label — the prose a redesign is free to reformat. Three
+claims, and none implies another: the rows are ordered newest first, the control
+exists and opens on `recent`, and the other two modes are still offered. Verified
+by putting the size ordering back, which fires the first by name.
+
+#### 3. *"So we are leaving a lot to imagination. So we'll have to be careful with the labels."*
+
+*"why should everywhere you show me direct plan growth? You're wasting a space
+here. We don't need it… Maybe you can write direct. Just direct plan, growth
+option — remove… Rather, I would rather have WhiteOak multi asset… For example,
+BNDH L&MC is large and mid cap. Now it's very important, Bandhan, large and mid
+cap should come."*
+
+Two complaints with one cause. A DEPOSITORY clips a scheme name to its own column
+width and an AMC folio spells the plan out at length; both are what the statement
+printed, which is exactly why `stripDepositoryTail` cannot help with either —
+**it only ever REMOVES, and it never supplies a name the statement did not
+print.** This file has recorded that limit three times and called the remedy *"a
+hand-checked alias, not another statement"*.
+
+**IT DID NOT NEED A HAND-CHECKED ALIAS. THE ANSWER WAS ALREADY COMMITTED.**
+`public/lookthrough/<schemecode>.json` carries `amfiSchemeName`, `amc`, `plan`
+and `option` for every scheme in this book, and `build-lookthrough` resolved
+each one FROM THE BOOK'S OWN ISIN. So the full name is AMFI's own published one,
+reached through an identifier — the same tiering as `build-symbols` and
+`build-sectors`, and the same rule: *an identifier above the name tiers makes the
+match STRICTER, never looser.* That is the **eighth** absence in this file
+recorded against a premise nobody rechecked.
+
+| The statement printed | A reader sees |
+| --- | --- |
+| `BNDH L&MCF DP GR` | **Bandhan Large & Mid Cap Fund · Direct** |
+| `WOC MAAF D-GROW` | **WhiteOak Capital Multi Asset Allocation Fund · Direct** |
+| `ICICI IOPPF D-GRW` | **ICICI Prudential India Opportunities Fund · Direct** |
+| `Helios Flexi Cap Fund - Direct Growth` | **Helios Flexi Cap Fund · Direct** |
+| `HDFC Liquid Fund-Direct Plan-Growth Option` | **HDFC Liquid Fund · Direct** |
+
+**21 of the book's 22 schemes resolve**, `npm run build-scheme-names` emits
+`src/data/schemeNames.json` and `docs/SCHEME-NAMES.md` lists every expansion and
+every refusal so any one can be challenged. The one that does not resolve —
+Liquid BeES, whose legacy ISIN is in no AMFI file — keeps the name its statement
+printed and is NAMED. **There is no fuzzy tier.**
+
+**FOUR GATES, BECAUSE A MIS-JOINED NAME IS THE WORST FABRICATION AVAILABLE
+HERE**: it is a complete, correct name belonging to another fund, and there is
+nothing on screen a reader could catch it by — the reasoning `build-sectors`
+already applies to a vendor page. The ISIN must agree three ways (the index
+entry's, the scheme file's and the BOOK's); the strip is anchored at the end over
+a CLOSED VOCABULARY of plan and option words, so nothing that could name a
+strategy is in it; the word that says what the thing IS must survive the strip;
+and the plan marker is rendered only where the AMFI name carried a plan or option
+phrase at all, so an ETF gets none.
+
+**THE PLAN CANNOT SIMPLY BE DROPPED, AND THAT IS MEASURED RATHER THAN
+CAUTIOUS.** *"Maybe you can write direct"* is the whole of what survives — one
+word instead of `Direct Plan - Growth Option`. It stays because **this book holds
+BOTH plans of two schemes**, HDFC Balanced Advantage (`1273` / `1273-D`) and
+ICICI Pru Nifty Next 50 (`11889` / `11889-D`). Plans differ in expense ratio and
+therefore in NAV, not in what the fund owns, so without the word each pair is two
+rows with one name and two different figures. The marker's TEXT comes from the
+record rather than from the words removed, because `HDFC Balanced Advantage Fund
+- Growth Plan` is the regular plan and its name says so nowhere. The OPTION is
+dropped wherever it is Growth — which is every scheme here — and says so where it
+is not.
+
+**IT IS DISPLAY ONLY, ON THE SAME TERMS AS `stripDepositoryTail`.**
+`securityKeyOf` is not routed through it. `PortfolioContext` is the seam — it
+already ran `displaySecurity` over every position — so the Monitor, every
+drill-down, the Excel export, the chat context and Private Market all follow with
+no per-page edit. `ledger.ts` moved with it, and that is not tidiness: the
+Monitor's pick list is built from the CONTEXT's labels and the tape filters on
+`t.security` from the LEDGER's, so two spellings would have emptied the tape the
+moment anyone filtered by a renamed scheme.
+
+**AND THE DAILY-NAV MOVERS CARD WAS A THIRD SPELLING.** It rendered the store's
+own `scheme` (`Bandhan Large & Mid Cap Fund-Reg(G)`) beside a holdings table
+naming the same fund two other ways. It composes through the same helper now —
+`composeSchemeLabel`, exported for exactly this, because that card resolves a row
+by SCHEMECODE and must not pass its fallback through `displaySecurity`'s title
+case, which renders `WhiteOak` as `Whiteoak`.
+
+**ONE THING THIS SURFACES RATHER THAN HIDES, AND IT IS A KNOWN DEFECT.** Helios
+Flexi Cap reaches this book under TWO securityKeys — the AMC folio's and the
+depository's clipped one — and after this change **both read alike**, because
+they are one scheme. They are still two keys, two rows and two `/stock/` pages,
+and `docs/BOOK-REPORT.md` still names all eight such ISINs as the extractor join
+they are. Merging them here would give a reader one tidy row and leave the
+reconciler none the wiser. The suite asserts the distinction from both ends: a
+twin pair with two ISINs must produce two labels, and one with a single ISIN must
+produce one.
+
+`build` · `tsc` · `test:ingest` 140 + 84 + 35 · `test:family` (a new
+`schemeLabel.test.ts`, anchored on `glowData.ts` and the generated map rather
+than on a fixture) · `check:family` **57/0** · `check:pages` **152 combinations
+clean**, with the same two pre-existing abstentions. `npm run build-book`
+regenerates the book BYTE-IDENTICALLY (md5 unchanged before and after) and
+`npm run build-scheme-names --check` is a no-op — nothing here touches the
+ingest, and a label change that moved a generated figure would not be one.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -11043,6 +11221,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   value the script decides. Run `build-symbols` first, since it is keyed on that
   output. `ONLY=<symbols>` limits it; `SCREENER_DELAY_MS` paces the fetch.
   A company with no NSE symbol is NAMED in the report and never name-matched.
+- `npm run build-scheme-names` emits `src/data/schemeNames.json` and
+  `docs/SCHEME-NAMES.md` from the COMMITTED `public/lookthrough/` files — the
+  full scheme name and plan behind every clipped depository label, joined by
+  ISIN. It needs no AmfiBeas checkout, is idempotent, and `--check` writes
+  nothing. Re-run it after `build-lookthrough` or after a drop brings a new
+  scheme. Nothing it writes reaches `glowData.ts`.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
   `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
   **every disclosed holding, not the equity section alone**: shares, bonds, NCDs,

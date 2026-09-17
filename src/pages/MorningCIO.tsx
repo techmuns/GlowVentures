@@ -1358,18 +1358,38 @@ export function MorningCIO() {
           <Card title="Capital deployment" subtitle="Fund commitments &amp; uncalled capital">
             {hasCommitments ? (
               <>
-                {/* Each line is a figure off a drawdown fund's capital account.
-                    The card links ONCE rather than four times: all four come off
-                    the same accounts, and four links to one destination reads as
-                    four different destinations. */}
-                <ul className="text-sm">
-                  <li className="flex items-center justify-between py-2"><span className="text-slate-400">
-                    <Link to="/private-market" title="Open the capital accounts these four figures come from — committed, called and still to call, folio by folio"
-                      className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400">Fund commitments</Link></span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
-                  <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
-                  <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn — uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
-                  <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
-                </ul>
+                {/*
+                  ── EVERY FIGURE HERE OPENS THE DETAIL, AND IT IS ONE LINK ────
+
+                    *"What is the capital deployed for private equity?… I told
+                     you — details, because it's not very clear. We discussed
+                     it. Right?"*  /  *"I'll make it clickable. And so you'll be
+                     redirected to the private page, and then we can show the
+                     details there."*
+
+                  This card carried ONE link, on the words "Fund commitments",
+                  and the figure the family were actually asking about — what
+                  has been CALLED — was not it. The reasoning for linking once
+                  stands and is why this is not four links: all four figures come
+                  off the same capital accounts, so four anchors to one address
+                  reads as four different destinations.
+
+                  So the LIST is the link. One anchor, one destination, and
+                  every figure on it is a click target — which is the whole of
+                  what was asked for. `/private-market` is where the detail is:
+                  committed, drawn, still to call and distributions, folio by
+                  folio, each with the fraction of the accounts that publish it.
+                */}
+                <Link to="/private-market" data-cio-deploy-link
+                  title="Open the capital accounts all four of these figures come from — committed, called, still to call and distributed, folio by folio"
+                  className="block rounded-md transition-colors hover:bg-ink-700/30">
+                  <ul className="text-sm">
+                    <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
+                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
+                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
+                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
+                  </ul>
+                </Link>
                 <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
                   <div style={{ width: `${calledPct}%`, background: CHART_COLORS[0] }} />
                   <div style={{ width: `${100 - (calledPct ?? 0)}%`, background: "rgba(245,158,11,.45)" }} />

@@ -26,7 +26,8 @@
     "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs",
     "harvest": "node scripts/harvest/run.mjs",
     "probe:sources": "node scripts/harvest/probe-sources.mjs",
-    "build-lookthrough": "node scripts/build-fund-lookthrough.mjs"
+    "build-lookthrough": "node scripts/build-fund-lookthrough.mjs",
+    "build-scheme-names": "node scripts/build-scheme-names.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

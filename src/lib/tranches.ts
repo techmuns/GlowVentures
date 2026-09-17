@@ -42,6 +42,7 @@
 // place still, and `positionIrrPct` stays unread.
 import type { CapitalMove, Position, PositionTranches } from "./types";
 import { holdingReturn, type HoldingReturn, type ReturnMode } from "./analytics";
+import { sortRows, type TxnSort } from "./txnSort";
 
 export type TrancheRow = {
   move: CapitalMove;
@@ -283,6 +284,7 @@ export function capitalRollup(
   positions: Position[],
   index: Record<string, PositionTranches>,
   side: CapitalSide = "all",
+  sort: TxnSort = "recent",
 ): CapitalGroup[] {
   const byAcct = new Map<string, CapitalMove[]>();
   for (const m of moves) {
@@ -319,7 +321,12 @@ export function capitalRollup(
       provider: a?.provider ?? "",
       accountNo: a?.accountNo ?? "",
       owner: a?.owner ?? "",
-      moves: [...ms].sort((x, y) => x.date.localeCompare(y.date)),
+      // THE EXPANSION FOLLOWS THE SAME ORDER AS THE ROWS ABOVE IT. It was
+      // oldest-first unconditionally, so a card set to "recent first" opened
+      // every row on its oldest payment — a list ordered one way containing
+      // lists ordered the other, which is the ordering complaint one level
+      // down. `date` is the only field a movement has, and `sortRows` reads it.
+      moves: sortRows(ms.map((m) => ({ ...m })), sort, (m) => m.amount ?? null),
       contributions: ins.length,
       withdrawals: outs.length,
       paidIn, tookOut, net,
@@ -332,9 +339,17 @@ export function capitalRollup(
       sideFiltered,
     });
   }
-  // Biggest commitment first — the reader's own question is about size.
-  out.sort((a, b) => b.paidIn - a.paidIn || a.accountId.localeCompare(b.accountId));
-  return out;
+  // ORDERED BY THE MODE THE READER CHOSE, and RECENT FIRST by default. This
+  // sorted by `paidIn` unconditionally — *"something is October, something is
+  // December, something is 2023. It's all very chaotic"* — which answers "what
+  // is the biggest" over a table of dated movements. `size` is that ordering,
+  // still here and no longer imposed. The accountId is the tie-break at every
+  // mode, so the order is stable rather than whatever the Map happened to hold.
+  // Sorted by accountId FIRST so the mode's own comparator, which is stable,
+  // resolves every tie the same way on every run rather than however the Map
+  // happened to be filled.
+  out.sort((a, b) => a.accountId.localeCompare(b.accountId));
+  return sortRows(out, sort, (g) => g.paidIn);
 }
 
 /** Column totals, summed FROM the rows so the footer cannot disagree with them. */

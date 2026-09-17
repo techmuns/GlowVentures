@@ -27,7 +27,7 @@
 //   • Realised gain is only where a manager issued a capital gain statement.
 //     Two of the five accounts have none, so their sells carry no realised
 //     figure — absent, not zero.
-import { displaySecurity } from "./format";
+import { holdingLabel } from "./schemeLabel";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -395,7 +395,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
       }
     }
     txns.push({
-      date: t.date, security: displaySecurity(t.security), securityKey: t.securityKey,
+      date: t.date, security: holdingLabel(t.securityKey, t.security), securityKey: t.securityKey,
       account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId,
       assetClass: t.assetClass ?? null, side, qty,
       // Derived only where both halves exist. `amount` is now null where the
@@ -479,7 +479,7 @@ export async function loadRealisedLots(): Promise<LotData | null> {
     const account = accountLabel(d);
     const st = l.shortTerm ?? 0, lt = l.longTerm ?? 0;
     lots.push({
-      securityKey: l.securityKey, security: displaySecurity(l.security), account,
+      securityKey: l.securityKey, security: holdingLabel(l.securityKey, l.security), account,
       assetClass: classOf.get(l.securityKey) ?? null,
       purchaseDate: l.purchaseDate, saleDate: l.saleDate, quantity: l.quantity,
       purchaseAmount: l.purchaseAmount, saleAmount: l.saleAmount, daysHeld: l.daysHeld,
@@ -565,7 +565,7 @@ export async function loadIncome(): Promise<IncomeData | null> {
   for (const { doc: d, row: ev } of events) {
     const account = accountLabel(d);
     const row: IncomeRow = {
-      security: displaySecurity(ev.security), securityKey: ev.securityKey, account,
+      security: holdingLabel(ev.securityKey, ev.security), securityKey: ev.securityKey, account,
       kind: ev.kind, date: ev.exDate ?? ev.receivedDate, quantity: ev.quantity,
       ratePerUnit: ev.ratePerUnit, net: ev.netAmount, tds: ev.tds,
       entitlement: ev.entitlement, source: d.docKey,
@@ -669,7 +669,7 @@ export async function loadSales(): Promise<SalesData | null> {
     let e = m.get(t.securityKey);
     if (!e) {
       e = {
-        securityKey: t.securityKey, security: displaySecurity(t.security),
+        securityKey: t.securityKey, security: holdingLabel(t.securityKey, t.security),
         soldQty: 0, proceeds: 0, realized: null, heldQty: held.get(t.securityKey) ?? 0,
         exited: false, hasRealised: false,
       };
@@ -712,7 +712,7 @@ export async function loadSales(): Promise<SalesData | null> {
     matchedSales: claimed.size,
     unattributedRealized: unattributed.length ? realisedOf(unattributed) : null,
     unattributedLots: unattributed.length,
-    unattributedSecurities: [...new Set(unattributed.map((l) => displaySecurity(l.security)))].sort(),
+    unattributedSecurities: [...new Set(unattributed.map((l) => holdingLabel(l.securityKey, l.security)))].sort(),
   };
 }
 
@@ -741,7 +741,7 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
   for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
     const account = accountLabel(d);
     if (t.securityKey !== securityKey || !t.date) continue;
-    name = displaySecurity(t.security);
+    name = holdingLabel(t.securityKey, t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
     const qty = t.quantity ?? 0, amount = settledAmount(t) ?? 0;
@@ -756,7 +756,7 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
   const lotDates: string[] = [];
   for (const { row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
     if (l.securityKey !== securityKey) continue;
-    if (name === securityKey) name = displaySecurity(l.security);
+    if (name === securityKey) name = holdingLabel(l.securityKey, l.security);
     realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
     if (l.purchaseDate) lotDates.push(l.purchaseDate);
   }
