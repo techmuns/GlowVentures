@@ -33,9 +33,7 @@ import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
-import { ReturnAttribution } from "@/components/ReturnAttribution";
-import { TodaysMovers } from "@/components/TodaysMovers";
-import { NavMovers } from "@/components/NavMovers";
+import { DailyMovers } from "@/components/DailyMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
@@ -1061,30 +1059,28 @@ export function MorningCIO() {
           icon={<Coins className="h-4 w-4" />} />
       </div>
 
-      {/* TODAY'S MOVERS — the first thing the family asked for, and the first
+      {/* DAILY MOVERS — the first thing the family asked for, and the first
           card under the strip for that reason. It is the only figure on this
           page that is about ONE SESSION rather than the book to date, which is
           why it carries its own coverage line rather than borrowing the page's:
           every other total here spans 369 positions, and a day change spans the
-          ones the quote feed can price. */}
+          ones that can be priced at all.
+
+          TWO CARDS STOOD HERE AND NOW THERE IS ONE WITH A TOGGLE —
+          *"give a toggle button in the direct equity daily movers for 'direct
+          equity/ETF & Mutual Funds', and remove the separate daily movers for
+          ETF and Mutual Funds."*
+
+          THE TOGGLE SWITCHES WHICH MEASUREMENT IS SHOWN, and that is the whole
+          of why they are still two components behind one control rather than
+          one model with a scope field. Direct Equity is a live intraday price
+          against the previous session's close; ETFs & mutual funds is a
+          scheme's own published NAV against the one before it, on dates a week
+          behind and not even shared between rows. Each branch keeps its own
+          title, its own as-of and its own coverage line; they are never summed
+          and never dated alike. See `DailyMovers.tsx`. */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <TodaysMovers />
-      </div>
-
-      {/* DAILY-NAV MOVERS — the same question over the instruments the quote
-          feed cannot reach.
-
-          *"this is covering for stocks which is fine … if mutual funds also
-          have a daily NAV? So wherever there is a daily NAV available and if
-          there is a drastic moment in the line item … can we capture that?"*
-
-          A SEPARATE CARD RATHER THAN MORE ROWS ABOVE, because it is a different
-          MEASUREMENT on a different DAY: a scheme's last published NAV against
-          the one before it, where the card above is a live intraday price
-          against the previous session's close. Blending them would print a
-          NAV move struck days ago under a heading reading "today". */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <NavMovers />
+        <DailyMovers />
       </div>
 
       {/* Allocation hero + right column */}
@@ -1490,21 +1486,33 @@ export function MorningCIO() {
         <NavVsIndex />
       </div>
 
-      {/* ── RETURN ATTRIBUTION ───────────────────────────────────────────────
-          *"Build return attribution over a period, against the benchmark …
-          which were the biggest detractors of returns? All of these questions
-          in my mind, these should be visible in this section."*
+      {/* ── RETURN ATTRIBUTION WAS REMOVED AT THE FAMILY'S REQUEST ──────────
+          *"remove return attribution section from the dashboard UI."*
 
-          It sits directly under the NAV chart because it decomposes THAT LINE:
-          the covered set, the window and the closing value are the same figures
-          the chart plots, struck in `attributionFrom` off the same snapshots
-          `navHistoryFrom` draws from. Two selections of "which statement is the
-          mark at this date" would let the bridge reconcile to a point the chart
-          never drew — the failure this repo names most often, and the reason
-          both go through one function. */}
-      <div className="mt-6">
-        <ReturnAttribution />
-      </div>
+          It sat here, under the NAV chart, because it decomposed THAT LINE: the
+          four-term bridge (opening → price / trading / bought in / sold out /
+          not split → closing), the ranked contributors and detractors, the
+          managers' own published one-year returns beside their own benchmarks,
+          and the per-account windows.
+
+          WHAT WENT WITH IT, SAID PLAINLY RATHER THAN GLOSSED. Unlike the Book
+          performance card of Stage 10t — every figure of which was already
+          elsewhere on this page — the bridge, the contributors and the
+          per-account windows are NOWHERE ELSE. The family asked for the section
+          and that is their call; what this file owes them is not pretending the
+          figures survived. Only the manager-year table has a home: `/performance`
+          renders `BOOK_ACCOUNT_RETURNS` per account and per window, which is
+          where the card's own footnote already pointed.
+
+          WHAT DID NOT GO WITH IT. `BOOK_ATTRIBUTION` is GENERATED — `build-book`
+          still emits it, and deleting it would rewrite `glowData.ts`, which is a
+          re-measurement of the book rather than a UI change. `src/lib/attribution.ts`
+          stays with it: it is that data's presentation half, and its suite is the
+          only thing that checks the generated bridge ties AND carries the
+          chain-linked NAV-series assertions the chart above still depends on. Its
+          header says plainly that nothing renders it, so it is a documented
+          no-caller and not the silent orphan a future session wires back
+          believing it load-bearing. */}
 
       {/* ── THE ROADMAP PLACEHOLDER IS GONE ─────────────────────────────────
           *"remove the placeholder for not live data from the dashboard ui."*

@@ -7,13 +7,21 @@
 // institution that did. `lib/classify.mjs` labels it
 // `Family investment register (not a statement)` and no extractor can reach it.
 //
-// TWO consumers read it, and they must never disagree about what it says:
+// IT HAD TWO CONSUMERS AND NOW HAS TWO AGAIN, ONE OF THEM A CHECK:
 //   • `scripts/register-reconcile.mjs` -> docs/REGISTER-RECONCILIATION.md
-//   • `scripts/build-register.mjs`     -> src/data/registerData.ts
+//   • `scripts/check-pages.mjs`        -> `REGISTER_SENTINEL`
 // so the parsing, the subtotal rules and the book partition live here once. Two
-// copies would be two chances for the report and the page to state different
+// copies would be two chances for the report and the sweep to state different
 // figures about the same workbook, which is the failure `drilldown.ts` exists to
 // stop for the book's own numbers.
+//
+// `scripts/build-register.mjs` -> `src/data/registerData.ts` WAS the second, and
+// both went when the family asked for the Investment Register page: that module
+// had exactly one reader, and a builder whose output nothing reads is the
+// dead-code-that-looks-alive failure this repo keeps naming. THIS FILE STAYS,
+// because the reconciler is an independent cross-check of the book and was never
+// the page — and because the sweep's own absence check needs the workbook's
+// largest not-in-book name to have anything to assert.
 //
 // It is under `scripts/` and not `shared/` deliberately: it imports `xlsx`, and
 // nothing the browser bundles may reach it.

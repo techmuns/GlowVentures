@@ -13,6 +13,27 @@
 // The bridge itself is GENERATED — `BOOK_ATTRIBUTION`, struck in
 // `attributionFrom` in build-book.mjs off the same snapshots the NAV series is
 // drawn from. Nothing here re-measures it; this turns it into rows.
+//
+// ── NO PAGE RENDERS THIS TODAY, AND THAT IS SAID RATHER THAN LEFT TO BE FOUND ─
+//
+// *"remove return attribution section from the dashboard UI."* The card that was
+// this module's only caller is deleted. The module is KEPT, deliberately, and on
+// two grounds rather than sentiment:
+//
+//   1. `BOOK_ATTRIBUTION` is still GENERATED on every `build-book` — removing it
+//      from the generator would rewrite `glowData.ts`, which is a re-measurement
+//      of the book rather than a UI change the family asked for. A generated
+//      artefact with no check is worse than one with no renderer.
+//   2. `__tests__/attribution.test.ts` is that check, and it is ALSO where the
+//      chain-linked NAV series is asserted — that it starts before the panel is
+//      complete, that the extension is load-bearing, that the raw line is
+//      undefined until the panel completes. `NavVsIndex` still draws all of it.
+//      Deleting this module would take those assertions with it.
+//
+// So this is a DOCUMENTED no-caller, which is not the failure this repo names —
+// that failure is the SILENT orphan a future session finds exported and wires
+// back believing it load-bearing. The same treatment `src/lib/series.ts` carries
+// for the same reason. If the card ever returns, nothing here needs rewriting.
 import type { Attribution, AttributionRow, AccountReturnBlock } from "./types";
 
 /** One step of the bridge from the opening value to the closing one. */

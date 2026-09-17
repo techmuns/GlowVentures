@@ -28,6 +28,7 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 // The book's own normalisation, so the checker keys a disclosed name exactly as
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
+import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
@@ -1289,30 +1290,46 @@ const PRIV_ASOF_MAX = (() => {
 /**
  * THE REGISTER'S OWN SENTINEL, DERIVED RATHER THAN TYPED.
  *
- * `src/data/registerData.ts` is generated from the family's investment register
- * and must reach NO portfolio total. The absence check below needs a string that
- * appears on `/register` and nowhere else, and the largest name the book does not
- * carry is exactly that: it is in the register by construction and in the book by
- * definition not. Taken from the data so the next drop picks its own sentinel —
- * the same reason `RINGFENCED_KEY` is read out of `BOOK_POLYCAB`.
+ * The family's investment register is a COST record that must reach NO portfolio
+ * total. The absence check below needs a string that appears in the register and
+ * nowhere in the book, and the largest name the book does not carry is exactly
+ * that: it is in the register by construction and in the book by definition not.
+ * Derived from the workbook so the next drop picks its own sentinel — the same
+ * reason `RINGFENCED_KEY` is read out of `BOOK_POLYCAB`.
+ *
+ * THE CLAIM GOT STRONGER WHEN THE PAGE WENT. `/register` was the one route
+ * allowed to name it; with the page removed at the family's request, no route
+ * may, and the walk below no longer carries an exception for one.
  *
  * The WORD "register" would be useless here: `capital-register` is a live report
  * type in the book and the Data Audit page names it on every walk.
  */
-/** How many book positions report no cost — the register page's denominator. */
-const COSTLESS_IN_BOOK = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const rows = bookArray(src, "BOOK_POSITIONS");
-    return Array.isArray(rows) ? rows.filter((p) => p.costBasis == null).length : null;
-  } catch { return null; }
-})();
-
 const REGISTER_SENTINEL = (() => {
   try {
-    const src = readFileSync(new URL("../src/data/registerData.ts", import.meta.url), "utf8");
-    const rows = bookArray(src, "REGISTER_NOT_IN_BOOK");
-    const name = Array.isArray(rows) ? rows[0]?.name ?? null : null;
+    // DERIVED FROM THE WORKBOOK, NOT FROM A GENERATED MODULE — and it had to
+    // move. It used to read `REGISTER_NOT_IN_BOOK` out of
+    // `src/data/registerData.ts`, which went with the page it was the only
+    // reader of. Left as it was, the try/catch would have swallowed the missing
+    // file, the sentinel would be null, and the absence check below would guard
+    // on `REGISTER_SENTINEL &&` and quietly stop running — a check retiring
+    // itself in silence on the very change that makes it matter most.
+    //
+    // Through `registerRead.mjs`, which is the ONE reader of that workbook and
+    // is what `npm run reconcile:register` uses, so the page's removal cannot
+    // drift this and a second parse cannot disagree with the reconciler.
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const byKey = new Map();
+    for (const p of positions) if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, p);
+    const R = readRegister(REGISTER_PATH);
+    const B = partitionAgainstBook(R.byName, byKey, new Set(accounts.map((a) => a.provider)));
+    // The largest name the register carries and the book does not: in the
+    // register by construction, out of the book by definition, so it is the one
+    // string that can tell the two apart on any page.
+    const name = B.none
+      .map((g) => ({ name: g.name, paid: g.amt }))
+      .sort((a, b) => b.paid - a.paid)[0]?.name ?? null;
     // Only the distinctive head of the name; the tables truncate nothing but the
     // check should not depend on punctuation the page may render differently.
     return name ? name.split(/[\s(,-]/).filter((w) => w.length > 3)[0] ?? null : null;
@@ -1686,11 +1703,20 @@ const ROUTES = [
   // over 1.39 Cr shares worth ₹12,351 Cr. Walked as its own route so a
   // regression that removes the guard is caught here rather than by the family.
   ["polycab-stock-redirect", () => `/stock/${encodeURIComponent(RINGFENCED_KEY ?? "none-ring-fenced-in-the-book")}`],
-  // THE FAMILY'S INVESTMENT REGISTER, ON ITS OWN PAGE and in NO book total. Same
-  // construction as Polycab and the same pair of obligations: this page RENDERS
-  // the register, and no consolidated figure anywhere in the sweep may move
-  // because of it. `registerAbsent` below applies to every other route.
-  ["register", "/register"],
+  // THE FAMILY'S INVESTMENT REGISTER USED TO BE WALKED HERE, and the route is
+  // gone with the page at the family's request. Its five invariants were about
+  // what that page RENDERED — that the figures are costs, that they are not
+  // additive, that no paid figure is posted as a cost basis — and there is
+  // nothing left for them to be true or false about.
+  //
+  // WHAT REPLACES THEM IS THE OTHER HALF OF THE SAME PAIR, AND IT GOT STRONGER.
+  // `/register` was the ONE route allowed to name the register's own largest
+  // not-in-book holding; now no route is, so the walk's per-page check below
+  // drops its exception and applies everywhere. The sentinel it needs is
+  // derived from the WORKBOOK rather than from the generated module that went
+  // with the page — see `REGISTER_SENTINEL`, and the `cio` invariant asserting
+  // it derived at all, because a null sentinel would make this whole claim
+  // unfalsifiable in silence.
   ["cio", "/cio"],
   // ...AND THE SAME PAGE WITH THE FEEDS STILL IN FLIGHT. A card that renders an
   // absence while it is loading tells the reader their book cannot be priced;
@@ -1741,14 +1767,17 @@ const ROUTES = [
   /**
    * ...AND THE MOVERS CARD'S OTHER TABS, ON THE SAME FULFILLED FEED.
    *
-   * `cio-movers-etf` and `cio-movers-mf` WERE HERE and went with the tabs the
-   * family asked to be rid of — *"remove these stocks etf mutual funds
-   * selectors for this top movers section... we will only show direct equity as
-   * default."* Those routes walked two constituent SETS that the card no longer
-   * offers, so there is nothing at either address to hold to the light; what
-   * replaces them is an ABSENCE check on `cio` and `cio-live` asserting the tab
-   * group is gone and the one set is Direct Equity. A removal is verified by
-   * asserting it happened, never by deleting the route alongside the feature.
+   * `cio-movers-etf` and `cio-movers-mf` WERE HERE and went with the four scope
+   * tabs of Stage 10ad — *"remove these stocks etf mutual funds selectors for
+   * this top movers section... we will only show direct equity as default."*
+   * Those routes walked two constituent SETS of ONE model, and the card stopped
+   * offering them.
+   *
+   * THEY ARE NOT WHAT `cio-movers-funds` IS. That route walks the second branch
+   * of the toggle the family have since asked for, and the branch is a whole
+   * separate card on a different MEASUREMENT — a published NAV against the one
+   * before it, dated on the scheme's own business days. What came back is a
+   * control over two measurements, not three unselectable scopes of one.
    */
   /**
    * ...AND THE ALLOCATION CARD ON THE FAMILY'S OTHER TWO AXES.
@@ -1766,6 +1795,26 @@ const ROUTES = [
    * that silently moves a default, and the page would render perfectly while
    * showing the family a table they asked to keep.
    */
+  /**
+   * ...AND THE MOVERS TOGGLE'S SECOND BRANCH.
+   *
+   * *"give a toggle button in the direct equity daily movers for 'direct
+   * equity/ETF & Mutual Funds', and remove the separate daily movers for ETF
+   * and Mutual Funds."*
+   *
+   * The published-NAV card used to stand beside Today's movers and was walked
+   * on the plain `cio` route. It is the toggle's second branch now, so its
+   * eleven invariants moved to this address WITH it — left on `cio` they would
+   * every one have reported NOT CHECKED against a card that is correctly not
+   * drawn there, which is an abstention rather than a failure and reads as a
+   * clean run.
+   *
+   * `?movers=` came BACK for this and that is not Stage 10al running backwards:
+   * there, four tabs were four SETS of one model and three of them were
+   * unreachable; here there are two branches, each a whole card that is checked
+   * end to end, and the family asked for the control. See `DailyMovers.tsx`.
+   */
+  ["cio-movers-funds", "/cio?movers=funds"],
   ["cio-alloc-basket", "/cio?alloc=basket"],
   ["cio-alloc-class", "/cio?alloc=assetClass"],
   ["monitor", "/monitor"],
@@ -2161,20 +2210,28 @@ const crU = (n, unit) => cr(n) * (unit === "Cr" ? 1 : unit === "L" ? 0.01 : unit
 const notChecked = (why) => ({ notChecked: why });
 
 /**
- * ── THE ATTRIBUTION, DERIVED FROM THE GENERATED BOOK ────────────────────────
+ * ── THE NAV SERIES, DERIVED FROM THE GENERATED BOOK ─────────────────────────
  *
- * Every expectation the attribution invariants use comes from `glowData.ts` on
- * each run: how many accounts carry a window, how many holdings are priced at
- * both ends, the largest contributor and the largest detractor by name, and the
- * covered fraction. A literal here would be a second source for a figure
- * `build-book` generates, and it would go stale on the next drop.
+ * Every expectation the NAV chart's invariants use comes from `glowData.ts` on
+ * each run: the series' span and point count, where the panel completes, and
+ * the book's own return chained two ways. A literal here would be a second
+ * source for a figure `build-book` generates, and it would go stale on the next
+ * drop.
  *
- * The ranking is RE-DERIVED rather than imported from `src/lib/attribution.ts`:
+ * IT WAS `ATTRIB_BOOK` AND CARRIED THE CARD'S EXPECTATIONS TOO — the ranked
+ * contributors, the covered fraction, the accounts with no priced row. The
+ * family asked for the Return attribution section to go, and those fields lost
+ * every reader with it, so they are DELETED rather than left computing the
+ * right answer into no caller. The name moved with them: a constant that
+ * misdescribes what it carries is the caption failure one layer down, where
+ * every caller inherits it.
+ *
+ * What it keeps is RE-DERIVED rather than imported from `src/lib/navSeries.ts`:
  * a check that imports the helper it is checking agrees with it by
  * construction, which is the rule `FUND_CLASS_BOOK` and `PRIVATE_QUOTABLE`
  * already follow one card over.
  */
-const ATTRIB_BOOK = (() => {
+const NAV_SERIES_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const grab = (name, open) => {
@@ -2187,40 +2244,10 @@ const ATTRIB_BOOK = (() => {
       if (start < 0 || end < 0) return null;
       return JSON.parse(src.slice(start, end + 2));
     };
-    const a = grab("BOOK_ATTRIBUTION", "{");
-    const summary = grab("BOOK_SUMMARY", "{");
     const nav = grab("BOOK_NAV_HISTORY", "[");
     const cov = grab("BOOK_NAV_COVERAGE", "{");
-    const accounts = grab("BOOK_ACCOUNTS", "[");
-    if (!a || !summary || !nav || !cov || !accounts) return null;
-    const held = a.rows.filter((r) => r.kind === "held");
-    const by = new Map();
-    for (const r of held) {
-      const cur = by.get(r.securityKey) ?? { key: r.securityKey, name: r.security, pe: 0, open: 0, n: 0 };
-      cur.pe += r.priceEffect; cur.open += r.openValue; cur.n++;
-      by.set(r.securityKey, cur);
-    }
-    const ranked = [...by.values()].sort((x, y) => y.pe - x.pe || x.name.localeCompare(y.name));
+    if (!nav || !cov) return null;
     return {
-      accounts: a.accounts.length,
-      accountsTotal: accounts.length,
-      held: held.length,
-      names: ranked.length,
-      gainers: ranked.filter((r) => r.pe > 0).length,
-      losers: ranked.filter((r) => r.pe < 0).length,
-      best: ranked[0] ?? null,
-      worst: ranked[ranked.length - 1] ?? null,
-      multi: ranked.filter((r) => r.n > 1).length,
-      openValue: a.openValue,
-      closeValue: a.closeValue,
-      priceEffect: a.priceEffect,
-      bookValue: a.bookValue,
-      coveredBookValue: a.coveredBookValue,
-      from: a.from,
-      to: a.to,
-      // The accounts whose every row is unpriced — their price and trading
-      // cells must be ABSENT rather than a fabricated zero.
-      unpricedAccounts: a.accounts.filter((x) => x.rowsHeld === 0).map((x) => x.accountId),
       /**
        * THE BOOK'S RETURN, CHAINED TWO WAYS — the right one and the wrong one.
        *
@@ -2257,7 +2284,6 @@ const ATTRIB_BOOK = (() => {
       completePanelPoints: nav.filter((p) => p.panelComplete !== false).length,
       panelFirst: (nav[0]?.accountsOnDate ?? 0) + (nav[0]?.accountsCarried ?? 0),
       panelLast: (nav[nav.length - 1]?.accountsOnDate ?? 0) + (nav[nav.length - 1]?.accountsCarried ?? 0),
-      totalValue: summary.totalValue,
     };
   } catch { return null; }
 })();
@@ -3403,6 +3429,229 @@ const CATEGORY_TOTAL_NOT_A_HOLDING = [
  * to change those words, and a check matching one would be retired silently by
  * the next rewording — the failure `MANDATE_SUBLINE` already cost this sweep.
  */
+/**
+ * ── THE DAILY-NAV MOVERS, NOW ONE BRANCH OF A TOGGLE ────────────────────────
+ *
+ * *"give a toggle button in the direct equity daily movers for 'direct
+ * equity/ETF & Mutual Funds', and remove the separate daily movers for ETF and
+ * Mutual Funds."*
+ *
+ * THESE INVARIANTS MOVED WITH THE CARD RATHER THAN BEING DELETED WITH IT. They
+ * lived in the `cio` block while the card stood beside Today's movers; the
+ * toggle defaults to Direct Equity, so on `cio` the card is correctly absent
+ * and every one of these would have started reporting NOT CHECKED — eleven
+ * abstentions reading as a clean run, which is how a check retires itself in
+ * silence. They are assigned to `cio-movers-funds` (`/cio?movers=funds`), which
+ * is the address the toggle's second branch lives at.
+ *
+ * NOT ONE CLAIM CHANGED. The card is the same card and the two measurements are
+ * still never added — "it states its basis and that the two cards are never
+ * added together" is in here and is now MORE load-bearing, not less, because
+ * one control switching between them is exactly where a future edit would be
+ * tempted to sum them.
+ */
+const NAV_MOVERS = [
+  /**
+   * ── DAILY-NAV MOVERS: THE INSTRUMENTS THE QUOTE FEED CANNOT REACH ─────────
+   *
+   *   "this is covering for stocks which is fine … But can I not have — see if
+   *    I have some money in ETF? Or if mutual funds also have a daily NAV? So
+   *    wherever there is a daily NAV available and if there is a drastic
+   *    moment in the line item for some reason, can we capture that? …
+   *    Because a silver ETF can have a drastic moment ऊपर नीचे."
+   *
+   * Struck on `NAV_MOVERS_BOOK`, which re-derives the whole card from the two
+   * committed artefacts by a different path from the page's.
+   *
+   * IT RENDERS ON THE PLAIN `cio` WALK, deliberately: the store is a committed
+   * file rather than a Function, so it answers under `vite preview` where
+   * `/api/quotes` 404s. That is what lets this card be checked at all without
+   * the live mocks — and it is also the point of the feature, since these
+   * instruments have no quote to wait for.
+   */
+  ["the daily-NAV movers card renders every scheme the store prices", (t, ctx) => {
+    if (!NAV_MOVERS_BOOK) return false;
+    const nm = ctx?.navMovers;
+    if (!nm) return false;
+    // A CARD STILL LOADING IS NOT A CARD THAT FAILED, and neither is a pass:
+    // the store is a static file on the same origin, so a walk that finds it
+    // pending has found a real regression in how it is fetched.
+    if (nm.loading) return false;
+    if (!NAV_MOVERS_BOOK.schemes) return { notChecked: "no ETF or mutual-fund holding resolves a scheme with two published NAVs" };
+    return nm.rows.length === NAV_MOVERS_BOOK.schemes;
+  }],
+  /**
+   * ── AND ITS FIGURES RECONCILE TO THE BOOK, NOT TO THE PAGE ───────────────
+   *
+   * REINTRODUCING TWO BUGS IS WHAT PUT THIS HERE, and both left the sweep
+   * CLEAN: the aggregate struck as the unweighted MEAN of the rows (−0.276%
+   * against the true −0.118%, which weights a ₹107 residual the same as a
+   * ₹42 Cr position), and a model that stopped SUMMING a scheme's holdings so
+   * every row carried its last statement's value alone. Neither changes a row
+   * count or a date, and every check on this card was reading counts and
+   * dates — comparing the page with itself, which is the failure this repo
+   * names in as many words and which it committed again here.
+   *
+   * All four figures come from `NAV_MOVERS_BOOK`, derived from the book and
+   * the store by a different path from the page's.
+   */
+  ["the NAV card's figures reconcile to the book", (t, ctx) => {
+    const f = ctx?.navMovers?.figures;
+    if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme with two published NAVs" };
+    if (!f) return false;
+    // To the rupee on the money, and to a ten-thousandth of a point on the
+    // percentage — both sides are the same arithmetic over the same inputs,
+    // so only floating-point addition sits between them.
+    return Math.abs(f.covered - NAV_MOVERS_BOOK.coveredValue) < 1
+      && Math.abs(f.scope - NAV_MOVERS_BOOK.scopeValue) < 1
+      && Math.abs(f.move - NAV_MOVERS_BOOK.move) < 1
+      && f.pct != null && Math.abs(f.pct - NAV_MOVERS_BOOK.changePct) < 1e-4;
+  }],
+  /**
+   * …AND THE AGGREGATE IS VALUE-WEIGHTED RATHER THAN AN AVERAGE, asserted as
+   * an INEQUALITY against the mean it must not be. A book where the two
+   * happen to coincide would let the equality above pass on either, so this
+   * is what makes that check load-bearing rather than lucky.
+   */
+  ["the NAV aggregate is value-weighted, not the mean of the rows", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm?.figures || !NAV_MOVERS_BOOK?.schemes) return false;
+    const pcts = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite);
+    if (pcts.length < 2) return { notChecked: "fewer than two schemes priced, so the two measures cannot differ" };
+    const mean = pcts.reduce((a, b) => a + b, 0) / pcts.length;
+    if (Math.abs(mean - NAV_MOVERS_BOOK.changePct) < 1e-4) {
+      return { notChecked: "on this book the weighted move and the mean coincide" };
+    }
+    return nm.figures.pct != null && Math.abs(nm.figures.pct - mean) > 1e-4;
+  }],
+  /**
+   * …AND EACH ROW CARRIES ITS OWN SCHEME'S PUBLISHED MOVE.
+   *
+   * The count above passes a card that drew the right NUMBER of rows with the
+   * wrong percentages on them — a scheme's row showing a neighbour's move is
+   * a real figure against the wrong fund, and every caption still reads
+   * correctly. Compared as a SET against the store's own, so it does not also
+   * assert a ranking (which the toggle changes).
+   */
+  ["each NAV row carries its own scheme's published move", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK?.schemes) return false;
+    const want = NAV_MOVERS_BOOK.pcts.map((n) => n.toFixed(6)).sort();
+    const got = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite).map((n) => n.toFixed(6)).sort();
+    return got.length === want.length && got.every((v, i) => v === want[i]);
+  }],
+  /**
+   * THE FAMILY'S OWN EXAMPLE IS THE ONE THE QUOTE FEED CANNOT SERVE. The DSP
+   * silver and gold ETFs resolve NO NSE symbol — NSE moved them to ISINs the
+   * statements do not carry — so they can never appear on Today's movers and
+   * this card is the only place they can. A build that quietly scoped this to
+   * mutual funds would satisfy every count above on a book with fewer ETFs.
+   */
+  ["a holding with no NSE symbol still gets a published move", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading) return false;
+    if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme" };
+    // Struck on the ETF class reaching the card at all, via the scheme count
+    // and the coverage sentence naming both instrument kinds.
+    return /ETF/i.test(t) && nm.rows.length > 0;
+  }],
+  /**
+   * ── THE TWO MEASUREMENTS ARE DATED APART, WHICH IS THE WHOLE RULE ─────────
+   *
+   * A live quote is intraday today; a published NAV is a scheme's last struck
+   * NAV against the one before it, and on this book that is a week old. Naming
+   * either "today" would print a real figure under the wrong day — the defect
+   * `/api/indices` already cost this repo, and the kind a reader cannot catch.
+   *
+   * So the card must PRINT ITS DATE and must not call it today.
+   */
+  ["the NAV card is dated, and never called today", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK?.newestNavDate) return false;
+    const asOf = nm.asOf ?? "";
+    return asOf.includes(NAV_MOVERS_BOOK.newestNavDate) && !/\btoday\b/i.test(asOf);
+  }],
+  /** …and where the rows do NOT share one date the card says so, because a
+      scheme does not publish on a non-business day and the heading carries
+      only the newest. */
+  ["a row struck on an older day than the heading is disclosed", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+    if (!NAV_MOVERS_BOOK.spansDates) return { notChecked: "every priced scheme published on the same day" };
+    const older = nm.rows.filter((r) => r.date && r.date !== NAV_MOVERS_BOOK.newestNavDate);
+    // The book says some row is older; the page must draw it AND say so.
+    return older.length > 0 && /do not share one date/i.test(nm.basis ?? "");
+  }],
+  /**
+   * THE CARD STATES THAT IT IS NOT THE CARD ABOVE. Two movers cards on one
+   * page, one intraday and one a week old, is exactly where a reader adds two
+   * figures that must never be added.
+   */
+  ["it states its basis and that the two cards are never added together", (t, ctx) => {
+    const b = ctx?.navMovers?.basis ?? "";
+    return /published NAV/i.test(b) && /never added together/i.test(b) && /derived/i.test(b);
+  }],
+  /**
+   * ── THE AGGREGATE TIES TO ITS OWN COLUMNS ────────────────────────────────
+   *
+   * The percentage is value-weighted over the covered rows, so it must equal
+   * the book's own — and the coverage sentence must name the value it stands
+   * on, never a name count alone. Compared against a figure derived here, not
+   * against another rendering of the page's own.
+   */
+  ["its coverage names the value it stands on, and the schemes it cannot price", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+    const cov = nm.coverage ?? "";
+    const schemesNamed = new RegExp(`\\b${NAV_MOVERS_BOOK.schemes}\\s+schemes?\\b`).test(cov);
+    // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER DROPPED IN SILENCE.
+    const skipNamed = NAV_MOVERS_BOOK.skipped === 0
+      ? !/resolve no scheme/i.test(cov)
+      : (/resolve no scheme/i.test(cov) && !!nm.skipped);
+    return schemesNamed && skipNamed && /₹|Cr|L\b/.test(cov);
+  }],
+  /**
+   * ── "DRASTIC" LABELS AND NEVER DECIDES ───────────────────────────────────
+   *
+   * A threshold is a judgement no statement states, so it must not choose which
+   * rows are drawn. The card draws EVERY priced scheme — which is checked by
+   * the count above — and this asserts the chip is a label: on a book where
+   * nothing crosses the bound, no row may carry it.
+   */
+  ["the drastic chip labels rather than filters", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+    const chipped = /\bdrastic\b/i.test(t);
+    // The note explaining the bound always renders; the CHIP renders only
+    // where the book has a row past it.
+    const noteOnly = /move of \d+% or more/i.test(t);
+    return noteOnly && nm.rows.length === NAV_MOVERS_BOOK.schemes
+      && (NAV_MOVERS_BOOK.anyDrastic ? chipped : true);
+  }],
+  /**
+   * THE RANKING DEFAULTS TO THE PERCENTAGE, matching the card above it and the
+   * question that was asked — a MOVE rather than an impact. A default is the
+   * change that moves silently: the page renders perfectly either way and only
+   * the order of the rows differs.
+   */
+  ["the NAV movers default to ranking by % move, with ₹ offered", (t, ctx) => {
+    const ranks = ctx?.navMovers?.ranks;
+    if (!ranks?.length) return false;
+    return ranks.length === 2 && ranks[0].key === "pct" && ranks[0].on
+      && ranks.some((r) => r.key === "impact" && !r.on);
+  }],
+  /**
+   * AND AN AIF IS NOT ON THIS CARD, which the family said first — *"AIF में
+   * monthly NAV आएगा"*. No alternative fund publishes a daily NAV, so their
+   * absence is a fact about the INSTRUMENT rather than a filter, and the card
+   * says so rather than leaving a reader to wonder where ₹352 Cr went.
+   */
+  ["it states that AIF folios publish no daily NAV", (t, ctx) => {
+    const b = ctx?.navMovers?.basis ?? "";
+    return /AIF/i.test(b) && /no alternative fund publishes a daily NAV/i.test(b);
+  }],
+];
+
 const ALLOC_AXIS = [
   /**
    * THE SELECTOR EXISTS, OFFERS ALL THREE, AND EXACTLY ONE IS ACTIVE. A missing
@@ -3926,61 +4175,24 @@ const INVARIANTS = {
    * captions rendered whatever the data did and it could not fail.
    */
   /**
-   * THE FAMILY'S INVESTMENT REGISTER — RENDERED HERE, AND IN NO PORTFOLIO TOTAL.
+   * ── THE INVESTMENT REGISTER'S OWN BLOCK IS GONE WITH ITS PAGE ─────────────
    *
-   * Same pair of obligations as Polycab, and neither implies the other: this page
-   * must RENDER the register, and every other route must be free of it (the
-   * `REGISTER_SENTINEL` check in the walk). A page that rendered nothing would
-   * satisfy every absence check while showing the family none of their own data.
+   * Five invariants stood here and every one was about what `/register`
+   * RENDERED: that it named the register's own largest holding, that the
+   * figures are amounts PAID rather than a valuation, that the gross is not
+   * additive to the book, that no paid figure is posted as a cost basis, and
+   * that the costless denominator tied to `BOOK_POSITIONS`. The family asked
+   * for the page to go, so there is nothing left for any of them to be true or
+   * false about — the page is not merely empty, it does not exist.
    *
-   * The register is a COST record — money that left a bank account on a date —
-   * and roughly half of it is already inside the book at a statement mark. So the
-   * assertions below are about the two things a reader could get wrong: that
-   * these figures are values, and that they are additive.
+   * THE OTHER HALF OF THE PAIR SURVIVES AND IS STRICTER. Polycab and the
+   * register always carried the same two obligations — render here, appear
+   * nowhere else — and only the second one still has a subject. It is in the
+   * walk (`REGISTER_SENTINEL`), it now applies to EVERY route with no
+   * exception, and `cio` additionally asserts the sentinel DERIVED, because a
+   * null sentinel short-circuits that guard and would retire the claim in
+   * silence on the very change that makes it matter.
    */
-  register: [
-    ["it renders the register's own largest name, so the absence check elsewhere means something",
-      (t) => !!REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(t)],
-    /**
-     * THE FIGURES ARE COSTS AND THE PAGE SAYS SO. A reader who takes ₹842 Cr of
-     * paid-in capital for a portfolio value has misread the page by an order of
-     * magnitude against a ₹710 Cr book, which is exactly the contradiction the
-     * "a total must tie" rule exists to prevent one page over.
-     */
-    ["it states these are amounts PAID and not a valuation",
-      (t) => /money the family PAID/i.test(t) && /cash outflow/i.test(t)],
-    ["it states the register is no part of the book's totals",
-      (t) => /no part of the book/i.test(t) && /NAV/i.test(t)],
-    /**
-     * AND THE OVERLAP IS SHOWN RATHER THAN IMPLIED. The gross is NOT additive:
-     * the first bucket is already inside NAV at a manager's own mark, so a page
-     * that printed only the total would invite exactly the double count the
-     * family asked us to rule out.
-     */
-    ["it partitions the register and says the overlap must not be added twice",
-      (t) => /Already in the book/i.test(t) && /double count/i.test(t)],
-    /**
-     * NO PAID FIGURE IS PRESENTED AS A POSTED COST. The candidates table is the
-     * one place a register figure sits beside a book figure for the same
-     * holding, which is where a future edit is most likely to post one — so the
-     * refusal is asserted on the CELL, with its reason, and never as a zero.
-     */
-    ["a register figure is never posted as a cost basis, and the refusal names its reason",
-      (t, ctx) => {
-        const why = (ctx?.titles ?? []).some((x) => /quantities tie/i.test(x) && /double-count/i.test(x));
-        return why && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t);
-      }],
-    /**
-     * THE COSTLESS COUNT TIES TO THE BOOK'S OWN. The page claims to cover N of
-     * the book's costless positions; if that denominator drifted from
-     * BOOK_POSITIONS the page would be quietly describing a different book.
-     */
-    ["the costless denominator matches the book's own count of costless positions",
-      (t) => {
-        const m = /of the book's (\d+) costless positions/i.exec(t);
-        return !!m && COSTLESS_IN_BOOK != null && Number(m[1]) === COSTLESS_IN_BOOK;
-      }],
-  ],
   polycab: [
     ["the holding is named, with a share count and a market value",
       (t) => /Polycab/i.test(t) && /[\d,]{7,}/.test(t) && new RegExp(CR).test(t)],
@@ -5210,204 +5422,26 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [
     /**
-     * ── DAILY-NAV MOVERS: THE INSTRUMENTS THE QUOTE FEED CANNOT REACH ─────────
+     * ── THE REGISTER'S SENTINEL DERIVED, SO ITS ABSENCE CHECK MEANS SOMETHING ─
      *
-     *   "this is covering for stocks which is fine … But can I not have — see if
-     *    I have some money in ETF? Or if mutual funds also have a daily NAV? So
-     *    wherever there is a daily NAV available and if there is a drastic
-     *    moment in the line item for some reason, can we capture that? …
-     *    Because a silver ETF can have a drastic moment ऊपर नीचे."
+     * The family asked for the Investment Register page to go, and with it went
+     * `src/data/registerData.ts` — which is where `REGISTER_SENTINEL` used to
+     * come from. Rederived from the workbook it guards the STRONGER claim (no
+     * route may name the register's largest not-in-book holding, with no
+     * exception for a page that no longer exists), and the guard in the walk
+     * short-circuits on `REGISTER_SENTINEL &&`.
      *
-     * Struck on `NAV_MOVERS_BOOK`, which re-derives the whole card from the two
-     * committed artefacts by a different path from the page's.
-     *
-     * IT RENDERS ON THE PLAIN `cio` WALK, deliberately: the store is a committed
-     * file rather than a Function, so it answers under `vite preview` where
-     * `/api/quotes` 404s. That is what lets this card be checked at all without
-     * the live mocks — and it is also the point of the feature, since these
-     * instruments have no quote to wait for.
+     * So a workbook this run cannot read would make that claim unfalsifiable
+     * WITHOUT FAILING ANYTHING — a check retiring itself in silence, on exactly
+     * the change that makes it matter most. This is the line that speaks up.
+     * Asserted once, on a route every sweep walks.
      */
-    ["the daily-NAV movers card renders every scheme the store prices", (t, ctx) => {
-      if (!NAV_MOVERS_BOOK) return false;
-      const nm = ctx?.navMovers;
-      if (!nm) return false;
-      // A CARD STILL LOADING IS NOT A CARD THAT FAILED, and neither is a pass:
-      // the store is a static file on the same origin, so a walk that finds it
-      // pending has found a real regression in how it is fetched.
-      if (nm.loading) return false;
-      if (!NAV_MOVERS_BOOK.schemes) return { notChecked: "no ETF or mutual-fund holding resolves a scheme with two published NAVs" };
-      return nm.rows.length === NAV_MOVERS_BOOK.schemes;
-    }],
-    /**
-     * ── AND ITS FIGURES RECONCILE TO THE BOOK, NOT TO THE PAGE ───────────────
-     *
-     * REINTRODUCING TWO BUGS IS WHAT PUT THIS HERE, and both left the sweep
-     * CLEAN: the aggregate struck as the unweighted MEAN of the rows (−0.276%
-     * against the true −0.118%, which weights a ₹107 residual the same as a
-     * ₹42 Cr position), and a model that stopped SUMMING a scheme's holdings so
-     * every row carried its last statement's value alone. Neither changes a row
-     * count or a date, and every check on this card was reading counts and
-     * dates — comparing the page with itself, which is the failure this repo
-     * names in as many words and which it committed again here.
-     *
-     * All four figures come from `NAV_MOVERS_BOOK`, derived from the book and
-     * the store by a different path from the page's.
-     */
-    ["the NAV card's figures reconcile to the book", (t, ctx) => {
-      const f = ctx?.navMovers?.figures;
-      if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme with two published NAVs" };
-      if (!f) return false;
-      // To the rupee on the money, and to a ten-thousandth of a point on the
-      // percentage — both sides are the same arithmetic over the same inputs,
-      // so only floating-point addition sits between them.
-      return Math.abs(f.covered - NAV_MOVERS_BOOK.coveredValue) < 1
-        && Math.abs(f.scope - NAV_MOVERS_BOOK.scopeValue) < 1
-        && Math.abs(f.move - NAV_MOVERS_BOOK.move) < 1
-        && f.pct != null && Math.abs(f.pct - NAV_MOVERS_BOOK.changePct) < 1e-4;
-    }],
-    /**
-     * …AND THE AGGREGATE IS VALUE-WEIGHTED RATHER THAN AN AVERAGE, asserted as
-     * an INEQUALITY against the mean it must not be. A book where the two
-     * happen to coincide would let the equality above pass on either, so this
-     * is what makes that check load-bearing rather than lucky.
-     */
-    ["the NAV aggregate is value-weighted, not the mean of the rows", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm?.figures || !NAV_MOVERS_BOOK?.schemes) return false;
-      const pcts = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite);
-      if (pcts.length < 2) return { notChecked: "fewer than two schemes priced, so the two measures cannot differ" };
-      const mean = pcts.reduce((a, b) => a + b, 0) / pcts.length;
-      if (Math.abs(mean - NAV_MOVERS_BOOK.changePct) < 1e-4) {
-        return { notChecked: "on this book the weighted move and the mean coincide" };
-      }
-      return nm.figures.pct != null && Math.abs(nm.figures.pct - mean) > 1e-4;
-    }],
-    /**
-     * …AND EACH ROW CARRIES ITS OWN SCHEME'S PUBLISHED MOVE.
-     *
-     * The count above passes a card that drew the right NUMBER of rows with the
-     * wrong percentages on them — a scheme's row showing a neighbour's move is
-     * a real figure against the wrong fund, and every caption still reads
-     * correctly. Compared as a SET against the store's own, so it does not also
-     * assert a ranking (which the toggle changes).
-     */
-    ["each NAV row carries its own scheme's published move", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading || !NAV_MOVERS_BOOK?.schemes) return false;
-      const want = NAV_MOVERS_BOOK.pcts.map((n) => n.toFixed(6)).sort();
-      const got = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite).map((n) => n.toFixed(6)).sort();
-      return got.length === want.length && got.every((v, i) => v === want[i]);
-    }],
-    /**
-     * THE FAMILY'S OWN EXAMPLE IS THE ONE THE QUOTE FEED CANNOT SERVE. The DSP
-     * silver and gold ETFs resolve NO NSE symbol — NSE moved them to ISINs the
-     * statements do not carry — so they can never appear on Today's movers and
-     * this card is the only place they can. A build that quietly scoped this to
-     * mutual funds would satisfy every count above on a book with fewer ETFs.
-     */
-    ["a holding with no NSE symbol still gets a published move", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading) return false;
-      if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme" };
-      // Struck on the ETF class reaching the card at all, via the scheme count
-      // and the coverage sentence naming both instrument kinds.
-      return /ETF/i.test(t) && nm.rows.length > 0;
-    }],
-    /**
-     * ── THE TWO MEASUREMENTS ARE DATED APART, WHICH IS THE WHOLE RULE ─────────
-     *
-     * A live quote is intraday today; a published NAV is a scheme's last struck
-     * NAV against the one before it, and on this book that is a week old. Naming
-     * either "today" would print a real figure under the wrong day — the defect
-     * `/api/indices` already cost this repo, and the kind a reader cannot catch.
-     *
-     * So the card must PRINT ITS DATE and must not call it today.
-     */
-    ["the NAV card is dated, and never called today", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading || !NAV_MOVERS_BOOK?.newestNavDate) return false;
-      const asOf = nm.asOf ?? "";
-      return asOf.includes(NAV_MOVERS_BOOK.newestNavDate) && !/\btoday\b/i.test(asOf);
-    }],
-    /** …and where the rows do NOT share one date the card says so, because a
-        scheme does not publish on a non-business day and the heading carries
-        only the newest. */
-    ["a row struck on an older day than the heading is disclosed", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
-      if (!NAV_MOVERS_BOOK.spansDates) return { notChecked: "every priced scheme published on the same day" };
-      const older = nm.rows.filter((r) => r.date && r.date !== NAV_MOVERS_BOOK.newestNavDate);
-      // The book says some row is older; the page must draw it AND say so.
-      return older.length > 0 && /do not share one date/i.test(nm.basis ?? "");
-    }],
-    /**
-     * THE CARD STATES THAT IT IS NOT THE CARD ABOVE. Two movers cards on one
-     * page, one intraday and one a week old, is exactly where a reader adds two
-     * figures that must never be added.
-     */
-    ["it states its basis and that the two cards are never added together", (t, ctx) => {
-      const b = ctx?.navMovers?.basis ?? "";
-      return /published NAV/i.test(b) && /never added together/i.test(b) && /derived/i.test(b);
-    }],
-    /**
-     * ── THE AGGREGATE TIES TO ITS OWN COLUMNS ────────────────────────────────
-     *
-     * The percentage is value-weighted over the covered rows, so it must equal
-     * the book's own — and the coverage sentence must name the value it stands
-     * on, never a name count alone. Compared against a figure derived here, not
-     * against another rendering of the page's own.
-     */
-    ["its coverage names the value it stands on, and the schemes it cannot price", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
-      const cov = nm.coverage ?? "";
-      const schemesNamed = new RegExp(`\\b${NAV_MOVERS_BOOK.schemes}\\s+schemes?\\b`).test(cov);
-      // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER DROPPED IN SILENCE.
-      const skipNamed = NAV_MOVERS_BOOK.skipped === 0
-        ? !/resolve no scheme/i.test(cov)
-        : (/resolve no scheme/i.test(cov) && !!nm.skipped);
-      return schemesNamed && skipNamed && /₹|Cr|L\b/.test(cov);
-    }],
-    /**
-     * ── "DRASTIC" LABELS AND NEVER DECIDES ───────────────────────────────────
-     *
-     * A threshold is a judgement no statement states, so it must not choose which
-     * rows are drawn. The card draws EVERY priced scheme — which is checked by
-     * the count above — and this asserts the chip is a label: on a book where
-     * nothing crosses the bound, no row may carry it.
-     */
-    ["the drastic chip labels rather than filters", (t, ctx) => {
-      const nm = ctx?.navMovers;
-      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
-      const chipped = /\bdrastic\b/i.test(t);
-      // The note explaining the bound always renders; the CHIP renders only
-      // where the book has a row past it.
-      const noteOnly = /move of \d+% or more/i.test(t);
-      return noteOnly && nm.rows.length === NAV_MOVERS_BOOK.schemes
-        && (NAV_MOVERS_BOOK.anyDrastic ? chipped : true);
-    }],
-    /**
-     * THE RANKING DEFAULTS TO THE PERCENTAGE, matching the card above it and the
-     * question that was asked — a MOVE rather than an impact. A default is the
-     * change that moves silently: the page renders perfectly either way and only
-     * the order of the rows differs.
-     */
-    ["the NAV movers default to ranking by % move, with ₹ offered", (t, ctx) => {
-      const ranks = ctx?.navMovers?.ranks;
-      if (!ranks?.length) return false;
-      return ranks.length === 2 && ranks[0].key === "pct" && ranks[0].on
-        && ranks.some((r) => r.key === "impact" && !r.on);
-    }],
-    /**
-     * AND AN AIF IS NOT ON THIS CARD, which the family said first — *"AIF में
-     * monthly NAV आएगा"*. No alternative fund publishes a daily NAV, so their
-     * absence is a fact about the INSTRUMENT rather than a filter, and the card
-     * says so rather than leaving a reader to wonder where ₹352 Cr went.
-     */
-    ["it states that AIF folios publish no daily NAV", (t, ctx) => {
-      const b = ctx?.navMovers?.basis ?? "";
-      return /AIF/i.test(b) && /no alternative fund publishes a daily NAV/i.test(b);
-    }],
+    ["the register sentinel derived, so the absence check on every route can fail",
+      /* A BOOLEAN, DELIBERATELY. The harness reads any truthy return as a PASS
+         (`else if (!r) invariants.push(desc)`), so returning a description of
+         the failure is how a check comes to be unable to fail — measured once
+         in this file already, on five invariants at a time. */
+      () => !!REGISTER_SENTINEL],
     /**
      * ── THE TILE IS "CURRENT VALUE OF HOLDINGS" ───────────────────────────────
      *
@@ -5449,203 +5483,35 @@ const INVARIANTS = {
     }],
 
     /**
-     * ── RETURN ATTRIBUTION ────────────────────────────────────────────────
+     * ── THE RETURN ATTRIBUTION CARD IS GONE, AND THE CLAIM IS ITS ABSENCE ────
      *
-     * *"Build return attribution over a period, against the benchmark … which
-     * were the biggest detractors of returns?"*
+     * *"remove return attribution section from the dashboard UI."*
      *
-     * On `cio` rather than `cio-live` because every figure here comes from
-     * `BOOK_ATTRIBUTION`, which is baked into the bundle: the card renders whole
-     * with no feed at all, and only the Nifty 500 pill beside it needs one. Each
-     * was verified by reintroducing its bug.
+     * Nine invariants stood here and every one was arithmetic ABOUT THAT CARD —
+     * that the bridge added to the closing value, that exactly one step was
+     * labelled performance, that the ranking's head and tail matched the book's
+     * own, that a per-account row tied across its own columns, that the
+     * manager-year rows paired both figures from ONE document, and that the
+     * pre-2026 absence named the statement that would fill it. None of them has
+     * a subject any more: the card is not empty, it does not exist.
      *
-     * A MISSING CARD IS A FAILURE, NOT AN ABSTENTION — the book carries a
-     * window, so a page that stopped drawing it must go red rather than
-     * reporting NOT CHECKED on eight lines. `ATTRIB_BOOK` decides that, off
-     * `glowData.ts`, so a drop that genuinely leaves no account with two dated
-     * statements abstains honestly instead.
+     * WHAT REPLACES THEM IS ONE STRUCTURAL ABSENCE, and it is struck on the
+     * card's own handles rather than on the words "return attribution". That
+     * phrase appears legitimately elsewhere in this app — Return & Drawdown is
+     * built on the same idea — so a text match could report the card gone while
+     * it was on screen, which is the failure the movers-tab removal already
+     * records. `attrib` returns `{ handles }`: `null` means the probe did not
+     * run, `0` means it ran and found nothing, and those must not be the same
+     * value.
+     *
+     * ASSERTED ON `cio` ONLY, because that is the one route the card was ever
+     * mounted on. `NAV_SERIES_BOOK` is NOT removed with it — the NAV chart's own
+     * invariants below read it for the series' span and its chain-linked
+     * return, and it is derived from `glowData.ts` rather than from the card.
      */
-    ["the return attribution card renders", (t, ctx) => {
-      if (!ATTRIB_BOOK) return notChecked("the generated book could not be read on this run");
-      if (ATTRIB_BOOK.accounts < 2) return notChecked("this book carries fewer than two account windows");
-      return !!ctx?.attrib && ctx.attrib.steps.length >= 5;
-    }],
-
-    /**
-     * THE BRIDGE ADDS TO ITS OWN CLOSING VALUE, ON THE RENDERED CELLS.
-     *
-     * The one claim that makes publishing a decomposition defensible, struck on
-     * what the reader can actually add up rather than on the generated object —
-     * a card that dropped a step would still reconcile against `glowData.ts`
-     * and would not reconcile against itself. The bound is the page's own
-     * printing precision reproduced: every cell is one decimal in Cr, so six
-     * cells carry at most seven half-digits of rounding. A dropped step moves
-     * it by crores.
-     */
-    ["the bridge's steps add to its own printed closing value", (t, ctx) => {
-      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
-      const val = (key) => {
-        const row = ctx.attrib.steps.find((r) => r.key === key);
-        if (!row) return null;
-        const m = /([+−-]?)₹([\d.,]+)\s*(Cr|L|K)?/.exec(row.cells[1] ?? "");
-        if (!m) return null;
-        return (m[1] === "−" || m[1] === "-" ? -1 : 1) * crU(m[2], m[3]);
-      };
-      const open = val("open"), close = val("close");
-      if (open == null || close == null) return false;
-      const steps = ctx.attrib.steps
-        .filter((r) => r.key !== "open" && r.key !== "close")
-        .map((r) => val(r.key));
-      if (steps.some((x) => x == null) || steps.length < 4) return false;
-      return Math.abs(open + steps.reduce((a, b) => a + b, 0) - close) <= 0.35;
-    }],
-
-    /**
-     * EXACTLY ONE STEP IS LABELLED PERFORMANCE, AND IT IS THE PRICE STEP.
-     *
-     * The distinction is the whole reason for decomposing: V.E.C 128005 runs
-     * +119% over its window and nearly all of it is a ₹11.24 Cr deposit. A card
-     * that labelled Trading or Bought in as performance would read as a mandate
-     * that earned the money it was handed.
-     */
-    ["exactly one bridge step is labelled performance, and it is Price", (t, ctx) => {
-      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
-      // NO `\b` — the badge is an inline span, so the cell reads
-      // "PricePERFORMANCE" with no separator and a word boundary between "e"
-      // and "P" does not exist. Matching on the boundary reported zero
-      // performance steps on a card that draws exactly one.
-      const perf = ctx.attrib.steps.filter((r) => /performance/i.test(r.cells[0] ?? ""));
-      return perf.length === 1 && /^Price/.test(perf[0].cells[0] ?? "");
-    }],
-
-    /**
-     * THE RANKING NAMES THE BOOK'S OWN BEST AND WORST — derived on each run, so
-     * this cannot go stale when the next drop moves the book, and a card ranking
-     * on the wrong term (raw change in value rather than the price effect) puts
-     * a different name at the head of each list.
-     */
-    ["the contributor and detractor lists lead with the book's own extremes", (t, ctx) => {
-      if (!ctx?.attrib || !ATTRIB_BOOK?.best || !ATTRIB_BOOK?.worst) {
-        return notChecked("the attribution card or the generated ranking was unavailable");
-      }
-      const g = ctx.attrib.gainers[0], l = ctx.attrib.losers[0];
-      return !!g && !!l && g.key === ATTRIB_BOOK.best.key && l.key === ATTRIB_BOOK.worst.key;
-    }],
-
-    /**
-     * A NAME HELD IN SEVERAL ACCOUNTS IS ONE ROW, AND SAYS SO.
-     *
-     * Today's movers' own rule arriving through a window. Ranked per statement
-     * row instead, Ather Energy takes two of the top five slots and understates
-     * its own impact in both. Gated on the BOOK carrying such a name, so a drop
-     * where none does abstains rather than passing on an untested aggregation.
-     */
-    ["a name held in more than one account is one ranked row, and names the count", (t, ctx) => {
-      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
-      if (!ATTRIB_BOOK.multi) return notChecked("no name in this book is priced at both ends in two accounts");
-      const rows = [...ctx.attrib.gainers, ...ctx.attrib.losers];
-      const keys = rows.map((r) => r.key);
-      if (new Set(keys).size !== keys.length) return false;
-      return rows.some((r) => /\d+ accounts, added/.test(r.cells[0] ?? ""));
-    }],
-
-    /**
-     * AN ACCOUNT WITH NO PRICED ROW SHOWS AN ABSENCE, NEVER A ZERO.
-     *
-     * 360 ONE holds one AIF unit line marked at a total value with no per-unit
-     * price, and its value still moved ₹1.44 Cr → ₹1.47 Cr. Printed `+₹0` that
-     * reads "this mandate went nowhere", which is a measurement nothing made —
-     * §2, arriving inside a decomposition.
-     */
-    ["an account with no priced holding renders an absence with its reason", (t, ctx) => {
-      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
-      if (!ATTRIB_BOOK.unpricedAccounts.length) {
-        return notChecked("every covered account in this book carries at least one priced holding");
-      }
-      const rows = ATTRIB_BOOK.unpricedAccounts
-        .map((id) => ctx.attrib.accounts.find((r) => r.key === id))
-        .filter(Boolean);
-      if (rows.length !== ATTRIB_BOOK.unpricedAccounts.length) return false;
-      // MATCHED ON THE PHRASE THE CELL ACTUALLY CARRIES. The first draft looked
-      // for "no per-unit price"; the reason reads "No holding in this account
-      // carries a per-unit price on both statements", so the check failed a card
-      // rendering exactly what it asks for — a check struck on a paraphrase of
-      // the sentence rather than on the sentence.
-      return rows.every((r) => /—/.test(r.cells[3] ?? "") && !/₹0/.test(r.cells[3] ?? "")
-        && r.titles.some((x) => /per-unit price on both statements/i.test(x)));
-    }],
-
-    /**
-     * AND EVERY PER-ACCOUNT ROW TIES ACROSS ITS OWN COLUMNS.
-     *
-     * This is why the "Not split" column exists: without it 360 ONE reads open
-     * ₹1.44 Cr, price ₹0, trading ₹0, in/out —, close ₹1.47 Cr, and a reader who
-     * adds the printed cells and gets a third answer has found a contradiction
-     * no popover rescues. The check was written by finding exactly that on the
-     * first sweep of this card.
-     */
-    ["every per-account row adds across its own columns", (t, ctx) => {
-      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
-      const num = (cell) => {
-        const txt = String(cell ?? "");
-        if (/^\s*—\s*$/.test(txt)) return 0;
-        let total = 0;
-        const re = /([+−-]?)₹([\d.,]+)\s*(Cr|L|K)?/g;
-        let m, seen = 0;
-        while ((m = re.exec(txt))) {
-          total += (m[1] === "−" || m[1] === "-" ? -1 : 1) * crU(m[2], m[3]);
-          seen++;
-        }
-        return seen ? total : null;
-      };
-      if (!ctx.attrib.accounts.length) return false;
-      return ctx.attrib.accounts.every((r) => {
-        const [, , open, price, trade, inout, unsplit, close] = r.cells;
-        const vals = [open, price, trade, inout, unsplit, close].map(num);
-        if (vals.some((v) => v === null)) return false;
-        const [o, p, tr, io, us, c] = vals;
-        // The bound is the page's own precision: six cells at one decimal in Cr.
-        return Math.abs(o + p + tr + io + us - c) <= 0.35;
-      });
-    }],
-
-    /**
-     * THE ONE-YEAR ROWS PAIR ON ONE DOCUMENT, AND NO BOOK-WIDE ONE IS STRUCK.
-     *
-     * Both halves, and the second cannot be seen by any value check: a card that
-     * averaged these into a single figure would render a perfectly plausible
-     * percentage. The refusal is the deliverable, so it is asserted in words —
-     * and the coverage count beside it is derived, so a card that quietly
-     * dropped a mandate fails.
-     */
-    ["the one-year table names each mandate's own benchmark and strikes no book-wide figure", (t, ctx) => {
-      if (!ctx?.attrib) return notChecked("the attribution card was not on screen");
-      const rows = ctx.attrib.years;
-      if (rows.length < 3) return false;
-      // Every row names a benchmark and an active figure derived from it.
-      const paired = rows.every((r) => /[A-Za-z]/.test(r.cells[2] ?? "") && /%/.test(r.cells[2] ?? "")
-        && /%/.test(r.cells[3] ?? ""));
-      const distinct = new Set(rows.map((r) => (r.cells[2] ?? "").split(" ")[0])).size > 1;
-      const refuses = /no book-wide one-year return here and there cannot be one/i.test(ctx.attrib.yearMissing);
-      return paired && distinct && refuses;
-    }],
-
-    /**
-     * AND THE ABSENCE IS STATED WITH THE DOCUMENT THAT WOULD FILL IT.
-     *
-     * *"What was my portfolio value in end of August 2025?"* — the archive's
-     * earliest dated valuation of any kind is 2026-03-31, so the answer is a
-     * refusal, and a refusal that does not name its remedy sends a reader to
-     * look for a dashboard bug. Struck on the card's own block, and it must
-     * NAME the series' own start rather than a typed date.
-     */
-    ["the card states what it cannot reach, and what would fill it", (t, ctx) => {
-      if (!ctx?.attrib || !ATTRIB_BOOK) return notChecked("the attribution card was not on screen");
-      const c = ctx.attrib.cannot;
-      return c.includes(ATTRIB_BOOK.seriesFrom)
-        && /holdings statement per account dated on or before/i.test(c)
-        && /2026-03-31/.test(c)
-        && /a level is not a change/i.test(c);
+    ["the return attribution card stays removed", (t, ctx) => {
+      if (ctx?.attrib == null) return notChecked("the attribution probe did not run on this pass");
+      return ctx.attrib.handles === 0;
     }],
 
     /**
@@ -5659,12 +5525,12 @@ const INVARIANTS = {
      */
     ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
       const head = navHead(ctx);
-      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      if (!ATTRIB_BOOK.panelCompleteFrom || ATTRIB_BOOK.panelCompleteFrom === ATTRIB_BOOK.seriesFrom) {
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (!NAV_SERIES_BOOK.panelCompleteFrom || NAV_SERIES_BOOK.panelCompleteFrom === NAV_SERIES_BOOK.seriesFrom) {
         return notChecked("this book's panel is complete at the series' first point");
       }
-      return head.includes(ATTRIB_BOOK.seriesFrom)
-        && new RegExp(`${ATTRIB_BOOK.seriesPoints} dated points`).test(head);
+      return head.includes(NAV_SERIES_BOOK.seriesFrom)
+        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
     }],
 
     /**
@@ -5695,15 +5561,15 @@ const INVARIANTS = {
      */
     ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
       const head = navHead(ctx);
-      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
       const m = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
       if (!m) return false;
       const shown = Number(m[1]);
       // The pill prints one decimal, so the bound is that precision reproduced.
-      if (Math.abs(shown - ATTRIB_BOOK.chainByLink) > 0.05) return false;
+      if (Math.abs(shown - NAV_SERIES_BOOK.chainByLink) > 0.05) return false;
       // …and the two chainings must actually differ on this book, or the check
       // asserts nothing and must be re-read rather than passing.
-      return Math.abs(ATTRIB_BOOK.chainByLevel - ATTRIB_BOOK.chainByLink) > 1;
+      return Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainByLink) > 1;
     }],
 
     /**
@@ -5724,23 +5590,23 @@ const INVARIANTS = {
      */
     ["the raw NAV curve covers only the complete panel, and the book's covers the whole series", (t, ctx) => {
       const counts = ctx?.navChart?.vertexCounts;
-      if (!counts || !ATTRIB_BOOK) return notChecked("the NAV chart was not found on this pass");
-      if (ATTRIB_BOOK.completePanelPoints >= ATTRIB_BOOK.seriesPoints) {
+      if (!counts || !NAV_SERIES_BOOK) return notChecked("the NAV chart was not found on this pass");
+      if (NAV_SERIES_BOOK.completePanelPoints >= NAV_SERIES_BOOK.seriesPoints) {
         return notChecked("this book's panel is complete at the series' first point");
       }
       // recharts emits one command per plotted vertex on a monotone curve.
-      return counts.includes(ATTRIB_BOOK.completePanelPoints)
-        && counts.includes(ATTRIB_BOOK.seriesPoints);
+      return counts.includes(NAV_SERIES_BOOK.completePanelPoints)
+        && counts.includes(NAV_SERIES_BOOK.seriesPoints);
     }],
 
     ["the NAV card names the panel it grows through", (t, ctx) => {
       const head = navHead(ctx);
-      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      if (ATTRIB_BOOK.panelFirst >= ATTRIB_BOOK.panelLast) {
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
         return notChecked("this book's panel does not grow inside the series");
       }
-      return new RegExp(`${ATTRIB_BOOK.panelFirst} to ${ATTRIB_BOOK.panelLast} accounts`).test(head)
-        && head.includes(ATTRIB_BOOK.panelCompleteFrom);
+      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(head)
+        && head.includes(NAV_SERIES_BOOK.panelCompleteFrom);
     }],
 
   /**
@@ -6017,23 +5883,37 @@ const INVARIANTS = {
     (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
       && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
   /**
-   * ...AND THE SCOPE TABS ARE GONE, WITH NO FEED TOO.
+   * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
    *
-   * A removal is verified by asserting it happened. Struck on the tab group's
-   * own `data-movers-scope` attribute rather than on the words "Stocks", "ETFs"
-   * or "Mutual funds", every one of which still appears legitimately — in this
-   * card's own absent-state sentence and in the allocation table below it — so
-   * a text match would report the tabs gone while they were on screen, and
-   * would go on passing if they came back.
+   * *"give a toggle button in the direct equity daily movers for 'direct
+   * equity/ETF & Mutual Funds'."*
    *
-   * ASSERTED WITH NO FEED AS WELL AS WITH ONE, because the tabs were a CONTROL
-   * and rendered whether or not a quote had landed: a build that restored them
-   * only on the cold-open branch would pass a live-only check.
+   * THIS CHECK IS INVERTED, NOT NEW. It asserted the four scope tabs of Stage
+   * 10ad were GONE; the family have asked for a control back, so it asserts the
+   * one they asked for is THERE — two branches, Direct Equity first and live by
+   * default. Inverting rather than deleting is what keeps the claim honest in
+   * both directions: a build that restored the old four-tab group would fail
+   * this as surely as one that dropped the toggle.
+   *
+   * Struck on `data-movers-scope` rather than on the labels. "Direct Equity"
+   * and "ETFs & mutual funds" both appear legitimately elsewhere on this page —
+   * in the allocation table, in this card's own sentences — so a text match
+   * would report the toggle present while it was gone.
+   *
+   * ASSERTED WITH NO FEED AS WELL AS WITH ONE, because the toggle is a CONTROL
+   * and renders whether or not a quote has landed: a build that drew it only on
+   * the settled branch would pass a live-only check.
+   *
+   * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — only the probe failing
+   * to run abstains, which is `golden.mjs`'s rule arriving through a control.
    */
-  ["the movers scope tabs are gone", (t, ctx) => {
+  ["the movers toggle offers Direct Equity and ETFs & mutual funds, and opens on Direct Equity", (t, ctx) => {
     const tabs = ctx?.moverScopes;
-    if (tabs == null) return { notChecked: "the tab probe did not run on this pass" };
-    return tabs.length === 0;
+    if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
+    return tabs.length === 2
+      && tabs[0].key === "direct" && tabs[1].key === "funds"
+      && tabs[0].active && !tabs[1].active
+      && /ETFs?\s*&\s*mutual funds/i.test(tabs[1].label);
   }],
   /**
    * ── THE MOVERS RANKING OPENS ON THE PERCENTAGE MOVE ───────────────────────
@@ -8517,20 +8397,17 @@ const INVARIANTS = {
         && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
     }],
     /**
-     * ...AND THE SCOPE TABS ARE GONE, WITH A FEED TOO.
+     * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
      *
-     * *"remove these stocks etf mutual funds selectors for this top movers
-     * section... we will only show direct equity as default."* Asserted on both
-     * walks and not just this one: the tab group rendered whether or not a quote
-     * had landed, so a build that restored it on only one branch has to fail
-     * somewhere. Struck on `data-movers-scope` rather than on the labels, every
-     * one of which still appears legitimately in this card's own sentences and
-     * in the allocation table below it.
+     * Asserted on both walks and not just one: the toggle is a CONTROL and
+     * renders whether or not a quote has landed, so a build that drew it on
+     * only one branch has to fail somewhere. The four-tab group of Stage 10ad
+     * must equally not come back, which `tabs.length === 2` is what rules out.
      */
-    ["the movers scope tabs are gone", (t, ctx) => {
+    ["the movers toggle offers exactly two branches with a feed too", (t, ctx) => {
       const tabs = ctx?.moverScopes;
-      if (tabs == null) return { notChecked: "the tab probe did not run on this pass" };
-      return tabs.length === 0;
+      if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
+      return tabs.length === 2 && tabs[0].key === "direct" && tabs[1].key === "funds";
     }],
     /**
      * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
@@ -8672,20 +8549,21 @@ const INVARIANTS = {
   ],
 
   /**
-   * ── THE FOUR CONSTITUENT-TAB BLOCKS ARE GONE WITH THE TABS ─────────────────
+   * ── THE FOUR CONSTITUENT-TAB BLOCKS ARE STILL GONE ─────────────────────────
    *
    * `cio-movers-etf` and `cio-movers-mf` held one block each — that a tab
    * changed the ROWS and not merely the heading, that every caption moved with
    * it, and that the mutual-fund tab's emptiness was blamed on the instrument
-   * rather than on the feed. All three claims were about SETS the card no longer
-   * offers, so there is nothing left for them to be true or false about.
+   * rather than on the feed. All three claims were about SETS of one model that
+   * the card stopped offering, and it still does not offer them: `moverScopes`
+   * must come back with exactly TWO entries, which is what rules the old group
+   * out.
    *
-   * WHAT REPLACES THEM IS AN ABSENCE, ASSERTED TWICE — "the movers scope tabs
-   * are gone", on `cio` and on `cio-live`, struck on the tab group's own
-   * `data-movers-scope` attribute. The probe that reads it (`moverScopes`) is
-   * deliberately KEPT for exactly that: it is the only thing that can tell a
-   * page with no tabs from a page whose tabs a text match cannot see, and the
-   * labels it used to read all still appear legitimately on this page.
+   * THE PROBE IS THE SAME PROBE AND HAS NOW PROVED BOTH THINGS — that the four
+   * tabs were gone, and that the two-branch toggle the family asked for is
+   * there. It is the only thing that can tell a page with no control from a
+   * page whose control a text match cannot see: every label it reads appears
+   * legitimately elsewhere on this page.
    */
   /**
    * ── THE ALLOCATION CARD, SLICED THE FAMILY'S OWN TWO WAYS ──────────────────
@@ -8696,6 +8574,28 @@ const INVARIANTS = {
    * carries: an axis selector is free to reword every heading on this card, and
    * a check matching one would be retired silently by that rewording.
    */
+  /**
+   * ── THE MOVERS TOGGLE'S SECOND BRANCH ─────────────────────────────────────
+   *
+   * `/cio?movers=funds` — the published-NAV card. Walked as its own route for
+   * the same reason `cio-alloc-basket` is: the branch lives in the URL, so a
+   * sweep can hold it to the light instead of guessing at a click.
+   *
+   * IT ALSO ASSERTS THE OTHER BRANCH IS NOT ON SCREEN. A toggle that renders
+   * both cards at once would satisfy every invariant in `NAV_MOVERS` and every
+   * one on `cio`, and the only thing that could see it is a check that says so.
+   */
+  "cio-movers-funds": [
+    ...NAV_MOVERS,
+    ["the toggle shows the funds branch and not the direct-equity one", (t, ctx) => {
+      const tabs = ctx?.moverScopes;
+      if (tabs == null) return notChecked("the toggle probe did not run on this pass");
+      if (!tabs.length) return false;
+      return tabs.find((x) => x.active)?.key === "funds"
+        // `Today's movers` is this card's own title and nothing else prints it.
+        && !/Today\u2019s movers/i.test(t);
+    }],
+  ],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
 
@@ -11212,9 +11112,9 @@ const INVARIANTS = {
       && !/two points are not a trajectory/i.test(t)],
     ["and the dated series is drawn here, over the whole measured span", (t, ctx) => {
       const head = navHead(ctx);
-      if (head == null || !ATTRIB_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      return head.includes(ATTRIB_BOOK.seriesFrom) && head.includes(ATTRIB_BOOK.seriesTo)
-        && new RegExp(`${ATTRIB_BOOK.seriesPoints} dated points`).test(head);
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      return head.includes(NAV_SERIES_BOOK.seriesFrom) && head.includes(NAV_SERIES_BOOK.seriesTo)
+        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
     }],
   ],
 
@@ -12103,14 +12003,16 @@ for (const theme of THEMES) {
        * page that had lost the tab group entirely — the "a check that cannot
        * fail" failure this file exists to prevent.
        *
-       * IT NOW PROVES THE OPPOSITE, AND IT IS KEPT FOR EXACTLY THAT. The family
-       * asked for the tabs to go (*"remove these stocks etf mutual funds
-       * selectors… we will only show direct equity as default"*), so this probe
-       * is what makes "they are gone" a finding rather than a phrase nobody can
-       * check: the labels it used to read all still appear legitimately on this
-       * page, so only the CONTROL can answer whether the group is there. An
-       * empty array is the passing state; `null` means the probe did not run and
-       * reports NOT CHECKED rather than passing.
+       * IT HAS NOW PROVED BOTH DIRECTIONS, AND IS KEPT FOR EXACTLY THAT. It
+       * asserted the four scope tabs of Stage 10ad were GONE; the family have
+       * since asked for a two-branch toggle (*"give a toggle button in the
+       * direct equity daily movers for 'direct equity/ETF & Mutual Funds'"*),
+       * so it asserts that one is THERE and that the old four-tab group has not
+       * come back with it. The labels it reads all appear legitimately
+       * elsewhere on this page, so only the CONTROL can answer either question.
+       * `null` means the probe did not run and reports NOT CHECKED rather than
+       * passing; an empty array is now a FAILURE, because the toggle is a
+       * control that renders in every branch of both cards.
        */
       const moverScopes = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main [data-movers-scope][role='tab']")].map((b) => ({
@@ -12221,49 +12123,30 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * THE RETURN ATTRIBUTION CARD, READ STRUCTURALLY.
+       * THE RETURN ATTRIBUTION CARD IS GONE, AND THIS PROBE PROVES IT.
        *
-       * Every claim about this card is arithmetic — the bridge adds to the
-       * closing value, the ranking sums to the price step, a per-account row
-       * ties across its own columns — and none of it can be struck on prose
-       * that a redesign is free to reword. `data-bridge-step`,
-       * `data-attrib-row` and `data-account-window` carry it, the same contract
-       * `data-section` and `data-mandate` already keep.
+       * *"remove return attribution section from the dashboard UI."* The probe
+       * is KEPT and INVERTED rather than deleted with the card, for the reason
+       * `moverScopes` is kept: it is the only thing that can tell a page with no
+       * attribution card from a page whose card a text match cannot see. The
+       * word "attribution" appears legitimately elsewhere in this app — the
+       * Return & Drawdown page is built on it — so a text check could report the
+       * card gone while it was on screen, and would go on passing if it came
+       * back.
+       *
+       * IT RETURNS A COUNT, NOT A NULL. The old probe returned `null` when the
+       * bridge was missing, which is exactly what `FAST` returns — so "the card
+       * is gone" and "the probe did not run" would have been the same value, and
+       * every invariant reading it abstained rather than failing. `{ handles }`
+       * separates them: `null` did not run, `0` ran and found nothing.
        */
-      const attrib = FAST ? null : await page.evaluate(() => {
-        const bridge = document.querySelector('[data-testid="attrib-bridge"]');
-        if (!bridge) return null;
-        const card = bridge.closest(".card");
-        /**
-         * `textContent`, NOT `innerText` — the per-account table lives inside a
-         * collapsed `<details>`, and `innerText` returns "" for everything
-         * inside one. Read that way, eight cells of figures came back empty and
-         * the row-ties-across-its-columns check failed a page that was correct.
-         * The same trap `ctx.titles` was added for, one element deeper.
-         */
-        const cells = (tr) => [...tr.cells].map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim());
-        const rowsOf = (sel) => [...(card?.querySelectorAll(sel) ?? [])].map((tr) => ({
-          key: tr.getAttribute("data-attrib-row") ?? tr.getAttribute("data-account-window")
-            ?? tr.getAttribute("data-year-row") ?? tr.getAttribute("data-bridge-step"),
-          priceEffect: tr.getAttribute("data-price-effect"),
-          cells: cells(tr),
-          titles: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? ""),
-          links: [...tr.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
-        }));
-        return {
-          steps: rowsOf("[data-bridge-step]"),
-          gainers: rowsOf('[data-testid="attrib-gainers"] tbody tr[data-attrib-row]'),
-          losers: rowsOf('[data-testid="attrib-losers"] tbody tr[data-attrib-row]'),
-          years: rowsOf("tr[data-year-row]"),
-          accounts: rowsOf("tr[data-account-window]"),
-          accountHead: [...(card?.querySelectorAll('[data-testid="attrib-accounts"] thead th') ?? [])]
-            .map((th) => (th.innerText ?? "").trim()),
-          subtitle: (card?.firstElementChild?.innerText ?? "").trim(),
-          cannot: (card?.querySelector('[data-testid="attrib-cannot"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
-          yearCoverage: (card?.querySelector('[data-testid="attrib-year-coverage"]')?.innerText ?? "").trim(),
-          yearMissing: (card?.querySelector('[data-testid="attrib-year-missing"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
-        };
-      });
+      const attrib = FAST ? null : await page.evaluate(() => ({
+        handles: document.querySelectorAll(
+          '[data-testid="attrib-bridge"],[data-testid="attrib-gainers"],[data-testid="attrib-losers"],'
+          + '[data-testid="attrib-years"],[data-testid="attrib-accounts"],[data-testid="attrib-cannot"],'
+          + '[data-testid="attrib-year-coverage"],[data-testid="attrib-year-missing"],[data-testid="attrib-more"],'
+          + '[data-bridge-step],[data-attrib-row],[data-account-window],[data-year-row]').length,
+      }));
       /**
        * EVERY ROW OF THE HOLDINGS TABLE, BY WHAT IT IS rather than by what it
        * prints. `bucket` is on every row and the mandate fields only on the
@@ -13152,15 +13035,20 @@ for (const theme of THEMES) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
       }
       /**
-       * AND THE REGISTER REACHES NO OTHER PAGE. `registerData.ts` is a cost
-       * record the book deliberately does not carry; a name from it appearing on
-       * a page that computes a portfolio figure means the two have been mixed,
-       * which is the double count the family asked us to rule out.
+       * AND THE REGISTER REACHES NO PAGE AT ALL — with no exception, since the
+       * one route that was allowed to name it went with the page at the
+       * family's request. The register is a cost record the book deliberately
+       * does not carry; a name from it appearing on a page that computes a
+       * portfolio figure means the two have been mixed, which is the double
+       * count the family asked us to rule out.
+       *
+       * THE SENTINEL IS DERIVED FROM THE WORKBOOK and a null one would make
+       * this guard vacuous, so `cio` asserts it derived. A check that cannot
+       * see its own subject must report that, not pass.
        */
-      const isRegisterPage = /\/register$/.test(page.url());
-      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isRegisterPage
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]
           && REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(mainText)) {
-        invariants.push(`the investment register is its own page, and this page names ${REGISTER_SENTINEL} from it`);
+        invariants.push(`the investment register reaches no page in this app, and this one names ${REGISTER_SENTINEL} from it`);
       }
       // `holdings-row-3` shares its invariant list with every other allocation
       // row: the assertions compare each page against ITS OWN row's cells, so

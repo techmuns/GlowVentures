@@ -70,9 +70,13 @@ const PROVIDERS_IN_BOOK = new Set(ACCOUNTS.map((a) => a.provider));
 
 // ── the register ────────────────────────────────────────────────────────────
 // The workbook, its subtotal rules and the book partition all live in
-// `scripts/lib/registerRead.mjs`, because `build-register.mjs` reads the same
-// document to generate the page's data. Two copies would be two chances for this
-// report and that page to state different figures about one workbook.
+// `scripts/lib/registerRead.mjs`, because `check-pages.mjs` reads the same
+// document for its register-absence sentinel. Two copies would be two chances
+// for this report and that sweep to state different figures about one workbook.
+// (`build-register.mjs` was the other consumer and went with the `/register`
+// page at the family's request; this report is untouched by that — it was never
+// the page, and it is still the register's proper use: an independent
+// cross-check that never writes to the book.)
 const {
   rows, perSheet, byName, ownerRows, qtyRows,
   gross, returned, blindSum, valuedRows, ownerResolved, ownerUnresolved,

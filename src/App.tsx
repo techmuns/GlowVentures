@@ -6,7 +6,6 @@ import { IndexStrip } from "@/components/IndexStrip";
 import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
 import { Polycab } from "@/pages/Polycab";
-import { Register } from "@/pages/Register";
 import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
 import { PrivateMarket } from "@/pages/PrivateMarket";
 import { FamilyEntities } from "@/pages/FamilyEntities";
@@ -94,7 +93,6 @@ export default function App() {
                 RINGFENCED_SECURITY_KEYS in build-book.mjs). Reads BOOK_POLYCAB
                 directly, never the portfolio context, so it cannot leak back in. */}
             <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
-            <Route path="/register" element={<Gate><Register /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
             {/* THE PRIVATE BOOK THIS DROP ACTUALLY CARRIES — not the
@@ -198,6 +196,30 @@ export default function App() {
                 one observation per run because their sources publish only a
                 current value, so stopping the harvest would not pause a series,
                 it would end it with no way to backfill. */}
+            {/* THE INVESTMENT REGISTER WAS REMOVED at the family's request —
+                the page, its nav entry, the generated `registerData.ts` it was
+                the only reader of, and `npm run build-register` which emitted
+                it. A builder whose output nothing reads is the
+                dead-code-that-looks-alive failure this repo keeps naming, so
+                the module went with the page exactly as `exportDeck.ts` did.
+
+                IT FORWARDS TO THE DASHBOARD HOME rather than to a neighbour.
+                The register is a COST record spanning every vehicle the family
+                has used, listed and private alike, and nothing that survives
+                holds it — pointing this at a page that merely looks adjacent
+                would assert a continuity that does not exist, which is the call
+                `/knowledge`, `/macro` and `/economy` already record below.
+
+                WHAT DID NOT GO WITH IT. `scripts/lib/registerRead.mjs` stays:
+                it is the ONE reader of the workbook and `npm run
+                reconcile:register` still calls it, so the analysis survives as
+                `docs/REGISTER-RECONCILIATION.md` — the independent cross-check
+                the register was always allowed to be. `source/` still holds the
+                workbook. And `check:pages` still asserts the register's own
+                largest not-in-book name appears on NO route: that claim got
+                STRONGER, not weaker, and its sentinel is derived from the
+                workbook now rather than from the deleted module. */}
+            <Route path="/register" element={<Navigate to="/cio" replace />} />
             <Route path="/knowledge" element={<Navigate to="/cio" replace />} />
             <Route path="/macro" element={<Navigate to="/cio" replace />} />
             <Route path="/economy" element={<Navigate to="/cio" replace />} />
