@@ -24,10 +24,19 @@ default. This applies to every layer:
 
 ### The preview convention, and the two lines it must not cross
 
-`src/components/Preview.tsx` renders a GREYED SAMPLE so the client can see the
-shape of a FOOS-spec screen before its source exists. That is legitimate for a
-page that is nothing but a mock. It went wrong twice, in ways worth naming
+`src/components/Preview.tsx` rendered a GREYED SAMPLE so the client could see
+the shape of a FOOS-spec screen before its source existed. That is legitimate
+for a page that is nothing but a mock. It went wrong twice, in ways worth naming
 because both looked compliant — badged, hatched, muted, `title`-tagged:
+
+***THE COMPONENT IS GONE SINCE Stage 10bc AND THE RULE BELOW IS NOT.*** Its last
+caller was Exposure & IPS, which the family asked to remove — and that caller
+imported exactly ONE of its seven exports, the other six having been uncalled for
+some time. A module nothing calls is the dead-code-that-looks-alive failure this
+file keeps naming, so it got the `exportDeck.ts` treatment rather than being left
+exported and dead. What follows is a rule about what a greyed sample may never
+do, and a rule lives here rather than in an uncalled component; a future page
+that needs one writes the badge again and obeys it.
 
 **1. A preview figure must never be arithmetic on the family's own money.**
 `PublicDashboardView` printed Target value = `marketValue × 1.25`, Pending to
@@ -90,7 +99,10 @@ had been sitting on the client's live dashboard:
   then checked for every one of them and carries none: its sections are Pros &
   Cons, About, Stock details, Shareholding, Balance Sheet, P&L, Quarterly
   Results, Peer Comparison. Absent, each naming its source.
-- **Exposure & IPS** — `Portfolio movement: MoM +2.1% · QoQ +6.4% · YoY +18.7%`
+- **Exposure & IPS** *(the PAGE has since been REMOVED at the family's request —
+  see Stage 10bc. The entry stays for the reason the Economy ones below it do:
+  the lesson is about what was PRINTED, not about which route printed it)* —
+  `Portfolio movement: MoM +2.1% · QoQ +6.4% · YoY +18.7%`
   about this family's real ₹335 Cr book, with its own caption already saying the
   book cannot measure it. And three GAP dimensions whose **ACTUAL** columns were
   typed in — the desired side was a known fabrication, the actual side claims a
@@ -2851,8 +2863,10 @@ Named here so the gap stays visible, and so nobody builds a frame around it:
   Both need a store plus a rules engine; only the price-level half of Layer 5 was
   ever possible, and both pages that shipped it have since been REMOVED at the
   family's request — see Stage 10y. The STORE is untouched: every thesis and
-  alert rule they entered is still held in `familyInputs.ts` and still exports
-  from Exposure & IPS. Nothing evaluates a rule today.
+  alert rule they entered is still held in `familyInputs.ts`. Nothing evaluates a
+  rule today and — since Exposure & IPS went at Stage 10bc — **nothing exports
+  one either**: that page carried the only Export/Import, so the rules are still
+  stored, still correct and no longer reachable from any screen.
 - **PDF and PowerPoint export.** Excel export exists (`exportPortfolioExcel.ts`).
 
 ## Conventions
@@ -3103,7 +3117,11 @@ been ENTERED, which is not the claim that nothing is outstanding.
 invented weights summing to 100%, was corrected to show every bucket absent, and
 then stayed absent whatever the family entered — wrong in both directions for the
 same reason: it was not reading the one place the answer lives. It calls
-`bucketActuals` now, like Exposure & IPS.
+`bucketActuals` now, like Exposure & IPS. *(Both surfaces have since been
+removed — the Family Dashboard at Stage 10f, Exposure & IPS at Stage 10bc — so
+`bucketActuals` is a documented no-caller today. The defect it records is a
+LIVE rule and the reason the helper is kept: a card that re-derives an answer
+instead of reading the one place it lives is wrong in both directions.)*
 
 **Two suites check this, and they check different things.**
 `npm run test:family` asserts the arithmetic (43 cases in
@@ -3125,9 +3143,12 @@ it) and the undrawn commitment, which is on Morning CIO's Dry powder tile and it
 Capital deployment card.
 
 **THE STORES STAY AND THE ARITHMETIC STAYS ASSERTED.** `deals.ts` and
-`household.ts` still exist, `familyInputs.ts` still round-trips both through the
-ONE export file on Exposure & IPS, and all 43 cases in `familyMath.test.ts` still
-run. What is gone is the rendering. A family that had entered a balance sheet or
+`household.ts` still exist, `familyInputs.ts` still holds what was entered, and
+all 43 cases in `familyMath.test.ts` still run. What is gone is the rendering.
+*(The ONE export file this sentence relied on lost its buttons with Exposure &
+IPS at Stage 10bc — so "keeps it and can export it" below was true when written
+and is now half true: they keep it, and there is no longer a screen that hands
+it back.)* A family that had entered a balance sheet or
 a deal register keeps it and can export it; deleting the model to match the UI
 would have thrown their data away for a layout decision.
 
@@ -3839,7 +3860,10 @@ other class. The stock page
 chips `via manager's mandate` beside the class and carries a **Held via** column;
 Portfolio Monitor's per-entity drill-down carries the same column; Sector
 Composition, Exposure & IPS and Compare say "company shares" and then state the
-mandate/own split instead of leading with a word that denies it.
+mandate/own split instead of leading with a word that denies it. *(Of those
+three only SECTOR COMPOSITION is left — Compare went at Stage 10ap and
+Exposure & IPS at Stage 10bc — and it still says both halves. The wording rule
+is what matters here and it is unchanged.)*
 
 **AND MORNING CIO HAD COMPUTED THE SPLIT AND RENDERED IT NOWHERE.**
 `equityManagedMV` / `equitySelfMV` were derived, exported from the memo, and
@@ -3906,7 +3930,9 @@ and a share a manager picked is a company share exactly like one the family pick
 `DIRECT_EQUITY_BUCKET` answers *who chose it*. Neither is asked to carry both claims,
 which is precisely what rounds one and two each tried to make one word do. It is also
 why **Sector Composition, Exposure & IPS, Compare and the market-cap bands KEEP
-counting mandate-held shares**: a PMS-held share has a GICS sector and a market cap,
+counting mandate-held shares** — of which only Sector Composition still renders,
+the other three having been removed at Stages 10ap and 10bc, on the same terms
+and with the reasoning unchanged for the one that is left: a PMS-held share has a GICS sector and a market cap,
 and narrowing those would throw away ₹127.12 Cr of real sector exposure and leave a
 sector table built from depository rows that carry almost none. A look-through into a
 mandate is a GAIN for exposure analysis. Those pages say so on their face.
@@ -5672,6 +5698,16 @@ at.
 WHOLE of the **MONITOR** nav group, so its heading goes with them, exactly as
 the KNOWLEDGE heading went with its one entry at Stage 10x.
 
+***BOTH NOW FORWARD TO THE DASHBOARD HOME, BECAUSE THE DESTINATION BELOW HAS
+ITSELF GONE — see Stage 10bc.*** The paragraph that follows was right about its
+own moment and its reasoning is exactly what expired: Exposure & IPS was the
+honest destination *because* it was the last surface reaching a stored thesis or
+alert rule, and there is no such surface now. So the two are REPOINTED rather
+than chained through a dead address, and deliberately not sent on to the sector
+table `/exposure` forwards to — that page holds nothing either editor was about.
+Kept in the order it was learnt, because "the nearest surviving surface" is a
+judgement that has to be re-made every time one of them is removed.
+
 **BOTH FORWARD TO EXPOSURE & IPS, and that is the surviving surface nearest
 their purpose rather than a neutral fallback.** All three pages were the
 family-input layer — a thesis, an alert rule and an IPS target are things the
@@ -5695,7 +5731,10 @@ deliberately kept whole and a future editor calls it again unchanged.
 **`alertEngine.ts` LOST TWO THIRDS OF ITSELF AND STAYS.** Exposure & IPS reads
 `bucketActuals` and `bucketWeightPct` from it — the bucket roll-up was never
 about alerts, it answers "what fraction of the book sits in each IPS bucket" —
-so those stay. `evaluateAlerts` and `ALERT_KIND_LABEL` had exactly one caller
+so those stay. *(That reader went at Stage 10bc, so the two survivors are a
+DOCUMENTED no-caller now and say so at their own definition; what kept them here
+was a live surface, and this is the record of that reason expiring rather than
+of the reasoning being wrong.)* `evaluateAlerts` and `ALERT_KIND_LABEL` had exactly one caller
 between them and went with the page: **229 lines to 68.** No arithmetic
 assertion was lost with them, checked rather than assumed —
 `familyMath.test.ts` covers `deals`, `household`, `watchlist` and `marketCap`
@@ -10845,6 +10884,186 @@ nothing to splice — and `npm run build-book` was run afterwards as a control
 anyway and regenerated both byte-identically. A generated file that merges
 WITHOUT conflicting is exactly the case this file says to re-derive.
 
+### Stage 10bc — THE NAV IS REARRANGED, AND ONE REMOVAL BREAKS A CHAIN THIS FILE HAD KEPT FIVE TIMES
+
+*"change the hierarchy of these pages, Morning CIO then Portfolio Monitor and
+then Private Market and then Polycab"* · *"remove exposure and IPS page from the
+dashboard UI"* · *"move data audit page at the bottom of the left navigation bar
+just above upload page selection button rather than at the top"* · *"Move the
+following page buttons inside a drop down option in the left navigation bar
+labelled as 'Extras' and after clicking on the drop down we should be able to
+select any of these page buttons."*
+
+Four asks, all about the left nav. Three are layout. The second is not, and it
+goes first here because it is the only thing in this change a reader could be
+hurt by.
+
+#### 1. EXPOSURE & IPS — AND THE FIRST REMOVAL THAT LEAVES THE FAMILY NO WAY BACK
+
+**IT WAS THE LAST READER OF THE FAMILY-INPUT STORE, AND THAT WAS MEASURED
+BEFORE ANYTHING WAS TOUCHED.** Three modules had exactly one runtime importer
+between them and it was this page: `familyInputs.ts` (the IPS targets, the
+bucket mapping, the theses, the alert rules, the deal register, the household
+balance sheet — **and the one-file Export/Import**), `alertEngine.ts`
+(`bucketActuals` / `bucketWeightPct`) and `marketCap.ts` (the bands). Nothing
+else imports any of them; `familyMath.test.ts` asserts all three and renders
+none.
+
+**EVERY EARLIER REMOVAL IN THIS FILE KEPT A PATH TO WHAT THE FAMILY TYPED, AND
+THIS ONE DOES NOT.** Stage 10f removed the Family Dashboard and Private Markets
+and kept the deal register and balance sheet reachable *through this page's
+export*. Stage 10w removed Watchlist & Targets and left `watchlist.ts` written
+by `InvestmentTools` on every company page. Stage 10y removed Thesis & Triggers
+and Alerts and forwarded both *here*, in as many words, because this was "the
+only surface that reaches a stored thesis or alert rule". Five times the answer
+was the same and it was never an accident: **Stage 10's own reasoning for
+building the export at all** is that `localStorage` alone is not good enough,
+because "a cleared browser would lose them with no way back".
+
+That is exactly what is now true. Nothing was deleted — every entry is still in
+`localStorage` and still correct — and there is no longer a screen that shows
+it, exports it or takes it back. **The family were shown that trade, in those
+terms, and asked for the removal outright with nothing relocated.** It is their
+record and their call; what this file owes them is not pretending the cost was
+zero, which is why it is the first paragraph of this section rather than a
+footnote in it.
+
+**SO THE THREE MODULES STAY AS DOCUMENTED NO-CALLERS**, the `series.ts` and
+`attribution.ts` treatment and never the SILENT orphan this file keeps naming.
+Each says at its own definition that no screen reads it, so a future session
+knows before it goes looking; `familyMath.test.ts` still asserts the arithmetic,
+which is what stops them rotting while nothing renders them; and re-wiring means
+importing from them again with nothing about them to change first.
+
+**`src/components/Preview.tsx` WENT, AND THAT IS THE OPPOSITE CALL FOR THE
+OPPOSITE REASON.** This page imported exactly ONE of its seven exports
+(`PreviewBadge`); the other six were already uncalled. With that last caller
+gone the whole 152-line module had none — no data, no test, no reader — which is
+the dead-code-that-looks-alive failure rather than a store worth keeping, so it
+got the `exportDeck.ts` treatment. **The preview CONVENTION it implemented is a
+rule about what a greyed sample may never do, and a rule lives in this file
+rather than in an uncalled component**; the section at the top says so now.
+
+**`/exposure` FORWARDS TO SECTOR COMPOSITION, AND `/thesis` AND `/alerts` DO
+NOT FOLLOW IT.** The bulk of what this page DREW was a sector table over company
+shares — mandate-chosen and own-bought alike — and Sector Composition draws that
+same set on that same axis through the same `isCompanyShare`, so it is the
+surviving surface nearest its purpose rather than a neutral fallback. A thesis
+and an alert rule are not exposure: they are things the family TYPED, and
+nothing surviving holds one. Sending them on to a sector table would assert a
+continuity that does not exist, so both are **REPOINTED at the dashboard home
+rather than chained** — the `/watchlist` fix of Stage 10ap, and the case
+`check-family-inputs.mjs`'s own `/industry` row records it cannot catch, because
+two hops land where one does and that suite reads only where.
+
+**AND ITS ALLOCATION GROUP SURVIVES, WHICH MAKES THIS THE OPPOSITE OF THE LAST
+THREE PAGE REMOVALS.** MONITOR, KNOWLEDGE and RESEARCH each lost their heading
+because the entry removed was the last in the group. Family & Entities and
+Sector Composition are still here, so a heading that vanished would be a second
+bug rather than the removal working — and the two are asserted as separate
+claims for exactly that reason.
+
+#### 2. Three layout changes, and one mechanism that did all three
+
+The nav headings are DERIVED from each entry's `group`, so a group whose last
+entry leaves stops rendering on its own. That is what retired MONITOR at Stage
+10y, KNOWLEDGE at 10x and RESEARCH at 10ap, and it is why two of these three
+asks are a reordering of one array and nothing else:
+
+| | |
+| --- | --- |
+| **Daily** | `/cio` → `/monitor` → `/private-market` → `/polycab`. Polycab led this group on an earlier request and closes it now. **Nothing about the ring-fence moves with it** — `RINGFENCED_SECURITY_KEYS` in `build-book.mjs` is what keeps the promoter block out of every other route's figures, and a nav position never was |
+| **Allocation** | `/family` → `/sectors`, Exposure & IPS removed from between them |
+| **Extras** | the four that were the whole of TAX and ANALYTICS, so both headings go with their entries |
+| **Admin** | `/audit` → `/history`. Data Audit was the only entry in SETUP, so that heading goes the same way — and it is now immediately above Upload History, at the bottom, which is both halves of what was asked |
+
+#### 3. The dropdown, and the two things it has to do that a plain group does not
+
+**IT OPENS ITSELF WHEN THE ROUTE IS INSIDE IT.** A reader following a link or a
+bookmark to `/performance` would otherwise land with Extras shut and **no active
+entry anywhere in the nav**, which reads as the page having left the app. The
+set it checks against is derived from `NAV` rather than typed, so a fifth entry
+added to Extras keeps that working with no second list to remember.
+
+**AND IT IS SEEDED FROM THE ROUTE IN THE `useState` INITIALISER, NOT OPENED BY
+AN EFFECT AFTERWARDS.** An effect alone paints the group collapsed for one frame
+and then springs it open — and that first frame is precisely the one with no
+active entry in it. `pathname` is read before the initialiser runs, so the first
+paint is already right; the effect only has to cover navigating in later.
+
+**REMEMBERED PER BROWSER, EXACTLY AS THE NAV WIDTH BESIDE IT IS**, and for the
+same reason: it is a per-reader convenience and nothing about the book. A
+blocked or cleared store just means it opens on its own terms again.
+
+**A COLLAPSED GROUP IS `display:none` RATHER THAN UNMOUNTED**, which is a
+decision the checks depend on: the four entries stay in the DOM, so a check can
+assert WHICH pages the dropdown holds without clicking anything, while what a
+reader can actually reach is measured off the box. Reading membership alone
+would report a dropdown that never opens as working — which is one of the twelve
+bugs below, and it fires.
+
+#### The claims are struck on the nav's own structure, never on its labels
+
+Three of the four asks are about WHERE things sit rather than what they say, so
+`data-nav-group`, `data-nav-entry`, `data-nav-group-toggle` and `aria-expanded`
+are what `check:family` reads. Order and grouping asserted on rendered prose
+would be a structural claim resting on text a redesign is free to reword — the
+rule `data-section`, `data-mandate` and `data-movers-scope` already follow, and
+the one a check retires itself by breaking. **A probe that read nothing is a
+FAILURE and not a pass**: every claim here is struck on one array, so an empty
+one would let all of them through by asserting over no input.
+
+**AND THE NAV BLOCK RUNS BEFORE ANY OTHER `goto` IN THAT SUITE, WHICH IS
+LOAD-BEARING.** The dropdown remembers itself and opens itself on a route inside
+it, so a walk that had already visited `/ledger` would leave it stored open and
+"starts collapsed" would be asserted against a state the suite itself created.
+
+**THE TWO CHECKS THAT LOST THEIR SUBJECT WERE INVERTED, NOT DELETED.** What
+stood on `/exposure` read the family's seeded bucket mapping back off the page
+and counted the Export and Import BUTTONS — the second struck on the buttons
+rather than on `/export/i`, because deleting the button while leaving the
+paragraph that explains it had once left the prose version green. Neither has a
+subject now, so the claim that replaces them is the absence, asserted three ways
+and none implying another: the nav entry is gone, the address forwards to Sector
+Composition, and the page's own content renders nowhere.
+
+#### Twelve bugs reintroduced, and one of them crashed the suite instead of reporting
+
+Each was put back on its own, rebuilt and run, with the harness restoring **by
+copy on a `trap … EXIT` and rebuilding on the way out** — restoring the source
+alone leaves `dist/` at the bugged build for the next run to report under the
+wrong name. Eleven fired exactly their own checks: the Daily order reverted; the
+Exposure entry restored (two, from two directions); Data Audit back at the top
+in SETUP (two); Extras reverted to a plain group; Extras starting open (three,
+because the first click then CLOSES it); the toggle wired to nothing; the
+auto-open removed; one entry left outside Extras at top level; the `/exposure`
+redirect deleted; `/thesis` chained back through it; the removed page's own
+wording injected onto its destination; and the structural handles removed, which
+fails the probe rather than silently passing everything struck on it.
+
+**THE TWELFTH IS THE FINDING.** Reverting Extras to a plain group failed its two
+rows correctly and then **aborted the whole suite**: `.click()` threw on a
+locator matching nothing, and every row after it never ran — including *"a page
+behind the Extras dropdown still renders"*, which is the half a reader would
+actually be hurt by. A missing toggle is a FINDING, not a crash, so those two
+rows now fail by name and the rest of the file runs. Re-run against the same
+bug, it reports instead of aborting.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 1,349 across 25 suites · `check:family` **81/0** (61
+plus this change's twenty nav assertions) · `check:pages` **158 combinations
+clean**, with **two** evidenced abstentions rather than the three of Stage 10ba:
+the third was the market-cap band reconciliation, which could only ever bind
+against a live quote feed and which went with the page that drew it.
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after — nothing here touches the
+ingest, and a nav rearrangement that moved a generated figure would not be one.
+
+**THAT SWEEP COUNT IS 160 LESS THE TWO COMBINATIONS THE `exposure` ROUTE WALKED,
+AND IT WAS RE-MEASURED RATHER THAN SUBTRACTED.** Every stage above states a
+count against a base that has since moved; this one happens to reconcile, and it
+reconciles only because the sweep was run again.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -10947,7 +11166,7 @@ reintroducing its bug and watching it fail:
 - no class the caption names as excluded may stand as a row in the table above it;
 - every wrapper class Return & Drawdown names in its caption must have its own
   attribution row, and no fund NAME may be a row label;
-- ~~`/compare` offers no fund and says what it left out~~ — the page was REMOVED at Stage 10ap. `isCompanyShare` is still the filter behind Sector Composition and Exposure & IPS, and both still assert that no fund wrapper appears as a company row;
+- ~~`/compare` offers no fund and says what it left out~~ — the page was REMOVED at Stage 10ap, and Exposure & IPS at Stage 10bc. `isCompanyShare` is still the filter behind SECTOR COMPOSITION, which still asserts that no fund wrapper appears as a company row — one surface now rather than two, and the claim is unweakened on the one that renders;
 - a new `stock-fund` route asserts the fund page states the research does not
   apply and renders none of the five panels — while the existing `stock` route
   asserts a COMPANY still carries all of them.
@@ -10983,7 +11202,8 @@ which is the second half of this same fix.
 what every predicate tests. Renaming the VALUE would rewrite the generated book
 for a wording change. Every surface that renders a class reads the label from
 that one function — the monitor's sections and its filter, Morning CIO's
-allocation bucket, Exposure & IPS's contributors, laggards and bucket mapping,
+allocation bucket, Exposure & IPS's contributors, laggards and bucket mapping
+(that page went at Stage 10bc, so this list is one shorter than it was),
 Capital Gains, Ledger Insights, the stock page's pill, the review deck's
 allocation slide. A label re-typed per screen is a label that disagrees with
 itself, and this one already had six places to disagree in.
@@ -11074,7 +11294,11 @@ all rather than pointing a browser straight at the deployment.
 unverified and "a value here could be wrong by a factor of a crore" — correct to
 withhold, and this is the check: ABCAPITAL reads ₹1,11,403 Cr against
 screener.in's ₹1,11,347 Cr, 0.05% apart on two snapshots minutes apart.
-`src/lib/marketCap.ts` bands the listed book on it.
+`src/lib/marketCap.ts` bands the listed book on it. **NO PAGE DRAWS THOSE BANDS
+SINCE Stage 10bc**, when Exposure & IPS — their only surface — was removed at the
+family's request: the module is a DOCUMENTED no-caller now, still asserted by
+`familyMath.test.ts`, and the measurement below is what earns it its place and
+does not expire with the card.
 
 **A PARTIAL FEED SILENTLY RE-BASES A WEIGHT, and that is a new failure mode this
 book had not met.** Market-cap bands are weights of the PRICED book, so they move
@@ -11265,11 +11489,17 @@ carries the measurement beside the entry so it cannot go stale silently.
 ### The alert engine — silence is read as all-clear
 
 **THE EVALUATOR HAS BEEN REMOVED WITH ITS PAGE — see Stage 10y.** `alertEngine.ts`
-still exists and still serves Exposure & IPS's IPS-bucket roll-up
-(`bucketActuals`, `bucketWeightPct`); what went is `evaluateAlerts` and
-`ALERT_KIND_LABEL`, which had no caller once `/alerts` was removed at the
-family's request. The family's alert RULES are untouched in `familyInputs.ts`
-and still export; nothing evaluates them today.
+still exists and still carries the IPS-bucket roll-up (`bucketActuals`,
+`bucketWeightPct`); what went is `evaluateAlerts` and `ALERT_KIND_LABEL`, which
+had no caller once `/alerts` was removed at the family's request.
+
+**AND THE ROLL-UP'S OWN READER HAS SINCE GONE TOO — see Stage 10bc.** Exposure &
+IPS was the surface that kept those two exports alive at Stage 10y, and with it
+removed `alertEngine.ts` is a DOCUMENTED no-caller: kept because the family asked
+for that after being shown the cost, still asserted by `familyMath.test.ts`, and
+saying so at its own definition so it is never the SILENT orphan this file keeps
+naming. The family's alert RULES are untouched in `familyInputs.ts`; nothing
+evaluates them and nothing exports them.
 
 The rule it enforced is kept here because it is the reason a future rules engine
 must not be written naively, and because it generalises past alerts: **a rule

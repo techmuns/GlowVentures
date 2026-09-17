@@ -20,7 +20,6 @@ import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
 import { MandateHoldings } from "@/pages/MandateHoldings";
 import { HoldingsBehind } from "@/pages/HoldingsBehind";
-import { ExposureIPS } from "@/pages/ExposureIPS";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 // A page only renders when there is something real to render. An empty book
@@ -128,7 +127,6 @@ export default function App() {
                 subsets and is called by BOTH sides. */}
             <Route path="/holdings" element={<Gate><HoldingsBehind /></Gate>} />
             <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
-            <Route path="/exposure" element={<Gate><ExposureIPS /></Gate>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             {/* COMPARE COMPANIES was REMOVED at the family's request — the page,
                 its nav entry and with them the whole RESEARCH nav group, which
@@ -223,31 +221,79 @@ export default function App() {
             <Route path="/knowledge" element={<Navigate to="/cio" replace />} />
             <Route path="/macro" element={<Navigate to="/cio" replace />} />
             <Route path="/economy" element={<Navigate to="/cio" replace />} />
-            {/* THESIS & TRIGGERS and ALERTS were REMOVED at the family's request —
-                both pages, both nav entries, and with them the whole MONITOR nav
-                group, which held nothing else.
+            {/* EXPOSURE & IPS WAS REMOVED at the family's request — the page,
+                its nav entry, and its seven invariants in `check-pages.mjs`.
+                Its ALLOCATION group SURVIVES with Family & Entities and Sector
+                Composition still in it, so unlike MONITOR, KNOWLEDGE and
+                RESEARCH there is no heading to go with it.
 
-                BOTH FORWARD TO EXPOSURE & IPS, which is the surviving surface
-                nearest their purpose rather than a neutral fallback. All three
-                were the family-input layer: a thesis, an alert rule and an IPS
-                target are things the family TYPES, not figures a statement
-                reports. Exposure & IPS is the one that stays, it holds the IPS
-                targets and the bucket mapping, and — the part that decides it —
-                it carries the Export/Import that round-trips the WHOLE store in
-                one file, theses and alert rules included. So it is now the only
-                way to reach a stored thesis or alert rule, which makes it the
-                honest destination for someone who bookmarked either page.
+                IT FORWARDS TO SECTOR COMPOSITION, which is the surviving
+                surface nearest its purpose rather than a neutral fallback. The
+                bulk of what that page DREW was a sector table over company
+                shares — mandate-chosen and own-bought alike — and Sector
+                Composition draws that same set on that same axis, through the
+                same `isCompanyShare`. What has no survivor is the market-cap
+                band card and the family-input half; see below.
 
-                NOTHING THE FAMILY TYPED WAS DELETED. `src/lib/familyInputs.ts`
-                is untouched: every thesis, trigger, review date and alert rule
-                they entered is still stored and still exports — the same
-                treatment `deals.ts` and `household.ts` got at Stage 10f and
-                `watchlist.ts` at Stage 10w. `alertEngine.ts` stays too, because
-                Exposure & IPS reads `bucketActuals` and `bucketWeightPct` from
-                it; only `evaluateAlerts` and `ALERT_KIND_LABEL`, which had no
-                caller left, went with the page. */}
-            <Route path="/thesis" element={<Navigate to="/exposure" replace />} />
-            <Route path="/alerts" element={<Navigate to="/exposure" replace />} />
+                THESIS & TRIGGERS and ALERTS (Stage 10y) used to forward HERE,
+                on the reasoning that Exposure & IPS was the last surface that
+                reached a stored thesis or alert rule. That reason has expired
+                with the page, so both are REPOINTED at the dashboard home
+                rather than chained through a dead address — two hops land
+                where one does, which is exactly the stale routing the
+                `/industry` row in `check-family-inputs.mjs` records being
+                unable to catch, and it is fixed in this table for that reason.
+                They do NOT follow /exposure to the sector table: a thesis and
+                an alert rule are things the family TYPED, not exposure, and
+                pointing them at a page that merely looks adjacent would assert
+                a continuity that does not exist.
+
+                ── AND THE FAMILY'S OWN STORE IS NOW UNREACHABLE FROM THE UI ──
+
+                Stated plainly rather than glossed, because this is the first
+                removal in this repo that breaks that chain. Every earlier one
+                kept a path to what the family had typed: Stage 10f kept the
+                deal register and balance sheet reachable through this page's
+                export, Stage 10w left `watchlist.ts` written by
+                `InvestmentTools` on each company page, Stage 10y kept theses
+                and alert rules reachable through the same export. This page
+                was the LAST reader of `familyInputs.ts`, and with it goes the
+                one-file Export/Import that existed precisely so a cleared
+                browser could be restored. So anything the family entered —
+                IPS targets, the bucket mapping, theses, alert rules, the deal
+                register, the household balance sheet — is still in
+                `localStorage`, still correct, and can no longer be seen,
+                exported or imported. Clearing the browser now loses it with no
+                way back. The family were shown that trade and asked for the
+                removal anyway; what this comment owes them is not pretending
+                otherwise.
+
+                NOTHING THEY TYPED WAS DELETED, and three modules stay as
+                DOCUMENTED no-callers on their own instruction — the `series.ts`
+                and `attribution.ts` treatment, never the silent orphan this
+                repo keeps naming. `familyInputs.ts` holds the store and its
+                round-trip; `alertEngine.ts` keeps `bucketActuals` and
+                `bucketWeightPct`, which were themselves kept at Stage 10y only
+                because this page read them; `marketCap.ts` keeps the band
+                arithmetic. All three still have their assertions in
+                `familyMath.test.ts`, which is what stops them rotting while
+                nothing renders them, and each says at its own definition that
+                no screen reads it.
+
+                `src/components/Preview.tsx` DID go, and that is the opposite
+                call for the opposite reason: this page imported exactly ONE of
+                its seven exports, the other six were already uncalled, and
+                with `PreviewBadge`'s last caller gone the whole 152-line module
+                had none. A module nothing calls is the
+                dead-code-that-looks-alive failure — the next session finds it
+                exported and wires it back believing it load-bearing — so it
+                got the `exportDeck.ts` treatment. The preview CONVENTION it
+                implemented is a rule about what a greyed sample may never do,
+                and rules live in CLAUDE.md rather than in an uncalled
+                component. */}
+            <Route path="/exposure" element={<Navigate to="/sectors" replace />} />
+            <Route path="/thesis" element={<Navigate to="/cio" replace />} />
+            <Route path="/alerts" element={<Navigate to="/cio" replace />} />
             <Route path="/capital-gains" element={<Gate><CapitalGains /></Gate>} />
             {/* THE FUND-OF-FUNDS PRIVATE MARKETS PAGE OF Stage 10f IS STILL
                 GONE, and so are the Data Bank and the Family Dashboard. What

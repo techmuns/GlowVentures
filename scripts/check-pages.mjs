@@ -2183,7 +2183,13 @@ const ROUTES = [
   // bar. The removal itself is asserted in `check-family-inputs.mjs`: a removal
   // is verified by asserting it happened, never by deleting the test alongside
   // the feature.
-  ["exposure", "/exposure"],
+  // EXPOSURE & IPS was REMOVED at the family's request, so it is no longer
+  // walked — there is no page at that address to hold to the light-mode,
+  // overflow and stray-zero bar, and its seven invariants went with it because
+  // every one was about what it RENDERED. The removal itself is asserted in
+  // `check-family-inputs.mjs`, three ways that do not imply one another: the
+  // nav entry is gone, `/exposure` forwards to Sector Composition, and the
+  // page's own content renders nowhere.
   // Thesis & Triggers and Alerts were REMOVED at the family's request, so
   // neither is walked — there is no page at either address. The removal itself
   // is asserted in `check-family-inputs.mjs`, alongside the half that would
@@ -10726,160 +10732,6 @@ const INVARIANTS = {
 
   family: [
     ["no per-entity XIRR blow-up (4-digit %)", (t) => !/[+-]?\d{4,}(\.\d+)?\s*%/.test(t)],
-  ],
-  // Exposure & IPS sector GAP and market-cap bands are DIRECT-EQUITY views, and
-  // every class they leave out is named with its value.
-  //
-  // These asserted "listed book" for a long time, which passed while the page
-  // was still wrong: excluding only the PRIVATE classes kept ₹52.4 Cr of
-  // mutual-fund units in the sector table (as "Unclassified") and in the
-  // market-cap card's unmeasured bucket, where they reported a permanent
-  // shortfall against a market cap a fund can never have. The wording moved
-  // with the fix so the check cannot pass on the old, weaker claim.
-  exposure: [
-    // THE FIRST DRAFT OF THIS ONE COULD NOT FAIL, which is worse than not having
-    // it. It matched the caption's PROSE — "direct equity", "excluded rather
-    // than folded in" — and that prose is static: reverting the filter to
-    // `!isPrivateClass` put Cash and ₹52.4 Cr of mutual funds straight back into
-    // the sector table and the check still passed. Both invariants below are
-    // struck on FIGURES THE PAGE RENDERS, so a filter that widens moves one side
-    // and not the other.
-    /**
-     * AND THIS PAGE DELIBERATELY DOES NOT REGROUP. The holdings tables now file
-     * a manager-chosen share inside its mandate; a SECTOR table must not, because
-     * a share Carnelian picked has a GICS sector, a market cap, an NSE symbol and
-     * a concall exactly like one the family bought. Narrowing here to own-held
-     * shares would throw ₹127 Cr of real exposure out of the family's sector
-     * picture over a question — who decided — that a sector table does not ask.
-     * A look-through into a mandate is a GAIN for exposure analysis.
-     */
-    ["sector GAP covers company shares by both routes, the non-equity classes named",
-      (t) => /company shares/i.test(t) && /excluded rather than folded in/i.test(t)],
-    /**
-     * THE FIGURE THAT PROVES IT, rather than the sentence that claims it: the
-     * caption states the covered set and then splits it by ROUTE, and the two
-     * (three where an engagement is unstated) must reconstruct the covered
-     * total. Narrow this page to own-held shares and the mandate figure goes to
-     * zero while the covered total falls with it — this fails on the first,
-     * before the reader ever has to notice the second.
-     */
-    ["the covered set's mandate/own split reconstructs it — mandate-held shares are counted", (t) => {
-      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
-      // Each half is either a figure or the page's own explicit "none" wording.
-      // A missing clause is NOT read as zero: that would let the mandate half
-      // vanish from the caption and still pass.
-      const half = (rx, none) => (none.test(t) ? 0 : cr(rx.exec(t)?.[1]));
-      const mandate = half(
-        new RegExp(CR + String.raw` of it was chosen by a discretionary manager`, "i"),
-        /no holding in it is run under a discretionary mandate/i);
-      const own = half(
-        new RegExp(String.raw`and ` + CR + String.raw` was bought in the family.s own demat`, "i"),
-        /none of it was bought in the family.s own account/i);
-      const otherM = new RegExp(String.raw`with ` + CR + String.raw` in accounts whose statements do not state`, "i").exec(t);
-      const other = otherM ? cr(otherM[1]) : 0;       // the clause renders only when it is non-zero
-      if (![covered, mandate, own].every(Number.isFinite)) return false;
-      return mandate > 0                              // this book holds ₹127 Cr of them
-        && Math.abs(mandate + own + other - covered) <= Math.max(0.6, covered * 0.002);
-    }],
-    // The caption states what the table COVERS and what it EXCLUDES from two
-    // independent computations. They must reconstruct the header's consolidated
-    // NAV. Widening the covered set moves the first and leaves the second, and
-    // the sum then overshoots by exactly the classes counted twice (₹180.8 +
-    // ₹339.4 = ₹520.2 against a ₹461 Cr book).
-    ["covered + excluded reconstructs the consolidated NAV", (t) => {
-      const nav = cr(new RegExp(CR).exec(t)?.[1]);           // header chip, first on the page
-      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
-      const excluded = cr(new RegExp(String.raw`The other ` + CR + String.raw` is excluded`, "i").exec(t)?.[1]);
-      return [nav, covered, excluded].every(Number.isFinite)
-        && Math.abs(covered + excluded - nav) <= Math.max(0.6, nav * 0.002);
-    }],
-    // And a class the caption NAMES as excluded may not stand as a row in the
-    // table above it. Cash did, under its own "Cash" sector, while the sentence
-    // underneath said it had been left out.
-    ["no class named as excluded appears as a sector row", (t) => {
-      const i = t.search(/SECTOR\s+VALUE/i);
-      const j = t.search(/Sectors cover company shares/i);
-      if (i < 0 || j <= i) return false;
-      const table = t.slice(i, j);
-      const named = /is excluded rather than folded in:([\s\S]*?)\. A fund is a wrapper/i.exec(t)?.[1] ?? "";
-      const classes = [...named.matchAll(/of ([A-Za-z][A-Za-z ]*?)(?=,| and |$)/g)].map((m) => m[1].trim());
-      if (classes.length === 0) return false;
-      return classes.every((c) => !new RegExp(`(^|\n)${c}\t`, "i").test(table));
-    }],
-    /**
-     * ── THE BANDS SIT ON THE SAME SET AS THE SECTOR TABLE, AND IT IS COUNTED ──
-     *
-     * Every share in a company, however it came to be held — the holdings table
-     * one link away uses "Direct Equity" for the narrower half, and two surfaces
-     * using one phrase for two sets is exactly what the last two rounds of this
-     * complaint were.
-     *
-     * THIS CHECK COULD NOT FAIL AND THAT IS WHY IT IS REWRITTEN. It matched
-     * "struck on company shares" / "struck on every share in a company the
-     * family owns" and "direct-equity section of the holdings tables" — and
-     * BOTH branches of the card carry those words, the live one in its caption
-     * and the absent one in its `needs`. Narrowing `mcapExposure`'s input from
-     * `isCompanyShare` to `isDirectEquity` would drop ₹127 Cr of mandate-held
-     * shares out of the bands and this would still have reported clean. It is
-     * the defect the exposure block's own header records having fixed once,
-     * reintroduced on the card next door.
-     *
-     * So it is struck on the card's OWN TWO FIGURES: what carries a market cap
-     * plus what does not is the whole set the bands are drawn over, and that
-     * must reconstruct the covered total the sector caption above it prints.
-     * Narrow the input and the two sides part company by the mandate-held value.
-     *
-     * AND WHEN THE FEED DOES NOT ANSWER, THIS IS NOT CHECKED — never passed.
-     * `Position.marketCap` comes from the quote feed and from nowhere else (the
-     * book carries no such field), so in this offline harness `mcap.measured`
-     * is 0, the card renders its declared absent state and neither figure is on
-     * screen. There is nothing to compare, and reporting a pass over no input
-     * is what `golden.mjs` refuses to do with BLOCKED. It is reported NOT
-     * CHECKED with the cause named, and it binds — and fails — the moment the
-     * page is walked against a live feed:
-     *
-     *     GLOW_PASSWORD='…' node scripts/dev/live-api-proxy.mjs   # → :4174
-     *     BASE=http://127.0.0.1:4174 npm run check:pages
-     *
-     * The sector half of the same set IS guarded offline, by the mandate/own
-     * reconstruction above — so what is unchecked here is precisely a filter
-     * narrowed on the market-cap card alone.
-     */
-    ["market-cap bands cover the sector table's own company-share set, reconstructed from the card's two figures", (t) => {
-      const covered = cr(new RegExp(String.raw`Sectors cover company shares \(` + CR + String.raw`\)`, "i").exec(t)?.[1]);
-      const priced = /Of that book,\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*carries a market cap from the quote feed/i.exec(t);
-      if (!priced) {
-        // The card is in one of its two declared absent states, both of which
-        // print no figure. Say WHICH — a reader of this report has to be able
-        // to tell a feed that did not answer from a card that broke.
-        const why = /Still measuring/i.test(t)
-          ? "the quote feed had not settled when the page was read"
-          : /No company share carries a market cap/i.test(t)
-            ? "no quote resolved for any name, so the card renders its absent state and neither figure is on screen (this harness serves no /api/quotes — walk it against scripts/dev/live-api-proxy.mjs to bind this)"
-            : null;
-        // Neither absent state and no live caption either: the card rendered
-        // something this check cannot read, which IS a failure.
-        return why ? notChecked(why) : false;
-      }
-      const measured = crU(priced[1], priced[2]);
-      // The "and ₹Y does not" clause renders only when something is unpriced.
-      // Absent, the unmeasured side is zero — and if the clause were DELETED
-      // while names went unpriced, `measured` alone would fall short of the
-      // covered total and this fails, which is the guard that makes reading the
-      // absence as zero safe here.
-      const un = new RegExp(String.raw`and ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*does not \(\d+ names?`, "i").exec(t);
-      const unmeasured = un ? crU(un[1], un[2]) : 0;
-      if (![covered, measured, unmeasured].every(Number.isFinite)) return false;
-      return Math.abs(measured + unmeasured - covered) <= Math.max(0.6, covered * 0.002)
-        // ...and the card still says which set that is, so a narrowing that
-        // rewrote the caption to match is caught on the words as well.
-        && /direct-equity section of the holdings tables/i.test(t);
-    }],
-    // Phase 5: the IPS is an editor now. With NO family input recorded — which is
-    // this harness's state — every gap must be absent and the page must say why.
-    // A gap computed against a defaulted target is a fabricated instruction.
-    ["IPS is recordable and the gap stays absent until a target is set",
-      (t) => /IPS buckets/i.test(t) && /No target weights recorded yet/i.test(t)],
   ],
   // Phase 3: the company page draws a real price chart and a returns table from
   // /api/prices. In this headless run the edge function does not exist, so the

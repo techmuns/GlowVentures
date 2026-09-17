@@ -1,5 +1,21 @@
+// ── NO SCREEN READS THIS FILE. IT IS A DOCUMENTED NO-CALLER ─────────────────
+//
+// Exposure & IPS was its LAST reader and the family asked for that page to go.
+// They were shown what it costs first and chose it anyway, so this module is
+// kept rather than deleted. It is the `series.ts` and `attribution.ts`
+// treatment and never the SILENT orphan this repo keeps naming: a future
+// session reading this header knows nothing calls it before it goes looking.
+//
+// `bucketActuals` and `bucketWeightPct` survived Stage 10y for ONE reason —
+// that Exposure & IPS read them — so this is that reason expiring rather
+// than a new one. The roll-up itself is unchanged and still correct.
+//
+// `familyMath.test.ts` still asserts the arithmetic below, which is what stops
+// it rotting while nothing renders it. Re-wiring means importing from here
+// again — nothing about this file has to change first.
+//
 // THE IPS BUCKET ROLL-UP — what the family's asset-class mapping actually
-// measures, read by Exposure & IPS.
+// measures. It was read by Exposure & IPS, which has been removed; see above.
 //
 // THIS FILE WAS THE ALERT ENGINE, and Layer 5's evaluator has been REMOVED with
 // the Alerts page at the family's request (Stage 10y). `evaluateAlerts` and
@@ -11,9 +27,9 @@
 // fire and does not pass either — it reports UNMEASURABLE with the reason,
 // because silence from an alert is read as "all clear".
 //
-// THE FAMILY'S ALERT RULES THEMSELVES WERE NOT DELETED. They are still stored in
-// `familyInputs.ts` and still round-trip through the one Export/Import on
-// Exposure & IPS; nothing evaluates them today.
+// THE FAMILY'S ALERT RULES THEMSELVES WERE NOT DELETED. They are still stored
+// in `familyInputs.ts`. Nothing evaluates them, and — since Exposure & IPS
+// went — nothing exports them either; that file's own header says so.
 //
 // What remains is the bucket roll-up, which was never about alerts: it answers
 // "what fraction of the book sits in each IPS bucket", and Exposure & IPS reads
