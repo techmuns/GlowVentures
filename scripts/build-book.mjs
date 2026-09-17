@@ -21,6 +21,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
+import { securityKeyOf } from "../shared/securityKey.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
@@ -43,6 +44,10 @@ const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowDat
 const REPORT = path.join(ROOT, "docs", "BOOK-REPORT.md");
 
 const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 100);
+// UNITS, not rupees — the depository statements print quantities to three
+// decimals and their own arithmetic is exact at that precision, so rounding one
+// to paise breaks the identity a share-movement table is published on.
+const r3 = (n) => (n === null || n === undefined ? null : Math.round(n * 1000) / 1000);
 /** Four places, for a PERCENTAGE — two would round a 0.4 bp contribution to zero. */
 const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) / 10000);
 /**
@@ -1010,6 +1015,106 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
     }
   }
   return moves;
+}
+
+/**
+ * OPENING, PLUS, MINUS, CLOSING — per holding, per statement window.
+ *
+ * *"beginning of the year, this was my quantity, sold so much in the year, this
+ * is the quantity remaining … more like an opening balance, plus minus,
+ * closing balance. In a simple table format."*
+ *
+ * THE DEMAT STATEMENTS PRINT THIS TABLE AND NOTHING READ IT. Each prints, per
+ * ISIN, an `Opening Balance`, every dated movement with its own running
+ * balance, and a `Closing Balance` — 362 movement rows across six statements,
+ * of which the reader took 14, because it required a `CREDIT`/`DEBIT` token
+ * that is printed on a wrapped continuation line or not at all. The direction
+ * is the SIGN OF THE RUNNING BALANCE'S OWN CHANGE, and `motilalDemat.mjs`
+ * refuses any block whose rows do not walk its printed opening to its printed
+ * closing. Measured: 90 of 90 walk.
+ *
+ * FOUR TERMS, BECAUSE TWO WOULD BE WRONG.
+ *
+ *   opening + unitsIn − unitsOut + corporateAction = closing
+ *
+ * A corporate action is the security itself changing — a dividend reinvested
+ * into more units, an AIF redeemed, a rearrangement — never a decision anybody
+ * made, and folding it into "bought" would report the family as having bought
+ * 72 lots they never ordered. An ENCUMBRANCE is the term that must never be
+ * counted at all: a pledge moves units between free and pledged WITHOUT
+ * changing the balance, so summing pledges as purchases would report a holding
+ * at twice its size. It is carried as a COUNT so the page can say the movements
+ * happened without putting them in a total.
+ *
+ * AND NONE OF THIS IS A TRADE. A depository movement carries no price, no
+ * counterparty and no consideration (§"a depository movement is not a trade"),
+ * so every figure here is a QUANTITY and the page says units, never bought or
+ * sold in the money sense.
+ *
+ * Keyed `accountId|securityKey` because that is what a holdings row is, and
+ * joined on the ISIN the statement prints — falling back to the name's own key
+ * only where the statement printed no ISIN, which on these six is never.
+ */
+function shareMovementsFrom(docs, positions, accounts, notes) {
+  const out = {};
+  const byAcctIsin = new Map();
+  for (const p of positions) if (p.isin) byAcctIsin.set(`${p.accountId}|${p.isin}`, p.securityKey);
+  // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. Account 32387399's three
+  // identifiers give three answers, so it is excluded with the reason and its
+  // ₹8.23 Cr is in no total — and it issues a transaction statement like every
+  // other demat, so a window keyed on its own accountId would walk that account
+  // back into the book through a side door, attributed to a holder this book
+  // has said it cannot establish.
+  const known = new Set(accounts.map((a) => a.accountId));
+
+  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0;
+  for (const d of docs) {
+    if (d.reportType !== "demat-transactions") continue;
+    // The SLUG a position carries, never `acctKey`'s grouping key — those are
+    // two different strings for one account, and keying on the wrong one joins
+    // nothing while looking exactly like a book that holds none of these.
+    if (!d.accountNo || !d.provider) continue;
+    const accountId = accountIdOf(d.provider, d.accountNo);
+    if (!known.has(accountId)) { offRegistry += 1; continue; }
+    for (const row of d.positionsAsOf ?? []) {
+      if (row.opening == null && row.quantity == null) continue;
+      blocks += 1;
+      if (row.movements) split += 1;
+      // The ISIN the statement prints, joined to the holding the book carries.
+      // A block whose security this book holds no position in is still emitted
+      // — the family sold out of it during the window, which is exactly the
+      // row a reader asking "what happened to my quantity" is looking for.
+      const key = byAcctIsin.get(`${accountId}|${row.isin}`) ?? securityKeyOf(row.security ?? "");
+      if (byAcctIsin.has(`${accountId}|${row.isin}`)) joined += 1;
+      const m = row.movements;
+      if (m?.unclassified) unclassified += m.unclassified;
+      out[`${accountId}|${key}`] = {
+        accountId, securityKey: key, security: row.security ?? null, isin: row.isin ?? null,
+        periodFrom: d.periodFrom ?? null, periodTo: d.periodTo ?? null,
+        opening: row.opening ?? null, closing: row.quantity ?? null,
+        // `r3`, NEVER `r2`. These are UNITS and the statement prints them to
+        // three decimals; the money rounder beside it moved three windows by up
+        // to 0.003 of a unit, which is nothing to a reader and is the whole of
+        // whether the four printed figures add across. Bandhan Arbitrage read
+        // 4011814.06 in less 640238.36 out against a printed closing of
+        // 3371575.697 — a table whose own columns do not reconcile.
+        unitsIn: m ? r3(m.unitsIn) : null,
+        unitsOut: m ? r3(m.unitsOut) : null,
+        corporateAction: m ? r3(m.corporateActionIn - m.corporateActionOut) : null,
+        encumbranceMoves: m ? m.encumbrance : null,
+        rows: m ? m.rows : null,
+        unclassified: m ? m.unclassified : null,
+        // Null where the block did not walk — never a zero, which would read as
+        // a window in which nothing moved.
+        reason: row.movementsReason ?? null,
+        source: d.docKey ?? null,
+      };
+    }
+  }
+  if (blocks) {
+    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; the rest are securities the account no longer holds. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+  }
+  return out;
 }
 
 /**
@@ -2183,10 +2288,11 @@ function build(docs) {
   capitalMoves.sort((a, b) =>
     a.date.localeCompare(b.date) || a.accountId.localeCompare(b.accountId) || a.direction.localeCompare(b.direction));
   const positionTranches = positionTranchesFrom(capitalMoves, positions, notes);
+  const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes);
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
-    capitalMoves, positionTranches,
+    capitalMoves, positionTranches, shareMovements,
     navHistory, accountNavHistory, navCoverage, attribution,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
@@ -2255,7 +2361,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, StartupInvestment,");
+  L.push("  RealisedByClass, ShareMovement, StartupInvestment,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -2365,6 +2471,27 @@ function emit(book) {
   L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
   L.push(" */");
   L.push(`export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = ${j(book.positionTranches)};`);
+
+  L.push("");
+  L.push("/**");
+  L.push(" * OPENING, PLUS, MINUS, CLOSING — one entry per holding-window, keyed");
+  L.push(" * `accountId|securityKey`.");
+  L.push(" *");
+  L.push(" * Read off the demat statements' own per-ISIN blocks: a printed opening");
+  L.push(" * balance, every dated movement with its running balance, and a printed");
+  L.push(" * closing balance. `opening + unitsIn - unitsOut + corporateAction` equals");
+  L.push(" * `closing` on every entry carrying a split, because `motilalDemat.mjs`");
+  L.push(" * refuses to publish a block whose rows do not walk its own two printed");
+  L.push(" * balances — where they do not, every movement term is null and `reason`");
+  L.push(" * says so rather than a zero claiming nothing moved.");
+  L.push(" *");
+  L.push(" * EVERY FIGURE IS A QUANTITY. A depository movement carries no price and no");
+  L.push(" * counterparty, so none of these is a trade and `unitsIn`/`unitsOut` are");
+  L.push(" * never called bought and sold. `encumbranceMoves` is a COUNT and in no");
+  L.push(" * total: a pledge moves units between free and pledged without any leaving");
+  L.push(" * the account, and summing one would report the holding twice.");
+  L.push(" */");
+  L.push(`export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = ${j(book.shareMovements)};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");

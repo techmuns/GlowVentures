@@ -7,12 +7,14 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
+  measuredReturn,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
+import type { Position } from "@/lib/types";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
@@ -24,6 +26,54 @@ import { ReturnsTable } from "@/components/ReturnsTable";
 import { RatioTable } from "@/components/RatioTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
+import { QuantityMovement } from "@/components/QuantityMovement";
+import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
+
+/**
+ * THE RETURN, AND WHICH RETURN IT IS.
+ *
+ * *"Where will I get to see holding period return? From the date of my purchase
+ * till today… Absolute return and XIRR, both. Less than one year equity has to
+ * be absolute. More than one year, then you should show me CAGR."*
+ *
+ * The holding-period return ALWAYS renders — it is the one this book can strike
+ * for every costed holding, and the family called it the most important. The
+ * annual rate renders BESIDE it, never instead of it, and only where a purchase
+ * date is on file and the holding is a year old: `measuredReturn` holds the
+ * guard that refuses to compound a shorter window (the +99.0% failure), so a
+ * row without a date shows the holding-period figure alone and the tooltip says
+ * which document would supply one.
+ *
+ * XIRR IS DELIBERATELY NOT A THIRD LINE HERE. It is absent for every holding in
+ * this book for one reason — the statements cover the current period, so there
+ * is no per-holding cash-flow history to solve against — and printing a dash on
+ * every row of every name would say that 371 times. The Return column's own
+ * picker on the Portfolio Monitor states it once, per its own rule.
+ */
+function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
+  const hpr = measuredReturn(p, "absolute", asOf);
+  const cagr = measuredReturn(p, "cagr", asOf);
+  // Only where the guard actually annualised. `cagr` falls back to the
+  // holding-period figure under a year and tags it HPR — printing that as a
+  // second line would show one number twice under two names.
+  const annual = cagr.shown && cagr.tag === "CAGR" ? cagr : null;
+  return (
+    <>
+      <span className="whitespace-nowrap">
+        <span className="ret-tag mr-0.5">HPR</span>
+        {hpr.shown
+          ? <span className={changeColor(hpr.pct)} title={hpr.note}>{fmtPct(hpr.pct, { sign: true, decimals: 1 })}</span>
+          : <AbsentCell reason={hpr.reason} />}
+      </span>
+      {annual && (
+        <div className="whitespace-nowrap">
+          <span className="ret-tag mr-0.5">CAGR</span>
+          <span className={changeColor(annual.pct)} title={annual.note}>{fmtPct(annual.pct, { sign: true, decimals: 1 })}</span>
+        </div>
+      )}
+    </>
+  );
+}
 
 // Per-stock drill-down: how one security is held across the family's entities, its
 // tax basis, every dated buy/sell from the ledger, and — from the muns research
@@ -53,6 +103,13 @@ export function StockInfo() {
   // page shows any holding, AIF units included, and those are not listed.
   const bookMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
+  // The demat statements' own opening-to-closing quantity account for this
+  // name, one row per account that issues a transaction statement.
+  const moves = useMemo(() => movementsFor(securityKey), [securityKey]);
+  // Accounts that hold this name, issue a transaction statement, and print no
+  // block for it — the statement saying it did not move, which a reader shown
+  // nothing at all cannot tell from a gap.
+  const unmoved = useMemo(() => unmovedAccountsFor(rows), [rows]);
   if (!portfolio) return null;
 
   const name = rows[0]?.security ?? led?.name ?? securityKey;
@@ -467,21 +524,42 @@ export function StockInfo() {
           <p className="text-sm text-slate-400">Realised P&amp;L and the full transaction history are below.</p>
         </Card>
       ) : (
-        <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <Card className="lg:col-span-2" title="Position by account" subtitle="How this name is held — the owning entity, who chose the position, and the platform that runs the account" pad={false}>
+        <>
+          {/* FULL WIDTH, AND THE TAX CARD MOVED BELOW IT.
+              *"ideally, I would not want to do one more scroll. One more click
+              on the right side is not desirable… use that space for showing
+              this column in entirety. And then tax maybe just make it a
+              click."* Measured at 1500×950 before the change: this table needed
+              1,508px inside a 953px card, so six columns including RETURN sat
+              off the right edge. Collapsing the tax card in place would not have
+              helped — it would still have held a third of the row — so it leaves
+              the row entirely and becomes a click. */}
+          <Card className="mt-5" title="Position by account" subtitle="How this name is held — the owning entity, who chose the position, and the platform that runs the account" pad={false}>
             <div className="overflow-x-auto">
               <table className="min-w-full whitespace-nowrap text-sm">
                 <thead className="border-b border-ink-700">
                   <tr>
                     <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Managed by</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Held via</th>
+                    {/* HELD VIA MERGED IN HERE, AND THE COLUMN IS GONE.
+                        *"This 'held via' can actually hide… use that space for
+                        showing this column in entirety."* Measured before it was
+                        moved: this table needed 1,508px inside a 953px card, so
+                        Avg cost, Invested, Current, Unrealised P&L, RETURN and
+                        Basis were all off the right edge and a reader had to
+                        scroll the card sideways to reach the one figure they
+                        came for. The route is not dropped with the column —
+                        WHO CHOSE a position is the distinction Stage 10j and
+                        10L exist for, and the mandate link is still the only
+                        door into the manager's own book from this page. Both
+                        ride in this cell now. */}
+                    <th className="label-xs px-4 py-2 text-left font-medium">Managed by · held via</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Avg cost</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Current</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&L</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium"
+                      title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. A money-weighted XIRR is not shown per holding at all: it needs every cash flow for this name and these statements cover the current period only — the per-account XIRR is on the Performance page.">Return</th>
                     <th className="label-xs px-4 py-2 text-right font-medium">Basis</th>
                   </tr>
                 </thead>
@@ -501,18 +579,16 @@ export function StockInfo() {
                     <tr key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
                       <td className="px-4 py-2.5 text-[12px] text-slate-400">
-                        {providerOf(accIdx, r)}
-                        {strategyOf(accIdx, r) && <div className="text-[10px] text-slate-600">{strategyOf(accIdx, r)}</div>}
-                      </td>
-                      <td className="px-4 py-2.5 text-[12px] text-slate-400">
-                        {/* ONE LINE. A second <div> here becomes a newline in
-                            innerText, which splits every account row in two and
-                            breaks the entity-count check on a dually-reported
-                            holding. The engagement rides in the tooltip, and the
-                            mandate link is INLINE for the same reason. */}
-                        <span title={`${eng || "engagement not stated"} — ${ROUTE_NOTE[route]}`}>
-                          {ROUTE_LABEL[route]}
-                        </span>
+                        <div>{providerOf(accIdx, r)}</div>
+                        {/* The route reads as a phrase — "via manager's mandate"
+                            — because the column header no longer supplies the
+                            word. `ROUTE_LABEL` is unchanged and is still the one
+                            place those four words are chosen. */}
+                        <div className="text-[10px] text-slate-600" data-held-via>
+                          {strategyOf(accIdx, r) && !isMandateHeld(eng) && <>{strategyOf(accIdx, r)}{" · "}</>}
+                          <span title={`${eng || "engagement not stated"} — ${ROUTE_NOTE[route]}`}>
+                            via {ROUTE_LABEL[route]}
+                          </span>
                         {/* THE ROW IS THE DOOR INTO THE MANDATE. A reader who
                             arrived on this name has one question left — what
                             else is in there — and this is the only place on the
@@ -529,13 +605,29 @@ export function StockInfo() {
                             </Link>
                           </>
                         )}
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
-                      <td className={`px-4 py-2.5 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
+                      {/*
+                        *"Where will I get to see holding period return? From the
+                        date of my purchase till today. Where is it — that's the
+                        most important return… Absolute return and XIRR, both."*
+                        So the cell states WHICH return it is rather than leaving
+                        a bare percentage to be read as whichever the reader has
+                        in mind, and where a purchase date licenses an annual
+                        rate it shows that BESIDE the holding-period figure
+                        instead of replacing it. `measuredReturn` is the one
+                        place the methodology lives (Stage 10af) — the guard that
+                        refuses to compound a sub-year window onto a year is
+                        inside it, and is not re-implemented here.
+                      */}
+                      <td className="px-4 py-2.5 text-right mono" data-stock-return>
+                        <ReturnCells p={r} asOf={portfolio.asOf} />
+                      </td>
                       <td className="px-4 py-2.5 text-right">
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>
                       </td>
@@ -547,13 +639,15 @@ export function StockInfo() {
                   <tr>
                     <td className="px-4 py-2.5 text-left text-slate-200">Total</td>
                     <td />
-                    <td />
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}>{fmtPct(ret, { sign: true, decimals: 1 })}</td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
+                      title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
+                      <span className="ret-tag mr-0.5">HPR</span>{fmtPct(ret, { sign: true, decimals: 1 })}
+                    </td>
                     <td />
                   </tr>
                 </tfoot>
@@ -575,7 +669,14 @@ export function StockInfo() {
             )}
           </Card>
 
-          <Card title="Tax basis & holding">
+          <Card className="mt-5" title="Tax basis & holding" pad={false}>
+            <details className="group">
+              <summary className="cursor-pointer list-none px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200"
+                data-tax-toggle>
+                <span className="text-champagne-400">Show</span> the long/short cost split, the purchase dates, the
+                dividends recorded and this holding's weight in the book
+              </summary>
+              <div className="px-4 pb-3">
             <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-400">Long-term cost</span><span className="mono text-slate-100">{ltCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — see the note below" /> : money(ltCost)}</span></div>
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Short-term cost</span><span className="mono text-slate-100">{stCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — see the note below" /> : money(stCost)}</span></div>
             <div className="mt-2 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
@@ -602,9 +703,16 @@ export function StockInfo() {
                 holding that is not listed and against a total that is not the
                 listed one. Wrong on both halves of a three-word label. */}
             <div className="flex items-center justify-between border-t border-ink-700/60 py-2 text-sm"><span className="text-slate-400">Weight in book</span><span className="mono text-slate-100" title="Share of the current value of holdings — every asset class, each dually-reported holding counted once.">{weight.toFixed(1)}%</span></div>
+              </div>
+            </details>
           </Card>
-        </div>
+        </>
       )}
+
+      {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
+          which prints all four. Above the tape deliberately: the family asked
+          for the quantity account first and the dated rows second. */}
+      <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts} />
 
       {/* Transaction history */}
       <Card className="mt-5" title="Transaction history" subtitle='Every dated buy & sell from the ledger — the "Transaction Info" drill-down' pad={false}

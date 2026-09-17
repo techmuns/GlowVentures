@@ -44,6 +44,7 @@ const SUITES = [
   ["scheme labels & transaction order", "src/lib/__tests__/schemeLabel.test.ts"],
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
+  ["share movements", "src/lib/__tests__/shareMovements.test.ts"],
 ];
 
 let failed = 0;
