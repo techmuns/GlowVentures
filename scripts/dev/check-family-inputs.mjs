@@ -93,54 +93,177 @@ await page.evaluate((f) => localStorage.setItem("glow:familyInputs/v1", JSON.str
 //
 // THE ARITHMETIC IS NOT LOST WITH THE SCREENS. Every one of those derivations
 // is still asserted in `src/lib/__tests__/familyMath.test.ts` (43 cases,
-// `npm run test:family`), and the STORE still round-trips all of it through the
-// export/import on Exposure & IPS — one file carries the whole thing, so a
-// family that entered a balance sheet or a deal register keeps it and can take
-// it elsewhere. What is gone is the rendering, and this suite covers rendering,
-// so those checks go with the pages.
+// `npm run test:family`). What is gone is the rendering, and this suite covers
+// rendering, so those checks go with the pages.
 //
-// What remains here is the wiring that still has a surface: the bucket mapping
-// the family enters must reach Exposure & IPS, the whole-store export must
-// still be reachable, and the removed routes must REDIRECT rather than break a
-// bookmark. Asserting a removal is the point — deleting a test alongside the
-// feature it guards proves nothing.
+// ── AND EXPOSURE & IPS HAS NOW GONE THE SAME WAY ───────────────────────────
+//
+// That ends the other half of what this file used to assert. Two checks lived
+// here — that the bucket mapping the family enters REACHED that page, and that
+// the whole store could still be exported and imported FROM it — and both were
+// written precisely because it was the LAST surface reaching what the family
+// had typed. There is no such surface now, so neither claim has a subject.
+//
+// THEY ARE INVERTED, NOT DELETED WITH THE FEATURE. A removal is verified by
+// asserting it happened: the entry is gone from the nav, the address forwards,
+// and the page renders none of its own content anywhere (below, and in the two
+// blocks after this one). `familyInputs.ts`, `alertEngine.ts` and
+// `marketCap.ts` keep their data and their `familyMath.test.ts` assertions and
+// each says at its own definition that no screen reads it — the family were
+// shown that this leaves their entries un-exportable, so a cleared browser
+// loses them with no way back, and asked for the removal anyway.
 
-// ── Exposure & IPS reads the family's bucket mapping ───────────────────────
-await page.goto(`${BASE}/exposure`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
+// ── THE LEFT NAV — ORDER, GROUPING, AND THE ONE DROPDOWN ───────────────────
+//
+// Three of the family's four asks are about WHERE things sit rather than what
+// they say, so every claim below is struck on `data-nav-group` /
+// `data-nav-entry` / `aria-expanded` rather than on rendered labels. Order and
+// grouping asserted on prose would be a structural claim resting on text a
+// redesign is free to reword — the rule `data-section`, `data-mandate` and
+// `data-movers-scope` already follow, and the one a check retires itself by
+// breaking.
+//
+// IT RUNS FIRST, BEFORE ANY OTHER `goto`, and that is load-bearing: the
+// dropdown remembers itself per browser and opens itself on a route inside it,
+// so a walk that had already visited /ledger would leave it stored open and
+// "starts collapsed" would be asserted against a state this suite created.
+await page.goto(`${BASE}/cio`, { waitUntil: "networkidle" });
+await page.waitForTimeout(600);
 let text = await page.locator("body").innerText();
-// The seeded mapping is Equity → Growth and Cash → Liquidity, so both buckets
-// must show a MEASURED actual weight and the two unmapped classes must be named
-// with their value. `/not mapped/` cannot be the test — it is also the empty
-// option in every one of the five dropdowns on this page, so it matches on a
-// page that is working perfectly.
-const growth = /Growth\s+([\d.]+)%/.exec(text);
-const liquidity = /Liquidity\s+([\d.]+)%/.exec(text);
-check("Exposure & IPS reads the family's bucket mapping",
-  !!growth && !!liquidity && Number(growth[1]) > 0 && Number(liquidity[1]) > 0,
-  `Growth ${growth?.[1] ?? "—"}% · Liquidity ${liquidity?.[1] ?? "—"}%`);
-check("the classes mapped to no bucket are named with their value",
-  /mapped to no bucket/.test(text) && /(AIF|Mutual Fund)/.test(text),
-  /₹[\d.]+ Cr \(\d+% of the book\) sits in [^,.]+/.exec(text.replace(/\s+/g, " "))?.[0]);
-// ── AND THESE TWO CHECKS ARE NOW WHAT KEEP THE REMOVED PAGES' DATA REACHABLE ─
+
+const readNav = () => page.$$eval("[data-nav-group]", (els) => els.map((el) => {
+  const links = [...el.querySelectorAll("[data-nav-entry]")];
+  const toggle = el.querySelector("[data-nav-group-toggle]");
+  return {
+    group: el.getAttribute("data-nav-group"),
+    entries: links.map((a) => a.getAttribute("data-nav-entry")),
+    // A COLLAPSED GROUP IS `display:none`, SO ITS ENTRIES ARE STILL IN THE DOM.
+    // The claim the family made is about what they can CLICK, so `visible` is
+    // measured off the box rather than off the selector — reading `entries`
+    // alone would report a dropdown that never opens as working.
+    visible: links.filter((a) => a.getBoundingClientRect().height > 0).map((a) => a.getAttribute("data-nav-entry")),
+    collapsible: !!toggle,
+    expanded: toggle?.getAttribute("aria-expanded") === "true",
+  };
+}));
+let navGroups = await readNav();
+const groupOf = (g) => navGroups.find((x) => x.group === g);
+const same = (a, b) => Array.isArray(a) && a.length === b.length && a.every((v, i) => v === b[i]);
+
+// A PROBE THAT READ NOTHING MUST NOT PASS. Every claim below is struck on this
+// array, so an empty one would let all nine through by asserting over no input
+// — `golden.mjs`'s rule, arriving through a selector.
+check("the nav renders its groups structurally", navGroups.length > 0, navGroups.map((g) => g.group).join(" · "));
+
+// *"change the hierarchy of these pages, Morning CIO then Portfolio Monitor and
+//  then Private Market and then Polycab"* — Polycab led this group until now.
+check("the Daily group is in the order the family asked for",
+  same(groupOf("Daily")?.entries, ["/cio", "/monitor", "/private-market", "/polycab"]),
+  groupOf("Daily")?.entries.join(" → "));
+
+// *"remove exposure and IPS page from the dashboard UI"*. Its ALLOCATION group
+// survives with two entries, so — unlike MONITOR, KNOWLEDGE and RESEARCH — a
+// heading that vanished with it would be a second bug rather than the removal
+// working. The two are separate claims and neither implies the other.
+check("the Exposure & IPS nav entry is gone",
+  !navGroups.some((g) => g.entries.includes("/exposure")) && !/Exposure\s*&\s*IPS/i.test(text));
+check("...and the Allocation group it sat in survives, with its other entries",
+  same(groupOf("Allocation")?.entries, ["/family", "/sectors"]),
+  groupOf("Allocation")?.entries.join(" · "));
+
+// *"move data audit page at the bottom of the left navigation bar just above
+//  upload page selection button rather than at the top"* — both halves: the
+// group is LAST, and Data Audit sits immediately above Upload History rather
+// than merely somewhere below it.
+check("Data Audit closes the nav, immediately above Upload History",
+  navGroups.at(-1)?.group === "Admin" && same(navGroups.at(-1)?.entries, ["/audit", "/history"]),
+  `${navGroups.at(-1)?.group}: ${navGroups.at(-1)?.entries.join(" → ")}`);
+check("...and the now-empty Setup group heading went with it",
+  !groupOf("Setup") && !/(^|\n)\s*SETUP\s*(\n|$)/.test(text));
+
+// *"Move the following page buttons inside a drop down option ... labelled as
+//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups.
+const extras = groupOf("Extras");
+check("Extras is a group, and the only collapsible one",
+  !!extras && extras.collapsible && navGroups.filter((g) => g.collapsible).length === 1,
+  `${navGroups.filter((g) => g.collapsible).length} collapsible`);
+check("...holding exactly the four pages the family named, in the order given",
+  same(extras?.entries, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+  extras?.entries.join(" · "));
+check("...and the emptied Tax and Analytics headings went with their entries",
+  !groupOf("Tax") && !groupOf("Analytics")
+  && !/(^|\n)\s*TAX\s*(\n|$)/.test(text) && !/(^|\n)\s*ANALYTICS\s*(\n|$)/.test(text));
+check("...sitting above Admin, so Data Audit and Upload History still close the nav",
+  navGroups.findIndex((g) => g.group === "Extras") >= 0
+  && navGroups.findIndex((g) => g.group === "Extras") < navGroups.findIndex((g) => g.group === "Admin"));
+// IT IS A DROPDOWN: shut until asked, and none of the four clickable meanwhile.
+check("Extras starts collapsed, with none of its four pages reachable",
+  extras?.expanded === false && extras?.visible.length === 0,
+  `${extras?.visible.length ?? "?"} visible`);
+
+// *"after clicking on the drop down we should be able to select any of these
+//  page buttons"* — the ask itself, struck on what a reader can click.
 //
-// Thesis & Triggers and Alerts have been removed (Stage 10y). The family's
-// theses and alert rules were NOT: they are still in `familyInputs.ts` and they
-// still travel in this page's one export file. With both editors gone, THIS is
-// the only surface that reaches them — so the check above (the bucket roll-up,
-// which is `bucketActuals`/`bucketWeightPct`, the half of `alertEngine.ts` that
-// survived its page) and the one below are what stop a future session deleting
-// either as dead.
+// A MISSING TOGGLE IS A FINDING, NEVER A CRASH. Reintroducing `collapsible =
+// false` — the dropdown reverting to an ordinary group — is what showed why
+// this needs a guard: two rows above failed correctly, then `.click()` threw on
+// a locator matching nothing, the suite ABORTED, and every row after it never
+// ran. Among those was "a page behind the dropdown still renders", which is the
+// half a reader would actually be hurt by. So a missing toggle fails these two
+// rows by name and lets the rest of the file run.
+const extrasToggle = page.locator('[data-nav-group-toggle="Extras"]');
+const hasExtrasToggle = (await extrasToggle.count()) > 0;
+const clickExtras = async () => {
+  if (!hasExtrasToggle) return;
+  await extrasToggle.click();
+  await page.waitForTimeout(250);
+  navGroups = await readNav();
+};
+await clickExtras();
+check("clicking Extras reveals all four page buttons",
+  hasExtrasToggle && same(groupOf("Extras")?.visible, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+  hasExtrasToggle ? groupOf("Extras")?.visible.join(" · ") : "no Extras toggle to click");
+// ...AND IT IS A TOGGLE RATHER THAN A ONE-WAY REVEAL. Without this, a control
+// that ignored its own state and simply rendered open would pass the row above.
+await clickExtras();
+check("...and clicking it again puts them away",
+  hasExtrasToggle && groupOf("Extras")?.expanded === false && groupOf("Extras")?.visible.length === 0,
+  hasExtrasToggle ? "" : "no Extras toggle to click");
+
+// AND A PAGE BEHIND THE DROPDOWN IS STILL REACHABLE BY ADDRESS, WITH THE GROUP
+// OPENING ITSELF. A reader following a link or a bookmark to /performance would
+// otherwise land with the dropdown shut and NO ACTIVE ENTRY ANYWHERE in the
+// nav, which reads as the page having left the app. It was just collapsed by
+// hand two lines up, so this also proves the ROUTE re-opens it rather than a
+// stored preference doing the work.
+for (const to of ["/capital-gains", "/performance", "/returns", "/ledger"]) {
+  await page.goto(`${BASE}${to}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(400);
+  navGroups = await readNav();
+  const landed = new URL(page.url()).pathname;
+  const main = (await page.locator("main").innerText()).trim();
+  check(`a page behind the Extras dropdown still renders — ${to}`,
+    landed === to && main.length > 200, `landed ${landed} · ${main.length} chars`);
+  check(`...and opening it by address opens the dropdown with it — ${to}`,
+    groupOf("Extras")?.expanded === true && groupOf("Extras")?.visible.includes(to),
+    groupOf("Extras")?.visible.join(" · "));
+}
+// ── AND THE BUCKET MAPPING AND THE EXPORT HAVE NO SURFACE LEFT ─────────────
 //
-// AND THE EXPORT CHECK COULD NOT FAIL, which is why it is rewritten. It read
-// `/export/i` over the whole page text — and the paragraph beneath the buttons
-// explains what "Export" does, so deleting the button outright left it green.
-// It is struck on the BUTTONS now: both of them, because an export with no
-// import back is a one-way door out of the family's own record.
-const exportBtn = await page.locator("button", { hasText: /^\s*Export\s*$/ }).count();
-const importBtn = await page.locator("button", { hasText: /^\s*Import\s*$/ }).count();
-check("the whole store can still be exported from here — and imported back",
-  exportBtn > 0 && importBtn > 0, `${exportBtn} export · ${importBtn} import`);
+// What stood here read the family's seeded mapping back off Exposure & IPS
+// (Equity → Growth, Cash → Liquidity, both showing a measured weight, the two
+// unmapped classes named with their value) and then counted the Export and
+// Import BUTTONS — struck on the buttons rather than on `/export/i`, because
+// the paragraph beneath them explains what Export does and deleting the button
+// outright had left the prose-matching version green.
+//
+// Both went with the page. The mapping is still stored, `bucketActuals` and
+// `bucketWeightPct` still compute it, and `familyMath.test.ts` still asserts
+// the arithmetic — but nothing renders any of it, so there is no rendering for
+// a rendering suite to check. The claim that replaces them is the absence
+// itself, asserted three ways and none implying another: the nav entry is gone
+// (above), the address forwards to Sector Composition (below), and the page's
+// own content renders nowhere (the block after that).
 
 // ── The removed routes redirect rather than 404 ────────────────────────────
 //
@@ -178,14 +301,21 @@ for (const [from, to] of [
   // chain is a fact about the route table, so it is fixed there and named in
   // `App.tsx` — not asserted here by a check that would have to pass either way.
   ["/knowledge", "/cio"], ["/macro", "/cio"], ["/economy", "/cio"], ["/industry", "/cio"],
-  // THESIS & TRIGGERS and ALERTS were removed at the family's request, and both
-  // forward to Exposure & IPS rather than to the dashboard home. All three were
-  // the family-input layer — a thesis, an alert rule and an IPS target are things
-  // the family TYPES — and Exposure & IPS is the one that survives, holding the
-  // IPS targets, the bucket mapping and the Export/Import that round-trips the
-  // WHOLE store. It is now the only way to reach a stored thesis or alert rule,
-  // which is what makes it the honest destination rather than a near-enough one.
-  ["/thesis", "/exposure"], ["/alerts", "/exposure"],
+  // EXPOSURE & IPS was removed at the family's request. It forwards to SECTOR
+  // COMPOSITION, which is the surviving surface nearest its purpose rather than
+  // a neutral fallback: the bulk of what it DREW was a sector table over company
+  // shares — mandate-chosen and own-bought alike — and that page draws the same
+  // set on the same axis, through the same `isCompanyShare`.
+  //
+  // THESIS & TRIGGERS and ALERTS (Stage 10y) used to forward to /exposure, on
+  // the reasoning that it was the last surface reaching a stored thesis or alert
+  // rule. That reason expired with the page, so both are REPOINTED at the
+  // dashboard home — and deliberately NOT sent on after /exposure to a sector
+  // table, which holds nothing either page was about. This row cannot catch the
+  // difference, for the reason the `/industry` row above records: chained, a
+  // bookmark still LANDS somewhere and this suite reads only where. So the
+  // decision is made in the route table and named in `App.tsx`.
+  ["/exposure", "/sectors"], ["/thesis", "/cio"], ["/alerts", "/cio"],
   // COMPARE COMPANIES was removed at the family's request, and with it the whole
   // RESEARCH nav group. It forwards to Portfolio Monitor: that page's SECURITY
   // axis is one row per company across every vehicle the family holds it
@@ -257,7 +387,7 @@ check("its private market value is a real measured figure, not the removed page'
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /PAID IN, BUT NEVER VALUED/i.test(text) && /in no total on this page/i.test(text));
 
-// ── THE THREE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
+// ── THE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
 //
 // This block used to prove that the release calendar sat on Economy & Macro and
 // that Macro Research had stopped claiming a calendar was impossible. Both those
@@ -274,17 +404,25 @@ for (const [from, label, pattern] of [
   ["/knowledge", "Knowledge & Memory", /capture the first note|search the family's notes|notes captured/i],
   ["/macro", "Macro Research", /returns table[\s\S]{0,400}52-week|series store did not respond|observations/i],
   ["/economy", "Economy & Macro", /data release calendar|surprise vs consensus/i],
-  // Both of these land on Exposure & IPS, so the text read is that page's. The
-  // phrases below belong to the removed editors and to nothing that survives —
-  // checked rather than assumed, because "Thesis" and "Alerts" as WORDS do
-  // appear in Exposure & IPS's own export tooltip, which is why neither page is
-  // matched on its title.
+  // EXPOSURE & IPS lands on Sector Composition, so the text read here is that
+  // page's. Matched on the IPS EDITOR's own furniture and deliberately NOT on
+  // "sector", "company shares", "market cap" or the excluded-class caption —
+  // every one of which Sector Composition prints legitimately, and one of which
+  // (`Sectors cover company shares`) was this page's own caption too. A phrase
+  // the DESTINATION prints is not distinctive to the page that was removed,
+  // which is the trap the `/alerts` row below already walked into once.
+  ["/exposure", "Exposure & IPS", /IPS buckets|no target weights recorded|investment charter|which IPS bucket/i],
+  // THESIS & TRIGGERS and ALERTS now land on MORNING CIO rather than on
+  // Exposure & IPS, which has gone the same way. The patterns are unchanged and
+  // the reason they were chosen still holds — each belongs to a removed editor
+  // and to nothing that survives — but the page whose prose forced them to be
+  // careful is itself gone now, so the caution below is history rather than a
+  // live hazard. It is kept because the RULE it records is live: match a
+  // removed page on its own content, never on a phrase its destination prints.
   ["/thesis", "Thesis & Triggers", /of \d+ recorded|not recorded|no schedule|exit triggers/i],
   // `alert rules` was in this pattern and FAILED a correct page: Exposure & IPS's
-  // export tooltip lists what the file carries, "theses, alert rules" among them
-  // — legitimately, because the export does carry them. A phrase the DESTINATION
-  // prints is not distinctive to the page that was removed, which is the trap the
-  // comment above names and the first draft walked into anyway.
+  // export tooltip listed what the file carries, "theses, alert rules" among them
+  // — legitimately, because the export did carry them.
   ["/alerts", "Alerts", /no rules yet|need a source, not a threshold/i],
   // COMPARE COMPANIES lands on Portfolio Monitor, so the text read here is that
   // page's. Matched on the comparison screen's OWN furniture and deliberately

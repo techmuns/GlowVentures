@@ -1,3 +1,20 @@
+// ── NO SCREEN READS THIS FILE. IT IS A DOCUMENTED NO-CALLER ─────────────────
+//
+// Exposure & IPS was its LAST reader and the family asked for that page to go.
+// They were shown what it costs first and chose it anyway, so this module is
+// kept rather than deleted. It is the `series.ts` and `attribution.ts`
+// treatment and never the SILENT orphan this repo keeps naming: a future
+// session reading this header knows nothing calls it before it goes looking.
+//
+// The bands had exactly one surface, and the measurement that earned them
+// their place — the quote feed's `marketCap` being RUPEES, verified against
+// two independent sources — is recorded below and does not expire with the
+// page that drew them.
+//
+// `familyMath.test.ts` still asserts the arithmetic below, which is what stops
+// it rotting while nothing renders it. Re-wiring means importing from here
+// again — nothing about this file has to change first.
+//
 // MARKET-CAP EXPOSURE — the one GAP dimension that became measurable.
 //
 // Exposure & IPS carried three preview cards — by geography, by market cap, by

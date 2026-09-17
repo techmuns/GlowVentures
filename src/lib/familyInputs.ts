@@ -1,3 +1,22 @@
+// ── NO SCREEN READS THIS FILE. IT IS A DOCUMENTED NO-CALLER ─────────────────
+//
+// Exposure & IPS was its LAST reader and the family asked for that page to go.
+// They were shown what it costs first and chose it anyway, so this module is
+// kept rather than deleted — deleting it would throw away what the family typed. It is the `series.ts` and `attribution.ts`
+// treatment and never the SILENT orphan this repo keeps naming: a future
+// session reading this header knows nothing calls it before it goes looking.
+//
+// SO EVERYTHING IN THIS STORE IS NOW UNREACHABLE FROM THE UI. The IPS
+// targets, the bucket mapping, the theses, the alert rules, the deal
+// register and the household balance sheet are all still in `localStorage`
+// and all still correct — and the one-file Export/Import below, which
+// existed precisely so a cleared browser could be restored, no longer has a
+// button anywhere. Clearing the browser now loses the lot with no way back.
+//
+// `familyMath.test.ts` still asserts the arithmetic below, which is what stops
+// it rotting while nothing renders it. Re-wiring means importing from here
+// again — nothing about this file has to change first.
+//
 // THE FAMILY-INPUT STORE — the decisions no data source can supply.
 //
 // Layers 3, 4 and 5 of the FOOS spec are not blocked on a vendor. They are
