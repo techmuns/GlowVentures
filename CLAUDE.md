@@ -10070,10 +10070,21 @@ pass, because a history and a scheme table truncated TOGETHER reconcile with eac
 other perfectly.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + **30 new** + 140 ·
-`test:family` · `check:family` **57/0** · `check:pages` — with the same two
-pre-existing abstentions. `npm run replay:calls -- --check` is a no-op against
-the committed tree, which is what says the archive on disk is what the extractor
-would write.
+`test:family` (a new `capitalCalls.test.ts`, anchored on the generated book) ·
+`check:family` **57/0** · `check:pages` **152 combinations clean**, with the
+same two evidenced abstentions — this harness serves no `/api/quotes`, so the
+market-cap card renders its absent state, and every KPI tile on this book
+carries a figure, so the absent-tile claim has no subject.
+
+**THAT COUNT IS UNCHANGED FROM STAGE 10ax, AND THAT IS THE POINT**: this change
+adds no route. Everything it asserts is struck on `/private-market`, which the
+sweep already walked, so the number moving would have meant a route appeared
+somewhere nobody looked.
+
+`npm run replay:calls -- --check` is a no-op against the committed tree, and
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY — which is what says the archive on disk is what the extractor
+would write, and that a change carrying 52 new dated rows moved no figure.
 
 ### Stage 10k — News & Announcements: REMOVED
 
