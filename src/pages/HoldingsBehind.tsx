@@ -738,7 +738,7 @@ export function HoldingsBehind() {
                                   subtitle counts what was left out, and the
                                   Portfolio Monitor still lists the closed rows in
                                   full with the money that came back on
-                                  Transactions → My investments.
+                                  Transactions → What I invested.
                                 */}
                               </div>
                             </td>

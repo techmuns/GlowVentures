@@ -16,14 +16,14 @@ import {
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure,
   costCoversSet,
-  currentHoldings,
+  currentHoldings, isCashEquivalent,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
-import { trancheTable, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
+import { trancheTable, trancheKey, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
@@ -124,6 +124,57 @@ type MandateInfo = {
   holdings: MandateHolding[];
   accountMV: number; accountCount: number;
 };
+/**
+ * WHEN A HOLDING'S OWN MONEY WENT IN, over the positions a row sums.
+ *
+ * Two sources, strongest first, and both are the HOLDING'S OWN dates rather
+ * than its account's:
+ *
+ *   • `Position.heldSince` — the acquisition date on a lot register, emitted
+ *     only where the lots account for every unit held;
+ *   • the position's own tranche record, keyed on (account, security), which is
+ *     the dated allotments a fund reports against that very folio.
+ *
+ * AN ACCOUNT-LEVEL DATE IS DELIBERATELY NOT A THIRD TIER. An account's first
+ * contribution is when the FAMILY funded the account, not when a manager bought
+ * the share this row is about — putting it here would print a date under a
+ * heading that says something else about it, for every share in a mandate. The
+ * account-level record has its own home, on the mandate page and on What I
+ * invested.
+ *
+ * Measured on this book: 10 of 371 positions carry one, and they are ₹208 Cr of
+ * ₹714 Cr — 29% of the money, because the dated ones are the large AIF folios.
+ *
+ * ── AND THAT THIRD TIER CANNOT BE CAUGHT ON THIS BOOK, SO IT IS WRITTEN DOWN ──
+ *
+ * Adding it was REINTRODUCED as a bug and the sweep came back clean. Measured,
+ * every position in a funded account is already one of three things: in a PMS
+ * (125 of them, rolled into a mandate row, which carries no date by design),
+ * already own-dated (7), or closed and not drawn (3). ZERO would newly borrow
+ * one — so the wrong rule and the right one render identically here, and the
+ * page check that guards it (`a holding the book cannot date shows a dash`)
+ * can only be shown to bite by a borrowed CONSTANT, which is what it was
+ * verified against. The first drop that funds a non-PMS account holding
+ * something with no allotment record of its own makes this live, silently, on a
+ * page computing correctly — which is why the rule is stated here rather than
+ * left to be inferred from the absence of a test for it.
+ */
+function investedOnOf(ps: Position[]): { first: string; last: string; payments: number } | null {
+  const dates: string[] = [];
+  for (const p of ps) {
+    const own = BOOK_POSITION_TRANCHES[trancheKey(p.accountId, p.securityKey)];
+    const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
+    if (ins.length) { dates.push(...ins); continue; }
+    if (p.heldSince) { dates.push(p.heldSince); continue; }
+    // ONE UNDATED CONSTITUENT AND THE ROW HAS NO FIRST PAYMENT. Returning the
+    // earliest of the rest would name a date the row's own money predates.
+    return null;
+  }
+  if (!dates.length) return null;
+  dates.sort();
+  return { first: dates[0], last: dates[dates.length - 1], payments: dates.length };
+}
+
 type Row = {
   /**
    * A SECURITY the family holds, or a MANDATE it has handed to a discretionary
@@ -168,6 +219,34 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /**
+   * ── WHEN THE MONEY WENT IN, AND DELIBERATELY NOT `heldSince` ───────────────
+   *
+   *   "here, you've given me the amount, but you've not given me the date. Date
+   *    is equally important… But invested when? When?"  …  "one important
+   *    column which is missing is basically the date when we invested."
+   *
+   * THE TWO FIELDS LOOK INTERCHANGEABLE AND MUST NOT BE MERGED. `heldSince`
+   * above is what LICENSES ANNUALISATION: `holdingReturn` reads it, and it is
+   * emitted only where a lot register accounts for every unit held, because a
+   * rate compounded over a window the holding did not occupy is exactly the
+   * +99% this book has already printed once.
+   *
+   * This is for DISPLAY and feeds no return, which is what lets it take a
+   * SECOND source `heldSince` cannot: the position's own dated contribution
+   * record. That record routinely carries SEVERAL payments — Sanshi 9069671554
+   * was funded four times between March and October 2025 — and a holding funded
+   * four times has no single holding period to compound over. Folding it into
+   * `heldSince` would annualise all four from the first, overstating the rate by
+   * everything the later money did not earn. Which is, precisely, the thing the
+   * family were pointing at when they asked for this column: *"XIRR will change
+   * depending on the investment amount and the time."*
+   *
+   * NULL THE MOMENT ANY CONSTITUENT'S DATE IS UNKNOWN — `sumOrNull` applied to a
+   * date, the same gate `heldSince` uses. A "first payment" over the subset that
+   * happens to be dated is not the first payment.
+   */
+  investedOn: { first: string; last: string; payments: number } | null;
   /**
    * The positions this row was built from — its own deduped set — carried ONLY
    * so a per-contribution breakdown can be struck on exactly what the row sums.
@@ -528,7 +607,7 @@ export function PortfolioMonitor() {
    * literal in seven places it goes wrong silently: the expansion simply stops
    * reaching the last column and nothing fails.
    */
-  const COL_COUNT = groupAxis === SECURITY_AXIS ? 15 : 13;
+  const COL_COUNT = groupAxis === SECURITY_AXIS ? 16 : 14;   // +1 for Invested on
   /**
    * THE FUND LOOK-THROUGH — assembled by `useStockExposure`, which both this
    * page and Sector Composition's Consolidated view call.
@@ -805,8 +884,14 @@ export function PortfolioMonitor() {
         // window to annualise it over, so CAGR renders absent on these rows —
         // and for the same reason the capital behind the mandate bought no units
         // in any one share, so it carries no per-contribution breakdown either.
-        // That money is on the Transactions card, under My investments.
+        // That money is on the Transactions card, under What I invested.
         heldSince: null,
+        // NOR AN INVESTED-ON DATE, AND FOR THE SAME REASON ONE LEVEL UP. A
+        // mandate is an ACCOUNT; the family funded it on dates the statements do
+        // report, but those dates belong to the account and not to any share in
+        // it. They are on the mandate's own page, beside its Invested tile and
+        // under What the family put in.
+        investedOn: null,
         // A MANDATE IS NEVER "REDEEMED": it is an account, and an account that
         // holds nothing says so through `noPositionsReason` on its own page.
         fundClasses: [],
@@ -990,6 +1075,10 @@ export function PortfolioMonitor() {
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
+          // Struck over the DEDUPED set, like every other figure on this row: the
+          // raw one reports Transition Venture Fund I twice and would count one
+          // subscription as two payments.
+          investedOn: investedOnOf(dps),
           // The DEDUPED set, which is what every other figure on this row sums.
           trancheSet: dps,
           live,
@@ -1043,6 +1132,7 @@ export function PortfolioMonitor() {
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
+        investedOn: investedOnOf([p]),
         trancheSet: [p],
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
         liveMV: p.live ? p.marketValue : 0,
@@ -1152,6 +1242,11 @@ export function PortfolioMonitor() {
             weight: weightBase > 0 ? e.total / weightBase : 0,
             costNA: true,
             heldSince: null,
+            // A DERIVED ROW HOLDS NO POSITION AT ALL — the family reach this
+            // company through somebody else's portfolio, and no document reports
+            // a quantity, a cost or a purchase date for it. Absent, like every
+            // other measured cell on this row.
+            investedOn: null,
             trancheSet: [],
             live: false, dayChange: 0, dayChangePct: null, liveMV: 0,
             realizedKeys: [],
@@ -1713,6 +1808,17 @@ export function PortfolioMonitor() {
                   <th className="label-xs px-2 py-1.5 text-right font-medium">Qty</th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium whitespace-nowrap">Avg cost</th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium">Invested</th>
+                  {/*
+                    BESIDE THE AMOUNT, WHICH IS WHERE IT WAS ASKED FOR.
+                    *"here, you've given me the amount, but you've not given
+                    me the date."* Every other column here reads money first
+                    and descriptors last (Stage 10n); this is neither — it is
+                    the second half of the cell to its left, and a date filed
+                    away at the end of the row is a date nobody pairs with the
+                    figure it belongs to.
+                  */}
+                  <th className="label-xs px-2 py-1.5 text-left font-medium whitespace-nowrap"
+                    title="When this holding's own money went in, from a lot register's acquisition date or the fund's own dated allotments against this very folio. It is the HOLDING's date, never its account's: when the family funded a mandate is a fact about the account and is on that mandate's own page. A row that rolls up several holdings shows a date only where every one of them carries one.">Invested on</th>
                   <th className="label-xs px-2 py-1.5 text-right font-medium">CMP</th>
                   <Th right onClick={sortBtn("dayChange")}>Day</Th>
                   <Th right onClick={sortBtn("marketValue")}>{bySecurity ? "Direct + PMS" : "Market value"}</Th>
@@ -1797,6 +1903,23 @@ export function PortfolioMonitor() {
                               <span className="font-normal normal-case tracking-normal text-slate-500"
                                 title="Not an absent figure: every statement in this section reports a nil balance, so the subtotal is a measurement.">
                                 · a measured nil — every row here is reported at zero
+                              </span>
+                            )}
+                            {/*
+                              WHY A LIQUID FUND IS SITTING IN CASH, said where
+                              the question is asked. A reader scanning the Cash
+                              section finds an ETF and a mutual-fund scheme in
+                              it; without this, the only available reading is
+                              that the app has misfiled them. It names the
+                              family's own instruction and the document that
+                              corroborates it, and it counts the rows rather
+                              than asserting coverage — a section with no
+                              re-bucketed row says nothing at all.
+                            */}
+                            {grp.key === "Cash" && grp.rows.some((r) => isCashEquivalent(r)) && (
+                              <span className="font-normal normal-case tracking-normal text-slate-500"
+                                title={`Cash is liquid and arbitrage — the family's own instruction, corroborated by the Cash sheet of their consolidated review (30 June 2026), which lists each of these by name. The issuing documents type them Mutual Fund or ETF, and that is what the archive still records: this is the CATEGORY axis answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`}>
+                                · includes {grp.rows.filter((r) => isCashEquivalent(r)).length} liquid {grp.rows.filter((r) => isCashEquivalent(r)).length === 1 ? "holding" : "holdings"} the statements type as a fund
                               </span>
                             )}
                             {grp.collapsed > 0 && (
@@ -2086,6 +2209,31 @@ export function PortfolioMonitor() {
                             </button>
                           ) : fmtFromBase(r.costBasis, { compact: true })}
                         </td>
+                        {/*
+                          THE DATE, AND WHAT IT IS NOT. A row funded several times
+                          shows the FIRST with the count beside it, never a single
+                          date standing for all of them — the family's own reason
+                          for asking is that when the money went in changes the
+                          return, so collapsing four payments to one date would
+                          answer the question wrongly in the direction they were
+                          worried about.
+                        */}
+                        <td className="px-2 py-1.5 text-left mono text-slate-400 whitespace-nowrap" data-invested-on={r.investedOn?.first ?? ""}>
+                          {r.investedOn === null
+                            ? <AbsentCell reason={m
+                              ? "a mandate is an account, not a holding: the family funded it on dates its statements do report, and those are on the mandate's own page beside its Invested figure"
+                              : r.costNA
+                                ? "no statement in this book reports what this holding cost, so there is no payment to date. A depository records what is held and never what was paid for it"
+                                : "the statements report this holding's cost but not the date it was bought. A lot register or the fund's own dated allotments would carry it; this account issues neither"} />
+                            : <span title={r.investedOn.payments > 1
+                              ? `Funded over ${r.investedOn.payments} dated payments, ${fmtDate(r.investedOn.first)} to ${fmtDate(r.investedOn.last)}. Open the Invested cell for each payment's own units, entry NAV and return — they are not the same return, because each has been at work for a different length of time.`
+                              : `One dated payment, ${fmtDate(r.investedOn.first)}.`}>
+                              {fmtDate(r.investedOn.first)}
+                              {r.investedOn.payments > 1 && (
+                                <span className="ml-1 text-[10px] text-slate-500">+{r.investedOn.payments - 1}</span>
+                              )}
+                            </span>}
+                        </td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
@@ -2284,7 +2432,8 @@ export function PortfolioMonitor() {
                                 <thead>
                                   <tr className="border-b border-ink-700/70">
                                     <th className="label-xs px-3 py-1.5 text-left font-medium">Invested on</th>
-                                    <th className="label-xs px-3 py-1.5 text-left font-medium">As</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium"
+                                    title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
                                     {/* ONLY WHERE THE ROW SPANS MORE THAN ONE FOLIO, and
                                         then it is load-bearing rather than decoration: this
                                         book's Sanshi Class E row unions four members, and
@@ -2741,6 +2890,14 @@ export function PortfolioMonitor() {
                                   {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
                                 </span>}
                           </td>
+                          {/* A CATEGORY WAS BOUGHT ON MANY DATES, so there is
+                              no one date to print — the same reason its Qty and
+                              Avg cost cells are absent rather than blended. The
+                              coverage is on the FOOTER, where a count over the
+                              whole table means something. */}
+                          <td className="px-2 py-1.5 text-left mono">
+                            <AbsentCell reason="a category holds many holdings bought on many dates; there is no single date for it. Each row above carries its own." />
+                          </td>
                           <td className="px-2 py-1.5 text-right mono">
                             <AbsentCell reason="a price is per unit and belongs to one security; a category has no price. Its market value is in the column that measures money." />
                           </td>
@@ -2823,6 +2980,19 @@ export function PortfolioMonitor() {
                 <tr className="border-t border-ink-700 font-semibold" data-footer-total="">
                   <td className="px-2 py-1.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
                   <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                  {/*
+                    THE COLUMN COUNTS WHAT IT COVERS RATHER THAN LEAVING A WALL
+                    OF DASHES TO BE INTERPRETED. There is no honest aggregate to
+                    print here — a "first invested" over rows most of which carry
+                    no date would be the first of the dated subset — so the
+                    footer states the coverage instead, which is the one thing a
+                    reader needs to know about a column that is mostly absent.
+                  */}
+                  <td className="px-2 py-1.5 text-left text-[10.5px] font-normal text-slate-500 whitespace-nowrap"
+                    data-invested-on-coverage={rows.filter((r) => r.investedOn).length}
+                    title="A holding is dated where a lot register reports when it was acquired, or where the fund reports its own dated allotments against that folio. The rest report a cost and not a date, or no cost at all — a depository records what is held and never what was paid for it.">
+                    {rows.filter((r) => r.investedOn).length} of {rows.length} dated
+                  </td>
                   <td className="px-2 py-1.5"></td>
                   <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
                     title={totDayPct == null ? undefined : `${money(totDay, true)} across the live-priced book since previous close`}>
@@ -2997,7 +3167,7 @@ export function PortfolioMonitor() {
                 list. It rides in the same hover so a future drop still says it.
               • the closed-position note went with ask 2 below: a redeemed
                 holding is no longer on any allocation page at all, and where the
-                money went is Transactions → My investments, which is the dated
+                money went is Transactions → What I invested, which is the dated
                 record a redemption belongs on.
               • the weight caption is the Weight footer's own hover, on the
                 column it describes.
@@ -3094,7 +3264,7 @@ export function PortfolioMonitor() {
             would learn the dashboard lost it. The family have since asked for a
             redeemed holding to leave every allocation page AND for this note to
             go with it, so the fact now lives where a redemption belongs — on
-            Transactions → My investments as a dated movement under Taken out,
+            Transactions → What I invested as a dated movement under Taken out,
             which `monitor-txn-out` asserts. A note here would be an allocation
             page explaining a transaction. `check:pages` INVERTS rather than
             being deleted with it.
@@ -3407,7 +3577,8 @@ function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSid
           <thead className="sticky top-0 z-10 bg-ink-800">
             <tr className="border-b border-ink-700">
               <th className="label-xs px-3 py-2.5 text-left font-medium">Mandate / fund</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">How</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="Whether the money went in as one payment or several. It is a COUNT of dated contributions, not a judgement about them: one is a lumpsum, more than one is staggered.">How it went in</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Paid in</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Taken out</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
@@ -3422,7 +3593,23 @@ function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSid
               <th className="label-xs px-3 py-2.5 text-right font-medium"
                 title="Struck only where the contribution list provably reaches the account's inception — either the allotted units account for every unit held, or the statement's own printed inception date is on or after the first contribution. A return against a partial record of what was paid in overstates itself by everything it missed, so a row that cannot establish it renders a dash naming the reason.">Return</th>
               <th className="label-xs px-3 py-2.5 text-left font-medium">Entity</th>
-              <th className="label-xs px-3 py-2.5 text-left font-medium">Period</th>
+              {/*
+                "INVESTED ON", NOT "PERIOD" — and the column did not move.
+
+                  "here, you've given me the amount, but you've not given me the
+                   date. Date is equally important… But invested when? When?
+                   Okay. Becomes very important."  …  "one important column
+                   which is missing is basically the date when we invested."
+
+                THE DATES WERE ALREADY IN THIS CELL. "Period" is not a word a
+                reader scanning for WHEN THEY INVESTED reads as an answer, so
+                the column was on the page and the question it answers was not
+                on the column. One date where the account was funded once; first
+                → last where the money went in over several payments, which is
+                the same record the How-it-went-in cell counts.
+              */}
+              <th className="label-xs px-3 py-2.5 text-left font-medium"
+                title="The date each contribution carries on the statement that reports it — the movement's own date, never the statement's report date. A single date means the account was funded once; a range spans the first payment to the last.">Invested on</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-700/70">
@@ -3540,18 +3727,19 @@ function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSid
                         <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
                           Every dated movement {g.provider} reports on account {g.accountNo}, as its statement types
                           them. The shares the manager bought and sold inside it are a different record and are not
-                          here — see <span className="font-medium text-slate-400">By manager</span>.
+                          here — see <span className="font-medium text-slate-400">Manager trades</span>.
                         </p>
                         <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                           <table className="min-w-full text-[12px]">
                             <thead>
                               <tr className="border-b border-ink-700/70">
                                 <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
-                                <th className="label-xs px-3 py-1.5 text-left font-medium">As</th>
-                                <th className="label-xs px-3 py-1.5 text-right font-medium">In</th>
-                                <th className="label-xs px-3 py-1.5 text-right font-medium">Out</th>
+                                <th className="label-xs px-3 py-1.5 text-left font-medium"
+                                    title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
+                                <th className="label-xs px-3 py-1.5 text-right font-medium">Paid in</th>
+                                <th className="label-xs px-3 py-1.5 text-right font-medium">Taken out</th>
                                 <th className="label-xs px-3 py-1.5 text-right font-medium">Units</th>
-                                <th className="label-xs px-3 py-1.5 text-left font-medium">Into</th>
+                                <th className="label-xs px-3 py-1.5 text-left font-medium">Security bought</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-ink-700/50">
@@ -3865,13 +4053,37 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
             </button>
           ))}
         </div>
-        {/* THE DEFAULT IS THE ROLLUP, AND THE TAPE IS ONE CLICK AWAY. Four
-            hundred dated rows answer "what happened on Tuesday"; the family
-            asked what each manager did this year. Tape is kept because a
-            reconciliation against a PDF needs the printed rows in printed
-            order, which no rollup can stand in for. */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="My investments is the capital the FAMILY committed, mandate by mandate and fund by fund. The rest read the managers' own trading: one line per manager or per family member; Direct Equity narrows it to the shares the family bought and sold in its own broking account; Tape is the raw dated rows.">
-          {([["mine", "My investments"], ["direct", "Direct Equity"], ["manager", "By manager"], ["entity", "By entity"], ["tape", "Tape"]] as const).map(([v, label]) => (
+        {/*
+          THE DEFAULT IS THE ROLLUP, AND THE FULL LIST IS ONE CLICK AWAY. Four
+          hundred dated rows answer "what happened on Tuesday"; the family asked
+          what each manager did this year. The full list is kept because a
+          reconciliation against a PDF needs the printed rows in printed order,
+          which no rollup can stand in for.
+
+          ── AND EVERY ONE OF THESE LABELS NOW SAYS WHAT IT STANDS FOR ─────────
+
+            "What is tape? So what is tape and what is my investments?… Let's
+             think of something better. Friendly words… Because it's confusing
+             right now."  …  "when you have a label, what does it stand for?
+             Otherwise, why have it?"
+
+          "Tape" is a trading-desk word for the printed record of every
+          execution. It is precise and it is jargon, and nothing on screen
+          unpacked it. "My investments" was worse than jargon — it was ambiguous
+          in the one way that matters here, because the whole point of this tab
+          group is the split between WHAT THE FAMILY DID and WHAT THEIR MANAGERS
+          DID, and "my investments" could honestly mean either. The five labels
+          now carry that split themselves instead of leaving it to a tooltip.
+
+          "Direct Equity" is deliberately NOT renamed. The family asked for that
+          exact word on that exact tab — *"Replace by security with direct
+          equity, that will contain the transaction of all direct buy and sold
+          equity transactions"* — and it is the same word this app's holdings
+          tables use for the same set. Changing it now would be a fourth round of
+          the argument Stage 10L settled, running backwards.
+        */}
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="The first two are what the FAMILY did: What I invested is the capital they committed, mandate by mandate and fund by fund; Direct Equity is the shares they bought and sold in their own broking account. The last three are what their MANAGERS did with it — the same trades grouped by manager, grouped by family member, or listed one dated row at a time.">
+          {([["mine", "What I invested"], ["direct", "Direct Equity"], ["manager", "Manager trades"], ["entity", "Trades by member"], ["tape", "Full trade list"]] as const).map(([v, label]) => (
             <button key={v} type="button" onClick={() => setGroupBy(v)}
               className={`rounded px-3 py-1.5 font-medium transition-colors ${groupBy === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
               {label}
@@ -3908,7 +4120,13 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Sold</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
                   <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&L</th>
-                  <th className="label-xs px-3 py-2.5 text-left font-medium">Period</th>
+                  {/* A PERIOD, AND DELIBERATELY NOT "INVESTED ON". This is the
+                      span of the MANAGER's dated trades; the family's own money
+                      going in is the other tab, and giving both columns one
+                      label would put a manager's first trade under a heading a
+                      reader takes for the date they subscribed. */}
+                  <th className="label-xs px-3 py-2.5 text-left font-medium"
+                    title="First to last dated trade the statements report for this row. The manager's dealing window — not when the family put money in, which is on What I invested.">Traded between</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">

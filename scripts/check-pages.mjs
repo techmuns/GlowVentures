@@ -145,6 +145,17 @@ function bookArray(src, name) {
   try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
 }
 
+/** The same, for a generated OBJECT literal (`BOOK_POSITION_TRANCHES`). */
+function bookObject(src, name) {
+  const i = src.indexOf(`export const ${name}`);
+  if (i < 0) return null;
+  const start = src.indexOf("= {", i);
+  if (start < 0) return null;
+  const end = src.indexOf("\n};", start);
+  if (end < 0) return null;
+  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+}
+
 /**
  * THE FUND FOLIO WHOSE DRILL-DOWN MUST REFUSE TO DRAW A CONSTITUENT LIST.
  *
@@ -1709,6 +1720,11 @@ const ROUTES = [
   // generated book instead (see `FUND_ACCOUNT_ID`). A book that stops carrying
   // one fails these invariants rather than skipping them.
   ["mandate-fund", () => (FUND_ACCOUNT_ID ? `/mandate/${encodeURIComponent(FUND_ACCOUNT_ID)}` : "/mandate/none-resolved-from-the-book")],
+  // ...AND ONE MANDATE THE FAMILY ACTUALLY FUNDED IN INSTALMENTS, for the
+  // contribution record they asked to be able to open. Most mandates here
+  // publish none, so the plain `mandate` walk would assert the absence branch
+  // and never see the table. Resolved from the book, like the fund one above.
+  ["mandate-funded", () => (FUNDED_MANDATE ? `/mandate/${encodeURIComponent(FUNDED_MANDATE.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
    *
@@ -2069,7 +2085,7 @@ const headingIs = (line, label) => {
   return !s.includes("\t") && (s === label || s.startsWith(label + " ·"));
 };
 const isAnyHeading = (line) => BUCKET_HEADINGS.some((h) => headingIs(line, h));
-/** A rendered table row: one tab per column boundary, and this table has 13. */
+/** A rendered table row: one tab per column boundary, and this table has 14. */
 const isDataRow = (line) => (line.match(/\t/g) ?? []).length >= 5;
 /**
  * ── AND ONE OF THOSE ROWS IS NOT A HOLDING ──────────────────────────────────
@@ -2416,6 +2432,15 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
     const bucket = (p) => {
       const e = engagement.get(p.accountId);
       if (e === "PMS") return "PMS mandates";
+      /**
+       * `holdingBucket`'s cash-equivalent rule is NOT mirrored here, and that
+       * is measured rather than overlooked. It sends a liquid fund or liquid
+       * ETF to Cash, and every candidate it can reach is `Mutual Fund`, `ETF`
+       * or `Cash` — never `Equity`. This derivation only ever asks about
+       * `Equity` rows (below), so the rule is inert on it and a copy would be a
+       * branch that cannot fire wearing a confident explanation. The rule IS
+       * asserted, on the rendered page, by the `monitor` cash invariants.
+       */
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
     };
@@ -2464,6 +2489,158 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
       if (sym) out.add(sym);
     }
     return out.size || null;
+  } catch { return null; }
+})();
+
+/**
+ * WHAT THE MOVERS CARD LEAVES OUT AND MUST NAME — derived, never spelled.
+ *
+ * The card's footer lists every bucket that moved today and is not in its
+ * Direct-Equity scope. That check used to require an "ETF" line by name, which
+ * was never a claim about the page: it was a fact about which of this book's
+ * buckets the FIXTURE happened to be able to price. The one priced ETF row was
+ * Liquid BeES, and when the family's cash mapping sent it to Cash the ETF line
+ * correctly disappeared — and a correct page failed. A check shaped by its own
+ * fixture, which is the thing this sweep exists to catch rather than commit.
+ *
+ * SO IT IS ANCHORED ON THE BOOK, AND ON THE ONE QUESTION THE CASH RULE CANNOT
+ * MOVE. `bucket()` above answers "is this Direct Equity?" without needing to
+ * know about cash equivalents at all — every one of them is a Mutual Fund, an
+ * ETF or Cash and never `Equity`, so it falls outside that bucket both before
+ * and after. What the footer owes the reader is therefore checkable without
+ * re-listing the mapping here: the entries it draws must account for every
+ * priced holding the scope excludes, and for its whole value.
+ */
+const MOVERS_EXCLUDED = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const isDirectEquity = (p) => {
+      const e = engagement.get(p.accountId);
+      if (e === "PMS" || p.assetClass !== "Equity") return false;
+      return e === "Direct" || e === "Execution";
+    };
+    // DEDUPED, because the card reads `consolidated`. A holding two members both
+    // report is one mover and one line here; counting both rows would overstate
+    // this expectation by exactly the double count the book already collapses.
+    const names = new Set();
+    const seen = new Set();
+    let mv = 0;
+    for (const p of positions) {
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      if (isDirectEquity(p)) continue;
+      const sym = p.symbol || symbols[p.securityKey];
+      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
+      names.add(p.securityKey);
+      // LIVE MARKET VALUE, NOT THE STATEMENT'S. The card is reading the overlaid
+      // portfolio on this walk, and the fixture prices every symbol it can at
+      // the mark x QUOTE_FACTOR — so a value summed off `glowData.ts` alone runs
+      // exactly that factor light. Measured, it was ₹126.06 Cr against a
+      // correctly-rendered ₹138.8 Cr, which is 1.10 to the second decimal.
+      mv += p.marketValue * QUOTE_FACTOR;
+    }
+    return names.size ? { names: names.size, cr: mv / 1e7 } : null;
+  } catch { return null; }
+})();
+
+/**
+ * THE FAMILY'S CASH MAPPING AND THE INVESTED-ON COLUMN, both derived from the
+ * book so the next drop brings its own expectation.
+ *
+ *   "why should an ETF show here? Like, a liquid ETF should actually show in
+ *    cash… Cash is liquid, arbitrage. All of it is cash."
+ *   "here, you've given me the amount, but you've not given me the date."
+ *
+ * THE FIVE KEYS ARE RE-LISTED HERE ON PURPOSE, not imported. A check that calls
+ * the helper it is checking agrees with it by construction — and this is the one
+ * place in this file where that costs something real, because a key added to
+ * `CASH_EQUIVALENT_KEYS` and not here would go unchecked. That is covered from
+ * the other side instead: `familyTaxonomy.test.ts` asserts the map has no dead
+ * entry and that nothing in the book READS as a cash equivalent without being in
+ * it, so a new entry cannot arrive silently even though this list is a copy.
+ *
+ * A MANDATE STILL WINS, which is why the engagement is read: both Axis Liquid
+ * rows sit inside a Green Lantern PMS, and a mandate's row has to tie to its own
+ * statement. Expecting them under Cash would fail a correct page.
+ */
+const CASH_MAPPING_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const KEYS = new Set([
+      "absl-liqf-d-growth", "icici-liqf-d-growth",
+      "hdfc-liquid-fund-direct-plan-growth-option",
+      "nip-etnf1d-rtliqbees", "axis-liquid-fund-direct-plan-growth-option",
+    ]);
+    const outside = new Set();      // expected under Cash
+    const inMandate = new Set();    // expected to stay with their mandate
+    for (const p of positions) {
+      if (!KEYS.has(p.securityKey)) continue;
+      (engagement.get(p.accountId) === "PMS" ? inMandate : outside).add(p.securityKey);
+    }
+    return outside.size ? { outside: [...outside], inMandate: [...inMandate] } : null;
+  } catch { return null; }
+})();
+
+/**
+ * HOW MANY HOLDINGS CAN HONESTLY CARRY AN INVESTED-ON DATE.
+ *
+ * Two sources, and both are the HOLDING'S OWN: a lot register's acquisition date
+ * (`heldSince`), or the fund's own dated allotments against that very folio
+ * (`BOOK_POSITION_TRANCHES`, keyed on account + security). An ACCOUNT's first
+ * contribution is deliberately not a third tier — that is when the family funded
+ * the account, not when a manager bought the share a row is about.
+ *
+ * Measured here so the column's coverage is checked against the BOOK rather than
+ * against the page's own count of what it drew, which would agree with itself
+ * however wrong both were.
+ */
+const INVESTED_ON_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const tranches = bookObject(src, "BOOK_POSITION_TRANCHES") ?? {};
+    const dated = new Set();
+    for (const p of positions) {
+      const own = tranches[`${p.accountId}|${p.securityKey}`];
+      const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
+      if (ins.length || p.heldSince) dated.add(p.securityKey);
+    }
+    return { keys: [...dated] };
+  } catch { return null; }
+})();
+
+/**
+ * THE MANDATE WHOSE CONTRIBUTION RECORD IS RICHEST — and the account behind the
+ * `mandate-funded` route.
+ *
+ *   "Twice — I have the two tranches I've entered here. How do I see that? I
+ *    can't see that. Where will I get to see that there were two contributions?"
+ *
+ * `MANDATE_PATH` resolves to whichever mandate the monitor links FIRST, and most
+ * of this book's mandates publish no dated capital record at all — so a check
+ * struck there would assert the named-absence branch and never see the table.
+ * This picks the PMS account with the MOST dated contributions, which is the
+ * worst case for a truncated or blended panel, and the next drop picks its own.
+ */
+const FUNDED_MANDATE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
+    const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
+    const byAcct = new Map();
+    for (const m of moves) {
+      if (!pms.has(m.accountId) || m.direction !== "in") continue;
+      byAcct.set(m.accountId, (byAcct.get(m.accountId) ?? 0) + 1);
+    }
+    const best = [...byAcct.entries()].sort((a, b) => b[1] - a[1])[0];
+    return best ? { accountId: best[0], contributions: best[1] } : null;
   } catch { return null; }
 })();
 
@@ -2762,14 +2939,22 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
 // The 13-column holdings table, after the separate YTD column was folded into
 // the Return measure picker. Return is now third from the end (Sector, Entity
 // close the row). There is no YTD column, so no COL.ytd.
-const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, weight: 7, pnl: 8, realised: 9, ret: 10, sector: 11, entity: 12 };
+/**
+ * EVERY COLUMN AFTER `Invested` MOVED ONE PLACE RIGHT when "Invested on"
+ * landed beside it — the family asked for the date next to the amount, which
+ * is the one position that shifts the whole rest of the row. Read against the
+ * old map a Weight assertion would have been struck on CMP: a real number in
+ * the wrong cell, which is the plausible-wrong-answer this sweep exists to
+ * catch rather than commit.
+ */
+const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, weight: 8, pnl: 9, realised: 10, ret: 11, sector: 12, entity: 13 };
 /**
  * THE STOCK AXIS DRAWS TWO MORE COLUMNS, so everything after Market value sits
  * two places right. Read positionally against `COL` a Weight assertion would be
  * struck on `Via funds` — a real percentage against a real money figure, which
  * is the plausible-wrong-answer this sweep exists to catch rather than commit.
  */
-const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, cmp: 4, day: 5, mv: 6, viaFunds: 7, exposure: 8, weight: 9, pnl: 10, realised: 11, ret: 12, sector: 13, entity: 14 };
+const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, viaFunds: 8, exposure: 9, weight: 10, pnl: 11, realised: 12, ret: 13, sector: 14, entity: 15 };
 /**
  * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
  * is a different answer from an unparseable one; NaN for anything else, so a
@@ -3427,12 +3612,12 @@ const FUND_CLASSES = [
    * reader who knew the family held 3P and could not find it would learn the
    * dashboard lost it. The family have since asked for a redeemed holding to
    * leave EVERY allocation page and for this note to go with it — so the fact
-   * now lives where a redemption belongs, on Transactions → My investments as a
+   * now lives where a redemption belongs, on Transactions → What I invested as a
    * dated movement under Taken out, which the `monitor-txn-out` route asserts.
    * A note here would be an allocation page explaining a transaction.
    *
    * Struck on the HANDLE rather than on prose: the words it used ("closed",
-   * "redeemed", "My investments") are ones this page prints legitimately
+   * "redeemed", "What I invested") are ones this page prints legitimately
    * elsewhere, so a text match would fail a correct page.
    */
   ["...and the note that named them is gone with them", (t, ctx) => {
@@ -3762,6 +3947,30 @@ const INVARIANTS = {
    * any prose match, and is exactly the regression this route exists to catch.
    */
   "monitor-txns": [
+    /**
+     * ── EVERY LABEL SAYS WHAT IT STANDS FOR ──────────────────────────────────
+     *
+     *   "What is tape? So what is tape and what is my investments?… Let's think
+     *    of something better. Friendly words."  …  "when you have a label, what
+     *    does it stand for? Otherwise, why have it?"
+     *
+     * Struck on the BUTTONS, not on the page text: "Direct Equity" is this app's
+     * own word for a holdings bucket and appears all over this page legitimately,
+     * so a text match would fail a correct build. A removal is asserted as well
+     * as the replacement — a tab group that kept "Tape" beside the new names
+     * would satisfy the second half alone.
+     */
+    ["the transaction views are named in plain words, and Tape is gone", (t, ctx) => {
+      const labels = ctx?.buttonLabels ?? [];
+      if (!labels.length) return { notChecked: "no buttons were captured on this run" };
+      const has = (l) => labels.includes(l);
+      return !has("Tape") && !has("My investments") && !has("By manager") && !has("By entity")
+        && has("What I invested") && has("Full trade list")
+        && has("Manager trades") && has("Trades by member")
+        // The family asked for this word on this tab by name; it is the one that
+        // must NOT have been "improved".
+        && has("Direct Equity");
+    }],
     ["the Transactions card opens on the family's own capital, not the manager's",
       (t, ctx) => ctx.mineRows.length > 0 && ctx.managerRows.length === 0],
 
@@ -7837,10 +8046,23 @@ const INVARIANTS = {
      * the bucket this round removed and a footer that quietly dropped them from
      * its own list would hide exactly what changed.
      */
-    ["the card names the buckets it does not cover, with their value",
-      (t) => /Direct equity only\. Also moved today and not counted here:/.test(t)
-        && /\d+ PMS mandates ₹[\d,.]+/.test(t)
-        && /\d+ ETF ₹[\d,.]+/.test(t)],
+    ["the card names the buckets it does not cover, with their value", (t) => {
+      if (!/Direct equity only\. Also moved today and not counted here:/.test(t)) return false;
+      if (!MOVERS_EXCLUDED) return { notChecked: "the book could not be read" };
+      // Each entry is "N <label> ₹X" — a count AND a value, never a bare label.
+      const line = /Also moved today and not counted here:([^\n]*)/.exec(t)?.[1] ?? "";
+      const parts = [...line.matchAll(/(\d+)\s+(.+?)\s+₹([\d,.]+)\s*(Cr|L|K)?/g)];
+      if (!parts.length) return false;
+      // THE SCOPE ITSELF IS NEVER ONE OF THEM — a card listing Direct Equity
+      // among what it leaves out has stopped covering it.
+      if (parts.some((m) => /direct equity/i.test(m[2]))) return false;
+      const names = parts.reduce((a, m) => a + Number(m[1]), 0);
+      const cr = parts.reduce((a, m) => a + crU(m[3], m[4]), 0);
+      // …and between them they account for every priced holding outside the
+      // scope, which is what stops a bucket being dropped from the list.
+      return names === MOVERS_EXCLUDED.names
+        && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
+    }],
     /**
      * ...AND THE SCOPE TABS ARE GONE, WITH A FEED TOO.
      *
@@ -8045,9 +8267,11 @@ const INVARIANTS = {
      *
      * The Holdings basis switch and the Review deck button both went at the
      * family's request. Struck on the BUTTONS a reader can press, not on the
-     * words: "By security" and "By entity" still appear in the Transactions
-     * card's own controls and in this page's prose, so a text match would fail
-     * a page that is correct.
+     * words: the retired switch's own vocabulary still appears in this page's
+     * prose, so a text match would fail a page that is correct. (It used to
+     * clash with the Transactions card's "By security" / "By entity" tabs as
+     * well; those are "Direct Equity" and "Trades by member" now — the labels
+     * moved, the reason this is struck structurally did not.)
      */
     ["the removed Holdings basis switch and Review deck button stay removed",
       () => {
@@ -8279,14 +8503,33 @@ const INVARIANTS = {
       return secs.some((x) => x.key === MANDATE_BUCKET)
         && secs.every((x) => !BASKETS.includes(x.key));
     }],
-    ["the class subtotals reconstruct the footer total", (t) => {
+    /**
+     * THE FOOTER'S MARKET VALUE IS READ BY COLUMN, NOT BY COUNTING TOKENS.
+     *
+     * This walked the footer's TEXT — an invested figure, then `\S*` for
+     * whatever one cell sat between, then the market value — and that held only
+     * while exactly one token stood there. It broke the moment "Invested on"
+     * landed beside Invested: the coverage cell reads "5 of 78 dated", which is
+     * four tokens, and both this and the dedupe check below failed against a
+     * page that was correct. Widening the skip would have been worse than the
+     * bug, because a `.*?` between two money columns can march straight past one
+     * and match the next.
+     *
+     * `ctx.footerCells` is accumulated by `colSpan`, so it lines up with `COL`
+     * exactly as a data row does. Read that way the assertion survives the next
+     * column move instead of silently reading the one beside it — `lib/table.mjs`'s
+     * own rule (match the HEADER, never the index) arriving in the sweep.
+     */
+    ["the class subtotals reconstruct the footer total", (t, ctx) => {
+      const foot = ctx?.footerCells;
+      if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
       const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
       const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
         .map((m) => unit(m[1], m[2]));
-      const total = /Total\s*·\s*\d+\s*rows\s*₹[\d.,]+\s*(?:Cr|L|K)?\s*\S*\s*₹([\d.,]+)\s*(Cr|L|K)?/.exec(t);
-      if (!parts.length || !total) return false;     // no input is never a pass
+      const total = moneyCell(foot[COL.mv]);
+      if (!parts.length || !Number.isFinite(total)) return false;   // no input is never a pass
       const sum = parts.reduce((a, b) => a + b, 0);
-      return Math.abs(sum - unit(total[1], total[2])) <= Math.max(0.6, parts.length * 0.05);
+      return Math.abs(sum - total) <= Math.max(0.6, parts.length * 0.05);
     }],
     // The by-security total must count each dedupeGroup once. Asserted against
     // the CONSOLIDATED NAV IN THE HEADER, which is on every page and is the
@@ -8299,9 +8542,11 @@ const INVARIANTS = {
     // must be the header chip's consolidated NAV: that figure is deduped by
     // construction, so a by-security table that double-counts a dually-reported
     // holding cannot match it.
-    ["by-security total counts each dedupeGroup once", (t) => {
+    ["by-security total counts each dedupeGroup once", (t, ctx) => {
+      const foot = ctx?.footerCells;
+      if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
       const nav = cr(new RegExp(CR).exec(t)?.[1]);   // header chip, first on the page
-      const total = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows\s*₹[\d,.]+\s*Cr\s*\S*\s*` + CR).exec(t)?.[1]);
+      const total = moneyCell(foot[COL.mv]);         // by column — see the note above
       return Number.isFinite(nav) && Number.isFinite(total)
         && Math.abs(total - nav) <= Math.max(0.6, nav * 0.002);
     }],
@@ -8317,6 +8562,96 @@ const INVARIANTS = {
      * so a header-order test would be reading a shape the reader never sees.
      * A data row is one tab-joined line and is exactly what they do see.
      */
+    /**
+     * ── CASH IS CASH, WHATEVER WRAPPER IT ARRIVED IN ─────────────────────────
+     *
+     *   "why should an ETF show here? Like, a liquid ETF should actually show in
+     *    cash. It should not come here… Cash is liquid, arbitrage. All of it is
+     *    cash."  …  "please look at the mapping because as of now, it looks all
+     *    over the place to me."
+     *
+     * It WAS all over the place, measurably: Liquid BeES reached this book as an
+     * `ETF` in three demat accounts and as a `Mutual Fund` in a fourth, and the
+     * liquid funds split between `Mutual Fund` and `Cash` depending on which
+     * document reported them. Struck on `data-bucket` rather than on where a
+     * name appears in the rendered text, because the section a row sits in is
+     * structural and its heading is prose.
+     */
+    ["a liquid fund or liquid ETF is filed under Cash", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "the table was not captured on this run" };
+      if (!CASH_MAPPING_BOOK) return { notChecked: "the book could not be read" };
+      const drawn = new Map(rows.filter((r) => r.securityKey).map((r) => [r.securityKey, r.bucket]));
+      return CASH_MAPPING_BOOK.outside.every((k) => !drawn.has(k) || drawn.get(k) === "Cash");
+    }],
+    /*
+     * THE OTHER HALF OF THAT RULE — a liquid sleeve INSIDE a mandate stays with
+     * the mandate — IS NOT ASSERTED HERE, AND THAT IS MEASURED RATHER THAN
+     * OVERLOOKED.
+     *
+     * It was written here first and then REINTRODUCED as a bug: the cash rule
+     * moved above the mandate check in `holdingBucket`, which is exactly the
+     * ordering error it exists to catch, and this sweep came back CLEAN. The
+     * reason is that the monitor's row build partitions mandates on the
+     * ACCOUNT's engagement rather than on `holdingBucket`, so those two Axis
+     * Liquid rows are rolled into the Green Lantern mandate either way and never
+     * reach the table as rows of their own. A check that cannot fail is itself a
+     * defect, so it is gone rather than left looking like cover.
+     *
+     * The claim is real and is asserted where the decision is actually made:
+     * `familyTaxonomy.test.ts` §10(c) calls `holdingBucket` directly and FAILS
+     * on that reordering, by name. Surfaces that DO read it per position —
+     * Morning CIO's allocation, the drill-downs, the Excel export — are covered
+     * by the same call.
+     */
+    /**
+     * ...AND THE SECTION SAYS WHY A FUND IS SITTING IN IT. A reader scanning
+     * Cash finds an ETF and a mutual-fund scheme there, and without this the only
+     * available reading is that the app has misfiled them. It is one of the few
+     * places a count is load-bearing rather than chrome.
+     */
+    ["the Cash section names the liquid holdings it took in", (t) =>
+      /includes \d+ liquid holdings? the statements type as a fund/i.test(t)],
+
+    /**
+     * ── THE DATE, BESIDE THE AMOUNT ──────────────────────────────────────────
+     *
+     *   "here, you've given me the amount, but you've not given me the date.
+     *    Date is equally important… But invested when? When?"
+     *
+     * Anchored on the BOOK, never on the page's own count of what it drew: the
+     * column and the footer's coverage note are both computed from the same
+     * field, so reconciling one against the other passes even when both
+     * fabricate. `INVESTED_ON_BOOK` is the independent path.
+     */
+    ["the Invested on column carries a date wherever the book has one", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "the table was not captured on this run" };
+      if (!INVESTED_ON_BOOK) return { notChecked: "the book could not be read" };
+      const dated = new Set(INVESTED_ON_BOOK.keys);
+      const drawn = rows.filter((r) => r.securityKey && dated.has(r.securityKey));
+      if (!drawn.length) return { notChecked: "no dated holding is on screen under these filters" };
+      // A DATE, not an em dash, and in the column the family asked for it in —
+      // immediately right of Invested. Read at `COL.investedOn`, so a column
+      // that moved is a failure rather than a silent read of its neighbour.
+      return drawn.every((r) => /\d/.test(String(r.cells?.[COL.investedOn] ?? "")));
+    }],
+    /**
+     * ...AND A HOLDING THE BOOK CANNOT DATE RENDERS AN EM DASH RATHER THAN A
+     * BORROWED ONE. The tempting third tier is the ACCOUNT's first contribution,
+     * which would put a date on every share in a mandate — a date about the
+     * account printed under a heading that says something else about it.
+     */
+    ["...and a holding the book cannot date shows a dash, never a borrowed one", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "the table was not captured on this run" };
+      if (!INVESTED_ON_BOOK) return { notChecked: "the book could not be read" };
+      const dated = new Set(INVESTED_ON_BOOK.keys);
+      const undated = rows.filter((r) => r.securityKey && !dated.has(r.securityKey));
+      if (!undated.length) return { notChecked: "every holding on screen carries a date" };
+      return undated.every((r) => !/\d/.test(String(r.cells?.[COL.investedOn] ?? "")));
+    }],
+
     ["the pick-list is of holdings, not of companies",
       (t) => /All holdings/.test(t) && !/All compan(y|ies)/i.test(t)],
     /**
@@ -9659,14 +9994,19 @@ const INVARIANTS = {
     // THE SAME RECONSTRUCTION AS THE BY-SECURITY VIEW, and the one that binds:
     // the section subtotal used to be a raw sum of the displayed rows, so the
     // headings added to ₹3.17 Cr more than the (consolidated) footer beneath.
-    ["the class subtotals reconstruct the footer total", (t) => {
+    // Read by COLUMN off `ctx.footerCells`, for the reason the by-security copy
+    // of this check records: a token-counting walk of the footer's text broke
+    // the first time a column landed between Invested and Market value.
+    ["the class subtotals reconstruct the footer total", (t, ctx) => {
+      const foot = ctx?.footerCells;
+      if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
       const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
       const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
         .map((m) => unit(m[1], m[2]));
-      const total = /Total\s*·\s*\d+\s*rows\s*₹[\d.,]+\s*(?:Cr|L|K)?\s*\S*\s*₹([\d.,]+)\s*(Cr|L|K)?/.exec(t);
-      if (!parts.length || !total) return false;
+      const total = moneyCell(foot[COL.mv]);
+      if (!parts.length || !Number.isFinite(total)) return false;
       const sum = parts.reduce((a, b) => a + b, 0);
-      return Math.abs(sum - unit(total[1], total[2])) <= Math.max(0.6, parts.length * 0.05);
+      return Math.abs(sum - total) <= Math.max(0.6, parts.length * 0.05);
     }],
     // ...and a subtotal that counts less than the rows above it says so, rather
     // than leaving the reader to find the difference by adding the column.
@@ -9985,6 +10325,33 @@ const INVARIANTS = {
   mandate: [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    /**
+     * ── WHEN, BESIDE HOW MUCH ────────────────────────────────────────────────
+     *
+     *   "here, you've given me the amount, but you've not given me the date.
+     *    Date is equally important… But invested when? When?"
+     *
+     * THREE OUTCOMES AND ALL THREE ARE ACCEPTED, because which one is right is a
+     * fact about the account rather than about the page: a dated contribution
+     * record, failing that the statement's own inception date, and failing both
+     * a named absence. What is NOT accepted is the tile saying nothing — a
+     * figure that simply stops mentioning when tells a reader nothing about
+     * whether to go and find the document.
+     */
+    ["the Invested tile says when the account was funded, or why it cannot", (t) =>
+      /funded from \s*\d/i.test(t) || /account opened\s*\d/i.test(t)
+      || /no statement dates what was paid in/i.test(t)],
+    /**
+     * ...AND THE CONTRIBUTION CARD IS ON THE PAGE IN ONE OF ITS TWO HONEST
+     * STATES. Most of this book's mandates publish no dated capital record, so
+     * requiring the table here would fail correct pages — but a card that simply
+     * vanished for them would leave the reader unable to tell "the family paid
+     * this in one go" from "nobody wired it up". `mandate-funded` is where the
+     * table itself is asserted.
+     */
+    ["the family's own capital is either listed or its absence is named", (t) =>
+      /What the family put in/i.test(t)
+      && (/Invested on/i.test(t) || /does not date what was paid into account/i.test(t))],
     ["it names its manager, its account number and how the account is run",
       (t) => /Run by\s+\S[^\n]*\bfor\b/i.test(t) && /·\s*account\s+\S+/i.test(t) && /manager's mandate/i.test(t)],
     /**
@@ -10079,9 +10446,87 @@ const INVARIANTS = {
    * empty dealing card. Both are gone; the last check in this block is what
    * holds the card gone.
    */
+  /**
+   * ── THE FAMILY'S OWN CAPITAL, CONTRIBUTION BY CONTRIBUTION ────────────────
+   *
+   *   "Twice — I have the two tranches I've entered here. How do I see that? I
+   *    can't see that. Where will I get to see that there were two
+   *    contributions?… amount invested is fine. But if I further want to see —
+   *    because XIRR will change depending on the investment amount and the time,
+   *    XIRR will change. It is not showing that. So need to show transaction
+   *    wise."
+   *
+   * This route is the PMS account with the MOST dated contributions in the book,
+   * resolved on every run — the worst case for a panel that truncates or blends,
+   * and the one where a page drawing "1 payment" over four is visible.
+   */
+  "mandate-funded": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    /**
+     * EVERY DATED CONTRIBUTION IS DRAWN, counted against the BOOK rather than
+     * against the card's own header. The card computes both from one array, so
+     * reconciling the table against its own count passes even when both are
+     * wrong — `INVESTED_ON_BOOK`'s lesson, one page over.
+     */
+    ["it draws every dated contribution the book reports for this account", (t, ctx) => {
+      if (!FUNDED_MANDATE) return { notChecked: "the book could not be read" };
+      const rows = ctx?.capitalMoves;
+      if (rows == null) return { notChecked: "the contribution probe did not run on this pass" };
+      // Contributions AND withdrawals are listed; the book's count is of the
+      // paid-in side, so the table must carry at least that many rows.
+      return rows >= FUNDED_MANDATE.contributions && FUNDED_MANDATE.contributions > 1;
+    }],
+    /**
+     * ...AND THE FOOTER TIES TO THE ROWS ABOVE IT. A footer struck independently
+     * of its own rows is the Private Market page's PM-1: both figures right on
+     * their own terms, and nothing able to see that a row had been dropped.
+     */
+    ["the contribution footer ties to the rows it sums", (t, ctx) => {
+      const c = ctx?.capitalTotal;
+      if (!c) return { notChecked: "the contribution footer was not captured on this pass" };
+      return Number.isFinite(c.rows) && Number.isFinite(c.paidIn)
+        && c.rows > 0 && Math.abs(c.paidIn - c.rowSum) <= Math.max(0.01, c.rows * 0.005);
+    }],
+    /**
+     * ...AND IT SAYS WHETHER THE MONEY WENT IN ONCE OR SEVERAL TIMES, which is
+     * the whole of "lumpsum or staggered" and is a COUNT rather than a detector.
+     */
+    ["it says the money went in more than once", (t, ctx) =>
+      ctx?.capitalHow === "staggered"],
+    /**
+     * ...AND THE RETURN IT PRINTS SAYS WHAT KIND OF RETURN IT IS. The family's
+     * own reason for asking is that a rate depends on WHEN each payment landed;
+     * a holding-period return on what was paid in is not that, and a page that
+     * let it read as one would answer the question wrongly in exactly the
+     * direction they were worried about.
+     */
+    ["the return beneath it is labelled, not left to read as money-weighted",
+      (t) => !/held over the whole record above/i.test(t)
+        || /NOT annualised and NOT money-weighted/i.test(t)],
+  ],
   "mandate-fund": [
     ["the address resolved to a fund folio this book carries, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
+    /**
+     * ── "INSIDE EVERY PMS *AND AIF* MANDATE" — THE HALF THAT REACHES HERE ────
+     *
+     * The DEALING card is deliberately not on this branch: a fund folio reports
+     * one purchase, not a trading record, and drawing an empty table for it is
+     * what the family pointed at. The CONTRIBUTION record is the opposite case
+     * and is exactly what a fund folio does report — measured, EIGHT of this
+     * book's eleven dated capital records belong to accounts that land on this
+     * branch against three on the mandate branch, so leaving it off here would
+     * have answered the smaller half of the ask.
+     *
+     * Both halves asserted, because neither implies the other: a build that put
+     * the dealing card back would pass the first and fail the second.
+     */
+    ["the family's own capital into the folio is on this branch", (t) =>
+      /What the family put in/i.test(t)
+      && (/Invested on/i.test(t) || /does not date what was paid into account/i.test(t))],
+    ["...and the manager's dealing card still is not", (t) =>
+      !/What the manager traded/i.test(t)],
     // The page's own words for what it is — and the assertion that keeps the
     // engagement set in `FUND_ROUTE_ENGAGEMENTS` honest: an `own`-route account
     // renders the same heading and NOT the fund paragraph below, so drift in
@@ -10130,7 +10575,7 @@ const INVARIANTS = {
      * so the card was an empty box under an empty page. The seventh, Buoyant
      * Capital 103473, is the one non-mandate account in this book that issues a
      * transaction statement — and it is not a My-investments row either, so this
-     * card was never the way into its record. That record is the By manager tab,
+     * card was never the way into its record. That record is the Manager trades tab,
      * which covers all ten accounts the tape reads.
      *
      * Struck on all three of the card's own strings, because the removal deleted
@@ -10664,7 +11109,7 @@ for (const theme of THEMES) {
         // contributions and abstain on every one of them.
         const tab = name === "monitor-txn-direct" ? /^Direct Equity$/
           : name === "monitor-txns" || name === "monitor-txn-in" || name === "monitor-txn-out" ? null
-          : /^By manager$/;
+          : /^Manager trades$/;
         if (tab) {
           const v = page.getByRole("button", { name: tab }).first();
           if (await v.count()) { await v.click(); await page.waitForTimeout(900); }
@@ -11646,7 +12091,7 @@ for (const theme of THEMES) {
          * The footer's label spans three columns and a category's does not, so
          * `cells[4]` is a different measurement on each — and an invariant that
          * adds the categories up against the footer is comparing exactly those.
-         * Accumulating `colSpan` puts both on the table's own 13 columns, which
+         * Accumulating `colSpan` puts both on the table's own 14 columns, which
          * is the only basis on which the comparison means anything.
          */
         const byColumn = (tr) => {
@@ -11829,6 +12274,56 @@ for (const theme of THEMES) {
       });
       const selectLabels = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main select")].map((sel) => (sel.options[sel.selectedIndex]?.text ?? "").trim()));
+      /**
+       * EVERY BUTTON A READER CAN PRESS IN `<main>`, by its own text.
+       *
+       * For claims about what a CONTROL is called — which is a different claim
+       * from what the page says. "Direct Equity" and "Manager trades" both
+       * appear in this page's prose whatever the tab group is labelled, so a
+       * text match over the page would report a rename that never happened.
+       */
+      const buttonLabels = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main button")]
+          .map((b) => (b.textContent ?? "").replace(/\s+/g, " ").trim())
+          .filter(Boolean));
+      /**
+       * THE MANDATE PAGE'S CONTRIBUTION CARD, off its own handles.
+       *
+       * `rowSum` adds the rendered Paid-in cells so the footer can be checked
+       * against the rows it claims to sum rather than against a second reading
+       * of the same variable. Money is parsed in CRORE from the compact label
+       * the page prints, which is why the footer tolerance below is the printing
+       * precision reproduced rather than a number picked to fit.
+       */
+      const capital = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("[data-capital-table]");
+        if (!table) return null;
+        const money = (s) => {
+          const m = /₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(String(s ?? ""));
+          if (!m) return 0;
+          const n = Number(m[1].replace(/,/g, ""));
+          return m[2] === "Cr" ? n : m[2] === "L" ? n / 100 : m[2] === "K" ? n / 100000 : n / 1e7;
+        };
+        const rows = [...document.querySelectorAll("[data-capital-move]")];
+        const foot = document.querySelector("[data-capital-total]");
+        return {
+          rows: rows.length,
+          rowSum: rows.reduce((a, tr) => a + money(tr.cells[2]?.innerText), 0),
+          // ACCUMULATED BY colSpan, because the footer's label cell spans TWO
+          // columns and `cells[]` does not know that — read positionally, the
+          // Paid-in total came back as the Taken-out cell. The same trap the
+          // holdings footer's own capture already records.
+          paidIn: foot ? (() => {
+            const flat = [];
+            for (const td of foot.cells) {
+              flat.push(td.innerText ?? "");
+              for (let i = 1; i < (td.colSpan || 1); i++) flat.push("");
+            }
+            return money(flat[2]);
+          })() : NaN,
+          how: document.querySelector("[data-capital-how]")?.getAttribute("data-capital-how") ?? null,
+        };
+      });
       const sectionRows = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-section]")].map((tr) => ({
           key: tr.getAttribute("data-section"),
@@ -12148,7 +12643,8 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

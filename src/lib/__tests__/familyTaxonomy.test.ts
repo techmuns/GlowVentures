@@ -18,7 +18,10 @@ import fs from "node:fs";
 import XLSX from "xlsx";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex, engagementOf } from "@/lib/accounts";
-import { holdingBucket, MANDATE_BUCKET, dedupedPositions } from "@/lib/analytics";
+import {
+  holdingBucket, MANDATE_BUCKET, dedupedPositions,
+  CASH_EQUIVALENT_KEYS, isCashEquivalent, cashEquivalentCandidates,
+} from "@/lib/analytics";
 import {
   FAMILY_TAXONOMY, BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED,
   basketKeyOf, familyClassKeyOf, familyBasket, familyAssetClass, productKeyOf,
@@ -270,6 +273,109 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
        sawBasket >= entries.length - 1 && sawClass >= entries.length - 1,
        `${sawBasket}/${sawClass} of ${entries.length}`);
   }
+}
+
+// ── 10. CASH IS CASH, WHATEVER WRAPPER IT ARRIVED IN ────────────────────────
+//
+//   "why should an ETF show here? Like, a liquid ETF should actually show in
+//    cash… Cash is liquid, arbitrage. All of it is cash."
+//
+// `CASH_EQUIVALENT_KEYS` sends a liquid fund or a liquid ETF to the Cash bucket
+// on the CATEGORY axis, overriding the class its issuing document printed. That
+// is a family decision applied over a measurement, so it earns the same
+// treatment `familyTaxonomy` gets above: every entry cited, nothing derived from
+// a name, and the thing it CANNOT see asserted rather than left to be noticed.
+{
+  const bucketOf = (p: (typeof BOOK_POSITIONS)[number]) => holdingBucket(p, engagementOf(idx, p) || null);
+
+  // (a) NO DEAD ENTRIES — the same rule section 1 applies to the taxonomy. A key
+  // that matches no holding is a typo, and a typo here is invisible: the liquid
+  // fund it was meant for simply stays under Mutual Fund.
+  const keys = Object.keys(CASH_EQUIVALENT_KEYS);
+  const held = new Set(BOOK_POSITIONS.map((p) => p.securityKey));
+  const dead = keys.filter((k) => !held.has(k));
+  ok("every cash-equivalent key matches a holding in the book",
+     dead.length === 0, dead.length ? dead.join("; ") : `${keys.length} keys`);
+
+  // (b) EVERY ENTRY CITES THE FAMILY'S OWN DOCUMENT. The map's whole authority
+  // is that workbook; an entry with no citation is one somebody typed.
+  const uncited = Object.entries(CASH_EQUIVALENT_KEYS).filter(([, why]) => !/\S/.test(why));
+  ok("...and every one cites the review row it came from", uncited.length === 0,
+     uncited.map(([k]) => k).join("; "));
+
+  // (c) THEY ACTUALLY REACH THE CASH BUCKET — except inside a mandate, where the
+  // mandate wins BY DESIGN, because its row has to tie to its own statement.
+  // Asserted in both directions: a rule that sent everything to Cash would pass
+  // the first half and fail the second.
+  const eq = BOOK_POSITIONS.filter((p) => isCashEquivalent(p));
+  const inMandate = eq.filter((p) => engagementOf(idx, p) === "PMS");
+  const outside = eq.filter((p) => engagementOf(idx, p) !== "PMS");
+  ok("a cash equivalent outside a mandate buckets as Cash",
+     outside.length > 0 && outside.every((p) => bucketOf(p) === "Cash"),
+     `${outside.length} rows`);
+  ok("...and one INSIDE a mandate stays with the mandate, which ties to its statement",
+     inMandate.length > 0 && inMandate.every((p) => bucketOf(p) === MANDATE_BUCKET),
+     `${inMandate.length} rows`);
+
+  // (d) THE REGROUPING MOVES NO MONEY. Buckets are a view of one book: the
+  // category sections must still reconstruct `BOOK_SUMMARY.totalValue`, or this
+  // stopped being a regrouping and became a re-measurement.
+  const ded = dedupedPositions([...BOOK_POSITIONS]);
+  const byBucket = new Map<string, number>();
+  for (const p of ded) byBucket.set(bucketOf(p), (byBucket.get(bucketOf(p)) ?? 0) + p.marketValue);
+  const total = [...byBucket.values()].reduce((a, b) => a + b, 0);
+  ok("the category sections still reconstruct the book's own total",
+     Math.abs(total - BOOK_SUMMARY.totalValue) < 1,
+     `${cr(total)} vs ${cr(BOOK_SUMMARY.totalValue)}`);
+
+  // (e) THE RULE IS LOAD-BEARING. Without it the Cash section reads ₹0.00 Cr on
+  // this book — every real rupee of cash either inside a mandate or filed under
+  // Mutual Fund and ETF — so a suite that only checked (d) would pass just as
+  // happily with the whole rule deleted.
+  const cashWith = byBucket.get("Cash") ?? 0;
+  const cashWithout = ded
+    .filter((p) => engagementOf(idx, p) !== "PMS" && p.assetClass === "Cash")
+    .reduce((a, p) => a + p.marketValue, 0);
+  ok("...and it is what puts the family's cash on screen at all",
+     cashWith > cashWithout && cashWithout < 1e7,
+     `Cash ${cr(cashWithout)} → ${cr(cashWith)}`);
+
+  /**
+   * (f) ── WHAT THE MAP DOES NOT NAME, WHICH IS THE HALF THAT GOES STALE ──────
+   *
+   * The family named ARBITRAGE in the same breath as liquid, and their review
+   * carries ₹41.08 Cr of it across four funds — the largest ₹30.99 Cr. Not one
+   * is in this book, so the map has no arbitrage entry and the screen shows
+   * none; saying otherwise would be a claim about a row that does not exist.
+   *
+   * That is exactly how a typed list dies quietly, so this is the line that
+   * speaks up. `cashEquivalentCandidates` reads the NAMES — the one place a
+   * name rule is allowed here, because it decides nothing and moves no money —
+   * and the first drop bringing a liquid or arbitrage fund this map does not
+   * carry FAILS here, naming it, so a human commits it with a citation.
+   *
+   * It is not a licence to bucket on the pattern. A name matched
+   * "Motilal Oswal Active Momentum Fund" to "Motilal Oswal Founders Fund II" on
+   * a shared house, and a section heading looks equally authoritative whichever
+   * rows sit under it.
+   */
+  const missed = cashEquivalentCandidates(BOOK_POSITIONS);
+  ok("no holding reads as a cash equivalent that the map does not carry",
+     missed.length === 0,
+     missed.length
+       ? `commit these to CASH_EQUIVALENT_KEYS with a citation, or record why they are not cash: ${
+           [...new Set(missed.map((p) => `${p.securityKey} ("${p.security}")`))].join("; ")}`
+       : "checked every position by name");
+
+  // (g) AND THE DETECTOR CAN ACTUALLY FIRE. A pattern that matched nothing
+  // would satisfy (f) for ever, including after the rule was deleted — so it is
+  // shown to catch the map's own entries when they are taken out of it.
+  const selfFound = cashEquivalentCandidates(
+    BOOK_POSITIONS.filter((p) => p.securityKey === "absl-liqf-d-growth")
+      .map((p) => ({ ...p, securityKey: "not-in-the-map" })),
+  );
+  ok("...and the detector is not a pattern that can never match",
+     selfFound.length > 0, `${selfFound.length} caught when a mapped key is hidden from it`);
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
