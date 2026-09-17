@@ -464,6 +464,19 @@ export function makeTransaction(input) {
     isin: named.isin,
     exchange: input.exchange ?? null,
     assetClass: input.assetClass ?? null,
+    /**
+     * THE STATEMENT'S OWN WORD FOR WHAT HAPPENED, where it prints one.
+     *
+     * Optional, and null on every trade report — a contract note's row is a buy
+     * or a sell and `side` says which. It exists for the DEPOSITORY tape, where
+     * `side` alone is not enough: a demat debit is printed the same way whether
+     * a scheme redeemed its units, a settlement obligation was met or a bonus
+     * was credited, and `CA-Redemption of AIF units` is the only thing on the
+     * row that tells the two apart. `makeCashFlow` has carried the same field
+     * for the same reason since it was written; this shape simply had no
+     * depository reader when it was.
+     */
+    description: input.description == null ? null : String(input.description).trim(),
     // ── primitives ──
     quantity: num(input.quantity),
     unitPrice: num(input.unitPrice),

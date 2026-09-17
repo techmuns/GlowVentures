@@ -86,6 +86,7 @@ import { OWNERS, resolveOwner } from "../../../shared/owners.mjs";
 export const PROVIDER = "Motilal Oswal Financial Services (demat)";
 
 const n = (v) => (v == null ? null : parseNum(String(v)));
+const sum = (xs) => xs.reduce((t, x) => t + (x ?? 0), 0);
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
 
 /**
@@ -240,13 +241,65 @@ export function reportTypeOf(text) {
 }
 
 /** `16-04-2026 CA-Redemption of AIF units DEBIT 199990.001 0.000` */
+/**
+ * A MOVEMENT ROW, AND WHY THE DIRECTION IS NOT READ OFF THE ROW.
+ *
+ * The block's header is `Date | Transaction Particulars | Credit | Debit |
+ * Current Balance` — THREE numeric columns, of which a row fills exactly one of
+ * Credit and Debit. Flattened to text only two figures survive, and WHICH of
+ * the two money columns the first one sat under is gone with the geometry.
+ *
+ * The previous pattern stood a literal `CREDIT|DEBIT|CR PSB|DR PSB` token in
+ * for it, and that token is printed on a WRAPPED CONTINUATION LINE on most
+ * rows (`1201090037205769 CR PSB`) and on no line at all for the rest
+ * (`PAYOUT-CR CM M50175 …`). So it matched 14 rows of the 362 these six
+ * statements print, and the other 348 — every purchase, every sale, every
+ * dividend reinvestment — reached nothing.
+ *
+ * THE RUNNING BALANCE IS THE WITNESS, and it is a better one than the token
+ * ever was: the direction is the SIGN OF ITS OWN CHANGE, which is a primitive
+ * the statement prints on every row rather than a label wrapped off the end of
+ * one. Measured over all 90 blocks the balance walks from the printed Opening
+ * Balance to the printed Closing Balance EXACTLY, 90 of 90, and every
+ * particular is consistently in, out or balance-neutral — not one disagrees
+ * with its own delta. `readTransactions` refuses a block that does not walk.
+ */
 const TXN_ROW = new RegExp(
   String.raw`^(\d{2}-\d{2}-\d{4})\s+` +          // 1 date
-  String.raw`(.+?)\s+` +                         // 2 particulars
-  String.raw`(CREDIT|DEBIT|CR PSB|DR PSB)\s+` +  // 3 direction
-  String.raw`([\d,]+\.\d{3})\s+` +               // 4 quantity
-  String.raw`([\d,]+\.\d{3})\s*$`,               // 5 running balance
+  String.raw`(.*?)\s+` +                          // 2 particulars
+  String.raw`([\d,]+\.\d{3})\s+` +               // 3 quantity (Credit or Debit)
+  String.raw`([\d,]+\.\d{3})\s*$`,               // 4 running balance
 );
+
+/**
+ * WHAT MOVED THE UNITS — the particular, classified.
+ *
+ * A depository movement carries no price and no counterparty, so none of these
+ * is a trade and none of them is called one: they are UNITS IN and UNITS OUT.
+ * The four kinds are what a reader adding up their own opening balance needs to
+ * tell apart, and an ENCUMBRANCE is the one that must never be counted — a
+ * pledge moves units between free and pledged without changing the balance, so
+ * summing it as a purchase would report a holding twice its size.
+ */
+const MOVEMENT_KINDS = [
+  // A corporate action is the security itself changing, never a decision the
+  // family made. Anchored on the issuer's own `CA-` prefix.
+  [/^CA-/i, "corporate-action"],
+  // Balance-NEUTRAL by construction, and measured to be: pledge setup and
+  // accept, unpledge, and the early-payin reversal and remat pairs.
+  [/\b(pledge|unpledge|lock|EP-REVL|EP-IREM)\b/i, "encumbrance"],
+  // Units arriving or leaving through the market or another depository.
+  [/\b(PAYOUT|INTDEP-CR|ON-CR|Demat)\b/i, "settlement"],
+  [/\b(BSEDR|NSEDR|EP-DR|PAYIN|PAY-IN|Remat)\b/i, "settlement"],
+];
+
+function movementKind(particulars) {
+  for (const [re, kind] of MOVEMENT_KINDS) if (re.test(particulars)) return kind;
+  // NAMED rather than folded into settlement: a movement nobody classified is
+  // still counted in the in/out totals (the balance proves which way it went)
+  // and is reported so the next drop's new wording is a one-line diagnosis.
+  return "unclassified";
+}
 
 export function extract({ grid, meta = {} }) {
   const warnings = [];
@@ -281,8 +334,8 @@ export function extract({ grid, meta = {} }) {
       // An empty account states its date in the sentence that says it is empty.
       ?? toIso((/NO HOLDING IS AVAILABLE AS ON\s*(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]?.replace(/\//g, "-"))
     : toIso((/PERIOD FROM:\s*\S+\s*TO:\s*(\d{2}-\d{2}-\d{4})/i.exec(text) ?? [])[1]);
-  const periodFrom = reportType === "demat-transactions"
-    ? toIso((/PERIOD FROM:\s*(\d{2}-\d{2}-\d{4})/i.exec(text) ?? [])[1]) : null;
+  const { periodFrom, periodTo } = reportType === "demat-transactions"
+    ? dematPeriod(text) : { periodFrom: null, periodTo: null };
 
   /**
    * A CONTRADICTION EXCLUDES THE ACCOUNT, AND IT HAS TO SAY SO EXPLICITLY.
@@ -314,7 +367,7 @@ export function extract({ grid, meta = {} }) {
   };
 
   if (reportType === "holdings") return { ...base, ...readHoldings(pages, text, meta, warnings) };
-  return { ...base, periodFrom, ...readTransactions(pages, warnings) };
+  return { ...base, periodFrom, periodTo, ...readTransactions(pages, warnings) };
 }
 
 function readHoldings(pages, text, meta, warnings) {
@@ -421,6 +474,31 @@ function readHoldings(pages, text, meta, warnings) {
 }
 
 /**
+ * THE WINDOW THE TWO PRINTED BALANCES BOUND, read once and shared.
+ *
+ * An opening balance means nothing without it: "the quantity at the start" is a
+ * claim about a DATE, and these statements run the Indian FINANCIAL year from
+ * 1 April rather than the calendar year — so a table headed "start of the year"
+ * over this data has to say which year it means.
+ *
+ * Exported because `scripts/replay-demat-movements.mjs` needs the same answer,
+ * and a second regex there would be a second reading of one line.
+ */
+export function dematPeriod(text) {
+  const m = /PERIOD FROM:\s*(\d{2}-\d{2}-\d{4})\s*TO:\s*(\d{2}-\d{2}-\d{4})/i.exec(text);
+  return { periodFrom: toIso(m?.[1]), periodTo: toIso(m?.[2]) };
+}
+
+/**
+ * The replay's door to the reader, so `scripts/replay-demat-movements.mjs`
+ * runs THIS function rather than a second copy of it — the rule
+ * `rekey:archive` and `replay:calls` both follow.
+ */
+export function readTransactionsForReplay(pages, warnings) {
+  return readTransactions(pages, warnings);
+}
+
+/**
  * The transaction tape — one block per ISIN, each with an opening balance, its
  * dated movements and a closing balance.
  *
@@ -435,41 +513,111 @@ function readTransactions(pages, warnings) {
   const lines = pages.flatMap((p) => p.text.split("\n")).map((l) => l.replace(/[ \t]+/g, " ").trim());
   const transactions = [];
   const positionsAsOf = [];
-  let isin = null, name = null, opening = null;
+  let isin = null, name = null, opening = null, balance = null, pending = [];
+  const refused = [];
+  // Counted in the loop rather than re-scanned: see the warning at the end.
+  let encumbranceRows = 0, encumbranceMoved = 0;
+
+  /**
+   * A BLOCK IS PUBLISHED ONLY IF ITS ROWS WALK ITS OWN PRINTED BALANCE.
+   *
+   * The statement prints the opening, every movement's running balance and the
+   * closing, so the rows either reproduce the closing or they do not, and there
+   * is no third answer to settle by judgement. A block that does not walk has a
+   * row this reader misread or did not see, and publishing its in/out split
+   * would state a movement the document does not support — so nothing is
+   * emitted for it beyond the two balances, and the reason is warned.
+   */
+  const closeBlock = (close) => {
+    const walked = balance != null && Math.abs(balance - close) < 5e-4;
+    const moves = walked ? pending : [];
+    if (!walked && pending.length) {
+      refused.push(`${name ?? isin}: ${pending.length} movement(s) walk to ${balance} against a printed closing of ${close}`);
+    }
+    const tally = (kind, dir) => sum(moves.filter((m) => m.kind === kind && m.dir === dir).map((m) => m.quantity));
+    positionsAsOf.push({
+      isin, security: name, opening, quantity: close,
+      // The family's own table: opening, plus, minus, closing. Every term is a
+      // sum of dated rows the statement prints, and the four add across to the
+      // difference between the two printed balances exactly or the block is not
+      // here at all. `null` where the block was refused — never a zero, which
+      // would read as a year in which nothing moved.
+      movements: walked ? {
+        unitsIn: tally("settlement", "in") + tally("unclassified", "in"),
+        unitsOut: tally("settlement", "out") + tally("unclassified", "out"),
+        corporateActionIn: tally("corporate-action", "in"),
+        corporateActionOut: tally("corporate-action", "out"),
+        // Balance-NEUTRAL and therefore in no total: a pledge moves units
+        // between free and pledged without any leaving the account.
+        encumbrance: moves.filter((m) => m.kind === "encumbrance").length,
+        rows: moves.length,
+        unclassified: moves.filter((m) => m.kind === "unclassified").length,
+      } : null,
+      movementsReason: walked ? null
+        : `the ${pending.length} movement(s) read walk this holding's balance to ${balance}, and the statement prints a closing balance of ${close} — so a row was misread or missed, and no opening-to-closing split is published for it`,
+    });
+    for (const m of moves) transactions.push(m.txn);
+    pending = [];
+  };
 
   for (const line of lines) {
     const mIsin = /^ISIN:\s*(IN[EF][A-Z0-9]{9})\b/.exec(line);
-    if (mIsin) { isin = mIsin[1]; name = null; opening = null; continue; }
+    if (mIsin) { isin = mIsin[1]; name = null; opening = null; balance = null; pending = []; continue; }
     const mName = /^ISIN NAME:\s*(.+)$/.exec(line);
     if (mName) { name = mName[1].trim(); continue; }
     const mOpen = /^Opening Balance\s+([\d,]+\.\d{3})$/.exec(line);
-    if (mOpen) { opening = n(mOpen[1]); continue; }
+    if (mOpen) { opening = n(mOpen[1]); balance = opening; continue; }
     const mClose = /^Closing Balance\s+([\d,]+\.\d{3})$/.exec(line);
-    if (mClose && isin) {
-      positionsAsOf.push({ isin, security: name, opening, quantity: n(mClose[1]) });
-      continue;
-    }
+    if (mClose && isin) { closeBlock(n(mClose[1])); continue; }
     const m = TXN_ROW.exec(line);
-    if (!m || !isin) continue;
-    const [, date, particulars, dir, qty, balance] = m;
-    transactions.push(makeTransaction({
-      date: toIso(date),
-      security: name,
-      isin,
-      // A depository movement is not a trade: there is no price and no
-      // consideration on this document, only units in or units out. `side` says
-      // which direction the SHARES went, and no settlement figure is invented.
-      side: /^(CREDIT|CR PSB)$/i.test(dir) ? "receipt" : "delivery",
-      quantity: n(qty),
-      description: `${particulars.trim()} — balance ${balance}`,
-    }));
+    if (!m || !isin || balance == null) continue;
+    const [, date, particulars, qty, runningBalance] = m;
+    const after = n(runningBalance);
+    const delta = after - balance;
+    balance = after;
+    const kind = movementKind(particulars);
+    if (kind === "encumbrance") encumbranceRows += 1;
+    // The SIGN OF THE BALANCE'S OWN CHANGE, never a token wrapped off the end
+    // of the row. A row that leaves the balance where it was moved nothing in
+    // or out of the account, whatever else it did inside it.
+    const dir = delta > 5e-4 ? "in" : delta < -5e-4 ? "out" : "flat";
+    if (kind === "encumbrance" && dir !== "flat") encumbranceMoved += 1;
+    pending.push({
+      kind, dir, quantity: n(qty),
+      txn: makeTransaction({
+        date: toIso(date),
+        security: name,
+        isin,
+        // A depository movement is not a trade: there is no price and no
+        // consideration on this document, only units in or units out. `side`
+        // says which direction the SHARES went, and no settlement is invented.
+        side: dir === "in" ? "receipt" : dir === "out" ? "delivery" : "encumbrance",
+        quantity: n(qty),
+        description: `${particulars.trim()} — ${kind}, balance ${runningBalance}`,
+      }),
+    });
   }
 
   if (!transactions.length && !positionsAsOf.length) {
-    warn(warnings, "no-transaction-rows", "no `date … CREDIT/DEBIT … quantity balance` row matched on this statement");
+    warn(warnings, "no-transaction-rows", "no `date … quantity balance` row matched on this statement");
   }
+  for (const r of refused) warn(warnings, "movement-block-does-not-walk", r);
+  const split = positionsAsOf.filter((p) => p.movements).length;
+  /**
+   * AN ENCUMBRANCE THAT MOVED A BALANCE WOULD BE COUNTED NOWHERE.
+   *
+   * A pledge, an unpledge and an early pay-in earmark are balance-NEUTRAL by
+   * construction, which is why they are excluded from the in/out totals — and
+   * that exclusion is only safe while it stays true. One that DID move a
+   * balance would leave its units in no column, and the block would still walk
+   * if another row happened to compensate: wrong figures, nothing failing.
+   *
+   * Measured on this corpus it is ZERO, and the count is printed anyway. A
+   * guard that only speaks when it fires is indistinguishable, on a clean run,
+   * from one that was quietly deleted.
+   */
   warn(warnings, "depository-movements-are-not-trades",
-    `${transactions.length} depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain.`);
+    `${transactions.length} depository movement(s) read across ${positionsAsOf.length} holding(s), ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${encumbranceMoved} of the ${encumbranceRows} pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain.`);
 
   return { transactions, positionsAsOf, holdings: [], totals: null };
 }

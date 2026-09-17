@@ -1566,6 +1566,107 @@ const NO_COST_KEY = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── OPENING, PLUS, MINUS, CLOSING — THE BOOK'S OWN ANSWER, RE-STRUCK HERE ────
+ *
+ * `BOOK_SHARE_MOVEMENTS` is the depository statements' quantity account: each
+ * entry's opening balance, the units in and out between them, the corporate
+ * action, the closing balance and a COUNT of pledge moves that is in none of
+ * those columns. Everything below is re-expressed from the generated book
+ * rather than imported from `src/lib/shareMovements.ts` — a check that calls
+ * the helper it is checking agrees with it by construction, which is the rule
+ * this sweep already follows for `isMandateHeld` and `holdingBucket`.
+ *
+ * Two routes, because the two states are different claims and neither implies
+ * the other: a name whose statement prints a block (the table), and a name held
+ * in the same kind of account whose statement prints NONE (the note that says
+ * the holding did not move, with no opening balance invented for it).
+ */
+const QTY_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const moves = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    if (!moves || !positions.length) return null;
+    const all = Object.values(moves);
+    const bySec = new Map();
+    for (const m of all) {
+      const e = bySec.get(m.securityKey) ?? [];
+      e.push(m); bySec.set(m.securityKey, e);
+    }
+    const held = new Set(positions.map((p) => `${p.accountId}|${p.securityKey}`));
+    const heldKeys = new Set(positions.map((p) => p.securityKey));
+    // THE WORST CASE BY CONSTRUCTION, and derived so the next drop picks its
+    // own: the held name whose window spans the most accounts, breaking ties on
+    // whether it exercises a corporate action. A single-account name would let
+    // a broken TOTAL row pass, and a name with no corporate action would let the
+    // fourth term be dropped unnoticed.
+    let table = null;
+    for (const [key, ms] of bySec) {
+      if (!heldKeys.has(key)) continue;
+      const ca = ms.some((m) => (m.corporateAction ?? 0) !== 0) ? 1 : 0;
+      const score = ms.length * 10 + ca;
+      if (!table || score > table.score) table = { key, ms, score };
+    }
+    // ...AND A HELD NAME IN A DEMAT ACCOUNT WITH NO BLOCK AT ALL. Its statement
+    // prints a block only for a security that moved, so an absent one is the
+    // document saying this holding was untouched — which a reader shown nothing
+    // cannot tell from a gap.
+    const issuing = new Set(all.map((m) => m.accountId));
+    const win = new Set(all.map((m) => `${m.accountId}|${m.securityKey}`));
+    const unmovedRows = positions.filter((p) => issuing.has(p.accountId) && !win.has(`${p.accountId}|${p.securityKey}`));
+    const byUnmoved = new Map();
+    for (const p of unmovedRows) byUnmoved.set(p.securityKey, (byUnmoved.get(p.securityKey) ?? 0) + 1);
+    let unmoved = null;
+    for (const [key, n] of byUnmoved) if (!unmoved || n > unmoved.accounts) unmoved = { key, accounts: n };
+    // A name whose OWN window carries a pledge, so the exclusion is exercised
+    // on screen rather than only in the arithmetic suite.
+    const pledged = [...bySec.entries()].find(([k, ms]) => heldKeys.has(k) && ms.some((m) => (m.encumbranceMoves ?? 0) > 0));
+    // PER KEY, so each route asserts the expectations of the name IT walks.
+    // One shared pair of numbers made the pledge route demand the worst-case
+    // name's row count and fail a page that was right.
+    const byKey = {};
+    for (const [key, ms] of bySec) byKey[key] = { rows: ms.length, accounts: ms.map((m) => m.accountId) };
+    return {
+      byKey,
+      tableKey: table?.key ?? null,
+      tableRows: table ? table.ms.length : 0,
+      tableAccounts: table ? table.ms.map((m) => m.accountId) : [],
+      unmovedKey: unmoved?.key ?? null,
+      unmovedAccounts: unmoved?.accounts ?? 0,
+      pledgeKey: pledged?.[0] ?? null,
+      // Every entry must tie — the reader refuses a block that does not walk,
+      // so a rendered row that stops adding across is a presentation defect.
+      allTie: all.every((m) => m.unitsIn == null
+        || Math.abs((m.opening ?? 0) + m.unitsIn - m.unitsOut + (m.corporateAction ?? 0) - (m.closing ?? 0)) <= 5e-4),
+      total: all.length,
+      joined: all.filter((m) => held.has(`${m.accountId}|${m.securityKey}`)).length,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * A HOLDING WITH A PURCHASE DATE AT LEAST A YEAR OLD — the one row on which the
+ * stock page can print a CAGR beside the holding-period return. Derived off
+ * `heldSince`, which `build-book` emits only where a lot register accounts for
+ * every unit held: 3 positions here, and a book with none makes the route say
+ * so rather than silently checking nothing.
+ */
+const CAGR_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const asOf = /export const BOOK_AS_OF = "([\d-]+)"/.exec(src)?.[1];
+    if (!asOf) return null;
+    const year = 365 * 24 * 3600 * 1000;
+    const hit = positions
+      .filter((p) => p.heldSince && p.returnPct !== null
+        && Date.parse(asOf) - Date.parse(p.heldSince) >= year)
+      .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0))[0];
+    return hit?.securityKey ?? null;
+  } catch { return null; }
+})();
+
 const CIO_BUCKET_HREFS = [];
 /** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
 /**
@@ -2067,6 +2168,30 @@ const ROUTES = [
   // "Held in 1 entity" over a table listing two, because a per-owner COUNT was
   // taken from the deduped set.
   ["stock-aif-dual", () => (DUAL_KEY ? `/stock/${encodeURIComponent(DUAL_KEY)}` : "/stock/no-holding-reported-twice-in-the-book")],
+  /**
+   * ...AND THE TWO QUANTITY-ACCOUNT STATES. `stock-qty` is the held name whose
+   * depository statement prints the most blocks — the worst case for a TOTAL
+   * row, and chosen to exercise the corporate-action term. `stock-unmoved` is a
+   * name held in the same kind of account whose statement prints NO block, so
+   * the page must say the holding did not move rather than showing nothing and
+   * must not invent an opening balance for it. Neither state implies the other.
+   */
+  ["stock-qty", () => (QTY_BOOK?.tableKey ? `/stock/${encodeURIComponent(QTY_BOOK.tableKey)}` : "/stock/no-demat-window-in-the-book")],
+  ["stock-unmoved", () => (QTY_BOOK?.unmovedKey ? `/stock/${encodeURIComponent(QTY_BOOK.unmovedKey)}` : "/stock/no-unmoved-demat-holding-in-the-book")],
+  /**
+   * ...AND ONE WHOSE WINDOW CARRIES A PLEDGE. The exclusion — counted, and in
+   * none of the four columns — is only load-bearing where a row exercises it,
+   * and the worst-case route above happens not to. Walked as its own route so
+   * the claim is a FAILURE when it regresses rather than an abstention.
+   */
+  ["stock-pledge", () => (QTY_BOOK?.pledgeKey ? `/stock/${encodeURIComponent(QTY_BOOK.pledgeKey)}` : "/stock/no-pledged-demat-holding-in-the-book")],
+  /**
+   * ...AND THE ONE HOLDING WHOSE PURCHASE DATE LICENSES AN ANNUAL RATE. The
+   * family asked for the holding-period return AND the annualised one, and the
+   * guard that refuses to compound a shorter window is only exercised where a
+   * date exists to compound over.
+   */
+  ["stock-cagr", () => (CAGR_KEY ? `/stock/${encodeURIComponent(CAGR_KEY)}` : "/stock/no-dated-holding-in-the-book")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -3913,6 +4038,135 @@ const CAPITAL_SIDES = (() => {
 const UNCLASSIFIED_KEY = "Not classified in the family's review";
 const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
 const ALL_LABEL_RE = { "asset class": "All asset classes", basket: "All baskets" };
+/**
+ * ── THE STOCK PAGE'S WIDTH, ITS RETURN COLUMN AND ITS TAX FOLD ──────────────
+ *
+ * *"ideally, I would not want to do one more scroll. One more click on the
+ * right side is not desirable. This 'held via' can actually hide… use that
+ * space for showing this column in entirety. And then tax maybe just make it a
+ * click."*
+ *
+ * Struck on GEOMETRY and on the cells, never on prose: the page rendered every
+ * figure correctly before this change and still buried the one the family came
+ * for behind a sideways scroll. Measured at 1500x950, this table needed 1,508px
+ * inside a 953px card and six columns including RETURN were off the edge.
+ *
+ * A missing probe is a FAILURE, never an abstention — this table is on every
+ * company page, so `posTable === null` means it stopped rendering.
+ */
+const stockLayoutChecks = () => [
+  ["the position table fits its card, so no column is behind a sideways scroll",
+    (t, ctx) => !!ctx.posTable && ctx.posTable.overflow <= 1 && ctx.posTable.cut.length === 0,
+    ],
+  // THE ROUTE SURVIVED THE COLUMN. "Held via" merged into Managed by and the
+  // words did not go with it: WHO CHOSE a position is the distinction Stage 10j
+  // and 10L exist for, and dropping it to save width would re-open both.
+  ["the route is still stated on every row, and the mandate still links",
+    (t, ctx) => /via (manager's mandate|own account|fund vehicle|route not stated)/i.test(t)
+      && !!ctx.posTable],
+  /**
+   * EVERY RETURN NAMES WHICH RETURN IT IS. A bare percentage is read as
+   * whichever return the reader has in mind, and the family listed ten. HPR is
+   * the holding-period figure and renders on every costed row; a dash names its
+   * own reason instead.
+   */
+  ["every return cell names its measure, or is an absence with a reason",
+    (t, ctx) => !!ctx.posTable && ctx.posTable.returns.length > 0
+      && ctx.posTable.returns.every((r) => /^(HPR|CAGR)/.test(r) || r.startsWith("—"))],
+  // ...AND NO CELL COMPOUNDS A WINDOW ONTO A YEAR SILENTLY. A CAGR here is
+  // struck only where a purchase date licenses one, so a row carrying CAGR must
+  // carry HPR beside it and never instead of it.
+  ["a CAGR never replaces the holding-period return, it stands beside it",
+    (t, ctx) => !!ctx.posTable && ctx.posTable.returns.every((r) => !/CAGR/.test(r) || /HPR/.test(r))],
+  /**
+   * TAX IS A CLICK. The card is still there and its figures are unchanged; what
+   * moved is that it no longer holds a third of the row the table needed. Both
+   * halves are asserted — the toggle exists, and it is CLOSED on arrival —
+   * because a details element that renders open has moved nothing.
+   */
+  ["the tax basis is behind a click and starts closed",
+    (t, ctx) => !!ctx.posTable && ctx.posTable.taxToggles === 1 && ctx.posTable.taxOpen === false],
+];
+
+/**
+ * ── OPENING, PLUS, MINUS, CLOSING ───────────────────────────────────────────
+ *
+ * *"beginning of the year, this was my quantity, sold so much in the year, this
+ * is the quantity remaining… opening balance, plus minus, closing balance. In a
+ * simple table format."*
+ *
+ * The claims are arithmetic, so they are struck on the CELLS. Expectations come
+ * from `QTY_BOOK`, re-expressed off the generated book rather than imported
+ * from `src/lib/shareMovements.ts`.
+ */
+const QTY_EPS = 5e-4;
+/**
+ * `keyOf` names which security the route walks, so the row-count claim is about
+ * THAT name. Passing one pair of expectations to every route made the pledge
+ * route demand the worst-case name's account count and fail a correct page.
+ */
+const qtyChecks = (keyOf) => [
+  ["the quantity account renders, one row per account the book carries a window for",
+    (t, ctx) => {
+      const want = QTY_BOOK?.byKey?.[keyOf()];
+      if (!want) return false;
+      return !!ctx.qtyTable && ctx.qtyTable.rows.length === want.rows
+        && want.accounts.every((a) => ctx.qtyTable.rows.some((r) => r.account === a));
+    }],
+  /**
+   * THE IDENTITY, ON THE PRINTED FIGURES. This is the whole licence for the
+   * table: the reader refuses a block that does not walk its own printed
+   * opening to its own printed closing, so a rendered row that stops adding
+   * across is a presentation defect and must fail here.
+   */
+  ["every row's own printed figures add across: opening + in − out + corporate action = closing",
+    (t, ctx) => !!ctx.qtyTable && ctx.qtyTable.rows.length > 0
+      && ctx.qtyTable.rows.every((r) => [r.opening, r.unitsIn, r.unitsOut, r.ca, r.closing].every(Number.isFinite)
+        && Math.abs(r.opening + r.unitsIn - r.unitsOut + r.ca - r.closing) <= QTY_EPS)],
+  // ...AND THE TOTAL IS SUMMED FROM THE ROWS ON SCREEN. A footer computed
+  // independently of its rows is this repo's most expensive recurring bug — the
+  // Private Market fund table's own PM-1, and the allocation footer before it.
+  ["the total ties to the rows above it, column by column",
+    (t, ctx) => {
+      if (!ctx.qtyTable) return false;
+      if (!ctx.qtyTable.total) return ctx.qtyTable.rows.length === 1;
+      const sum = (f) => ctx.qtyTable.rows.reduce((a, r) => a + (f(r) ?? 0), 0);
+      const tt = ctx.qtyTable.total;
+      return ["opening", "unitsIn", "unitsOut", "ca", "closing", "pledge"]
+        .every((k) => Number.isFinite(tt[k]) && Math.abs(tt[k] - sum((r) => r[k])) <= QTY_EPS);
+    }],
+  /**
+   * A PLEDGE IS COUNTED AND IS IN NO COLUMN. It moves units between this
+   * account's free and encumbered balances, so folding it into units in would
+   * report the holding at twice its size — and the rows above already tie
+   * WITHOUT it, which is the proof. This asserts the exclusion is load-bearing
+   * rather than describing a set that happens to be empty: on a page whose rows
+   * carry one, counting it must BREAK the identity.
+   */
+  ["counting a pledge as a movement would break the identity that holds without it",
+    (t, ctx) => {
+      if (!ctx.qtyTable) return false;
+      const pledged = ctx.qtyTable.rows.filter((r) => (r.pledge ?? 0) > 0);
+      if (!pledged.length) return { notChecked: "no row on this page carries a pledge or lock-in move" };
+      return pledged.every((r) => Math.abs(r.opening + r.unitsIn + r.pledge - r.unitsOut + r.ca - r.closing) > QTY_EPS);
+    }],
+  ["the four terms are named as the identity and the pledge is named as outside it",
+    (t, ctx) => !!ctx.qtyTable?.identity
+      && /opening \+ units in − units out \+ corporate action = closing/i.test(t)],
+  // WHAT THIS IS NOT. Without it "units in" reads as a purchase, and a
+  // depository movement names no price, no counterparty and no consideration.
+  ["the table says these are depository movements and not trades",
+    (t) => /depository movements, not trades/i.test(t) && /no\s+price, amount or gain/i.test(t)],
+  /**
+   * AN OPENING BALANCE IS A CLAIM ABOUT A DATE. Without the window on screen,
+   * "opening 4,875" is a figure with no period attached and a reader cannot
+   * tell a financial year from a month. It is read off the ROWS and printed
+   * only where every one agrees on one, so this asserts the pill a reader sees.
+   */
+  ["the window the two balances bound is named",
+    (t, ctx) => !!ctx.qtyTable && /\d{1,2} \w{3} \d{4}\s*→\s*\d{1,2} \w{3} \d{4}/.test(t)],
+];
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -10731,7 +10985,95 @@ const INVARIANTS = {
   // /api/prices. In this headless run the edge function does not exist, so the
   // card must degrade to a NAMED absence — never to the old "a chart is
   // impossible" claim, which stopped being true when the series arrived.
+  /**
+   * ── THE QUANTITY ACCOUNT, ON THE NAME WHOSE STATEMENT PRINTS THE MOST ─────
+   *
+   * Derived in `QTY_BOOK`, so the next drop picks its own worst case: the held
+   * name spanning the most demat accounts, breaking ties on whether it carries
+   * a corporate action. A single-account name would let a broken TOTAL row pass
+   * and a name with no corporate action would let the fourth term be dropped.
+   */
+  "stock-qty": [
+    ...qtyChecks(() => QTY_BOOK?.tableKey),
+    ...stockLayoutChecks(),
+    // A ROUTE THAT RESOLVED NOTHING MUST NOT PASS. With no window in the book
+    // the route lands on a page with no table, which has no console error, no
+    // overflow and no stray zero — it would satisfy every generic check while
+    // asserting nothing.
+    ["the book carries a demat quantity window to walk at all",
+      () => !!QTY_BOOK?.tableKey],
+  ],
+  /**
+   * ── AND THE NAME WHOSE STATEMENT PRINTS NO BLOCK ──────────────────────────
+   *
+   * A CDSL transaction statement carries an `ISIN:` block only for a security
+   * whose balance moved — measured on this corpus, where every one of the 89
+   * blocks carries between 1 and 28 dated rows and NONE carries zero, and the
+   * securities with no block appear nowhere in the document. So an absent block
+   * is the statement saying the holding was untouched, and a reader shown
+   * nothing at all cannot tell that from a gap.
+   */
+  /**
+   * ── THE PLEDGE, WHICH IS COUNTED AND IS IN NO COLUMN ──────────────────────
+   *
+   * A pledge, an unpledge or an early pay-in earmark moves units between this
+   * account's free and encumbered balances: nothing enters or leaves, so
+   * folding one into units in would report the holding at twice its size. The
+   * proof is that the four columns tie WITHOUT it and stop tying WITH it, and
+   * that is asserted here on a row that actually carries one.
+   */
+  "stock-pledge": [
+    ...qtyChecks(() => QTY_BOOK?.pledgeKey),
+    ...stockLayoutChecks(),
+    ["this page really does exercise a pledge, so the exclusion is not vacuous",
+      (t, ctx) => !!ctx.qtyTable && ctx.qtyTable.rows.some((r) => (r.pledge ?? 0) > 0)],
+    ["the book carries a pledged demat holding to walk at all",
+      () => !!QTY_BOOK?.pledgeKey],
+  ],
+  "stock-unmoved": [
+    ...stockLayoutChecks(),
+    ["a holding whose statement prints no block says so, and names the accounts",
+      (t, ctx) => !!ctx.qtyTable?.unmoved
+        && /prints no dated block for it/i.test(ctx.qtyTable.unmoved)
+        && /untouched/i.test(ctx.qtyTable.unmoved)],
+    // ...AND NO OPENING BALANCE IS INVENTED FOR IT. `opening = closing` is the
+    // tempting fill and it is a figure no statement printed, standing in a card
+    // whose every other figure was printed.
+    ["no opening balance is invented where the statement printed none",
+      (t, ctx) => !!ctx.qtyTable && ctx.qtyTable.rows.length === 0
+        && /No opening balance is shown for it/i.test(ctx.qtyTable.unmoved ?? "")],
+    ["the book carries such a holding to walk at all",
+      () => !!QTY_BOOK?.unmovedKey],
+  ],
+  /**
+   * ── THE ONE HOLDING WHOSE PURCHASE DATE LICENSES AN ANNUAL RATE ───────────
+   *
+   * *"Less than one year equity has to be absolute. More than one year, then
+   * you should show me CAGR."* Both must be on screen at once: the guard that
+   * refuses to compound a shorter window is only exercised where a date exists
+   * to compound over, and a CAGR that REPLACED the holding-period figure would
+   * answer a different question from the one the family asked first.
+   */
+  "stock-cagr": [
+    ...stockLayoutChecks(),
+    ["a holding held over a year shows its CAGR beside the holding-period return",
+      (t, ctx) => !!ctx.posTable
+        && ctx.posTable.returns.some((r) => /HPR/.test(r) && /CAGR/.test(r))],
+    // ...AND THE TWO ARE DIFFERENT FIGURES. Equal, one of them is not what its
+    // tag says — a CAGR that merely echoes the total return on cost is the
+    // guard having silently stopped annualising.
+    ["the annualised rate is not the holding-period figure wearing a second tag",
+      (t, ctx) => {
+        const cell = (ctx.posTable?.returns ?? []).find((r) => /HPR/.test(r) && /CAGR/.test(r));
+        if (!cell) return false;
+        const nums = [...cell.matchAll(/[-−+]?\d+(?:\.\d+)?%/g)].map((m) => Number(m[0].replace(/[−–]/g, "-").replace(/[+%]/g, "")));
+        return nums.length >= 2 && Math.abs(nums[0] - nums[1]) > 0.05;
+      }],
+    ["the book carries a holding with a purchase date a year old",
+      () => !!CAGR_KEY],
+  ],
   stock: [
+    ...stockLayoutChecks(),
     // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
     //
     // Macro Research and Economy & Macro were the most visible readers of
@@ -12710,6 +13052,76 @@ for (const theme of THEMES) {
       // on that page can see it.
       const pmFunds = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
+      /**
+       * THE QUANTITY ACCOUNT, READ OFF THE CELLS RATHER THAN THE PROSE.
+       *
+       * Every claim on this table is arithmetic — the four printed figures add
+       * across, the total ties to its rows, the pledge count is in none of
+       * them — and `innerText` cannot tell a column apart from its neighbour.
+       * The figures are parsed from the CELLS, which is what lets a row that
+       * silently stopped reconciling fail rather than render plausibly.
+       *
+       * A cell renders `0` for a measured zero and an em dash for an absent
+       * one, so a NaN here means the page printed neither a number nor a dash —
+       * which the invariants treat as a failure rather than skipping the row.
+       */
+      const qtyTable = FAST ? null : await page.evaluate(() => {
+        const t = document.querySelector("table[data-qty-movement]");
+        const note = document.querySelector("[data-qty-unmoved]")?.innerText ?? null;
+        if (!t) return note === null ? null
+          : { rows: [], total: null, headers: [], identity: false, unmoved: note };
+        const num = (td) => {
+          const s = (td?.innerText ?? "").replace(/[,\s]/g, "").replace(/[−–]/g, "-").replace(/^\+/, "");
+          if (s === "" || s === "—") return null;
+          const v = Number(s);
+          return Number.isFinite(v) ? v : NaN;
+        };
+        // THE SIGN ON UNITS IN / UNITS OUT IS DECORATION, AND THE ONE ON
+        // CORPORATE ACTION IS DATA. Both movement columns print a MAGNITUDE
+        // under a heading that says the direction, so reading the minus as part
+        // of the figure turns `opening + in - out` into `opening + in + out`
+        // and the identity fails on a page that is right. The corporate-action
+        // column is the opposite: its sign IS the measurement, because a bonus
+        // and a scheme redemption share one column.
+        const read = (tr) => {
+          const td = [...tr.querySelectorAll("td")];
+          const mag = (v) => (v === null || Number.isNaN(v) ? v : Math.abs(v));
+          return { opening: num(td[1]), unitsIn: mag(num(td[2])), unitsOut: mag(num(td[3])),
+            ca: num(td[4]), closing: num(td[5]), pledge: num(td[6]),
+            account: tr.getAttribute("data-qty-account"), ties: tr.getAttribute("data-qty-ties") };
+        };
+        const foot = t.querySelector("tr[data-qty-total]");
+        return {
+          rows: [...t.querySelectorAll("tr[data-qty-row]")].map(read),
+          total: foot ? read(foot) : null,
+          headers: [...t.querySelectorAll("thead th")].map((h) => h.innerText.trim().toLowerCase()),
+          identity: !!document.querySelector("[data-qty-identity]"),
+          unmoved: document.querySelector("[data-qty-unmoved]")?.innerText ?? null,
+        };
+      });
+      /**
+       * THE STOCK PAGE'S OWN WIDTH, MEASURED — because the family's complaint
+       * was geometric and no amount of matching text can see it. Before the
+       * change this table needed 1,508px inside a 953px card, so the RETURN
+       * column a reader came for sat off the right edge behind a sideways
+       * scroll. `overflow` is what that costs, in pixels.
+       */
+      const posTable = FAST ? null : await page.evaluate(() => {
+        const t = [...document.querySelectorAll("table")].find((x) =>
+          [...x.querySelectorAll("thead th")].some((h) => /held via/i.test(h.innerText)));
+        if (!t) return null;
+        const box = t.closest("div.overflow-x-auto") ?? t.parentElement;
+        const right = box.getBoundingClientRect().right;
+        return {
+          overflow: box.scrollWidth - box.clientWidth,
+          cut: [...t.querySelectorAll("thead th")]
+            .filter((h) => h.getBoundingClientRect().right > right + 0.5)
+            .map((h) => h.innerText.trim()),
+          returns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => e.innerText.replace(/\s+/g, " ").trim()),
+          taxOpen: [...document.querySelectorAll("details")].some((d) => d.querySelector("[data-tax-toggle]") && d.open),
+          taxToggles: document.querySelectorAll("[data-tax-toggle]").length,
+        };
+      });
       // THE CAPITAL-CALL TIMELINE, READ STRUCTURALLY.
       //
       // Every claim here is about a BUCKET — which windows exist, which carry a
@@ -13182,7 +13594,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, callBuckets, callRows, schemeCalls, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
