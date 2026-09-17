@@ -26,7 +26,7 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { isPrivateClass, isRedeemedToNil } from "./analytics";
+import { currentHoldings, droppedHoldings, isPrivateClass, sum } from "./analytics";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -210,6 +210,24 @@ export type Drilldown = {
    */
   closedExcluded: number;
   /**
+   * HOW MANY ROWS THE ₹1,000 FLOOR LEFT OUT, AND WHAT THEY WERE WORTH.
+   *
+   * A SECOND COUNT RATHER THAN A WIDER ONE, because the two carry DIFFERENT
+   * REASONS and this page prints the reason. Folded into `closedExcluded` the
+   * six specks would have been described to the reader as redemptions — "the
+   * fund still publishes a NAV, the family no longer holds them" — about four
+   * mutual funds and two shares the family holds perfectly well and simply
+   * holds ₹848.24 of. A confidently wrong reason is worse than a vague one; it
+   * sends the next reader to ask a fund manager about a redemption that never
+   * happened.
+   *
+   * AND THIS ONE CARRIES A VALUE, WHERE THE CLOSED COUNT DOES NOT NEED TO. A
+   * closed row is ₹0 by construction, so its count is the whole story. These
+   * rows moved the page's own total, and a reader reconciling it against
+   * Morning CIO is owed the figure rather than the count alone.
+   */
+  negligibleExcluded: { count: number; value: number };
+  /**
    * Set only where the scope is legitimately EMPTY, with what would fill it. An
    * empty table renders through `AbsentSection`, never as a frame around nothing.
    */
@@ -243,17 +261,27 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
    * page to list a redeemed row the others drop — the same reason `holdingBucket`
    * and `costCoversSet` are single functions.
    *
-   * `isRedeemedToNil` is the test the Portfolio Monitor already uses to separate
-   * its closed rows, so the two screens agree about what "current" means.
+   * THROUGH `currentHoldings`, NOT A LOCAL PREDICATE. This read
+   * `!isRedeemedToNil(p)` — a second answer to "what does the family hold",
+   * written before there was a second rule to get wrong. The ₹1,000 floor is
+   * that second rule, and an inline test would have applied it on the Portfolio
+   * Monitor and not here: a tile reading 364 opening a table of 370, which is
+   * the one disagreement this module exists to prevent.
+   *
+   * It is called on each set rather than used as a predicate because the floor
+   * is struck on the SECURITY's whole value, which no per-row predicate can see.
    */
-  const live = (p: Position) => !isRedeemedToNil(p);
-  const consolidated = ctx.consolidated.filter(live);
-  const livePositions = portfolio.positions.filter(live);
+  const consolidated = currentHoldings(ctx.consolidated);
+  const livePositions = currentHoldings(portfolio.positions);
+  // Struck on the DEDUPED set, like the counts it sits beside: the per-account
+  // scope below overrides `closedExcluded` with its own for exactly that reason.
+  const dropped = droppedHoldings(ctx.consolidated);
   const base: Omit<Drilldown, "id" | "key" | "title" | "backs" | "lead" | "rows"> = {
     deduped: true,
     facets: [],
     activeFacet: "",
-    closedExcluded: ctx.consolidated.length - consolidated.length,
+    closedExcluded: dropped.closed.length,
+    negligibleExcluded: { count: dropped.negligible.length, value: sum(dropped.negligible.map((p) => p.marketValue)) },
     absent: null,
   };
 
@@ -373,7 +401,11 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         deduped: false,
         // This scope reads the PER-ACCOUNT set, so its closed count is that
         // set's — not the deduped one `base` carries.
-        closedExcluded: portfolio.positions.length - livePositions.length,
+        closedExcluded: droppedHoldings(portfolio.positions).closed.length,
+        negligibleExcluded: (() => {
+          const n = droppedHoldings(portfolio.positions).negligible;
+          return { count: n.length, value: sum(n.map((p) => p.marketValue)) };
+        })(),
         title: "Money-weighted return",
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",

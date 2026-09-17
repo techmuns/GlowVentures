@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
-  costCoversSet, currentHoldings,
+  costCoversSet, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 /**
@@ -187,6 +187,10 @@ export function MorningCIO() {
      * others about which rows the family still holds.
      */
     const p = currentHoldings(consolidated);
+    // What the ₹1,000 floor took out of the counts and out of `bookMV`. Named on
+    // the Positions tile rather than left for a reader to notice the count move.
+    const smallRows = droppedHoldings(consolidated).negligible;
+    const smallDropped = { count: smallRows.length, value: sum(smallRows.map((x) => x.marketValue)) };
     const bookMV = sum(p.map((x) => x.marketValue));
     // `sumOrNull`: a position whose statement carries no cost must not enter a
     // book-wide cost as zero — it would understate the basis and overstate the
@@ -751,7 +755,7 @@ export function MorningCIO() {
     const navGrowth = navFirst && navLast && navFirst.nav > 0 ? (navLast.nav / navFirst.nav - 1) * 100 : null;
 
     return {
-      p, bookMV, bookCost, bookPnL, noCostCount: noCost.length, noCostMV,
+      p, bookMV, bookCost, bookPnL, noCostCount: noCost.length, noCostMV, smallDropped,
       accountCount: portfolio.accounts.length,
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
@@ -1377,7 +1381,7 @@ export function MorningCIO() {
               derivation of one set. */}
           <Card title="Concentration &amp; risk">
             <div className="grid grid-cols-2 gap-x-6 text-sm">
-              <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, one row per statement line — the unit this count counts">Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
+              <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title={`Open every holding in the book, one row per statement line — the unit this count counts.${m.smallDropped.count > 0 ? ` It leaves out ${m.smallDropped.count} holding${m.smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, ${fmtFromBase(m.smallDropped.value)} in total, dropped automatically at the family's instruction.` : ""}`}>Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
               <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, grouped one row per name and per mandate — the unit this count counts">Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
               <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
               <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>

@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import {
-  bySector, sum, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel,
+  bySector, sum, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel, currentHoldings,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
@@ -150,7 +150,24 @@ export function SectorComposition() {
   // place the company-vs-fund axis is decided, so this page, Exposure & IPS,
   // Return Analysis and the stock page narrow on the same rule rather than on
   // four local re-derivations of it.
-  const p = consolidated.filter(isCompanyShare);
+  /**
+   * CURRENT HOLDINGS FIRST, AND THE ₹1,000 FLOOR IS WHY THIS LINE CHANGED.
+   *
+   * It read `consolidated.filter(isCompanyShare)` — and was RIGHT for as long as
+   * the only thing `currentHoldings` removed was a redeemed fund, because a
+   * redeemed holding is a fund vehicle and `isCompanyShare` had already excluded
+   * every one of them. The floor drops two EQUITY rows (EFPL's preference line
+   * at ₹60 and Everest Fleet at ₹580), so the two filters stopped being
+   * equivalent and this page's measured half stopped agreeing with the Portfolio
+   * Monitor's security axis — which is a claim `check:pages` makes across the
+   * two pages, and which is what caught it.
+   *
+   * The DERIVED half was already filtered, through `useStockExposure`. Half a
+   * page on one set and half on another is the disagreement `companyExposure`
+   * exists to prevent, arriving through the one caller that narrowed by hand.
+   */
+  const heldConsolidated = currentHoldings(consolidated);
+  const p = heldConsolidated.filter(isCompanyShare);
   /** Every company share the statements report — the MEASURED half of both views. */
   const measuredMV = consolidatedMarketValue(p);
   /**
@@ -195,7 +212,10 @@ export function SectorComposition() {
   // name them FROM THE BOOK rather than from a hardcoded list — which is also
   // what makes the reconstruction (covered + excluded = NAV) a real check
   // rather than a comparison of a caption with itself.
-  const excluded = excludedClasses(consolidated, isCompanyShare);
+  // ON THE SAME SET AS THE COVERED HALF. The reconstruction under the table is
+  // "company shares + the classes this view leaves out = the book", and a
+  // partition whose two sides are drawn from different sets is not a partition.
+  const excluded = excludedClasses(heldConsolidated, isCompanyShare);
   const excludedMV = sum(excluded.map((c) => c.mv));
   /**
    * ── THE CONSOLIDATED SET: one entry per COMPANY, both halves kept apart ────

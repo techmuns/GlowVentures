@@ -16,7 +16,7 @@ import {
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure,
   costCoversSet,
-  currentHoldings, isCashEquivalent,
+  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
@@ -767,11 +767,22 @@ export function PortfolioMonitor() {
    * than silently gone — this book shows what it can and names the rest.
    */
 
-  const { rows, totMV, totCost, totPnL, rawMV, weightBase, weightCount, bucketTotals } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
     let base = currentHoldings(positions);
+    /**
+     * WHAT THE ₹1,000 FLOOR TOOK, struck on the UNFILTERED book deliberately.
+     *
+     * It is a fact about the BOOK — "six holdings are too small to list" — not
+     * about whichever entity or category the reader has selected. Struck on the
+     * filtered set it would read 0 the moment someone picked a category none of
+     * the six sits in, and a disclosure that disappears under a filter is one a
+     * reader can only find by accident.
+     */
+    const small = droppedHoldings(positions).negligible;
+    const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)) };
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => p.sector === sector);
     /**
@@ -1347,7 +1358,7 @@ export function PortfolioMonitor() {
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
       heldCount: db.length,
-      weightBase, weightCount, bucketTotals,
+      weightBase, weightCount, bucketTotals, smallDropped,
     };
   }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, sortKey, asc]);
   /**
@@ -2978,7 +2989,23 @@ export function PortfolioMonitor() {
                     row's label spans three of them and a category's spans one,
                     so cell-for-cell the two rows are different measurements. */}
                 <tr className="border-t border-ink-700 font-semibold" data-footer-total="">
-                  <td className="px-2 py-1.5 text-slate-200" colSpan={3}>Total · {rows.length} rows</td>
+                  {/*
+                    THE FLOOR IS NAMED IN THE FOOTER'S OWN `title`, AND NOT AS A
+                    PARAGRAPH UNDER THE TABLE.
+
+                    A note there is what the family have twice asked to be rid of
+                    — the closed-position note was one of the three grey blocks
+                    they pointed at, and it is recorded above as removed rather
+                    than relocated. But a row count that silently stops counting
+                    six holdings is the gap that note existed to close, so the
+                    claim goes where this book puts a claim about a figure: on
+                    the figure. Same treatment as the Weight cell's own `title`
+                    one column over, which explains its denominator the same way.
+                  */}
+                  <td className="px-2 py-1.5 text-slate-200" colSpan={3}
+                      title={smallDropped.count > 0
+                        ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total, which is what this figure and every total beside it leave out. Nothing is missing: the book still carries them and the statements still report them.`
+                        : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`}>Total · {rows.length} rows</td>
                   <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
                   {/*
                     THE COLUMN COUNTS WHAT IT COVERS RATHER THAN LEAVING A WALL
