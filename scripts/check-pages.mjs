@@ -807,6 +807,240 @@ const FAMILY_ENTITY = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── WHAT THE AIF DRILL-DOWN MUST SECTION INTO, DERIVED FROM THE BOOK ────────
+ *
+ *   "when you're drilling down in the AIF … make it cat one, cat two, cat three
+ *    … club कर दो कि these are cat two AIFs, these are cat three AIFs, this is
+ *    cat one AIF"  and  "create another private equity fund line item".
+ *
+ * RE-DERIVED HERE, NOT IMPORTED FROM `src/lib/aifCategory.ts`. A check that
+ * imports the helper it is checking agrees with it by construction — the rule
+ * this sweep already follows for `isMandateHeld` and for the fund-class split —
+ * so the category is read again, from the same two printed fields, by a second
+ * expression. The two agreeing is the measurement; one of them calling the
+ * other would be a tautology.
+ *
+ * Measured on this book: Category III ₹297.78 Cr over 8 rows, Category II
+ * ₹34.28 Cr over 3, Private Equity ₹3.60 Cr over 2, Category not stated
+ * ₹16.69 Cr over 3 — and Category I has NO valued holding at all, because every
+ * one the family owns is an angel fund that publishes no NAV.
+ */
+const AIF_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    // The second expression of the same read: every category a string names,
+    // III before II before I, with the whole numeral run in one group so `III`
+    // can never be read as `I`.
+    const cats = (t) => {
+      const out = new Set();
+      for (const m of String(t ?? "").matchAll(/\b(?:categor(?:y|ies)|cat)[\s‐-―-]*((?:III|II|I|[123])(?:\s*\/\s*(?:III|II|I|[123]))*)\b/gi)) {
+        for (const part of m[1].split("/")) {
+          const v = part.trim().toUpperCase();
+          if (v === "I" || v === "1") out.add("Category I");
+          else if (v === "II" || v === "2") out.add("Category II");
+          else if (v === "III" || v === "3") out.add("Category III");
+        }
+      }
+      return ["Category I", "Category II", "Category III"].filter((c) => out.has(c));
+    };
+    const isPE = (p, a) => /\b(private equity|venture capital|growth equity|buyout)\b/i
+      .test([p?.security, a?.providerEngagement, a?.strategy, a?.provider].filter(Boolean).join(" · "));
+    // The drill-down draws CURRENT, CONSOLIDATED holdings — a fund redeemed to
+    // nil still publishes a NAV, and a dedupe group counts once.
+    const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
+      && Number(p.quantity) === 0 && p.currentPrice != null));
+    const seen = new Set();
+    const ded = current.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const rows = ded.filter((p) => p.assetClass === "AIF" && acc.get(p.accountId)?.engagement !== "PMS");
+    /**
+     * THE PAGE DRAWS ONE ROW PER FUND, NOT PER STATEMENT, which is the whole of
+     * what "club कर दो" asked for: Sanshi Class E reaches this book under one
+     * securityKey in four folios and is ONE row. So the counts below are of
+     * DISTINCT SECURITY KEYS, re-derived here the way `groupRows` derives them
+     * — and the VALUES are still summed over every statement, because a fund's
+     * row carries all of its folios' money.
+     *
+     * The first draft counted positions and failed a page that was right, which
+     * is the reason this is spelled out: a count is only meaningful beside the
+     * noun it counts.
+     */
+    const sections = new Map();
+    for (const p of rows) {
+      const a = acc.get(p.accountId);
+      const named = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
+      const key = isPE(p, a) ? "Private Equity"
+        : named.length === 1 ? named[0] : "Category not stated";
+      const e = sections.get(key) ?? { mv: 0, n: 0, keys: new Set() };
+      e.mv += Number(p.marketValue) || 0; e.n += 1; e.keys.add(p.securityKey); sections.set(key, e);
+    }
+    /**
+     * THE CATEGORY EACH DRAWN ROW MUST CLAIM — `""` where none is stated.
+     *
+     * REINTRODUCING A BUG IS WHAT PUT THIS HERE. Resolving `Category I/II` to
+     * the FIRST of the two, rather than to neither, left the sweep CLEAN: the
+     * only holding with an ambiguous category is Transition Venture Capital,
+     * which Private Equity claims first, so the defect moved no row and no
+     * total — it changed one chip from "category not stated" to "Category I",
+     * and the check accepted any of the three names or none.
+     *
+     * A chip is where this book states a classification, so it is held to the
+     * book's own answer rather than to a shape.
+     */
+    const rowCats = new Map();
+    for (const p of rows) {
+      const a = acc.get(p.accountId);
+      const named = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
+      // Exactly as the page reads it: one named category resolves, anything
+      // else — none, or more than one — is not stated.
+      rowCats.set(p.securityKey, named.length === 1 ? named[0] : "");
+    }
+    // THE AGREEMENT GUARD, RE-STRUCK. Where BOTH printed fields name a single
+    // category they must name the SAME one. Counted so it can be reported at
+    // zero: a guard that only speaks when it fires is indistinguishable, on a
+    // clean run, from one that was quietly deleted.
+    let bothSpeak = 0, disagree = 0;
+    for (const p of rows) {
+      const a = acc.get(p.accountId);
+      const fs = cats(p.security), fe = cats(a?.providerEngagement);
+      if (fs.length && fe.length) { bothSpeak++; if (fs.length === 1 && fe.length === 1 && fs[0] !== fe[0]) disagree++; }
+    }
+    // AND THE FOLIOS THAT VALUE NOTHING, by the same axis — the only place a
+    // Category I AIF appears in this book at all.
+    const withPositions = new Set(positions.map((p) => p.accountId));
+    const unvalued = accounts
+      .filter((a) => a.engagement === "AIF" && !withPositions.has(a.accountId))
+      .map((a) => {
+        const named = cats(a.providerEngagement);
+        return isPE(null, a) ? "Private Equity" : named.length === 1 ? named[0] : "Category not stated";
+      });
+    return {
+      total: rows.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      /** Statement rows behind the table. */
+      rows: rows.length,
+      /** Rows the table actually draws — one per fund. */
+      funds: new Set(rows.map((p) => p.securityKey)).size,
+      sections: [...sections].map(([key, v]) => ({ key, mv: v.mv, n: v.n, funds: v.keys.size }))
+        .sort((x, y) => y.mv - x.mv),
+      bothSpeak, disagree,
+      /** One entry per drawn fund row, sorted, as a multiset to compare. */
+      rowCats: [...rowCats.values()].sort(),
+      unvaluedSections: [...new Set(unvalued)],
+      unvaluedCount: unvalued.length,
+      /** True where the book carries a Category I AIF that no statement values. */
+      catIOnlyUnvalued: !sections.has("Category I") && unvalued.includes("Category I"),
+    };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT THE DAILY-NAV MOVERS CARD MUST COVER, FROM THE BOOK AND THE STORE ──
+ *
+ *   "wherever there is a daily NAV available and if there is a drastic moment
+ *    in the line item for some reason, can we capture that? … Because a silver
+ *    ETF can have a drastic moment ऊपर नीचे."
+ *
+ * Both inputs are committed artefacts, so this is derived on every run rather
+ * than typed — and it is derived by a DIFFERENT PATH from the page's, which
+ * reads `navMoverModel`. Re-deriving it here is what lets the two disagree.
+ *
+ * The ETF trap is the reason the expected figures are struck this way: the
+ * rupee move is the scheme's published percentage applied to the BOOK's market
+ * value, never `units × NAV`, which puts the family's ₹16.88 Cr gold ETF at
+ * ₹1.76 Cr. See `src/lib/navMovers.ts`.
+ */
+const NAV_MOVERS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const idx = JSON.parse(readFileSync(new URL("../public/lookthrough/index.json", import.meta.url), "utf8"));
+    if (!Array.isArray(accounts) || !Array.isArray(positions) || !idx?.schemes) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
+      && Number(p.quantity) === 0 && p.currentPrice != null));
+    const seen = new Set();
+    const ded = current.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    /**
+     * ETF and Mutual Fund, never one held inside a PMS mandate (the manager
+     * chose it, so it belongs to the mandate) — AND NEVER A CASH EQUIVALENT.
+     *
+     * THAT LAST CLAUSE IS WHY THIS EXPRESSION HAD TO MOVE WHEN MAIN DID.
+     * Stage 10av made a liquid fund or liquid ETF `Cash` in `holdingBucket`
+     * whatever wrapper its statement typed it as, and the CARD scopes on the
+     * bucket while this scoped on `assetClass` — which §5 correctly does not
+     * move. So after that merge the two expressions of one rule disagreed by
+     * four rows and five invariants failed at once, which is this check
+     * earning its place rather than a defect in it: written as one import it
+     * would have agreed with the card by construction and reported nothing.
+     *
+     * `CASH_EQUIVALENT_KEYS` is read as committed DATA and the membership test
+     * re-expressed here, exactly as `BOOK_POLYCAB` is read for the ring-fence.
+     * An unreadable or empty map yields `null` rather than silently restoring
+     * the old scope — the checks then FAIL rather than pass, because a renamed
+     * constant must not read as a book with no cash equivalents in it.
+     */
+    const cashEq = (() => {
+      try {
+        const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+        const i = a.indexOf("export const CASH_EQUIVALENT_KEYS");
+        if (i < 0) return null;
+        const end = a.indexOf("\n};", i);
+        if (end < 0) return null;
+        const keys = [...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]);
+        return keys.length ? new Set(keys) : null;
+      } catch { return null; }
+    })();
+    if (!cashEq) return null;
+    const scope = ded.filter((p) => ["ETF", "Mutual Fund"].includes(p.assetClass)
+      && acc.get(p.accountId)?.engagement !== "PMS"
+      && !cashEq.has(p.securityKey));
+    const bySchemecode = new Map();
+    let skipped = 0, skippedValue = 0;
+    for (const p of scope) {
+      const m = idx.schemes[p.securityKey];
+      const nav = m?.nav;
+      if (!m || nav?.value == null || nav?.prev == null || nav?.changePct == null) {
+        skipped++; skippedValue += Number(p.marketValue) || 0; continue;
+      }
+      const e = bySchemecode.get(m.schemecode) ?? { value: 0, pct: nav.changePct, date: nav.date };
+      e.value += Number(p.marketValue) || 0;
+      bySchemecode.set(m.schemecode, e);
+    }
+    const rows = [...bySchemecode.values()];
+    const coveredValue = rows.reduce((t, r) => t + r.value, 0);
+    const move = rows.reduce((t, r) => t + (r.value * r.pct) / 100, 0);
+    const dates = [...new Set(rows.map((r) => r.date))].sort().reverse();
+    return {
+      schemes: rows.length,
+      names: new Set(scope.map((p) => p.securityKey)).size,
+      coveredValue, scopeValue: scope.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      move, changePct: coveredValue > 0 ? (move / coveredValue) * 100 : null,
+      skipped, skippedValue,
+      newestNavDate: dates[0] ?? null,
+      spansDates: dates.length > 1,
+      /** The largest single published move, which is what "drastic" ranks on. */
+      topPct: rows.reduce((t, r) => Math.max(t, Math.abs(r.pct)), 0),
+      /** Every scheme's own move, so a row showing a neighbour's can be caught. */
+      pcts: rows.map((r) => r.pct),
+      /** True where at least one scheme is past the card's stated 2% bound. */
+      anyDrastic: rows.some((r) => Math.abs(r.pct) >= 2),
+    };
+  } catch { return null; }
+})();
+
 const FUND_ACCOUNT_ID = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -1540,6 +1774,18 @@ const ROUTES = [
    *     invested tile names and which must render absent rather than ₹0.
    */
   ...BUCKET_SLOTS.map((n) => [`holdings-row-${n}`, () => CIO_BUCKET_HREFS[n - 1] ?? `/holdings?of=bucket&key=no-row-${n}-on-morning-cio`]),
+  /**
+   * ...AND THE AIF ROW SPECIFICALLY, because that is the one the family asked
+   * to have clubbed by SEBI category.
+   *
+   * It is already among the six slots above, and which slot it lands in moves
+   * with the book — the rows are sorted by value. A slot number here would be a
+   * literal standing for a generated ordering, so the address is picked out of
+   * the ones Morning CIO itself drew, by its key. A book whose allocation table
+   * stops carrying an AIF row lands on `/holdings`'s own not-found state and
+   * FAILS these invariants rather than skipping them.
+   */
+  ["holdings-aif", () => CIO_BUCKET_HREFS.find((h) => /[?&]key=AIF(&|$)/.test(h)) ?? "/holdings?of=bucket&key=no-aif-row-on-morning-cio"],
   ["holdings-book", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
   /**
    * ...AND ONE ROW FROM EACH OF THE FAMILY'S OWN TWO AXES.
@@ -4706,6 +4952,205 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [
     /**
+     * ── DAILY-NAV MOVERS: THE INSTRUMENTS THE QUOTE FEED CANNOT REACH ─────────
+     *
+     *   "this is covering for stocks which is fine … But can I not have — see if
+     *    I have some money in ETF? Or if mutual funds also have a daily NAV? So
+     *    wherever there is a daily NAV available and if there is a drastic
+     *    moment in the line item for some reason, can we capture that? …
+     *    Because a silver ETF can have a drastic moment ऊपर नीचे."
+     *
+     * Struck on `NAV_MOVERS_BOOK`, which re-derives the whole card from the two
+     * committed artefacts by a different path from the page's.
+     *
+     * IT RENDERS ON THE PLAIN `cio` WALK, deliberately: the store is a committed
+     * file rather than a Function, so it answers under `vite preview` where
+     * `/api/quotes` 404s. That is what lets this card be checked at all without
+     * the live mocks — and it is also the point of the feature, since these
+     * instruments have no quote to wait for.
+     */
+    ["the daily-NAV movers card renders every scheme the store prices", (t, ctx) => {
+      if (!NAV_MOVERS_BOOK) return false;
+      const nm = ctx?.navMovers;
+      if (!nm) return false;
+      // A CARD STILL LOADING IS NOT A CARD THAT FAILED, and neither is a pass:
+      // the store is a static file on the same origin, so a walk that finds it
+      // pending has found a real regression in how it is fetched.
+      if (nm.loading) return false;
+      if (!NAV_MOVERS_BOOK.schemes) return { notChecked: "no ETF or mutual-fund holding resolves a scheme with two published NAVs" };
+      return nm.rows.length === NAV_MOVERS_BOOK.schemes;
+    }],
+    /**
+     * ── AND ITS FIGURES RECONCILE TO THE BOOK, NOT TO THE PAGE ───────────────
+     *
+     * REINTRODUCING TWO BUGS IS WHAT PUT THIS HERE, and both left the sweep
+     * CLEAN: the aggregate struck as the unweighted MEAN of the rows (−0.276%
+     * against the true −0.118%, which weights a ₹107 residual the same as a
+     * ₹42 Cr position), and a model that stopped SUMMING a scheme's holdings so
+     * every row carried its last statement's value alone. Neither changes a row
+     * count or a date, and every check on this card was reading counts and
+     * dates — comparing the page with itself, which is the failure this repo
+     * names in as many words and which it committed again here.
+     *
+     * All four figures come from `NAV_MOVERS_BOOK`, derived from the book and
+     * the store by a different path from the page's.
+     */
+    ["the NAV card's figures reconcile to the book", (t, ctx) => {
+      const f = ctx?.navMovers?.figures;
+      if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme with two published NAVs" };
+      if (!f) return false;
+      // To the rupee on the money, and to a ten-thousandth of a point on the
+      // percentage — both sides are the same arithmetic over the same inputs,
+      // so only floating-point addition sits between them.
+      return Math.abs(f.covered - NAV_MOVERS_BOOK.coveredValue) < 1
+        && Math.abs(f.scope - NAV_MOVERS_BOOK.scopeValue) < 1
+        && Math.abs(f.move - NAV_MOVERS_BOOK.move) < 1
+        && f.pct != null && Math.abs(f.pct - NAV_MOVERS_BOOK.changePct) < 1e-4;
+    }],
+    /**
+     * …AND THE AGGREGATE IS VALUE-WEIGHTED RATHER THAN AN AVERAGE, asserted as
+     * an INEQUALITY against the mean it must not be. A book where the two
+     * happen to coincide would let the equality above pass on either, so this
+     * is what makes that check load-bearing rather than lucky.
+     */
+    ["the NAV aggregate is value-weighted, not the mean of the rows", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm?.figures || !NAV_MOVERS_BOOK?.schemes) return false;
+      const pcts = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite);
+      if (pcts.length < 2) return { notChecked: "fewer than two schemes priced, so the two measures cannot differ" };
+      const mean = pcts.reduce((a, b) => a + b, 0) / pcts.length;
+      if (Math.abs(mean - NAV_MOVERS_BOOK.changePct) < 1e-4) {
+        return { notChecked: "on this book the weighted move and the mean coincide" };
+      }
+      return nm.figures.pct != null && Math.abs(nm.figures.pct - mean) > 1e-4;
+    }],
+    /**
+     * …AND EACH ROW CARRIES ITS OWN SCHEME'S PUBLISHED MOVE.
+     *
+     * The count above passes a card that drew the right NUMBER of rows with the
+     * wrong percentages on them — a scheme's row showing a neighbour's move is
+     * a real figure against the wrong fund, and every caption still reads
+     * correctly. Compared as a SET against the store's own, so it does not also
+     * assert a ranking (which the toggle changes).
+     */
+    ["each NAV row carries its own scheme's published move", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading || !NAV_MOVERS_BOOK?.schemes) return false;
+      const want = NAV_MOVERS_BOOK.pcts.map((n) => n.toFixed(6)).sort();
+      const got = nm.rows.map((r) => Number(r.pct)).filter(Number.isFinite).map((n) => n.toFixed(6)).sort();
+      return got.length === want.length && got.every((v, i) => v === want[i]);
+    }],
+    /**
+     * THE FAMILY'S OWN EXAMPLE IS THE ONE THE QUOTE FEED CANNOT SERVE. The DSP
+     * silver and gold ETFs resolve NO NSE symbol — NSE moved them to ISINs the
+     * statements do not carry — so they can never appear on Today's movers and
+     * this card is the only place they can. A build that quietly scoped this to
+     * mutual funds would satisfy every count above on a book with fewer ETFs.
+     */
+    ["a holding with no NSE symbol still gets a published move", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading) return false;
+      if (!NAV_MOVERS_BOOK?.schemes) return { notChecked: "nothing in scope resolves a scheme" };
+      // Struck on the ETF class reaching the card at all, via the scheme count
+      // and the coverage sentence naming both instrument kinds.
+      return /ETF/i.test(t) && nm.rows.length > 0;
+    }],
+    /**
+     * ── THE TWO MEASUREMENTS ARE DATED APART, WHICH IS THE WHOLE RULE ─────────
+     *
+     * A live quote is intraday today; a published NAV is a scheme's last struck
+     * NAV against the one before it, and on this book that is a week old. Naming
+     * either "today" would print a real figure under the wrong day — the defect
+     * `/api/indices` already cost this repo, and the kind a reader cannot catch.
+     *
+     * So the card must PRINT ITS DATE and must not call it today.
+     */
+    ["the NAV card is dated, and never called today", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading || !NAV_MOVERS_BOOK?.newestNavDate) return false;
+      const asOf = nm.asOf ?? "";
+      return asOf.includes(NAV_MOVERS_BOOK.newestNavDate) && !/\btoday\b/i.test(asOf);
+    }],
+    /** …and where the rows do NOT share one date the card says so, because a
+        scheme does not publish on a non-business day and the heading carries
+        only the newest. */
+    ["a row struck on an older day than the heading is disclosed", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+      if (!NAV_MOVERS_BOOK.spansDates) return { notChecked: "every priced scheme published on the same day" };
+      const older = nm.rows.filter((r) => r.date && r.date !== NAV_MOVERS_BOOK.newestNavDate);
+      // The book says some row is older; the page must draw it AND say so.
+      return older.length > 0 && /do not share one date/i.test(nm.basis ?? "");
+    }],
+    /**
+     * THE CARD STATES THAT IT IS NOT THE CARD ABOVE. Two movers cards on one
+     * page, one intraday and one a week old, is exactly where a reader adds two
+     * figures that must never be added.
+     */
+    ["it states its basis and that the two cards are never added together", (t, ctx) => {
+      const b = ctx?.navMovers?.basis ?? "";
+      return /published NAV/i.test(b) && /never added together/i.test(b) && /derived/i.test(b);
+    }],
+    /**
+     * ── THE AGGREGATE TIES TO ITS OWN COLUMNS ────────────────────────────────
+     *
+     * The percentage is value-weighted over the covered rows, so it must equal
+     * the book's own — and the coverage sentence must name the value it stands
+     * on, never a name count alone. Compared against a figure derived here, not
+     * against another rendering of the page's own.
+     */
+    ["its coverage names the value it stands on, and the schemes it cannot price", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+      const cov = nm.coverage ?? "";
+      const schemesNamed = new RegExp(`\\b${NAV_MOVERS_BOOK.schemes}\\s+schemes?\\b`).test(cov);
+      // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER DROPPED IN SILENCE.
+      const skipNamed = NAV_MOVERS_BOOK.skipped === 0
+        ? !/resolve no scheme/i.test(cov)
+        : (/resolve no scheme/i.test(cov) && !!nm.skipped);
+      return schemesNamed && skipNamed && /₹|Cr|L\b/.test(cov);
+    }],
+    /**
+     * ── "DRASTIC" LABELS AND NEVER DECIDES ───────────────────────────────────
+     *
+     * A threshold is a judgement no statement states, so it must not choose which
+     * rows are drawn. The card draws EVERY priced scheme — which is checked by
+     * the count above — and this asserts the chip is a label: on a book where
+     * nothing crosses the bound, no row may carry it.
+     */
+    ["the drastic chip labels rather than filters", (t, ctx) => {
+      const nm = ctx?.navMovers;
+      if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+      const chipped = /\bdrastic\b/i.test(t);
+      // The note explaining the bound always renders; the CHIP renders only
+      // where the book has a row past it.
+      const noteOnly = /move of \d+% or more/i.test(t);
+      return noteOnly && nm.rows.length === NAV_MOVERS_BOOK.schemes
+        && (NAV_MOVERS_BOOK.anyDrastic ? chipped : true);
+    }],
+    /**
+     * THE RANKING DEFAULTS TO THE PERCENTAGE, matching the card above it and the
+     * question that was asked — a MOVE rather than an impact. A default is the
+     * change that moves silently: the page renders perfectly either way and only
+     * the order of the rows differs.
+     */
+    ["the NAV movers default to ranking by % move, with ₹ offered", (t, ctx) => {
+      const ranks = ctx?.navMovers?.ranks;
+      if (!ranks?.length) return false;
+      return ranks.length === 2 && ranks[0].key === "pct" && ranks[0].on
+        && ranks.some((r) => r.key === "impact" && !r.on);
+    }],
+    /**
+     * AND AN AIF IS NOT ON THIS CARD, which the family said first — *"AIF में
+     * monthly NAV आएगा"*. No alternative fund publishes a daily NAV, so their
+     * absence is a fact about the INSTRUMENT rather than a filter, and the card
+     * says so rather than leaving a reader to wonder where ₹352 Cr went.
+     */
+    ["it states that AIF folios publish no daily NAV", (t, ctx) => {
+      const b = ctx?.navMovers?.basis ?? "";
+      return /AIF/i.test(b) && /no alternative fund publishes a daily NAV/i.test(b);
+    }],
+    /**
      * ── THE TILE IS "CURRENT VALUE OF HOLDINGS" ───────────────────────────────
      *
      *   "rename consolidated NAV as Current Value of holdings … wherever it is
@@ -6066,6 +6511,133 @@ const INVARIANTS = {
       (t) => !/the FAMILY['’]S OWN, taken from their consolidated review/i.test(t)],
   ],
 
+  /**
+   * ── THE AIF DRILL-DOWN, CLUBBED BY SEBI CATEGORY ───────────────────────────
+   *
+   *   "when you're drilling down in the AIF … make it cat one, cat two, cat
+   *    three … club कर दो कि these are cat two AIFs, these are cat three AIFs,
+   *    this is cat one AIF"   and   "create another private equity fund line
+   *    item".
+   *
+   * Every expectation below comes from `AIF_BOOK`, which re-derives the reading
+   * from the same two printed fields by a SECOND expression rather than
+   * importing `aifCategory.ts` — a check that calls the helper it is checking
+   * agrees with it by construction.
+   *
+   * A CATEGORY NOBODY PRINTED IS THE DEFECT THIS GUARDS. A section heading looks
+   * exactly as authoritative whichever rows sit under it, so a page that filed
+   * every fund under a plausible category would read perfectly and no value
+   * check on the page could see it.
+   */
+  "holdings-aif": [
+    ...DRILLDOWN_CHROME_GONE,
+    ["it opened the AIF row Morning CIO linked", (t, ctx) => {
+      // A ROUTE THAT RESOLVED NOTHING LANDS ON THE NOT-FOUND STATE, which has no
+      // console error, no overflow and no stray zero — so it passes every
+      // generic check while asserting nothing. This is what makes that a
+      // FAILURE rather than a silent pass.
+      if (!AIF_BOOK) return false;
+      return !/no-aif-row-on-morning-cio/.test(ctx?.url ?? "") && !!ctx?.aifSections?.sections?.length;
+    }],
+    /**
+     * THE SECTIONS PARTITION THE ROW, which is the claim a reader acts on: the
+     * headings must add to the figure they clicked and no fund may be counted
+     * twice. It is the reason Private Equity could be a section at all — a PE
+     * fund IS a Category II AIF, so the two overlap, and only a partition check
+     * can show that the overlap was resolved rather than double-counted.
+     *
+     * Struck on the SUBTOTALS the page publishes and the book's own total, which
+     * are two independently produced figures — comparing the sections with each
+     * other would pass a page that split the same money the wrong way.
+     */
+    ["its sections partition the AIF row, to the rupee", (t, ctx) => {
+      const secs = ctx?.aifSections?.sections;
+      if (!AIF_BOOK || !secs?.length) return false;
+      const sum = secs.reduce((a, x) => a + (Number.isFinite(x.mv) ? x.mv : NaN), 0);
+      const funds = secs.reduce((a, x) => a + (Number.isFinite(x.funds) ? x.funds : NaN), 0);
+      // A rupee, because both sides are struck on the same `marketValue` and
+      // only floating-point addition sits between them.
+      return Math.abs(sum - AIF_BOOK.total) < 1 && funds === AIF_BOOK.funds;
+    }],
+    /** …and each named section carries the value and the count the book gives it. */
+    ["every section carries the book's own figure for it", (t, ctx) => {
+      const secs = ctx?.aifSections?.sections;
+      if (!AIF_BOOK || !secs?.length) return false;
+      if (secs.length !== AIF_BOOK.sections.length) return false;
+      return AIF_BOOK.sections.every((want) => {
+        const got = secs.find((x) => x.key === want.key);
+        return got && Math.abs(got.mv - want.mv) < 1 && got.funds === want.funds;
+      });
+    }],
+    /**
+     * PRIVATE EQUITY IS A SECTION, AND ITS ROWS STILL NAME THEIR CATEGORY.
+     *
+     * The family chose the separate line over folding PE into Category II. That
+     * is only honest if a reader can still see that a PE fund IS a Category I
+     * or II AIF — otherwise the category sections silently under-report and the
+     * page gives no way to notice.
+     */
+    ["Private Equity is its own section", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      const want = AIF_BOOK.sections.find((x) => x.key === "Private Equity");
+      if (!want) return { notChecked: "no holding in this book reads as a private-equity or venture fund" };
+      return !!ctx?.aifSections?.sections?.some((x) => x.key === "Private Equity" && Math.abs(x.mv - want.mv) < 1);
+    }],
+    ["every drawn row states the SEBI category the book gives it", (t, ctx) => {
+      const cats = ctx?.aifSections?.rowCats;
+      if (!AIF_BOOK || !cats?.length) return false;
+      // One chip per drawn fund row…
+      if (cats.length !== AIF_BOOK.funds) return false;
+      // …and each is the book's own answer, compared as a MULTISET so this does
+      // not also assert an ordering the sections are free to change. Checking
+      // only the SHAPE (a name, or empty) passed a build that resolved
+      // `Category I/II` to Category I — see `rowCats` in `AIF_BOOK`.
+      const got = [...cats].sort();
+      return got.length === AIF_BOOK.rowCats.length
+        && got.every((c, i) => c === AIF_BOOK.rowCats[i]);
+    }],
+    /**
+     * ── AND THE FOLIOS THAT VALUE NOTHING ARE NAMED ────────────────────────
+     *
+     * Every Category I AIF this family owns is an angel fund that publishes no
+     * NAV, so a holdings table can NEVER draw one. A page clubbed by category
+     * with no Category I heading and no note tells a reader they hold none,
+     * which is false — and is the one way this change could mislead.
+     *
+     * GATED ON THE BOOK, so it abstains only where the book genuinely has no
+     * such folio rather than wherever the page stopped drawing them.
+     */
+    ["the AIF folios no statement values are named, with their category", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.unvaluedCount) return { notChecked: "every AIF folio in this book carries a valued position" };
+      const un = ctx?.aifSections?.unvalued;
+      if (!un?.length) return false;
+      return un.length === AIF_BOOK.unvaluedCount
+        && AIF_BOOK.unvaluedSections.every((k) => un.includes(k))
+        && /drawn/i.test(t) && /no NAV|valued by no statement/i.test(t);
+    }],
+    ["a Category I AIF the book holds but no statement values is named", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.catIOnlyUnvalued) return { notChecked: "this book values a Category I AIF, so the table draws one" };
+      // The page must say Category I SOMEWHERE — and, since no section can carry
+      // it, that somewhere is the unvalued list.
+      return (ctx?.aifSections?.unvalued ?? []).includes("Category I") && /Category I\b/.test(t);
+    }],
+    /**
+     * THE TWO PRINTED FIELDS AGREE, AND IT IS REPORTED AT ZERO.
+     *
+     * Where both the fund's name and the account's own wording name a single
+     * category they must name the SAME one, or neither is used. Measured on this
+     * book: 5 holdings print both and 0 disagree — and a guard that only speaks
+     * when it fires is indistinguishable, on a clean run, from one that was
+     * deleted, which is why this asserts the measurement rather than trusting it.
+     */
+    ["the two printed category fields do not disagree anywhere", () => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.bothSpeak) return { notChecked: "no AIF holding prints a category in both fields" };
+      return AIF_BOOK.disagree === 0;
+    }],
+  ],
   "holdings-book": [
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
@@ -11265,6 +11837,71 @@ for (const theme of THEMES) {
        */
       const closedNote = FAST ? null : await page.evaluate(() =>
         (document.querySelector("[data-closed-note]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null);
+      /**
+       * ── THE AIF DRILL-DOWN'S SECTIONS, READ AS STRUCTURE ───────────────────
+       *
+       * A section heading is a row of the same table as the funds under it, so
+       * on `innerText` a heading and a holding are indistinguishable — and a
+       * table that drew its headings and filed every fund under the wrong one
+       * reads perfectly. `data-aif-section` carries the key and its own
+       * subtotal, `data-aif-row-cat` carries what each ROW says its category
+       * is, and `data-aif-unvalued` carries the folios no statement values.
+       */
+      const aifSections = FAST ? null : await page.evaluate(() => ({
+        sections: [...document.querySelectorAll("tr[data-aif-section]")].map((tr) => ({
+          key: tr.getAttribute("data-aif-section"),
+          mv: Number(tr.getAttribute("data-aif-section-mv")),
+          funds: Number(tr.getAttribute("data-aif-section-funds")),
+        })),
+        // What each drawn ROW says its own SEBI category is — `""` where none is
+        // stated. This is what makes a Private Equity section safe beside the
+        // category ones: a PE fund is still a Category I or II AIF and the row
+        // has to say so, or a reader adding the sections cannot see where it went.
+        rowCats: [...document.querySelectorAll("[data-aif-row-cat]")].map((e) => e.getAttribute("data-aif-row-cat")),
+        // The folios that publish no NAV, by the same axis. Every Category I AIF
+        // in this book is one of these, so without them a category-clubbed page
+        // tells a reader they hold no Category I at all.
+        unvalued: [...document.querySelectorAll("[data-aif-unvalued]")].map((e) => e.getAttribute("data-aif-unvalued")),
+      }));
+      /**
+       * ── THE DAILY-NAV MOVERS CARD, READ AS STRUCTURE ───────────────────────
+       *
+       * Every row here is well-formed prose whichever schemes are in it, so a
+       * card that dropped half its rows, ranked them the wrong way, or blended
+       * a NAV move into the live-quote card above would render perfectly. The
+       * rows carry their scheme code, their published percentage and their NAV
+       * DATE — the last is what a claim about dating can be struck on.
+       */
+      const navMovers = FAST ? null : await page.evaluate(() => ({
+        rows: [...document.querySelectorAll("tr[data-navmover-row]")].map((tr) => ({
+          schemecode: tr.getAttribute("data-navmover-row"),
+          pct: Number(tr.getAttribute("data-navmover-pct")),
+          keys: Number(tr.getAttribute("data-navmover-keys")),
+          date: tr.getAttribute("data-navmover-date"),
+        })),
+        // The RANKING control's offer and its live choice, off the attribute
+        // rather than the button labels — "By % move" is exactly the prose a
+        // redesign is free to reword.
+        ranks: [...document.querySelectorAll("[data-navmover-rank]")].map((b) => ({
+          key: b.getAttribute("data-navmover-rank"), on: b.getAttribute("aria-pressed") === "true",
+        })),
+        // THE TILE'S OWN FOUR FIGURES, off attributes rather than parsed out of
+        // a compact-formatted caption — `₹-0.1 Cr` cannot be compared with a
+        // rupee figure, and `crU` reading a suffix-less number as crore is a
+        // trap this sweep has already fallen into once.
+        figures: (() => {
+          const el = document.querySelector("[data-navmovers-move]");
+          if (!el) return null;
+          const n = (k) => { const v = el.getAttribute(k); return v === "" || v == null ? null : Number(v); };
+          return { move: n("data-navmovers-move"), pct: n("data-navmovers-pct"),
+                   covered: n("data-navmovers-covered"), scope: n("data-navmovers-scope") };
+        })(),
+        asOf: document.querySelector("[data-testid='navmovers-asof']")?.innerText ?? null,
+        coverage: document.querySelector("[data-testid='navmovers-coverage']")?.innerText ?? null,
+        basis: document.querySelector("[data-testid='navmovers-basis']")?.innerText ?? null,
+        skipped: document.querySelector("[data-testid='navmovers-skipped']")?.innerText ?? null,
+        loading: !!document.querySelector("[data-testid='navmovers-loading']"),
+      }));
       const hbRedeemed = FAST ? null : await page.evaluate(() => ({
         // The marker the closed rows used to carry; it must now never appear.
         marked: [...document.querySelectorAll("[data-hb-redeemed]")].map((e) => e.getAttribute("data-hb-redeemed")),
@@ -12036,7 +12673,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
