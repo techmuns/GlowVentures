@@ -213,7 +213,12 @@ cash holding's genuinely-zero return both match, and both are correct.
   windows); this turns it into rows — the four labelled steps, the ranked
   contributors and detractors with a name held in several accounts counted once,
   and the managers' own one-year returns paired with their own benchmark ON ONE
-  DOCUMENT. See Stage 10ar.
+  DOCUMENT. See Stage 10ar. **NO PAGE RENDERS IT since Stage 10bb**, when the
+  family asked for the Return attribution section to go: the generator still
+  emits the bridge on every `build-book`, and `attribution.test.ts` is the only
+  thing that checks it ties — and it also carries the chain-linked NAV-series
+  assertions the chart on Morning CIO still depends on. A DOCUMENTED no-caller,
+  the `series.ts` treatment, and not the silent orphan this file keeps naming.
 - `src/lib/indices.ts` — the four live NSE index levels (`/api/indices`), and the
   one place `NIFTY_500_SYMBOL` is named so the strip and the NAV chart cannot
   disagree about which index "Nifty 500" means.
@@ -1193,18 +1198,32 @@ can, and it now has a page — built as `BOOK_POLYCAB` is, because that is the
 construction this repo has already proven for real data that must never reach a
 NAV:
 
-- **`npm run build-register`** emits `src/data/registerData.ts` from the workbook.
-  Generated, never hand-edited, and idempotent — it regenerates byte-identically.
-- **`src/pages/Register.tsx` at `/register` is its ONLY reader**, and it reads
-  that module DIRECTLY rather than through `PortfolioContext`. `usePortfolio` is
-  used for one thing — the display-currency formatter — and never for a figure.
-  So nothing on the page can leak into a total, an allocation, a sector or a NAV.
-- **`scripts/lib/registerRead.mjs` is the one reader**, used by both
-  `build-register.mjs` and `register-reconcile.mjs`. Two copies would be two
-  chances for the page and the report to state different figures about one
-  workbook — the failure `drilldown.ts` exists to stop for the book's own numbers.
-  Extracting it was verified by regenerating `docs/REGISTER-RECONCILIATION.md`
-  byte-identically.
+***THE PAGE HAS SINCE BEEN REMOVED at the family's request — `/register`
+redirects, and `src/data/registerData.ts` and `npm run build-register` went with
+it, because that module had exactly one reader. See Stage 10bb. What survives is
+everything below about the WORKBOOK: `scripts/lib/registerRead.mjs` is still its
+one reader, `npm run reconcile:register` still writes
+`docs/REGISTER-RECONCILIATION.md`, and the absence check below is stricter than
+it was — no route may name the register now, and its sentinel is derived from the
+workbook rather than from the deleted module. The passage stays in the order it
+was learnt, because the anti-duplication reasoning is why the figures were never
+additive in the first place.***
+
+- ~~**`npm run build-register`** emits `src/data/registerData.ts`~~ — REMOVED with
+  the page. It was generated, never hand-edited and idempotent; a builder whose
+  output nothing reads is the failure this file keeps naming.
+- ~~**`src/pages/Register.tsx` at `/register` is its ONLY reader**~~ — and that
+  is exactly why both went together. It read the module DIRECTLY rather than
+  through `PortfolioContext`, using `usePortfolio` for the display-currency
+  formatter alone, so nothing on it could ever leak into a total, an allocation,
+  a sector or a NAV. That construction was right and is recorded for the next
+  page that needs it.
+- **`scripts/lib/registerRead.mjs` is the one reader, and it STAYS**, used now by
+  `register-reconcile.mjs` and by `check-pages.mjs`'s `REGISTER_SENTINEL`. Two
+  copies would be two chances for the report and the sweep to state different
+  figures about one workbook — the failure `drilldown.ts` exists to stop for the
+  book's own numbers. Extracting it was verified by regenerating
+  `docs/REGISTER-RECONCILIATION.md` byte-identically.
 
 **THE PAGE LEADS WITH THE PARTITION, NOT THE TOTAL, AND THAT IS THE ANTI-DUPLICATION
 DESIGN.** ₹842.92 Cr of paid-in capital is NOT additive to a ₹710.39 Cr book:
@@ -1215,7 +1234,7 @@ in-book-as-position ₹43.42 Cr, not-in-book ₹450.08 Cr, exited ₹1.69 Cr —
 apart, each with what it means for the dashboard, and they sum to the gross.
 
 **TWO INVARIANTS, AND NEITHER IMPLIES THE OTHER**, both verified by reintroducing
-their bug. `check:pages` walks `/register` and asserts it renders the register's
+their bug. `check:pages` walked `/register` and asserted it renders the register's
 own largest not-in-book name, states these are amounts PAID rather than a
 valuation, states it is no part of the book's totals, names the double count, and
 never posts a paid figure as a cost basis. And on EVERY OTHER ROUTE it asserts that
@@ -1223,6 +1242,13 @@ name does NOT appear — `REGISTER_SENTINEL`, derived from the data like
 `RINGFENCED_KEY` so the next drop picks its own. Measured: leaking the sentinel
 onto Morning CIO fires the absence check; breaking the page's own wording fires the
 page check; the full sweep is 102 combinations clean.
+
+***ONLY THE SECOND STILL HAS A SUBJECT, AND IT IS STRICTER FOR IT (Stage 10bb).***
+The page's five own invariants went with the page; the absence check now applies
+to EVERY route with no exception, and `cio` additionally asserts the sentinel
+DERIVED — because it used to be read out of `registerData.ts` inside a
+`try/catch`, and deleting that module would have left it `null`, short-circuited
+the guard and made the whole claim unfalsifiable in silence.
 
 The sentinel is a NAME and deliberately not the word "register": `capital-register`
 is a live report type in the book and the Data Audit page prints it on every walk.
@@ -7075,6 +7101,14 @@ verbs and a mutual-fund absence essay standing for a card that renders one set
 for ever — the dead-code-that-looks-alive failure, wearing a query parameter. So
 `MOVER_SCOPES`, `CANNOT_BE_PRICED` and the param are deleted with the control.
 
+***`?movers=` HAS SINCE COME BACK, AND IT IS NOT THIS REASONING REVERSED — see
+Stage 10bb.*** There it carries a TOGGLE BETWEEN TWO MEASUREMENTS (a live
+intraday price and a published NAV, never summed), not three unreachable scopes
+of one model. Both branches are whole cards, both are offered, both are walked.
+The distinction this paragraph draws is exactly what makes the two calls
+consistent: a param nobody can reach from the page is dead code, and a param
+that carries a control the family asked for is an address.
+
 **EVERY CAPTION STILL READS THE SET** — the tile label, the coverage line, the
 index sentence and the excluded footer each state what the figure covers, off one
 constant instead of an active tab. And **what the narrowing leaves out is still
@@ -9288,6 +9322,12 @@ Today's movers stays exactly as Stage 10t narrowed it and Stage 10al settled it
 beside it. Reading this as "widen that card" would have put back the selectors
 the family removed one round earlier.
 
+***THE TWO CARDS SIT BEHIND ONE TOGGLE SINCE Stage 10bb, and nothing below
+changed.*** The family asked for the second card to stop standing beside the
+first; it is the other branch of a control now. Every reason this section gives
+for keeping them APART — different prices, different days, never added — is why
+they are still two components rather than one model with a scope field.
+
 **THE QUOTE FEED CANNOT ANSWER IT, AND THE FAMILY'S OWN EXAMPLE IS THE PROOF.**
 Every live endpoint is keyed on an NSE trading symbol. Measured over this book's
 6 ETF and 22 mutual-fund rows, **exactly one resolves a symbol** (LIQUIDBEES) —
@@ -10543,6 +10583,268 @@ one figure in the book moves**, which is what an additive change must look like.
 The ONLY generated files this touches are the six demat `document.json`s and the
 new `BOOK_SHARE_MOVEMENTS` block — `BOOK_SUMMARY` is unchanged to the rupee.
 
+### Stage 10bb — THREE REMOVALS, AND THE ONE THAT PUT TWO MEASUREMENTS BEHIND ONE CONTROL
+
+*"open pr and do not merge until i tell you to"* · *"remove the investment
+register page from the ui"* · *"give a toggle button in the direct equity daily
+movers for 'direct equity/ETF & Mutual Funds', and remove the separate daily
+movers for ETF and Mutual Funds"* · *"remove return attribution section from the
+dashboard UI"*
+
+Three asks, and only the middle one is a removal that ADDS something. It is also
+the one with a real hazard in it, so it is recorded first.
+
+#### 1. THE TOGGLE SWITCHES A MEASUREMENT, NOT A SCOPE
+
+Two cards stood under the index strip and now there is one with a control:
+
+| | |
+| --- | --- |
+| **Direct Equity** | a LIVE INTRADAY price against the PREVIOUS SESSION'S close |
+| **ETFs & mutual funds** | a scheme's own PUBLISHED NAV against the ONE BEFORE IT |
+
+**THEY ARE NOT TWO SCOPES OF ONE MODEL AND MUST NEVER BECOME ONE.** On this book
+the second is struck on **2026-09-09** against 2026-09-08 — a week behind the
+quote feed — and its rows do not even share one date, because a scheme does not
+publish on a non-business day. Merging them into one model with a `scope` field
+would put both under one heading and make summing them a one-line edit; that is
+the defect `/api/indices` already cost this repo, where a level was differenced
+against itself and the ±0.05 residual was the only tell.
+
+So `DailyMovers.tsx` is a HOST that owns the choice and hands the control down,
+and `TodaysMovers` and `NavMovers` are unchanged in substance. Each keeps its own
+card title, its own as-of, its own coverage line, its own absent states and its
+own ranking control. Nothing was rewritten to fit; the second card moved from
+beside the first to behind it.
+
+**THE CONTROL RENDERS IN EVERY BRANCH, INCLUDING THE FAILED ONES.** `NavMovers`
+has four — loading, store-down, nothing-priced, populated — and a toggle that
+disappears when the NAV store does not answer strands a reader on a card that
+cannot fill with no way back to the one that works. All four take it.
+
+**AND ONE CAPTION WAS A LAYOUT CLAIM THAT STOPPED BEING TRUE.** The NAV card's
+basis paragraph read *"a different measurement from Today's movers ABOVE"* —
+there is nothing above it any more. It names *the Direct Equity branch of this
+card* now. The sentence it must keep is unchanged and is the load-bearing half:
+**the two are never added together.**
+
+**`?movers=` IS BACK, AND THAT IS NOT STAGE 10al RUNNING BACKWARDS.** There, four
+tabs were four SETS of one model and the family removed them, so keeping three
+unreachable ones alive would have left their captions, nouns, verbs and a
+mutual-fund absence essay standing for a card that renders one set for ever. Here
+there are TWO branches, each a whole card that is checked end to end, and the
+family asked for the control. Nothing is unreachable, and the param is what lets
+the sweep hold the second branch to the light rather than guess at a click.
+
+**THE ELEVEN NAV INVARIANTS MOVED WITH THE CARD RATHER THAN BEING DELETED WITH
+IT.** They lived in the `cio` block; the toggle defaults to Direct Equity, so on
+`cio` that card is correctly absent and every one of them would have begun
+reporting NOT CHECKED — **eleven abstentions reading as a clean run**, which is
+how a check retires itself in silence. They are `NAV_MOVERS` now, assigned to a
+new `cio-movers-funds` route at `/cio?movers=funds`.
+
+**AND THE TWO ABSENCE CHECKS WERE INVERTED, NOT DELETED.** `moverScopes` was
+written to prove the four tabs were GONE; it now proves this pair is THERE —
+exactly two branches, Direct Equity first and live by default, the funds label
+naming ETFs and mutual funds. Inverting keeps the claim honest in both
+directions: a build that restored the old four-tab group fails it as surely as
+one that dropped the toggle. **A missing toggle is a FINDING, not an
+abstention**; only the probe failing to run abstains.
+
+**THE FIRST DRAFT OF THE NEW ROUTE'S OWN CHECK FAILED A CORRECT PAGE**, for a
+reason this file records twice for removed pages. It asserted the absence of the
+string *"Today's movers"* — which the NAV card's basis paragraph prints,
+legitimately, to say the two are never added. **A phrase the surviving branch
+prints is not distinctive to the branch that is hidden.** It is struck on the
+direct-equity card's own structural handles now (`data-mover-rank`,
+`movers-coverage`, `data-mover-row`), which is the stronger claim and survives
+either wording changing again.
+
+#### 2. THE INVESTMENT REGISTER PAGE, AND THE CHECK THAT WOULD HAVE GONE SILENT
+
+`/register` redirects to `/cio`, the nav entry is gone, and
+`src/pages/Register.tsx` is deleted. **It forwards to the dashboard home rather
+than to a neighbour**: the register is a COST record spanning every vehicle the
+family has used, listed and private alike, and nothing that survives holds it —
+pointing it at Private Market or the Monitor would assert a continuity that does
+not exist, which is the call `/knowledge`, `/macro` and `/economy` already
+record. The DAILY nav group survives with its other four entries, so unlike
+KNOWLEDGE, RESEARCH and MONITOR there is no heading to remove, and the suite
+asserts that too.
+
+**`src/data/registerData.ts` AND `npm run build-register` WENT WITH IT.** That
+module had exactly one reader, and a builder whose output nothing reads is the
+dead-code-that-looks-alive failure this file keeps naming — the `exportDeck.ts`
+treatment, and for the same reason. `RegisterLine`, `RegisterCostCandidate` and
+`RegisterSummary` in `types.ts` went too: three interfaces describing a file that
+no longer exists are that orphan one layer up.
+
+**WHAT DID NOT GO, AND WHY.** `scripts/lib/registerRead.mjs` is the ONE reader of
+the workbook and `npm run reconcile:register` still calls it, so the analysis
+survives as `docs/REGISTER-RECONCILIATION.md` — the independent cross-check the
+register was always allowed to be, and never a source for the book. `source/`
+still holds the workbook.
+
+**AND THE ABSENCE CHECK WOULD HAVE RETIRED ITSELF ON EXACTLY THIS CHANGE.**
+`REGISTER_SENTINEL` — the register's largest not-in-book name, which must appear
+on no route — was read out of `registerData.ts` inside a `try/catch`. Deleting
+that module would have swallowed the read, left the sentinel `null`, and the
+guard short-circuits on `REGISTER_SENTINEL &&`: **the claim becomes unfalsifiable
+without failing anything**, on the very change that makes it matter most.
+
+It is derived from the WORKBOOK now, through `registerRead.mjs` — the same reader
+the reconciler uses, so a second parse cannot disagree with it. Verified against
+the deleted module's own answer: `AVENDUS ABSOLUTE RETURN FUND C` at ₹7.05 Cr,
+113 not-in-book names, sentinel `AVENDUS` — identical. And **`cio` now asserts
+the sentinel DERIVED**, so a workbook this run cannot read is a finding rather
+than a silent pass.
+
+**THE CLAIM GOT STRONGER, WHICH IS THE POINT OF INVERTING RATHER THAN DELETING.**
+`/register` was the one route allowed to name it. No route is now, so the walk's
+per-page guard drops its exception and applies everywhere. The page's own five
+invariants are gone, because they were about what it RENDERED and the page is not
+empty — it does not exist.
+
+**AND `docs/SOURCE-COVERAGE.md` IS DELIBERATELY NOT REGENERATED, WHICH IS WORTH
+STATING RATHER THAN LEAVING TO BE FOUND.** `source-coverage.mjs` attributed the
+workbook to "the `/register` page (`npm run build-register`)" and now attributes
+it to the reconciler alone — the generator is fixed. The DOC is not, because
+regenerating it here would have rewritten a provenance record with a worse one:
+`source/_extracted/` is gitignored and derived, and the unzipper available on this
+machine **drops `__MACOSX/` resource forks**, so the run reported `Not a document:
+0` against the committed `58` and 260 leaf files against 318. The counts that
+matter — 252 read, 2 held out, **0 unread** — reproduce exactly. This is the
+hazard this file already names in as many words (*"a pipeline whose document count
+depends on who unzipped is not idempotent"*), so the fix rides in the generator
+and lands the next time the doc is regenerated where the forks survive.
+
+#### 3. RETURN ATTRIBUTION, AND WHAT GOES WITH IT
+
+`ReturnAttribution.tsx` is deleted and Morning CIO no longer renders it.
+
+**WHAT WENT WITH IT IS NAMED RATHER THAN GLOSSED, because this is not Stage
+10t.** There, the Book performance card was removed and *not one of its figures
+was* — every one was already elsewhere on the page. Here the four-term bridge
+(opening → price / trading / bought in / sold out / not split → closing), the
+ranked contributors and detractors, and the per-account windows are **NOWHERE
+ELSE**. The family asked for the section and that is their call; what this file
+owes them is not pretending the figures survived. Only the manager-year table has
+a home: `/performance` renders `BOOK_ACCOUNT_RETURNS` per account and per window,
+which is where the card's own footnote already pointed.
+
+**`BOOK_ATTRIBUTION` STAYS, AND SO DOES `src/lib/attribution.ts`.** The first is
+GENERATED — removing it from `build-book` would rewrite `glowData.ts`, which is a
+re-measurement of the book rather than a UI change anyone asked for. The second
+is kept on two grounds rather than sentiment: it is that data's presentation half,
+and its suite is **the only thing that checks the generated bridge ties** — and
+`attribution.test.ts` also carries the chain-linked NAV-series assertions (that
+the series starts before the panel is complete, that the extension is
+load-bearing, that the raw line is undefined until the panel completes) which the
+chart above it still depends on. Deleting the module would have taken those with
+it. Its header says plainly that nothing renders it, so it is a DOCUMENTED
+no-caller — the `series.ts` treatment — and not the silent orphan a future
+session wires back believing it load-bearing.
+
+**AND `ATTRIB_BOOK` WAS TRIMMED AND RENAMED, BECAUSE ITS NAME STOPPED BEING
+TRUE.** It carried the card's expectations (the ranked contributors, the covered
+fraction, the accounts with no priced row) AND the NAV chart's (the series' span,
+the panel completion, the book's return chained two ways). The first set lost
+every reader with the card, so those fields are deleted rather than left
+computing the right answer into no caller, and the constant is `NAV_SERIES_BOOK`
+— a constant that misdescribes what it carries is the caption failure one layer
+down, where every caller inherits it. Same treatment `nonEquityValue` →
+`unaccountedValue` got at Stage 10as.
+
+**THE NINE CARD INVARIANTS BECAME ONE STRUCTURAL ABSENCE**, and the probe was
+inverted rather than deleted — the `moverScopes` precedent. It is struck on the
+card's own handles and deliberately NOT on the words "return attribution": that
+phrase appears legitimately elsewhere in this app, so a text match could report
+the card gone while it was on screen. **The old probe returned `null` when the
+bridge was missing, which is exactly what `FAST` returns** — so "the card is
+gone" and "the probe did not run" were the same value and every invariant reading
+it would have abstained rather than failed. It returns `{ handles }` now: `null`
+did not run, `0` ran and found nothing.
+
+
+#### Ten bugs reintroduced, and the tenth could not fail
+
+Each was put back on its own, rebuilt and swept, with the harness restoring **by
+copy on a `trap … EXIT` and rebuilding on the way out** — one of these files is
+NEW and therefore untracked, and `git checkout --` on an untracked file silently
+does nothing, while restoring the source alone leaves `dist/` at the bugged build
+for the next run to report under the wrong name. A no-patch CONTROL ran first.
+
+| Bug put back | Fires |
+| --- | --- |
+| the toggle deleted, Morning CIO rendering one card again | **15 invariants across 3 routes** — the toggle checks on `cio` and `cio-live`, and all eleven NAV ones plus the branch check on `cio-movers-funds` |
+| the default branch flipped to funds | 4 on `cio`, 9 on `cio-live` |
+| BOTH branches rendered at once | the branch check on `cio-movers-funds` |
+| a third scope added (the old four-tab group creeping back) | the toggle checks on `cio` and `cio-live` |
+| the NAV card stops saying the two are never added | that invariant, at its NEW address |
+| the register sentinel cannot derive | "the register sentinel derived" |
+| a register name leaked onto Morning CIO | the walk's absence guard, by name (`…names AVENDUS from it`) |
+| the attribution card's handles back on the page | "the return attribution card stays removed" |
+| the register nav entry restored | `check:family` — "the Investment Register nav entry is gone" |
+| **the `/register` redirect deleted** | **NOTHING — see below** |
+
+**THE FIRST BUG IS THE ONE WORTH THE PASS.** Deleting the toggle leaves the
+eleven NAV invariants FAILING rather than abstaining, which is what says moving
+them to `cio-movers-funds` kept them biting. Left on `cio` they would have gone
+quietly NOT CHECKED against a card that is correctly not drawn there — eleven
+abstentions reading as a clean run.
+
+**AND THE LAST ONE IS THE FINDING.** With the explicit `/register` route removed,
+`path="*"` falls through to `RootRedirect`, which lands on `/cio` — so the
+redirect row still PASSED. That is the `/industry` finding this file already
+records, arriving through a catch-all instead of a chain: **what this suite reads
+is where a bookmark LANDS**, and by that measure the promise is kept either way.
+The row stays as it is rather than being rewritten into something that would have
+to pass anyway; what the explicit route buys is INTENT, which a catch-all does not
+state. It is named beside the row rather than left to be discovered.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` · `check:family` **61/0** (57 plus this change's four
+register assertions) · `check:pages` **160 combinations clean**, with three
+evidenced abstentions. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY (md5 unchanged before and after) —
+nothing here touches the ingest, and three UI removals that moved a generated
+figure would not be three UI removals.
+
+**THAT COUNT IS MEASURED ON THE MERGED TREE AND THE ARITHMETIC RECONCILES, WHICH
+IS WHY IT IS RE-RUN RATHER THAN CARRIED ACROSS.** This branch's own pre-merge
+sweep was **152**, and unchanged from its base: `/register` left the walk (two
+combinations) and `cio-movers-funds` joined it (two). Stage 10ba then landed on
+main with four new `stock-*` routes — eight combinations — so the merged tree is
+160, and its third abstention is that stage's own pledge check, not one of this
+one's.
+
+#### Merged with main, and both predicted conflicts arrived on cue
+
+Stage 10ba landed while this branch was open, so the merge hit exactly the two
+things this file already tells a future session to expect — **for the fifth time
+each**:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10ba`. Main's
+  merged first and **keeps it**, as at 10al, 10as, 10at and 10aw; this section is
+  `10bb`, and the six cross-references elsewhere in this file that named it moved
+  with it — checked one at a time, because three others on those same lines
+  belong to main's stage and must NOT move.
+- **AND THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS.**
+  `check-pages.mjs` hands its invariants ONE object literal, and git produced the
+  union without conflicting: this branch's `attrib`, `moverScopes` and `movers`
+  beside main's `qtyTable` and `posTable`. Verified by READING it rather than by
+  trusting that git did not complain — every key was then confirmed defined
+  exactly once, because a key naming a variable that no longer exists throws
+  inside the check and is reported as a broken matcher rather than as a clean
+  page.
+
+**AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED.** `glowData.ts` came
+across as a straight take-theirs (+1,625 lines of `BOOK_SHARE_MOVEMENTS`, which
+this branch never touched) and `docs/BOOK-REPORT.md` with it, so there was
+nothing to splice — and `npm run build-book` was run afterwards as a control
+anyway and regenerated both byte-identically. A generated file that merges
+WITHOUT conflicting is exactly the case this file says to re-derive.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -11538,10 +11840,9 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   outright if any entry's stored `navDate` disagrees with its scheme file, because
   then the entry is joined to the wrong record and the replay cannot reproduce it.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
-- `npm run build-register` regenerates `src/data/registerData.ts` from the family's
-  investment register — the `/register` page's data, and NO part of the book. Its
-  only reader is `src/pages/Register.tsx`, which reads it directly so it cannot
-  reach a portfolio total.
+- ~~`npm run build-register`~~ — REMOVED at Stage 10bb with the `/register` page
+  it was the only producer for. The workbook itself is untouched and
+  `npm run reconcile:register` still reads it.
 - `npm run check:pages` renders every route headlessly (needs `npm run build` and
   a `vite preview` on :4173) and reports console errors, failed requests and
   on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.

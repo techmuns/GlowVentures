@@ -15,9 +15,9 @@ import { fmtPct, changeColor, DASH } from "@/lib/format";
 //
 // The second half of "today's movers", over the instruments the quote feed
 // cannot reach. `navMovers.ts` carries the whole argument for why this is a
-// separate card on separate dates rather than more rows on the one above, and
-// why the rupee figure is derived from the book's value rather than from units
-// × NAV. This file renders it.
+// separate MEASUREMENT on separate dates rather than more rows on the quote-fed
+// card it now toggles with, and why the rupee figure is derived from the book's
+// value rather than from units × NAV. This file renders it.
 //
 // ── IT DRAWS EVERY COVERED ROW, AND THAT IS DELIBERATE ──────────────────────
 //
@@ -40,10 +40,29 @@ import { fmtPct, changeColor, DASH } from "@/lib/format";
 
 type Rank = "pct" | "impact";
 
-export function NavMovers() {
+/**
+ * ── IT IS ONE BRANCH OF A TOGGLE NOW, AND NOT A CARD OF ITS OWN ─────────────
+ *
+ * *"give a toggle button in the direct equity daily movers for 'direct
+ * equity/ETF & Mutual Funds', and remove the separate daily movers for ETF and
+ * Mutual Funds."* Both halves of that are one change: this card stopped
+ * standing beside Today's movers and became the second branch of it.
+ *
+ * NOTHING IT MEASURES MOVED. The title, the published-NAV date, the coverage
+ * line, the basis paragraph, the derived rupee figure and every skipped-holding
+ * reason are unchanged — which is the point, because the two branches are
+ * different measurements and the whole risk of putting them behind one control
+ * is that they start to look like one. `DailyMovers.tsx` argues that at length.
+ *
+ * THE TOGGLE RENDERS IN ALL FOUR BRANCHES, including loading, store-down and
+ * nothing-priced. A control that disappears when the store does not answer
+ * strands a reader on a card that cannot fill, with no way back to the one that
+ * works. The prop is optional so this component still stands alone.
+ */
+export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
   /**
-   * THE DEFAULT IS THE PERCENTAGE, matching the card above it — *"keep % wise
+   * THE DEFAULT IS THE PERCENTAGE, matching the card it toggles with — *"keep % wise
    * as the default view and ₹ wise absolute as the second toggle option"* — and
    * matching what was asked for here, which is a move rather than an impact:
    * *"if there is a drastic moment in the line item … can we capture that"*.
@@ -79,7 +98,7 @@ export function NavMovers() {
   // records on the company page and on Today's movers.
   if (schemes === undefined) {
     return (
-      <Card className="lg:col-span-3" title={title}>
+      <Card className="lg:col-span-3" title={title} right={scopeToggle}>
         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-8 text-center"
              data-testid="navmovers-loading">
           <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
@@ -90,7 +109,7 @@ export function NavMovers() {
   }
   if (schemes === null) {
     return (
-      <Card className="lg:col-span-3" title={title}>
+      <Card className="lg:col-span-3" title={title} right={scopeToggle}>
         <AbsentSection what="The NAV store did not respond"
           needs="These moves come from the committed AMFI NAV store rather than the live quote feed, and the request for it failed. Nothing has been substituted: every holding is showing its statement mark elsewhere on this page." />
       </Card>
@@ -98,7 +117,7 @@ export function NavMovers() {
   }
   if (!model || model.rows.length === 0) {
     return (
-      <Card className="lg:col-span-3" title={title}>
+      <Card className="lg:col-span-3" title={title} right={scopeToggle}>
         <AbsentSection what="No ETF or mutual-fund holding has a published NAV move"
           needs={`The store answered and carries no scheme with two published NAVs for any of the ${model?.scopeNames ?? 0} names held here. A move needs a NAV and the one before it; run \`npm run build-lookthrough\` against the AmfiBeas checkout to refresh the store.`} />
       </Card>
@@ -137,6 +156,10 @@ export function NavMovers() {
   return (
     <Card className="lg:col-span-3" title={title}
       right={
+        /* TWO CONTROLS: the SCOPE toggle (owned by `DailyMovers`) switches which
+           MEASUREMENT the card shows, and the RANKING reorders these rows. */
+        <div className="flex flex-wrap items-center justify-end gap-2">
+        {scopeToggle}
         <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank NAV movers by">
           {(["pct", "impact"] as const).map((k) => (
             <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k} data-navmover-rank={k}
@@ -145,6 +168,7 @@ export function NavMovers() {
               {k === "impact" ? "By ₹ impact" : "By % move"}
             </button>
           ))}
+        </div>
         </div>
       }>
 
@@ -182,7 +206,7 @@ export function NavMovers() {
         </div>
 
         {/* WHAT THIS MEASUREMENT IS, beside the figure rather than under the
-            table: a reader comparing it with the quote-fed card above needs to
+            table: a reader switching from the quote-fed branch needs to
             know at a glance that the two are struck on different days and on
             different kinds of price. */}
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4 sm:col-span-2">
@@ -191,8 +215,8 @@ export function NavMovers() {
             Each scheme&rsquo;s own <strong>published NAV against the one before it</strong> — {model.oldestNavDate === model.newestNavDate
               ? <>both struck {model.newestNavDate}</>
               : <>struck between {model.oldestNavDate} and {model.newestNavDate}; a scheme does not publish on a non-business day, so the rows do not share one date</>}.
-            That is a different measurement from Today&rsquo;s movers above, which is a live intraday price against the previous
-            session&rsquo;s close — the two are never added together.
+            That is a different measurement from the Direct Equity branch of this card, which is a live intraday price
+            against the previous session&rsquo;s close — the two are never added together.
             The rupee figure is <strong>derived</strong>: the scheme&rsquo;s move applied to what this book values the holding at, whose
             mark is its own statement&rsquo;s. AIF folios are not here — no alternative fund publishes a daily NAV.
           </p>

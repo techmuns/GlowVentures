@@ -37,34 +37,30 @@ import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 // mixed them — Jammu Kashmir Bank (Carnelian's pick) sat beside Fractal
 // Analytics (the family's own demat) under one heading.
 //
-// ── …AND THE SCOPE TABS ARE GONE, LEAVING THE ONE SET ────────────────────────
+// ── THE SCOPE HERE IS A CONSTANT, AND THE TOGGLE ABOVE IT IS NOT A SCOPE ─────
 //
-// *"remove these stocks etf mutual funds selectors for this top movers
-// section... we will only show direct equity as default."*
+// Four tabs sat on this card once — Stocks & ETFs / Stocks / ETFs / Mutual
+// funds, on `?movers=` — after the family read their own first wording ("my
+// stocks and ETFs are up") as asking for the ETFs back. They removed them
+// (*"we will only show direct equity as default"*), and `MOVER_SCOPES`,
+// `CANNOT_BE_PRICED` and every caption that read an active tab went with the
+// control: each was a different SET of ONE model, so keeping three unselectable
+// ones alive would have left their captions, nouns, verbs and a mutual-fund
+// absence essay standing for a card that renders one set for ever.
 //
-// A round of tabs sat here — Stocks & ETFs / Stocks / ETFs / Mutual funds, on
-// `?movers=` — after the family read their own first wording ("my stocks and
-// ETFs are up") as asking for the ETFs back. They have now settled it the other
-// way, and what is left is exactly the set the paragraph above describes.
+// THIS CARD'S SET IS STILL THAT ONE CONSTANT. What sits in the `right` slot now
+// is `DailyMovers`' toggle, and it does something different in kind: it swaps
+// this whole card for `NavMovers`, which is a different MEASUREMENT on
+// different dates — a published NAV against the one before it, not a live price
+// against the previous close. Nothing here widens, and the two are never summed.
+// See `DailyMovers.tsx`, which is where that distinction is argued.
 //
-// THE SCOPE IS A CONSTANT, NOT A PINNED VIEW, and that is the opposite of the
-// call Stage 10q made for the Portfolio Monitor's basis switch. There the flag
-// was threaded through fifteen render branches, so pinning it to a literal would
-// have left every one of them unreachable and `?view=entity` survived the button
-// that set it. Here each scope was a different SET, and the family have chosen
-// which set this card covers: keeping three unselectable ones alive on a URL
-// nobody can reach from the page would keep their captions, their nouns, their
-// verbs and a mutual-fund absence essay standing for a card that renders one set
-// forever — the dead-code-that-looks-alive failure, wearing a query parameter.
-// So `MOVER_SCOPES`, `CANNOT_BE_PRICED` and the `?movers=` param are deleted
-// with the control, and `check:pages` asserts the tabs are ABSENT.
-//
-// EVERY CAPTION STILL READS THE SET rather than a literal — the tile label, the
+// EVERY CAPTION READS THE SET rather than a literal — the tile label, the
 // coverage line, the index comparison and the excluded footer each state what
 // the figure covers, and a caption that widens or narrows a figure it does not
-// is the failure the Capital invested tile already cost this book once. They now
-// read one constant instead of an active tab, which is the same discipline with
-// one fewer thing that can drift.
+// is the failure the Capital invested tile already cost this book once. They
+// read one constant now instead of an active tab, which is the same discipline
+// with one fewer thing that can drift.
 //
 // ── AND THE DAY'S MOVE IS OVER THE PRICED PART OF THAT SET ───────────────────
 //
@@ -116,7 +112,19 @@ const SCOPE = {
   noun: "direct-equity",
 } as const;
 
-export function TodaysMovers() {
+/**
+ * ── IT IS ONE BRANCH OF A TOGGLE NOW, AND IT RENDERS THE CONTROL ────────────
+ *
+ * *"give a toggle button in the direct equity daily movers for 'direct
+ * equity/ETF & Mutual Funds'."* `DailyMovers` owns the choice and hands the
+ * control down; this card renders it in its own `right` slot beside the
+ * ranking, in EVERY branch including the loading and absent ones. A toggle that
+ * vanishes while the feed is down strands a reader on a card that cannot fill.
+ *
+ * The prop is optional so this component still stands alone — which is what the
+ * `cio-filling` route walks, and what a future caller outside the toggle gets.
+ */
+export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   const { portfolio, consolidated, quotesStatus, quotesAsOf, pendingFor, fmtFromBase } = usePortfolio();
   /**
    * THE DEFAULT IS THE PERCENTAGE MOVE, at the family's request — *"keep % wise
@@ -309,9 +317,14 @@ export function TodaysMovers() {
        moves to the tile that is actually as-of it. */
     <Card className="lg:col-span-3" title={`Today\u2019s movers \u00b7 ${SCOPE.label}`}
       right={
-        /* THE SCOPE TABS ARE GONE AT THE FAMILY'S REQUEST. What is left is the
-           RANKING, which reorders one list rather than changing which holdings
-           are in it — the set itself is named in the heading above. */
+        /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
+           (owned by `DailyMovers`) switches which MEASUREMENT this card shows —
+           a live intraday price here, a published NAV there, never summed. The
+           RANKING reorders one list without changing which holdings are in it.
+           The set itself is named in the heading above, so neither control has
+           to carry it. */
+        <div className="flex flex-wrap items-center justify-end gap-2">
+        {scopeToggle}
         <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
           {/* `data-mover-rank` is the handle the sweep reads the OFFER and the
               ACTIVE choice off. Struck on the attribute rather than on the
@@ -325,6 +338,7 @@ export function TodaysMovers() {
               {k === "impact" ? "By ₹ impact" : "By % move"}
             </button>
           ))}
+        </div>
         </div>
       }>
 

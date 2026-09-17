@@ -151,7 +151,7 @@ say("| File | Where its data goes instead |");
 say("| --- | --- |");
 for (const r of rows.filter((x) => x.cls === "held-out-by-decision")) {
   const where = /INVESTMENT SHEET/i.test(r.f)
-    ? "the `/register` page (`npm run build-register`) and `npm run reconcile:register`"
+    ? "`npm run reconcile:register` — an independent cross-check of the generated book"
     : "`npm run reconcile:review` — an independent cross-check of the generated book";
   say(`| \`${r.f}\` | ${where} |`);
 }

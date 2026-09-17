@@ -200,6 +200,24 @@ for (const [from, to] of [
   // `/industry` row above records this suite could not have caught, because two
   // hops land on the same pathname as one.
   ["/compare", "/monitor"], ["/watchlist", "/monitor"],
+  // THE INVESTMENT REGISTER was removed at the family's request, and it forwards
+  // to the dashboard home rather than to a neighbour. It is a COST record
+  // spanning every vehicle the family has used — listed and private, managed and
+  // self-bought — so no surviving page is "nearest its purpose": pointing it at
+  // Private Market or the Monitor would assert a continuity that does not exist,
+  // which is the reasoning the `/knowledge` row above already records.
+  //
+  // AND THIS ROW CANNOT CATCH A DELETED REDIRECT, WHICH IS WORTH SAYING RATHER
+  // THAN LEAVING TO BE FOUND — the same finding the `/industry` row above
+  // records, arriving through a different mechanism. Reintroducing the bug is
+  // what showed it: with the explicit `/register` route removed, `path="*"`
+  // falls through to `RootRedirect`, which lands on `/cio` — so the row still
+  // PASSED. What this suite reads is where a bookmark LANDS, and by that measure
+  // the promise is kept either way, which is why the row stays as it is rather
+  // than being rewritten into something that would have to pass anyway. What
+  // the explicit route buys is INTENT: a reader of `App.tsx` can see where this
+  // address was deliberately sent, which a catch-all does not say.
+  ["/register", "/cio"],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -276,6 +294,12 @@ for (const [from, label, pattern] of [
   // to the page that was removed — the exact trap the `/alerts` row above walked
   // into once already.
   ["/compare", "Compare Companies", /names side by side|Pick companies|Pick up to four holdings above/i],
+  // THE INVESTMENT REGISTER lands on Morning CIO, so the text read here is the
+  // dashboard's. Matched on the register page's OWN sentences and deliberately
+  // NOT on the word "register": `capital-register` is a live report type in this
+  // book and the Data Audit page prints it on every walk — the same trap the
+  // `/alerts` and `/compare` rows above each record once.
+  ["/register", "Investment Register", /money the family PAID|Cost record · not a valuation|Why the gross is not added to anything/i],
 ]) {
   await page.goto(`${BASE}${from}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
@@ -313,6 +337,13 @@ check("the holdings-news bell is gone with it", !/Latest holdings news/i.test(na
 // fair values and levels are still written and read on a name's own company
 // page, and that half is asserted below on the company page itself.
 check("the Watchlist & Targets nav entry is gone", !/Watchlist\s*&\s*Targets/i.test(nav));
+// INVESTMENT REGISTER went the same way. Its DAILY group survives — Polycab,
+// Morning CIO, Portfolio Monitor and Private Market are still in it — so unlike
+// KNOWLEDGE, RESEARCH and MONITOR there is no heading to remove with the entry,
+// and a check for one would assert the opposite of what should be true.
+check("the Investment Register nav entry is gone", !/Investment Register/i.test(nav));
+check("...and the Daily group it sat in survives, with its other entries",
+  /(^|\n)\s*DAILY\s*(\n|$)/.test(nav) && /Morning CIO/.test(nav) && /Polycab/.test(nav));
 // KNOWLEDGE & MEMORY, MACRO RESEARCH and ECONOMY & MACRO went the same way.
 // Removing `/knowledge` also empties the whole KNOWLEDGE nav GROUP, so its
 // heading must go with its one entry — a group label standing over nothing is a
