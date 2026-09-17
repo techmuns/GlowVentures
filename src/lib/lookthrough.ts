@@ -160,6 +160,19 @@ export type SchemeMatch = {
   /** `isin` · `name` · `name+plan` — see the ingest's tiers. */
   matchedVia: string;
   navDate: string | null;
+  /**
+   * THE NAV AND ITS DAY MOVE, IN THE INDEX ITSELF.
+   *
+   * A page showing ONE fund could fetch the scheme's own file for this; a card
+   * showing EVERY fund at once cannot — 20 scheme files is 632 KB, on the
+   * landing page, to render 20 numbers. It rides here instead, at ~120 bytes a
+   * scheme, so `loadFundNavs` is one fetch.
+   *
+   * OPTIONAL BECAUSE A STORE PREDATING IT IS NOT A BROKEN STORE. Absent, a
+   * caller has a scheme with no NAV and says so, exactly as it does for a
+   * holding the store never resolved.
+   */
+  nav?: FundNav;
   holdingsAsOf: string | null;
   holdingsSource: "amc" | "aggregator" | null;
 };
@@ -214,6 +227,29 @@ export async function loadLookthrough(securityKey: string): Promise<LookthroughS
   } catch {
     return { status: "unreachable" };
   }
+}
+
+/**
+ * ── EVERY SCHEME'S NAV, IN ONE FETCH ────────────────────────────────────────
+ *
+ * `loadLookthrough` answers "what does THIS fund hold" and pulls the scheme's
+ * own 30 KB file to do it. Morning CIO's daily-NAV movers asks the opposite
+ * question — "what did EVERY fund's NAV do" — over 20 schemes at once, and
+ * pulling those files would cost 632 KB on the landing page.
+ *
+ * The index carries `nav` for exactly that, so this is one request, memoised
+ * beside the index itself. Keyed on `securityKey`, so a caller joins on the
+ * book's own identity rather than on a scheme code it would have to look up.
+ *
+ * A STORE THAT DOES NOT ANSWER RETURNS NULL, NOT AN EMPTY MAP. An empty map is
+ * "the store answered and knows no NAVs", which is a claim about the funds; a
+ * failed fetch is a fact about the fetch, and the two send a reader to
+ * completely different places.
+ */
+export async function loadFundNavs(): Promise<Map<string, SchemeMatch> | null> {
+  const idx = await loadIndex();
+  if (!idx) return null;
+  return new Map(Object.entries(idx.schemes ?? {}));
 }
 
 /**

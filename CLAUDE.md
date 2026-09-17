@@ -9248,7 +9248,442 @@ new `mandate-funded` route — with the same two pre-existing abstentions.
 before and after: nothing here touches the ingest, and a presentation-layer
 change that moved a generated figure would not be one.
 
-### Stage 10aw — THE ₹1,000 FLOOR, AND THE FIRST FILTER THAT MOVES MONEY
+### Stage 10aw — A DAILY NAV IS A SECOND SOURCE, AND THE AIF DRILL-DOWN IS CLUBBED
+
+Three asks. The first needed a feed this dashboard already had and had never
+read for this; the other two needed a fact the statements print and nothing had
+ever looked at.
+
+#### 1. *"wherever there is a daily NAV available … can we capture that?"*
+
+> *"this is covering for stocks which is fine. बाकी AIF में तुम monthly NAV आएगा
+> and mutual funds — there will be whatever. But can I not have — see if I have
+> some money in ETF? Or if mutual funds also have a daily NAV? So wherever there
+> is a daily NAV available and if there is a drastic moment in the line item for
+> some reason, can we capture that? … Because a silver ETF can have a drastic
+> moment ऊपर नीचे. A momentum fund or a momentum ETF can have very drastic
+> moments on rebalancing days."*
+
+**"THIS IS COVERING FOR STOCKS WHICH IS FINE" IS A BLESSING, NOT A COMPLAINT.**
+Today's movers stays exactly as Stage 10t narrowed it and Stage 10al settled it
+— `DIRECT_EQUITY_BUCKET`, no scope tabs, ranked by % — and what is added sits
+beside it. Reading this as "widen that card" would have put back the selectors
+the family removed one round earlier.
+
+**THE QUOTE FEED CANNOT ANSWER IT, AND THE FAMILY'S OWN EXAMPLE IS THE PROOF.**
+Every live endpoint is keyed on an NSE trading symbol. Measured over this book's
+6 ETF and 22 mutual-fund rows, **exactly one resolves a symbol** (LIQUIDBEES) —
+and **the DSP silver and gold ETFs resolve none**, because NSE has moved them to
+ISINs the statements do not carry (a fact `build-symbols` already records). So
+the one instrument the family named is precisely the one no amount of work on
+the quote feed would ever reach.
+
+**THE ANSWER WAS ALREADY COMMITTED.** `public/lookthrough/` has carried each
+scheme's NAV, its previous NAV, both dates and the move between them since
+Stage 10s — 21 of this book's 22 schemes, the DSP ETFs among them. Nothing read
+it for this. `src/lib/navMovers.ts` and `src/components/NavMovers.tsx` are the
+card; measured on the committed store:
+
+| | |
+| --- | ---: |
+| Schemes with a published move | **16**, behind 17 names |
+| Covered / in scope | **₹110.39 Cr** of ₹110.39 Cr — the whole of it |
+| The covered set's own move | **−0.1364%**, −₹15.06 L |
+| Not priced, and named | **none** — see below |
+| NAV dates the rows span | 2026-09-08 and **2026-09-09** |
+
+**AND EVERY ONE OF THOSE FIGURES MOVED ON THE MERGE, WHICH IS THE POINT OF
+RE-MEASURING RATHER THAN CARRYING THEM ACROSS.** This branch measured 18 schemes
+over ₹123.28 Cr of a ₹124.46 Cr scope, with LIQUIDBEES and three sibling rows
+(₹1.18 Cr) named as the part it could not price. Stage 10av landed on main while
+it was open and moved a liquid fund or liquid ETF into **Cash** whatever wrapper
+its statement typed it as — so those rows left this card's scope entirely, and
+**the one name it could not price was exactly a liquid ETF.** The scope is now
+the whole of what it covers and the not-priced list is empty, which is a better
+card than the one this branch wrote and is not a figure anyone chose. The table
+above is the merged measurement; the PR body and the branch commit record the
+pre-merge one, and the two differing is the merge working rather than drifting.
+
+**IT IS A SEPARATE CARD ON ITS OWN DATES, AND THAT IS THE WHOLE RULE.** A live
+quote is intraday TODAY; a published NAV is a scheme's last struck NAV against
+the one before it, as recent as the last `build-lookthrough`. On this book those
+are a week apart. Summing a NAV move into the quote card's percentage would
+print a real figure under the wrong day — the defect `/api/indices` already cost
+this repo, where the level was differenced against itself and the ±0.05 residual
+was the only tell. So the heading carries the newest NAV date, **never the word
+"today"**, a row struck on an older day says so, and the card states in words
+that the two are never added together.
+
+**AND THE RUPEE MOVE IS NOT `units × NAV`, WHICH WAS MEASURED RATHER THAN
+REASONED.** The obvious construction — value the units held at each published
+NAV — is exact arithmetic on a false premise, because the units and the NAV are
+not on the same base for every holding:
+
+```
+DSP GOLD ETF     1,195,000 u   book mark ₹141.24/u   published NAV ₹14.7633
+DSP GOLD ETF       205,000 u   book mark ₹151.10/u   published NAV ₹14.7633
+DSP SILVER ETF     123,000 u   book mark ₹276.82/u   published NAV ₹22.4561
+```
+
+That puts the family's **₹16.88 Cr gold ETF at ₹1.76 Cr** — a plausible figure,
+an order of magnitude out, on the very instrument they asked about. And there is
+no factor to correct by: the two gold rows are the SAME security on the SAME
+as-of date and imply ratios of 9.57 and 10.24, while silver implies 12.33.
+
+So the PERCENTAGE is the primitive — a fact about the SCHEME, needing no unit
+reconciliation at all — and the rupee figure is that move applied to what the
+book values the holding at. Every row then ties to its own columns: `move ÷
+value` IS the printed percentage, and the aggregate is value-weighted rather
+than an average of the rows (which would weight a ₹107 residual the same as a
+₹42 Cr position — measured, −0.3145% against the true −0.1364%).
+
+**THE ROW IS THE SCHEME, NOT THE `securityKey`.** A NAV is published against a
+scheme, and Helios Flexi Cap reaches this book under TWO keys — the AMC folio's
+`helios-flexi-cap-fund-direct-growth` and the depository's clipped
+`helios-fcf-d-grow` — both resolving ISIN INF0R8701046 and therefore one NAV.
+Keyed on `securityKey` the card prints one scheme's one move twice, at two
+sizes, as though they were two decisions. This is a join on the identifier the
+NAV is published against, not a name match: the store already resolved each key
+to its schemecode on the ISIN.
+
+**AND TWO ROWS OF ONE FUND NAME ARE NOT A DUPLICATE.** This book holds BOTH
+plans of two funds — HDFC Balanced Advantage as `1273` and `1273-D`, ICICI Pru
+Nifty Next 50 as `11889` and `11889-D` — each printing one scheme name and two
+different NAVs, because plans differ in expense ratio and therefore in NAV, not
+in what the fund owns. The row names its plan, or the card reads as a defect.
+
+**EVERY ROW IS DRAWN, AND "DRASTIC" ONLY LABELS.** A top-N would have to choose
+between two rankings that disagree at the extremes — by percentage the biggest
+mover here is a ₹107 residual in an index fund, by rupees a ₹42 Cr position that
+moved 0.12% — and hiding either is wrong. So all 18 are listed with their value
+beside them, which makes a 0.86% move on ₹107 self-evidently trivial without
+suppressing anything. The `drastic` chip is a LABEL on a row that is already
+there, past a bound the card states on its face: a threshold is a judgement no
+statement makes, and getting it wrong must cost a chip rather than a figure —
+the standing `staggered` already has on the transactions rollup. Nothing on this
+book crosses it, so the suite exercises it against a constructed move rather
+than leaving it unproven.
+
+**AN AIF IS NOT ON THIS CARD, WHICH THE FAMILY SAID FIRST** — *"AIF में monthly
+NAV आएगा"*. No alternative fund publishes a daily NAV and none resolves a scheme
+in the store, so their absence is a fact about the INSTRUMENT rather than a
+filter, and the card says so rather than leaving ₹352 Cr unexplained.
+
+**AND THE NAV HAD TO MOVE INTO THE INDEX.** `loadLookthrough` pulls a scheme's
+own 30 KB file, which is right for a page showing ONE fund and costs **632 KB**
+for a card showing twenty — on the landing page, which is the latency complaint
+that card already exists to answer. `nav` now rides in `index.json` at ~120
+bytes a scheme (7 KB → 11 KB), so `loadFundNavs` is one fetch.
+
+**`npm run build-lookthrough -- --reindex` IS HOW THAT LANDED WITHOUT THE
+AMFIBEAS CHECKOUT.** A full build needs a read-only clone most machines do not
+have, so a change to the index projection would otherwise be unlandable —
+exactly the position `securityKeyOf` was in before `rekey:archive`. It does not
+have to be: every field the projection emits is read VERBATIM off a record this
+store has already written to `<schemecode>.json`, so re-deriving the index from
+those files is a faithful partial replay of the build, and the next full run
+calls the same function on the same records and writes the same bytes. **Its
+gate is the field the index already carried** — `navDate` is `nav.date` by
+construction, so a replay that disagrees has joined an entry to the wrong scheme
+file, and nothing is written. Measured: all 21 entries replay, every non-`nav`
+byte is unchanged, and a second run is a no-op.
+
+#### 2. and 3. The AIF drill-down, clubbed — and Private Equity beside it
+
+> *"when you're drilling down in the AIF ना नवल, make it cat one, cat two, cat
+> three … क्योंकि there are only three categories. तो आप वहीं पर drill down करने
+> पर फिर उसको club कर दो कि these are cat two AIFs, these are cat three AIFs,
+> this is cat one AIF."*   and   *"Similarly for Private equity also … So either
+> you create one more line item here. I think that'll be better if there is PE
+> funds. Just create another private equity fund line item."*
+
+**SEBI HAS THREE CATEGORIES AND THIS BOOK DOES NOT KNOW WHICH FOR EVERY FUND.**
+Those are different facts — the first is about the regulation, the second about
+the paperwork in `source/` — and conflating them is how a section heading comes
+to assert a classification nobody made. A heading looks exactly as authoritative
+whichever rows sit under it, so a page that filed every fund under a plausible
+category would render perfectly, reconcile perfectly, and be `VAL_METHODS[i % 5]`
+arriving through a table.
+
+**SO IT IS READ, AND THERE ARE TWO PLACES IT IS PRINTED** — both the statement's
+own words, with the standing `providerSector` and `providerEngagement` already
+have: the SECURITY NAME, which names the fund (`Sanshi Fund-I (Open Ended AIF
+CAT-III)`, `BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III`, `360 ONE SPECIAL
+OPPORTUNITIES FUND … (AIF CATEGORY II)`), and `Account.providerEngagement`,
+which describes the account (`Category II AIF - drawdown, with a commitment and
+called capital`, `Category I Alternative Investment Fund – Angel Fund`).
+
+**NEITHER IS PREFERRED, AND WHERE BOTH SPEAK THEY MUST AGREE.** A disagreement
+leaves the holding unstated rather than letting either side win silently — the
+rule `build-symbols` already applies to its ISIN tier, where adding a second
+identifier makes the match STRICTER rather than looser. Measured on this book:
+**5 holdings print a category in both fields and 0 disagree**, reported at zero,
+because a guard that only speaks when it fires is indistinguishable on a clean
+run from one that was deleted.
+
+**A PHRASE NAMING TWO CATEGORIES RESOLVES TO NEITHER.** Transition Venture
+Capital's account reads **`Category I/II AIF — drawdown`**. That is the issuer
+declining to commit, and picking one would be this book inventing the answer the
+document withheld. The read yields both, the holding is filed as not stated, and
+its wording says so — *"the statement names Category I and Category II and
+commits to neither"* — because a statement naming two and a statement naming
+none send a reader to different documents.
+
+**AND `III` MUST NEVER BE READ AS `I`** — that would file ₹297.78 Cr, 84% of the
+AIF book, under the wrong heading, silently. Two things prevent it, and
+**reintroducing the bug proved the first draft of this paragraph credited the
+wrong one**:
+
+- **the trailing `\b` is the real guard.** Matching `I` out of `III` leaves `II`
+  after it, and a word boundary between two word characters fails, so the engine
+  backtracks to `III`. Measured: **with it, BOTH alternation orders read
+  `CAT-III` correctly; without it, `I|II|III` reads it as `I`.**
+- the alternation ordered longest-first is the BACKUP, and is what would carry
+  it if the boundary were ever loosened.
+
+Reordering the alternation alone therefore produced a clean sweep AND a clean
+suite — a comment asserting an enforcement that never happens, which is a shape
+this file already names. The suite now asserts all four combinations directly,
+so the claim is about the PROPERTY the pattern must have rather than about the
+spelling this file happens to use. The pattern is also anchored on the WORD, so
+`Class A2`, `Series II` and `Founders Fund Series II — Class G1` name nothing;
+all three are in this book and all three are asserted.
+
+**PRIVATE EQUITY IS A SECTION, NOT A CATEGORY, AND THE FAMILY CHOSE THAT.** A PE
+fund IS an AIF — Category I or II under SEBI — so the two overlap by
+construction, and they were asked which they wanted in those terms. They chose
+the separate line, so `PRIVATE_EQUITY_SECTION` takes PRECEDENCE when a holding
+is filed **and the row still prints the category the statement gave it**, which
+is what lets the two sit side by side without misleading: a reader adding the
+category sections can see where a PE fund went.
+
+**IT IS READ FROM THE STATEMENT TOO, AND NEVER FROM THE STRUCTURE.** "Is this a
+private equity fund" is a judgement about what a manager does, and this book does
+not make those. Exactly two valued holdings print the discipline in the fund's
+own name — `Baring Private Equity India Fund 6` (`Category II AIF — drawdown
+private equity fund`) and `Transition Venture Capital Fund I`. Nothing is
+inferred from a fund being a drawdown vehicle: this book holds five, and calling
+all of them private equity would file an infrastructure income fund and a
+listed-equity growth fund under a discipline neither claims. There is no fuzzy
+tier, for the reason `shared/nameMatch.mjs` records at length.
+
+Measured, and the sections partition the row to the rupee:
+
+| Section | Funds | Value |
+| --- | ---: | ---: |
+| Category II | 2 | ₹34.28 Cr |
+| Category III | 4 | ₹297.78 Cr |
+| Private Equity | 2 | ₹3.60 Cr |
+| Category not stated | 3 | ₹16.69 Cr |
+| **Total** | **11** | **₹352.35 Cr** |
+
+**MORNING CIO'S ALLOCATION TABLE IS UNTOUCHED.** The AIF row is still ₹352.35 Cr
+and no headline figure moves, which is what makes this a clubbing of a
+drill-down rather than a re-measurement of the book.
+
+**AND CATEGORY I WOULD HAVE BEEN SILENTLY ABSENT, WHICH IS THE ONE WAY THIS
+COULD MISLEAD.** The family expect all three categories. **Every Category I AIF
+this family owns is an angel fund that publishes no NAV** — Sky Capital's four
+folios report units and the capital drawn against a commitment and no valuation
+anywhere — so they carry no valued position and can stand in no holdings table
+on this site. A page clubbed by category with no Category I heading tells a
+reader they hold none, which is false. So the folios that value nothing are
+NAMED under the table with what they have drawn, by the same axis: **4 Category
+I folios (₹4.73 Cr drawn), 5 Category II (₹13.50 Cr), 1 not stated** — the
+standing rule that a figure existing for some accounts is shown for those and
+the rest are named. Their money is in no total on the page, and the note says
+drawn capital is what was PAID rather than what the stake is worth.
+
+**THE SECTIONING FOLLOWS THE ROWS, NOT THE ADDRESS.** It applies only where
+every row is an AIF holding, so a drill-down mixing an AIF with a mutual fund —
+the whole book, the winners, the costless positions — never draws a "Category
+not stated" heading over an ETF, which would be a category claim about an
+instrument that has none.
+
+#### The verification, and the three defects it found in this change
+
+Both features are checked twice: `npm run test:family` carries the arithmetic
+(`navMovers.test.ts`, `aifCategory.test.ts`, both anchored on the generated book
+and the committed store rather than on fixtures), and `check:pages` walks the
+rendered pages. **The sweep's expectations are RE-DERIVED in `check-pages.mjs`
+by a second expression** rather than importing `navMovers.ts` or
+`aifCategory.ts` — a check that calls the helper it is checking agrees with it
+by construction, which is the rule this sweep already follows for
+`isMandateHeld`. The two agreeing is the measurement.
+
+**A ROUTE THAT RESOLVES NOTHING IS A FAILURE, NOT A PASS.** `holdings-aif` takes
+the address Morning CIO itself drew, found by its key among the six allocation
+rows — a slot number would be a literal standing for an ordering that moves with
+the book. Unresolved it lands on `/holdings`'s own not-found state, which has no
+console error, no overflow and no stray zero, so it would pass every generic
+check while asserting nothing.
+
+**AND THE FIRST DRAFT OF THREE INVARIANTS FAILED A PAGE THAT WAS RIGHT**, which
+is worth recording because it is the same mistake in three places: they counted
+STATEMENT ROWS where the table draws FUNDS. Sanshi Class E is one securityKey in
+four folios and is one row — which is exactly what *"club कर दो"* asked for — so
+16 positions are 11 rows. A count is only meaningful beside the noun it counts.
+
+**AND TWO REINTRODUCED BUGS PRODUCED A COMPLETELY CLEAN SWEEP**, which is the
+finding this pass exists for and the most useful thing it turned up:
+
+- **the aggregate struck as the unweighted MEAN of the rows** — −0.3145%
+  against the true −0.1364%, because it weights a ₹107 residual the same as a
+  ₹42 Cr position;
+- **a model that stopped SUMMING a scheme's holdings**, so every row carried its
+  last statement's value alone.
+
+Neither changes a row count, a scheme count or a date — and **every check on
+that card was reading counts and dates.** They compared the page with itself,
+which is the failure this file names in as many words (*"a check that compares a
+figure with its own copy cannot fail"*) and which this change committed again in
+the very file written to avoid it. The tile's four figures carry structural
+handles now and are reconciled against `NAV_MOVERS_BOOK`, derived from the book
+and the store by a different path; and the value-weighting is additionally
+asserted as an INEQUALITY against the mean it must not be, so the equality
+cannot pass by luck on a book where the two happen to coincide. Re-run against
+the same two bugs, the mean fires two checks and the un-summed model fires four.
+
+**A THIRD DEFECT WAS IN THE HARNESS**, and it is the one recorded at Stage 10ar
+arriving again: two of the files this pass patches are NEW and therefore
+UNTRACKED, so `git checkout -- <file>` restores nothing. The harness snapshots by
+COPY and restores on a `trap … EXIT`, **and rebuilds on the way out** — restoring
+the source alone leaves `dist/` at the bugged build, and the next sweep reads it
+and reports the previous bug's failures under the next one's name. A patch that
+does not apply, or a build that fails, is reported as NOT A RESULT rather than
+as a clean run.
+
+**AND A FOURTH WAS A RACE IN THE WAITER.** A follow-on step that waited on
+`pgrep -f bug.sh` started while the pass was still running: that predicate is
+FALSE for a moment BETWEEN two invocations, so the waiter slipped through the
+gap and rebuilt `dist/` underneath bug 14. Nothing it produced afterwards was a
+result — two builds racing on one output directory can report either one's
+failures under the other's name, which is the stale-`dist` defect one level up.
+A waiter has to be built on the LOOP, not on one iteration of it; the fix
+re-checks after a pause long enough to cover the gap.
+
+Reading this change back found three defects in it that no check would have
+caught, all of them shapes this file already names:
+
+- **`spansDates` was computed and rendered nowhere** — the
+  dead-code-that-looks-alive failure, in code written the same hour as the
+  comment warning about it.
+- **`skipped[0].reason` was printed as THE reason** for every unpriced holding,
+  which is right only while they all share a cause. Three different things put a
+  holding there and only one of them is a "wait for tomorrow". Grouped by reason
+  now, and by name within it, since LIQUIDBEES is four statement rows and one
+  security.
+- **`valueAsOf` was on the row and rendered nowhere** — the field carrying the
+  right answer into no caller, which is this repo's most-repeated defect. It is
+  the statement date behind the derived rupee figure, and the two sides being
+  dated differently is the whole reason that figure is labelled derived.
+
+A fourth was in the new suite itself: `ok("no section is empty", v !== 0 || true)`
+is always true — a check that cannot fail, written into the file whose purpose is
+to catch exactly that.
+
+**FIFTEEN BUGS WERE REINTRODUCED IN TOTAL AND EVERY ONE NOW FIRES ITS OWN
+CHECK**: the rupee move struck as `units × NAV`; the aggregate as an unweighted
+mean; a scheme clubbed on `securityKey` rather than on the scheme the NAV is
+published against; the card dated "today"; the ranking defaulted to rupees; the
+basis sentence deleted; the coverage line dropping the holdings it cannot price;
+an AIF folded into the scope; the numeral read loosened; `Category I/II`
+resolved to one of the two; Private Equity folded back into the category axis;
+the unvalued folios deleted; the per-row category chip removed; the sectioning
+dropped entirely; and one section silently dropped from the partition. The last
+fires seven checks at once, from seven directions.
+
+**AND A FIFTH BUG WAS CLEAN FOR A REASON WORTH KEEPING.** Resolving `Category
+I/II` to the FIRST of the two, rather than to neither, moved no row and no total:
+the only holding with an ambiguous category is Transition Venture Capital, and
+**Private Equity claims it first**. All the defect changed was one chip, from
+"category not stated" to "Category I" — and the check accepted any of the three
+names or none, because it was asserting a SHAPE. A chip is where this book states
+a classification, so it is held to the book's own per-row answer now, compared as
+a multiset so it does not also assert an ordering the sections are free to
+change.
+
+#### Merged with main, and both predicted conflicts arrived on cue
+
+This branch sat open through review and **Stage 10av landed on main while it
+waited**, so the merge hit exactly the two conflicts this file already tells a
+future session to expect — for the **fourth** time each:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10av`. Main's
+  merged first and **keeps the letter**, as it did at 10al, 10as and 10at; this
+  section is `10aw`, and the two Build-section cross-references that named its
+  suites (`navMovers.test.ts`, `aifCategory.test.ts`) moved with it. The two that
+  still read `10av` — the `CASH_EQUIVALENT_KEYS` line in **Layout** and the cash
+  note under Stage 10L — belong to main's section and were left alone, checked
+  rather than assumed.
+- **AND THE `ctx` LITERAL CONFLICTED AGAIN, ON ONE LINE, EXACTLY AS PREDICTED.**
+  `check-pages.mjs` hands its invariants one object literal: this branch adds
+  `aifSections` and `navMovers`, main's adds `buttonLabels`, `capitalMoves`,
+  `capitalTotal` and `capitalHow`. **Resolved as a mechanical union**, never by
+  picking a side — the file's own measurement is that dropping `attrib` turned
+  nine invariants into NOT CHECKED over a sweep still reporting every combination
+  CLEAN, so half of these losses are invisible by construction. Every one of the
+  eight probes was then confirmed to be defined exactly once in the merged file,
+  because a key naming a variable that no longer exists throws inside the check
+  and is reported as a broken matcher rather than as a clean page.
+
+**AND THE SWEEP FAILED FIVE INVARIANTS ON THE MERGED TREE, WHICH IS THE CHECK
+EARNING ITS PLACE RATHER THAN A DEFECT IN IT.** Every suite was green — build,
+tsc, `test:ingest`, `test:family`, `check:family` 57/0 — and `check:pages` came
+back **1 of 152 combinations with a finding**, all five on `cio`'s NAV card.
+
+The cause is the one thing that makes a second expression worth writing and is
+also its whole hazard: **the card scopes on `holdingBucket` and the checker
+scoped on `assetClass`, and only one of the two moved.** Stage 10av made a
+liquid fund or liquid ETF `Cash` in the BUCKET whatever wrapper its statement
+typed it as — and §5 correctly leaves `assetClass` alone, because that is the
+model's vocabulary. So the two expressions of one rule disagreed by four rows,
+and **the card was the right one**: a card headed "what your funds did" must not
+carry the family's cash.
+
+`NAV_MOVERS_BOOK` reads `CASH_EQUIVALENT_KEYS` out of `analytics.ts` as
+committed DATA and re-expresses the membership test, exactly as it already reads
+`BOOK_POLYCAB` for the ring-fence — **never by importing `isCashEquivalent`,
+which would agree with the card by construction and report nothing.** Both
+directions were then verified by reintroducing the bug:
+
+- dropping the exclusion reproduces **exactly the five failures the merge
+  produced**, so the clause is load-bearing rather than merely agreeing;
+- renaming the constant so the map cannot be read yields **seven failures, not a
+  silent pass** — the parse returns `null`, the checks fail, and a renamed
+  constant can never read as a book with no cash equivalents in it.
+
+**THE LESSON IS NOT "THE CHECKER WAS WRONG".** It is that a rule expressed twice
+has to be MOVED twice, and the merge is where that comes due — which is an
+argument for the two expressions, not against them: written as one import, this
+merge would have silently changed what the card covers and reported clean.
+
+**AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, the discipline
+Stage 10at records — a textual splice of two generated regions can produce
+something the generator would never write. Measured here: **neither side touched
+`src/data/glowData.ts`, `docs/` or `public/lookthrough/`, so the merge had nothing
+to splice**, and `npm run build-book` was run as a control afterwards and
+regenerated byte-identically. Both halves are stated because the first is what
+made this merge safe and only the second would have caught it had it not been.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 140 (2 not checked, 0
+blocked) · `test:family` · `check:family` **57/0** · `check:pages`
+**152 combinations clean**, with the same two pre-existing abstentions — both
+evidenced rather than silent: this harness serves no `/api/quotes`, so the
+market-cap card renders its absent state, and every KPI tile on this book
+carries a figure, so the absent-tile claim has no subject. `npm run build-book`
+is a no-op against the committed tree.
+
+**THAT COUNT IS MEASURED ON THE MERGED TREE, AND THE TWO 150s ABOVE IT ARE BOTH
+TRUE OF DIFFERENT BASES.** Stage 10av's 150 is 148 plus its own `mandate-funded`
+route; this branch's pre-merge 150 is the same 148 plus its own `holdings-aif`.
+Each route is two combinations, so the merged tree carrying BOTH is 152 — which
+is the one case where the arithmetic does reconcile, and it reconciles only
+because it was re-measured rather than assumed. Every other stage in this file
+that states a count states it against a base that has since moved, which is why
+the sweep is re-run and the number never adjusted.
+
+### Stage 10ax — THE ₹1,000 FLOOR, AND THE FIRST FILTER THAT MOVES MONEY
 
 *"यह तो ना यहां पर irrelevant items हैं. यह सबको हटा दो यह. 54 rupees क्या होता
 है? … or we can just say that less than thousand rupees remove automatically.
@@ -9374,12 +9809,49 @@ The five that fired first time: the floor wired to nothing (**8 invariants acros
 ROW, `SectorComposition` back on the unfiltered set, and the `/holdings`
 disclosure deleted.
 
-`build` · `tsc` · `test:ingest` 140 + 84 + 35 · `test:family` (a new
-`negligibleFloor.test.ts`, 21 checks anchored on `glowData.ts` and on the audit
-archive) · `check:family` **57/0** · `check:pages` **150 combinations clean**,
-with the same two pre-existing abstentions. `npm run build-book` regenerates the
-book BYTE-IDENTICALLY, run as a control: a display-layer decision that moved a
-generated figure would not be one.
+#### Merged with main, and the merge found a sixth surface
+
+Stage 10aw landed while this branch was open and **took the same letter**, which
+is the parallel-branch collision this file has now recorded four times; this is
+`10ax` and main's keeps `10aw`. Three files conflicted and every one was a UNION
+— `test-family.mjs`'s suite list, `HoldingsBehind`'s imports, and this file —
+because taking either side whole silently retires the other's checks.
+
+**AND THE DANGEROUS ONE AUTO-MERGED, AS IT ALWAYS DOES.** `check-pages.mjs`'s ctx
+literal merged without conflicting; both sides' keys survived (`aifSections` and
+`navMovers` are main's, this branch added none), verified by reading it rather
+than by trusting that git did not complain.
+
+**THE FLOOR REACHED A CARD THIS BRANCH NEVER SAW.** `NavMovers.tsx` — main's new
+daily-NAV movers — draws `currentHoldings(consolidated)`, so the floor applied to
+it the moment the two landed together, and **all five of that card's invariants
+failed at once** against a page that was right: the rendered card covered
+₹1,103,878,543.11 against a derivation expecting ₹1,103,878,751.35, a gap of
+**exactly ₹208.24** — the four mutual-fund holdings the floor drops. That is the
+single-definition seam working (the card needed no edit) and `NAV_MOVERS_BOOK`
+needing to follow, which is the same failure its own comment already records
+from the 10av merge, arriving one merge later.
+
+**PRISTINE `main` WAS WALKED FIRST TO ESTABLISH THE FAILURE WAS THIS BRANCH'S**
+— a worktree at `origin/main`, built and swept: `cio` clean. Without that the
+five could have been read as main's own and waited out.
+
+**AND THE FIRST FIX PATCHED THE WRONG BLOCK.** The anchor text — `const seen` /
+`const ded = current.filter(...)` — is IDENTICAL in `AIF_BOOK` and
+`NAV_MOVERS_BOOK`, and the merge had moved both, so a text-anchored patch landed
+in the first of them and the five went on failing. Instrumenting the check is
+what showed it (the ₹208.24 above); the fix is anchored on a line whose enclosing
+block was then asserted. It is left in `AIF_BOOK` too, where it is correct for
+the same reason and currently a no-op — no holding the floor drops is an AIF.
+
+`build` · `tsc` · `test:ingest` 140 + 84 + 35 · `test:family` 1,207 across 22
+suites (a new `negligibleFloor.test.ts`, 21 checks anchored on `glowData.ts` and
+on the audit archive) · `check:family` **57/0** · `check:pages` **152
+combinations clean** — MEASURED ON THE MERGED TREE, not carried across from this
+branch's own pre-merge 150, which was struck against a base that has since moved
+— with the same two pre-existing abstentions. `npm run build-book` regenerates
+the book BYTE-IDENTICALLY, run as a control: a display-layer decision that moved
+a generated figure would not be one.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -10293,6 +10765,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   **index strip's day move** (`indicesFunction.test.ts` — the level and the
   previous close must never be the same session; a live probe cannot check it,
   because outside a 3h45m window plus every weekend the function is correct),
+  the **daily-NAV movers** (`navMovers.test.ts`, Stage 10aw — every row must tie
+  to its own columns, and the model must never value a holding at `units × NAV`,
+  which is an order of magnitude out on the gold and silver ETFs), the **AIF
+  category read** (`aifCategory.test.ts`, Stage 10aw — `III` is never read as
+  `I`, `Class A2` names nothing, `Category I/II` resolves to neither, and the
+  sections partition the AIF row to the rupee),
   the **family's own dated investments** (`tranches.test.ts`, Stage 10ag: the
   tranches must tie to the position's own quantity, cost basis and market value
   on three separate paths; the derived entry NAV is checked against the one the
@@ -10326,6 +10804,15 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   (`AMFIBEAS_DIR`, `DRY=1` to resolve and report without writing). Idempotent.
   Re-run it when that repo advances: NAV is daily and the disclosure monthly, and
   the card prints both as-of dates so staleness is visible rather than silent.
+  **`-- --reindex` rebuilds `index.json` alone, off the COMMITTED scheme files,
+  and needs no AmfiBeas checkout** — every field the index projects is read
+  verbatim off a record already written to `<schemecode>.json`, so it is a
+  faithful partial replay of the build rather than a repair layer, on the same
+  terms as `rekey:archive`. It is how a change to that projection lands on a
+  machine without the clone; `-- --reindex --check` writes nothing and is the
+  control run, which must be a no-op against an unchanged projection. It refuses
+  outright if any entry's stored `navDate` disagrees with its scheme file, because
+  then the entry is joined to the wrong record and the replay cannot reproduce it.
 - `npm run build-book` regenerates `src/data/glowData.ts` and `docs/BOOK-REPORT.md`.
 - `npm run build-register` regenerates `src/data/registerData.ts` from the family's
   investment register — the `/register` page's data, and NO part of the book. Its

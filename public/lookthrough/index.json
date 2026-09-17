@@ -15,6 +15,13 @@
       "isin": "INF0R8701046",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 16.22,
+        "date": "2026-09-09",
+        "prev": 16.24,
+        "prevDate": "2026-09-08",
+        "changePct": -0.12315270935960329
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -25,6 +32,13 @@
       "isin": "INF247L01EP5",
       "matchedVia": "name+plan",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 14.6359,
+        "date": "2026-09-09",
+        "prev": 14.6706,
+        "prevDate": "2026-09-08",
+        "changePct": -0.23652747672215751
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -35,6 +49,13 @@
       "isin": "INF740KA1SW3",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 14.7633,
+        "date": "2026-09-09",
+        "prev": 14.7373,
+        "prevDate": "2026-09-08",
+        "changePct": 0.1764230897111398
+      },
       "holdingsAsOf": null,
       "holdingsSource": null
     },
@@ -45,6 +66,13 @@
       "isin": "INF209K01VA3",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 459.0137,
+        "date": "2026-09-09",
+        "prev": 458.8265,
+        "prevDate": "2026-09-08",
+        "changePct": 0.04079973584785569
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -55,6 +83,13 @@
       "isin": "INF0R8701046",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 16.22,
+        "date": "2026-09-09",
+        "prev": 16.24,
+        "prevDate": "2026-09-08",
+        "changePct": -0.12315270935960329
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -65,6 +100,13 @@
       "isin": "INF03VN01761",
       "matchedVia": "isin",
       "navDate": "2026-09-08",
+      "nav": {
+        "value": 16.802,
+        "date": "2026-09-08",
+        "prev": 16.809,
+        "prevDate": "2026-09-07",
+        "changePct": -0.04164435718960943
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -75,6 +117,13 @@
       "isin": "INF109KC1RH9",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 39.03,
+        "date": "2026-09-09",
+        "prev": 39.41,
+        "prevDate": "2026-09-08",
+        "changePct": -0.9642222786094785
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -85,6 +134,13 @@
       "isin": "INF740KA1RE3",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 22.4561,
+        "date": "2026-09-09",
+        "prev": 22.3284,
+        "prevDate": "2026-09-08",
+        "changePct": 0.5719173787642681
+      },
       "holdingsAsOf": null,
       "holdingsSource": null
     },
@@ -95,6 +151,13 @@
       "isin": "INF194K01V89",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 165.767,
+        "date": "2026-09-09",
+        "prev": 166.142,
+        "prevDate": "2026-09-08",
+        "changePct": -0.2257105367697512
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -105,6 +168,13 @@
       "isin": "INF084M01AB8",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 113.02,
+        "date": "2026-09-09",
+        "prev": 113.59,
+        "prevDate": "2026-09-08",
+        "changePct": -0.5018047363324302
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -115,6 +185,13 @@
       "isin": "INF179K01830",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 517.318,
+        "date": "2026-09-09",
+        "prev": 520.123,
+        "prevDate": "2026-09-08",
+        "changePct": -0.5392955127921787
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -125,6 +202,13 @@
       "isin": "INF174KA1HV3",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 21.386,
+        "date": "2026-09-09",
+        "prev": 21.489,
+        "prevDate": "2026-09-08",
+        "changePct": -0.47931499837126684
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -135,6 +219,13 @@
       "isin": "INF109K012B0",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 87.8,
+        "date": "2026-09-09",
+        "prev": 88.17,
+        "prevDate": "2026-09-08",
+        "changePct": -0.41964386979698826
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -145,6 +236,13 @@
       "isin": "INF109K01Q49",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 420.2936,
+        "date": "2026-09-09",
+        "prev": 420.2178,
+        "prevDate": "2026-09-08",
+        "changePct": 0.018038264918814762
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -155,6 +253,13 @@
       "isin": "INF179K01WA6",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 562.797,
+        "date": "2026-09-09",
+        "prev": 565.84,
+        "prevDate": "2026-09-08",
+        "changePct": -0.5377845327301014
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -165,6 +270,13 @@
       "isin": "INF109K012M7",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 248.061,
+        "date": "2026-09-09",
+        "prev": 250.2162,
+        "prevDate": "2026-09-08",
+        "changePct": -0.8613351173904725
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "aggregator"
     },
@@ -175,6 +287,13 @@
       "isin": "INF205K01189",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 134.81,
+        "date": "2026-09-09",
+        "prev": 135.6,
+        "prevDate": "2026-09-08",
+        "changePct": -0.5825958702064838
+      },
       "holdingsAsOf": "2026-07-31",
       "holdingsSource": "amc"
     },
@@ -185,6 +304,13 @@
       "isin": "INF109K01IF1",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 64.0758,
+        "date": "2026-09-09",
+        "prev": 64.162,
+        "prevDate": "2026-09-08",
+        "changePct": -0.13434743306007474
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -195,6 +321,13 @@
       "isin": "INF109K01Y80",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 67.8184,
+        "date": "2026-09-09",
+        "prev": 67.9089,
+        "prevDate": "2026-09-08",
+        "changePct": -0.13326677357460626
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -205,6 +338,13 @@
       "isin": "INF179KB1HP9",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 5577.0646,
+        "date": "2026-09-09",
+        "prev": 5576.1572,
+        "prevDate": "2026-09-08",
+        "changePct": 0.01627285543528171
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     },
@@ -215,6 +355,13 @@
       "isin": "INF179KA1RW5",
       "matchedVia": "isin",
       "navDate": "2026-09-09",
+      "nav": {
+        "value": 159.88,
+        "date": "2026-09-09",
+        "prev": 160.587,
+        "prevDate": "2026-09-08",
+        "changePct": -0.44025979687022837
+      },
       "holdingsAsOf": "2026-08-31",
       "holdingsSource": "amc"
     }

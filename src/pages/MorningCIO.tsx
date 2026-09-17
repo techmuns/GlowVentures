@@ -35,6 +35,7 @@ import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { ReturnAttribution } from "@/components/ReturnAttribution";
 import { TodaysMovers } from "@/components/TodaysMovers";
+import { NavMovers } from "@/components/NavMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
@@ -1068,6 +1069,22 @@ export function MorningCIO() {
           ones the quote feed can price. */}
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <TodaysMovers />
+      </div>
+
+      {/* DAILY-NAV MOVERS — the same question over the instruments the quote
+          feed cannot reach.
+
+          *"this is covering for stocks which is fine … if mutual funds also
+          have a daily NAV? So wherever there is a daily NAV available and if
+          there is a drastic moment in the line item … can we capture that?"*
+
+          A SEPARATE CARD RATHER THAN MORE ROWS ABOVE, because it is a different
+          MEASUREMENT on a different DAY: a scheme's last published NAV against
+          the one before it, where the card above is a live intraday price
+          against the previous session's close. Blending them would print a
+          NAV move struck days ago under a heading reading "today". */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+        <NavMovers />
       </div>
 
       {/* Allocation hero + right column */}
