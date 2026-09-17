@@ -225,8 +225,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   multi-report PDF; `lib/sheet.mjs` reads the spreadsheets (an `.xls` in this drop
   is an HTML table, not BIFF — the format is sniffed from the bytes, never the
   extension); `providers/*` is one reader per document family.
-- `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — undrawn capital owed
-  to a drawdown fund. Not a holding, and never summed into NAV.
+- `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — what the family has
+  promised a drawdown fund, what it has CALLED, what has been PAID, what is
+  called and still unpaid, and the fund's own DATED calls. Not a holding, and
+  never summed into NAV. `src/lib/capitalCalls.ts` is its timeline half: the
+  per-scheme rows, the coverage-aware totals and the 1/3/6-month windows — which
+  are empty on this corpus because no fund here publishes a forward schedule,
+  and say so rather than being projected. See Stage 10ay.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -9853,6 +9858,223 @@ branch's own pre-merge 150, which was struck against a base that has since moved
 the book BYTE-IDENTICALLY, run as a control: a display-layer decision that moved
 a generated figure would not be one.
 
+### Stage 10ay — COMMITTED, CALLED AND INVESTED ARE THREE FIGURES, AND THE CALLS ARE DATED
+
+*"How are you calculating this uncalled capital of 16 crores? … Something seems
+amiss here. According to me, the number is not 16 crores."* · *"Capital
+committed, or is it capital invested? What is capital committed versus
+invested? … Because committed can be one thing. I would commit 10 crores, but I
+may have only invested so far 5 crores, and 5 crores is remaining to be drawn."*
+· *"Drawn against no valuation means?"* · *"Where is it pending? … what is the
+timeline? When is the commitment expected? Or is there something which is due in
+the next one month, three months, six months?"* · *"so labels are there, but
+they just need more granularity and timeline and dates and also the schemes."*
+
+#### 1. The ₹16 Cr was right, and the tile was still wrong
+
+**BOTH HALVES OF THAT MATTER AND ONLY THE SECOND IS FIXABLE.** Verified two
+ways before anything was built:
+
+```
+Σ printed "undrawn", 13 accounts               = ₹15,97,50,000
+Σ (committed − called) over the 14 that print
+  a called line                                = ₹15,97,50,000
+```
+
+Two independent paths from two different blocks of the statements, agreeing to
+the rupee, and the per-scheme table now prints every row of it.
+
+**WHAT WAS AMISS IS THE COVERAGE, AND THE TILE NEVER SAID SO.** The register
+holds **15 capital accounts against this page's 29 private accounts**. The other
+14 — the five Sanshi folios, both Buoyant, 3P, both 360 ONE Alternates, both
+360 ONE Private Wealth CRNs, Hedged Equity, the ICICI NSDL row — report a
+holding, an income split or nothing, and a commitment behind one of those is
+INVISIBLE to this figure. So a reader who knows of such a commitment is right
+that the number is too small, and the tile gave them no way to see it. It reads
+`across 15 of this page's 29 private accounts · the rest send no capital
+account, so this is a floor` now, and the card under the table names the gap and
+points at the family's own register, which lists further funds with no statement
+in this book at all.
+
+**AND ₹4.48 Cr OF IT IS FIVE MONTHS STALE** — Baring and both Transition Venture
+trusts are marked 31 March 2026, 122 days behind the newest capital account here,
+so a call made since would not show. Named on the timeline card with the funds
+and their dates, rather than folded into one figure.
+
+#### 2. `drawn` was two different quantities, and the statements say so themselves
+
+Baring prints the whole identity as labelled algebra on one block, and Motilal
+Oswal and Carnelian print the same five under their own names:
+
+```
+Capital Commitment    A                what the family PROMISED
+Capital Call          B                what the fund has DEMANDED
+Capital Contribution  C                what the family has PAID  ← "invested"
+Pending Contribution  D = B − C        called and not yet paid   ← DUE NOW
+Undrawn Capital       G = A − B + E    not yet called
+```
+
+**`Commitment.drawn` CARRIED WHICHEVER OF B AND C ITS OWN LAYOUT MATCHED.** India
+SME's, Baring's, Sky Capital's and Neo Infra's readers take the CONTRIBUTION
+line; Carnelian's takes the CALL. The type's own comment said "capital actually
+called so far", which was true of one reader out of six. On this drop the gap is
+**₹2,925.10** — Carnelian's contributed runs ABOVE its called, being fund income
+reinvested — so nothing on screen was visibly wrong, which is exactly the
+condition under which one field quietly means two things for a drop and a half.
+
+`called`, `paid` and `pending` are separate fields now, each read ONLY from the
+line its own statement labels and null where it labels none. **`drawn` is
+unchanged**, so no figure already in the book moves with the correction.
+
+| | | coverage |
+| --- | ---: | --- |
+| Committed | ₹97.73 Cr | 15 of 15 |
+| Called by the funds | ₹71.75 Cr | 14 of 15 |
+| Invested (paid in) | ₹81.75 Cr | 15 of 15 |
+| Due now (called, unpaid) | **₹0 — measured** | 1 of 15 |
+| Still to call | ₹15.98 Cr | 13 of 15 |
+
+**CALLED AND INVESTED COVER DIFFERENT SETS AND THE PAGE SAYS THEY MUST NOT BE
+SUBTRACTED.** Delphi prints a contribution column and no called line, so its
+₹10 Cr is in the second total and not the first; ₹81.75 − ₹71.75 reads as ₹10 Cr
+overpaid when it is one fund appearing in one total and not the other. That is
+`sumOrNull`'s standing rule arriving on a tile pair a reader will instinctively
+difference.
+
+**AND THE PAGE'S OWN WORKING LINE COMMITTED THAT EXACT ERROR ON ITS FIRST
+DRAFT.** It printed *"the same figure the other way: committed ₹97.7 Cr less
+called ₹71.8 Cr is ₹26 Cr"* beside a printed uncalled total of ₹16 Cr. Both
+numbers were right and the sentence was a contradiction a reader who subtracts
+finds in ten seconds — `committed` spans 15 accounts and `called` spans 14, so
+the subtraction carried the whole ₹10 Cr commitment of the fund that prints no
+called line. `committedWhereCalled` is the matched denominator, and PM-4b
+asserts the printed difference really is the difference AND is the tile.
+
+**`Drawn against no valuation` IS `Paid in, but never valued`** — the client's
+third question, and the old label was jargon twice over: "drawn" is the fund's
+word for having taken the money, and "against no valuation" is a property of the
+STATEMENT rather than of the money. ₹18.2 Cr across 7 funds, unchanged in every
+other respect.
+
+#### 3. Fifty-two dated capital calls that were in the archive all along
+
+**EVERY DRAWDOWN STATEMENT IN THIS CORPUS PRINTS ITS CALLS DATED**, one row each
+with the fund's own total under them, and nothing read past the summary block —
+so a register of ₹97.73 Cr carried four numbers and not one date. That is an
+absence recorded against a premise nobody rechecked, and the second (after 3P's
+redemption on page 2) where the missing table was on a page the reader had
+already opened.
+
+`capitalFrom` on six layouts plus `transitionVenture.mjs` reads them: **52 calls
+across all 15 capital accounts**, Neo Infra's running back to October 2023.
+
+**A DATED TABLE IS PUBLISHED ONLY IF THE STATEMENT'S OWN TOTAL AGREES.**
+`callsIfTheyTie` is the whole licence — the rows must reproduce the figure the
+same statement prints for them, to the rupee, or NOTHING is emitted and the
+reason is warned. A schedule one call short understates what the family has paid
+and looks on screen exactly like a complete one. `capitalCalls.test.mjs` breaks
+each statement one figure at a time, and each mutation isolates one check: a
+removed call, a moved printed total, a total that is not printed at all (a
+DIFFERENT code — the rows may be perfect and there is no way to say so), a stamp
+duty or allotment row swept in, and an unpaid call that must raise `called` and
+leave `paid` alone.
+
+**AND ONE OF ITS OWN COMMENTS WAS REFUTED BY THE TEST WRITTEN TO PROVE IT.** Sky
+Capital prints its commitment schedule and its drawdown schedule in the same
+`₹ <amount> <date>` shape, so the sweep is cut to the drawdown block — and the
+comment claimed that without the cut the merged rows would sum to commitment plus
+drawdown and the gate would refuse them. It is a SLICE, not a filter: with the
+anchor gone the reader finds no rows at all, published nothing, and said nothing.
+Safe, and silent. The anchor is checked against the printed total now
+(`drawdown-table-not-found`), and the case asserts the SILENCE is gone rather
+than that the gate fired — a confidently wrong comment about which check protects
+you is how the next session deletes the one that does.
+
+#### 4. `npm run replay:calls` — landing a reader change without the passwords
+
+`GLOW_PDF_PASSWORDS` is not available on most machines, so `npm run extract`
+would drop eight encrypted statements and `guardAgainstShrinkingTheArchive`
+would correctly refuse the run. The text these readers parse is
+`public/audit/<doc>/pages.json` — committed, and reconstructed EXACTLY as
+`extract()` builds it — so running the REAL reader over it is a faithful partial
+replay rather than a second implementation. `rekey:archive` and
+`build-lookthrough --reindex` are the precedents; this is the third, on the same
+three rules: it only ever ADDS fields, its gate is struck on the archive (a
+replay that cannot reproduce the four figures already on disk is not reading what
+the extractor read, and nothing is written), and `--check` writes nothing and
+must be a no-op.
+
+Measured: **28 commitment documents replayed, 0 refused**, the diff to
+`public/audit/` is **573 insertions and 28 deletions — every deletion a
+`"distributed": null` line gaining a comma** — and `glowData.ts` gains **335
+lines and loses none**. `BOOK_SUMMARY` and `docs/BOOK-REPORT.md` are
+byte-identical, which is what a purely additive change must look like.
+
+#### 5. The timeline, and the one thing it must not do
+
+**NOT ONE OF THE 265 DOCUMENTS IN THIS ARCHIVE PUBLISHES A FORWARD DRAWDOWN
+SCHEDULE.** Measured, not assumed: no commitment-period end date, no call notice
+dated ahead of its own statement, no expected-drawdown table. A drawdown fund
+calls when it finds something to buy, and none of these has said when.
+
+So the 1/3/6-month windows the family asked for cannot be filled from a schedule,
+and the tempting substitute — projecting the next call from the observed cadence
+— is a forecast, which rendered beside fifteen measured figures reads as the
+sixteenth. The card therefore carries five buckets:
+
+| | |
+| --- | --- |
+| **Due now** | called and unpaid, ₹0 MEASURED on the 1 of 15 accounts that print the line |
+| **Next 1 / 3 / 6 months** | `—`, each naming the document that would fill it |
+| **Promised, no date** | ₹15.98 Cr, callable on any day, which is why no window can claim it |
+
+`callWindows` is a FILTER over real dated calls rather than a constant empty
+array, so the day a fund issues a notice ahead of time the card fills itself.
+The windows run from the newest capital-account date rather than `new Date()`,
+because that is the date these balances are struck at — `pooledXirr`'s own rule.
+
+**AND WHAT FILLS THE CARD INSTEAD IS THE HISTORY**, which is the honest answer to
+"timeline and dates and also the schemes": every one of the 52 calls, dated,
+with the fund's own wording, newest first — a reader who can see that a fund has
+called four times in eighteen months knows more about what is coming than any
+projection this book could print as a figure.
+
+**THE `No capital-call timeline` ABSENCE CARD IS GONE AND THE TVPI ONE WAS HALF
+FALSE.** The first read *"others print their drawdowns as page text their reader
+does not yet emit … the fix belongs in the ingest"*, which was true and is now
+done. The second said *"none publishes its calls as dated data"* — false of all
+fifteen the moment the calls landed, so it names the real remaining gap and
+counts it: 12 of 15 accounts print no distribution line, and reading those as nil
+would report a fund that has returned nothing when its statement does not say.
+
+#### Seven bugs reintroduced, and one check could not fail
+
+Each was put back on its own, rebuilt and swept, with the harness restoring **by
+copy on a trap and rebuilding on the way out** — two of these files are new and
+untracked, and `git checkout --` on an untracked file silently does nothing,
+which leaves the bug in place and reports the next run under the previous one's
+failures.
+
+Six fired immediately: the mismatched subtraction, the floor sentence deleted,
+the "no forward schedule" sentence deleted, the history truncated, the
+must-not-subtract warning softened, and a window given a figure.
+
+**THE SEVENTH PRODUCED A CLEAN SWEEP.** A `?? 0` on the due-now total widens its
+coverage to every row and leaves the FIGURE at ₹0 — every `pending` in this drop
+is either a measured nil or null — so no value check on the page can see it, and
+the coverage check read `15 of 15` against the page's own denominator and passed.
+`CAPITAL_BOOK` re-expresses the register off `glowData.ts` (never by importing
+`capitalCalls.ts`, which would agree by construction) and the count is struck
+against the book. The call-count check was anchored the same way in the same
+pass, because a history and a scheme table truncated TOGETHER reconcile with each
+other perfectly.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + **30 new** + 140 ·
+`test:family` · `check:family` **57/0** · `check:pages` — with the same two
+pre-existing abstentions. `npm run replay:calls -- --check` is a no-op against
+the committed tree, which is what says the archive on disk is what the extractor
+would write.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -10722,6 +10944,16 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run harvest` refreshes `public/series/` and `docs/SERIES-REPORT.md`.
   Idempotent; `--only <ids>` limits it. Runs nightly via `.github/workflows/harvest.yml`.
 - `npm run inventory` regenerates the ingest inventory.
+- `npm run replay:calls` re-runs the CAPITAL-CALL reader over the committed
+  archive — the called/paid/pending split and the dated calls — from each
+  document's own `pages.json`, through the same `capitalFrom` the extractor
+  calls. A faithful partial replay of extraction, not a repair layer, and the
+  third of its kind after `rekey:archive` and `build-lookthrough --reindex`; it
+  is how a reader change lands WITHOUT `GLOW_PDF_PASSWORDS` (see Stage 10ay).
+  It only ever ADDS fields — `total`, `contributed`, `undrawn` and `distributed`
+  are written back byte-identically and a run that would move one refuses — and
+  `--check` writes nothing and is the control run, which must be a no-op.
+  Follow it with `build-book`.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a
@@ -10747,7 +10979,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   answers the question `docs/EXTRACTION-REPORT.md` presupposes: not *did the
   documents tie out*, but *is there a file whose data never reached anything*.
   Output: `docs/SOURCE-COVERAGE.md`.
-- `npm run test:ingest` runs the ingest test suites.
+- `npm run test:ingest` runs the ingest test suites — including
+  `capitalCalls.test.mjs`, which breaks a synthetic drawdown statement one
+  figure at a time to prove the dated-call gate is load-bearing: a reader that
+  publishes a schedule it could not reconcile is the one thing on that card a
+  reader cannot check by opening the PDF.
 - `npm run reconcile:review` checks the book against the adviser's consolidated
   review; `npm run reconcile:register` checks it against the family's own
   investment register. **Neither ever writes to the book** — both are independent

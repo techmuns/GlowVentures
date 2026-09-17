@@ -1399,6 +1399,27 @@ function build(docs) {
         // any drift between them is the fund's, not ours to smooth.
         undrawn: r2(c.undrawn),
         distributed: r2(c.distributed),
+        /**
+         * COMMITTED, CALLED AND PAID ARE THREE FIGURES — see the header note in
+         * `providers/altFundStatements.mjs`. `drawn` above is whichever of the
+         * last two its own layout matched and is kept exactly as it was; these
+         * are read from the line each statement LABELS, and stay null where it
+         * labels neither rather than borrowing from the other.
+         *
+         * `pending` is called-and-not-yet-paid: the only figure in this corpus
+         * that answers "what is due now", and a MEASURED zero on the two
+         * statements that print it.
+         */
+        called: r2(c.called),
+        paid: r2(c.paid),
+        pending: r2(c.pending),
+        /**
+         * The dated calls, each already reconciled against its own statement's
+         * printed total by the reader — a set that did not tie is EMPTY here
+         * rather than partial, so a timeline built on this can never be one
+         * call short of what the family actually paid.
+         */
+        calls: (c.calls ?? []).map((k) => ({ date: k.date, label: k.label ?? null, amount: r2(k.amount) })),
         arithmeticHolds: isNum(c.total) && isNum(c.contributed) && isNum(c.undrawn)
           ? Math.abs(c.total - c.contributed - c.undrawn) <= 1
           : null,

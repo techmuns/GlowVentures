@@ -1047,6 +1047,43 @@ const AIF_BOOK = (() => {
  * value, never `units × NAV`, which puts the family's ₹16.88 Cr gold ETF at
  * ₹1.76 Cr. See `src/lib/navMovers.ts`.
  */
+/**
+ * THE CAPITAL REGISTER, re-expressed off `glowData.ts`.
+ *
+ * Every expectation about the timeline is derived from the book on each run
+ * rather than typed, and it is RE-EXPRESSED rather than imported from
+ * `capitalCalls.ts` — a check that calls the helper it is checking agrees with
+ * it by construction and reports nothing. The two agreeing is the measurement.
+ *
+ * `pendingOf` is the one that had to exist. The due-now coverage is the ONLY
+ * tell that a `?? 0` has crept into that total: every `pending` in this drop is
+ * either a measured nil or null, so the FIGURE is ₹0 either way and no value
+ * check on the page can see the difference. Struck against the page's own
+ * denominator it passed while reading "15 of 15" — a check that could not fail,
+ * found by reintroducing exactly the bug it exists for.
+ */
+const CAPITAL_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const cs = bookArray(src, "BOOK_COMMITMENTS");
+    if (!Array.isArray(cs) || !cs.length) return null;
+    const n = (f) => cs.filter((c) => c[f] != null).length;
+    return {
+      count: cs.length,
+      pendingOf: n("pending"),
+      calledOf: n("called"),
+      paidOf: n("paid"),
+      uncalledOf: n("undrawn"),
+      callCount: cs.reduce((t, c) => t + (c.calls?.length ?? 0), 0),
+      /** Uncalled summed as printed, in Cr — the figure the client questioned. */
+      uncalledCr: cs.reduce((t, c) => t + (c.undrawn ?? 0), 0) / 1e7,
+      /** And the other path, over the accounts that print a called line only. */
+      impliedCr: cs.filter((c) => c.called != null)
+        .reduce((t, c) => t + (c.committed - c.called), 0) / 1e7,
+    };
+  } catch { return null; }
+})();
+
 const NAV_MOVERS_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -7670,17 +7707,122 @@ const INVARIANTS = {
     // drawdown and no undrawn figure; a `?? 0`, or deriving committed − drawn,
     // puts a figure on all fifteen and the coverage count gives it away.
     ["the uncalled-capital tile covers fewer capital accounts than the register holds", (t) => {
-      const tile = cr(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*` + CR, "i").exec(t)?.[1]);
-      const foot = new RegExp(String.raw`Still to call\s*` + CR + String.raw`\s*\((\d+) of (\d+)\)`, "i").exec(t);
-      if (!Number.isFinite(tile) || !foot) return false;
-      const total = cr(foot[1]), have = Number(foot[2]), rows = Number(foot[3]);
-      return Number.isFinite(total) && Math.abs(total - tile) <= 0.6 && have > 0 && have < rows;
+      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
+      // The footer now prints the figure and its coverage as two spans; the
+      // working line under the table repeats both in words. BOTH are read, and
+      // they must agree — a footer and a sentence describing it are exactly the
+      // pair this page has already had disagree once.
+      const foot = new RegExp(String.raw`₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*·\s*(\d+) of (\d+)\b`, "i");
+      const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*over\s*the\s*(\d+) accounts`, "i").exec(t);
+      const rows = /Total\s*·\s*(\d+) accounts/i.exec(t);
+      const hits = [...t.matchAll(new RegExp(foot, "gi"))].map((m) => ({ v: crU(m[1], m[2]), have: Number(m[3]), of: Number(m[4]) }));
+      const cell = hits.find((h) => Math.abs(h.v - tile) <= 0.6);
+      if (!Number.isFinite(tile) || !said || !rows || !cell) return false;
+      return Math.abs(crU(said[1], said[2]) - tile) <= 0.6
+        && Number(said[3]) === cell.have
+        && cell.have > 0 && cell.have < cell.of && cell.of === Number(rows[1]);
+    }],
+    // PM-4b. THE CLIENT'S OWN QUESTION, CHECKED AS ARITHMETIC. *"How are you
+    // calculating this uncalled capital of 16 crores?"* — the page answers with
+    // the second path, and BOTH SIDES OF THAT SUBTRACTION MUST BE STRUCK OVER
+    // ONE SET. The first draft printed committed over all 15 accounts less
+    // called over 14, came to ₹26 Cr, and called it "the same figure the other
+    // way" beside a printed ₹16 Cr. Both numbers were right; the sentence was a
+    // contradiction a reader who subtracts would find in ten seconds.
+    ["committed − called reproduces the printed uncalled figure, on one matched set", (t) => {
+      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
+      const m = new RegExp(String.raw`The same figure the other way:\s*committed\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*less\s*called\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*is\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t);
+      if (!Number.isFinite(tile) || !m) return false;
+      const [c, cd, u] = [crU(m[1], m[2]), crU(m[3], m[4]), crU(m[5], m[6])];
+      // The stated difference is really the difference, AND it is the tile.
+      return Math.abs(c - cd - u) <= 0.15 && Math.abs(u - tile) <= 0.6;
+    }],
+    // PM-4c. The floor, not the ceiling — the other half of the client's
+    // "something seems amiss". The tile's own coverage must be a strict subset
+    // of the page's private accounts, said on the tile rather than only in a
+    // hover: a reader who cannot see that this figure misses whole accounts
+    // reads it as the family's total exposure to future calls.
+    ["the uncalled tile says it is a floor, and its coverage is a strict subset", (t) => {
+      const m = /across (\d+) of this page's (\d+) private accounts/i.exec(t);
+      const nav = /across (\d+) accounts · each holding counted once/i.exec(t);
+      if (!m || !nav) return false;
+      return Number(m[1]) > 0 && Number(m[1]) < Number(m[2])
+        && Number(m[2]) === Number(nav[1])
+        && /so this is a floor/i.test(t)
+        && /floor of what can still be called, never the ceiling/i.test(t);
+    }],
+    // PM-4d. THE TIMELINE'S WINDOWS ARE EMPTY AND MUST SAY WHY. No fund in this
+    // archive publishes a forward drawdown schedule, so 1/3/6 months carry
+    // nothing — and an empty window that does not name the document which would
+    // fill it reads as a feed that is down rather than a fact about the funds.
+    // The bucket that DOES hold the money must be the uncalled tile, or the
+    // card would answer "when" by quietly losing the "how much".
+    ["the call windows are empty, name what would fill them, and the undated bucket is the uncalled total", (t, ctx) => {
+      const buckets = ctx.callBuckets ?? [];
+      if (buckets.length < 5) return false;
+      const windows = buckets.filter((b) => ["1m", "3m", "6m"].includes(b.key));
+      const undated = buckets.find((b) => b.key === "unscheduled");
+      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
+      if (windows.length !== 3 || !undated || !Number.isFinite(tile)) return false;
+      return windows.every((w) => /—/.test(w.text) && !/₹/.test(w.text))
+        && /No fund in this book publishes a forward drawdown schedule/i.test(t)
+        && /drawdown notice/i.test(t) && /commitment-period schedule/i.test(t)
+        && Math.abs(crU(...(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(undated.text) ?? []).slice(1)) - tile) <= 0.6;
+    }],
+    // PM-4e. DUE NOW IS A MEASUREMENT AND MUST NOT BE MISTAKEN FOR A WINDOW. It
+    // is the only genuinely-due figure in this book, it is a MEASURED zero on
+    // this drop, and an account whose statement prints no such line is skipped
+    // rather than counted as owing nothing — so the coverage has to be on the
+    // face of it. A `?? 0` here would report every fund as fully paid up.
+    ["the due-now figure states the accounts it covers, and is not a window", (t, ctx) => {
+      const due = (ctx.callBuckets ?? []).find((b) => b.key === "due-now");
+      const m = /(\d+) of (\d+) accounts print this line/i.exec(t);
+      if (!due || !m || !CAPITAL_BOOK) return false;
+      // AGAINST THE BOOK, NEVER AGAINST THE PAGE'S OWN DENOMINATOR. A `?? 0` in
+      // the total widens the coverage to every row and leaves the figure at ₹0,
+      // so the count is the only thing that moves — and `N <= M` is satisfied by
+      // the bug. The book says how many statements print the line.
+      return Number(m[1]) === CAPITAL_BOOK.pendingOf && Number(m[2]) === CAPITAL_BOOK.count
+        && /a measured figure, not an assumption/i.test(t)
+        && /never counted as nil/i.test(due.text);
+    }],
+    // PM-4f. Every dated call reached the page through its own statement's
+    // total, and the history must account for exactly the calls the per-scheme
+    // table claims. A schedule ONE CALL SHORT understates what the family has
+    // paid and looks on screen exactly like a complete one, so the two
+    // independent renderings of that count are compared against each other.
+    ["the call history holds every call the scheme table counts", (t, ctx) => {
+      const rows = (ctx.callRows ?? []).length;
+      const pill = /(\d+) calls\b/i.exec(t);
+      const foot = /Total\s*·\s*(\d+) calls/i.exec(t);
+      const perScheme = (ctx.schemeCalls ?? []).reduce((a, b) => a + b, 0);
+      if (!rows || !pill || !foot || !perScheme || !CAPITAL_BOOK) return false;
+      return rows === perScheme && Number(pill[1]) === perScheme && Number(foot[1]) === perScheme
+        // …and the book's own count, so a history and a scheme table truncated
+        // TOGETHER cannot reconcile with each other and pass.
+        && perScheme === CAPITAL_BOOK.callCount;
+    }],
+    // PM-4g. Committed, Called and Invested are three figures and the page must
+    // keep them apart — this is the client's question, and the defect it names
+    // is one field carrying two quantities. Called and Invested cover different
+    // sets here, so the page must SAY they cannot be subtracted: their printed
+    // difference is a coverage gap and reads exactly like money paid twice.
+    ["committed, called and invested are three separate tiles, each stating its coverage", (t) => {
+      const tiles = ["COMMITTED", "CALLED BY THE FUNDS", "INVESTED \\(PAID IN\\)", "DUE NOW \\(CALLED, UNPAID\\)"];
+      if (!tiles.every((x) => new RegExp(x + String.raw`\s*\n`, "i").test(t))) return false;
+      const called = /(\d+) of (\d+) capital accounts print a called line/i.exec(t);
+      const paid = /(\d+) of (\d+) capital accounts · cash that has actually left/i.exec(t);
+      if (!called || !paid) return false;
+      return Number(called[1]) <= Number(called[2]) && Number(paid[1]) <= Number(paid[2])
+        && /must not be subtracted from each other/i.test(t);
     }],
     // PM-5. The capital paid into funds that value nothing ties to its own table
     // and is NOT inside the private market value. Carrying drawn capital as a
     // mark would report what was paid as what the stake is worth.
     ["the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total", (t) => {
-      const tile = cr(new RegExp(String.raw`DRAWN AGAINST NO VALUATION\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      // The label was the client's own question — *"Drawn against no valuation
+      // means?"* — and it now says what it is. The check follows the tile.
+      const tile = cr(new RegExp(String.raw`PAID IN, BUT NEVER VALUED\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const consol = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*funds\s*` + CR + String.raw`\s*` + CR, "i").exec(t)?.[2]);
       const i = t.search(/Private accounts whose fund publishes no valuation/i);
@@ -12409,6 +12551,24 @@ for (const theme of THEMES) {
       // on that page can see it.
       const pmFunds = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
+      // THE CAPITAL-CALL TIMELINE, READ STRUCTURALLY.
+      //
+      // Every claim here is about a BUCKET — which windows exist, which carry a
+      // figure and which carry a dash — and `innerText` cannot tell a window
+      // apart from the paragraph under it. `data-call-bucket` is the contract
+      // `data-section` and `data-pm-fund` already carry, and the same rule: a
+      // structural claim must not depend on prose a redesign may reword.
+      const callBuckets = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("[data-call-bucket]")].map((e) => ({
+          key: e.getAttribute("data-call-bucket"), text: e.innerText })));
+      // The dated calls the history table draws, and the per-scheme table's own
+      // count of them. TWO INDEPENDENT RENDERINGS of one figure, which is what
+      // lets the pair fail: a truncated history reconciles perfectly with
+      // itself and only the scheme table can see the rows it lost.
+      const callRows = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tr[data-call-row]")].map((e) => e.getAttribute("data-call-row")));
+      const schemeCalls = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tr[data-scheme] [data-calls]")].map((e) => Number(e.getAttribute("data-calls"))));
       // A COLUMN'S OWN NOTE — the word under a header and the sentence behind it.
       // The derived fence lives here now rather than in a paragraph under the
       // table, and `innerText` alone cannot tell a note apart from a second
@@ -12863,7 +13023,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, callBuckets, callRows, schemeCalls, kpiTiles, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

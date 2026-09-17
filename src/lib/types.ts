@@ -616,6 +616,13 @@ export type FundInvestment = {
  * else in the book and which the Morning CIO's dry-powder tile previously denied
  * existed while two statements reporting it sat unread.
  */
+/** One dated demand a drawdown fund made on the family, as its statement prints it. */
+export type CapitalCall = {
+  date: string;             // ISO
+  label: string | null;     // the fund's own wording — "Drawdown 3", "Fourth Contribution"
+  amount: number;           // INR
+};
+
 export type Commitment = {
   accountId: string;
   name: string;
@@ -623,9 +630,37 @@ export type Commitment = {
   ownerId: string | null;
   asOf: string | null;
   committed: number;        // INR — the total the family signed up for
-  drawn: number | null;     // INR — capital actually called so far
+  /**
+   * INR — whichever of CALLED and PAID this fund's own layout matched.
+   *
+   * The comment here used to read "capital actually called so far" and that was
+   * true of one reader out of six: India SME's, Baring's, Sky Capital's and Neo
+   * Infra's all take the CONTRIBUTION line, and Carnelian's takes the CALL. The
+   * two differ by ₹2,925.10 on this drop, so nothing on screen was visibly
+   * wrong — which is the condition under which one field means two things for a
+   * drop and a half. `called` and `paid` below are the split; this field is
+   * unchanged so that no figure already in the book moves with the correction.
+   */
+  drawn: number | null;
   undrawn: number | null;   // INR — the dry powder, AS PRINTED, not derived
   distributed: number | null;
+  /** INR — what the fund has DEMANDED, off the line its statement labels so. Null where it labels none. */
+  called: number | null;
+  /** INR — what the family has actually PAID. This is "capital invested". */
+  paid: number | null;
+  /**
+   * INR — called and NOT yet paid, which is the only thing in this book that is
+   * genuinely DUE. A measured zero on the statements that print it, and null on
+   * the ones that do not: a fund that does not publish the line is not a fund
+   * with nothing outstanding.
+   */
+  pending: number | null;
+  /**
+   * The fund's own dated calls, oldest first — and only ever a set that
+   * reproduced the total its statement prints for it. A schedule that did not
+   * tie is EMPTY rather than partial.
+   */
+  calls: CapitalCall[];
   /**
    * Whether the fund's own three figures agree: committed − drawn = undrawn, to
    * the rupee. False means the statement disagrees with itself and the figures

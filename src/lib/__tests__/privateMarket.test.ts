@@ -156,8 +156,10 @@ eq("an empty register totals NULL, never 0", [
   emptyTotals.committed, emptyTotals.drawn, emptyTotals.undrawn, emptyTotals.distributed,
 ], [null, null, null, null]);
 const fixture: Commitment[] = [
-  { accountId: "a", name: "A", provider: "A", ownerId: null, asOf: null, committed: 100, drawn: 40, undrawn: 60, distributed: null, arithmeticHolds: true },
-  { accountId: "b", name: "B", provider: "B", ownerId: null, asOf: null, committed: 200, drawn: 80, undrawn: null, distributed: null, arithmeticHolds: null },
+  { accountId: "a", name: "A", provider: "A", ownerId: null, asOf: null, committed: 100, drawn: 40, undrawn: 60, distributed: null,
+    called: 40, paid: 40, pending: null, calls: [], arithmeticHolds: true },
+  { accountId: "b", name: "B", provider: "B", ownerId: null, asOf: null, committed: 200, drawn: 80, undrawn: null, distributed: null,
+    called: null, paid: 80, pending: null, calls: [], arithmeticHolds: null },
 ];
 const ft = commitmentTotals(fixture);
 eq("a null undrawn is skipped, not zeroed", [ft.undrawn, ft.undrawnOf], [60, 1]);

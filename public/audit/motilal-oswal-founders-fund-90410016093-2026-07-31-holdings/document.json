@@ -96,7 +96,27 @@
   "total": 100000000,
   "contributed": 100000000,
   "undrawn": null,
-  "distributed": null
+  "distributed": null,
+  "called": 100000000,
+  "paid": 100000000,
+  "pending": null,
+  "calls": [
+   {
+    "date": "2024-08-06",
+    "label": "Contribution",
+    "amount": 50000000
+   },
+   {
+    "date": "2024-09-09",
+    "label": "Contribution",
+    "amount": 10000000
+   },
+   {
+    "date": "2024-10-16",
+    "label": "Contribution",
+    "amount": 40000000
+   }
+  ]
  },
  "capitalAccount": [],
  "postTaxNav": null,

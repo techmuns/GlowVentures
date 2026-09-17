@@ -16,6 +16,7 @@ const SUITES = [
   { name: "layout",   file: "layout.test.mjs",   required: true },
   { name: "pipeline", file: "pipeline.test.mjs", required: true },
   { name: "altFund",  file: "altFund.test.mjs",  required: true },
+  { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   // Exit 2 = BLOCKED: the real statements are not present. Reported, not failed.
   { name: "golden",   file: "golden.mjs",        required: false },
 ];

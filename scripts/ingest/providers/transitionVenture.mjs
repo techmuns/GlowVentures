@@ -183,7 +183,35 @@ export function extract({ grid, meta }) {
      * a holding: `undrawn` is money the family OWES the fund on demand, and it
      * belongs in dry powder and upcoming capital calls, never in NAV.
      */
-    commitment: { total: commitment, contributed, undrawn, distributed },
+    /**
+     * `called` and `paid` are the SAME printed figure here, and that is the
+     * statement's own arithmetic rather than an assumption: `Undrawn Capital
+     * Commitment` = `Total Capital Commitment` − `Capital Contributed`, so this
+     * fund strikes its uncalled balance on the contribution and leaves no room
+     * between what it has demanded and what it has received.
+     *
+     * `calls` reuses the dated rows read above, keeping ONE reading of this
+     * table rather than a second regex over the same text — and is published
+     * only where the contribution rows reproduce the contributed figure the
+     * summary block prints, which is the licence every dated table in this
+     * pipeline needs. A distribution is not a call and is excluded by kind.
+     */
+    commitment: {
+      total: commitment, contributed, undrawn, distributed,
+      called: contributed, paid: contributed,
+      calls: (() => {
+        const rows = cashFlows.filter((c) => c.kind === "contribution" && c.date && typeof c.amount === "number");
+        if (!rows.length || contributed == null) return [];
+        const sum = Math.round(rows.reduce((t, c) => t + c.amount, 0) * 100) / 100;
+        if (Math.abs(sum - contributed) > 1) {
+          warn(warnings, "capital-calls-do-not-tie",
+            `${rows.length} dated contributions sum to ${sum} against a printed Capital Contributed of ${contributed}; none is carried`);
+          return [];
+        }
+        return rows.map((c) => ({ date: c.date, label: c.description, amount: c.amount }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      })(),
+    },
     capitalAccount,
     sections: {
       commitment: {
