@@ -9627,6 +9627,37 @@ future session to expect — for the **fourth** time each:
   because a key naming a variable that no longer exists throws inside the check
   and is reported as a broken matcher rather than as a clean page.
 
+**AND THE SWEEP FAILED FIVE INVARIANTS ON THE MERGED TREE, WHICH IS THE CHECK
+EARNING ITS PLACE RATHER THAN A DEFECT IN IT.** Every suite was green — build,
+tsc, `test:ingest`, `test:family`, `check:family` 57/0 — and `check:pages` came
+back **1 of 152 combinations with a finding**, all five on `cio`'s NAV card.
+
+The cause is the one thing that makes a second expression worth writing and is
+also its whole hazard: **the card scopes on `holdingBucket` and the checker
+scoped on `assetClass`, and only one of the two moved.** Stage 10av made a
+liquid fund or liquid ETF `Cash` in the BUCKET whatever wrapper its statement
+typed it as — and §5 correctly leaves `assetClass` alone, because that is the
+model's vocabulary. So the two expressions of one rule disagreed by four rows,
+and **the card was the right one**: a card headed "what your funds did" must not
+carry the family's cash.
+
+`NAV_MOVERS_BOOK` reads `CASH_EQUIVALENT_KEYS` out of `analytics.ts` as
+committed DATA and re-expresses the membership test, exactly as it already reads
+`BOOK_POLYCAB` for the ring-fence — **never by importing `isCashEquivalent`,
+which would agree with the card by construction and report nothing.** Both
+directions were then verified by reintroducing the bug:
+
+- dropping the exclusion reproduces **exactly the five failures the merge
+  produced**, so the clause is load-bearing rather than merely agreeing;
+- renaming the constant so the map cannot be read yields **seven failures, not a
+  silent pass** — the parse returns `null`, the checks fail, and a renamed
+  constant can never read as a book with no cash equivalents in it.
+
+**THE LESSON IS NOT "THE CHECKER WAS WRONG".** It is that a rule expressed twice
+has to be MOVED twice, and the merge is where that comes due — which is an
+argument for the two expressions, not against them: written as one import, this
+merge would have silently changed what the card covers and reported clean.
+
 **AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, the discipline
 Stage 10at records — a textual splice of two generated regions can produce
 something the generator would never write. Measured here: **neither side touched

@@ -973,10 +973,40 @@ const NAV_MOVERS_BOOK = (() => {
       if (seen.has(p.dedupeGroup)) return false;
       seen.add(p.dedupeGroup); return true;
     });
-    // ETF and Mutual Fund, and never one held inside a PMS mandate — the
-    // manager chose it, so it belongs to the mandate.
+    /**
+     * ETF and Mutual Fund, never one held inside a PMS mandate (the manager
+     * chose it, so it belongs to the mandate) — AND NEVER A CASH EQUIVALENT.
+     *
+     * THAT LAST CLAUSE IS WHY THIS EXPRESSION HAD TO MOVE WHEN MAIN DID.
+     * Stage 10av made a liquid fund or liquid ETF `Cash` in `holdingBucket`
+     * whatever wrapper its statement typed it as, and the CARD scopes on the
+     * bucket while this scoped on `assetClass` — which §5 correctly does not
+     * move. So after that merge the two expressions of one rule disagreed by
+     * four rows and five invariants failed at once, which is this check
+     * earning its place rather than a defect in it: written as one import it
+     * would have agreed with the card by construction and reported nothing.
+     *
+     * `CASH_EQUIVALENT_KEYS` is read as committed DATA and the membership test
+     * re-expressed here, exactly as `BOOK_POLYCAB` is read for the ring-fence.
+     * An unreadable or empty map yields `null` rather than silently restoring
+     * the old scope — the checks then FAIL rather than pass, because a renamed
+     * constant must not read as a book with no cash equivalents in it.
+     */
+    const cashEq = (() => {
+      try {
+        const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+        const i = a.indexOf("export const CASH_EQUIVALENT_KEYS");
+        if (i < 0) return null;
+        const end = a.indexOf("\n};", i);
+        if (end < 0) return null;
+        const keys = [...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]);
+        return keys.length ? new Set(keys) : null;
+      } catch { return null; }
+    })();
+    if (!cashEq) return null;
     const scope = ded.filter((p) => ["ETF", "Mutual Fund"].includes(p.assetClass)
-      && acc.get(p.accountId)?.engagement !== "PMS");
+      && acc.get(p.accountId)?.engagement !== "PMS"
+      && !cashEq.has(p.securityKey));
     const bySchemecode = new Map();
     let skipped = 0, skippedValue = 0;
     for (const p of scope) {
