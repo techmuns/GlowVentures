@@ -39,6 +39,7 @@ const SUITES = [
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
+  ["negligible floor", "src/lib/__tests__/negligibleFloor.test.ts"],
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
 ];

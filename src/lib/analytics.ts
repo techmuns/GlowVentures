@@ -171,10 +171,18 @@ export const isRedeemedToNil = (p: { assetClass: string; quantity: number; curre
  * hold", and the tile and the page it opens are the one pair where that
  * disagreement is guaranteed to be visible.
  *
- * IT MOVES NO MONEY, WHICH IS WHY IT IS SAFE TO APPLY AT THE BASE. A closed
- * position is a measured ₹0 with no reported cost, so every sum, weight,
- * denominator and return is identical either way. What changes is the COUNT —
- * and a count of holdings that includes what was sold is the wrong count.
+ * THE CLOSED HALF MOVES NO MONEY. A closed position is a measured ₹0 with no
+ * reported cost, so every sum, weight, denominator and return is identical
+ * either way. What changes is the COUNT — and a count of holdings that includes
+ * what was sold is the wrong count.
+ *
+ * THE ₹1,000 FLOOR BELOW *DOES* MOVE MONEY, BY ₹848.24, and this paragraph said
+ * otherwise for exactly as long as the floor did not exist. Both filters are
+ * applied at the BASE for the same reason — the filters, the weight
+ * denominator, the footer set and every section subtotal are then struck over
+ * one set and cannot disagree — but only one of them is free. What the floor
+ * costs is named on the surfaces that draw it and carried as an explicit term
+ * by the suites that tie to `BOOK_SUMMARY`, never absorbed into a tolerance.
  *
  * THE ZERO IS NOT DELETED, ONLY THE HOLDINGS TABLES. `BOOK_POSITIONS` still
  * carries every one of these rows, `isRedeemedToNil` still says which they are,
@@ -182,9 +190,148 @@ export const isRedeemedToNil = (p: { assetClass: string; quantity: number; curre
  * investments. This is a filter on what a CURRENT-holdings page draws, never a
  * decision to stop being able to see the position.
  */
-export const currentHoldings = <T extends { assetClass: string; quantity: number; currentPrice: number | null }>(
+/**
+ * ── THE ₹1,000 FLOOR — A HOLDING TOO SMALL TO BE WORTH A ROW ────────────────
+ *
+ * *"यह तो ना यहां पर irrelevant items हैं. यह सबको हटा दो यह. 54 rupees क्या
+ *  होता है? … or we can just say that less than thousand rupees remove
+ *  automatically."*
+ *
+ * The ₹54 they were pointing at is `INVES CON R GROWTH`, 0.39 units of a
+ * mutual fund. Measured over the whole book there are SIX such rows and they
+ * come to **₹848.24** between them — a hundred-thousandth of a ₹710 Cr book,
+ * occupying six rows of a table the family read top to bottom.
+ *
+ * THIS IS A FAMILY DECISION, NOT A PARSING RULE, so it is applied at the
+ * DISPLAY layer and nowhere else — the same standing `RINGFENCED_SECURITY_KEYS`
+ * has one layer up. `glowData.ts` still carries every one of these rows, the
+ * archive still carries the statement that reported them, and moving the floor
+ * to 0 here restores them everywhere in one edit. What it must never become is
+ * an ingest rule: a figure a statement printed does not stop being a figure
+ * because it is small.
+ *
+ * ── IT IS STRUCK ON THE SECURITY, NEVER ON THE STATEMENT ROW ────────────────
+ *
+ * The obvious `p.marketValue < FLOOR` is wrong in a way this book has no case
+ * of today and would not survive the next drop: a name held at ₹900 in five
+ * accounts is ₹4,500 the family really owns, and a per-row test deletes every
+ * one of those rows and the holding with them. So the test is the security's
+ * whole consolidated value, and a row is dropped only because the HOLDING is
+ * negligible — which is also what keeps the per-account view and the
+ * consolidated view agreeing about which names exist at all.
+ *
+ * Measured on this book: 130 of 213 securities are reported by more than one
+ * statement, and the number where every row is under the floor while the
+ * holding is not is **ZERO** — the smallest row belonging to a multi-row
+ * security is ₹6,208. So the two readings agree here, and the one that is
+ * right in general is the one implemented.
+ *
+ * ── AND IT IS THE MAGNITUDE, WHICH IS WHAT PROTECTS THE PAYABLES ────────────
+ *
+ * Two rows in this book carry a NEGATIVE market value: V.E.C's `CASH
+ * Rec/Payable` at −₹84,556.96 and −₹1,37,488.47, a settlement obligation inside
+ * a mandate. A naive `value < 1000` is true of both, so it would drop ₹2.22 L of
+ * real liability and silently INFLATE two mandates by exactly that. `Math.abs`
+ * is therefore the test, and it is not merely defensive: a −₹54 payable is as
+ * irrelevant as a +₹54 holding, and both should go for the same reason.
+ *
+ * ── WHAT IT MOVES, MEASURED RATHER THAN ASSUMED ─────────────────────────────
+ *
+ * Every one of the six carries `costBasis: null`, no realised gain and no
+ * dividend, so Capital invested, Realised P&L and income are untouched and only
+ * MARKET VALUE moves — by ₹848.24, which is invisible at the one-decimal-crore
+ * precision every surface prints. It is not invisible to the suites that tie a
+ * rendered figure to `BOOK_SUMMARY` to the rupee, and those carry it as a named
+ * term rather than a widened tolerance, which is what keeps the drop measurable.
+ */
+export const NEGLIGIBLE_VALUE_FLOOR = 1000;
+
+/**
+ * The securityKeys whose WHOLE consolidated value sits under the floor.
+ *
+ * Deduped first, so the answer cannot depend on whether the caller handed us
+ * `portfolio.positions` or the already-deduped `consolidated` set: every caller
+ * passes one or the other, `dedupedPositions` is idempotent, and summing by key
+ * over either then gives the same total. A helper whose verdict changed with
+ * its caller would put a row on one page and drop it from the next.
+ */
+export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[]): Set<string> {
+  const byKey = new Map<string, number>();
+  for (const p of dedupedPositions(positions as unknown as Position[])) {
+    byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
+  }
+  const out = new Set<string>();
+  for (const [key, value] of byKey) {
+    /**
+     * A MEASURED ZERO IS NOT A SPECK, AND `value !== 0` IS WHAT SAYS SO.
+     *
+     * `Math.abs(0) < 1000` is true, so the obvious test takes the three rows
+     * this book carries at exactly ₹0 — two `Cash` sleeves and a `Tax Deducted
+     * at Source` line — along with the six the family pointed at. It should
+     * not, for reasons this book has already written down:
+     *
+     *   • A COMPUTED ZERO IS LEGITIMATE AND STAYS. `₹0` of cash in a mandate is
+     *     a MEASUREMENT — the account holds none — and this book's founding rule
+     *     is that a measured zero and an absent measurement must never look the
+     *     same. Dropping it makes them identical.
+     *   • THE FAMILY POINTED AT ₹54, NOT AT ₹0. "54 rupees क्या होता है?" is a
+     *     complaint about a figure too small to matter, and a zero row was on
+     *     that same screen and was not what they named.
+     *   • THE REDEEMED ROWS ARE ₹0 AND ALREADY HAVE A BETTER REASON.
+     *     `isRedeemedToNil` says the fund still prices units the family no
+     *     longer holds. Folded in here they would be described to the reader as
+     *     specks, which is a confidently wrong reason for a redemption.
+     *   • AND IT KEEPS THE GUARANTEE CHECKABLE. Excluding zero, the floor moves
+     *     MARKET VALUE and nothing else — the suite asserts exactly that. The
+     *     three zero rows carry `costBasis: 0`, so including them would move no
+     *     money either, but it would move the cost-COVERAGE counts ("309 of 369
+     *     report a cost") for no gain, and a guarantee with an exception is one
+     *     nobody can check.
+     *
+     * So this is deliberate and is not a `Math.abs` written carelessly. A future
+     * session simplifying it to `Math.abs(value) < FLOOR` will find the suite's
+     * partition and cost checks failing by name.
+     */
+    if (value !== 0 && Math.abs(value) < NEGLIGIBLE_VALUE_FLOOR) out.add(key);
+  }
+  return out;
+}
+
+type NegligibleInput = {
+  assetClass: string; quantity: number; currentPrice: number | null;
+  securityKey: string; marketValue: number; dedupeGroup?: string;
+};
+
+/**
+ * The rows a current-holdings surface drops, and WHY each one went — so a page
+ * can name them rather than letting a reader who counted 371 wonder where seven
+ * rows have gone.
+ *
+ * A redeemed holding is ₹0, so it is under the floor too and the two reasons
+ * would double-count it. `closed` is the more specific finding and wins: the
+ * fund is still publishing a NAV against units the family no longer holds,
+ * which is a different sentence from "this is worth ₹54". The two lists
+ * therefore partition, which is what lets their counts be added.
+ */
+export function droppedHoldings<T extends NegligibleInput>(
   positions: readonly T[],
-): T[] => positions.filter((p) => !isRedeemedToNil(p));
+): { closed: T[]; negligible: T[] } {
+  const small = negligibleKeys(positions);
+  const closed: T[] = [];
+  const negligible: T[] = [];
+  for (const p of positions) {
+    if (isRedeemedToNil(p)) closed.push(p);
+    else if (small.has(p.securityKey)) negligible.push(p);
+  }
+  return { closed, negligible };
+}
+
+export const currentHoldings = <T extends NegligibleInput>(
+  positions: readonly T[],
+): T[] => {
+  const small = negligibleKeys(positions);
+  return positions.filter((p) => !isRedeemedToNil(p) && !small.has(p.securityKey));
+};
 
 /**
  * COMPANY SHARES — a share in a company, whoever pressed the button.

@@ -212,6 +212,44 @@ const MANDATE_COUNT = (() => {
  * is the payoff: names visible ONLY on this axis, because on every other one they
  * are inside a mandate's roll-up and cannot be seen at all.
  */
+/**
+ * ── THE ₹1,000 FLOOR, RE-DERIVED FROM THE BOOK ─────────────────────────────
+ *
+ *   "यह तो ना यहां पर irrelevant items हैं … 54 rupees क्या होता है? … or we can
+ *    just say that less than thousand rupees remove automatically."
+ *
+ * Re-implemented from `glowData.ts` rather than imported from `analytics.ts`,
+ * on the same terms as `isMandateHeld` and the closed test beside it: a check
+ * that imports the helper it is checking agrees with it by construction and can
+ * only ever catch a page that stopped CALLING it.
+ *
+ * ONE COPY INSIDE THIS FILE, THOUGH. Three blocks below need the answer, and
+ * three hand-written copies of a two-pass rule are three chances for this sweep
+ * to disagree with ITSELF about which holdings a page should draw — which would
+ * show up as one route failing and another passing over the same book.
+ *
+ * Both halves of the rule are reproduced deliberately, because both are what
+ * `analytics.ts` has to get right:
+ *   • THE SECURITY, NOT THE ROW — summed by `securityKey` across the deduped
+ *     book, so a name held in several small lots is not lost;
+ *   • THE MAGNITUDE, AND NOT ZERO — `Math.abs`, so V.E.C's negative cash
+ *     payables are kept, and `!== 0`, so a measured ₹0 stays a measurement.
+ */
+const FUND_VEHICLE_CLASSES = new Set(["AIF", "Mutual Fund", "ETF"]);
+const NEGLIGIBLE_FLOOR = 1000;
+function smallKeysOf(positions) {
+  const seen = new Set();
+  const byKey = new Map();
+  for (const p of positions) {
+    if (FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
+    if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+    byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
+  }
+  const out = new Set();
+  for (const [k, v] of byKey) if (v !== 0 && Math.abs(v) < NEGLIGIBLE_FLOOR) out.add(k);
+  return out;
+}
+
 const SECURITY_AXIS_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -223,7 +261,7 @@ const SECURITY_AXIS_BOOK = (() => {
     // Deduped once, and every figure below is struck over this — each
     // dedupeGroup counted a single time, exactly as the page's rows are.
     const seenAll = new Set();
-    const ded = [];
+    let ded = [];
     for (const p of positions) {
       // CURRENT HOLDINGS, as every allocation surface now draws them: a fund
       // vehicle at zero units still publishing a NAV has been redeemed, and a
@@ -235,6 +273,27 @@ const SECURITY_AXIS_BOOK = (() => {
       ded.push(p);
     }
     const sum = (a) => a.reduce((x, y) => x + y, 0);
+    /**
+     * ── AND THE ₹1,000 FLOOR, RE-DERIVED RATHER THAN IMPORTED ───────────────
+     *
+     *   "54 rupees क्या होता है? … less than thousand rupees remove
+     *    automatically."
+     *
+     * Re-implemented here from the book, like the closed test above it and for
+     * the same reason: a check that imports the helper it is checking agrees
+     * with it by construction and can only fail when the page stops CALLING it,
+     * never when the helper itself goes wrong.
+     *
+     * STRUCK ON THE SECURITY, NOT THE ROW, and the magnitude, not the value —
+     * both of which are the whole of what `analytics.ts` has to get right, so
+     * both are what this has to reproduce independently. A zero is NOT under the
+     * floor: a measured ₹0 cash balance is a measurement and stays.
+     */
+    const smallKeys = smallKeysOf(positions);
+    const smallRows = ded.filter((p) => smallKeys.has(p.securityKey));
+    const smallValue = sum(smallRows.map((p) => p.marketValue));
+    // Everything below this line is struck over what the pages actually draw.
+    ded = ded.filter((p) => !smallKeys.has(p.securityKey));
     const nav = sum(ded.map((p) => p.marketValue));
     const stocks = ded.filter((p) => p.assetClass === "Equity");
     const measured = sum(stocks.map((p) => p.marketValue));
@@ -438,6 +497,15 @@ const SECURITY_AXIS_BOOK = (() => {
        * either way, because a closed position is a measured ₹0.
        */
       heldPositions: ded.length,
+      /**
+       * WHAT THE ₹1,000 FLOOR TOOK. Exposed so an invariant can assert the
+       * filter is DOING WORK: every count check below is satisfied just as well
+       * by a floor wired to nothing, and a book where it catches nothing looks
+       * exactly like a clean one.
+       */
+      smallDroppedCount: smallRows.length,
+      smallDroppedValue: smallValue,
+      smallDroppedKeys: [...smallKeys],
       measured, measuredCr: measured / 1e7,
       derived, derivedCr: derived / 1e7,
       totalCr: (measured + derived) / 1e7,
@@ -656,7 +724,12 @@ const AXIS_VENUE_BOOK = (() => {
     // here rather than imported, on the same terms as `isMandateHeld` beside it.
     const FV = new Set(["AIF", "Mutual Fund", "ETF"]);
     const closed = (p) => FV.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
-    const rest = positions.filter((p) => acc.get(p.accountId)?.engagement !== "PMS" && !closed(p));
+    // ...AND THE ₹1,000 FLOOR, for the same reason the closed test is here: the
+    // Monitor draws current holdings, and a holding it drops has no row to carry
+    // an expansion, so the identity below must not demand statements for one.
+    const small = smallKeysOf(positions);
+    const rest = positions.filter((p) =>
+      acc.get(p.accountId)?.engagement !== "PMS" && !closed(p) && !small.has(p.securityKey));
     const pairs = new Set(rest.map((p) => `${p.securityKey}\u0000${p.accountId}`));
     /**
      * ...AND THE HOLDING WHOSE PANEL HAS THE MOST TO GET WRONG: one reported by
@@ -855,7 +928,24 @@ const AIF_BOOK = (() => {
     const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
       && Number(p.quantity) === 0 && p.currentPrice != null));
     const seen = new Set();
+    /**
+     * ...AND THE ₹1,000 FLOOR, WHICH IS THE SAME FAILURE THIS BLOCK'S OWN
+     * COMMENT BELOW ALREADY RECORDS, ARRIVING AT THE NEXT MERGE.
+     *
+     * `NavMovers.tsx` draws `currentHoldings(consolidated)`, so the floor
+     * reaches the card whether or not this derivation follows — and when it did
+     * not, all five of this card's invariants failed at once against a page
+     * that was right. Three of the six holdings the floor drops are schemes the
+     * store prices, so the card correctly stops reporting a daily NAV move on a
+     * ₹2.90 fund holding.
+     *
+     * Re-derived through `smallKeysOf` above rather than imported, on the same
+     * terms as the closed test one line up and the cash-equivalent membership
+     * below it.
+     */
+    const smallNav = smallKeysOf(positions);
     const ded = current.filter((p) => {
+      if (smallNav.has(p.securityKey)) return false;
       if (!p.dedupeGroup) return true;
       if (seen.has(p.dedupeGroup)) return false;
       seen.add(p.dedupeGroup); return true;
@@ -968,7 +1058,23 @@ const NAV_MOVERS_BOOK = (() => {
     const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
       && Number(p.quantity) === 0 && p.currentPrice != null));
     const seen = new Set();
+    /**
+     * ...AND THE ₹1,000 FLOOR, WHICH IS THE SAME FAILURE THIS BLOCK'S OWN
+     * COMMENT BELOW ALREADY RECORDS, ARRIVING AT THE NEXT MERGE.
+     *
+     * `NavMovers.tsx` draws `currentHoldings(consolidated)`, so the floor
+     * reaches the CARD whether or not this derivation follows it — and when it
+     * did not, all five of this card's invariants failed at once against a page
+     * that was right, by exactly the ₹208.24 of four mutual-fund holdings the
+     * floor drops (₹2.90, ₹36.08, ₹53.67 and ₹115.59). The card correctly stops
+     * reporting a daily NAV move on a holding worth less than a bus fare.
+     *
+     * Re-derived through `smallKeysOf` rather than imported, on the same terms
+     * as the closed test one line up and the cash-equivalent membership below.
+     */
+    const smallNav = smallKeysOf(positions);
     const ded = current.filter((p) => {
+      if (smallNav.has(p.securityKey)) return false;
       if (!p.dedupeGroup) return true;
       if (seen.has(p.dedupeGroup)) return false;
       seen.add(p.dedupeGroup); return true;
@@ -3307,7 +3413,16 @@ const ALLOC_FAMILY_AXIS = [
     if (!(a.rows ?? []).some((k) => /^Not classified/.test(k ?? ""))) {
       return { notChecked: "the family's review places every holding in this book on this axis" };
     }
-    return /the family’s review does not place these holdings/.test(t);
+    /**
+     * EITHER NUMBER, BECAUSE THE ROW'S OWN COUNT DECIDES IT. This matched the
+     * PLURAL alone and failed a page that was right the moment the ₹1,000 floor
+     * took this section from six holdings to one: five of the six specks the
+     * family asked to be rid of were sitting in it, so the page correctly
+     * switched to "this holding" and the check called it a regression. A check
+     * shaped by the fixture it was written against — which this sweep has
+     * recorded catching itself at more than once.
+     */
+    return /the family’s review does not place (this holding|these holdings)/.test(t);
   }],
 ];
 
@@ -3515,6 +3630,35 @@ const AXIS_EXPANSION = [
    * dropped a statement or listed one twice lands elsewhere; so does one that
    * stopped offering the expansion, because the sum falls to zero.
    */
+  /**
+   * ── NOTHING UNDER THE ₹1,000 FLOOR IS A ROW, ON ANY AXIS ──────────────────
+   *
+   *   "यह तो ना यहां पर irrelevant items हैं. यह सबको हटा दो यह. 54 rupees क्या
+   *    होता है? … less than thousand rupees remove automatically."
+   *
+   * Spread across all three consolidated axes, because the floor is a property
+   * of the HOLDING and an axis only decides which section it sits in — so a fix
+   * that reached one grouping and not the others is precisely the regression to
+   * catch, and it is the shape `FUND_CLASSES` is already spread for.
+   *
+   * Struck on `data-security-key` against the book's own answer. Never on the
+   * rendered name: four of the six are depository-clipped mutual funds whose
+   * names appear in this page's own pick-list and prose, so a text match would
+   * report them absent while a row carried one.
+   *
+   * A BOOK WITH NOTHING UNDER THE FLOOR ABSTAINS; A PAGE WITH NO ROWS FAILS.
+   * The first is an honest "not applicable"; the second is a broken page, and a
+   * check that shrugged at an empty table could not fail in the one direction
+   * that matters.
+   */
+  ["no holding under the ₹1,000 floor is drawn as a row", (t, ctx) => {
+    const small = SECURITY_AXIS_BOOK?.smallDroppedKeys ?? [];
+    if (!small.length) return { notChecked: "no holding in this book falls under the floor" };
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return false;
+    const listed = rows.map((r) => r.securityKey).filter((k) => k && small.includes(k));
+    return listed.length === 0;
+  }],
   ["...and the venue counts account for every statement behind them", (t, ctx) => {
     const rows = ctx?.tableRows;
     if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
@@ -6690,6 +6834,51 @@ const INVARIANTS = {
       if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
       const said = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? NaN);
       return said === FUND_CLASS_BOOK.closedCount;
+    }],
+    /**
+     * ── AND NOTHING UNDER THE ₹1,000 FLOOR IS LISTED EITHER ──────────────────
+     *
+     *   "यह तो ना यहां पर irrelevant items हैं … 54 rupees क्या होता है? … less
+     *    than thousand rupees remove automatically."
+     *
+     * Struck on `data-hb-key` against the book's own answer, for the reason the
+     * closed check one line up already gives: a name is clipped, wrapped and
+     * re-cased by the table it sits in, so a text match can report a row absent
+     * while it is on screen. The key is what the row IS.
+     *
+     * A PAGE THAT DREW NO ROWS IS A FINDING, NOT AN ABSTENTION — same as above,
+     * because this scope is the whole book and an empty table would satisfy any
+     * check phrased as "none of these appears".
+     */
+    ["no holding under the ₹1,000 floor is listed behind the figure", (t, ctx) => {
+      const small = SECURITY_AXIS_BOOK?.smallDroppedKeys ?? [];
+      if (!small.length) return { notChecked: "no holding in this book falls under the floor" };
+      const hb = ctx?.hbRedeemed;
+      if (!hb || !hb.keys.length) return false;
+      const listed = hb.keys.filter((k) => small.includes(k));
+      return listed.length === 0;
+    }],
+    /**
+     * ...AND WHAT IT TOOK IS COUNTED *AND PRICED*.
+     *
+     * The closed count needs no value — a redeemed row is ₹0 by construction, so
+     * the count is the whole story. These moved this page's own total, so the
+     * figure is what a reader reconciling against the tile they came from
+     * actually needs, and the count alone would leave them to find it.
+     *
+     * The VALUE is compared at the page's own printing precision rather than to
+     * the rupee: it renders through `fmtFromBase`, which drops to whole rupees
+     * below a lakh. A drop that moved the floor's cost by crores still cannot
+     * pass this.
+     */
+    ["...and the holdings under the floor are counted, with what they were worth", (t) => {
+      const n = SECURITY_AXIS_BOOK?.smallDroppedCount ?? 0;
+      if (!n) return { notChecked: "no holding in this book falls under the floor" };
+      const m = /(\d+) holdings? worth under ₹?[\d,.]+\s*(?:Cr|L)? (?:is|are) dropped automatically, ₹([\d,]+(?:\.\d+)?)/i.exec(t);
+      if (!m) return false;
+      const said = Number(m[1]);
+      const value = Number(m[2].replace(/,/g, ""));
+      return said === n && Math.abs(value - SECURITY_AXIS_BOOK.smallDroppedValue) < 1;
     }],
     /**
      * ── THE TWO HALVES ARE A TOGGLE ON THIS PAGE ─────────────────────────────

@@ -6,7 +6,7 @@ import { Kpi } from "@/components/Kpi";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
   aifSectionOf, aifCategoryOf, aifCategoryWhy, isAifHolding, aifSectionOrd,
   unvaluedAifFolios, AIF_UNSTATED_SECTION, PRIVATE_EQUITY_SECTION,
@@ -613,6 +613,14 @@ export function HoldingsBehind() {
               // — these carry ₹0 and report no cost — so only the count is named.
               d.closedExcluded > 0
                 ? ` ${fmtNum(d.closedExcluded)} closed position${d.closedExcluded === 1 ? " is" : "s are"} not listed: the fund still publishes a NAV, the family no longer holds ${d.closedExcluded === 1 ? "it" : "them"}, and ${d.closedExcluded === 1 ? "it carries" : "they carry"} no value and no cost here.`
+                : ""
+            }${
+              // THE FLOOR IS NAMED SEPARATELY, AND WITH ITS VALUE. A closed row
+              // is ₹0 so its count is the whole story; these moved this page's
+              // own total, and a reader reconciling it against the tile they
+              // came from is owed the figure rather than left to find it.
+              d.negligibleExcluded.count > 0
+                ? ` ${fmtNum(d.negligibleExcluded.count)} holding${d.negligibleExcluded.count === 1 ? "" : "s"} worth under ${money(NEGLIGIBLE_VALUE_FLOOR)} ${d.negligibleExcluded.count === 1 ? "is" : "are"} dropped automatically, ${money(d.negligibleExcluded.value)} in total — at the family's instruction, and not because anything is missing.`
                 : ""
             }`}
             right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"

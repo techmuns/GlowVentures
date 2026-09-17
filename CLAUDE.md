@@ -9683,6 +9683,176 @@ because it was re-measured rather than assumed. Every other stage in this file
 that states a count states it against a base that has since moved, which is why
 the sweep is re-run and the number never adjusted.
 
+### Stage 10ax — THE ₹1,000 FLOOR, AND THE FIRST FILTER THAT MOVES MONEY
+
+*"यह तो ना यहां पर irrelevant items हैं. यह सबको हटा दो यह. 54 rupees क्या होता
+है? … or we can just say that less than thousand rupees remove automatically.
+Something like that. Right? Yeah. Yeah. Please code it like that."*
+
+**THE ₹54 IS `INVES CON R GROWTH`, 0.39 UNITS OF A MUTUAL FUND**, found by value
+rather than by name. Measured over the whole book there are **SIX** such rows and
+they come to **₹848.24** between them — a hundred-thousandth of a ₹710 Cr book,
+spending six rows of a table the family read top to bottom.
+
+**IT IS A FAMILY DECISION, SO IT IS APPLIED AT THE DISPLAY LAYER AND NOWHERE
+ELSE** — the standing `RINGFENCED_SECURITY_KEYS` already has. `glowData.ts`
+regenerates BYTE-IDENTICALLY with it in the tree (run as a control before and
+after), the archive still carries the statements, and setting
+`NEGLIGIBLE_VALUE_FLOOR` to 0 restores every row everywhere in one edit. What it
+must never become is an ingest rule: a figure a statement printed does not stop
+being a figure because it is small.
+
+**AND IT IS THE FIRST FILTER IN THIS APP THAT DROPS A ROW AND MOVES MONEY WITH
+IT.** The closed-position filter it sits beside is free — a redeemed holding is a
+measured ₹0, so every total is identical either way — which is exactly why it is
+the wrong precedent to reason from, and why `currentHoldings`'s own doc block
+(*"IT MOVES NO MONEY, WHICH IS WHY IT IS SAFE TO APPLY AT THE BASE"*) had to be
+corrected in the same change rather than left standing as a confidently wrong
+explanation of code beneath it.
+
+#### Three decisions, each a wrong answer this book had no case of
+
+**1. IT IS STRUCK ON THE SECURITY, NEVER ON THE STATEMENT ROW.** The obvious
+`p.marketValue < FLOOR` deletes a name held at ₹900 in five accounts — ₹4,500 the
+family really owns — and the holding with it. Measured: **130 of 213 securities
+are reported by more than one statement, and the number where every row is under
+the floor while the holding is not is ZERO** — the smallest row belonging to a
+multi-row security is ₹6,208. So the two readings agree HERE, which is precisely
+why the one that is right in general is the one implemented and why the
+difference is asserted on CONSTRUCTED rows rather than waited for.
+
+**2. IT IS THE MAGNITUDE.** Two rows carry a NEGATIVE market value — V.E.C's
+`CASH Rec/Payable` at −₹84,556.96 and −₹1,37,488.47, a settlement obligation
+inside a mandate. A naive `value < 1000` is true of both, so it would drop
+₹2.22 L of real liability and silently INFLATE two mandates by exactly that.
+
+**3. A MEASURED ZERO IS NOT A SPECK.** `Math.abs(0) < 1000` is true, so the
+obvious test also takes the three rows this book carries at exactly ₹0 — two
+`Cash` sleeves and a `Tax Deducted at Source` line. **It must not**, on this
+book's own rules: a computed zero is legitimate and stays, the family pointed at
+₹54 and not at ₹0, and the redeemed rows are ₹0 with a BETTER reason already
+(`isRedeemedToNil`) that folding them in would replace with "this is a speck".
+**The test suite is what caught this** — it reported the TDS row as a dropped
+holding reporting a cost, which is the one thing the floor must not touch.
+
+#### What it moves, measured rather than assumed
+
+Every one of the six carries `costBasis: null`, no dividend, and no capital-gain
+lot anywhere in the archive — checked against `public/audit/`'s own 329 lots
+across 26 securities, because **realised is not a field on `Position`** and the
+first draft of that check read `p.realizedPnL`, found `undefined` on all six rows
+and PASSED while asserting nothing. So Capital invested, Realised P&L and income
+are untouched and only MARKET VALUE moves, by ₹848.24 — invisible at the
+one-decimal-crore precision every surface prints, and carried as an EXPLICIT TERM
+by the suite that ties to `BOOK_SUMMARY` rather than absorbed into a tolerance.
+
+#### Named on the figure, never as a paragraph
+
+The family have twice asked for the grey blocks under these tables to go — the
+closed-position note was one of the three they pointed at, and this file records
+it as REMOVED rather than relocated. So the disclosure goes where this book puts
+a claim about a figure: **on the figure.** The Portfolio Monitor's footer states
+it in the row-count cell's own `title`, beside the Weight cell that already
+explains its denominator the same way; Morning CIO's Positions tile states it in
+the `title` that already names what that count counts; and `/holdings`, which is
+the page that exists to explain these counts and already carries the closed
+sentence, states it in the subtitle **with the VALUE** — a closed row is ₹0 so its
+count is the whole story, and these moved the page's own total.
+
+`Drilldown.closedExcluded` therefore gained a SIBLING rather than a wider count.
+Folded together, the six specks would have been described to the reader as
+redemptions — *"the fund still publishes a NAV, the family no longer holds them"*
+— about four mutual funds and two shares the family holds perfectly well.
+
+#### The inconsistency it exposed, and the one it would have created
+
+**`drilldown.ts` HELD A SECOND ANSWER TO "WHAT IS CURRENT".** It read
+`!isRedeemedToNil(p)` inline — written before there was a second rule to get
+wrong — so the floor would have applied on the Portfolio Monitor and not there: a
+tile reading 364 opening a table of 370, which is the one disagreement that
+module exists to prevent. It calls `currentHoldings` now.
+
+**AND `SectorComposition` WAS ALREADY NARROWING BY HAND.** `consolidated.filter(isCompanyShare)`
+was RIGHT for as long as everything `currentHoldings` removed was a fund vehicle,
+which `isCompanyShare` had already excluded — so the two filters were equivalent
+by accident. The floor drops two EQUITY rows, they stopped being equivalent, and
+that page's MEASURED half stopped agreeing with its own DERIVED half (which was
+already filtered, through `useStockExposure`). Caught by the two-page identity
+`check:pages` strikes across it and the Monitor's security axis — half a page on
+one set and half on another is the disagreement `companyExposure` exists to
+prevent, arriving through the one caller that narrowed by hand.
+
+#### Seven bugs reintroduced, and TWO of them were defects in the checks
+
+Each was put back on its own, rebuilt and swept, with the harness restoring **and
+rebuilding** on a `trap … EXIT` — restoring the source alone leaves `dist/` at the
+bugged build and the next sweep reports the previous bug's failures under the next
+one's name.
+
+- **THE SIGN GUARD COULD NOT FAIL, AND ONLY REINTRODUCING IT SHOWED THAT.**
+  Replacing `Math.abs(value)` with `value` — the exact defect that section exists
+  for — left the whole suite GREEN. The reason is decision 1: both negative rows
+  are `CASH Rec/Payable`, and that securityKey is ALSO carried by three positive
+  rows, so the key totals ₹2.07 Cr. Measured over the whole book there is **NO
+  NEGATIVE KEY TOTAL AT ALL**, so a real payable can never reach the branch. It is
+  exercised on constructed rows now — a lone −₹84,556.96 payable that must be
+  KEPT, and a lone −₹54 that must still GO, because a guard "fixed" by refusing
+  every negative is a different rule.
+- **AND ONE CHECK WAS SHAPED BY ITS OWN FIXTURE.** `cio-alloc-class` required the
+  PLURAL — *"the family's review does not place these holdings"* — and **five of
+  the six specks were sitting in that very section**, so the floor took it from
+  six holdings to one, the page correctly switched to "this holding", and the
+  check called a correct page a regression.
+
+The five that fired first time: the floor wired to nothing (**8 invariants across
+5 routes**, plus 4 in the suite), the zero exclusion dropped, the test struck per
+ROW, `SectorComposition` back on the unfiltered set, and the `/holdings`
+disclosure deleted.
+
+#### Merged with main, and the merge found a sixth surface
+
+Stage 10aw landed while this branch was open and **took the same letter**, which
+is the parallel-branch collision this file has now recorded four times; this is
+`10ax` and main's keeps `10aw`. Three files conflicted and every one was a UNION
+— `test-family.mjs`'s suite list, `HoldingsBehind`'s imports, and this file —
+because taking either side whole silently retires the other's checks.
+
+**AND THE DANGEROUS ONE AUTO-MERGED, AS IT ALWAYS DOES.** `check-pages.mjs`'s ctx
+literal merged without conflicting; both sides' keys survived (`aifSections` and
+`navMovers` are main's, this branch added none), verified by reading it rather
+than by trusting that git did not complain.
+
+**THE FLOOR REACHED A CARD THIS BRANCH NEVER SAW.** `NavMovers.tsx` — main's new
+daily-NAV movers — draws `currentHoldings(consolidated)`, so the floor applied to
+it the moment the two landed together, and **all five of that card's invariants
+failed at once** against a page that was right: the rendered card covered
+₹1,103,878,543.11 against a derivation expecting ₹1,103,878,751.35, a gap of
+**exactly ₹208.24** — the four mutual-fund holdings the floor drops. That is the
+single-definition seam working (the card needed no edit) and `NAV_MOVERS_BOOK`
+needing to follow, which is the same failure its own comment already records
+from the 10av merge, arriving one merge later.
+
+**PRISTINE `main` WAS WALKED FIRST TO ESTABLISH THE FAILURE WAS THIS BRANCH'S**
+— a worktree at `origin/main`, built and swept: `cio` clean. Without that the
+five could have been read as main's own and waited out.
+
+**AND THE FIRST FIX PATCHED THE WRONG BLOCK.** The anchor text — `const seen` /
+`const ded = current.filter(...)` — is IDENTICAL in `AIF_BOOK` and
+`NAV_MOVERS_BOOK`, and the merge had moved both, so a text-anchored patch landed
+in the first of them and the five went on failing. Instrumenting the check is
+what showed it (the ₹208.24 above); the fix is anchored on a line whose enclosing
+block was then asserted. It is left in `AIF_BOOK` too, where it is correct for
+the same reason and currently a no-op — no holding the floor drops is an AIF.
+
+`build` · `tsc` · `test:ingest` 140 + 84 + 35 · `test:family` 1,207 across 22
+suites (a new `negligibleFloor.test.ts`, 21 checks anchored on `glowData.ts` and
+on the audit archive) · `check:family` **57/0** · `check:pages` **152
+combinations clean** — MEASURED ON THE MERGED TREE, not carried across from this
+branch's own pre-merge 150, which was struck against a base that has since moved
+— with the same two pre-existing abstentions. `npm run build-book` regenerates
+the book BYTE-IDENTICALLY, run as a control: a display-layer decision that moved
+a generated figure would not be one.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
